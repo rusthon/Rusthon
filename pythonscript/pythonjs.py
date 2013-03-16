@@ -1,5 +1,5 @@
 """
-Emulate Javascript object in Python those object will be converted to their Javascript equivalent by PythonScript compiler also functions without kwargs can be converted to Javascript functions.
+Emulate Javascript object in Python those object will be converted to their Javascript equivalent by PythonScript compiler also functions can be converted to Javascript functions but only positional arguments are converted.
 
 At least the following doesn't work
 
@@ -52,7 +52,8 @@ class JSGenerator(NodeVisitor):
             ', '.join(args),
         )
         for child in node.body:
-            buffer += self.visit(child)
+            out = self.visit(child)
+            buffer += out
         buffer += '\n}\n'
         return buffer
 
@@ -65,6 +66,10 @@ class JSGenerator(NodeVisitor):
     def visit_Name(self, node):
         if node.id == 'None':
             return 'undefined'
+        if node.id == 'JSObject':
+            return 'Object'
+        if node.id == 'JSArray':
+            return 'new Array'
         return node.id
 
     def visit_Attribute(self, node):
@@ -79,11 +84,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_Call(self, node):
         name = self.visit(node.func)
-        if name == 'JSObject':
-            return 'Object()'
-        elif name == 'JSArray':
-            return 'new Array()'
-        elif name.endswith('___get'):
+        if name.endswith('___get'):
             object = node.func.value.id
             arg = node.args[0].id
             return '%s[%s]' % (object, arg)
@@ -109,8 +110,11 @@ class JSGenerator(NodeVisitor):
         elif name == 'toString':
             return 'Object().toString.call(%s)' % self.visit(node.args[0])
         else:
-            args = [self.visit(e) for e in node.args]
-            args = ', '.join(args)
+            if node.args:
+                args = [self.visit(e) for e in node.args]
+                args = ', '.join(args)
+            else:
+                args = ''
             return '%s(%s)' % (name, args)
 
     def visit_Str(self, node):
@@ -164,6 +168,12 @@ class JSGenerator(NodeVisitor):
         if orelse:
             return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
         return 'if(%s) {\n%s}\n' % (test, body)
+
+    def visit_For(self, node):
+        target = node.target.id
+        num = node.iter.args[0].n
+        body = ''.join(map(self.visit, node.body))
+        return 'for (%s=0; %s<%s; %s++) {\n%s}\n' % (target, target, num, target, body)
 
 
 if __name__ == '__main__':
