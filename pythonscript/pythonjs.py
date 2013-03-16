@@ -171,7 +171,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_For(self, node):
         target = node.target.id
-        num = node.iter.args[0].n
+        num = self.visit(node.iter.args[0])
         body = ''.join(map(self.visit, node.body))
         return 'for (%s=0; %s<%s; %s++) {\n%s}\n' % (target, target, num, target, body)
 
