@@ -36,7 +36,7 @@ class PythonScriptTransformer(NodeTransformer):
             return self.generic_visit(node)
 
     def visit_Call(self, node):
-        if hasattr(node.func, 'id') and node.func.id == 'JS':
+        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString'):
             return self.generic_visit(node)
         return Call(
             Call(
