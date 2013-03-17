@@ -52,6 +52,12 @@ def get_attribute(object, attribute):
                     return r
                 return method
             return attr
+        bases = __class__.bases
+        for i in range(bases.length):
+            base = bases.___get(i)
+            attr = get_attribute(base, attribute)
+            if attr:
+                return attr
     return None
 
 

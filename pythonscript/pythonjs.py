@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Emulate Javascript object in Python those object will be converted to their Javascript equivalent by PythonScript compiler also functions can be converted to Javascript functions but only positional arguments are converted.
 
@@ -9,6 +10,7 @@ At least the following doesn't work
 - args, **kwargs is not supported
 - assignements support only one target
 """
+import sys
 from ast import parse
 from ast import NodeVisitor
 
@@ -176,9 +178,11 @@ class JSGenerator(NodeVisitor):
         return 'for (%s=0; %s<%s; %s++) {\n%s}\n' % (target, target, num, target, body)
 
 
+def main():
+    input = parse(sys.stdin.read())
+    tree = parse(input)
+    print JSGenerator().visit(tree)
+
+
 if __name__ == '__main__':
-    ast = parse(open('demo.py'))
-    generator = JSGenerator()
-    c = generator.visit(ast)
-    print '*' * 80
-    print c
+    main()

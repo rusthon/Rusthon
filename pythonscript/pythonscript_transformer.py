@@ -13,16 +13,31 @@ class PythonScriptTransformer(NodeTransformer):
     def visit_ClassDef(self, node):
         name = Name(node.name, None)
         yield Assign([name], Call(Name('JSObject', None), None, None, None, None))
-        yield Assign([Name('parents', None)], Call(Name('JSArray', Name), None, None, None, None))  # Bases not supported
+        yield Assign([Name('parents', None)], Call(Name('JSArray', Name), None, None, None, None))
+        if node.bases:
+            yield Expr(
+                Call(
+                    Attribute(
+                        Name('parents', None),
+                        'push',
+                        None
+                    ),
+                    node.bases,
+                    None,
+                    None,
+                    None
+                )
+            )
         for item in node.body:
+            yield self.generic_visit(item)
             if isinstance(item, FunctionDef):
                 item_name = item.name
                 item.name = closure_name = '%s__%s' % (node.name, item_name)
+                yield Assign([Attribute(name, item_name, None)], Name(closure_name, None))
             elif isinstance(item, Assign):
                 item_name = item.targets[0].id
                 item.targets[0].id = closure_name = '%s__%s' % (name.id, item_name)
-            yield self.generic_visit(item)
-            yield Assign([Attribute(name, item_name, None)], Name(closure_name, None))
+                yield Assign([Attribute(name, item_name, None)], Name(closure_name, None))
         yield Assign([name], Call(Name('create_class', None), [Str(node.name), Name('parents', None), Name(name.id, None)], None, None, None))
 
     def visit_Attribute(self, node):
