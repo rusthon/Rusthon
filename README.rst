@@ -14,7 +14,7 @@ Getting started
 First:
 
 ::
-   sudo pip install pythonscript
+   sudo pip install pythonscripttranslator
 
 Write some Python then::
 
@@ -30,7 +30,7 @@ What is supported
 - Functions with positional arguments only
 - Class with multiple inheritance but not compatible with CPython
 - ``for i in range(foo.bar)``
-- Any Python variable name will be output as is in the code which means ``Spam`` will be ``Spam`` in javascript. Similarly an ``egg`` variable in javascript will be ``egg`` in Python but there is still a bug (or security in Javascript engines) preventing from doings for instance ``document.createElement("div")`` directly in Python, it seems to works with pure javascript objects (see weblib.py). Keep in mind that you'd rather use JS if you look for speed.
+- Any Python variable name will be output as is in the code which means ``Spam`` will be ``Spam`` in javascript. Similarly an ``egg`` variable in javascript will be ``egg`` in Python but there is still a bug (or security in Javascript engines) preventing from doings for instance ``document.createElement("div")`` directly in Python, it seems to works with some pure javascript objects. Keep in mind that you'd rather use ``JS`` if you look for speed.
 - ``JS('javascript code')`` will output ``javascript_code`` in the generated code, useful for accessing javascript objects that you cannot access directly, you can a still assign the result to whatever you want.
 
 
