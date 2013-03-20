@@ -46,6 +46,11 @@ So the last step before the actual Javascript file is a restricted version of Py
 
 ``pythonpythonjs.py`` is converted to Javascript using ``pythonjs`` command.
 
+TODO
+====
+
+Demos: infojs, chartjs, timelinejs
+
 See also
 ========
 
