@@ -4,8 +4,7 @@ object.__class__ = klass;
 object.__dict__ = Object();
 init = get_attribute(object, "__init__");
 if(init) {
-args = Array.prototype.slice.call(arguments).slice(1);
-o = init.apply(undefined, args);
+init.apply(undefined, arguments);
 }
 return object;
 }
