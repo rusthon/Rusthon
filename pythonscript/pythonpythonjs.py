@@ -5,11 +5,7 @@ def create_object():
 
     init = get_attribute(object, '__init__')
     if init:
-        # unamed arguments from the instantiation call
-        # equivalent to arguments[1:] in python
-        args = arguments.___slice(1)
-        # XXX: dummy assign is to bypass a bug in pythonjs
-        o = init.apply(None, args)
+        init.apply(None, arguments)
     return object
 
 
