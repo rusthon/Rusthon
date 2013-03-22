@@ -86,210 +86,305 @@ class J:
     def css(self, name, value):
         j = self.j
         o = JS('j.css(name)')
-        return o
+        return J(o)
 
     def data(self, key, value):
         j = self.j
         o = JS('j.data(key, value)')
-        return o
+        return J(o)
 
     def double_click(self, handler):
         j = self.j
         o = JS('j.dbclick(handler)')
-        return o
+        return J(o)
 
     def delay(self, time, queue_name):
         j = self.j
         o = JS('j.delay(time, queue_name)')
-        return o
+        return J(o)
 
     def delay(self, time, queue_name):
         j = self.j
         o = JS('j.delay(time, queue_name)')
-        return o
+        return J(o)
 
     def dequeue(self, queue_name):
         j = self.j
         o = JS('j.dequeue(queue_name)')
-        return o
+        return J(o)
 
     def dequeue(self, queue_name):
         j = self.j
         o = JS('j.dequeue(queue_name)')
-        return o
+        return J(o)
 
     def dequeue(self, queue_name):
         j = self.j
         o = JS('j.dequeue(queue_name)')
-        return o
+        return J(o)
 
     def dequeue(self, queue_name):
         j = self.j
         o = JS('j.dequeue(queue_name)')
-        return o
+        return J(o)
 
     def detach(self, selector):
-a        j = self.j
+        j = self.j
         o = JS('j.detach(selector)')
-        return o
+        return J(o)
 
     def die(self, event_type, handler):
         j = self.j
         o = JS('j.detach(event_type, handler)')
-        return o
+        return J(o)
 
     def each(self, handler):
         j = self.j
         o = JS('j.each(handler)')
-        return o
+        return J(o)
 
     def end(self, handler):
         j = self.j
         o = JS('j.end()')
-        return o
+        return J(o)
 
     def eq(self, index):
         j = self.j
         o = JS('j.eq(index)')
-        return o
+        return J(o)
 
     def error(self, handler):
         j = self.j
         o = JS('j.error(handler)')
-        return o
+        return J(o)
 
     def fade_in(self, duration, complete):
         j = self.j
         o = JS('j.fadeIn(duration, complete)')
-        return o
+        return J(o)
 
 
     def fade_out(self, duration, complete):
         j = self.j
         o = JS('j.fadeOut(handler)')
-        return o
+        return J(o)
 
     def fadeTo(self, duration, opacity, complete):
         j = self.j
         o = JS('j.fade_to(handler)')
-        return o
+        return J(o)
 
     def fade_toggle(self, duration, easing, complete):
         j = self.j
         o = JS('j.fade_toggle(duration, easing, complete)')
-        return o
+        return J(o)
 
     def filter(self, selector):
         j = self.j
         o = JS('j.filter(selector)')
-        return o
+        return J(o)
 
     def finish(self, queue):
         j = self.j
         o = JS('j.finish(queue)')
-        return o
+        return J(o)
 
     def first(self, ):
         j = self.j
         o = JS('j.first()')
-        return o
+        return J(o)
 
     def focus(self, handler):
         j = self.j
         o = JS('j.focus(handler)')
-        return o
+        return J(o)
 
     def focus_in(self, handler):
         j = self.j
         o = JS('j.focus_in(handler)')
-        return o
+        return J(o)
 
     def focus_out(self, handler):
         j = self.j
         o = JS('j.filter(selector)')
-        return o
+        return J(o)
 
     def get(self, index):
         j = self.j
         o = JS('j.get(index)')
-        return o
+        return J(o)
 
     def has_class(self, name):
         j = self.j
         o = JS('j.has_class(selector)')
-        return o
+        return J(o)
 
     def height(self, value):
         j = self.j
         o = JS('j.height(value)')
-        return o
+        return J(o)
 
     def hide(self, duration, complete):
         j = self.j
         o = JS('j.hide(duration, complete)')
-        return o
+        return J(o)
 
     def hover(self, handler):
         j = self.j
         o = JS('j.hover(handler)')
-        return o
+        return J(o)
 
     def html(self, value):
         j = self.j
         o = JS('j.html(value)')
-        return o
+        return J(o)
 
     def index(self, selector):
         j = self.j
         o = JS('j.index(selector)')
-        return o
+        return J(o)
 
     def inner_height(self):
         j = self.j
         o = JS('j.innerHeight()')
-        return o
+        return J(o)
 
     def inner_width(self):
         j = self.j
         o = JS('j.innerWidth()')
-        return o
+        return J(o)
 
     def insert_after(self, target):
         j = self.j
         o = JS('j.insertAfter(target)')
-        return o
+        return J(o)
 
     def insert_before(self, target):
         j = self.j
         o = JS('j.insertBefore(selector)')
-        return o
+        return J(o)
 
     def is_(self, name):
         j = self.j
         o = JS('j.is(selector)')
+        return J(o)
+
+    def keydown(self, handler):
+        j = self.j
+        o = JS('j.keydown(handler)')
+        return J(o)
+
+    def keypress(self, handler):
+        j = self.j
+        o = JS('j.keypress(handler)')
+        return J(o)
+
+    def keyup(self, handler):
+        j = self.j
+        o = JS('j.keyup(handler)')
+        return J(o)
+
+    def last(self, handler):
+        j = self.j
+        o = JS('j.last(handler)')
+        return J(o)
+
+    def on(self, event, handler):
+        j = self.j
+        o = JS('j.on(event, handler)')
+        return J(o)
+
+    def load(self, url, data, complete):
+        j = self.j
+        o = JS('j.load(url, data, complete)')
+        return J(o)
+
+    def select(self, handler):
+        j = self.j
+        o = JS('j.select(handler)')
+        return J(o)
+
+    def select(self, handler):
+        j = self.j
+        o = JS('j.select(handler)')
+        return J(o)
+
+    def show(self, duration, complete):
+        j = self.j
+a        o = JS('j.show(duration, complete)')
+        return J(o)
+
+    def siblings(self, selector):
+        j = self.j
+        o = JS('j.select(handler)')
+        return J(o)
+
+    def size(self):
+        j = self.j
+        o = JS('j.size()')
         return o
 
-    def ajax(self, url, options):
+    def slice(self, start, end):
         j = self.j
-        o = JS('j.ajax(url, options)')
+        o = JS('j.slice(start, end)')
         return o
 
-    def has_class(self, name):
+    def slide_down(self, duration, complete):
         j = self.j
-        o = JS('j.filter(selector)')
+        o = JS('j.slideDown(duration, complete)')
         return o
 
-    def has_class(self, name):
+    def slide_toggle(self, duration, complete):
         j = self.j
-        o = JS('j.filter(selector)')
+        o = JS('j.slideToggle(duration, complete)')
         return o
 
-    def has_class(self, name):
+    def slide_up(self, duration, complete):
         j = self.j
-        o = JS('j.filter(selector)')
+        o = JS('j.slideUp(duration, complete)')
         return o
 
-    def has_class(self, name):
+    def stop(self, clear_queue, jump_to_end):
         j = self.j
-        o = JS('j.filter(selector)')
+        o = JS('j.stop(clear_queue, jump_to_end)')
+        return o
+
+    def submit(self, clear_queue, jump_to_end):
+        j = self.j
+        o = JS('j.submit(handler)')
+        return o
+
+    def text(self, text):
+        j = self.j
+        o = JS('j.text(text)')
+        return o
+
+    def toggle(self, duration, complete):
+        j = self.j
+        o = JS('j.toggle(duration, complete)')
+        return o
+
+    def toggle_class(self, class_name):
+        j = self.j
+        o = JS('j.toggle_class(class_name)')
+        return o
+
+    def trigger(self, event):
+        j = self.j
+        o = JS('j.trigger(event)')
+        return o
+
+    def unbind(self, event, handler):
+        j = self.j
+        o = JS('j.unbind(event, handler)')
+        return o
+
+    def value(self, value):
+        j = self.j
+        o = JS('j.val(value)')
+        return o
+
+    def width(self, value):
+        j = self.j
+        o = JS('j.width(value)')
         return o
