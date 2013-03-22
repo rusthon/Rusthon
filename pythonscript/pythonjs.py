@@ -84,6 +84,9 @@ class JSGenerator(NodeVisitor):
         s = 'console.log(%s);\n' % ' + '.join(args)
         return s
 
+    def visit_keyword(self, node):
+        return node.arg, self.visit(node.value)
+
     def visit_Call(self, node):
         name = self.visit(node.func)
         if name.endswith('___get'):
@@ -107,6 +110,11 @@ class JSGenerator(NodeVisitor):
                 end = node.args[1].n
                 return 'Array.prototype.slice.call(%s).slice(%s, %s)' % (object, start, end)
             return 'Array.prototype.slice.call(%s).slice(%s)' % (object, start)
+        elif name == 'dict':
+            kwargs = map(self.visit, node.keywords)
+            f = lambda x: '"%s": %s' % (x[0], x[1])
+            out = ', '.join(map(f, kwargs))
+            return '{%s}' % out
         elif name == 'JS':
             return node.args[0].s
         elif name == 'toString':
