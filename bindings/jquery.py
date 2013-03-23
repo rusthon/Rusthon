@@ -399,5 +399,5 @@ class J:
 
 
 def ajax(url, settings):
-    return JS("jQuery(url, settings)")
+    return JS("jQuery.ajax(url, settings)")
         
