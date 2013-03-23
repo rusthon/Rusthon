@@ -2,17 +2,12 @@ J = Object();
 parents = new Array();
 var J____init__ = function(self, arg) {
 set_attribute(self, "j", jQuery(arg));
+
 }
 J.__init__ = J____init__;
 var J__add = function(self, arg) {
 j = get_attribute(self, "j");
 o = j.add(arg);
-return get_attribute(J, "__call__")(o);
-}
-J.add = J__add;
-var J__add = function(self, arg) {
-j = get_attribute(self, "j");
-o = j.addBack(arg);
 return get_attribute(J, "__call__")(o);
 }
 J.add = J__add;
@@ -124,30 +119,6 @@ o = j.delay(time, queue_name);
 return get_attribute(J, "__call__")(o);
 }
 J.delay = J__delay;
-var J__delay = function(self, time, queue_name) {
-j = get_attribute(self, "j");
-o = j.delay(time, queue_name);
-return get_attribute(J, "__call__")(o);
-}
-J.delay = J__delay;
-var J__dequeue = function(self, queue_name) {
-j = get_attribute(self, "j");
-o = j.dequeue(queue_name);
-return get_attribute(J, "__call__")(o);
-}
-J.dequeue = J__dequeue;
-var J__dequeue = function(self, queue_name) {
-j = get_attribute(self, "j");
-o = j.dequeue(queue_name);
-return get_attribute(J, "__call__")(o);
-}
-J.dequeue = J__dequeue;
-var J__dequeue = function(self, queue_name) {
-j = get_attribute(self, "j");
-o = j.dequeue(queue_name);
-return get_attribute(J, "__call__")(o);
-}
-J.dequeue = J__dequeue;
 var J__dequeue = function(self, queue_name) {
 j = get_attribute(self, "j");
 o = j.dequeue(queue_name);
@@ -160,12 +131,6 @@ o = j.detach(selector);
 return get_attribute(J, "__call__")(o);
 }
 J.detach = J__detach;
-var J__die = function(self, event_type, handler) {
-j = get_attribute(self, "j");
-o = j.detach(event_type, handler);
-return get_attribute(J, "__call__")(o);
-}
-J.die = J__die;
 var J__each = function(self, handler) {
 j = get_attribute(self, "j");
 o = j.each(handler);
@@ -364,12 +329,6 @@ o = j.select(handler);
 return get_attribute(J, "__call__")(o);
 }
 J.select = J__select;
-var J__select = function(self, handler) {
-j = get_attribute(self, "j");
-o = j.select(handler);
-return get_attribute(J, "__call__")(o);
-}
-J.select = J__select;
 var J__show = function(self, duration, complete) {
 j = get_attribute(self, "j");
 o = j.show(duration, complete);
@@ -391,31 +350,31 @@ J.size = J__size;
 var J__slice = function(self, start, end) {
 j = get_attribute(self, "j");
 o = j.slice(start, end);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.slice = J__slice;
 var J__slide_down = function(self, duration, complete) {
 j = get_attribute(self, "j");
 o = j.slideDown(duration, complete);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.slide_down = J__slide_down;
 var J__slide_toggle = function(self, duration, complete) {
 j = get_attribute(self, "j");
 o = j.slideToggle(duration, complete);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.slide_toggle = J__slide_toggle;
 var J__slide_up = function(self, duration, complete) {
 j = get_attribute(self, "j");
 o = j.slideUp(duration, complete);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.slide_up = J__slide_up;
 var J__stop = function(self, clear_queue, jump_to_end) {
 j = get_attribute(self, "j");
 o = j.stop(clear_queue, jump_to_end);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.stop = J__stop;
 var J__submit = function(self, clear_queue, jump_to_end) {
@@ -463,7 +422,64 @@ J.value = J__value;
 var J__width = function(self, value) {
 j = get_attribute(self, "j");
 o = j.width(value);
-return o;
+return get_attribute(J, "__call__")(o);
 }
 J.width = J__width;
+var J__length = function(self) {
+j = get_attribute(self, "j");
+return j.length();
+}
+J.length = J__length;
+var J__map = function(self, func) {
+j = get_attribute(self, "j");
+o = j.map(func);
+return get_attribute(J, "__call__")(o);
+}
+J.map = J__map;
+var J__mousedown = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mousedown(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mousedown = J__mousedown;
+var J__mouseenter = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mouseenter(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mouseenter = J__mouseenter;
+var J__mouseleave = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mouseleave(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mouseleave = J__mouseleave;
+var J__mousemove = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mousemove(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mousemove = J__mousemove;
+var J__mouseout = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mouseout(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mouseout = J__mouseout;
+var J__mouseover = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mouseover(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mouseover = J__mouseover;
+var J__mouseup = function(self, handler) {
+j = get_attribute(self, "j");
+o = j.mouseup(handler);
+return get_attribute(J, "__call__")(o);
+}
+J.mouseup = J__mouseup;
 J = create_class("J", parents, J);
+var ajax = function(url, settings) {
+return jQuery(url, settings);
+}
+
