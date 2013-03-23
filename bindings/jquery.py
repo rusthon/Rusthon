@@ -286,7 +286,7 @@ class J:
     def size(self):
         j = self.j
         o = JS('j.size()')
-        return o
+        return J(o)
 
     def slice(self, start, end):
         j = self.j
@@ -316,37 +316,37 @@ class J:
     def submit(self, clear_queue, jump_to_end):
         j = self.j
         o = JS('j.submit(handler)')
-        return o
+        return J(o)
 
     def text(self, text):
         j = self.j
         o = JS('j.text(text)')
-        return o
+        return J(o)
 
     def toggle(self, duration, complete):
         j = self.j
         o = JS('j.toggle(duration, complete)')
-        return o
+        return J(o)
 
     def toggle_class(self, class_name):
         j = self.j
-        o = JS('j.toggle_class(class_name)')
-        return o
+        o = JS('j.toggleClass(class_name)')
+        return J(o)
 
     def trigger(self, event):
         j = self.j
         o = JS('j.trigger(event)')
-        return o
+        return J(o)
 
     def unbind(self, event, handler):
         j = self.j
         o = JS('j.unbind(event, handler)')
-        return o
+        return J(o)
 
     def value(self, value):
         j = self.j
         o = JS('j.val(value)')
-        return o
+        return J(o)
 
     def width(self, value):
         j = self.j

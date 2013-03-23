@@ -1,7 +1,7 @@
-all: jquery.py.js main.py.js
+all: jquery.py.js
 
 jquery.py.js:
-	pythonscript < jquery.py > jquery.py.js
+	../pythonscript/main.py < jquery.py > jquery.py.js
 
 clean:
 	rm *py.js

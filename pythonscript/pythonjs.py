@@ -45,7 +45,7 @@ class JSGenerator(NodeVisitor):
         return super(JSGenerator, self).visit(node)
 
     def visit_Module(self, node):
-        return ''.join(map(self.visit, node.body))
+        return '\n'.join(map(self.visit, node.body))
 
     def visit_FunctionDef(self, node):
         args = self.visit(node.args)  # FIXME: support kwargs
@@ -53,9 +53,8 @@ class JSGenerator(NodeVisitor):
             node.name,
             ', '.join(args),
         )
-        for child in node.body:
-            out = self.visit(child)
-            buffer += out
+        body = map(self.visit, node.body)
+        buffer += '\n'.join(body)
         buffer += '\n}\n'
         return buffer
 
@@ -81,7 +80,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_Print(self, node):
         args = [self.visit(e) for e in node.values]
-        s = 'console.log(%s);\n' % ' + '.join(args)
+        s = 'console.log(%s)' % ' + '.join(args)
         return s
 
     def visit_keyword(self, node):
@@ -142,13 +141,11 @@ class JSGenerator(NodeVisitor):
     def visit_Assign(self, node):
         target = self.visit(node.targets[0])  # XXX: support only one target
         value = self.visit(node.value)
-        code = '%s = %s;\n' % (target, value)
+        code = '%s = %s' % (target, value)
         return code
 
     def visit_Expr(self, node):
-        o = self.visit(node.value)
-        o += ';\n'
-        return o
+        return self.visit(node.value) + ';'
 
     def visit_Return(self, node):
         return 'return %s;' % self.visit(node.value)
@@ -173,8 +170,8 @@ class JSGenerator(NodeVisitor):
 
     def visit_If(self, node):
         test = self.visit(node.test)
-        body = ''.join(map(self.visit, node.body))
-        orelse = ''.join(map(self.visit, node.orelse))
+        body = '\n'.join(map(self.visit, node.body))
+        orelse = '\n'.join(map(self.visit, node.orelse))
         if orelse:
             return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
         return 'if(%s) {\n%s}\n' % (test, body)
@@ -182,7 +179,7 @@ class JSGenerator(NodeVisitor):
     def visit_For(self, node):
         target = node.target.id
         num = self.visit(node.iter.args[0])
-        body = ''.join(map(self.visit, node.body))
+        body = '\n'.join(map(self.visit, node.body)) + '\n'
         return 'for (%s=0; %s<%s; %s++) {\n%s}\n' % (target, target, num, target, body)
 
 
