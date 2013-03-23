@@ -41,7 +41,10 @@ class PythonScriptTransformer(NodeTransformer):
         yield Assign([name], Call(Name('create_class', None), [Str(node.name), Name('parents', None), Name(name.id, None)], None, None, None))
 
     def visit_Attribute(self, node):
-        return Call(Name('get_attribute', None), [self.generic_visit(node.value), Str(node.attr)], None, None, None)
+        return Call(Name('get_attribute', None), [self.visit(node.value), Str(node.attr)], None, None, None)
+
+    def visit_Expr(self, node):
+        return self.visit(node.value)
 
     def visit_Assign(self, node):
         attr = node.targets[0]
