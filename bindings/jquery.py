@@ -396,3 +396,8 @@ class J:
         j = self.j
         o = JS('j.mouseup(handler)')
         return J(o)
+
+
+def ajax(url, settings):
+    return JS("jQuery(url, settings)")
+        
