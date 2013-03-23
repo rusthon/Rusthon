@@ -13,12 +13,11 @@ Getting started
 
 First:
 
-::
    sudo pip install pythonscripttranslator
 
 Write some Python then::
 
-   pythonscript < app.py > app.js
+   pythonscript < app.py > app.py.js
 
 Then copy python.js from github to your project added both files as scripts of your page and voilà!
 
@@ -36,7 +35,8 @@ What is supported
 Known bugs
 ==========
 
-- no proper support for list and dict
+- no support for ``list``
+- no support of ``super``
 
 How is it possible
 ==================
