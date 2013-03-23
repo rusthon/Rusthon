@@ -133,7 +133,7 @@ class J:
         o = JS('j.detach(selector)')
         return J(o)
 
-    def die(self, event_type, handler):
+    def detach(self, event_type, handler):
         j = self.j
         o = JS('j.detach(event_type, handler)')
         return J(o)
