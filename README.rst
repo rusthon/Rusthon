@@ -11,7 +11,7 @@ A Python to Javascript translator in Python. It converts a subset of Python to a
 Getting started
 ---------------
 
-First:
+First::
 
    sudo pip install pythonscripttranslator
 
