@@ -24,10 +24,9 @@ def create_class(class_name, parents, attrs):
 
 def get_attribute(object, attribute):
     if attribute == '__call__':
-        name = toString(object)
-        if name == '[object Function]':
+        if JS('_.isFunction(object)'):
             return object
-    attr = object.___get(attribute)
+    attr = JS("object[attribute]")
     if attr:
         return attr
     __dict__ = object.__dict__
@@ -40,8 +39,7 @@ def get_attribute(object, attribute):
         __dict__ = __class__.__dict__
         attr = __dict__.___get(attribute)
         if attr:
-            name = toString(attr)
-            if name == '[object Function]':
+            if JS('_.isFunction(attr)'):
                 def method():
                     o = arguments.___insert(0, object)
                     r = attr.apply(None, arguments)
@@ -60,3 +58,32 @@ def get_attribute(object, attribute):
 def set_attribute(object, attr, value):
     __dict__ = object.__dict__
     __dict__.___set(attr, value)
+
+
+def get_arguments(parameters, args, kwargs):
+    out = JSObject()
+    if parameters.args.length:
+        argslength = parameters.args.length
+    else:
+        argslength = 0
+    kwargslength = JS('Object.keys(parameters.kwargs).length')
+    j = 0
+    for i in argslength:
+        arg = JS('parameters.args[j]')
+        if kwargs:
+            kwarg = JS('kwargs[arg]')
+            if kwarg:
+                JS('out[arg] = kwarg')
+                JS('delete kwargs[arg]')
+            else:
+                JS('out[arg] = args[j]')
+                j = j + 1
+        else:
+            JS('out[arg] = args[j]')
+            j = j + 1
+    args = args.slice(j)
+    if parameters.vararg:
+        JS("out[parameters.vararg] = args")
+    if parameters.varkwarg:
+        JS("out[parameters.varkwarg] = kwargs")
+    return out

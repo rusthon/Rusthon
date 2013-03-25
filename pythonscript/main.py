@@ -3,12 +3,12 @@ import sys
 from ast import parse
 
 from pythonjs import JSGenerator
-from pythonscript_transformer import PythonScriptTransformer
+from pythonscript_transformer import PythonToPythonJS
 
 
 def main():
     input = parse(sys.stdin.read())
-    pythonscript = PythonScriptTransformer().visit(input)
+    pythonscript = PythonToPythonJS().visit(input)
     jsgenerator = JSGenerator()
     print jsgenerator.visit(pythonscript)
 
