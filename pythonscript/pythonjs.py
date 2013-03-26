@@ -70,13 +70,19 @@ class JSGenerator(NodeVisitor):
     def visit_Call(self, node):
         name = self.visit(node.func)
         if name == 'JSObject':
-            kwargs = map(self.visit, node.keywords)
-            f = lambda x: '"%s": %s' % (x[0], x[1])
-            out = ', '.join(map(f, kwargs))
+            if node.keywords:
+                kwargs = map(self.visit, node.keywords)
+                f = lambda x: '"%s": %s' % (x[0], x[1])
+                out = ', '.join(map(f, kwargs))
+            else:
+                out = ''
             return '{%s}' % out
         if name == 'JSArray':
-            args = map(self.visit, node.args)
-            out = ', '.join(args)
+            if node.args:
+                args = map(self.visit, node.args)
+                out = ', '.join(args)
+            else:
+                out = ''
             return 'new Array(%s)' % out
         elif name == 'JS':
             return node.args[0].s

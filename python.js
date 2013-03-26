@@ -35,7 +35,7 @@ return attr;}
 
 __dict__ = object.__dict__
 if(__dict__) {
-attr = get_attribute(__dict__, attribute)
+attr = __dict__[attribute]
 if(attr) {
 return attr;}
 }
@@ -43,13 +43,12 @@ return attr;}
 __class__ = object.__class__
 if(__class__) {
 __dict__ = __class__.__dict__
-attr = __dict__.___get(attribute)
+attr = __dict__[attribute]
 if(attr) {
 if(_.isFunction(attr)) {
 var method = function() {
-o = arguments.___insert(0, object)
-r = attr.apply(undefined, arguments)
-return r;
+arguments[0].splice(0, 0, object);
+return attr.apply(undefined, arguments);
 }
 
 return method;}
@@ -57,8 +56,8 @@ return method;}
 return attr;}
 
 bases = __class__.bases
-for (i=0; i<range(bases.length); i++) {
-base = bases.___get(i)
+for (i=0; i<bases.length; i++) {
+base = bases[i]
 attr = get_attribute(base, attribute)
 if(attr) {
 return attr;}

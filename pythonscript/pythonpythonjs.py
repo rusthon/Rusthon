@@ -26,29 +26,28 @@ def get_attribute(object, attribute):
     if attribute == '__call__':
         if JS('_.isFunction(object)'):
             return object
-    attr = JS("object[attribute]")
+    attr = JS('object[attribute]')
     if attr:
         return attr
     __dict__ = object.__dict__
     if __dict__:
-        attr = get_attribute(__dict__, attribute)
+        attr = JS('__dict__[attribute]')
         if attr:
             return attr
     __class__ = object.__class__
     if __class__:
         __dict__ = __class__.__dict__
-        attr = __dict__.___get(attribute)
+        attr = JS('__dict__[attribute]')
         if attr:
             if JS('_.isFunction(attr)'):
                 def method():
-                    o = arguments.___insert(0, object)
-                    r = attr.apply(None, arguments)
-                    return r
+                    JS('arguments[0]').splice(0, 0, object)
+                    return attr.apply(None, arguments)
                 return method
             return attr
         bases = __class__.bases
-        for i in range(bases.length):
-            base = bases.___get(i)
+        for i in bases.length:
+            base = JS('bases[i]')
             attr = get_attribute(base, attribute)
             if attr:
                 return attr
