@@ -3,7 +3,7 @@ import sys
 from ast import parse
 
 from pythonjs import JSGenerator
-from pythonscript_transformer import PythonToPythonJS
+from python_to_pythonjs import PythonToPythonJS
 
 
 def main():
