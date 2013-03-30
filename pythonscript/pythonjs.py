@@ -9,6 +9,8 @@ At least the following doesn't work
 - assignements support only one target
 """
 import sys
+from types import GeneratorType
+
 from ast import parse
 from ast import NodeVisitor
 
@@ -29,6 +31,7 @@ class JSArray(list):
 
 
 class JSGenerator(NodeVisitor):
+
     def visit_Module(self, node):
         return '\n'.join(map(self.visit, node.body))
 
@@ -38,7 +41,13 @@ class JSGenerator(NodeVisitor):
             node.name,
             ', '.join(args),
         )
-        body = map(self.visit, node.body)
+        body = list()
+        for child in node.body:
+            if isinstance(child, GeneratorType):
+                for sub in child:
+                    body.append(self.visit(sub))
+            else:
+                body.append(self.visit(child))
         buffer += '\n'.join(body)
         buffer += '\n}\n'
         return buffer
