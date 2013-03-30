@@ -10,3 +10,4 @@ clean:
 test:
 	cat test.py
 	./main.py < test.py > test.py.js
+	cat test.py.js

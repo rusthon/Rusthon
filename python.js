@@ -25,7 +25,7 @@ return klass;
 
 var get_attribute = function(object, attribute) {
 if(attribute == "__call__") {
-if(_.isFunction(object)) {
+if({}.toString.call(object) === '[object Function]') {
 return object;}
 }
 
@@ -45,7 +45,7 @@ if(__class__) {
 __dict__ = __class__.__dict__
 attr = __dict__[attribute]
 if(attr) {
-if(_.isFunction(attr)) {
+if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 arguments[0].splice(0, 0, object);
 return attr.apply(undefined, arguments);
@@ -70,7 +70,7 @@ return undefined;
 
 var set_attribute = function(object, attr, value) {
 __dict__ = object.__dict__
-__dict__.___set(attr, value);
+__dict__[attr] = value;
 }
 
 var get_arguments = function(parameters, args, kwargs) {

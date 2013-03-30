@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='PythonScriptTranslator',
-    version='0.2',
+    version='0.3',
     description='Python compiler for the browser',
     author='Amirouche Boubekki',
     author_email='amirouche.boubekki@gmail.com',

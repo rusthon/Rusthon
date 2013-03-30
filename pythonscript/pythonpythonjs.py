@@ -24,7 +24,7 @@ def create_class(class_name, parents, attrs):
 
 def get_attribute(object, attribute):
     if attribute == '__call__':
-        if JS('_.isFunction(object)'):
+        if JS("{}.toString.call(object) === '[object Function]'"):
             return object
     attr = JS('object[attribute]')
     if attr:
@@ -39,7 +39,7 @@ def get_attribute(object, attribute):
         __dict__ = __class__.__dict__
         attr = JS('__dict__[attribute]')
         if attr:
-            if JS('_.isFunction(attr)'):
+            if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     JS('arguments[0]').splice(0, 0, object)
                     return attr.apply(None, arguments)
@@ -56,7 +56,7 @@ def get_attribute(object, attribute):
 
 def set_attribute(object, attr, value):
     __dict__ = object.__dict__
-    __dict__.___set(attr, value)
+    JS('__dict__[attr] = value')
 
 
 def get_arguments(parameters, args, kwargs):

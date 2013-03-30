@@ -33,7 +33,7 @@ class JSGenerator(NodeVisitor):
         return '\n'.join(map(self.visit, node.body))
 
     def visit_FunctionDef(self, node):
-        args = self.visit(node.args) 
+        args = self.visit(node.args)
         buffer = 'var %s = function(%s) {\n' % (
             node.name,
             ', '.join(args),

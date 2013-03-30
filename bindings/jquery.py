@@ -80,7 +80,7 @@ class J:
 
     def css(self, name, value):
         j = self.j
-        o = JS('j.css(name)')
+        o = JS('j.css(name, value)')
         return J(o)
 
     def data(self, key, value):
@@ -170,12 +170,12 @@ class J:
 
     def focus_in(self, handler):
         j = self.j
-        o = JS('j.focus_in(handler)')
+        o = JS('j.focusIn(handler)')
         return J(o)
 
     def focus_out(self, handler):
         j = self.j
-        o = JS('j.filter(selector)')
+        o = JS('j.focusOut(handler)')
         return J(o)
 
     def get(self, index):
