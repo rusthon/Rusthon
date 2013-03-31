@@ -74,6 +74,8 @@ class JSGenerator(NodeVisitor):
         return s
 
     def visit_keyword(self, node):
+        if isinstance(node.arg, basestring):
+            return node.arg, self.visit(node.value)
         return self.visit(node.arg), self.visit(node.value)
 
     def visit_Call(self, node):
@@ -92,7 +94,7 @@ class JSGenerator(NodeVisitor):
                 out = ', '.join(args)
             else:
                 out = ''
-            return 'new Array(%s)' % out
+            return 'create_array(%s)' % out
         elif name == 'JS':
             return node.args[0].s
         else:

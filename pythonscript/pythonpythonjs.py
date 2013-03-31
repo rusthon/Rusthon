@@ -1,3 +1,17 @@
+# FIX a "bug" in Javascript new Array where new Array(number) creates a list of undefined
+def create_array():
+    JS('array = new Array()')
+    for i in arguments.length:
+        JS('array.push(arguments[i])')
+    return array
+
+
+def adapt_arguments(handler):
+    def func():
+        handler(Array.prototype.slice.call(arguments))
+    return func
+
+
 def create_object():
     object = JSObject()
     object.__class__ = klass

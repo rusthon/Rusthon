@@ -58,7 +58,7 @@ class PythonToPythonJS(NodeTransformer):
             return Expr(self.generic_visit(node))
 
     def visit_Call(self, node):
-        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'dict'):
+        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject'):
             return self.generic_visit(node)
         return Call(
             Call(
@@ -71,7 +71,7 @@ class PythonToPythonJS(NodeTransformer):
             [
                 Call(
                     Name('JSArray', None),
-                    node.args,
+                    map(self.visit, node.args),
                     None,
                     None,
                     None
@@ -216,7 +216,7 @@ class PythonToPythonJS(NodeTransformer):
                     [
                         Call(
                             Name('JS', None),
-                            [Str('new Array(%s)' % node.name)],
+                            [Str('create_array(%s)' % node.name)],
                             None,
                             None,
                             None

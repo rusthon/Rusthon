@@ -45,17 +45,17 @@ class J:
 
     def bind(self, event_type, event_data, handler):
         j = self.j
-        o = JS('j.bind(event_type, event_data, handler)')
+        o = JS('j.bind(event_type, event_data, adapt_arguments(handler))')
         return J(o)
 
     def blur(self, handler):
         j = self.j
-        o = JS('j.blur(handler)')
+        o = JS('j.blur(adapt_arguments(handler))')
         return J(o)
 
     def change(self, handler):
         j = self.j
-        o = JS('j.change(handler)')
+        o = JS('j.change(adapt_arguments(handler))')
         return J(o)
 
     def children(self, selector):
@@ -65,7 +65,7 @@ class J:
 
     def click(self, handler):
         j = self.j
-        o = JS('j.click(handler)')
+        o = JS('j.click(adapt_arguments(handler))')
         return J(o)
 
     def clone(self, with_data_and_events):
@@ -90,7 +90,7 @@ class J:
 
     def double_click(self, handler):
         j = self.j
-        o = JS('j.dbclick(handler)')
+        o = JS('j.dbclick(adapt_arguments(handler))')
         return J(o)
 
     def delay(self, time, queue_name):
@@ -110,12 +110,12 @@ class J:
 
     def each(self, handler):
         j = self.j
-        o = JS('j.each(handler)')
+        o = JS('j.each(adapt_arguments(handler))')
         return J(o)
 
     def end(self, handler):
         j = self.j
-        o = JS('j.end()')
+        o = JS('j.end(handler)')
         return J(o)
 
     def eq(self, index):
@@ -125,7 +125,7 @@ class J:
 
     def error(self, handler):
         j = self.j
-        o = JS('j.error(handler)')
+        o = JS('j.error(adapt_arguments(handler))')
         return J(o)
 
     def fade_in(self, duration, complete):
@@ -135,12 +135,12 @@ class J:
 
     def fade_out(self, duration, complete):
         j = self.j
-        o = JS('j.fadeOut(handler)')
+        o = JS('j.fadeOut(duration, adapt_arguments(complete))')
         return J(o)
 
     def fadeTo(self, duration, opacity, complete):
         j = self.j
-        o = JS('j.fade_to(handler)')
+        o = JS('j.fade_to(duration, opacity, adapt_arguments(complete))')
         return J(o)
 
     def fade_toggle(self, duration, easing, complete):
@@ -165,17 +165,17 @@ class J:
 
     def focus(self, handler):
         j = self.j
-        o = JS('j.focus(handler)')
+        o = JS('j.focus(adapt_arguments(handler))')
         return J(o)
 
     def focus_in(self, handler):
         j = self.j
-        o = JS('j.focusIn(handler)')
+        o = JS('j.focusIn(adapt_arguments(handler))')
         return J(o)
 
     def focus_out(self, handler):
         j = self.j
-        o = JS('j.focusOut(handler)')
+        o = JS('j.focusOut(adapt_arguments(handler))')
         return J(o)
 
     def get(self, index):
@@ -200,7 +200,7 @@ class J:
 
     def hover(self, handler):
         j = self.j
-        o = JS('j.hover(handler)')
+        o = JS('j.hover(adapt_arguments(handler))')
         return J(o)
 
     def html(self, value):
@@ -240,27 +240,27 @@ class J:
 
     def keydown(self, handler):
         j = self.j
-        o = JS('j.keydown(handler)')
+        o = JS('j.keydown(adapt_arguments(handler))')
         return J(o)
 
     def keypress(self, handler):
         j = self.j
-        o = JS('j.keypress(handler)')
+        o = JS('j.keypress(adapt_arguments(handler))')
         return J(o)
 
     def keyup(self, handler):
         j = self.j
-        o = JS('j.keyup(handler)')
+        o = JS('j.keyup(adapt_arguments(handler))')
         return J(o)
 
     def last(self, handler):
         j = self.j
-        o = JS('j.last(handler)')
+        o = JS('j.last(adapt_arguments(handler))')
         return J(o)
 
     def on(self, event, handler):
         j = self.j
-        o = JS('j.on(event, handler)')
+        o = JS('j.on(event, adapt_arguments(handler))')
         return J(o)
 
     def load(self, url, data, complete):
@@ -270,7 +270,7 @@ class J:
 
     def select(self, handler):
         j = self.j
-        o = JS('j.select(handler)')
+        o = JS('j.select(adapt_arguments(handler))')
         return J(o)
 
     def show(self, duration, complete):
@@ -280,7 +280,7 @@ class J:
 
     def siblings(self, selector):
         j = self.j
-        o = JS('j.select(handler)')
+        o = JS('j.select(adapt_arguments(handler))')
         return J(o)
 
     def size(self):
@@ -315,7 +315,7 @@ class J:
 
     def submit(self, clear_queue, jump_to_end):
         j = self.j
-        o = JS('j.submit(handler)')
+        o = JS('j.submit(clear_queue, jump_to_end)')
         return J(o)
 
     def text(self, text):
@@ -340,7 +340,7 @@ class J:
 
     def unbind(self, event, handler):
         j = self.j
-        o = JS('j.unbind(event, handler)')
+        o = JS('j.unbind(event, adapt_arguments(handler))')
         return J(o)
 
     def value(self, value):
@@ -364,37 +364,37 @@ class J:
 
     def mousedown(self, handler):
         j = self.j
-        o = JS('j.mousedown(handler)')
+        o = JS('j.mousedown(adapt_arguments(handler))')
         return J(o)
 
     def mouseenter(self, handler):
         j = self.j
-        o = JS('j.mouseenter(handler)')
+        o = JS('j.mouseenter(adapt_arguments(handler))')
         return J(o)
 
     def mouseleave(self, handler):
         j = self.j
-        o = JS('j.mouseleave(handler)')
+        o = JS('j.mouseleave(adapt_arguments(handler))')
         return J(o)
 
     def mousemove(self, handler):
         j = self.j
-        o = JS('j.mousemove(handler)')
+        o = JS('j.mousemove(adapt_arguments(handler))')
         return J(o)
 
     def mouseout(self, handler):
         j = self.j
-        o = JS('j.mouseout(handler)')
+        o = JS('j.mouseout(adapt_arguments(handler))')
         return J(o)
 
     def mouseover(self, handler):
         j = self.j
-        o = JS('j.mouseover(handler)')
+        o = JS('j.mouseover(adapt_arguments(handler))')
         return J(o)
 
     def mouseup(self, handler):
         j = self.j
-        o = JS('j.mouseup(handler)')
+        o = JS('j.mouseup(adapt_arguments(handler))')
         return J(o)
 
 

@@ -1,3 +1,20 @@
+var create_array = function() {
+array = new Array();
+for (i=0; i<arguments.length; i++) {
+array.push(arguments[i]);
+}
+
+return array;
+}
+
+var adapt_arguments = function(handler) {
+var func = function() {
+handler(Array.prototype.slice.call(arguments));
+}
+
+return func;
+}
+
 var create_object = function() {
 object = {}
 object.__class__ = klass
