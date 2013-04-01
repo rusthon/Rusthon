@@ -295,17 +295,17 @@ class J:
 
     def slide_down(self, duration, complete):
         j = self.j
-        o = JS('j.slideDown(duration, complete)')
+        o = JS('j.slideDown(duration, adapt_arguments(complete))')
         return J(o)
 
     def slide_toggle(self, duration, complete):
         j = self.j
-        o = JS('j.slideToggle(duration, complete)')
+        o = JS('j.slideToggle(duration, adapt_arguments(complete))')
         return J(o)
 
     def slide_up(self, duration, complete):
         j = self.j
-        o = JS('j.slideUp(duration, complete)')
+        o = JS('j.slideUp(duration, adapt_arguments(complete))')
         return J(o)
 
     def stop(self, clear_queue, jump_to_end):
