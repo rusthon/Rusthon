@@ -105,6 +105,10 @@ class JSGenerator(NodeVisitor):
                 args = ''
             return '%s(%s)' % (name, args)
 
+    def visit_While(self, node):
+        body = '\n'.join(map(self.visit, node.body))
+        return 'while(%s) {\n%s\n}\n' % (self.visit(node.test), body)
+
     def visit_Str(self, node):
         return '"%s"' % node.s
 
