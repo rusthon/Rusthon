@@ -669,7 +669,7 @@ complete = parameters["complete"];
 duration = parameters["duration"];
 self = parameters["self"];
 j = get_attribute(self, "j");
-o = j.slideDown(duration, complete);
+o = j.slideDown(duration, adapt_arguments(complete));
 return get_attribute(J, "__call__")(create_array(o), {});
 }
 
@@ -681,7 +681,7 @@ complete = parameters["complete"];
 duration = parameters["duration"];
 self = parameters["self"];
 j = get_attribute(self, "j");
-o = j.slideToggle(duration, complete);
+o = j.slideToggle(duration, adapt_arguments(complete));
 return get_attribute(J, "__call__")(create_array(o), {});
 }
 
@@ -693,7 +693,7 @@ complete = parameters["complete"];
 duration = parameters["duration"];
 self = parameters["self"];
 j = get_attribute(self, "j");
-o = j.slideUp(duration, complete);
+o = j.slideUp(duration, adapt_arguments(complete));
 return get_attribute(J, "__call__")(create_array(o), {});
 }
 

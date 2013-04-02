@@ -1,10 +1,24 @@
 var create_array = function() {
 array = new Array();
-for (i=0; i<arguments.length; i++) {
+var iter = range(arguments.length);
+for (i=0; i < iter.length; i++) {
+var backup = i
+i = iter[i];
 array.push(arguments[i]);
+i = backup
 }
 
 return array;
+}
+
+var range = function(num) {
+i = 1
+r = [0]
+while(i < num) {
+r.push(i);
+i = i + 1
+}
+return r;
 }
 
 var adapt_arguments = function(handler) {
@@ -73,12 +87,16 @@ return method;}
 return attr;}
 
 bases = __class__.bases
-for (i=0; i<bases.length; i++) {
+var iter = range(bases.length);
+for (i=0; i < iter.length; i++) {
+var backup = i
+i = iter[i];
 base = bases[i]
 attr = get_attribute(base, attribute)
 if(attr) {
 return attr;}
 
+i = backup
 }
 }
 
@@ -90,7 +108,7 @@ __dict__ = object.__dict__
 __dict__[attr] = value;
 }
 
-var get_arguments = function(parameters, args, kwargs) {
+var get_arguments = function(signature, args, kwargs) {
 out = {}
 if(parameters.args.length) {
 argslength = parameters.args.length}
@@ -99,7 +117,10 @@ argslength = 0}
 
 kwargslength = Object.keys(parameters.kwargs).length
 j = 0
-for (i=0; i<argslength; i++) {
+var iter = range(argslength);
+for (i=0; i < iter.length; i++) {
+var backup = i
+i = iter[i];
 arg = parameters.args[j]
 if(kwargs) {
 kwarg = kwargs[arg]
@@ -114,6 +135,7 @@ else {
 out[arg] = args[j];
 j = j + 1}
 
+i = backup
 }
 
 args = args.slice(j)

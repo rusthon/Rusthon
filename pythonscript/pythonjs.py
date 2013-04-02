@@ -11,6 +11,7 @@ At least the following doesn't work
 import sys
 from types import GeneratorType
 
+from ast import Str
 from ast import parse
 from ast import NodeVisitor
 
@@ -43,6 +44,10 @@ class JSGenerator(NodeVisitor):
         )
         body = list()
         for child in node.body:
+            # simple test to drop triple quote comments
+            if hasattr(child, 'value'):
+                if isinstance(child.value, Str):
+                    continue
             if isinstance(child, GeneratorType):
                 for sub in child:
                     body.append(self.visit(sub))
@@ -107,7 +112,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_While(self, node):
         body = '\n'.join(map(self.visit, node.body))
-        return 'while(%s) {\n%s\n}\n' % (self.visit(node.test), body)
+        return 'while(%s) {\n%s\n}' % (self.visit(node.test), body)
 
     def visit_Str(self, node):
         return '"%s"' % node.s
@@ -120,6 +125,21 @@ class JSGenerator(NodeVisitor):
 
     def visit_Add(self, node):
         return '+'
+
+    def visit_Sub(self, node):
+        return '-'
+
+    def visit_Lt(self, node):
+        return '<'
+
+    def visit_Gt(self, node):
+        return '>'
+
+    def visit_GtE(self, node):
+        return '>='
+
+    def visit_LtE(self, node):
+        return '<='
 
     def visit_Assign(self, node):
         target = self.visit(node.targets[0])  # XXX: support only one target
@@ -163,9 +183,17 @@ class JSGenerator(NodeVisitor):
 
     def visit_For(self, node):
         target = node.target.id
-        num = self.visit(node.iter)
+        iter = self.visit(node.iter)
+        # iter is the python iterator
+        init_iter = 'var iter = %s;\n' % iter
+        # backup iterator and affect value of the next element to the target
+        pre = 'var backup = %s\ni = iter[%s];\n' % (target, target)
+        # replace the replace target with the javascript iterator
+        post = 'i = backup\n'
         body = '\n'.join(map(self.visit, node.body)) + '\n'
-        return 'for (%s=0; %s<%s; %s++) {\n%s}\n' % (target, target, num, target, body)
+        body = pre + body + post
+        for_block = init_iter + 'for (%s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
+        return for_block
 
 
 def main():
