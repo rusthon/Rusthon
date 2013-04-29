@@ -16,21 +16,6 @@ from ast import parse
 from ast import NodeVisitor
 
 
-class JSObject(dict):
-
-    def length(self):
-        return len(self)
-
-
-class JSArray(list):
-
-    def push(self, value):
-        self.append(value)
-
-    def length(self):
-        return len(self)
-
-
 class JSGenerator(NodeVisitor):
 
     def visit_Module(self, node):
