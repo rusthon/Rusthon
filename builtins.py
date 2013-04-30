@@ -36,6 +36,7 @@ class list:
         self.js_object = JSArray()
 
     def append(self, obj):
+        JS('var __array')
         __array = self.js_object
         JS('__array.push(obj)')
 
@@ -44,19 +45,23 @@ class list:
             self.append(obj)
 
     def insert(self, index, obj):
+        JS('var __array')
         __array = self.js_object
         JS('__array.splice(index, 0, obj)')
 
     def remove(self, obj):
+        JS('var __array')
         index = self.index(obj)
         __array = self.js_object
         JS('__array.splice(index, 1)')
 
     def pop(self):
+        JS('var __array')
         __array = self.js_object
         return JS('__array.pop()')
 
     def index(self, obj):
+        JS('var __array')
         __array = self.js_object
         return JS('__array.indexOf(obj)')
 
@@ -68,14 +73,17 @@ class list:
         return i
 
     def reverse(self):
+        JS('var __array')
         __array = self.js_object
         self.js_object = JS('__array.reverse()')
 
     def shift(self):
+        JS('var __array')
         __array = self.js_object
         return JS('__array.shift()')
 
     def slice(self, start, end):
+        JS('var __array')
         __array = self.js_object
         return JS('__array.slice(start, end)')
 
@@ -83,9 +91,45 @@ class list:
         return Iterator(self, 0)
 
     def get(self, index):
+        JS('var __array')
         __array = self.js_object
         return JS('__array[index]')
 
     def set(self, index, value):
+        JS('var __array')
         __array = self.js_object
         JS('__array[index] = value')
+
+
+class dict:
+
+    def __init__(self):
+        self.js_object = JSObject()
+
+    def get(self, key, default):
+        JS('var __dict')
+        __dict = JS('self.js_object')
+        if JS('__dict[key]'):
+            return JS('__dict[key]')
+        return default
+
+    def set(self, key, value):
+        JS('var __dict')
+        __dict = JS('self.js_object')
+        JS('__dict[key] = value')
+
+    def __len__(self):
+        JS('var __dict')
+        __dict = JS('self.js_object')
+        return JS('Object.keys(__dict).length')
+
+    def keys(self):
+        JS('var __dict')
+        __dict = JS('self.js_object')
+        __keys = JS('Object.keys(__dict)')
+        JS('var out')
+        out = list()
+        out.js_object = __keys
+        return out
+
+    
