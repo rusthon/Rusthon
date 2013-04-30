@@ -235,7 +235,22 @@ class PythonToPythonJS(NodeTransformer):
             [Name('var __iterator__', None)],
             Call(
                 Call(Name('get_attribute', None), [self.visit(node.iter), Str('__iter__')], None, None, None),
-                None,
+                [
+                    Call(
+                        Name('JSArray', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                    Call(
+                        Name('JSObject', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                ],
                 None,
                 None,
                 None
@@ -246,7 +261,22 @@ class PythonToPythonJS(NodeTransformer):
                 [Name('var %s' % node.target.id, None)],
                 Call(
                     Attribute(Name('__iterator__', None), 'next', None),
-                    None,
+                [
+                    Call(
+                        Name('JSArray', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                    Call(
+                        Name('JSObject', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                ],
                     None,
                     None,
                     None
@@ -258,7 +288,22 @@ class PythonToPythonJS(NodeTransformer):
                 [Name('var %s' % node.target.id, None)],
                 Call(
                     Attribute(Name('__iterator__', None), 'next', None),
-                    None,
+                [
+                    Call(
+                        Name('JSArray', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                    Call(
+                        Name('JSObject', None),
+                        None,
+                        None,
+                        None,
+                        None
+                    ),
+                ],
                     None,
                     None,
                     None
