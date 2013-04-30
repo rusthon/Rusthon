@@ -36,29 +36,29 @@ class list:
         self.js_object = JSArray()
 
     def append(self, obj):
-        array = self.js_object
-        JS('array.push(obj)')
+        __array = self.js_object
+        JS('__array.push(obj)')
 
     def extend(self, other):
         for obj in other:
             self.append(obj)
 
     def insert(self, index, obj):
-        array = self.js_object
-        JS('array.splice(index, 0, obj)')
+        __array = self.js_object
+        JS('__array.splice(index, 0, obj)')
 
     def remove(self, obj):
         index = self.index(obj)
-        array = self.js_object
-        JS('array.splice(index, 1)')
+        __array = self.js_object
+        JS('__array.splice(index, 1)')
 
     def pop(self):
-        array = self.js_object
-        return JS('array.pop()')
+        __array = self.js_object
+        return JS('__array.pop()')
 
     def index(self, obj):
-        array = self.js_object
-        return JS('array.indexOf(obj)')
+        __array = self.js_object
+        return JS('__array.indexOf(obj)')
 
     def count(self, obj):
         i = 0
@@ -68,16 +68,24 @@ class list:
         return i
 
     def reverse(self):
-        array = self.js_object
-        self.js_object = JS('array.reverse()')
+        __array = self.js_object
+        self.js_object = JS('__array.reverse()')
 
     def shift(self):
-        array = self.js_object
-        return JS('array.shift()')
+        __array = self.js_object
+        return JS('__array.shift()')
 
     def slice(self, start, end):
-        array = self.js_object
-        return JS('array.slice(start, end)')
+        __array = self.js_object
+        return JS('__array.slice(start, end)')
 
     def __iter__(self):
         return Iterator(self, 0)
+
+    def get(self, index):
+        __array = self.js_object
+        return JS('__array[index]')
+
+    def set(self, index, value):
+        __array = self.js_object
+        JS('__array[index] = value')

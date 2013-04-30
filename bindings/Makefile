@@ -1,6 +1,6 @@
-all: jquery.py.js
+all: jquery
 
-jquery.py.js:
+jquery:
 	../pythonscript/main.py < jquery.py > jquery.py.js
 
 clean:
