@@ -25,8 +25,6 @@ def adapt_arguments(handler):
     return func
 
 
-
-
 def create_class(class_name, parents, attrs):
     """Create a PythonScript class"""
     JS('var klass')
@@ -37,6 +35,7 @@ def create_class(class_name, parents, attrs):
 
     def __call__():
         """Create a PythonScript object"""
+        JS('var object')
         object = JSObject()
         object.__class__ = klass
         object.__dict__ = JSObject()
