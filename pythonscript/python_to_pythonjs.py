@@ -60,7 +60,7 @@ class PythonToPythonJS(NodeTransformer):
             return Expr(self.generic_visit(node))
 
     def visit_Call(self, node):
-        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject'):
+        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray'):
             return self.generic_visit(node)
         return Call(
             Call(
