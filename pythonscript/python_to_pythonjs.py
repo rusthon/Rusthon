@@ -234,7 +234,7 @@ class PythonToPythonJS(NodeTransformer):
         yield Assign(
             [Name('var __iterator__', None)],
             Call(
-                Attribute(node.iter, '__iter__', None),
+                Call(Name('get_attribute', None), [self.visit(node.iter), Str('__iter__')], None, None, None),
                 None,
                 None,
                 None,
