@@ -1,11 +1,16 @@
-all: build_pythonscript build_bindings
+all: bindings pythonscript
 
-build_pythonscript:
-	cd pythonscript && make
-
-build_bindings:
+bindings:
 	cd bindings && make
 
+builtins:
+	./pythonscript/main.py < builtins.py > builtins.py.js
+
+python:
+	./pythonscript/pythonjs.py < pythonscript/pythonpythonjs.py > python.js
+
+pythonscript: python builtins
+	cat python.js builtins.py.js > pythonscript.js
+
 clean:
-	(cd bindings && make clean)
-	(cd pythonscript && make clean)
+	rm python.js builtins.py.js pythonscript.js

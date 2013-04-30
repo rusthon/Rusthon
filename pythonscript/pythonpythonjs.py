@@ -2,7 +2,7 @@ def create_array():
     """Used to fix a bug/feature of Javascript where new Array(number)
     created a array with number of undefined elements which is not
     what we want"""
-    JS('array = new Array()')
+    JS('var array = new Array()')
     for i in range(arguments.length):
         JS('array.push(arguments[i])')
     return array
@@ -10,8 +10,8 @@ def create_array():
 
 def range(num):
     """Emulates Python's range function"""
-    i = 1
-    r = JS('[0]')
+    i = 0
+    r = JS('[]')
     while i < num:
         r.push(i)
         i = i + 1
@@ -100,14 +100,14 @@ def get_arguments(signature, args, kwargs):
     This will set default keyword arguments and retrieve positional arguments
     in kwargs if their called as such"""
     out = JSObject()
-    if parameters.args.length:
-        argslength = parameters.args.length
+    if signature.args.length:
+        argslength = signature.args.length
     else:
         argslength = 0
-    kwargslength = JS('Object.keys(parameters.kwargs).length')
+    kwargslength = JS('Object.keys(signature.kwargs).length')
     j = 0
     for i in range(argslength):
-        arg = JS('parameters.args[j]')
+        arg = JS('signature.args[j]')
         if kwargs:
             kwarg = JS('kwargs[arg]')
             if kwarg:
@@ -120,8 +120,8 @@ def get_arguments(signature, args, kwargs):
             JS('out[arg] = args[j]')
             j = j + 1
     args = args.slice(j)
-    if parameters.vararg:
-        JS("out[parameters.vararg] = args")
-    if parameters.varkwarg:
-        JS("out[parameters.varkwarg] = kwargs")
+    if signature.vararg:
+        JS("out[signature.vararg] = args")
+    if signature.varkwarg:
+        JS("out[signature.varkwarg] = kwargs")
     return out

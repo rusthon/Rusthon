@@ -1,4 +1,4 @@
-class StopIteration(object):
+class StopIteration:
     pass
 
 
@@ -16,21 +16,21 @@ def map(func, objs):
     return out
 
 
-class Iterator(object):
+class Iterator:
 
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index
 
     def next(self):
-        if len(self.obj):
+        if self.index >= len(self.obj):
             raise StopIteration
-        n = self.obj[self.index]
+        item = self.obj[self.index]
         self.index = self.index + 1
-        return n
+        return item
 
 
-class list(object):
+class list:
 
     def __init__(self):
         self.js_object = JSArray()

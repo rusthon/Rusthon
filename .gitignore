@@ -33,3 +33,11 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+#
+
+python.js
+builtins.py.js
+pythonscript/test.py
+pythonscript/test.py.js
+tmp/

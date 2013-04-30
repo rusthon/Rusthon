@@ -129,7 +129,7 @@ class PythonToPythonJS(NodeTransformer):
             0,
             Expr(
                 Assign(
-                    [Name('parameters', None)],
+                    [Name('var signature', None)],
                     Call(
                         Name('JSObject', None),
                         None,
@@ -145,10 +145,10 @@ class PythonToPythonJS(NodeTransformer):
             1,
             Expr(
                 Assign(
-                    [Name('parameters', None)],
+                    [Name('var arguments', None)],
                     Call(
                         Name('get_arguments', None),
-                        [Name('parameters', None), Name('args', None), Name('kwargs', None)],
+                        [Name('signature', None), Name('args', None), Name('kwargs', None)],
                         None,
                         None,
                         None
@@ -165,7 +165,7 @@ class PythonToPythonJS(NodeTransformer):
                         [arg],
                         Call(
                             Name('JS', None),
-                            [Str('parameters["%s"]' % arg.id)],
+                            [Str('arguments["%s"]' % arg.id)],
                             None,
                             None,
                             None
@@ -179,7 +179,7 @@ class PythonToPythonJS(NodeTransformer):
                     Expr(
                         Call(
                             Name('JS', None),
-                            [Str('%s = parameters["%s"]' % (node.args.vararg, node.args.vararg))],
+                            [Str('%s = arguments["%s"]' % (node.args.vararg, node.args.vararg))],
                             None,
                             None,
                             None
@@ -192,7 +192,7 @@ class PythonToPythonJS(NodeTransformer):
                     Expr(
                         Call(
                             Name('JS', None),
-                            [Str('%s = parameters["%s"]' % (node.args.kwarg, node.args.kwarg))],
+                            [Str('%s = arguments["%s"]' % (node.args.kwarg, node.args.kwarg))],
                             None,
                             None,
                             None
