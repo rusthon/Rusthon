@@ -2,9 +2,11 @@ from ast import Str
 from ast import Expr
 from ast import Call
 from ast import Name
+from ast import While
 from ast import Assign
 from ast import keyword
 from ast import arguments
+from ast import TryExcept
 from ast import Attribute
 from ast import FunctionDef
 from ast import NodeTransformer
@@ -227,3 +229,47 @@ class PythonToPythonJS(NodeTransformer):
                     None
                 )
             )
+
+    def visit_For(self, node):
+        yield Assign(
+            [Name('var __iterator__', None)],
+            Call(
+                Attribute(node.iter, '__iter__', None),
+                None,
+                None,
+                None,
+                None
+            )
+        )
+        node.body.append(
+            Assign(
+                [Name('var %s' % node.target.id, None)],
+                Call(
+                    Attribute(Name('__iterator__', None), 'next', None),
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            )
+        )
+        tryexcept_body = [
+            Assign(
+                [Name('var %s' % node.target.id, None)],
+                Call(
+                    Attribute(Name('__iterator__', None), 'next', None),
+                    None,
+                    None,
+                    None,
+                    None
+                )
+            ),
+            While(Name('true', None), node.body, None)
+        ]
+        yield TryExcept(
+            tryexcept_body,
+            [],  # FIXME: there is no handlers any exception
+                 # will throw us out the the for loop
+            [],
+        )
+                
