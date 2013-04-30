@@ -17,6 +17,7 @@ def range(num):
         i = i + 1
     return r
 
+
 def adapt_arguments(handler):
     """Useful to transform callback arguments to positional arguments"""
     def func():
@@ -24,29 +25,27 @@ def adapt_arguments(handler):
     return func
 
 
-def create_object():
-    """Create a PythonScript object"""
-    object = JSObject()
-    object.__class__ = klass
-    object.__dict__ = JSObject()
-
-    init = get_attribute(object, '__init__')
-    if init:
-        init.apply(None, arguments)
-    return object
 
 
 def create_class(class_name, parents, attrs):
     """Create a PythonScript class"""
+    JS('var klass')
     klass = JSObject()
     klass.bases = parents
     klass.__name__ = class_name
     klass.__dict__ = attrs
 
     def __call__():
-        args = arguments.___insert(0, klass)
-        return create_object.apply(None, args)
-    klass.__call__ = create_object
+        """Create a PythonScript object"""
+        object = JSObject()
+        object.__class__ = klass
+        object.__dict__ = JSObject()
+        JS('var init')
+        init = get_attribute(object, '__init__')
+        if init:
+            init.apply(None, arguments)
+        return object
+    klass.__call__ = __call__
     return klass
 
 
@@ -59,29 +58,30 @@ def get_attribute(object, attribute):
     if attribute == '__call__':
         if JS("{}.toString.call(object) === '[object Function]'"):
             return object
-    attr = JS('object[attribute]')
+    JS('var attr = object[attribute]')
     if attr:
         return attr
-    __dict__ = object.__dict__
+    JS('var __dict__ = object.__dict__')
     if __dict__:
         attr = JS('__dict__[attribute]')
         if attr:
             return attr
-    __class__ = object.__class__
+    JS('var __class__ = object.__class__')
     if __class__:
-        __dict__ = __class__.__dict__
+        JS('var __dict__ = __class__.__dict__')
         attr = JS('__dict__[attribute]')
         if attr:
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
-                    JS('arguments[0]').splice(0, 0, object)
-                    return attr.apply(None, arguments)
+                    JS('var args = arguments')
+                    JS('args[0]').splice(0, 0, object)
+                    return attr.apply(None, args)
                 return method
             return attr
-        bases = __class__.bases
+        JS('var bases = __class__.bases')
         for i in range(bases.length):
-            base = JS('bases[i]')
-            attr = get_attribute(base, attribute)
+            JS('var base = bases[i]')
+            JS('var attr = get_attribute(base, attribute)')
             if attr:
                 return attr
     return None

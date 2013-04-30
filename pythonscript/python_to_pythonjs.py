@@ -162,7 +162,7 @@ class PythonToPythonJS(NodeTransformer):
                 2,
                 Expr(
                     Assign(
-                        [arg],
+                        [Name('var ' + arg.id, None)],
                         Call(
                             Name('JS', None),
                             [Str('arguments["%s"]' % arg.id)],

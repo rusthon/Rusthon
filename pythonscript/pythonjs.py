@@ -200,7 +200,7 @@ class JSGenerator(NodeVisitor):
         post = 'i = backup;\n'
         body = '\n'.join(map(self.visit, node.body)) + '\n'
         body = pre + body + post
-        for_block = init_iter + 'for (%s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
+        for_block = init_iter + 'for (var %s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
         return for_block
 
 
