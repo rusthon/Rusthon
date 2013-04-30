@@ -55,7 +55,7 @@ class PythonToPythonJS(NodeTransformer):
     def visit_Assign(self, node):
         attr = node.targets[0]
         if isinstance(attr, Attribute):
-            return Expr(Call(Name('set_attribute', None), [attr.value, Str(attr.attr), node.value], None, None, None))
+            return Expr(Call(Name('set_attribute', None), [attr.value, Str(attr.attr), self.visit(node.value)], None, None, None))
         else:
             return Expr(self.generic_visit(node))
 
