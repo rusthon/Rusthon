@@ -79,7 +79,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_Print(self, node):
         args = [self.visit(e) for e in node.values]
-        s = 'console.log(%s);' % ' + '.join(args)
+        s = 'console.log(%s);' % ', '.join(args)
         return s
 
     def visit_keyword(self, node):
