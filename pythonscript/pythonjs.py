@@ -23,15 +23,15 @@ class JSGenerator(NodeVisitor):
 
     def visit_TryExcept(self, node):
         out = 'try {\n'
-        out += ';\n'.join(map(self.visit, node.body))
-        out += ';\n}\n'
+        out += '\n'.join(map(self.visit, node.body))
+        out += '\n}\n'
         out += 'catch(__exception__) {\n'
-        out += ';\n'.join(map(self.visit, node.handlers))
-        out += ';\n}\n'
+        out += '\n'.join(map(self.visit, node.handlers))
+        out += '\n}\n'
         return out
 
     def visit_Raise(self, node):
-        return 'throw %s' % self.visit(node.type)
+        return 'throw %s;' % self.visit(node.type)
 
     def visit_ExceptHandler(self, node):
         return '\n'.join(map(self.visit, node.body))
@@ -79,7 +79,7 @@ class JSGenerator(NodeVisitor):
 
     def visit_Print(self, node):
         args = [self.visit(e) for e in node.values]
-        s = 'console.log(%s)' % ' + '.join(args)
+        s = 'console.log(%s);' % ' + '.join(args)
         return s
 
     def visit_keyword(self, node):
@@ -148,11 +148,15 @@ class JSGenerator(NodeVisitor):
     def visit_Assign(self, node):
         target = self.visit(node.targets[0])  # XXX: support only one target
         value = self.visit(node.value)
-        code = '%s = %s' % (target, value)
+        code = '%s = %s;' % (target, value)
         return code
 
     def visit_Expr(self, node):
-        return self.visit(node.value) + ';'
+        # XXX: this is UGLY
+        s = self.visit(node.value)
+        if not s.endswith(';'):
+            s += ';'
+        return s
 
     def visit_Return(self, node):
         if node.value:
@@ -179,8 +183,8 @@ class JSGenerator(NodeVisitor):
 
     def visit_If(self, node):
         test = self.visit(node.test)
-        body = '\n'.join(map(self.visit, node.body))
-        orelse = '\n'.join(map(self.visit, node.orelse))
+        body = '\n'.join(map(self.visit, node.body)) + '\n'
+        orelse = '\n'.join(map(self.visit, node.orelse)) + '\n'
         if orelse:
             return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
         return 'if(%s) {\n%s}\n' % (test, body)
@@ -191,9 +195,9 @@ class JSGenerator(NodeVisitor):
         # iter is the python iterator
         init_iter = 'var iter = %s;\n' % iter
         # backup iterator and affect value of the next element to the target
-        pre = 'var backup = %s\ni = iter[%s];\n' % (target, target)
+        pre = 'var backup = %s;\ni = iter[%s];\n' % (target, target)
         # replace the replace target with the javascript iterator
-        post = 'i = backup\n'
+        post = 'i = backup;\n'
         body = '\n'.join(map(self.visit, node.body)) + '\n'
         body = pre + body + post
         for_block = init_iter + 'for (%s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)

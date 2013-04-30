@@ -106,12 +106,12 @@ class dict:
     def __init__(self):
         self.js_object = JSObject()
 
-    def get(self, key, default):
+    def get(self, key, d):
         JS('var __dict')
         __dict = JS('self.js_object')
         if JS('__dict[key]'):
             return JS('__dict[key]')
-        return default
+        return d
 
     def set(self, key, value):
         JS('var __dict')
