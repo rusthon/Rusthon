@@ -97,6 +97,10 @@ class JSGenerator(NodeVisitor):
             else:
                 out = ''
             return '{%s}' % out
+        if name == 'var':
+            args = map(self.visit, node.args)
+            out = ', '.join(args)
+            return 'var %s' % out
         if name == 'JSArray':
             if node.args:
                 args = map(self.visit, node.args)
