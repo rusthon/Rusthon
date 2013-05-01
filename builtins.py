@@ -1,3 +1,15 @@
+def range(num):
+    """Emulates Python's range function"""
+    JS('var i')
+    JS('var r')
+    i = 0
+    r = list()
+    while i < num:
+        r.append(i)
+        i = i + 1
+    return r
+
+
 class StopIteration:
     pass
 
