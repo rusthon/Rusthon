@@ -556,3 +556,30 @@ return out;
 
 dict.keys = dict__keys;
 dict = create_class("dict", parents, dict);
+str = {};
+parents = create_array();
+parents.push(list);
+var str____init__ = function(args, kwargs) {
+var signature = {"kwargs": {}, "args": create_array("self", "jsstring")};
+var arguments = get_arguments(signature, args, kwargs);
+var jsstring = arguments["jsstring"];
+var self = arguments["self"];
+get_attribute(get_attribute(list, "__init__"), "__call__")(create_array(self), {});
+var char;
+var __iterator__ = get_attribute(get_attribute(range, "__call__")(create_array(jsstring.length), {}), "__iter__")(create_array(), {});
+try {
+var i = get_attribute(__iterator__, "next")(create_array(), {});
+while(true) {
+char = jsstring.charAt(i);
+get_attribute(get_attribute(self, "append"), "__call__")(create_array(char), {});
+var i = get_attribute(__iterator__, "next")(create_array(), {});
+}
+}
+catch(__exception__) {
+
+}
+
+}
+
+str.__init__ = str____init__;
+str = create_class("str", parents, str);
