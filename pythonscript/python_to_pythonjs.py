@@ -81,7 +81,7 @@ class PythonToPythonJS(NodeTransformer):
                 Call(
                     Name('JSObject', None),
                     None,
-                    map(lambda x: keyword(Name(x.arg, None), x.value), node.keywords),
+                    map(lambda x: keyword(Name(x.arg, None), self.visit(x.value)), node.keywords),
                     None,
                     None
                 ),
