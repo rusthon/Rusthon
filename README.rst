@@ -3,7 +3,7 @@ PythonScript
 
 :dependency: Python 2.7
 
-Kesako
+Kesaco
 ======
 
 A Python to Javascript translator in Python. It converts a subset of Python to a subset of Javascript, making available enough Javascript in Python to do many things useful among which (at least I think) a full Python interpreter.
@@ -19,7 +19,7 @@ Write some Python then::
 
    pythonscript < app.py > app.py.js
 
-Then copy python.js from github to your project added both files as scripts of your page and voilà!
+Then copy pythonscript.js from github to your project added both files as scripts of your page and voilà!
 
 
 What is supported
@@ -28,17 +28,12 @@ What is supported
 - print are translated to ``console.log``
 - Functions & methods
 - Class with multiple inheritance but not compatible with CPython
-- ``for i in range(foo.bar)``
+- minimal list/dict/str
+- minimal for/while/try/except/raise
 - Any Python variable name will be output as is in the code which means ``Spam`` will be ``Spam`` in javascript. Similarly an ``egg`` variable in javascript will be ``egg`` in Python but there is still a bug (or security in Javascript engines) preventing from doings for instance ``document.createElement("div")`` directly in Python, it seems to works with some pure javascript objects. Keep in mind that you'd rather use ``JS`` if you look for speed.
 - ``JS('javascript code')`` will output ``javascript_code`` in the generated code, useful for accessing javascript objects that you cannot access directly, you can a still assign the result to whatever you want.
-- ``for i in j`` is translated as ``(for(i=0, i<j, i++)``
 - ``JSObject(foo="bar")`` is converted to ``{"foo": "bar" }``
-
-Known bugs
-----------
-
-- no support for ``list``
-- no support of ``super``
+- ``var(spam, egg)`` is translated to ``var spam, egg;`` each time you create a variable that is not global (in a method or function) you need to *var* it or expect bugs.
 
 How is it possible
 ==================
@@ -52,24 +47,52 @@ So the last step before the actual Javascript file is a restricted version of Py
 
 ``pythonpythonjs.py`` is converted to Javascript using ``pythonjs`` command.
 
-TODO
-====
+Demos
+=====
 
-Demos: infojs, chartjs, timelinejs
+- `sudo python <http://amirouche.github.io/sudo-python/>`_
+
 
 Changelog
 =========
 
-- 0.3 - 31/03/13
+0.5 - 13/05/01 - Lazy labor
+---------------------------
 
-  - support of python(positional, arguments, key=word, *args, **kwargs), it doesn't work in callbacks
+- improvements in jquery bindings
+- add minimal support for exceptions
+- better support for loops
+- introduce a builtins.py file
+- renamed the compiled python runtime file to pythonscript.js
+- booleans
+- minimal list/dict/str but not fully compatible with CPython
+- ``get_attribute`` support now inhertance but still not as CPython
+- new special function ``var(spam, egg)`` that is translated to ``var spam, egg;``
+- new ``range`` that is compatible with for loop
+- several fixes in the compilation
+- `sudo python <http://amirouche.github.io/sudo-python/>`_
 
-- 0.2
+0.4 - tldr
+----------
 
-  - positional arguments
-  - inheritance with custom mro
+- lazy for loop implementation (only used in pythonjs now)
+- while loops
+- fixing some callbacks in jquery bindings with ``adapt_arguments``
 
-- 0.1
+0.3 - 13/03/31
+--------------
+
+- support of python(positional, arguments, key=word, *args, **kwargs), it doesn't work in callbacks
+
+0.2 - acid lemon
+----------------
+
+- positional arguments
+- inheritance with custom mro
+
+
+0.1 - happy hacking
+-------------------
 
 See also
 ========
