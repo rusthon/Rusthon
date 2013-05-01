@@ -33,10 +33,12 @@ class J:
         o = JS('j.appendTo(arg)')
         return J(o)
 
-    def attr(self, arg):
+    def attr(self, key, value):
         j = self.j
-        o = JS('j.attr(arg)')
-        return J(o)
+        if value == None:
+            JS('j.attr(key)')
+        else:
+            JS('j.attr(key, value)')
 
     def before(self, arg):
         j = self.j
@@ -205,8 +207,11 @@ class J:
 
     def html(self, value):
         j = self.j
-        o = JS('j.html(value)')
-        return J(o)
+        if value != None:
+            o = JS('j.html(value)')
+        else:
+            o = JS('j.html()')
+        return o
 
     def index(self, selector):
         j = self.j
