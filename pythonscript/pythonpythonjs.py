@@ -85,6 +85,16 @@ def get_attribute(object, attribute):
             JS('var base = bases[i]')
             JS('var attr = get_attribute(base, attribute)')
             if attr:
+                if JS("{}.toString.call(attr) === '[object Function]'"):
+                    def method():
+                        JS('var args = arguments')
+                        if(args.length>0):
+                            JS('args[0]').splice(0, 0, object)
+                        else:
+                            args = JSArray(object)
+                        return attr.apply(None, args)
+                    return method
+
                 return attr
     return None
 
