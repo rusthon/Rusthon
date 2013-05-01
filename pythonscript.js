@@ -1,6 +1,18 @@
+var jsrange = function(num) {
+var i;
+var r;
+i = 0;
+r = [];
+while(i < num) {
+r.push(i);
+i = i + 1;
+}
+return r;
+}
+
 var create_array = function() {
 var array = new Array();
-var iter = range(arguments.length);
+var iter = jsrange(arguments.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
 i = iter[i];
@@ -9,16 +21,6 @@ i = backup;
 }
 
 return array;
-}
-
-var range = function(num) {
-i = 0;
-r = [];
-while(i < num) {
-r.push(i);
-i = i + 1;
-}
-return r;
 }
 
 var adapt_arguments = function(handler) {
@@ -124,13 +126,32 @@ else {
 }
 
 var bases = __class__.bases;
-var iter = range(bases.length);
+var iter = jsrange(bases.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
 i = iter[i];
 var base = bases[i];
 var attr = get_attribute(base, attribute);
 if(attr) {
+if({}.toString.call(attr) === '[object Function]') {
+var method = function() {
+var args = arguments;
+if(args.length > 0) {
+args[0].splice(0, 0, object);
+}
+else {
+args = create_array(object);
+}
+
+return attr.apply(undefined, args);
+}
+
+return method;
+}
+else {
+
+}
+
 return attr;
 }
 else {
@@ -164,7 +185,7 @@ argslength = 0;
 
 kwargslength = Object.keys(signature.kwargs).length;
 j = 0;
-var iter = range(argslength);
+var iter = jsrange(argslength);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
 i = iter[i];
@@ -173,7 +194,6 @@ if(kwargs) {
 kwarg = kwargs[arg];
 if(kwarg) {
 out[arg] = kwarg;
-delete kwargs[arg];
 }
 else {
 out[arg] = args[j];
@@ -205,6 +225,21 @@ else {
 }
 
 return out;
+}
+
+var range = function(args, kwargs) {
+var signature = {"kwargs": {}, "args": create_array("num")};
+var arguments = get_arguments(signature, args, kwargs);
+var num = arguments["num"];
+var i;
+var r;
+i = 0;
+r = get_attribute(list, "__call__")(create_array(), {});
+while(i < num) {
+get_attribute(get_attribute(r, "append"), "__call__")(create_array(i), {});
+i = i + 1;
+}
+return r;
 }
 
 StopIteration = {};

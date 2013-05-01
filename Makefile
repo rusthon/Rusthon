@@ -1,7 +1,7 @@
-all: bindings pythonscript
+all: jquery pythonscript
 
-bindings:
-	cd bindings && make
+jquery:
+	./pythonscript/main.py < bindings/jquery.py > bindings/jquery.py.js
 
 builtins:
 	./pythonscript/main.py < builtins.py > builtins.py.js
@@ -13,4 +13,4 @@ pythonscript: python builtins
 	cat python.js builtins.py.js > pythonscript.js
 
 clean:
-	rm python.js builtins.py.js pythonscript.js
+	rm python.js builtins.py.js pythonscript.js bindings/*py.js
