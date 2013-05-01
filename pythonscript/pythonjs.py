@@ -181,6 +181,12 @@ class JSGenerator(NodeVisitor):
         comparator = self.visit(node.comparators[0])
         return '%s %s %s' % (left, ops, comparator)
 
+    def visit_Not(self, node):
+        return '!'
+
+    def visit_UnaryOp(self, node):
+        return self.visit(node.op) + self.visit(node.operand)
+
     def visit_If(self, node):
         test = self.visit(node.test)
         body = '\n'.join(map(self.visit, node.body)) + '\n'
