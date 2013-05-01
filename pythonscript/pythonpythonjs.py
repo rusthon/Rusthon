@@ -63,7 +63,7 @@ def get_attribute(object, attribute):
     JS('var __dict__ = object.__dict__')
     if __dict__:
         attr = JS('__dict__[attribute]')
-        if attr:
+        if attr != None:
             return attr
     JS('var __class__ = object.__class__')
     if __class__:
@@ -73,7 +73,10 @@ def get_attribute(object, attribute):
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     JS('var args = arguments')
-                    JS('args[0]').splice(0, 0, object)
+                    if(args.length>0):
+                        JS('args[0]').splice(0, 0, object)
+                    else:
+                        args = JSArray(object)
                     return attr.apply(None, args)
                 return method
             return attr

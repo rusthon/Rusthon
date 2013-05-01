@@ -23,9 +23,11 @@ class Iterator:
         self.index = index
 
     def next(self):
-        if self.index >= len(self.obj):
+        index = self.index
+        length = len(self.obj)
+        if index == length:
             raise StopIteration
-        item = self.obj[self.index]
+        item = self.obj.get(self.index)
         self.index = self.index + 1
         return item
 
@@ -100,6 +102,11 @@ class list:
         __array = self.js_object
         JS('__array[index] = value')
 
+    def __len__(self):
+        JS('var __array')
+        __array = self.js_object
+        return JS('__array.length')
+
 
 class dict:
 
@@ -108,28 +115,26 @@ class dict:
 
     def get(self, key, d):
         JS('var __dict')
-        __dict = JS('self.js_object')
+        __dict = self.js_object
         if JS('__dict[key]'):
             return JS('__dict[key]')
         return d
 
     def set(self, key, value):
         JS('var __dict')
-        __dict = JS('self.js_object')
+        __dict = self.js_object
         JS('__dict[key] = value')
 
     def __len__(self):
         JS('var __dict')
-        __dict = JS('self.js_object')
+        __dict = self.js_object
         return JS('Object.keys(__dict).length')
 
     def keys(self):
         JS('var __dict')
-        __dict = JS('self.js_object')
+        __dict = self.js_object
         __keys = JS('Object.keys(__dict)')
         JS('var out')
         out = list()
         out.js_object = __keys
         return out
-
-    

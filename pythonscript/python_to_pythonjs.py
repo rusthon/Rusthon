@@ -256,11 +256,12 @@ class PythonToPythonJS(NodeTransformer):
                 None
             )
         )
+        node.body = map(self.visit, node.body)
         node.body.append(
             Assign(
                 [Name('var %s' % node.target.id, None)],
                 Call(
-                    Attribute(Name('__iterator__', None), 'next', None),
+                    Call(Name('get_attribute', None), [Name('__iterator__', None), Str('next')], None, None, None),
                 [
                     Call(
                         Name('JSArray', None),
@@ -287,7 +288,7 @@ class PythonToPythonJS(NodeTransformer):
             Assign(
                 [Name('var %s' % node.target.id, None)],
                 Call(
-                    Attribute(Name('__iterator__', None), 'next', None),
+                    Call(Name('get_attribute', None), [Name('__iterator__', None), Str('next')], None, None, None),
                 [
                     Call(
                         Name('JSArray', None),
@@ -315,6 +316,7 @@ class PythonToPythonJS(NodeTransformer):
             tryexcept_body,
             [],  # FIXME: there is no handlers any exception
                  # will throw us out the the for loop
+                 # XXX: at least at console.log
             [],
         )
                 
