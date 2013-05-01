@@ -1,21 +1,23 @@
-def create_array():
-    """Used to fix a bug/feature of Javascript where new Array(number)
-    created a array with number of undefined elements which is not
-    what we want"""
-    JS('var array = new Array()')
-    for i in range(arguments.length):
-        JS('array.push(arguments[i])')
-    return array
-
-
-def range(num):
+def jsrange(num):
     """Emulates Python's range function"""
+    JS('var i')
+    JS('var r')
     i = 0
     r = JS('[]')
     while i < num:
         r.push(i)
         i = i + 1
     return r
+
+
+def create_array():
+    """Used to fix a bug/feature of Javascript where new Array(number)
+    created a array with number of undefined elements which is not
+    what we want"""
+    JS('var array = new Array()')
+    for i in jsrange(arguments.length):
+        JS('array.push(arguments[i])')
+    return array
 
 
 def adapt_arguments(handler):
@@ -81,7 +83,7 @@ def get_attribute(object, attribute):
                 return method
             return attr
         JS('var bases = __class__.bases')
-        for i in range(bases.length):
+        for i in jsrange(bases.length):
             JS('var base = bases[i]')
             JS('var attr = get_attribute(base, attribute)')
             if attr:
@@ -118,7 +120,7 @@ def get_arguments(signature, args, kwargs):
         argslength = 0
     kwargslength = JS('Object.keys(signature.kwargs).length')
     j = 0
-    for i in range(argslength):
+    for i in jsrange(argslength):
         arg = JS('signature.args[j]')
         if kwargs:
             kwarg = JS('kwargs[arg]')
