@@ -126,7 +126,6 @@ def get_arguments(signature, args, kwargs):
             kwarg = JS('kwargs[arg]')
             if kwarg:
                 JS('out[arg] = kwarg')
-                JS('delete kwargs[arg]')
             else:
                 JS('out[arg] = args[j]')
                 j = j + 1
