@@ -150,3 +150,13 @@ class dict:
         out = list()
         out.js_object = __keys
         return out
+
+
+class str(list):
+
+    def __init__(self, jsstring):
+        list.__init__(self)
+        var(char)
+        for i in range(JS('jsstring.length')):
+            char = JS('jsstring.charAt(i)')
+            self.append(char)
