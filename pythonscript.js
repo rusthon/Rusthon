@@ -433,8 +433,8 @@ return get_attribute(get_attribute(obj, "next"), "__call__")(create_array(), {})
 var map = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("func", "objs")};
 var arguments = get_arguments(signature, args, kwargs);
-var objs = arguments["objs"];
 var func = arguments["func"];
+var objs = arguments["objs"];
 out = get_attribute(list, "__call__")(create_array(), {});
 set_attribute(out, "js_object", get_attribute(map, "__call__")(create_array(func, get_attribute(objs, "js_object")), {}));
 return out;
@@ -445,9 +445,9 @@ parents = create_array();
 var Iterator____init__ = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "obj", "index")};
 var arguments = get_arguments(signature, args, kwargs);
-var index = arguments["index"];
-var obj = arguments["obj"];
 var self = arguments["self"];
+var obj = arguments["obj"];
+var index = arguments["index"];
 set_attribute(self, "obj", obj);
 set_attribute(self, "index", index);
 }
@@ -476,18 +476,25 @@ Iterator = create_class("Iterator", parents, Iterator);
 list = {};
 parents = create_array();
 var list____init__ = function(args, kwargs) {
-var signature = {"kwargs": {}, "args": create_array("self")};
+var signature = {"kwargs": {"js_object": undefined}, "args": create_array("self", "js_object")};
 var arguments = get_arguments(signature, args, kwargs);
 var self = arguments["self"];
+var js_object = arguments["js_object"];
+if(js_object) {
+set_attribute(self, "js_object", js_object);
+}
+else {
 set_attribute(self, "js_object", create_array());
+}
+
 }
 
 list.__init__ = list____init__;
 var list__append = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "obj")};
 var arguments = get_arguments(signature, args, kwargs);
-var obj = arguments["obj"];
 var self = arguments["self"];
+var obj = arguments["obj"];
 var __array;
 __array = get_attribute(self, "js_object");
 __array.push(obj);
@@ -497,8 +504,8 @@ list.append = list__append;
 var list__extend = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "other")};
 var arguments = get_arguments(signature, args, kwargs);
-var other = arguments["other"];
 var self = arguments["self"];
+var other = arguments["other"];
 var __iterator__ = get_attribute(other, "__iter__")(create_array(), {});
 try {
 var obj = get_attribute(__iterator__, "next")(create_array(), {});
@@ -517,9 +524,9 @@ list.extend = list__extend;
 var list__insert = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "index", "obj")};
 var arguments = get_arguments(signature, args, kwargs);
-var obj = arguments["obj"];
-var index = arguments["index"];
 var self = arguments["self"];
+var index = arguments["index"];
+var obj = arguments["obj"];
 var __array;
 __array = get_attribute(self, "js_object");
 __array.splice(index, 0, obj);
@@ -529,8 +536,8 @@ list.insert = list__insert;
 var list__remove = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "obj")};
 var arguments = get_arguments(signature, args, kwargs);
-var obj = arguments["obj"];
 var self = arguments["self"];
+var obj = arguments["obj"];
 var __array;
 index = get_attribute(get_attribute(self, "index"), "__call__")(create_array(obj), {});
 __array = get_attribute(self, "js_object");
@@ -551,8 +558,8 @@ list.pop = list__pop;
 var list__index = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "obj")};
 var arguments = get_arguments(signature, args, kwargs);
-var obj = arguments["obj"];
 var self = arguments["self"];
+var obj = arguments["obj"];
 var __array;
 __array = get_attribute(self, "js_object");
 return __array.indexOf(obj);
@@ -562,8 +569,8 @@ list.index = list__index;
 var list__count = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "obj")};
 var arguments = get_arguments(signature, args, kwargs);
-var obj = arguments["obj"];
 var self = arguments["self"];
+var obj = arguments["obj"];
 i = 0;
 var __iterator__ = get_attribute(self, "__iter__")(create_array(), {});
 try {
@@ -610,9 +617,9 @@ list.shift = list__shift;
 var list__slice = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "start", "end")};
 var arguments = get_arguments(signature, args, kwargs);
-var end = arguments["end"];
-var start = arguments["start"];
 var self = arguments["self"];
+var start = arguments["start"];
+var end = arguments["end"];
 var __array;
 __array = get_attribute(self, "js_object");
 return __array.slice(start, end);
@@ -630,8 +637,8 @@ list.__iter__ = list____iter__;
 var list__get = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "index")};
 var arguments = get_arguments(signature, args, kwargs);
-var index = arguments["index"];
 var self = arguments["self"];
+var index = arguments["index"];
 var __array;
 __array = get_attribute(self, "js_object");
 return __array[index];
@@ -641,9 +648,9 @@ list.get = list__get;
 var list__set = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "index", "value")};
 var arguments = get_arguments(signature, args, kwargs);
-var value = arguments["value"];
-var index = arguments["index"];
 var self = arguments["self"];
+var index = arguments["index"];
+var value = arguments["value"];
 var __array;
 __array = get_attribute(self, "js_object");
 __array[index] = value;
@@ -674,9 +681,9 @@ dict.__init__ = dict____init__;
 var dict__get = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "key", "d")};
 var arguments = get_arguments(signature, args, kwargs);
-var d = arguments["d"];
-var key = arguments["key"];
 var self = arguments["self"];
+var key = arguments["key"];
+var d = arguments["d"];
 var __dict;
 __dict = get_attribute(self, "js_object");
 if(__dict[key]) {
@@ -693,9 +700,9 @@ dict.get = dict__get;
 var dict__set = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "key", "value")};
 var arguments = get_arguments(signature, args, kwargs);
-var value = arguments["value"];
-var key = arguments["key"];
 var self = arguments["self"];
+var key = arguments["key"];
+var value = arguments["value"];
 var __dict;
 __dict = get_attribute(self, "js_object");
 __dict[key] = value;
@@ -733,8 +740,8 @@ parents.push(list);
 var str____init__ = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("self", "jsstring")};
 var arguments = get_arguments(signature, args, kwargs);
-var jsstring = arguments["jsstring"];
 var self = arguments["self"];
+var jsstring = arguments["jsstring"];
 get_attribute(get_attribute(list, "__init__"), "__call__")(create_array(self), {});
 var char;
 var __iterator__ = get_attribute(get_attribute(range, "__call__")(create_array(jsstring.length), {}), "__iter__")(create_array(), {});

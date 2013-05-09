@@ -124,9 +124,10 @@ class PythonToPythonJS(NodeTransformer):
         if node.args.kwarg:
             keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
+        prebody = list()
+
         # create a JS Object to store the value of each parameter
-        body.insert(
-            0,
+        prebody.append(
             Expr(
                 Assign(
                     [Name('var signature', None)],
@@ -141,8 +142,7 @@ class PythonToPythonJS(NodeTransformer):
             )
         )
         # retrieve the actual value for each argument, cf. pythonpythonjs
-        body.insert(
-            1,
+        prebody.append(
             Expr(
                 Assign(
                     [Name('var arguments', None)],
@@ -158,8 +158,7 @@ class PythonToPythonJS(NodeTransformer):
         )
         # then for each argument assign its value
         for arg in node.args.args:
-            body.insert(
-                2,
+            prebody.append(
                 Expr(
                     Assign(
                         [Name('var ' + arg.id, None)],
@@ -174,32 +173,35 @@ class PythonToPythonJS(NodeTransformer):
                 )
             )
         if node.args.vararg:
-            body.insert(
-                    2,
+            prebody.append(
                     Expr(
                         Call(
                             Name('JS', None),
-                            [Str('%s = arguments["%s"]' % (node.args.vararg, node.args.vararg))],
+                            [Str('var %s = arguments["%s"]' % (node.args.vararg, node.args.vararg))],
                             None,
                             None,
                             None
                     )
                 )
             )
+            # turn it into a list
+            expr = '%s = get_attribute(list, "__call__")(create_array([%s]), {});'
+            expr = expr % (node.args.vararg, node.args.vararg)
+            prebody.append(Name(expr, None))
         if node.args.kwarg:
-            body.insert(
-                    2,
+            prebody.append(
                     Expr(
                         Call(
                             Name('JS', None),
-                            [Str('%s = arguments["%s"]' % (node.args.kwarg, node.args.kwarg))],
+                            [Str('var %s = arguments["%s"]' % (node.args.kwarg, node.args.kwarg))],
                             None,
                             None,
                             None
                     )
                 )
             )
-
+        prebody.extend(body)
+        body = prebody
         # process arguments to build python keyword arguments handling
         # in pythonjs, python functions takes two parameters args and kwargs
         args = arguments([Name('args', None), Name('kwargs', None)], None, None, None)

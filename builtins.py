@@ -46,8 +46,11 @@ class Iterator:
 
 class list:
 
-    def __init__(self):
-        self.js_object = JSArray()
+    def __init__(self, js_object=None):
+        if js_object:
+            self.js_object = js_object
+        else:
+            self.js_object = JSArray()
 
     def append(self, obj):
         JS('var __array')
