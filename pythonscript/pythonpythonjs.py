@@ -64,30 +64,66 @@ def get_attribute(object, attribute):
     if attribute == '__call__':
         if JS("{}.toString.call(object) === '[object Function]'"):
             return object
-    JS('var attr = object[attribute]')
+    var(attr)
+    JS('attr = object[attribute]')
     if attr:
         return attr
-    JS('var __dict__ = object.__dict__')
+    var(__class__, __dict__, __get__, bases)
+    # Check object.__class__.__dict__ for data descriptors named attr
+    __class__ = object.__class__
+    if __class__:
+        __dict__ = __class__.__dict__
+        attr = JS('__dict__[attribute]')
+        if attr:
+            __get__ = get_attribute(attr, '__get__')
+            if __get__:
+                return __get__(JS('[object, __class__]'))
+        bases = __class__.bases
+        for i in jsrange(bases.length):
+            var(base, attr)
+            JS('base = bases[i]')
+            attr = get_attribute(base, attribute)
+            if attr:
+                __get__ = get_attribute(attr, '__get__')
+                if __get__:
+                    return __get__(JS('[object, __class__]'))
+    # Check object.__dict__ for attr and its bases if it a class
+    # in the case if the descriptor is found return it
+    __dict__ = object.__dict__
+    bases = object.__bases__
     if __dict__:
         attr = JS('__dict__[attribute]')
         if attr != None:
+            if bases:
+                __get__ = get_attribute(attr, '__get__')
+                if __get__:
+                    return __get__(JS('[undefined, __class__]'))
             return attr
-    JS('var __class__ = object.__class__')
+    if bases:
+        for i in jsrange(bases.length):
+            var(base, attr)
+            JS('base = bases[i]')
+            attr = get_attribute(base, attribute)
+            if attr:
+                __get__ = get_attribute(attr, '__get__')
+                if __get__:
+                    return __get__(JS('[object, __class__]'))
     if __class__:
         JS('var __dict__ = __class__.__dict__')
         attr = JS('__dict__[attribute]')
         if attr:
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
-                    JS('var args = arguments')
-                    if(args.length>0):
+                    var(args)
+                    args = arguments
+                    if args.length > 0:
                         JS('args[0]').splice(0, 0, object)
                     else:
                         args = JSArray(object)
                     return attr.apply(None, args)
                 return method
             return attr
-        JS('var bases = __class__.bases')
+        bases = __class__.bases
         for i in jsrange(bases.length):
             JS('var base = bases[i]')
             JS('var attr = get_attribute(base, attribute)')
@@ -103,17 +139,37 @@ def get_attribute(object, attribute):
                     return method
 
                 return attr
-    return None
+    return None  # XXX: raise AttributeError instead
 
 
-def set_attribute(object, attr, value):
+def set_attribute(object, attribute, value):
     """Set an attribute on an object by updating its __dict__ property"""
-    var(__dict__)
+    var(__dict__, __class__)
+    __class__  = object.__class__
+    if __class__:
+        var(attr, bases)
+        __dict__ = __class__.__dict__
+        attr = JS('__dict__[attribute]')
+        if attr != None:
+            __set__ = get_attribute(attr, '__set__')
+            if __set__:
+                __set__(JS('[object, value]'))
+                return
+        bases = __class__.bases
+        for i in jsrange(bases.length):
+            var(base)
+            base = JS('bases[i]')
+            attr = get_attribute(base, attribute)
+            if attr:
+                __set__ = get_attribute(attr, '__set__')
+                if __set__:
+                    __set__(JS('[object, value]'))
+                    return
     __dict__ = object.__dict__
     if __dict__:
-        JS('__dict__[attr] = value')
+        JS('__dict__[attribute] = value')
     else:
-        JS('object[attr] = value')
+        JS('object[attribute] = value')
 
 
 def get_arguments(signature, args, kwargs):

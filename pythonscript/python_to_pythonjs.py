@@ -42,7 +42,7 @@ class PythonToPythonJS(NodeTransformer):
             elif isinstance(item, Assign):
                 item_name = item.targets[0].id
                 item.targets[0].id = closure_name = '%s__%s' % (name.id, item_name)
-                yield item
+                yield self.visit(item)
                 yield Expr(Assign([Attribute(name, item_name, None)], Name(closure_name, None)))
         yield Expr(Assign([name], Call(Name('create_class', None), [Str(node.name), Name('parents', None), Name(name.id, None)], None, None, None)))
 

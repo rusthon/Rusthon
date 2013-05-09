@@ -82,7 +82,8 @@ else {
 
 }
 
-var attr = object[attribute];
+var attr;
+attr = object[attribute];
 if(attr) {
 return attr;
 }
@@ -90,10 +91,74 @@ else {
 
 }
 
-var __dict__ = object.__dict__;
+var __class__, __dict__, __get__, bases;
+__class__ = object.__class__;
+if(__class__) {
+__dict__ = __class__.__dict__;
+attr = __dict__[attribute];
+if(attr) {
+__get__ = get_attribute(attr, "__get__");
+if(__get__) {
+return __get__([object, __class__]);
+}
+else {
+
+}
+
+}
+else {
+
+}
+
+bases = __class__.bases;
+var iter = jsrange(bases.length);
+for (var i=0; i < iter.length; i++) {
+var backup = i;
+i = iter[i];
+var base, attr;
+base = bases[i];
+attr = get_attribute(base, attribute);
+if(attr) {
+__get__ = get_attribute(attr, "__get__");
+if(__get__) {
+return __get__([object, __class__]);
+}
+else {
+
+}
+
+}
+else {
+
+}
+
+i = backup;
+}
+
+}
+else {
+
+}
+
+__dict__ = object.__dict__;
+bases = object.__bases__;
 if(__dict__) {
 attr = __dict__[attribute];
 if(attr != undefined) {
+if(bases) {
+__get__ = get_attribute(attr, "__get__");
+if(__get__) {
+return __get__([undefined, __class__]);
+}
+else {
+
+}
+
+}
+else {
+
+}
+
 return attr;
 }
 else {
@@ -105,14 +170,44 @@ else {
 
 }
 
-var __class__ = object.__class__;
+if(bases) {
+var iter = jsrange(bases.length);
+for (var i=0; i < iter.length; i++) {
+var backup = i;
+i = iter[i];
+var base, attr;
+base = bases[i];
+attr = get_attribute(base, attribute);
+if(attr) {
+__get__ = get_attribute(attr, "__get__");
+if(__get__) {
+return __get__([object, __class__]);
+}
+else {
+
+}
+
+}
+else {
+
+}
+
+i = backup;
+}
+
+}
+else {
+
+}
+
 if(__class__) {
 var __dict__ = __class__.__dict__;
 attr = __dict__[attribute];
 if(attr) {
 if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
-var args = arguments;
+var args;
+args = arguments;
 if(args.length > 0) {
 args[0].splice(0, 0, object);
 }
@@ -135,7 +230,7 @@ else {
 
 }
 
-var bases = __class__.bases;
+bases = __class__.bases;
 var iter = jsrange(bases.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
@@ -179,14 +274,65 @@ else {
 return undefined;
 }
 
-var set_attribute = function(object, attr, value) {
-var __dict__;
-__dict__ = object.__dict__;
-if(__dict__) {
-__dict__[attr] = value;
+var set_attribute = function(object, attribute, value) {
+var __dict__, __class__;
+__class__ = object.__class__;
+if(__class__) {
+var attr, bases;
+__dict__ = __class__.__dict__;
+attr = __dict__[attribute];
+if(attr != undefined) {
+__set__ = get_attribute(attr, "__set__");
+if(__set__) {
+__set__([object, value]);
+return undefined;
 }
 else {
-object[attr] = value;
+
+}
+
+}
+else {
+
+}
+
+bases = __class__.bases;
+var iter = jsrange(bases.length);
+for (var i=0; i < iter.length; i++) {
+var backup = i;
+i = iter[i];
+var base;
+base = bases[i];
+attr = get_attribute(base, attribute);
+if(attr) {
+__set__ = get_attribute(attr, "__set__");
+if(__set__) {
+__set__([object, value]);
+return undefined;
+}
+else {
+
+}
+
+}
+else {
+
+}
+
+i = backup;
+}
+
+}
+else {
+
+}
+
+__dict__ = object.__dict__;
+if(__dict__) {
+__dict__[attribute] = value;
+}
+else {
+object[attribute] = value;
 }
 
 }
