@@ -1,0 +1,73 @@
+{% extends "basic/layout.html" %}
+{% set script_files = script_files %}
+{% set css_files = css_files + ['_static/css/foundation.min.css', '_static/css/app.css'] %}
+
+{%- block doctype -%}
+<!DOCTYPE html>
+{%- endblock %}
+
+{%- block extrahead %}
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+{% endblock %}
+
+{# Silence the sidebar's, relbar's #}
+{% block header %}{% endblock %}
+{% block sidebar1 %}{% endblock %}
+{% block sidebar2 %}{% endblock %}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+{% block sidebarsourcelink %}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="large-9 columns">{% block body %}{% endblock %}</div>
+            <div class="large-3 columns">
+                <ul class="side-nav">
+                    {% if prev %}
+                        <li>Previous: <a href="{{ prev.link|e }}">{{ prev.title }}</a></li>
+                        <li class="divider"></li>
+                    {% endif %}
+
+                    {{ toc }}
+                    {% if next %}
+                        <li class="divider"></li>
+                        <li>Next: <a href="{{ next.link|e }}">{{ next.title }}</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{%- block footer %}
+<footer class="footer">
+    <div class="container">
+        <p class="pull-right">
+            <a href="#">Back to top</a>
+            {% if theme_source_link_position == "footer" %}
+                <br/>
+                {% include "sourcelink.html" %}
+            {% endif %}
+        </p>
+        <p>
+            {%- if show_copyright %}
+            {%- if hasdoc('copyright') %}
+            {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}<br/>
+            {%- else %}
+            {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}.{% endtrans %}<br/>
+            {%- endif %}
+            {%- endif %}
+            {%- if last_updated %}
+            {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
+            {%- endif %}
+            {%- if show_sphinx %}
+            {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}<br/>
+            {%- endif %}
+        </p>
+    </div>
+</footer>
+{%- endblock %}

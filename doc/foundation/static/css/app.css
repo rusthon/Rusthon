@@ -1,0 +1,44 @@
+@font-face {
+  font-family: "League Gothic";
+  src: url("../fonts/leaguegothic-regular-webfont.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+    background: url('../img/subtle_carbon.png');
+    color: white;
+}
+
+.top-bara .name h1 a {
+    font-weight: normal;
+}
+
+
+.highlight {
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+.section ul {
+    padding-left: 20px;
+}
+
+.warning {
+    border: 1px solid red;
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+h1, h2, h3, h4, h5, .top-bar .name h1 a {
+    font-family: "League Gothic", Impact, sans;
+    font-weight: normal;
+    color: white;
+}
+
+.top-bar, .top-bar ul, .top-bar-section .has-form {
+   background: none repeat scroll 0 0 transparent;
+}
+
+.container .row {
+    background-color: rgba(0, 0, 0, 0.3);
+}
