@@ -24,7 +24,7 @@ That is all, ``app.py.js`` is the result of the compilation of a ``app.py`` with
 
 .. note:: The following tests can be done in the `online editor <http://apppyjs.appspot.com/>`_.
 
-.. note:: Or you can use the mini `Django project <https://github.com/amirouche/PythonScript/tree/master/demo-django>`_.
+.. note:: Or you can use the mini `deli Django project <https://github.com/amirouche/PythonScript/tree/master/django-demo>`_.
 
 .. note:: Whatever route you go you will need `firebug <https://addons.mozilla.org/fr/firefox/addon/firebug/>`_.
 
@@ -38,7 +38,7 @@ Dealing with variables
 
 This is very important! Just like in Javascript you **must** «declare» the variables using the ``var`` function. For instance ``var(spam)``. It can take several arguments ``var(spam, egg, bottle)``. This is because PythonScript use the underlying Javascript variable scope and in Javascript a variable is by default global. The partical consequence is that you **must** declare every usage of a variable *except* if you want to use a global (which seldom happens). Typical code in PythonScript looks like:
 
-.. code-block::
+.. code-block:: python
 
    var(spam, egg, bottle)
    spam = 1
