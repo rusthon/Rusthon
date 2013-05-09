@@ -200,6 +200,9 @@ class PythonToPythonJS(NodeTransformer):
                     )
                 )
             )
+            expr = '%s = get_attribute(dict, "__call__")(create_array([%s]), {});'
+            expr = expr % (node.args.kwarg, node.args.kwarg)
+            prebody.append(Name(expr, None))
         prebody.extend(body)
         body = prebody
         # process arguments to build python keyword arguments handling

@@ -125,8 +125,11 @@ class list:
 
 class dict:
 
-    def __init__(self):
-        self.js_object = JSObject()
+    def __init__(self, js_object=None):
+        if js_object:
+            self.js_object = js_object
+        else:
+            self.js_object = JSObject()
 
     def get(self, key, d):
         JS('var __dict')

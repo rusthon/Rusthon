@@ -671,10 +671,17 @@ list = create_class("list", parents, list);
 dict = {};
 parents = create_array();
 var dict____init__ = function(args, kwargs) {
-var signature = {"kwargs": {}, "args": create_array("self")};
+var signature = {"kwargs": {"js_object": undefined}, "args": create_array("self", "js_object")};
 var arguments = get_arguments(signature, args, kwargs);
 var self = arguments["self"];
+var js_object = arguments["js_object"];
+if(js_object) {
+set_attribute(self, "js_object", js_object);
+}
+else {
 set_attribute(self, "js_object", {});
+}
+
 }
 
 dict.__init__ = dict____init__;
