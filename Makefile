@@ -14,3 +14,6 @@ pythonscript: python builtins
 
 clean:
 	rm python.js builtins.py.js pythonscript.js bindings/*py.js
+
+app:
+	./pythonscript/main.py < app.py > app.py.js

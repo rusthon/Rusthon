@@ -32,6 +32,16 @@ return func;
 }
 
 var create_class = function(class_name, parents, attrs) {
+if(attrs.__metaclass__) {
+var metaclass;
+metaclass = attrs.__metaclass__;
+attrs.__metaclass__ = undefined;
+return metaclass([class_name, parents, attrs]);
+}
+else {
+
+}
+
 var klass;
 klass = {};
 klass.bases = parents;
@@ -170,8 +180,15 @@ return undefined;
 }
 
 var set_attribute = function(object, attr, value) {
+var __dict__;
 __dict__ = object.__dict__;
+if(__dict__) {
 __dict__[attr] = value;
+}
+else {
+object[attr] = value;
+}
+
 }
 
 var get_arguments = function(signature, args, kwargs) {
@@ -225,6 +242,14 @@ else {
 }
 
 return out;
+}
+
+var type = function(args, kwargs) {
+var class_name, parents, attrs;
+class_name = args[0];
+parents = args[1];
+attrs = args[2];
+return create_class(class_name, parents, attrs);
 }
 
 var range = function(args, kwargs) {

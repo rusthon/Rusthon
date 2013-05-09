@@ -29,7 +29,12 @@ def adapt_arguments(handler):
 
 def create_class(class_name, parents, attrs):
     """Create a PythonScript class"""
-    JS('var klass')
+    if attrs.__metaclass__:
+        var(metaclass)
+        metaclass = attrs.__metaclass__
+        attrs.__metaclass__ = None
+        return metaclass(JS('[class_name, parents, attrs]'))
+    var(klass)
     klass = JSObject()
     klass.bases = parents
     klass.__name__ = class_name
@@ -103,8 +108,12 @@ def get_attribute(object, attribute):
 
 def set_attribute(object, attr, value):
     """Set an attribute on an object by updating its __dict__ property"""
+    var(__dict__)
     __dict__ = object.__dict__
-    JS('__dict__[attr] = value')
+    if __dict__:
+        JS('__dict__[attr] = value')
+    else:
+        JS('object[attr] = value')
 
 
 def get_arguments(signature, args, kwargs):
@@ -138,3 +147,11 @@ def get_arguments(signature, args, kwargs):
     if signature.varkwarg:
         JS("out[signature.varkwarg] = kwargs")
     return out
+
+
+def type(args, kwargs):
+    var(class_name, parents, attrs)
+    class_name = JS('args[0]')
+    parents = JS('args[1]')
+    attrs = JS('args[2]')
+    return create_class(class_name, parents, attrs)
