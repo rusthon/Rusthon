@@ -35,6 +35,7 @@ Changelog
 
 - added data descriptors
 - added metaclasses functions and ``type`` as a class contructor
+- args and kwargs in called are respectively list and dictionary instead of javascript objects
 
 0.5 - 13/04/01 - Lazy labor
 ---------------------------
