@@ -185,7 +185,7 @@ class PythonToPythonJS(NodeTransformer):
                 )
             )
             # turn it into a list
-            expr = '%s = get_attribute(list, "__call__")(create_array([%s]), {});'
+            expr = '%s = get_attribute(list, "__call__")(create_array(%s), {});'
             expr = expr % (node.args.vararg, node.args.vararg)
             prebody.append(Name(expr, None))
         if node.args.kwarg:
@@ -200,7 +200,7 @@ class PythonToPythonJS(NodeTransformer):
                     )
                 )
             )
-            expr = '%s = get_attribute(dict, "__call__")(create_array([%s]), {});'
+            expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
             expr = expr % (node.args.kwarg, node.args.kwarg)
             prebody.append(Name(expr, None))
         prebody.extend(body)
