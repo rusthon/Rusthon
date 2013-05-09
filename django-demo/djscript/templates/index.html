@@ -1,0 +1,13 @@
+{% load compress %}
+<!DOCTYPE html>
+
+<div id="héllo">
+    Héllo THIS is animated by compiled PythonScript code
+</div>
+
+<script src="/static/pythonscript.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/jquery.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/jquery.py.js" type="text/javascript" charset="utf-8"></script>
+{% compress js %}
+<script type="text/pythonscript" charset="utf-8" src="/static/app.py"></script>
+{% endcompress %}
