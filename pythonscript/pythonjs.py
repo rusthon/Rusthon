@@ -179,6 +179,9 @@ class JSGenerator(NodeVisitor):
     def visit_Num(self, node):
         return str(node.n)
 
+    def visit_Is(self, node):
+        return '==='
+
     def visit_Compare(self, node):
         left = self.visit(node.left)
         ops = self.visit(node.ops[0])
