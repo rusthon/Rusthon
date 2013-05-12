@@ -31,10 +31,6 @@ extensions = [
     'sphinx.ext.viewcode',
     # contrib
     'sphinxcontrib.blockdiag',
-    'sphinxcontrib.seqdiag',
-    'sphinxcontrib.nwdiag',
-    'sphinxcontrib.actdiag',
-
 ]
 
 # Add any paths that contain templates here, relative to this directory.
