@@ -1,6 +1,5 @@
 var jsrange = function(num) {
-var i;
-var r;
+var i, r;
 i = 0;
 r = [];
 while(i < num) {
@@ -396,6 +395,21 @@ class_name = args[0];
 parents = args[1];
 attrs = args[2];
 return create_class(class_name, parents, attrs);
+}
+
+var getattr = function(args, kwargs) {
+var object, attribute;
+object = args[0];
+attribute = args[1];
+return get_attribute(object, attribute);
+}
+
+var setattr = function(args, kwargs) {
+var object, attribute, value;
+object = args[0];
+attribute = args[1];
+value = args[2];
+return set_attribute(object, attribute, value);
 }
 
 var range = function(args, kwargs) {
