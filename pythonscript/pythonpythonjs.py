@@ -1,7 +1,6 @@
 def jsrange(num):
     """Emulates Python's range function"""
-    JS('var i')
-    JS('var r')
+    var(i, r)
     i = 0
     r = JS('[]')
     while i < num:
@@ -21,7 +20,7 @@ def create_array():
 
 
 def adapt_arguments(handler):
-    """Useful to transform callback arguments to positional arguments"""
+    """Useful to transform Javascript arguments to Python arguments"""
     def func():
         handler(Array.prototype.slice.call(arguments))
     return func
@@ -211,3 +210,18 @@ def type(args, kwargs):
     parents = JS('args[1]')
     attrs = JS('args[2]')
     return create_class(class_name, parents, attrs)
+
+
+def getattr(args, kwargs):
+    var(object, attribute)
+    object = JS('args[0]')
+    attribute = JS('args[1]')
+    return get_attribute(object, attribute)
+
+
+def setattr(args, kwargs):
+    var(object, attribute, value)
+    object = JS('args[0]')
+    attribute = JS('args[1]')
+    value = JS('args[2]')
+    return set_attribute(object, attribute, value)
