@@ -412,6 +412,50 @@ value = args[2];
 return set_attribute(object, attribute, value);
 }
 
+var issubclass = function(args, kwargs) {
+var C, B, base;
+C = args[0];
+B = args[1];
+if(C === B) {
+return true;
+}
+else {
+
+}
+
+var iter = jsrange(C.bases.length);
+for (var index=0; index < iter.length; index++) {
+var backup = index;
+index = iter[index];
+base = C.bases[index];
+if(issubclass([base, B], {})) {
+return true;
+}
+else {
+
+}
+
+index = backup;
+}
+
+return false;
+}
+
+var isinstance = function(args, kwargs) {
+var object_class, object, klass;
+object = args[0];
+klass = args[1];
+object_class = object.__class__;
+if(object_class === undefined) {
+return false;
+}
+else {
+
+}
+
+return issubclass(create_array(object_class, klass));
+}
+
 var range = function(args, kwargs) {
 var signature = {"kwargs": {}, "args": create_array("num")};
 var arguments = get_arguments(signature, args, kwargs);

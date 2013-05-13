@@ -225,3 +225,26 @@ def setattr(args, kwargs):
     attribute = JS('args[1]')
     value = JS('args[2]')
     return set_attribute(object, attribute, value)
+
+
+def issubclass(args, kwargs):
+    var(C, B, base)
+    C = JS('args[0]')
+    B = JS('args[1]')
+    if C is B:
+        return True
+    for index in jsrange(C.bases.length):
+        base = JS('C.bases[index]')
+        if issubclass(JS('[base, B]'), JS('{}')):
+            return True
+    return False
+
+
+def isinstance(args, kwargs):
+    var(object_class, object, klass)
+    object = JS('args[0]')
+    klass = JS('args[1]')
+    object_class = object.__class__
+    if object_class is None:
+        return False
+    return issubclass(create_array(object_class, klass))

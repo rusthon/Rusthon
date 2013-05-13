@@ -208,9 +208,9 @@ class JSGenerator(NodeVisitor):
         # iter is the python iterator
         init_iter = 'var iter = %s;\n' % iter
         # backup iterator and affect value of the next element to the target
-        pre = 'var backup = %s;\ni = iter[%s];\n' % (target, target)
+        pre = 'var backup = %s;\n%s = iter[%s];\n' % (target, target, target)
         # replace the replace target with the javascript iterator
-        post = 'i = backup;\n'
+        post = '%s = backup;\n' % target
         body = '\n'.join(map(self.visit, node.body)) + '\n'
         body = pre + body + post
         for_block = init_iter + 'for (var %s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
