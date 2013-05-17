@@ -198,7 +198,7 @@ class JSGenerator(NodeVisitor):
         test = self.visit(node.test)
         body = '\n'.join(map(self.visit, node.body)) + '\n'
         orelse = '\n'.join(map(self.visit, node.orelse)) + '\n'
-        if orelse:
+        if not orelse.isspace():
             return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
         return 'if(%s) {\n%s}\n' % (test, body)
 
