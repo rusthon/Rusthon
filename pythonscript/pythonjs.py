@@ -34,7 +34,15 @@ class JSGenerator(NodeVisitor):
         return 'throw %s;' % self.visit(node.type)
 
     def visit_ExceptHandler(self, node):
-        return '\n'.join(map(self.visit, node.body))
+        out = ''
+        if node.type:
+            out = 'if (__exception__ == %s || isinstance(__exception__, %s)) {\n' % (self.visit(node.type), self.visit(node.type))
+        if node.name:
+            out += 'var %s = __exception__;\n' % self.visit(node.name)
+        out += '\n'.join(map(self.visit, node.body)) + '\n'
+        if node.type:
+            out += '}\n'
+        return out
 
     def visit_FunctionDef(self, node):
         args = self.visit(node.args)
