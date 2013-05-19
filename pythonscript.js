@@ -509,16 +509,16 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var other = arguments['other'];
 var __iterator__, obj;
-__iterator__ = get_attribute(get_attribute(other, "__iter__"), "__call__")();
+__iterator__ = get_attribute(get_attribute(other, "__iter__"), "__call__")(create_array(), {});
 try {
-obj = get_attribute(__iterator__, "next")();
+obj = get_attribute(__iterator__, "next")(create_array(), {});
 while(true) {
 var __args_8, __kwargs_8;
 __args_8 = create_array(obj);
 __kwargs_8 = {};
 get_attribute(get_attribute(self, "append"), "__call__")(__args_8, __kwargs_8);
 undefined;
-obj = get_attribute(__iterator__, "next")();
+obj = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
 catch(__exception__) {
@@ -591,16 +591,16 @@ var self = arguments['self'];
 var obj = arguments['obj'];
 i = 0;
 var __iterator__, other;
-__iterator__ = get_attribute(get_attribute(self, "__iter__"), "__call__")();
+__iterator__ = get_attribute(get_attribute(self, "__iter__"), "__call__")(create_array(), {});
 try {
-other = get_attribute(__iterator__, "next")();
+other = get_attribute(__iterator__, "next")(create_array(), {});
 while(true) {
 if(other == obj) {
 i = i + 1;
 }
 
 undefined;
-other = get_attribute(__iterator__, "next")();
+other = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
 catch(__exception__) {
@@ -796,9 +796,9 @@ var __iterator__, i;
 var __args_13, __kwargs_13;
 __args_13 = create_array(jsstring.length);
 __kwargs_13 = {};
-__iterator__ = get_attribute(get_attribute(get_attribute(range, "__call__")(__args_13, __kwargs_13), "__iter__"), "__call__")();
+__iterator__ = get_attribute(get_attribute(get_attribute(range, "__call__")(__args_13, __kwargs_13), "__iter__"), "__call__")(create_array(), {});
 try {
-i = get_attribute(__iterator__, "next")();
+i = get_attribute(__iterator__, "next")(create_array(), {});
 while(true) {
 char = jsstring.charAt(i);
 var __args_14, __kwargs_14;
@@ -807,7 +807,7 @@ __kwargs_14 = {};
 get_attribute(get_attribute(self, "append"), "__call__")(__args_14, __kwargs_14);
 undefined;
 undefined;
-i = get_attribute(__iterator__, "next")();
+i = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
 catch(__exception__) {
