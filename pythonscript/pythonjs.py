@@ -225,11 +225,11 @@ class JSGenerator(NodeVisitor):
         return for_block
 
 
-def main():
-    input = parse(sys.stdin.read())
+def main(script):
+    input = parse(script)
     tree = parse(input)
-    print JSGenerator().visit(tree)
+    return JSGenerator().visit(tree)
 
 
 if __name__ == '__main__':
-    main()
+    print main(sys.stdin.read())

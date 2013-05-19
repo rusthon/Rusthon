@@ -16,12 +16,15 @@ from ast import FunctionDef
 from ast import parse
 from ast import NodeVisitor
 
+from cStringIO import StringIO as StringIO
+
 
 class Writer(object):
 
     def __init__(self):
         self.level = 0
         self.buffers = list()
+        self.output = StringIO()
 
     def push(self):
         self.level += 1
@@ -40,7 +43,7 @@ class Writer(object):
 
     def _write(self, code):
         indentation = self.level * 4 * ' '
-        print '%s%s' % (indentation, code)
+        self.output.write('%s%s\n' % (indentation, code))
 
 
 writer = Writer()
@@ -296,11 +299,11 @@ class PythonToPythonJS(NodeVisitor):
         writer.pull()
 
 
-def main():
-    input = parse(sys.stdin.read())
+def main(script):
+    input = parse(script)
     tree = parse(input)
     PythonToPythonJS().visit(tree)
-
+    return writer.output.getvalue()
 
 if __name__ == '__main__':
-    main()
+    print main(sys.stdin.read())
