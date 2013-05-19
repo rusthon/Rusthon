@@ -12,7 +12,9 @@ setup(
     packages=['pythonscript'],
     entry_points="""
     [console_scripts]
-    pythonscript=pythonscript.main:main
     pythonjs=pythonscript.pythonjs:main
-    """
+    pythonscript=pythonscript.pythonscript:main
+    python_to_pythonjs=pythonscript.python_to_pythonjs:main
+    """,
+    install_script='bin/pythonscript',
 )
