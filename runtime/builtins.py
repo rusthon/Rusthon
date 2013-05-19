@@ -1,7 +1,6 @@
 def range(num):
     """Emulates Python's range function"""
-    JS('var i')
-    JS('var r')
+    var(i, r)
     i = 0
     r = list()
     while i < num:
@@ -53,7 +52,7 @@ class list:
             self.js_object = JSArray()
 
     def append(self, obj):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         JS('__array.push(obj)')
 

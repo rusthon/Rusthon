@@ -40,3 +40,6 @@ builtins.py.js
 pythonscript/test.py
 pythonscript/test.py.js
 tmp/
+index.html
+test.py
+test.py.js

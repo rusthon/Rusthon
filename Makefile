@@ -16,6 +16,3 @@ pythonscript: python builtins
 
 clean:
 	rm python.js builtins.py.js pythonscript.js bindings/*py.js
-
-tests:
-	$(CMD) < tests/runtime/tests.py > tests/runtime/tests.py.js

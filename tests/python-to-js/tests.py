@@ -1,15 +1,21 @@
-class A(B,C):
+class B:
     pass
 
-a.b = c.d
 
-JS('var a = new Object()')
-var(object, args, str)
+class C:
+    pass
+
+
+class A(B, C):
+    pass
+
+
+var(a, object, args, str)
+JS('a = new Object()')
 object = JSObject(spam=7, egg=8)
 args = JSArray(5, 6)
 str = toString(egg)
 
-# function(1, 2, 3, 4, *args, **kwargs)
 
 @deco_a
 @deco_b
@@ -20,3 +26,6 @@ def function(a, b, c=3, d=4, *args, **kwargs):
     for arg in args:
         print args
     print kwargs
+
+
+function(1, 2, 3, 4, *args, **kwargs)

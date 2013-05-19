@@ -1,10 +1,10 @@
 var Exception;
 Exception = {};
 try {
-throw Exception;
+foo;
 }
 catch(__exception__) {
-if (__exception__ == Exception || isinstance(__exception__, Exception)) {
+if (__exception__ == Exception || isinstance([__exception__, Exception])) {
 var babar = __exception__;
 console.log(true);
 }

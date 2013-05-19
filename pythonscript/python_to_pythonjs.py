@@ -61,15 +61,50 @@ class PythonToPythonJS(NodeVisitor):
         for item in node.body:
             if isinstance(item, FunctionDef):
                 item_name = item.name
-                item.name = '__%s__%s' % (name, item_name)
+                item.name = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the function
-                writer.write('%s.%s = %s' % (name, item_name, item.name))
+                writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
             elif isinstance(item, Assign):
                 item_name = item.targets[0].id
-                item.targets[0].id = '__%s__%s' % (name.id, item_name)
+                item.targets[0].id = '__%s_%s' % (name.id, item_name)
                 self.visit(item)  # this will output the code for the assign
-                writer.write('%s.%s = %s' % (name, item_name, item.targets[0].id))
-        writer.write('%s = create_class("%s", __%s_parents, __%s__attrs)' % (name, name, name, name))
+                writer.write('%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))
+        writer.write('%s = create_class("%s", __%s_parents, __%s_attrs)' % (name, name, name, name))
+
+    def visit_If(self, node):
+        writer.write('if %s:' % self.visit(node.test))
+        writer.push()
+        map(self.visit, node.body)
+        writer.pull()
+        if node.orelse:
+            writer.write('else:')
+            writer.push()
+            map(self.visit, node.orelse)
+            writer.pull()
+
+    def visit_TryExcept(self, node):
+        writer.write('try:')
+        writer.push()
+        map(self.visit, node.body)
+        writer.pull()
+        map(self.visit, node.handlers)
+
+    def visit_Raise(self, node):
+        writer.write('raise %s' % self.visit(node.type))
+
+    def visit_ExceptHandler(self, node):
+        if node.type and node.name:
+            writer.write('except %s, %s:' % (self.visit(node.type), self.visit(node.name)))
+        elif node.type and not node.name:
+            writer.write('except %s:' % self.visit(node.type))
+        else:
+            writer.write('except:')
+        writer.push()
+        map(self.visit, node.body)
+        writer.pull()
+
+    def visit_Pass(self, node):
+        writer.write('pass')
 
     def visit_Name(self, node):
         return node.id
@@ -81,9 +116,6 @@ class PythonToPythonJS(NodeVisitor):
         if node.value:
             return writer.write('return %s' % self.visit(node.value))
         return writer.write('return undefined')
-
-    def visit_Pass(self, node):
-        return ''
 
     def visit_BinOp(self, node):
         left = self.visit(node.left)
@@ -98,7 +130,7 @@ class PythonToPythonJS(NodeVisitor):
         return '!='
 
     def visit_Is(self, node):
-        return '==='
+        return 'is'
 
     def visit_Add(self, node):
         return '+'
@@ -125,18 +157,18 @@ class PythonToPythonJS(NodeVisitor):
         return '%s %s %s' % (left, ops, comparator)
 
     def visit_Not(self, node):
-        return '!'
+        return ' not '
 
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
 
     def visit_Attribute(self, node):
-        return 'get_attribute(%s, %s)' % (self.visit(node.value), node.attr)
+        return 'get_attribute(%s, "%s")' % (self.visit(node.value), node.attr)
 
     def visit_Assign(self, node):
         attr = node.targets[0]
         if isinstance(attr, Attribute):
-            code = 'set_attribute(%s, %s, %s)' % (
+            code = 'set_attribute(%s, "%s", %s)' % (
                 self.visit(attr.value),
                 attr.attr,
                 self.visit(node.value)
@@ -146,7 +178,7 @@ class PythonToPythonJS(NodeVisitor):
             writer.write('%s = %s' % (node.targets[0].id, self.visit(node.value)))
 
     def visit_Print(self, node):
-        writer.write('print %s' % ', '.join(map(self.visit, node.values)))
+        return 'print %s' % ', '.join(map(self.visit, node.values))
 
     def visit_Str(self, node):
         return '"%s"' % node.s
@@ -227,7 +259,7 @@ class PythonToPythonJS(NodeVisitor):
             expr = expr % (node.args.vararg, node.args.vararg)
             writer.write(expr)
         if node.args.kwarg:
-            writer.write("""var %s = arguments["%s"]""" % (node.args.kwarg, node.args.kwarg))
+            writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
             expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
             expr = expr % (node.args.kwarg, node.args.kwarg)
             writer.write(expr)
@@ -241,15 +273,14 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_For(self, node):
         writer.write('var(__iterator__, %s)' % node.target.id)
-        writer.write('__iterator__ = get_attribute(%s, "__iter__")' % self.visit(node.iter))
-
+        writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
         writer.write('try:')
         writer.push()
-        writer.write('%s = get_attribute(__iterator__, "next")()' % node.target.id)
+        writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.write('while True:')
         writer.push()
         map(writer.write, map(self.visit, node.body))
-        writer.write('%s = get_attribute(__iterator__, "next")()' % node.target.id)
+        writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.pull()
         writer.pull()
         writer.write('except StopIteration:')
@@ -257,6 +288,13 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('pass')
         writer.pull()
         return ''
+
+    def visit_While(self, node):
+        writer.write('while %s:' % self.visit(node.test))
+        writer.push()
+        map(self.visit, node.body)
+        writer.pull()
+
 
 def main():
     input = parse(sys.stdin.read())

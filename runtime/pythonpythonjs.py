@@ -177,6 +177,10 @@ def get_arguments(signature, args, kwargs):
 
     This will set default keyword arguments and retrieve positional arguments
     in kwargs if their called as such"""
+    if args is None:
+        args = JSArray()
+    if kwargs is None:
+        kwargs = JSObject()
     out = JSObject()
     if signature.args.length:
         argslength = signature.args.length

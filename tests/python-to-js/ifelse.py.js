@@ -1,5 +1,5 @@
 a = 1;
-if(!a) {
+if(nota) {
 console.log(false);
 }
 else {
