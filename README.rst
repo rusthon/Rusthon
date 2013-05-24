@@ -30,6 +30,29 @@ Demos
 Changelog
 =========
 
+
+0.7.2 - Urban species
+---------------------
+
+- fixed ``pythonscript`` which was broken by last release
+
+0.7.1 - Morcheeba
+-----------------
+
+- rework the way script are executed to be possible to call them from Python easly
+
+0.7 - 13/05/12 - Electric Guest
+-------------------------------
+
+- move weblib to its own repository
+- add support for ``is``
+- added ``isinstance`` and ``issubclass``
+- rework the translation for python to pythonjs
+- improved generated code
+- full support of exception (typed and named)
+- added a set of reference transaltion ``tests/python-to-js/``
+
+
 0.6.1 - 13/05/12 - Open up
 --------------------------
 
