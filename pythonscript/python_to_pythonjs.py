@@ -45,6 +45,10 @@ class Writer(object):
         indentation = self.level * 4 * ' '
         self.output.write('%s%s\n' % (indentation, code))
 
+    def getvalue(self):
+        s = self.output.getvalue()
+        self.output = StringIO()
+        return s
 
 writer = Writer()
 
@@ -301,9 +305,8 @@ class PythonToPythonJS(NodeVisitor):
 
 def main(script):
     input = parse(script)
-    tree = parse(input)
-    PythonToPythonJS().visit(tree)
-    return writer.output.getvalue()
+    PythonToPythonJS().visit(input)
+    return writer.getvalue()
 
 
 def command():
