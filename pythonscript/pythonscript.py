@@ -6,11 +6,11 @@ from pythonjs import main as pythonjs
 
 
 def main(script):
-    print pythonjs(python_to_pythonjs(script))
+    return pythonjs(python_to_pythonjs(script))
 
 
 def command():
-    main(sys.stdin.read())
+    print main(sys.stdin.read())
 
 
 if __name__ == '__main__':
