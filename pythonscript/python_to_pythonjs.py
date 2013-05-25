@@ -181,7 +181,7 @@ class PythonToPythonJS(NodeVisitor):
             writer.write('%s = %s' % (node.targets[0].id, self.visit(node.value)))
 
     def visit_Print(self, node):
-        return 'print %s' % ', '.join(map(self.visit, node.values))
+        writer.write('print %s' % ', '.join(map(self.visit, node.values)))
 
     def visit_Str(self, node):
         return '"%s"' % node.s
