@@ -5,8 +5,12 @@ from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs
 
 
-def main():
-    print pythonjs(python_to_pythonjs(sys.stdin.read()))
+def main(script):
+    print pythonjs(python_to_pythonjs(script))
+
+
+def command():
+    main(sys.stdin.read())
 
 
 if __name__ == '__main__':
