@@ -14,4 +14,4 @@ def command():
 
 
 if __name__ == '__main__':
-    main()
+    command()
