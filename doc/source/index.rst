@@ -22,12 +22,5 @@ No. You don't need to understand how it works to use it, but since it's buggy (b
    :maxdepth: 2
 
    internals
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   changelog
 
