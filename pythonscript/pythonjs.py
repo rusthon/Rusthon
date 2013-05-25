@@ -231,5 +231,8 @@ def main(script):
     return JSGenerator().visit(tree)
 
 
-if __name__ == '__main__':
+def command():
     print main(sys.stdin.read())
+
+if __name__ == '__main__':
+    command()
