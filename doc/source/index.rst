@@ -21,6 +21,7 @@ No. You don't need to understand how it works to use it, but since it's buggy (b
 .. toctree::
    :maxdepth: 2
 
+   django
    internals
    changelog
 
