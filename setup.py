@@ -13,7 +13,7 @@ setup(
     entry_points="""
     [console_scripts]
     pythonjs=pythonscript.pythonjs:main
-    pythonscript=pythonscript.pythonscript:main
+    pythonscript=pythonscript.main:command
     python_to_pythonjs=pythonscript.python_to_pythonjs:command
     """,
     install_script='bin/pythonscript',
