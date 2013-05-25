@@ -75,7 +75,7 @@ class J:
         o = JS('j.clone(with_data_and_events)')
         return J(o)
 
-    def contents(self):
+    def contents(self, e):
         j = self.j
         o = JS('j.contents()')
         return J(o)
@@ -158,6 +158,12 @@ class J:
     def finish(self, queue):
         j = self.j
         o = JS('j.finish(queue)')
+        return J(o)
+
+    def find(self, selector):
+        var(j, o)
+        j = self.j
+        o = JS('j.find(selector)')
         return J(o)
 
     def first(self, ):
