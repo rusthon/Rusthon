@@ -42,3 +42,26 @@ h1, h2, h3, h4, h5, .top-bar .name h1 a {
 .container .row {
     background-color: rgba(0, 0, 0, 0.3);
 }
+
+.note {
+    border: 1px solid #2BA6CB;
+    background-color: rgba(46, 166, 203, 0.3);
+}
+
+.hightlight {
+    margin-bottom: 1em;
+}
+
+.versionchanged {
+    border: 1px solid white;
+    background-color: rgba(255, 255, 255, 0.3);
+    padding: 5px;
+}
+
+.versionmodified {
+    font-weight: bold;
+}
+
+.pre {
+    color: #E44D26;
+}

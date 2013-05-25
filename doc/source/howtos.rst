@@ -4,27 +4,30 @@ How to write Python in PythonScript
 How to use PythonScript ?
 -------------------------
 
-Install PythonScriptTranslator::
+Install PythonScriptTranslator:
+
+.. code-block:: sh
 
   pip install PythonScriptTranslator
 
 And download the latest version on the master branch of `pythonscript.js <https://raw.github.com/amirouche/PythonScript/master/pythonscript.js>`_.
 
-Prepare a app.html file that can look like the following:
+Prepare a ``app.html`` file that can look like the following:
 
 .. code-block:: html
 
    <script src="pythonscript.js" type="text/javascript" charset="utf-8"></script>
    <script src="app.py.js" type="text/javascript" charset="utf-8"></script>
 
-That is all, ``app.py.js`` is the result of the compilation of a ``app.py`` with the following command::
+That is all, ``app.py.js`` is the result of the compilation of a ``app.py`` with the following command:
+
+.. code-block:: sh
 
   pythonscript < app.py > app.py.js
 
-
 .. note:: The following tests can be done in the `online editor <http://apppyjs.appspot.com/>`_.
 
-.. note:: Or you can use the mini `deli Django project <https://github.com/amirouche/PythonScript/tree/master/django-demo>`_.
+.. note:: Or you can use the mini `demo Django project <https://github.com/amirouche/PythonScript/tree/master/django-demo>`_.
 
 .. note:: Whatever route you go you will need `firebug <https://addons.mozilla.org/fr/firefox/addon/firebug/>`_.
 
@@ -36,7 +39,7 @@ The old ``print`` statement will be converted to Javascript ``console.log`` whic
 Dealing with variables
 ----------------------
 
-This is very important! Just like in Javascript you **must** «declare» the variables using the ``var`` function. For instance ``var(spam)``. It can take several arguments ``var(spam, egg, bottle)``. This is because PythonScript use the underlying Javascript variable scope and in Javascript a variable is by default global. The partical consequence is that you **must** declare every usage of a variable *except* if you want to use a global (which seldom happens). Typical code in PythonScript looks like:
+This is very important! Just like in Javascript you **must** «declare» the variables using the ``var`` function. For instance ``var(spam)``. It can take several arguments ``var(spam, egg, bottle)``. This is because PythonScript use the underlying Javascript variable scope and in Javascript a variable is by default global. The pratical consequence is that you **must** declare every usage of a variable *except* if you want to use a global (which seldom happens). Typical code in PythonScript looks like:
 
 .. code-block:: python
 
@@ -58,7 +61,9 @@ A function is defined just like in Python:
 
    my_function(1,2,3,4,5,spam=6,egg=7)
 
-The above code will print in a browser console the following::
+The above code will print in a browser console the following:
+
+.. code-block:: javascript
 
   1 2 3 Object { __class__={...}, __dict__={...}} Object { __class__={...}, __dict__={...}}
 
@@ -81,7 +86,9 @@ Let's define a function that is more verbose:
 
    my_function(1,2,3,4,5,spam=6,egg=7)
 
-It will print in the browser console the following::
+It will print in the browser console the following:
+
+.. code-block:: javascript
 
   foo
 
@@ -111,23 +118,15 @@ What we expected.
 
 Also, as in Python, functions are objects so you can use them as such.
 
-**Becarful**, ``*args`` and ``**kwargs`` are supported in definition but not in calling, this means that the following:
-
-.. code-block:: python
-
-   args = list()
-   kwargs = dict()
-   my_function(*args, **kwargs)
-
-Will **not** work.
-
+.. versionchanged:: 0.7
+   Added support for ``*`` and ``**`` in calling, pratically it means that given ``args`` a ``list`` and ``kwargs`` a ``dict`` you can use the following call ``function(*args, **kwargs)``.
 
 How to work with classes?
 -------------------------
 
 Once functions are done, classes are just a piece of cake, except there is yet no ``__get_attribute__`` or ``__getattr__`` hook it similar to CPython. Data descriptors works the same way. And metaclass is explained in the following paragraph.
 
-.. warning:: You don't have to inherit ``object`` actually there is no ``object`` object in PythonScript yet.
+.. warning:: You don't have to inherit ``object`` actually there is no ``object`` object in PythonScript.
 
 
 How to use ``__metaclass__`` property?

@@ -18,7 +18,11 @@ Compilation
      JSGenerator -> "Javascript" [folded];
    }
 
-This is the description of ``pythonscript`` command. Mind the fact that there is no actual ``pythontopythonjs`` command this is done on the fly.
+This is the description of ``pythonscript`` command.
+
+.. versionchanged:: 0.7
+   There is now ``python_to_pythonjs`` command that allow you to review the python code generated before it's converted to javascript
+
 
 Execution
 ---------
@@ -50,12 +54,12 @@ In the following we will see in order:
 ``pythonjs``
 ------------
 
-``pythonjs`` knows how to translate:
+``pythonjs`` command knows how to translate:
 
-- Python functions to Javascript ones
+- Restricted Python functions to Javascript
 - It handles attribute access e.g. ``spam.egg.foobarbaz``
 - Add brackets and semi-colons
-- ``print(*args)`` are converted to ``console.log(*args)``
+- ``print(foo, bar, flower)`` are converted to ``console.log(foo, bar, flower)``
 - ``for i in jsrange(int)`` are converted to Javascript for loops
 
 It also support two special functions ``JS(str)`` and ``var(*args)``:
@@ -78,7 +82,7 @@ Will be translated to the following Javascript code:
    d = new Array();
    d.push(1)
 
-This makes it possible to:
+This makes possible to:
 
 - Support Javascript syntax that is not supported by Python.
 - Bypass translation process as it will be shown later.
@@ -126,7 +130,6 @@ Create an array of integers that can be iterated over by the ``for`` loop genera
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 ``create_array`` will create a Javascript array with ``args``. This function circunvent a behavior in Javascript where ``new Array(42)`` and ``new Array(42, 24)`` behaves differently.
-
 
 
 ``adapt_arguments()``
