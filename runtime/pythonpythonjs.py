@@ -22,7 +22,7 @@ def create_array():
     created a array with number of undefined elements which is not
     what we want"""
     var(array)
-    array = JSArray()
+    array = []
     for i in jsrange(arguments.length):
         array.push(arguments[i])
     return array
