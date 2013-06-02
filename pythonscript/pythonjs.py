@@ -21,6 +21,9 @@ class JSGenerator(NodeVisitor):
     def visit_Module(self, node):
         return '\n'.join(map(self.visit, node.body))
 
+    def visit_List(self, node):
+        return '[%s]' % ', '.join(map(self.visit, node.elts))
+
     def visit_TryExcept(self, node):
         out = 'try {\n'
         out += '\n'.join(map(self.visit, node.body))
