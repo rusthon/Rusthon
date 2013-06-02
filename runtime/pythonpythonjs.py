@@ -1,8 +1,16 @@
+from pythonjs import JS
+from pythonjs import var
+from pythonjs import Array
+from pythonjs import JSArray
+from pythonjs import JSObject
+from pythonjs import arguments
+
+
 def jsrange(num):
     """Emulates Python's range function"""
     var(i, r)
     i = 0
-    r = JS('[]')
+    r = JSArray()
     while i < num:
         r.push(i)
         i = i + 1
@@ -13,9 +21,10 @@ def create_array():
     """Used to fix a bug/feature of Javascript where new Array(number)
     created a array with number of undefined elements which is not
     what we want"""
-    JS('var array = new Array()')
+    var(array)
+    array = JSArray()
     for i in jsrange(arguments.length):
-        JS('array.push(arguments[i])')
+        array.push(arguments[i])
     return array
 
 
@@ -32,7 +41,7 @@ def create_class(class_name, parents, attrs):
         var(metaclass)
         metaclass = attrs.__metaclass__
         attrs.__metaclass__ = None
-        return metaclass(JS('[class_name, parents, attrs]'))
+        return metaclass([class_name, parents, attrs])
     var(klass)
     klass = JSObject()
     klass.bases = parents
@@ -64,7 +73,7 @@ def get_attribute(object, attribute):
         if JS("{}.toString.call(object) === '[object Function]'"):
             return object
     var(attr)
-    JS('attr = object[attribute]')
+    attr = object[attribute]
     if attr:
         return attr
     var(__class__, __dict__, __get__, bases)
@@ -72,68 +81,71 @@ def get_attribute(object, attribute):
     __class__ = object.__class__
     if __class__:
         __dict__ = __class__.__dict__
-        attr = JS('__dict__[attribute]')
+        attr = __dict__[attribute]
         if attr:
             __get__ = get_attribute(attr, '__get__')
             if __get__:
-                return __get__(JS('[object, __class__]'))
+                return __get__([object, __class__])
         bases = __class__.bases
         for i in jsrange(bases.length):
             var(base, attr)
-            JS('base = bases[i]')
+            base = bases[i]
             attr = get_attribute(base, attribute)
             if attr:
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
-                    return __get__(JS('[object, __class__]'))
+                    return __get__([object, __class__])
     # Check object.__dict__ for attr and its bases if it a class
     # in the case if the descriptor is found return it
     __dict__ = object.__dict__
     bases = object.__bases__
     if __dict__:
-        attr = JS('__dict__[attribute]')
+        attr = __dict__[attribute]
         if attr != None:
             if bases:
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
-                    return __get__(JS('[undefined, __class__]'))
+                    return __get__([None, __class__])
             return attr
     if bases:
         for i in jsrange(bases.length):
             var(base, attr)
-            JS('base = bases[i]')
+            base = bases[i]
             attr = get_attribute(base, attribute)
             if attr:
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
-                    return __get__(JS('[object, __class__]'))
+                    return __get__([object, __class__])
     if __class__:
-        JS('var __dict__ = __class__.__dict__')
-        attr = JS('__dict__[attribute]')
+        var(__dict__)
+        __dict__ = __class__.__dict__
+        attr = __dict__[attribute]
         if attr:
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     var(args)
                     args = arguments
                     if args.length > 0:
-                        JS('args[0]').splice(0, 0, object)
+                        args[0].splice(0, 0, object)
                     else:
-                        args = JSArray(object)
+                        args = [object]
                     return attr.apply(None, args)
                 return method
             return attr
         bases = __class__.bases
         for i in jsrange(bases.length):
-            JS('var base = bases[i]')
-            JS('var attr = get_attribute(base, attribute)')
+            var(base, attr)
+            base = bases[i]
+            attr = get_attribute(base, attribute)
             if attr:
                 if JS("{}.toString.call(attr) === '[object Function]'"):
                     def method():
-                        JS('var args = arguments')
-                        if(args.length>0):
-                            JS('args[0]').splice(0, 0, object)
+                        var(args)
+                        args = arguments
+                        if(args.length > 0):
+                            args[0].splice(0, 0, object)
                         else:
-                            args = JSArray(object)
+                            args = [object]
                         return attr.apply(None, args)
                     return method
 
@@ -144,31 +156,31 @@ def get_attribute(object, attribute):
 def set_attribute(object, attribute, value):
     """Set an attribute on an object by updating its __dict__ property"""
     var(__dict__, __class__)
-    __class__  = object.__class__
+    __class__ = object.__class__
     if __class__:
         var(attr, bases)
         __dict__ = __class__.__dict__
-        attr = JS('__dict__[attribute]')
+        attr = __dict__[attribute]
         if attr != None:
             __set__ = get_attribute(attr, '__set__')
             if __set__:
-                __set__(JS('[object, value]'))
+                __set__([object, value])
                 return
         bases = __class__.bases
         for i in jsrange(bases.length):
             var(base)
-            base = JS('bases[i]')
+            base = bases[i]
             attr = get_attribute(base, attribute)
             if attr:
                 __set__ = get_attribute(attr, '__set__')
                 if __set__:
-                    __set__(JS('[object, value]'))
+                    __set__([object, value])
                     return
     __dict__ = object.__dict__
     if __dict__:
-        JS('__dict__[attribute] = value')
+        __dict__[attribute] = value
     else:
-        JS('object[attribute] = value')
+        object[attribute] = value
 
 
 def get_arguments(signature, args, kwargs):
@@ -178,7 +190,7 @@ def get_arguments(signature, args, kwargs):
     This will set default keyword arguments and retrieve positional arguments
     in kwargs if their called as such"""
     if args is None:
-        args = JSArray()
+        args = []
     if kwargs is None:
         kwargs = JSObject()
     out = JSObject()
@@ -186,68 +198,67 @@ def get_arguments(signature, args, kwargs):
         argslength = signature.args.length
     else:
         argslength = 0
-    kwargslength = JS('Object.keys(signature.kwargs).length')
     j = 0
     for i in jsrange(argslength):
         arg = JS('signature.args[j]')
         if kwargs:
-            kwarg = JS('kwargs[arg]')
+            kwarg = kwargs[arg]
             if kwarg:
-                JS('out[arg] = kwarg')
+                out[arg] = kwarg
             else:
-                JS('out[arg] = args[j]')
+                out[arg] = args[j]
                 j = j + 1
         else:
-            JS('out[arg] = args[j]')
+            out[arg] = args[j]
             j = j + 1
     args = args.slice(j)
     if signature.vararg:
-        JS("out[signature.vararg] = args")
+        out[signature.vararg] = args
     if signature.varkwarg:
-        JS("out[signature.varkwarg] = kwargs")
+        out[signature.varkwarg] = kwargs
     return out
 
 
 def type(args, kwargs):
     var(class_name, parents, attrs)
-    class_name = JS('args[0]')
-    parents = JS('args[1]')
-    attrs = JS('args[2]')
+    class_name = args[0]
+    parents = args[1]
+    attrs = args[2]
     return create_class(class_name, parents, attrs)
 
 
 def getattr(args, kwargs):
     var(object, attribute)
-    object = JS('args[0]')
-    attribute = JS('args[1]')
+    object = args[0]
+    attribute = args[1]
     return get_attribute(object, attribute)
 
 
 def setattr(args, kwargs):
     var(object, attribute, value)
-    object = JS('args[0]')
-    attribute = JS('args[1]')
-    value = JS('args[2]')
+    object = args[0]
+    attribute = args[1]
+    value = args[2]
     return set_attribute(object, attribute, value)
 
 
 def issubclass(args, kwargs):
     var(C, B, base)
-    C = JS('args[0]')
-    B = JS('args[1]')
+    C = args[0]
+    B = args[1]
     if C is B:
         return True
     for index in jsrange(C.bases.length):
-        base = JS('C.bases[index]')
-        if issubclass(JS('[base, B]'), JS('{}')):
+        base = C.bases[index]
+        if issubclass([base, B], JSObject()):
             return True
     return False
 
 
 def isinstance(args, kwargs):
     var(object_class, object, klass)
-    object = JS('args[0]')
-    klass = JS('args[1]')
+    object = args[0]
+    klass = args[1]
     object_class = object.__class__
     if object_class is None:
         return False
