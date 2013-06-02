@@ -1,7 +1,6 @@
 from pythonjs import JS
 from pythonjs import var
 from pythonjs import Array
-from pythonjs import JSArray
 from pythonjs import JSObject
 from pythonjs import arguments
 
@@ -10,7 +9,7 @@ def jsrange(num):
     """Emulates Python's range function"""
     var(i, r)
     i = 0
-    r = JSArray()
+    r = []
     while i < num:
         r.push(i)
         i = i + 1
