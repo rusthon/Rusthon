@@ -2,14 +2,10 @@
 import sys
 
 from ast import Str
-from ast import Expr
 from ast import Call
 from ast import Name
-from ast import While
 from ast import Assign
 from ast import keyword
-from ast import arguments
-from ast import TryExcept
 from ast import Attribute
 from ast import FunctionDef
 
