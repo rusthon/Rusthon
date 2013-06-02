@@ -4,8 +4,10 @@ import sys
 from ast import Str
 from ast import Call
 from ast import Name
+from ast import Tuple
 from ast import Assign
 from ast import keyword
+from ast import Subscript
 from ast import Attribute
 from ast import FunctionDef
 
@@ -178,17 +180,48 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Attribute(self, node):
         return 'get_attribute(%s, "%s")' % (self.visit(node.value), node.attr)
 
+    def visit_Subscript(self, node):
+        return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
+            self.visit(node.value),
+            self.visit(node.slice),
+        )
+
+    def visit_Slice(self, node):
+        return "get_attribute(Slice, '__call__')([%s, %s, %s], JSObject())" % (self.visit(node.lower), self.visit(node.upper), self.visit(node.step))
+
     def visit_Assign(self, node):
-        attr = node.targets[0]
-        if isinstance(attr, Attribute):
+        # XXX: support only one target for subscripts
+        target = node.targets[0]
+        if isinstance(target, Subscript):
+            code = "get_attribute(get_attribute('%s', '__setitem__'), '__call__')([%s, %s], JSObject())"
+            code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
+            writer.write(code)
+        elif isinstance(target, Attribute):
             code = 'set_attribute(%s, "%s", %s)' % (
-                self.visit(attr.value),
-                attr.attr,
+                self.visit(target.value),
+                target.attr,
                 self.visit(node.value)
             )
             writer.write(code)
-        else:
-            writer.write('%s = %s' % (node.targets[0].id, self.visit(node.value)))
+        elif isinstance(target, Name):
+            writer.write('%s = %s' % (target.id, self.visit(node.value)))
+        else:  # it's a Tuple
+            id = self.identifier
+            self.identifier += 1
+            r = '__r_%s' % id
+            writer.write('var(%s)' % r)
+            writer.write('%s = %s' % (r, self.visit(node.value)))
+            for i, target in enumerate(target.elts):
+                if isinstance(target, Attribute):
+                    code = 'set_attribute(%s, "%s", %s[%s])' % (
+                        self.visit(target.value),
+                        target.attr,
+                        r,
+                        i
+                    )
+                    writer.write(code)
+                else:
+                    writer.write('%s = %s[%s]' % (target.id, r, i))
 
     def visit_Print(self, node):
         writer.write('print %s' % ', '.join(map(self.visit, node.values)))
