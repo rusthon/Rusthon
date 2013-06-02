@@ -28,7 +28,6 @@ class JSGenerator(NodeVisitor):
         return 'throw %s;' % self.visit(node.type)
 
     def visit_Yield(self, node):
-        print node._fields
         return 'yield %s' % self.visit(node.value)
 
     def visit_ImportFrom(self, node):
