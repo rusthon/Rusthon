@@ -166,10 +166,15 @@ class JSGenerator(NodeVisitor):
         return '<='
 
     def visit_Assign(self, node):
-        target = self.visit(node.targets[0])  # XXX: support only one target
-        value = self.visit(node.value)
-        code = '%s = %s;' % (target, value)
-        return code
+        # XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
+        target = node.targets[0]
+        if isinstance(target, Tuple):
+            raise NotImplementedError
+        else:
+            target = self.visit(target)
+            value = self.visit(node.value)
+            code = '%s = %s;' % (target, value)
+            return code
 
     def visit_Expr(self, node):
         # XXX: this is UGLY
