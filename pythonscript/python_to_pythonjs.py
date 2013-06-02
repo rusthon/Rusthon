@@ -57,6 +57,13 @@ class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
 
+    def visit_ImportFrom(self, node):
+        # ignore "import from"
+        # print node.module
+        # print node.names[0].name
+        # print node.level
+        pass
+
     def visit_ClassDef(self, node):
         name = node.name
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
