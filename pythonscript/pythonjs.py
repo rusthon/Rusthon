@@ -6,6 +6,7 @@ from ast import Str
 from ast import Name
 from ast import Tuple
 from ast import parse
+from ast import Attribute
 from ast import NodeVisitor
 
 
@@ -184,7 +185,7 @@ class JSGenerator(NodeVisitor):
         return s
 
     def visit_Return(self, node):
-        if isinstance(node.value, Name):
+        if isinstance(node.value, Name) or isinstance(node.value, Attribute):
             return 'return %s;' % self.visit(node.value)
         elif isinstance(node.value, Tuple):
             return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
