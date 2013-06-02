@@ -1,3 +1,9 @@
+from pythonjs import JS
+from pythonjs import var
+from pythonjs import JSArray
+from pythonjs import JSObject
+
+
 def range(num):
     """Emulates Python's range function"""
     var(i, r)
@@ -61,23 +67,23 @@ class list:
             self.append(obj)
 
     def insert(self, index, obj):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         JS('__array.splice(index, 0, obj)')
 
     def remove(self, obj):
-        JS('var __array')
+        var(__array)
         index = self.index(obj)
         __array = self.js_object
         JS('__array.splice(index, 1)')
 
     def pop(self):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array.pop()')
 
     def index(self, obj):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array.indexOf(obj)')
 
@@ -89,17 +95,17 @@ class list:
         return i
 
     def reverse(self):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         self.js_object = JS('__array.reverse()')
 
     def shift(self):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array.shift()')
 
     def slice(self, start, end):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array.slice(start, end)')
 
@@ -107,17 +113,17 @@ class list:
         return Iterator(self, 0)
 
     def get(self, index):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array[index]')
 
     def set(self, index, value):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         JS('__array[index] = value')
 
     def __len__(self):
-        JS('var __array')
+        var(__array)
         __array = self.js_object
         return JS('__array.length')
 
@@ -131,27 +137,26 @@ class dict:
             self.js_object = JSObject()
 
     def get(self, key, d):
-        JS('var __dict')
+        var(__dict)
         __dict = self.js_object
         if JS('__dict[key]'):
             return JS('__dict[key]')
         return d
 
     def set(self, key, value):
-        JS('var __dict')
+        var(__dict)
         __dict = self.js_object
         JS('__dict[key] = value')
 
     def __len__(self):
-        JS('var __dict')
+        var(__dict)
         __dict = self.js_object
         return JS('Object.keys(__dict).length')
 
     def keys(self):
-        JS('var __dict')
+        var(__dict, out)
         __dict = self.js_object
         __keys = JS('Object.keys(__dict)')
-        JS('var out')
         out = list()
         out.js_object = __keys
         return out
