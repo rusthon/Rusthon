@@ -65,6 +65,9 @@ class JSGenerator(NodeVisitor):
         buffer += '\n}\n'
         return buffer
 
+    def visit_Subscript(self, node):
+        return '%s[%s]' % (self.visit(node.value), self.visit(node.slice.value))
+
     def visit_arguments(self, node):
         out = []
         for name in [self.visit(arg) for arg in node.args]:
