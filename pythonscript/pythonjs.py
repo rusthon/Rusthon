@@ -3,6 +3,8 @@ import sys
 from types import GeneratorType
 
 from ast import Str
+from ast import Name
+from ast import Tuple
 from ast import parse
 from ast import NodeVisitor
 
@@ -177,8 +179,10 @@ class JSGenerator(NodeVisitor):
         return s
 
     def visit_Return(self, node):
-        if node.value:
+        if isinstance(node.value, Name):
             return 'return %s;' % self.visit(node.value)
+        elif isinstance(node.value, Tuple):
+            return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
         return 'return undefined;'
 
     def visit_Pass(self, node):
