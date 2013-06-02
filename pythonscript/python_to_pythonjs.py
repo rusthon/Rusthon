@@ -64,6 +64,9 @@ class PythonToPythonJS(NodeVisitor):
         # print node.level
         pass
 
+    def visit_Yield(self, node):
+        return 'yield %s' % self.visit(node.value)
+
     def visit_ClassDef(self, node):
         name = node.name
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
@@ -293,7 +296,8 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.write('while True:')
         writer.push()
-        map(writer.write, map(self.visit, node.body))
+        print node.body
+        map(self.visit, node.body)
         writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.pull()
         writer.pull()
