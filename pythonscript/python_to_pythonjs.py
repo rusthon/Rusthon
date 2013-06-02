@@ -296,7 +296,6 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.write('while True:')
         writer.push()
-        print node.body
         map(self.visit, node.body)
         writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
         writer.pull()
