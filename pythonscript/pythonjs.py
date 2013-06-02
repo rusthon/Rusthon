@@ -1,13 +1,4 @@
 #!/usr/bin/env python
-"""
-Emulate Javascript object in Python those object will be converted to their Javascript equivalent by PythonScript compiler also functions can be converted to Javascript functions but only positional arguments are converted.
-
-At least the following doesn't work
-
-- functions don't take keyword arguments
-- args, **kwargs is not supported
-- assignements support only one target
-"""
 import sys
 from types import GeneratorType
 
