@@ -1,7 +1,13 @@
+
+
+
+
+
+
 var jsrange = function(num) {
 var i, r;
 i = 0;
-r = [];
+r = create_array();
 while(i < num) {
 r.push(i);
 i = i + 1;
@@ -10,7 +16,8 @@ return r;
 }
 
 var create_array = function() {
-var array = new Array();
+var array;
+array = create_array();
 var iter = jsrange(arguments.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
@@ -149,7 +156,8 @@ i = backup;
 }
 
 if(__class__) {
-var __dict__ = __class__.__dict__;
+var __dict__;
+__dict__ = __class__.__dict__;
 attr = __dict__[attribute];
 if(attr) {
 if({}.toString.call(attr) === '[object Function]') {
@@ -160,7 +168,7 @@ if(args.length > 0) {
 args[0].splice(0, 0, object);
 }
 else {
-args = create_array(object);
+args = [object];
 }
 
 return attr.apply(undefined, args);
@@ -177,17 +185,19 @@ var iter = jsrange(bases.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
 i = iter[i];
-var base = bases[i];
-var attr = get_attribute(base, attribute);
+var base, attr;
+base = bases[i];
+attr = get_attribute(base, attribute);
 if(attr) {
 if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
-var args = arguments;
+var args;
+args = arguments;
 if(args.length > 0) {
 args[0].splice(0, 0, object);
 }
 else {
-args = create_array(object);
+args = [object];
 }
 
 return attr.apply(undefined, args);
@@ -257,7 +267,7 @@ object[attribute] = value;
 
 var get_arguments = function(signature, args, kwargs) {
 if(args === undefined) {
-args = create_array();
+args = [];
 }
 
 if(kwargs === undefined) {
@@ -272,7 +282,6 @@ else {
 argslength = 0;
 }
 
-kwargslength = Object.keys(signature.kwargs).length;
 j = 0;
 var iter = jsrange(argslength);
 for (var i=0; i < iter.length; i++) {
@@ -517,7 +526,6 @@ var __args_8, __kwargs_8;
 __args_8 = create_array(obj);
 __kwargs_8 = {};
 get_attribute(get_attribute(self, "append"), "__call__")(__args_8, __kwargs_8);
-undefined;
 obj = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
@@ -599,7 +607,6 @@ if(other == obj) {
 i = i + 1;
 }
 
-undefined;
 other = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
@@ -763,10 +770,9 @@ var signature, arguments;
 signature = {"kwargs": {}, "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-var __dict;
+var __dict, out;
 __dict = get_attribute(self, "js_object");
 __keys = Object.keys(__dict);
-var out;
 var __args_11, __kwargs_11;
 __args_11 = create_array();
 __kwargs_11 = {};
@@ -805,8 +811,6 @@ var __args_14, __kwargs_14;
 __args_14 = create_array(char);
 __kwargs_14 = {};
 get_attribute(get_attribute(self, "append"), "__call__")(__args_14, __kwargs_14);
-undefined;
-undefined;
 i = get_attribute(__iterator__, "next")(create_array(), {});
 }
 }
