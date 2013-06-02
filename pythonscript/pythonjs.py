@@ -33,6 +33,12 @@ class JSGenerator(NodeVisitor):
     def visit_Raise(self, node):
         return 'throw %s;' % self.visit(node.type)
 
+    def visit_ImportFrom(self, node):
+        # print node.module
+        # print node.names[0].name
+        # print node.level
+        return ''
+
     def visit_ExceptHandler(self, node):
         out = ''
         if node.type:
