@@ -185,10 +185,10 @@ class JSGenerator(NodeVisitor):
         return s
 
     def visit_Return(self, node):
-        if isinstance(node.value, Name) or isinstance(node.value, Attribute):
-            return 'return %s;' % self.visit(node.value)
-        elif isinstance(node.value, Tuple):
+        if isinstance(node.value, Tuple):
             return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
+        if node.value:
+            return 'return %s;' % self.visit(node.value)
         return 'return undefined;'
 
     def visit_Pass(self, node):

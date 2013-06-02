@@ -3,11 +3,10 @@
 
 
 
-
 var jsrange = function(num) {
 var i, r;
 i = 0;
-r = create_array();
+r = [];
 while(i < num) {
 r.push(i);
 i = i + 1;
@@ -17,7 +16,7 @@ return r;
 
 var create_array = function() {
 var array;
-array = create_array();
+array = [];
 var iter = jsrange(arguments.length);
 for (var i=0; i < iter.length; i++) {
 var backup = i;
