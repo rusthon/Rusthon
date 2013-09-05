@@ -262,3 +262,28 @@ def isinstance(args, kwargs):
     if object_class is None:
         return False
     return issubclass(create_array(object_class, klass))
+
+
+# not part of Python, but it's here because it's easier to write
+# in PythonJS
+
+def json_to_pythonscript(json):
+    var(jstype, item, output)
+    jstype = JS('typeof json')
+    if jstype == 'number':
+        return json
+    if jstype == 'string':
+        return json
+    if JS("Object.prototype.toString.call(json) === '[object Array]'"):
+        output = list.__call__([])
+        var(append)
+        for item in json:
+            append = get_attribute(output, 'append')
+            append([json_to_pythonscript(item)])
+        return output
+    # else it's a map
+    output = dict.__call__([])
+    for key in JS('Object.keys(json)'):
+        set = get_attribute(output, 'set')
+        set([key, json_to_pythonscript(json[key])])
+    return output

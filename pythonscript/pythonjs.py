@@ -111,9 +111,9 @@ class JSGenerator(NodeVisitor):
                 kwargs = map(self.visit, node.keywords)
                 f = lambda x: '"%s": %s' % (x[0], x[1])
                 out = ', '.join(map(f, kwargs))
+                return '{%s}' % out
             else:
-                out = ''
-            return '{%s}' % out
+                return 'Object()'
         if name == 'var':
             args = map(self.visit, node.args)
             out = ', '.join(args)
