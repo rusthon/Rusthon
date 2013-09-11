@@ -299,7 +299,7 @@ class PythonToPythonJS(NodeVisitor):
         for arg in node.args.args:
             writer.write("""JS("var %s = arguments['%s']")""" % (arg.id, arg.id))
         if node.args.vararg:
-            writer.write("""JS("var %s arguments['%s']")""" % (node.args.vararg, node.args.vararg))
+            writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
             # turn it into a list
             expr = '%s = get_attribute(list, "__call__")(create_array(%s), {});'
             expr = expr % (node.args.vararg, node.args.vararg)
