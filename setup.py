@@ -12,8 +12,8 @@ setup(
     packages=['pythonscript'],
     entry_points="""
     [console_scripts]
-    pythonjs=pythonscript.pythonjs:main
-    pythonscript=pythonscript.main:command
+    pythonjs=pythonscript.pythonjs:command
+    pythonscript=pythonscript.pythonscript:command
     python_to_pythonjs=pythonscript.python_to_pythonjs:command
     """,
     install_script='bin/pythonscript',

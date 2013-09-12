@@ -162,11 +162,10 @@ class dict:
         return out
 
 
-class str(list):
+class str:
 
     def __init__(self, jsstring):
-        list.__init__(self)
-        var(char)
-        for i in range(JS('jsstring.length')):
-            char = JS('jsstring.charAt(i)')
-            self.append(char)
+        self.jsstring = jsstring
+
+    def __iter__(self):
+        return Iterator(self.jsstring, 0)

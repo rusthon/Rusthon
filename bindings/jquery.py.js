@@ -26,7 +26,7 @@ return get_attribute(J, "__call__")(__args_0, __kwargs_0);
 }
 
 __J_attrs.add = __J_add;
-var __J_addClass = function(args, kwargs) {
+var __J_add_class = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "klass")};
 arguments = get_arguments(signature, args, kwargs);
@@ -40,7 +40,7 @@ __kwargs_1 = Object();
 return get_attribute(J, "__call__")(__args_1, __kwargs_1);
 }
 
-__J_attrs.addClass = __J_addClass;
+__J_attrs.add_class = __J_add_class;
 var __J_after = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "arg")};
@@ -89,7 +89,7 @@ return get_attribute(J, "__call__")(__args_4, __kwargs_4);
 }
 
 __J_attrs.append = __J_append;
-var __J_appendTo = function(args, kwargs) {
+var __J_append_to = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "arg")};
 arguments = get_arguments(signature, args, kwargs);
@@ -103,7 +103,7 @@ __kwargs_5 = Object();
 return get_attribute(J, "__call__")(__args_5, __kwargs_5);
 }
 
-__J_attrs.appendTo = __J_appendTo;
+__J_attrs.append_to = __J_append_to;
 var __J_attr = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "key", "value")};
@@ -1006,11 +1006,17 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var text = arguments['text'];
 j = get_attribute(self, "j");
-o = j.text(text);
+if(text != undefined) {
 var __args_62, __kwargs_62;
-__args_62 = create_array(o);
+__args_62 = create_array(j.text(text));
 __kwargs_62 = Object();
-return get_attribute(J, "__call__")(__args_62, __kwargs_62);
+o = get_attribute(J, "__call__")(__args_62, __kwargs_62);
+}
+else {
+o = j.text();
+}
+
+return o;
 }
 
 __J_attrs.text = __J_text;
@@ -1083,11 +1089,14 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
 j = get_attribute(self, "j");
+if(value === undefined) {
+o = j.val();
+}
+else {
 o = j.val(value);
-var __args_67, __kwargs_67;
-__args_67 = create_array(o);
-__kwargs_67 = Object();
-return get_attribute(J, "__call__")(__args_67, __kwargs_67);
+}
+
+return o;
 }
 
 __J_attrs.value = __J_value;
@@ -1099,10 +1108,10 @@ var self = arguments['self'];
 var value = arguments['value'];
 j = get_attribute(self, "j");
 o = j.width(value);
-var __args_68, __kwargs_68;
-__args_68 = create_array(o);
-__kwargs_68 = Object();
-return get_attribute(J, "__call__")(__args_68, __kwargs_68);
+var __args_67, __kwargs_67;
+__args_67 = create_array(o);
+__kwargs_67 = Object();
+return get_attribute(J, "__call__")(__args_67, __kwargs_67);
 }
 
 __J_attrs.width = __J_width;
@@ -1123,11 +1132,11 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var func = arguments['func'];
 j = get_attribute(self, "j");
-o = j.map(func);
-var __args_69, __kwargs_69;
-__args_69 = create_array(o);
-__kwargs_69 = Object();
-return get_attribute(J, "__call__")(__args_69, __kwargs_69);
+o = j.map(adapt_arguments(func));
+var __args_68, __kwargs_68;
+__args_68 = create_array(o);
+__kwargs_68 = Object();
+return get_attribute(J, "__call__")(__args_68, __kwargs_68);
 }
 
 __J_attrs.map = __J_map;
@@ -1139,10 +1148,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mousedown(adapt_arguments(handler));
-var __args_70, __kwargs_70;
-__args_70 = create_array(o);
-__kwargs_70 = Object();
-return get_attribute(J, "__call__")(__args_70, __kwargs_70);
+var __args_69, __kwargs_69;
+__args_69 = create_array(o);
+__kwargs_69 = Object();
+return get_attribute(J, "__call__")(__args_69, __kwargs_69);
 }
 
 __J_attrs.mousedown = __J_mousedown;
@@ -1154,10 +1163,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mouseenter(adapt_arguments(handler));
-var __args_71, __kwargs_71;
-__args_71 = create_array(o);
-__kwargs_71 = Object();
-return get_attribute(J, "__call__")(__args_71, __kwargs_71);
+var __args_70, __kwargs_70;
+__args_70 = create_array(o);
+__kwargs_70 = Object();
+return get_attribute(J, "__call__")(__args_70, __kwargs_70);
 }
 
 __J_attrs.mouseenter = __J_mouseenter;
@@ -1169,10 +1178,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mouseleave(adapt_arguments(handler));
-var __args_72, __kwargs_72;
-__args_72 = create_array(o);
-__kwargs_72 = Object();
-return get_attribute(J, "__call__")(__args_72, __kwargs_72);
+var __args_71, __kwargs_71;
+__args_71 = create_array(o);
+__kwargs_71 = Object();
+return get_attribute(J, "__call__")(__args_71, __kwargs_71);
 }
 
 __J_attrs.mouseleave = __J_mouseleave;
@@ -1184,10 +1193,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mousemove(adapt_arguments(handler));
-var __args_73, __kwargs_73;
-__args_73 = create_array(o);
-__kwargs_73 = Object();
-return get_attribute(J, "__call__")(__args_73, __kwargs_73);
+var __args_72, __kwargs_72;
+__args_72 = create_array(o);
+__kwargs_72 = Object();
+return get_attribute(J, "__call__")(__args_72, __kwargs_72);
 }
 
 __J_attrs.mousemove = __J_mousemove;
@@ -1199,10 +1208,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mouseout(adapt_arguments(handler));
-var __args_74, __kwargs_74;
-__args_74 = create_array(o);
-__kwargs_74 = Object();
-return get_attribute(J, "__call__")(__args_74, __kwargs_74);
+var __args_73, __kwargs_73;
+__args_73 = create_array(o);
+__kwargs_73 = Object();
+return get_attribute(J, "__call__")(__args_73, __kwargs_73);
 }
 
 __J_attrs.mouseout = __J_mouseout;
@@ -1214,10 +1223,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mouseover(adapt_arguments(handler));
-var __args_75, __kwargs_75;
-__args_75 = create_array(o);
-__kwargs_75 = Object();
-return get_attribute(J, "__call__")(__args_75, __kwargs_75);
+var __args_74, __kwargs_74;
+__args_74 = create_array(o);
+__kwargs_74 = Object();
+return get_attribute(J, "__call__")(__args_74, __kwargs_74);
 }
 
 __J_attrs.mouseover = __J_mouseover;
@@ -1229,10 +1238,10 @@ var self = arguments['self'];
 var handler = arguments['handler'];
 j = get_attribute(self, "j");
 o = j.mouseup(adapt_arguments(handler));
-var __args_76, __kwargs_76;
-__args_76 = create_array(o);
-__kwargs_76 = Object();
-return get_attribute(J, "__call__")(__args_76, __kwargs_76);
+var __args_75, __kwargs_75;
+__args_75 = create_array(o);
+__kwargs_75 = Object();
+return get_attribute(J, "__call__")(__args_75, __kwargs_75);
 }
 
 __J_attrs.mouseup = __J_mouseup;

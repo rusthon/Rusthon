@@ -407,9 +407,6 @@ var iter = Object.keys(json);
 for (var key=0; key < iter.length; key++) {
 var backup = key;
 key = iter[key];
-console.log("!");
-console.log(key);
-console.log(json[key]);
 set = get_attribute(output, "set");
 set([key, json_to_pythonscript(json[key])]);
 key = backup;
@@ -827,42 +824,26 @@ dict = create_class("dict", __dict_parents, __dict_attrs);
 var str, __str_attrs, __str_parents;
 __str_attrs = Object();
 __str_parents = create_array();
-__str_parents.push(list);
 var __str___init__ = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "jsstring")};
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var jsstring = arguments['jsstring'];
-var __args_12, __kwargs_12;
-__args_12 = create_array(self);
-__kwargs_12 = Object();
-get_attribute(get_attribute(list, "__init__"), "__call__")(__args_12, __kwargs_12);
-var char;
-var __iterator__, i;
-var __args_13, __kwargs_13;
-__args_13 = create_array(jsstring.length);
-__kwargs_13 = Object();
-__iterator__ = get_attribute(get_attribute(get_attribute(range, "__call__")(__args_13, __kwargs_13), "__iter__"), "__call__")(create_array(), Object());
-try {
-i = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
-char = jsstring.charAt(i);
-var __args_14, __kwargs_14;
-__args_14 = create_array(char);
-__kwargs_14 = Object();
-get_attribute(get_attribute(self, "append"), "__call__")(__args_14, __kwargs_14);
-i = get_attribute(__iterator__, "next")(create_array(), Object());
-}
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
-
-}
-
-}
-
+set_attribute(self, "jsstring", jsstring);
 }
 
 __str_attrs.__init__ = __str___init__;
+var __str___iter__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var __args_12, __kwargs_12;
+__args_12 = create_array(get_attribute(self, "jsstring"), 0);
+__kwargs_12 = Object();
+return get_attribute(Iterator, "__call__")(__args_12, __kwargs_12);
+}
+
+__str_attrs.__iter__ = __str___iter__;
 str = create_class("str", __str_parents, __str_attrs);
