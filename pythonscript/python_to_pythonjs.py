@@ -14,7 +14,11 @@ from ast import FunctionDef
 from ast import parse
 from ast import NodeVisitor
 
-from cStringIO import StringIO as StringIO
+if sys.version_info.major == 3:
+    import io
+    StringIO = io.StringIO
+else:
+    from cStringIO import StringIO as StringIO
 
 
 class Writer(object):
@@ -349,7 +353,7 @@ def main(script):
 
 
 def command():
-    print main(sys.stdin.read())
+    print( main(sys.stdin.read()) )
 
 
 if __name__ == '__main__':
