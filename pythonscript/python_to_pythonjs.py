@@ -238,7 +238,7 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Call(self, node):
         if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var'):
-            args = map(self.visit, node.args)
+            args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
             kwargs = map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords)
             args.extend(kwargs)
             args = ', '.join(args)
