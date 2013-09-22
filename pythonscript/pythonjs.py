@@ -11,6 +11,9 @@ from ast import NodeVisitor
 
 
 class JSGenerator(NodeVisitor):
+    def visit_AugAssign(self, node):
+        a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
+        return a
 
     def visit_Module(self, node):
         return '\n'.join(map(self.visit, node.body))
