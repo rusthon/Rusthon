@@ -59,6 +59,10 @@ class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
 
+    def visit_AugAssign(self, node):
+        a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
+        writer.write(a)
+
     def visit_ImportFrom(self, node):
         # ignore "import from"
         # print node.module
