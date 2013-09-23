@@ -250,7 +250,12 @@ class PythonToPythonJS(NodeVisitor):
             elif target.id in self._instances:
                 self._instances.pop( target.id )
 
-            writer.write('%s = %s' % (target.id, self.visit(node.value)))
+            if isinstance(node.value, Name):
+                name = self.visit(node.value)
+                if name in self._instances: self._instances[ target.id ] = self._instances[ name ]
+                writer.write('%s = %s' % (target.id, name))
+            else:
+                writer.write('%s = %s' % (target.id, self.visit(node.value)))
 
         else:  # it's a Tuple
             id = self.identifier
