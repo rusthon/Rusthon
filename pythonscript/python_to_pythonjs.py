@@ -205,11 +205,25 @@ class PythonToPythonJS(NodeVisitor):
         else:
             return 'get_attribute(%s, "%s")' % (name, node.attr)
 
+    def visit_Index(self, node):
+        return self.visit(node.value)
+
     def visit_Subscript(self, node):
-        return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
-            self.visit(node.value),
-            self.visit(node.slice),
-        )
+        name = self.visit(node.value)
+        if name in self._instances:  ## support x[y] operator overloading
+            klass = self._instances[ name ]
+            if '__getitem__' in self._classes[ klass ]:
+                return '__%s___getitem__( [%s, %s] )' % (klass, name, self.visit(node.slice))
+            else:
+                return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
+                    self.visit(node.value),
+                    self.visit(node.slice),
+                )
+        else:
+            return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
+                self.visit(node.value),
+                self.visit(node.slice),
+            )
 
     def visit_Slice(self, node):
         return "get_attribute(Slice, '__call__')([%s, %s, %s], JSObject())" % (self.visit(node.lower), self.visit(node.upper), self.visit(node.step))
