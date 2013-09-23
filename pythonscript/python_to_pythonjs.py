@@ -59,6 +59,12 @@ class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
 
+    def __init__(self):
+        super(PythonToPythonJS, self).__init__()
+        self._classes = dict()    ## class name : [method names]
+        self._names = set()
+        self._instances = dict()  ## instance name : class name
+
     def visit_AugAssign(self, node):
         a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
         writer.write(a)
@@ -75,6 +81,8 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_ClassDef(self, node):
         name = node.name
+        self._classes[ name ] = list()  ## method names
+
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
         writer.write('__%s_attrs = JSObject()' % name)
         writer.write('__%s_parents = JSArray()' % name)
@@ -83,6 +91,7 @@ class PythonToPythonJS(NodeVisitor):
             writer.write(code)
         for item in node.body:
             if isinstance(item, FunctionDef):
+                self._classes[ name ].append( item.name )
                 item_name = item.name
                 item.name = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the function
@@ -186,7 +195,15 @@ class PythonToPythonJS(NodeVisitor):
         return self.visit(node.op) + self.visit(node.operand)
 
     def visit_Attribute(self, node):
-        return 'get_attribute(%s, "%s")' % (self.visit(node.value), node.attr)
+        name = self.visit(node.value)
+        if name in self._instances:  ## support '.' operator overloading
+            klass = self._instances[ name ]
+            if '__getattr__' in self._classes[ klass ]:
+                return '__%s___getattr__( [%s, "%s"] )' % (klass, name, node.attr)
+            else:
+                return 'get_attribute(%s, "%s")' % (name, node.attr)
+        else:
+            return 'get_attribute(%s, "%s")' % (name, node.attr)
 
     def visit_Subscript(self, node):
         return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
@@ -212,7 +229,15 @@ class PythonToPythonJS(NodeVisitor):
             )
             writer.write(code)
         elif isinstance(target, Name):
+
+            if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
+                writer.write('## creating class: %s ' %node.value.func.id)
+                self._instances[ target.id ] = node.value.func.id  ## keep track of instances
+            elif target.id in self._instances:
+                self._instances.pop( target.id )
+
             writer.write('%s = %s' % (target.id, self.visit(node.value)))
+
         else:  # it's a Tuple
             id = self.identifier
             self.identifier += 1
@@ -262,7 +287,12 @@ class PythonToPythonJS(NodeVisitor):
                 kwargs = self.visit(node.kwargs)
                 code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
                 writer.append(code)
-            return 'get_attribute(%s, "__call__")(%s, %s)' % (self.visit(node.func), args_name, kwargs_name)
+
+            name = self.visit(node.func)
+            if name in self._classes:
+                return 'get_attribute(%s, "__call__")(%s, %s)  #create class instance#' % (name, args_name, kwargs_name)
+            else:
+                return 'get_attribute(%s, "__call__")(%s, %s)  #function call#' % (name, args_name, kwargs_name)
 
     def visit_FunctionDef(self, node):
         writer.write('def %s(args, kwargs):' % node.name)
