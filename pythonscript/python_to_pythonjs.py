@@ -72,6 +72,9 @@ class PythonToPythonJS(NodeVisitor):
             if b.id in self._classes:
                 self._instances[ a.id ] = b.id
 
+    def visit_In(self, node):
+        return ' in '
+
     def visit_AugAssign(self, node):
         a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
         writer.write(a)
