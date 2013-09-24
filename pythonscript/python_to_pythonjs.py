@@ -57,6 +57,9 @@ writer = Writer()
 MINI_STDLIB = {
     'time': {
         'time': 'function time() { return new Date().getTime(); }'
+    },
+    'random': {
+        'random': 'var random = Math.random'
     }
 }
 class PythonToPythonJS(NodeVisitor):
