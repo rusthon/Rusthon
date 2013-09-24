@@ -72,8 +72,12 @@ class PythonToPythonJS(NodeVisitor):
             if b.id in self._classes:
                 self._instances[ a.id ] = b.id
 
+    def visit_Tuple(self, node):
+        ## TODO how to deal with tuples
+        return '(%s)' % ', '.join(map(self.visit, node.elts))
+
     def visit_List(self, node):
-        return '[%s]' % ', '.join(map(self.visit, node.elts))
+        return 'get_attribute(list, "__call__")(create_array([%s]), Object())' % ', '.join(map(self.visit, node.elts))
 
     def visit_In(self, node):
         return ' in '
@@ -322,9 +326,9 @@ class PythonToPythonJS(NodeVisitor):
 
             name = self.visit(node.func)
             if name in self._classes:
-                return 'get_attribute(%s, "__call__")(%s, %s)  #create class instance#' % (name, args_name, kwargs_name)
+                return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
             else:
-                return 'get_attribute(%s, "__call__")(%s, %s)  #function call#' % (name, args_name, kwargs_name)
+                return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 
     def visit_FunctionDef(self, node):
         writer.write('def %s(args, kwargs):' % node.name)

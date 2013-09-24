@@ -21,6 +21,9 @@ class JSGenerator(NodeVisitor):
     def visit_Module(self, node):
         return '\n'.join(map(self.visit, node.body))
 
+    def visit_Tuple(self, node):
+        return '[%s]' % ', '.join(map(self.visit, node.elts))
+
     def visit_List(self, node):
         return '[%s]' % ', '.join(map(self.visit, node.elts))
 
