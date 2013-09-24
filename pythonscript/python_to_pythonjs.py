@@ -54,7 +54,11 @@ class Writer(object):
 
 writer = Writer()
 
-
+MINI_STDLIB = {
+    'time': {
+        'time': 'function time() { return new Date().getTime(); }'
+    }
+}
 class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
@@ -87,11 +91,10 @@ class PythonToPythonJS(NodeVisitor):
         writer.write(a)
 
     def visit_ImportFrom(self, node):
-        # ignore "import from"
-        # print node.module
-        # print node.names[0].name
-        # print node.level
-        pass
+        if node.module in MINI_STDLIB:
+            for n in node.names:
+                if n.name in MINI_STDLIB[ node.module ]:
+                    writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] ) 
 
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
