@@ -65,6 +65,13 @@ class PythonToPythonJS(NodeVisitor):
         self._names = set()
         self._instances = dict()  ## instance name : class name
 
+    def visit_Assert(self, node):
+        ## hijacking "assert isinstance(a,A)" as a type system ##
+        if isinstance( node.test, Call ) and node.test.func.id == 'isinstance':
+            a,b = node.test.args
+            if b.id in self._classes:
+                self._instances[ a.id ] = b.id
+
     def visit_AugAssign(self, node):
         a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
         writer.write(a)
