@@ -72,6 +72,9 @@ class PythonToPythonJS(NodeVisitor):
             if b.id in self._classes:
                 self._instances[ a.id ] = b.id
 
+    def visit_List(self, node):
+        return '[%s]' % ', '.join(map(self.visit, node.elts))
+
     def visit_In(self, node):
         return ' in '
 
