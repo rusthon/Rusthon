@@ -56,7 +56,7 @@ writer = Writer()
 
 MINI_STDLIB = {
     'time': {
-        'time': 'function time() { return new Date().getTime(); }'
+        'time': 'function time() { return new Date().getTime() / 1000.0; }'
     },
     'random': {
         'random': 'var random = Math.random'
@@ -102,6 +102,25 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
 
+    def _gen_getattr_helper(self, class_name, func_name):
+        '''
+        This helper is used to emulate how Python works, __getattr__ is only supposed
+        to be called when the attribute is not found on the instance.
+        '''
+        a = [
+            'def __%s____getattr_helper(args, kwargs):' %class_name,
+            '  var(signature, arguments)',
+            '  signature = JSObject(kwargs=JSObject(), args=JSArray("self", "name"))',
+            '  arguments = get_arguments(signature, args, kwargs)',
+            '''  JS("var self = arguments['self']")''',
+            '''  JS("var name = arguments['name']")''',
+            '  if name in get_attribute(self, "__dict__"):',
+            '    return get_attribute(getattr, "__call__")( JSArray(self,name), JSObject() )',
+            '  else:',
+            '    return %s( [self, name] )' %func_name
+        ]
+        return '\n'.join(a)
+
     def visit_ClassDef(self, node):
         name = node.name
         self._classes[ name ] = list()  ## method names
@@ -119,6 +138,10 @@ class PythonToPythonJS(NodeVisitor):
                 item.name = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the function
                 writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
+
+                if item_name == '__getattr__':
+                    writer.write( self._gen_getattr_helper(name, item.name) )
+
             elif isinstance(item, Assign):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name.id, item_name)
@@ -222,7 +245,7 @@ class PythonToPythonJS(NodeVisitor):
         if name in self._instances:  ## support '.' operator overloading
             klass = self._instances[ name ]
             if '__getattr__' in self._classes[ klass ]:
-                return '__%s___getattr__( [%s, "%s"] )' % (klass, name, node.attr)
+                return '__%s____getattr_helper( [%s, "%s"] )' % (klass, name, node.attr)
             else:
                 return 'get_attribute(%s, "%s")' % (name, node.attr)
         else:
@@ -420,6 +443,7 @@ class PythonToPythonJS(NodeVisitor):
         writer.push()
         map(self.visit, node.body)
         writer.pull()
+
 
 
 def main(script):
