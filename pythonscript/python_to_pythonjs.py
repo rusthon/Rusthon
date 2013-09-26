@@ -397,55 +397,56 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('def %s(args, kwargs):' % node.name)
         writer.push()
 
-        # new pythonjs' python function arguments handling
-        # create the structure representing the functions arguments
-        # first create the defaultkwargs JSObject
-        writer.write('var(signature, arguments)')
-        L = len(node.args.defaults)
-        kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
-        kwargsdefault = Call(
-            Name('JSObject', None),
-            [],
-            kwargsdefault,
-            None,
-            None
-        )
-        args = Call(
-            Name('JSArray', None),
-            map(lambda x: Str(x.id), node.args.args),
-            [],
-            None,
-            None
-        )
-        keywords = list([
-            keyword(Name('kwargs', None), kwargsdefault),
-            keyword(Name('args', None), args),
-        ])
-        if node.args.vararg:
-            keywords.append(keyword(Name('vararg', None), Str(node.args.vararg)))
-        if node.args.kwarg:
-            keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
+        if len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
+            # new pythonjs' python function arguments handling
+            # create the structure representing the functions arguments
+            # first create the defaultkwargs JSObject
+            writer.write('var(signature, arguments)')
+            L = len(node.args.defaults)
+            kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
+            kwargsdefault = Call(
+                Name('JSObject', None),
+                [],
+                kwargsdefault,
+                None,
+                None
+            )
+            args = Call(
+                Name('JSArray', None),
+                map(lambda x: Str(x.id), node.args.args),
+                [],
+                None,
+                None
+            )
+            keywords = list([
+                keyword(Name('kwargs', None), kwargsdefault),
+                keyword(Name('args', None), args),
+            ])
+            if node.args.vararg:
+                keywords.append(keyword(Name('vararg', None), Str(node.args.vararg)))
+            if node.args.kwarg:
+                keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
-        prebody = list()
+            prebody = list()  ## NOT USED?
 
-        # create a JS Object to store the value of each parameter
-        signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
-        writer.write('signature = JSObject(%s)' % signature)
-        writer.write('arguments = get_arguments(signature, args, kwargs)')
-        # # then for each argument assign its value
-        for arg in node.args.args:
-            writer.write("""JS("var %s = arguments['%s']")""" % (arg.id, arg.id))
-        if node.args.vararg:
-            writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
-            # turn it into a list
-            expr = '%s = get_attribute(list, "__call__")(create_array(%s), {});'
-            expr = expr % (node.args.vararg, node.args.vararg)
-            writer.write(expr)
-        if node.args.kwarg:
-            writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
-            expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
-            expr = expr % (node.args.kwarg, node.args.kwarg)
-            writer.write(expr)
+            # create a JS Object to store the value of each parameter
+            signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
+            writer.write('signature = JSObject(%s)' % signature)
+            writer.write('arguments = get_arguments(signature, args, kwargs)')
+            # # then for each argument assign its value
+            for arg in node.args.args:
+                writer.write("""JS("var %s = arguments['%s']")""" % (arg.id, arg.id))
+            if node.args.vararg:
+                writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
+                # turn it into a list
+                expr = '%s = get_attribute(list, "__call__")(create_array(%s), {});'
+                expr = expr % (node.args.vararg, node.args.vararg)
+                writer.write(expr)
+            if node.args.kwarg:
+                writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
+                expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
+                expr = expr % (node.args.kwarg, node.args.kwarg)
+                writer.write(expr)
 
         map(self.visit, node.body)
         writer.pull()
