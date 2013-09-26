@@ -69,6 +69,8 @@ class PythonToPythonJS(NodeVisitor):
     def __init__(self):
         super(PythonToPythonJS, self).__init__()
         self._classes = dict()    ## class name : [method names]
+        self._inline_classes = dict()  ## class name : [attribute names]
+        self._catch_attributes = None
         self._names = set()
         self._instances = dict()  ## instance name : class name
 
@@ -124,6 +126,10 @@ class PythonToPythonJS(NodeVisitor):
     def visit_ClassDef(self, node):
         name = node.name
         self._classes[ name ] = list()  ## method names
+        self._catch_attributes = None
+        for dec in node.decorator_list:
+            if isinstance(dec, Name) and dec.id == 'inline':
+                self._catch_attributes = set()
 
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
         writer.write('__%s_attrs = JSObject()' % name)
@@ -137,7 +143,8 @@ class PythonToPythonJS(NodeVisitor):
                 item_name = item.name
                 item.name = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the function
-                writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
+                #writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))  ## not ClosureCompiler compatible
+                writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
 
                 if item_name == '__getattr__':
                     writer.write( self._gen_getattr_helper(name, item.name) )
@@ -146,7 +153,12 @@ class PythonToPythonJS(NodeVisitor):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name.id, item_name)
                 self.visit(item)  # this will output the code for the assign
-                writer.write('%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))
+                #writer.write('%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))  ## not ClosureCompiler compatible
+                writer.write('%s_attrs["%s"] = %s' % (name, item_name, item.targets[0].id))
+
+        if self._catch_attributes: self._inline_classes[ name ] = self._catch_attributes
+        self._catch_attributes = None
+
         writer.write('%s = create_class("%s", __%s_parents, __%s_attrs)' % (name, name, name, name))
 
     def visit_If(self, node):
@@ -245,9 +257,27 @@ class PythonToPythonJS(NodeVisitor):
         if name in self._instances:  ## support '.' operator overloading
             klass = self._instances[ name ]
             if '__getattr__' in self._classes[ klass ]:
-                return '__%s____getattr_helper( [%s, "%s"] )' % (klass, name, node.attr)
+                if klass in self._inline_classes:  ## static attribute
+                    if node.attr in self._inline_classes[klass]:
+                        #return '''JS('%s.__dict__["%s"]')''' %(name, node.attr)  ## this is not ClosureCompiler compatible
+                        return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
+                    elif node.attr in self._classes[ klass ]: ## method
+                        return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
+                    else:
+                        return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
+
+                else:  ## dynamic python style
+                    return '__%s____getattr_helper( [%s, "%s"] )' % (klass, name, node.attr)
             else:
-                return 'get_attribute(%s, "%s")' % (name, node.attr)
+                if klass in self._inline_classes:  ## static attribute
+                    if node.attr in self._inline_classes[klass]:
+                        return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
+                    elif node.attr in self._classes[ klass ]: ## method
+                        return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
+                    else:
+                        return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
+                else:
+                    return 'get_attribute(%s, "%s")' % (name, node.attr)
         else:
             return 'get_attribute(%s, "%s")' % (name, node.attr)
 
@@ -282,8 +312,12 @@ class PythonToPythonJS(NodeVisitor):
             code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
             writer.write(code)
         elif isinstance(target, Attribute):
+            name = self.visit(target.value)
+            if name == 'self' and isinstance(self._catch_attributes, set):
+                self._catch_attributes.add( target.attr )
+
             code = 'set_attribute(%s, "%s", %s)' % (
-                self.visit(target.value),
+                name,
                 target.attr,
                 self.visit(node.value)
             )
