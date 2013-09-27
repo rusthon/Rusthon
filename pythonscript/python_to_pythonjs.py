@@ -372,26 +372,32 @@ class PythonToPythonJS(NodeVisitor):
             args = ', '.join(args)
             return '%s(%s)' % (node.func.id, args)
         else:
-            args = ', '.join(map(self.visit, node.args))
-            kwargs = ', '.join(map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords))
-            args_name = '__args_%s' % self.identifier
-            kwargs_name = '__kwargs_%s' % self.identifier
-            writer.append('var(%s, %s)' % (args_name, kwargs_name))
-            self.identifier += 1
-            writer.append('%s = JSArray(%s)' % (args_name, args))
-            if node.starargs:
-                writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
-            writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
-            if node.kwargs:
-                kwargs = self.visit(node.kwargs)
-                code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
-                writer.append(code)
+
+            call_has_args = len(node.args) or len(node.keywords) or node.starargs or node.kwargs
+
+            if call_has_args:
+                args = ', '.join(map(self.visit, node.args))
+                kwargs = ', '.join(map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords))
+                args_name = '__args_%s' % self.identifier
+                kwargs_name = '__kwargs_%s' % self.identifier
+                writer.append('var(%s, %s)' % (args_name, kwargs_name))
+                self.identifier += 1
+                writer.append('%s = JSArray(%s)' % (args_name, args))
+                if node.starargs:
+                    writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
+                writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
+                if node.kwargs:
+                    kwargs = self.visit(node.kwargs)
+                    code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
+                    writer.append(code)
 
             name = self.visit(node.func)
-            if name in self._classes:
+            if call_has_args:
                 return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
+            elif name in self._classes:
+                return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
             else:
-                return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
+                return '%s()' %name
 
     def visit_FunctionDef(self, node):
         writer.write('def %s(args, kwargs):' % node.name)
