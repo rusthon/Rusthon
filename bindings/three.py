@@ -7,7 +7,35 @@ class _ObjectBase:
 		ob = self._object
 		JS('ob.add(child)')
 
-class _PerspectiveCamera( _ObjectBase ):
+class _Camera( _ObjectBase ):
+
+	def updateProjectionMatrix(self):
+		ob = self._object
+		JS('ob.updateProjectionMatrix()')
+
+class _OrthographicCamera( _Camera ):
+	def __init__(self, left, right, top, bottom, near, far):
+		self._object = JS('new THREE.OrthographicCamera(left, right, top, bottom, near, far)')
+
+class _PerspectiveCamera( _Camera ):
+	def __init__(self, fov, aspect, near, far):
+		self._object = JS('new THREE.PerspectiveCamera(fov, aspect, near, far)')
+
+	def setLens(self, focalLength, frameSize):
+		'''Uses Focal Length (in mm) to estimate and set FOV
+		* 35mm (fullframe) camera is used if frame size is not specified;
+		* Formula based on http://www.bobatkins.com/photography/technical/field_of_view.html
+		'''
+		ob = self._object
+		JS('ob.setLens(focalLength, frameSize)')
+
+	def setViewOffset(self, fullWidth, fullHeight, x, y, width, height):
+		'''
+		Sets an offset in a larger frustum. This is useful for multi-window or
+		multi-monitor/multi-machine setups.
+		'''
+		ob = self._object
+		JS('ob.setViewOffset(fullWidth, fullHeight, x, y, width, height)')
 
 
 class _Scene:
@@ -64,6 +92,10 @@ class _Three:
 	def WebGLRenderer(self):
 		return _WebGLRenderer()
 
+	def PerspectiveCamera(self, fov, aspect, near, far):
+		return _PerspectiveCamera(fov, aspect, near, far)
 
+	def OrthographicCamera(left, right, top, bottom, near, far):
+		return _OrthographicCamera(left, right, top, bottom, near, far)
 
 Three = _Three()
