@@ -78,6 +78,7 @@ class JSGenerator(NodeVisitor):
                 body.append(self.visit(child))
         buffer += '\n'.join(body)
         buffer += '\n}\n'
+        buffer += 'window["%s"] = %s \n' % (node.name, node.name)  ## export to global namespace so Closure will not remove them
         return buffer
 
     def visit_Subscript(self, node):

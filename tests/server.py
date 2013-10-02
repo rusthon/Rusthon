@@ -43,9 +43,14 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 	a = stdout.decode('utf-8')
 
 	if closure_compiler and os.path.isfile( PATHS['closure'] ):
-		x = '/tmp/input.js'; y = '/tmp/output.js'
+		x = '/tmp/input.js'; y = '/tmp/output.js';
 		f = open(x, 'wb'); f.write( a.encode('utf-8') ); f.close()
-		subprocess.call( ['java', '-jar', PATHS['closure'], '--compilation_level', 'ADVANCED_OPTIMIZATIONS', '--js', x, '--js_output_file', y] )
+		subprocess.call([
+			'java', '-jar', PATHS['closure'], 
+			'--compilation_level', 'ADVANCED_OPTIMIZATIONS', 
+			'--js', x, '--js_output_file', y,
+			#'--create_name_map_files', 
+		])
 		f = open(y, 'rb'); a = f.read().decode('utf-8'); f.close()
 
 	return a
