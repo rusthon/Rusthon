@@ -1,6 +1,11 @@
 # THREE.js wrapper for PythonScript
 # by Brett Hartshorn - copyright 2013
-# License: "New" BSD
+# License: PSFLv2 - http://www.python.org/psf/license/
+
+
+class _Vector3:
+	def __init__(self, jsobject=None):
+		self._vec = jsobject
 
 class _ObjectBase:
 	def add(self, child):
