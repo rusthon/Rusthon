@@ -111,7 +111,9 @@ def convert_python_html_document( data ):
 					name = b.split('/')[-1]
 					path = os.path.join( PATHS['bindings'], name )
 					src = open(path, 'rb').read().decode('utf-8')
-					python_to_pythonjs( src, module=name.split('.')[0] )
+					pyjs = python_to_pythonjs( src, module=name.split('.')[0] )
+					print(pyjs)
+					print('_'*80)
 
 			elif 'type="text/python"' in line:
 				if 'closure="true"' in line.lower(): use_closure = True

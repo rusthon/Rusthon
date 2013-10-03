@@ -151,6 +151,8 @@ class PythonToPythonJS(NodeVisitor):
         self._classes[ name ] = list()  ## method names
         self._catch_attributes = None
         self._decorator_properties = dict() ## property names :  {'get':func, 'set':func}
+        self._decorator_class_props[ name ] = self._decorator_properties
+        self._instances[ 'self' ] = name
 
         for dec in node.decorator_list:
             if isinstance(dec, Name) and dec.id == 'inline':
@@ -187,12 +189,10 @@ class PythonToPythonJS(NodeVisitor):
 
         if self._catch_attributes:
             self._inline_classes[ name ] = self._catch_attributes
-        if self._decorator_properties:
-            self._decorator_class_props[ name ] = self._decorator_properties
-            writer.write('#@props: %s'%self._decorator_properties)
 
         self._catch_attributes = None
         self._decorator_properties = None
+        self._instances.pop('self')
 
         writer.write('%s = create_class("%s", __%s_parents, __%s_attrs)' % (name, name, name, name))
 

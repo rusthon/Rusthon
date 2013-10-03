@@ -6,10 +6,6 @@ class Vector3:
 	def __init__(self, x=0, y=0, z=0 ):
 		self._vec = JS('new THREE.Vector3(x,y,z)')
 
-	def set(self, x,y,z):
-		vec = self._vec
-		JS('vec.set(x,y,z)')
-
 	@property
 	def x(self):
 		vec = self._vec
@@ -37,6 +33,36 @@ class Vector3:
 		vec = self._vec
 		JS('vec.z=value')
 
+	def setComponent(self, index, value):
+		vec = self._vec
+		JS('vec.setComponent(index,value)')
+	def getComponent(self, index):
+		vec = self._vec
+		return JS('vec.getComponent(index)')
+
+	def set(self, x,y,z):
+		vec = self._vec
+		JS('vec.set(x,y,z)')
+	def setX(self, x):
+		vec = self._vec
+		JS('vec.setX(x)')
+	def setY(self, y):
+		vec = self._vec
+		JS('vec.setY(y)')
+	def setZ(self, z):
+		vec = self._vec
+		JS('vec.setZ(z)')
+
+	def copy(self, other):
+		assert isinstance(other, Vector3)
+		self.set( other.x, other.y, other.z )
+		return self
+
+	def add(self, other):
+		assert isinstance(other, Vector3)
+		#self.x += other.x ## TODO fix inplace property assignment
+		self.set( self.x+other.x, self.y+other.y, self.z+other.z )
+		return self
 
 class _ObjectBase:
 	def add(self, child):
