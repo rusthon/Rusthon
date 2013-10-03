@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import sys
+from types import GeneratorType
 
 from ast import Str
 from ast import Call
@@ -433,7 +434,7 @@ class PythonToPythonJS(NodeVisitor):
             if node.args.kwarg:
                 keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
-            prebody = list()  ## NOT USED?
+            #prebody = list()  ## NOT USED?
 
             # create a JS Object to store the value of each parameter
             signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
@@ -454,7 +455,18 @@ class PythonToPythonJS(NodeVisitor):
                 expr = expr % (node.args.kwarg, node.args.kwarg)
                 writer.write(expr)
 
-        map(self.visit, node.body)
+        #map(self.visit, node.body)
+        for child in node.body:
+            # simple test to drop triple quote comments
+            if hasattr(child, 'value'):
+                if isinstance(child.value, Str):
+                    continue
+            if isinstance(child, GeneratorType):
+                for sub in child:
+                    self.visit(sub)
+            else:
+                self.visit(child)
+
         writer.pull()
 
         # apply decorators

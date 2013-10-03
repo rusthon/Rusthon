@@ -24,6 +24,7 @@ PATHS = dict(
 )
 
 
+
 def python_to_pythonjs( src ):
 	p = subprocess.Popen(
 		['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')],
@@ -49,6 +50,7 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 			'java', '-jar', PATHS['closure'], 
 			'--compilation_level', 'ADVANCED_OPTIMIZATIONS', 
 			'--js', x, '--js_output_file', y,
+			'--formatting', 'PRETTY_PRINT',
 			#'--create_name_map_files', 
 		])
 		f = open(y, 'rb'); a = f.read().decode('utf-8'); f.close()
@@ -56,7 +58,7 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 	return a
 
 def python_to_javascript( src, closure_compiler=False ):
-	a = python_to_pythonjs( src )
+	a = python_to_pythonjs( src ); print(a)
 	return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
 
 
@@ -154,8 +156,30 @@ class MainHandler( tornado.web.RequestHandler ):
 				self.write('Hello World')
 
 
+LIBS = dict(
+	three = {'three.min.js' : os.path.expanduser( '~/three.js/build/three.min.js')},
+	tween = {'tween' : os.path.expanduser( '~/tween.js/build/tween.min.js')},
+)
+
+class LibsHandler( tornado.web.RequestHandler ):
+	def get(self, path=None):
+		print('path', path)
+		module, name = path.split('/')
+		assert module in LIBS
+		assert name in LIBS[ module ]
+		if os.path.isfile( LIBS[module][name] ):
+			data = open( LIBS[module][name], 'rb').read()
+		else:
+			raise tornado.web.HTTPError(404)
+
+		self.set_header("Content-Type", "text/javascript; charset=utf-8")
+		self.set_header("Content-Length", len(data))
+		self.write( data )
+
+
 Handlers = [
-	(r'/(.*)', MainHandler)
+	(r'/libs/(.*)', LibsHandler),
+	(r'/(.*)', MainHandler),  ## order is important, this comes last.
 ]
 
 
