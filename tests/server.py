@@ -21,17 +21,17 @@ PATHS = dict(
 	bindings = os.path.abspath('../bindings'),
 	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
 	runtime = os.path.abspath('../pythonscript.js'),
+	module_cache = '/tmp',
 )
 
 
 
 def python_to_pythonjs( src, module=None ):
-	cmdheader = '#!/tmp'  ## module_path
+	cmdheader = '#!%s' %PATHS['module_cache']
 	if module:
 		assert '.' not in module
 		cmdheader += ';' + module
 	cmdheader += '\n'
-	print('cmd-header', cmdheader)
 
 	p = subprocess.Popen(
 		['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')],
@@ -93,16 +93,33 @@ def convert_python_html_document( data ):
 		<script type="text/python" closure="true">
 		print("hello world")
 		</script>
+
+	Note:
+		we need to parse and compile any python binding scripts that appear in the head,
+		because later scripts may use classes from the bindings, and we need have the 
+		AST introspected data available here to properly inline and for operator overloading.
 	'''
 	doc = list()
 	script = None
 	use_closure = False
 	for line in data.splitlines():
-		if line.strip().startswith('<script') and 'type="text/python"' in line:
-			if 'closure="true"' in line.lower(): use_closure = True
-			else: use_closure = False
-			doc.append( '<script type="text/javascript">')
-			script = list()
+		if line.strip().startswith('<script'):
+			if 'src="bindings/' in line:
+				doc.append( line )
+				a,b,c = line.split('"')
+				if b.endswith('.py'):  ## make sure the module is cached ##
+					name = b.split('/')[-1]
+					path = os.path.join( PATHS['bindings'], name )
+					src = open(path, 'rb').read().decode('utf-8')
+					python_to_pythonjs( src, module=name.split('.')[0] )
+
+			elif 'type="text/python"' in line:
+				if 'closure="true"' in line.lower(): use_closure = True
+				else: use_closure = False
+				doc.append( '<script type="text/javascript">')
+				script = list()
+			else:
+				doc.append( line )
 
 		elif line.strip() == '</script>':
 			if script:
