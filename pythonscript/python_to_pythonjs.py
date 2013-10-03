@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+import os, sys, pickle
 from types import GeneratorType
 
 from ast import Str
@@ -67,7 +67,7 @@ class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
 
-    def __init__(self):
+    def __init__(self, module=None, module_path=None):
         super(PythonToPythonJS, self).__init__()
         self._classes = dict()    ## class name : [method names]
         self._inline_classes = dict()  ## class name : [attribute names]
@@ -76,6 +76,32 @@ class PythonToPythonJS(NodeVisitor):
         self._instances = dict()  ## instance name : class name
         self._decorator_properties = dict()
         self._decorator_class_props = dict()
+
+        self._module = module
+        self._module_path = module_path
+        assert os.path.isdir( module_path )
+
+    def save_module(self):
+        if self._module and self._module_path:
+            a = dict(
+                classes = self._classes,
+                inline_classes = self._inline_classes,
+                decorator_class_props = self._decorator_class_props,
+            )
+            pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
+
+    def visit_ImportFrom(self, node):
+        if node.module in MINI_STDLIB:
+            for n in node.names:
+                if n.name in MINI_STDLIB[ node.module ]:
+                    writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] )
+
+        elif self._module_path and node.module+'.module' in os.listdir(self._module_path):
+            f = open( os.path.join(self._module_path, node.module+'.module'), 'rb' )
+            a = pickle.load( f ); f.close()
+            self._classes.update( a['classes'] )
+            self._inline_classes.update( a['inline_classes'] )
+            self._decorator_class_props.update( a['decorator_class_props'] )
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
@@ -97,12 +123,6 @@ class PythonToPythonJS(NodeVisitor):
     def visit_AugAssign(self, node):
         a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
         writer.write(a)
-
-    def visit_ImportFrom(self, node):
-        if node.module in MINI_STDLIB:
-            for n in node.names:
-                if n.name in MINI_STDLIB[ node.module ]:
-                    writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] ) 
 
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
@@ -565,7 +585,22 @@ def main(script):
 
 
 def command():
-    print( main(sys.stdin.read()) )
+    module = module_path = None
+
+    data = sys.stdin.read()
+    if data.startswith('#!'):
+        header = data[ 2 : data.index('\n') ]
+        data = data[ data.index('\n')+1 : ]
+        if ';' in header:
+            module_path, module = header.split(';')
+        else:
+            module_path = header
+
+    compiler = PythonToPythonJS( module=module, module_path=module_path )
+    compiler.visit( parse(data) )
+    compiler.save_module()
+    output = writer.getvalue()
+    print( output )  ## pipe to stdout
 
 
 if __name__ == '__main__':

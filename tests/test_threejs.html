@@ -1,19 +1,17 @@
 <html>
 <head>
+<script src="pythonscript.js"></script>
 <script src="libs/three/three.min.js"></script>
 <script src="bindings/three.py"></script>
-<script src="pythonscript.js"></script>
 
 <script type="text/python" closure="true">
-def inline_me():
-	return 1
+from three import *
 
 def test():
-	i = 0
-	while i < 10:
-		i += inline_me()
-
-	print 'hello world', i
+	v = Vector3(1, 2, 3)
+	print( v.x )
+	print( v.y )
+	print( v.z )
 
 </script>
 </head>

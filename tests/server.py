@@ -25,13 +25,20 @@ PATHS = dict(
 
 
 
-def python_to_pythonjs( src ):
+def python_to_pythonjs( src, module=None ):
+	cmdheader = '#!/tmp'  ## module_path
+	if module:
+		assert '.' not in module
+		cmdheader += ';' + module
+	cmdheader += '\n'
+	print('cmd-header', cmdheader)
+
 	p = subprocess.Popen(
 		['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')],
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
-	stdout, stderr = p.communicate( src.encode('utf-8') )
+	stdout, stderr = p.communicate( (cmdheader + src).encode('utf-8') )
 	return stdout.decode('utf-8')
 
 def pythonjs_to_javascript( src, closure_compiler=False ):
@@ -57,8 +64,9 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 
 	return a
 
-def python_to_javascript( src, closure_compiler=False ):
-	a = python_to_pythonjs( src ); print(a)
+def python_to_javascript( src, module=None, closure_compiler=False, debug=False ):
+	a = python_to_pythonjs( src, module=module )
+	if debug: print( a )
 	return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
 
 
@@ -99,7 +107,7 @@ def convert_python_html_document( data ):
 		elif line.strip() == '</script>':
 			if script:
 				src = '\n'.join( script )
-				js = python_to_javascript( src, closure_compiler=use_closure )
+				js = python_to_javascript( src, closure_compiler=use_closure, debug=True )
 				doc.append( js )
 			doc.append( line )
 			script = None
@@ -132,7 +140,9 @@ class MainHandler( tornado.web.RequestHandler ):
 				raise tornado.web.HTTPError(404)
 
 			if path.endswith('.py'):
-				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False )
+				print('converting python binding to javascript', name)
+				module = name.split('.')[0]
+				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False, module=module )
 
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))

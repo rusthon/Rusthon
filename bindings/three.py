@@ -2,10 +2,41 @@
 # by Brett Hartshorn - copyright 2013
 # License: PSFLv2 - http://www.python.org/psf/license/
 
+class Vector3:
+	def __init__(self, x=0, y=0, z=0 ):
+		self._vec = JS('new THREE.Vector3(x,y,z)')
 
-class _Vector3:
-	def __init__(self, jsobject=None):
-		self._vec = jsobject
+	def set(self, x,y,z):
+		vec = self._vec
+		JS('vec.set(x,y,z)')
+
+	@property
+	def x(self):
+		vec = self._vec
+		return JS('vec.x')
+	@x.setter
+	def x(self, value):
+		vec = self._vec
+		JS('vec.x=value')
+
+	@property
+	def y(self):
+		vec = self._vec
+		return JS('vec.y')
+	@y.setter
+	def y(self, value):
+		vec = self._vec
+		JS('vec.y=value')
+
+	@property
+	def z(self):
+		vec = self._vec
+		return JS('vec.z')
+	@x.setter
+	def z(self, value):
+		vec = self._vec
+		JS('vec.z=value')
+
 
 class _ObjectBase:
 	def add(self, child):
@@ -27,10 +58,10 @@ class _PerspectiveCamera( _Camera ):
 		self._object = JS('new THREE.PerspectiveCamera(fov, aspect, near, far)')
 
 	def setLens(self, focalLength, frameSize):
-		'''Uses Focal Length (in mm) to estimate and set FOV
+		"""Uses Focal Length (in mm) to estimate and set FOV
 		* 35mm (fullframe) camera is used if frame size is not specified;
 		* Formula based on http://www.bobatkins.com/photography/technical/field_of_view.html
-		'''
+		"""
 		ob = self._object
 		JS('ob.setLens(focalLength, frameSize)')
 
@@ -87,6 +118,7 @@ class _ImageUtils:
 class _Three:
 	def __init__(self):
 		self.ImageUtils = _ImageUtils()
+		self.Vector3 = Vector3
 
 	def Scene(self):
 		return _Scene()
