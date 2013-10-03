@@ -74,6 +74,8 @@ class PythonToPythonJS(NodeVisitor):
         self._catch_attributes = None
         self._names = set()
         self._instances = dict()  ## instance name : class name
+        self._decorator_properties = dict()
+        self._decorator_class_props = dict()
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
@@ -128,6 +130,8 @@ class PythonToPythonJS(NodeVisitor):
         name = node.name
         self._classes[ name ] = list()  ## method names
         self._catch_attributes = None
+        self._decorator_properties = dict() ## property names :  {'get':func, 'set':func}
+
         for dec in node.decorator_list:
             if isinstance(dec, Name) and dec.id == 'inline':
                 self._catch_attributes = set()
@@ -142,10 +146,15 @@ class PythonToPythonJS(NodeVisitor):
             if isinstance(item, FunctionDef):
                 self._classes[ name ].append( item.name )
                 item_name = item.name
+                item.original_name = item.name
                 item.name = '__%s_%s' % (name, item_name)
+
                 self.visit(item)  # this will output the code for the function
-                #writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))  ## not ClosureCompiler compatible
-                writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
+
+                if item_name in self._decorator_properties:
+                    pass
+                else:
+                    writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
 
                 if item_name == '__getattr__':
                     writer.write( self._gen_getattr_helper(name, item.name) )
@@ -154,11 +163,16 @@ class PythonToPythonJS(NodeVisitor):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name.id, item_name)
                 self.visit(item)  # this will output the code for the assign
-                #writer.write('%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))  ## not ClosureCompiler compatible
                 writer.write('%s_attrs["%s"] = %s' % (name, item_name, item.targets[0].id))
 
-        if self._catch_attributes: self._inline_classes[ name ] = self._catch_attributes
+        if self._catch_attributes:
+            self._inline_classes[ name ] = self._catch_attributes
+        if self._decorator_properties:
+            self._decorator_class_props[ name ] = self._decorator_properties
+            writer.write('#@props: %s'%self._decorator_properties)
+
         self._catch_attributes = None
+        self._decorator_properties = None
 
         writer.write('%s = create_class("%s", __%s_parents, __%s_attrs)' % (name, name, name, name))
 
@@ -264,6 +278,9 @@ class PythonToPythonJS(NodeVisitor):
                         return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
                     elif node.attr in self._classes[ klass ]: ## method
                         return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
+                    elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
+                        getter = self._decorator_class_props[klass][node.attr]['get']
+                        return '''JS('%s( [%s] )')''' %(getter, name)
                     else:
                         return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
 
@@ -275,8 +292,16 @@ class PythonToPythonJS(NodeVisitor):
                         return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
                     elif node.attr in self._classes[ klass ]: ## method
                         return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
+                    elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
+                        getter = self._decorator_class_props[klass][node.attr]['get']
+                        return '''JS('%s( [%s] )')''' %(getter, name)
                     else:
                         return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
+
+                elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
+                    getter = self._decorator_class_props[klass][node.attr]['get']
+                    return '''JS('%s( [%s] )')''' %(getter, name)
+
                 else:
                     return 'get_attribute(%s, "%s")' % (name, node.attr)
         else:
@@ -317,12 +342,23 @@ class PythonToPythonJS(NodeVisitor):
             if name == 'self' and isinstance(self._catch_attributes, set):
                 self._catch_attributes.add( target.attr )
 
-            code = 'set_attribute(%s, "%s", %s)' % (
-                name,
-                target.attr,
-                self.visit(node.value)
-            )
-            writer.write(code)
+            fallback = True
+            if name in self._instances:  ## support '.' operator overloading
+                klass = self._instances[ name ]
+                if klass in self._decorator_class_props and target.attr in self._decorator_class_props[klass]:
+                    setter = self._decorator_class_props[klass][target.attr].get( 'set', None )
+                    if setter:
+                        writer.write( '''JS('%s( [%s, %s] )')''' %(setter, name, self.visit(node.value)) )
+                        fallback = False
+
+
+            if fallback:
+                code = 'set_attribute(%s, "%s", %s)' % (
+                    name,
+                    target.attr,
+                    self.visit(node.value)
+                )
+                writer.write(code)
         elif isinstance(target, Name):
 
             if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
@@ -401,6 +437,29 @@ class PythonToPythonJS(NodeVisitor):
                 return '%s()' %name
 
     def visit_FunctionDef(self, node):
+        property_decorator = None
+        decorators = []
+        for decorator in reversed(node.decorator_list):
+            if isinstance(decorator, Name) and decorator.id == 'property':
+                property_decorator = decorator
+                n = node.name + '__getprop__'
+                self._decorator_properties[ node.original_name ] = dict( get=n )
+                node.name = n
+
+            elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
+                if decorator.attr == 'setter':
+                    n = node.name + '__setprop__'
+                    self._decorator_properties[ decorator.value.id ]['set'] = n
+                    node.name = n
+                elif decorator.attr == 'deleter':
+                    raise NotImplementedError
+                else:
+                    raise RuntimeError
+
+            else:
+                decorators.append( decorator )
+
+
         writer.write('def %s(args, kwargs):' % node.name)
         writer.push()
 
@@ -470,7 +529,7 @@ class PythonToPythonJS(NodeVisitor):
         writer.pull()
 
         # apply decorators
-        for decorator in reversed(node.decorator_list):
+        for decorator in decorators:
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
 
     def visit_For(self, node):
