@@ -64,6 +64,8 @@ class Vector3:
 		self.set( self.x+other.x, self.y+other.y, self.z+other.z )
 		return self
 
+	#def __iadd__(self, other):
+
 	def addScalar(self, s):
 		self.set( self.x+s, self.y+s, self.z+s )
 		return self
@@ -72,6 +74,46 @@ class Vector3:
 		var( a=Vector3, b=Vector3 )
 		self.set( a.x+b.x, a.y+b.y, a.z+b.z )
 		return self
+
+	def sub(self, other):
+		assert isinstance(other, Vector3)
+		self.set( self.x-other.x, self.y-other.y, self.z-other.z )
+		return self
+
+	def subVectors(self, a,b):
+		var( a=Vector3, b=Vector3 )
+		self.set( a.x-b.x, a.y-b.y, a.z-b.z )
+		return self
+
+	def multiply(self, other):
+		assert isinstance(other, Vector3)
+		self.set( self.x*other.x, self.y*other.y, self.z*other.z )
+		return self
+
+	def multiplyScalar(self, s):
+		self.set( self.x*s, self.y*s, self.z*s )
+		return self
+
+	def multiplyVectors(self, a,b):
+		var( a=Vector3, b=Vector3 )
+		self.set( a.x*b.x, a.y*b.y, a.z*b.z )
+		return self
+
+	def applyMatrix3(self, m):
+		vec = self._vec
+		JS('vec.applyMatrix3(m)')
+		return self
+
+	def applyMatrix4(self, m):
+		vec = self._vec
+		JS('vec.applyMatrix4(m)')
+		return self
+
+	def applyProjection(self, m):
+		vec = self._vec
+		JS('vec.applyProjection(m)')
+		return self
+
 
 
 class _ObjectBase:

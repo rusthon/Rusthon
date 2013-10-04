@@ -158,6 +158,9 @@ class JSGenerator(NodeVisitor):
         right = self.visit(node.right)
         return '%s %s %s' % (left, op, right)
 
+    def visit_Mult(self, node):
+        return '*'
+
     def visit_Add(self, node):
         return '+'
 

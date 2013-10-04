@@ -257,6 +257,9 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Is(self, node):
         return 'is'
 
+    def visit_Mult(self, node):
+        return '*'
+
     def visit_Add(self, node):
         return '+'
 
