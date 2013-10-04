@@ -64,6 +64,16 @@ class Vector3:
 		self.set( self.x+other.x, self.y+other.y, self.z+other.z )
 		return self
 
+	def addScalar(self, s):
+		self.set( self.x+s, self.y+s, self.z+s )
+		return self
+
+	def addVectors(self, a,b):
+		var( a=Vector3, b=Vector3 )
+		self.set( a.x+b.x, a.y+b.y, a.z+b.z )
+		return self
+
+
 class _ObjectBase:
 	def add(self, child):
 		ob = self._object

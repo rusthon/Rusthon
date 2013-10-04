@@ -190,9 +190,6 @@ class PythonToPythonJS(NodeVisitor):
         if self._catch_attributes:
             self._inline_classes[ name ] = self._catch_attributes
 
-        writer.write('#decorators#')
-        writer.write('#%s' %self._decorator_properties)
-        writer.write('#--------------------------------')
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
@@ -428,8 +425,13 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Call(self, node):
         if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var'):
             args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
-            kwargs = map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords)
-            args.extend(kwargs)
+            if node.func.id == 'var':
+                for k in node.keywords:
+                    self._instances[ k.arg ] = k.value.id
+                    args.append( k.arg )
+            else:
+                kwargs = map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords)
+                args.extend(kwargs)
             args = ', '.join(args)
             return '%s(%s)' % (node.func.id, args)
         else:
