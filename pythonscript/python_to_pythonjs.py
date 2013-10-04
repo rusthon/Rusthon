@@ -190,6 +190,9 @@ class PythonToPythonJS(NodeVisitor):
         if self._catch_attributes:
             self._inline_classes[ name ] = self._catch_attributes
 
+        writer.write('#decorators#')
+        writer.write('#%s' %self._decorator_properties)
+        writer.write('#--------------------------------')
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
@@ -368,7 +371,8 @@ class PythonToPythonJS(NodeVisitor):
                 if klass in self._decorator_class_props and target.attr in self._decorator_class_props[klass]:
                     setter = self._decorator_class_props[klass][target.attr].get( 'set', None )
                     if setter:
-                        writer.write( '''JS('%s( [%s, %s] )')''' %(setter, name, self.visit(node.value)) )
+                        #writer.write( '''JS('%s( [%s, %s] )')''' %(setter, name, self.visit(node.value)) )  ## can not nest have nested JS() calls
+                        writer.write( '%s( [%s, %s] )' %(setter, name, self.visit(node.value)) )
                         fallback = False
 
 
@@ -379,10 +383,10 @@ class PythonToPythonJS(NodeVisitor):
                     self.visit(node.value)
                 )
                 writer.write(code)
+
         elif isinstance(target, Name):
 
             if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
-                writer.write('## creating class: %s ' %node.value.func.id)
                 self._instances[ target.id ] = node.value.func.id  ## keep track of instances
             elif target.id in self._instances:
                 self._instances.pop( target.id )
@@ -463,11 +467,13 @@ class PythonToPythonJS(NodeVisitor):
             if isinstance(decorator, Name) and decorator.id == 'property':
                 property_decorator = decorator
                 n = node.name + '__getprop__'
-                self._decorator_properties[ node.original_name ] = dict( get=n )
+                self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
                 node.name = n
 
             elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
                 if decorator.attr == 'setter':
+                    if self._decorator_properties[ decorator.value.id ]['set']:
+                        raise SyntaxError('user error - the same decorator.setter is used more than once!')
                     n = node.name + '__setprop__'
                     self._decorator_properties[ decorator.value.id ]['set'] = n
                     node.name = n

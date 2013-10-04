@@ -28,7 +28,7 @@ class Vector3:
 	def z(self):
 		vec = self._vec
 		return JS('vec.z')
-	@x.setter
+	@z.setter
 	def z(self, value):
 		vec = self._vec
 		JS('vec.z=value')
