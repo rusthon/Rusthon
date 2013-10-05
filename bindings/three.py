@@ -115,8 +115,11 @@ class Vector3:
 		return self
 
 	def __mul__(self, other):
-		assert isinstance(other, Vector3)
-		return Vector3( self.x*other.x, self.y*other.y, self.z*other.z )
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			assert isinstance(other, Vector3)
+			return Vector3( self.x*other.x, self.y*other.y, self.z*other.z )
+		else:
+			return Vector3( self.x*other, self.y*other, self.z*other )
 
 	def __imul__(self, other):
 		if JS("{}.toString.call(other) === '[object Object]'"):
@@ -148,6 +151,139 @@ class Vector3:
 		JS('vec.applyProjection(m)')
 		return self
 
+	def applyQuaternion(self, q):
+		vec = self._vec
+		JS('vec.applyQuaternion(q)')
+		return self
+
+	def transformDirection(self, m):
+		vec = self._vec
+		JS('vec.transformDirection(m)')
+		return self
+
+	def divide(self, other):
+		assert isinstance(other, Vector3)
+		self.set( self.x/other.x, self.y/other.y, self.z/other.z )
+		return self
+
+	def divideScalar(self, s):
+		vec = self._vec
+		JS('vec.divideScalar(s)')  ## takes care of divide by zero
+		return self
+
+	def __div__(self, other):
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			assert isinstance(other, Vector3)
+			return Vector3( self.x/other.x, self.y/other.y, self.z/other.z )
+		else:
+			return Vector3( self.x/other, self.y/other, self.z/other )
+
+	def __idiv__(self, other):
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			self.divide( other )
+		else:
+			self.divideScalar( other )
+
+	def min(self, s):
+		vec = self._vec
+		JS('vec.min(s)')
+		return self
+	def max(self, s):
+		vec = self._vec
+		JS('vec.max(s)')
+		return self
+	def clamp(self, s):
+		vec = self._vec
+		JS('vec.clamp(s)')
+		return self
+	def negate(self):
+		vec = self._vec
+		JS('vec.negate()')
+		return self
+
+	def dot(self, v):
+		vec = self._vec
+		return JS('vec.dot(v)')
+	def lengthSq(self):
+		vec = self._vec
+		return JS('vec.lengthSq()')
+	def length(self):
+		vec = self._vec
+		return JS('vec.length()')
+	def lengthManhattan(self):
+		vec = self._vec
+		return JS('vec.lengthManhattan()')
+
+	def normalize(self):
+		vec = self._vec
+		JS('vec.normalize()')
+		return self
+
+	def setLength(self, l):
+		vec = self._vec
+		JS('vec.setLength(l)')
+		return self
+
+	def lerp(self, v, alpha):
+		vec = self._vec
+		JS('vec.lerp(v, alpha)')
+		return self
+
+	def cross(self, v):  ## cross product
+		vec = self._vec
+		JS('vec.cross(v)')
+		return self
+
+	def crossVectors(self, a,b):
+		vec = self._vec
+		JS('vec.crossVectors(a,b)')
+		return self
+
+	def __ixor__(self, other):  ## ^=
+		self.cross(other)
+
+	def angleTo(self, v):
+		vec = self._vec
+		return JS('vec.angleTo(v)')
+
+	def distanceTo(self, v):
+		vec = self._vec
+		return JS('vec.distanceTo(v)')
+
+	def distanceToSquared(self, v):
+		vec = self._vec
+		return JS('vec.distanceToSquared(v)')
+
+	def getPositionFromMatrix(self, m):
+		vec = self._vec
+		JS('vec.getPositionFromMatrix(m)')
+		return self
+
+	def getScaleFromMatrix(self, m):
+		vec = self._vec
+		JS('vec.getScaleFromMatrix(m)')
+		return self
+
+	def getColumnFromMatrix(self, i, m):
+		vec = self._vec
+		JS('vec.getColumnFromMatrix(i,m)')
+		return self
+
+	def equals(self, v):
+		vec = self._vec
+		return JS('vec.equals(v)')
+
+	def fromArray(self, a):
+		vec = self._vec
+		JS('vec.fromArray(a)')
+		return self
+
+	def toArray(self):
+		vec = self._vec
+		return JS('vec.toArray()')
+
+	def clone(self):
+		return Vector3( self.x, self.y, self.z )
 
 
 class _ObjectBase:

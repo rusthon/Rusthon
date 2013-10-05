@@ -167,6 +167,12 @@ class JSGenerator(NodeVisitor):
     def visit_Sub(self, node):
         return '-'
 
+    def visit_Div(self, node):
+        return '/'
+
+    def visit_Mod(self, node):
+        return '%'
+
     def visit_Lt(self, node):
         return '<'
 

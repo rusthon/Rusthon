@@ -74,6 +74,20 @@ class Typedef(object):
         __isub__ = '-=',
         __mul__ = '*',
         __imul__ = '*=',
+        __div__ = '/',
+        __idiv__ = '/=',
+        __mod__ = '%',
+        __imod__ = '%=',
+        __lshift__ = '<<',
+        __ilshift__ = '<<=',
+        __rshift__ = '>>',
+        __irshift__ = '>>=',
+        __and__ = '&',
+        __iand__ = '&=',
+        __xor__ = '^',
+        __ixor__ = '^=',
+        __or__ = '|',
+        __ior__ = '|=',
     )
 
     def __init__(self, **kwargs):
@@ -173,7 +187,7 @@ class PythonToPythonJS(NodeVisitor):
             writer.write( a )
         else:
             ## TODO extra checks to make sure the operator type is valid in this context
-            a = '%s %s= %s' %(target, op, self.visit(node.value))
+            a = '%s %s %s' %(target, op, self.visit(node.value))
             writer.write(a)
 
     def visit_Yield(self, node):
@@ -337,6 +351,21 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Sub(self, node):
         return '-'
+
+    def visit_Div(self, node):
+        return '/'
+    def visit_Mod(self, node):
+        return '%'
+    def visit_LShift(self, node):
+        return '<<'
+    def visit_RShift(self, node):
+        return '>>'
+    def visit_BitXor(self, node):
+        return '^'
+    def visit_BitOr(self, node):
+        return '|'
+    def visit_BitAnd(self, node):
+        return '&'
 
     def visit_Lt(self, node):
         return '<'
@@ -542,7 +571,7 @@ class PythonToPythonJS(NodeVisitor):
             elif name in self._classes:
                 return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
             else:
-                return '%s()' %name
+                return '%s( JSArray(), JSObject() )' %name
 
     def visit_FunctionDef(self, node):
         property_decorator = None
