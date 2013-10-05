@@ -64,6 +64,33 @@ MINI_STDLIB = {
         'random': 'var random = Math.random'
     }
 }
+
+class Typedef(object):
+    # http://docs.python.org/2/reference/datamodel.html#emulating-numeric-types
+    _opmap = dict(
+        __add__ = '+',
+        __iadd__ = '+=',
+        __sub__ = '-',
+        __isub__ = '-=',
+        __mul__ = '*',
+        __imul__ = '*=',
+    )
+
+    def __init__(self, **kwargs):
+        for name in kwargs.keys():
+            setattr( self, name, kwargs[name] )
+
+        self.operators = dict()
+        for name in self.methods:
+            if name in self._opmap:
+                op = self._opmap[ name ]
+                self.operators[ op ] = self.get_pythonjs_function_name( name )
+
+    def get_pythonjs_function_name(self, name):
+        assert name in self.methods
+        return '__%s_%s' %(self.name, name) ## class name
+
+
 class PythonToPythonJS(NodeVisitor):
 
     identifier = 0
@@ -73,7 +100,7 @@ class PythonToPythonJS(NodeVisitor):
         self._classes = dict()    ## class name : [method names]
         self._inline_classes = dict()  ## class name : [attribute names]
         self._catch_attributes = None
-        self._names = set()
+        self._names = set() ## not used?
         self._instances = dict()  ## instance name : class name
         self._decorator_properties = dict()
         self._decorator_class_props = dict()
@@ -81,7 +108,18 @@ class PythonToPythonJS(NodeVisitor):
         self._return_type = None
         self._module = module
         self._module_path = module_path
-        assert os.path.isdir( module_path )
+
+    def get_typedef(self, node):
+        assert isinstance(node, Name)
+        if node.id in self._instances:
+            klass = self._instances[ node.id ]
+            typedef = Typedef(
+                name = klass,
+                methods = self._classes[ klass ],
+                properties = self._decorator_class_props[ klass ],
+                #compiler = self,
+            )
+            return typedef
 
     def save_module(self):
         if self._module and self._module_path:
@@ -125,8 +163,18 @@ class PythonToPythonJS(NodeVisitor):
         return ' in '
 
     def visit_AugAssign(self, node):
-        a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
-        writer.write(a)
+        target = self.visit( node.target )
+        op = '%s=' %self.visit( node.op )
+
+        typedef = self.get_typedef( node.target )
+        if typedef and op in typedef.operators:
+            func = typedef.operators[ op ]
+            a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
+            writer.write( a )
+        else:
+            ## TODO extra checks to make sure the operator type is valid in this context
+            a = '%s %s= %s' %(target, op, self.visit(node.value))
+            writer.write(a)
 
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
@@ -254,16 +302,22 @@ class PythonToPythonJS(NodeVisitor):
             raise RuntimeError
 
     def visit_BinOp(self, node):
-        node.operator_overloading = 'undefined'
         left = self.visit(node.left)
         op = self.visit(node.op)
         right = self.visit(node.right)
-        if isinstance(node.left, Name) and node.left.id in self._instances:
-            klass = self._instances[ node.left.id ]
-            if op == '*' and '__mul__' in self._classes[klass]:
-                node.operator_overloading = '__%s___mul__' %klass
-                assert node.operator_overloading
-                return '''JS('__%s___mul__( [%s, %s] )')''' %(klass, left, right)
+        #if isinstance(node.left, Name) and node.left.id in self._instances:
+        #    klass = self._instances[ node.left.id ]
+        #    if op == '*' and '__mul__' in self._classes[klass]:
+        #        node.operator_overloading = '__%s___mul__' %klass
+        #        assert node.operator_overloading
+        #        return '''JS('__%s___mul__( [%s, %s] )')''' %(klass, left, right)
+        if isinstance(node.left, Name):
+            typedef = self.get_typedef( node.left )
+            if typedef and op in typedef.operators:
+                func = typedef.operators[ op ]
+                node.operator_overloading = func
+                return '''JS('%s( [%s, %s] )')''' %(func, left, right)
+
         return '%s %s %s' % (left, op, right)
 
     def visit_Eq(self, node):
