@@ -65,8 +65,17 @@ class Vector3:
 		return self
 
 	def __add__(self, other):
-		assert isinstance(other, Vector3)
-		return Vector3( self.x+other.x, self.y+other.y, self.z+other.z )
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			assert isinstance(other, Vector3)
+			return Vector3( self.x+other.x, self.y+other.y, self.z+other.z )
+		else:
+			return Vector3( self.x+other, self.y+other, self.z+other )
+
+	def __iadd__(self, other):
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			self.add( other )
+		else:
+			self.addScalar( other )
 
 	def addScalar(self, s):
 		self.set( self.x+s, self.y+s, self.z+s )
@@ -83,8 +92,17 @@ class Vector3:
 		return self
 
 	def __sub__(self, other):
-		assert isinstance(other, Vector3)
-		return Vector3( self.x-other.x, self.y-other.y, self.z-other.z )
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			assert isinstance(other, Vector3)
+			return Vector3( self.x-other.x, self.y-other.y, self.z-other.z )
+		else:
+			return Vector3( self.x-other, self.y-other, self.z-other )
+
+	def __isub__(self, other):
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			self.sub( other )
+		else:
+			self.set( self.x-other, self.y-other, self.z-other )
 
 	def subVectors(self, a,b):
 		var( a=Vector3, b=Vector3 )
@@ -100,8 +118,11 @@ class Vector3:
 		assert isinstance(other, Vector3)
 		return Vector3( self.x*other.x, self.y*other.y, self.z*other.z )
 
-	def __imul__(self, s):
-		self.multiplyScalar(s)
+	def __imul__(self, other):
+		if JS("{}.toString.call(other) === '[object Object]'"):
+			self.multiply( other )
+		else:
+			self.multiplyScalar( other )
 
 	def multiplyScalar(self, s):
 		self.set( self.x*s, self.y*s, self.z*s )

@@ -1,0 +1,48 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/three/three.min.js"></script>
+<script src="bindings/three.py"></script>
+
+<script type="text/python" closure="true">
+from three import *
+
+def show_vec(v):
+	assert isinstance(v, Vector3)
+	print('--vector--')
+	print(v.x)
+	print(v.y)
+	print(v.z)
+
+def test():
+	v1 = Vector3(1, 2, 3)
+	v2 = Vector3(10, 0, 10)
+
+	a = v1 + v2
+	show_vec(a)
+
+	a += 2.5
+	show_vec(a)
+	a += v1
+	show_vec(a)
+
+	a -= v1
+	show_vec(a)
+	a -= 100
+	show_vec(a)
+
+	b = v1 * v2
+	show_vec(b)
+
+	b *= 10.0
+	show_vec(b)
+	b *= v2
+	show_vec(b)
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
