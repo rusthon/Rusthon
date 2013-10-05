@@ -11,6 +11,7 @@ from ast import keyword
 from ast import Subscript
 from ast import Attribute
 from ast import FunctionDef
+from ast import BinOp
 
 from ast import parse
 from ast import NodeVisitor
@@ -76,7 +77,8 @@ class PythonToPythonJS(NodeVisitor):
         self._instances = dict()  ## instance name : class name
         self._decorator_properties = dict()
         self._decorator_class_props = dict()
-
+        self._function_return_types = dict()
+        self._return_type = None
         self._module = module
         self._module_path = module_path
         assert os.path.isdir( module_path )
@@ -87,6 +89,7 @@ class PythonToPythonJS(NodeVisitor):
                 classes = self._classes,
                 inline_classes = self._inline_classes,
                 decorator_class_props = self._decorator_class_props,
+                function_return_types = self._function_return_types,
             )
             pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
 
@@ -102,6 +105,7 @@ class PythonToPythonJS(NodeVisitor):
             self._classes.update( a['classes'] )
             self._inline_classes.update( a['inline_classes'] )
             self._decorator_class_props.update( a['decorator_class_props'] )
+            self._function_return_types.update( a['function_return_types'] )
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
@@ -239,13 +243,27 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Return(self, node):
         if node.value:
-            return writer.write('return %s' % self.visit(node.value))
-        return writer.write('return undefined')
+            if isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._classes:
+                self._return_type = node.value.func.id
+            elif isinstance(node.value, Name) and node.value.id == 'self' and 'self' in self._instances:
+                self._return_type = self._instances['self']
+
+            writer.write('return %s' % self.visit(node.value))
+
+        else:
+            raise RuntimeError
 
     def visit_BinOp(self, node):
+        node.operator_overloading = 'undefined'
         left = self.visit(node.left)
         op = self.visit(node.op)
         right = self.visit(node.right)
+        if isinstance(node.left, Name) and node.left.id in self._instances:
+            klass = self._instances[ node.left.id ]
+            if op == '*' and '__mul__' in self._classes[klass]:
+                node.operator_overloading = '__%s___mul__' %klass
+                assert node.operator_overloading
+                return '''JS('__%s___mul__( [%s, %s] )')''' %(klass, left, right)
         return '%s %s %s' % (left, op, right)
 
     def visit_Eq(self, node):
@@ -385,18 +403,25 @@ class PythonToPythonJS(NodeVisitor):
                 writer.write(code)
 
         elif isinstance(target, Name):
+            node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
             if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
                 self._instances[ target.id ] = node.value.func.id  ## keep track of instances
+            elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
+                self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
             elif target.id in self._instances:
-                self._instances.pop( target.id )
+                self._instances.pop( target.id )  ## TODO is this correct?
 
-            if isinstance(node.value, Name):
+            if isinstance(node.value, Name):  ## if this is a simple copy: "a = b" and "b" is known to be of some class
                 name = self.visit(node.value)
                 if name in self._instances: self._instances[ target.id ] = self._instances[ name ]
                 writer.write('%s = %s' % (target.id, name))
-            else:
-                writer.write('%s = %s' % (target.id, self.visit(node.value)))
+            elif isinstance(node.value, BinOp) and hasattr(node.value, 'operator_overloading') and node.value.operator_overloading in self._function_return_types:
+                self._instances[ target.id ] = self._function_return_types[ node.value.operator_overloading ]
+                writer.write('%s = %s' % (target.id, node_value))
+
+            else: ## blind assignment
+                writer.write('%s = %s' % (target.id, node_value))
 
         else:  # it's a Tuple
             id = self.identifier
@@ -545,6 +570,7 @@ class PythonToPythonJS(NodeVisitor):
                 expr = expr % (node.args.kwarg, node.args.kwarg)
                 writer.write(expr)
 
+        self._return_type = None
         #map(self.visit, node.body)
         for child in node.body:
             # simple test to drop triple quote comments
@@ -556,6 +582,12 @@ class PythonToPythonJS(NodeVisitor):
                     self.visit(sub)
             else:
                 self.visit(child)
+
+        if self._return_type:
+            #if hasattr(node, 'original_name'):
+            #    self._function_return_types[ node.original_name ] = self._return_type
+            #else:
+            self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
 

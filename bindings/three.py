@@ -90,6 +90,10 @@ class Vector3:
 		self.set( self.x*other.x, self.y*other.y, self.z*other.z )
 		return self
 
+	def __mul__(self, other):
+		assert isinstance(other, Vector3)
+		return Vector3( self.x*other.x, self.y*other.y, self.z*other.z )
+
 	def multiplyScalar(self, s):
 		self.set( self.x*s, self.y*s, self.z*s )
 		return self
