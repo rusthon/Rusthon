@@ -40,7 +40,9 @@ def test():
 	show_vec(b)
 
 	c = b.clone()
-	assert isinstance(c, Vector3)
+	c.normalize()
+	print( c.x )
+	v1.normalize()
 	c ^= v1  ## cross product
 	show_vec(c)
 

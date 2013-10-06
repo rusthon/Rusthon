@@ -475,7 +475,8 @@ class PythonToPythonJS(NodeVisitor):
                         #writer.write( '''JS('%s( [%s, %s] )')''' %(setter, name, self.visit(node.value)) )  ## can not nest have nested JS() calls
                         writer.write( '%s( [%s, %s] )' %(setter, name, self.visit(node.value)) )
                         fallback = False
-
+                else:
+                    writer.write('#!!!! class is known: %s' %klass)
 
             if fallback:
                 code = 'set_attribute(%s, "%s", %s)' % (
@@ -492,19 +493,23 @@ class PythonToPythonJS(NodeVisitor):
                 self._instances[ target.id ] = node.value.func.id  ## keep track of instances
             elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
                 self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
-            elif target.id in self._instances:
-                self._instances.pop( target.id )  ## TODO is this correct?
+            elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and node.value.func.value.id in self._instances:
+                typedef = self.get_typedef( node.value.func.value )
+                method = node.value.func.attr
+                if method in typedef.methods:
+                    func = typedef.get_pythonjs_function_name( method )
+                    if func in self._function_return_types:
+                        self._instances[ target.id ] = self._function_return_types[ func ]
 
-            if isinstance(node.value, Name):  ## if this is a simple copy: "a = b" and "b" is known to be of some class
-                name = self.visit(node.value)
-                if name in self._instances: self._instances[ target.id ] = self._instances[ name ]
-                writer.write('%s = %s' % (target.id, name))
+            elif isinstance(node.value, Name) and node_value in self._instances:  ## if this is a simple copy: "a = b" and "b" is known to be of some class
+                self._instances[ target.id ] = self._instances[ node_value ]
             elif isinstance(node.value, BinOp) and hasattr(node.value, 'operator_overloading') and node.value.operator_overloading in self._function_return_types:
                 self._instances[ target.id ] = self._function_return_types[ node.value.operator_overloading ]
-                writer.write('%s = %s' % (target.id, node_value))
 
-            else: ## blind assignment
-                writer.write('%s = %s' % (target.id, node_value))
+            elif target.id in self._instances:
+                self._instances.pop( target.id )
+
+            writer.write('%s = %s' % (target.id, node_value))
 
         else:  # it's a Tuple
             id = self.identifier
