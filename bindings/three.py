@@ -297,11 +297,11 @@ class _Camera( _ObjectBase ):
 		ob = self._object
 		JS('ob.updateProjectionMatrix()')
 
-class _OrthographicCamera( _Camera ):
+class OrthographicCamera( _Camera ):
 	def __init__(self, left, right, top, bottom, near, far):
 		self._object = JS('new THREE.OrthographicCamera(left, right, top, bottom, near, far)')
 
-class _PerspectiveCamera( _Camera ):
+class PerspectiveCamera( _Camera ):
 	def __init__(self, fov, aspect, near, far):
 		self._object = JS('new THREE.PerspectiveCamera(fov, aspect, near, far)')
 
@@ -322,13 +322,17 @@ class _PerspectiveCamera( _Camera ):
 		JS('ob.setViewOffset(fullWidth, fullHeight, x, y, width, height)')
 
 
-class _Scene:
+class Scene:
 	def __init__(self):
 		self._scene = JS('new THREE.Scene()')
 
 	def add(self, child):
 		scene = self._scene
 		JS('scene.add(child)')
+
+	def updateMatrixWorld(self):
+		scene = self._scene
+		JS('scene.updateMatrixWorld()')
 
 
 class _Renderer:
@@ -340,18 +344,26 @@ class _Renderer:
 		renderer = self._renderer
 		JS('renderer.setClearColor( {r:red, g:green, b:blue}, alpha)')
 
-
-class _CSS3DRenderer( _Renderer ):
-	def __init__(self):
-		self._renderer = JS('new THREE.CSS3DRenderer()')
-
 	def getDomElement(self):
 		renderer = self._renderer
 		return JS('renderer.domElement')
 
-class _WebGLRenderer( _Renderer ):
+	def render(self, scn, cam):
+		renderer = self._renderer
+		return JS('renderer.render(scn, cam)')
+
+class CSS3DRenderer( _Renderer ):
+	def __init__(self):
+		self._renderer = JS('new THREE.CSS3DRenderer()')
+
+
+class WebGLRenderer( _Renderer ):
 	def __init__(self):
 		self._renderer = JS('new THREE.WebGLRenderer()')
+
+	def getContext(self):
+		renderer = self._renderer
+		return JS('renderer.getContext()')
 
 
 class _ImageUtils:
@@ -363,24 +375,5 @@ class _ImageUtils:
 		JS('var _mapping = new THREE.CubeReflectionMapping()')
 		return JS('THREE.ImageUtils.loadTextureCube(urls, _mapping)')
 
-class _Three:
-	def __init__(self):
-		self.ImageUtils = _ImageUtils()
-		self.Vector3 = Vector3
+ImageUtils = _ImageUtils()
 
-	def Scene(self):
-		return _Scene()
-
-	def CSS3DRenderer(self):
-		return _CSS3DRenderer()
-
-	def WebGLRenderer(self):
-		return _WebGLRenderer()
-
-	def PerspectiveCamera(self, fov, aspect, near, far):
-		return _PerspectiveCamera(fov, aspect, near, far)
-
-	def OrthographicCamera(left, right, top, bottom, near, far):
-		return _OrthographicCamera(left, right, top, bottom, near, far)
-
-Three = _Three()

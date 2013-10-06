@@ -1,0 +1,39 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/three/three.min.js"></script>
+<script src="bindings/three.py"></script>
+</head>
+
+<body>
+<script type="text/python" closure="true">
+from three import *
+
+con = JS("document.createElement( 'div' )")
+JS('document.body.appendChild(con)')
+
+width = 640; height = 320
+scn = Scene()
+cam = PerspectiveCamera( 45, width, height, 0.01, 10000)
+scn.add( cam )
+
+ren = WebGLRenderer()
+ren.setSize( 640, 480 )
+ren.setClearColor( red=1.0, green=0.5, blue=0.5 )
+
+element = ren.getDomElement()
+JS('con.appendChild( element )')
+
+
+def animate():
+	JS('requestAnimationFrame( animate )')
+	scn.updateMatrixWorld()
+	s = scn._scene
+	c = cam._object
+	ren.render( s, c )
+	print('rendering')
+
+</script>
+<button onclick="animate()">click me</button>
+</body>
+</html>
