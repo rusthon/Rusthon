@@ -516,7 +516,7 @@ class PythonToPythonJS(NodeVisitor):
                 self._instances[ target.id ] = node.value.func.id  ## keep track of instances
             elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
                 self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
-            elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and node.value.func.value.id in self._instances:
+            elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and isinstance(node.value.func.value, Name) and node.value.func.value.id in self._instances:
                 typedef = self.get_typedef( node.value.func.value )
                 method = node.value.func.attr
                 if method in typedef.methods:

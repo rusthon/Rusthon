@@ -13,7 +13,7 @@ except ImportError:
 
 import tornado.ioloop
 import tornado.web
-import os, subprocess
+import os, subprocess, datetime
 
 PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
@@ -22,9 +22,13 @@ PATHS = dict(
 	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
 	runtime = os.path.abspath('../pythonscript.js'),
 	module_cache = '/tmp',
+
+	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
+	runtime_builtins = os.path.abspath('../runtime/builtins.py'),
+
 )
 
-
+REGENERATE_RUNTIME = True  ## to be safer, the runtime should be rebuilt each run
 
 def python_to_pythonjs( src, module=None ):
 	cmdheader = '#!%s' %PATHS['module_cache']
@@ -139,13 +143,30 @@ def convert_python_html_document( data ):
 
 	return '\n'.join( doc )
 
+
+def regenerate_runtime():
+	print('regenerating pythonscript runtime...')
+	global REGENERATE_RUNTIME
+	REGENERATE_RUNTIME = False
+	a = '// PythonScript Runtime - regenerated on: %s' %datetime.datetime.now().ctime()
+	b = pythonjs_to_javascript( open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8') )
+	c = python_to_javascript( open(PATHS['runtime_builtins'],'rb').read().decode('utf-8') )
+	src = '\n'.join( [a,b.strip(),c.strip()] )
+	file = open( PATHS['runtime'], 'wb')
+	file.write( src.encode('utf-8') )
+	file.close()
+	return src
+
 class MainHandler( tornado.web.RequestHandler ):
 	def get(self, path=None):
 		print('path', path)
 		if not path:
 			self.write( get_main_page() )
 		elif path == 'pythonscript.js':
-			data = open( PATHS['runtime'], 'rb').read()
+			if REGENERATE_RUNTIME:
+				data = regenerate_runtime()
+			else:
+				data = open( PATHS['runtime'], 'rb').read()
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))
 			self.write(data)
