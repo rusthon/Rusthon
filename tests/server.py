@@ -13,7 +13,7 @@ except ImportError:
 
 import tornado.ioloop
 import tornado.web
-import os, subprocess, datetime
+import os, sys, subprocess, datetime
 
 PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
@@ -28,7 +28,7 @@ PATHS = dict(
 
 )
 
-REGENERATE_RUNTIME = True  ## to be safer, the runtime should be rebuilt each run
+REGENERATE_RUNTIME = '--regenerate-runtime' in sys.argv
 
 def python_to_pythonjs( src, module=None ):
 	cmdheader = '#!%s' %PATHS['module_cache']

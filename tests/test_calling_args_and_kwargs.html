@@ -12,6 +12,9 @@ def mixed_args_kwargs( a, b, x=1, y=2, z=3 ):
 	print('testing mixed args and kwargs')
 	print a,b, x,y,z
 
+def test_simple(x,y):
+	print x,y
+
 def test():
 	print('hello world')
 	test_kwargs()
@@ -20,6 +23,11 @@ def test():
 
 	mixed_args_kwargs(9,9)
 	mixed_args_kwargs(9,9, z=420)
+
+	test_kwargs(3, 2, 1)
+
+	test_simple(1,2)
+	test_simple(1)  ## calling with too few args throw a TypeError
 
 </script>
 </head>

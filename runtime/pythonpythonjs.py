@@ -205,14 +205,20 @@ def get_arguments(signature, args, kwargs):
             kwarg = kwargs[arg]
             if kwarg:
                 out[arg] = kwarg
+            elif j < args.length:
+                out[arg] = args[j]
             elif arg in signature.kwargs:
                 out[arg] = signature.kwargs[arg]
             else:
-                out[arg] = args[j]
+                #out[arg] = args[j]
+                raise TypeError
+        elif j < args.length:
+            out[arg] = args[j]
         elif arg in signature.kwargs:
             out[arg] = signature.kwargs[arg]
         else:
-            out[arg] = args[j]
+            #out[arg] = args[j]
+            raise TypeError
         j += 1
     args = args.slice(j)
     if signature.vararg:

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Mon Oct  7 03:32:19 2013
+// PythonScript Runtime - regenerated on: Mon Oct  7 06:29:29 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -304,22 +304,34 @@ if(kwarg) {
 out[arg] = kwarg;
 }
 else {
-if(arg  in  signature.kwargs) {
-out[arg] = signature.kwargs[arg];
-}
-else {
+if(j < args.length) {
 out[arg] = args[j];
-}
-
-}
-
 }
 else {
 if(arg  in  signature.kwargs) {
 out[arg] = signature.kwargs[arg];
 }
 else {
+throw TypeError;
+}
+
+}
+
+}
+
+}
+else {
+if(j < args.length) {
 out[arg] = args[j];
+}
+else {
+if(arg  in  signature.kwargs) {
+out[arg] = signature.kwargs[arg];
+}
+else {
+throw TypeError;
+}
+
 }
 
 }

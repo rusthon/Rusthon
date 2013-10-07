@@ -451,3 +451,8 @@ class Mesh:
 	def rotation(self):
 		vec = self._object.rotation
 		return Vector3( object=vec )
+
+	@property
+	def scale(self):
+		vec = self._object.scale
+		return Vector3( object=vec )
