@@ -68,9 +68,12 @@ class JSGenerator(NodeVisitor):
         body = list()
         for child in node.body:
             # simple test to drop triple quote comments
-            if hasattr(child, 'value'):
-                if isinstance(child.value, Str):
-                    continue
+            #if hasattr(child, 'value'):
+            #    if isinstance(child.value, Str):
+            #        continue
+            if isinstance(child, Str):
+                continue
+
             if isinstance(child, GeneratorType):
                 for sub in child:
                     body.append(self.visit(sub))
@@ -150,7 +153,7 @@ class JSGenerator(NodeVisitor):
         return 'while(%s) {\n%s\n}' % (self.visit(node.test), body)
 
     def visit_Str(self, node):
-        return '"%s"' % node.s
+        return '"%s"' % node.s.replace('\n', '\\n')
 
     def visit_BinOp(self, node):
         left = self.visit(node.left)

@@ -23,7 +23,7 @@ cam.position.x = 5
 #ren = WebGLRenderer()
 ren = CanvasRenderer()
 ren.setSize( width, height )
-#ren.setClearColor( red=1.0, green=0.0, blue=0.5 )
+ren.setClearColor( red=0.1, green=0.8, blue=0.5 )
 
 element = ren.getDomElement()
 #JS('con.appendChild( element )')
@@ -36,9 +36,11 @@ scn.add( mesh )
 
 def animate():
 	JS('requestAnimationFrame( animate )')
-	scn.updateMatrixWorld()
+	#scn.updateMatrixWorld()
+
+	mesh.rotation.x = mesh.rotation.x + 0.01
+	mesh.rotation.y = mesh.rotation.y + 0.02
 	ren.render( scn, cam )
-	#print('rendering')
 
 </script>
 <button onclick="animate()">click me</button>

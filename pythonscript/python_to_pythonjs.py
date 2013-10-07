@@ -561,7 +561,7 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('print %s' % ', '.join(map(self.visit, node.values)))
 
     def visit_Str(self, node):
-        return '"%s"' % node.s
+        return '"""%s"""' % node.s
 
     def visit_Expr(self, node):
         writer.write(self.visit(node.value))
@@ -687,17 +687,17 @@ class PythonToPythonJS(NodeVisitor):
                 writer.write(expr)
 
         self._return_type = None
-        #map(self.visit, node.body)
-        for child in node.body:
-            # simple test to drop triple quote comments
-            if hasattr(child, 'value'):
-                if isinstance(child.value, Str):
-                    continue
-            if isinstance(child, GeneratorType):
-                for sub in child:
-                    self.visit(sub)
-            else:
-                self.visit(child)
+        map(self.visit, node.body)
+        #for child in node.body:
+        #    # simple test to drop triple quote comments
+        #    if hasattr(child, 'value'):
+        #        if isinstance(child.value, Str):
+        #            continue
+        #    if isinstance(child, GeneratorType):
+        #        for sub in child:
+        #            self.visit(sub)
+        #    else:
+        #        self.visit(child)
 
         if self._return_type:
             #if hasattr(node, 'original_name'):

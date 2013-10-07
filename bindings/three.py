@@ -7,7 +7,7 @@ class Color:
 		if object:
 			self._color = object
 		else:
-			self._color = JS('new THREE.Vector3()')
+			self._color = JS('new THREE.Color()')
 			self.setRGB(red=red, green=green, blue=blue)
 
 	def setRGB(self, red=1.0, green=1.0, blue=1.0):
@@ -383,7 +383,9 @@ class _Renderer:
 
 	def setClearColor(self, red=1.0, green=1.0, blue=1.0, alpha=1.0):
 		renderer = self._renderer
-		JS('renderer.setClearColor( {r:red, g:green, b:blue}, alpha)')
+		clr = Color( red=red, green=green, blue=blue )
+		c = clr._color
+		JS('renderer.setClearColor( c, alpha)')
 
 	def getDomElement(self):
 		renderer = self._renderer
@@ -439,3 +441,13 @@ class Mesh:
 		g = geometry._object
 		m = material._object
 		self._object = JS('new THREE.Mesh(g,m)')
+
+	@property
+	def position(self):
+		vec = self._object.position
+		return Vector3( object=vec )
+
+	@property
+	def rotation(self):
+		vec = self._object.rotation
+		return Vector3( object=vec )

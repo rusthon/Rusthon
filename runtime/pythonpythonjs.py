@@ -197,19 +197,23 @@ def get_arguments(signature, args, kwargs):
         argslength = signature.args.length
     else:
         argslength = 0
+
     j = 0
-    for i in jsrange(argslength):
+    while j < argslength:
         arg = JS('signature.args[j]')
         if kwargs:
             kwarg = kwargs[arg]
             if kwarg:
                 out[arg] = kwarg
+            elif arg in signature.kwargs:
+                out[arg] = signature.kwargs[arg]
             else:
                 out[arg] = args[j]
-                j = j + 1
+        elif arg in signature.kwargs:
+            out[arg] = signature.kwargs[arg]
         else:
             out[arg] = args[j]
-            j = j + 1
+        j += 1
     args = args.slice(j)
     if signature.vararg:
         out[signature.vararg] = args

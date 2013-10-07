@@ -1,0 +1,30 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+def test_kwargs( x=1, y=2, z=3 ):
+	print('testing kwargs')
+	print x,y,z
+
+def mixed_args_kwargs( a, b, x=1, y=2, z=3 ):
+	print('testing mixed args and kwargs')
+	print a,b, x,y,z
+
+def test():
+	print('hello world')
+	test_kwargs()
+	test_kwargs(x=100, y=200, z=300)
+	test_kwargs(y=420)
+
+	mixed_args_kwargs(9,9)
+	mixed_args_kwargs(9,9, z=420)
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
