@@ -2,9 +2,40 @@
 # by Brett Hartshorn - copyright 2013
 # License: PSFLv2 - http://www.python.org/psf/license/
 
+class Color:
+	def __init__(self, red=1.0, green=1.0, blue=1.0, object=None ):
+		if object:
+			self._color = object
+		else:
+			self._color = JS('new THREE.Vector3()')
+			self.setRGB(red=red, green=green, blue=blue)
+
+	def setRGB(self, red=1.0, green=1.0, blue=1.0):
+		color = self._color
+		JS('color.setRGB(red, green, blue)')
+
+	@property
+	def r(self):
+		color = self._color
+		return JS('color.r')
+	@property
+	def g(self):
+		color = self._color
+		return JS('color.g')
+	@property
+	def b(self):
+		color = self._color
+		return JS('color.b')
+
+	def clone(self):
+		return Color( red=self.r, green=self.g, blue=self.b )
+
 class Vector3:
-	def __init__(self, x=0, y=0, z=0 ):
-		self._vec = JS('new THREE.Vector3(x,y,z)')
+	def __init__(self, x=0, y=0, z=0, object=None ):
+		if object:
+			self._vec = object
+		else:
+			self._vec = JS('new THREE.Vector3(x,y,z)')
 
 	@property
 	def x(self):
@@ -321,6 +352,15 @@ class PerspectiveCamera( _Camera ):
 		ob = self._object
 		JS('ob.setViewOffset(fullWidth, fullHeight, x, y, width, height)')
 
+	@property
+	def position(self):
+		vec = self._object.position
+		return Vector3( object=vec )
+
+	def get_position(self):
+		vec = self._object.position
+		return Vector3( object=vec )
+
 
 class Scene:
 	def __init__(self):
@@ -328,7 +368,8 @@ class Scene:
 
 	def add(self, child):
 		scene = self._scene
-		JS('scene.add(child)')
+		c = child._object
+		JS('scene.add(c)')
 
 	def updateMatrixWorld(self):
 		scene = self._scene
@@ -350,7 +391,14 @@ class _Renderer:
 
 	def render(self, scn, cam):
 		renderer = self._renderer
-		return JS('renderer.render(scn, cam)')
+		s = scn._scene; c = cam._object
+		return JS('renderer.render(s, c)')
+
+
+class CanvasRenderer( _Renderer ):
+	def __init__(self):
+		self._renderer = JS('new THREE.CanvasRenderer()')
+
 
 class CSS3DRenderer( _Renderer ):
 	def __init__(self):
@@ -377,3 +425,17 @@ class _ImageUtils:
 
 ImageUtils = _ImageUtils()
 
+class MeshBasicMaterial:
+	def __init__(self):
+		self._object = JS('new THREE.MeshBasicMaterial( {color:0xff0000, wireframe:true} )')
+
+class CubeGeometry:
+	def __init__(self, width, height, length):
+		self._object = JS('new THREE.CubeGeometry(width, height, length)')
+
+
+class Mesh:
+	def __init__(self, geometry, material):
+		g = geometry._object
+		m = material._object
+		self._object = JS('new THREE.Mesh(g,m)')

@@ -6,32 +6,39 @@
 </head>
 
 <body>
-<script type="text/python" closure="true">
+<script type="text/python" closure="false">
 from three import *
 
-con = JS("document.createElement( 'div' )")
-JS('document.body.appendChild(con)')
+#con = JS("document.createElement( 'div' )")
+#JS('document.body.appendChild(con)')
 
 width = 640; height = 320
 scn = Scene()
 cam = PerspectiveCamera( 45, width, height, 0.01, 10000)
-scn.add( cam )
+cam.position.z = 100
+cam.position.x = 5
 
-ren = WebGLRenderer()
-ren.setSize( 640, 480 )
-ren.setClearColor( red=1.0, green=0.5, blue=0.5 )
+#scn.add( cam )
+
+#ren = WebGLRenderer()
+ren = CanvasRenderer()
+ren.setSize( width, height )
+#ren.setClearColor( red=1.0, green=0.0, blue=0.5 )
 
 element = ren.getDomElement()
-JS('con.appendChild( element )')
+#JS('con.appendChild( element )')
+JS('document.body.appendChild(element)')
 
+geo = CubeGeometry( 10, 10, 10 )
+mat = MeshBasicMaterial()
+mesh = Mesh( geo, mat )
+scn.add( mesh )
 
 def animate():
 	JS('requestAnimationFrame( animate )')
 	scn.updateMatrixWorld()
-	s = scn._scene
-	c = cam._object
-	ren.render( s, c )
-	print('rendering')
+	ren.render( scn, cam )
+	#print('rendering')
 
 </script>
 <button onclick="animate()">click me</button>

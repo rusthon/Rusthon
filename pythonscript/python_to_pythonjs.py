@@ -257,7 +257,7 @@ class PythonToPythonJS(NodeVisitor):
 
         if self._catch_attributes:
             self._inline_classes[ name ] = self._catch_attributes
-        writer.write('#$---: %s' %self._function_return_types)
+
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
@@ -394,21 +394,24 @@ class PythonToPythonJS(NodeVisitor):
         return self.visit(node.op) + self.visit(node.operand)
 
     def visit_Attribute(self, node):
+        node_value = self.visit(node.value)
+        typedef = None
         if isinstance(node.value, Name):
-            name = self.visit( node.value )
-            typedef = self.get_typedef( node.value )
-            if typedef:
-                if node.attr in typedef.properties:
-                    getter = typedef.properties[ node.attr ]['get']
-                    if getter in self._function_return_types:
-                        node.returns_type = self._function_return_types[getter]
-                    return '%s( [%s] )' %(getter, name)
-                else:
-                    return 'get_attribute(%s, "%s")' % (name, node.attr)
+            typedef = self.get_typedef( instance=node.value )
+        elif hasattr(node.value, 'returns_type'):
+            typedef = self.get_typedef( class_name=node.value.returns_type )
+
+        if typedef:
+            if node.attr in typedef.properties:
+                getter = typedef.properties[ node.attr ]['get']
+                if getter in self._function_return_types:
+                    node.returns_type = self._function_return_types[getter]
+                return '%s( [%s] )' %(getter, node_value)
             else:
-                return 'get_attribute(%s, "%s")' % (name, node.attr)
+                return 'get_attribute(%s, "%s")' % (node_value, node.attr)
         else:
-            return 'get_attribute(%s, "%s")' % (self.visit(node.value), node.attr)
+            return 'get_attribute(%s, "%s")' % (node_value, node.attr)
+
 
     def visit_Attribute_OLD(self, node):
         name = self.visit(node.value)
@@ -480,49 +483,25 @@ class PythonToPythonJS(NodeVisitor):
             code = "get_attribute(get_attribute('%s', '__setitem__'), '__call__')([%s, %s], JSObject())"
             code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
             writer.write(code)
+
         elif isinstance(target, Attribute):
-            #name = self.visit(target.value)
-            #if name == 'self' and isinstance(self._catch_attributes, set):
-            #    self._catch_attributes.add( target.attr )
-
-            fallback = True
-            #if name in self._instances:  ## support '.' operator overloading
-            #    klass = self._instances[ name ]
-            #    if klass in self._decorator_class_props and target.attr in self._decorator_class_props[klass]:
-            #        setter = self._decorator_class_props[klass][target.attr].get( 'set', None )
-            #        if setter:
-            #            #writer.write( '''JS('%s( [%s, %s] )')''' %(setter, name, self.visit(node.value)) )  ## can not nest have nested JS() calls
-            #            writer.write( '%s( [%s, %s] )' %(setter, name, self.visit(node.value)) )
-            #            fallback = False
-            #    else:
-            #        writer.write('#!!!! class is known: %s' %klass)
-            #else:
-            #    writer.write('##fallback--unknown-type: %s - %s' %(target.value, name))
-
             target_value = self.visit(target.value)  ## target.value may have "returns_type" after being visited
+            typedef = None
             if isinstance(target.value, Name):
                 if target.value.id == 'self' and isinstance(self._catch_attributes, set):
                     self._catch_attributes.add( target.attr )
-
                 typedef = self.get_typedef( instance=target.value )
-                if typedef and target.attr in typedef.properties:
-                    setter = typedef.properties[ target.attr ].get('set',None)
-                    if setter:
-                        writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
-                        fallback = False
-
             elif hasattr(target.value, 'returns_type'):
-                writer.write('#### HEY: %s' %target.value.returns_type)
                 typedef = self.get_typedef( class_name=target.value.returns_type )
-                if typedef and target.attr in typedef.properties:
-                    setter = typedef.properties[ target.attr ].get('set',None)
-                    if setter:
-                        writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
-                        fallback = False
 
+            fallback = True
+            if typedef and target.attr in typedef.properties:
+                setter = typedef.properties[ target.attr ].get('set',None)
+                if setter:
+                    writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
+                    fallback = False
 
             if fallback:
-                writer.write('#FALLBACK')
                 code = 'set_attribute(%s, "%s", %s)' % (
                     target_value,
                     target.attr,
