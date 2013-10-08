@@ -9,8 +9,8 @@
 <script type="text/python" closure="false">
 from three import *
 
-#con = JS("document.createElement( 'div' )")
-#JS('document.body.appendChild(con)')
+div = document.createElement( 'div' )
+document.body.appendChild(div)
 
 width = 640; height = 320
 scn = Scene()
@@ -26,12 +26,12 @@ ren.setSize( width, height )
 ren.setClearColor( red=0.1, green=0.8, blue=0.5 )
 
 element = ren.getDomElement()
-#JS('con.appendChild( element )')
-JS('document.body.appendChild(element)')
+div.appendChild( element )
 
 geo = CubeGeometry( 10, 10, 10 )
 mat = MeshBasicMaterial()
 mesh = Mesh( geo, mat )
+print 'mesh scale', mesh.scale.x, mesh.scale.y, mesh.scale.z
 scn.add( mesh )
 
 def animate():

@@ -24,6 +24,16 @@ else:
     from cStringIO import StringIO as StringIO
 
 
+try:
+    _log_file = open('/tmp/python_to_pythonjs.log', 'wb')
+except:
+    _log_file = None
+def log(txt):
+    if _log_file:
+        _log_file.write( txt+'\n' )
+        _log_file.flush()
+
+
 class Writer(object):
 
     def __init__(self):
@@ -106,6 +116,9 @@ class Typedef(object):
         return '__%s_%s' %(self.name, name) ## class name
 
     def check_for_parent_with(self, method=None, property=None, operator=None, class_attribute=None):
+        log('check_for_parent_with: %s'%locals())
+        log('self.parents: %s'%self.parents)
+
         for parent_name in self.parents:
             typedef = self.compiler.get_typedef( class_name=parent_name )
             if method and method in typedef.methods:
@@ -154,7 +167,11 @@ class PythonToPythonJS(NodeVisitor):
             class_name = self._instances[ instance.id ]
 
         if class_name:
-            assert class_name in self._classes
+            #assert class_name in self._classes
+            if class_name not in self._classes:
+                log('ERROR: class name not in self._classes: %s'%class_name)
+                log('self._classes: %s'%self._classes)
+                raise RuntimeError('class name: %s - not found in self._classes - node:%s '%(class_name, instance))
 
             if class_name not in self._typedefs:
                 self._typedefs[ class_name ] = Typedef(
@@ -233,6 +250,7 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_ClassDef(self, node):
         name = node.name
+        log('ClassDef: %s'%name)
         self._classes[ name ] = list()  ## method names
         self._class_parents[ name ] = set()
         self._class_attributes[ name ] = set()
@@ -256,12 +274,13 @@ class PythonToPythonJS(NodeVisitor):
             code = '__%s_parents.push(%s)' % (name, self.visit(base))
             writer.write(code)
             if isinstance(base, Name):
-                self._class_parents[ name ] = base.id
+                self._class_parents[ name ].add( base.id )
             else:
                 raise NotImplementedError
 
         for item in node.body:
             if isinstance(item, FunctionDef):
+                log('  method: %s'%item.name)
                 self._classes[ name ].append( item.name )
                 item_name = item.name
                 item.original_name = item.name
@@ -540,6 +559,7 @@ class PythonToPythonJS(NodeVisitor):
 
             elif typedef and '__setattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__setattr__' )
+                log('__setattr__ in instance typedef.methods - func:%s target_value:%s target_attr:%s' %(func, target_value, target_attr))
                 writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
 
 
@@ -652,6 +672,8 @@ class PythonToPythonJS(NodeVisitor):
         property_decorator = None
         decorators = []
         for decorator in reversed(node.decorator_list):
+            log('@decorator: %s' %decorator)
+
             if isinstance(decorator, Name) and decorator.id == 'property':
                 property_decorator = decorator
                 n = node.name + '__getprop__'
@@ -673,7 +695,7 @@ class PythonToPythonJS(NodeVisitor):
             else:
                 decorators.append( decorator )
 
-
+        log('function: %s'%node.name)
         writer.write('def %s(args, kwargs):' % node.name)
         writer.push()
 
@@ -725,6 +747,8 @@ class PythonToPythonJS(NodeVisitor):
                 expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
                 expr = expr % (node.args.kwarg, node.args.kwarg)
                 writer.write(expr)
+        else:
+            log('(function has no arguments)')
 
         self._return_type = None
         map(self.visit, node.body)
