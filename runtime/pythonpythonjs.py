@@ -67,13 +67,35 @@ def get_attribute(object, attribute):
 
     method are actually functions which are converted to methods by
     prepending their arguments with the current object. Properties are
-    not functions!"""
+    not functions!
+
+    DOM support:
+        http://stackoverflow.com/questions/14202699/document-createelement-not-working
+        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof
+    """
     if attribute == '__call__':
         if JS("{}.toString.call(object) === '[object Function]'"):
             return object
+
     var(attr)
     attr = object[attribute]
-    if attr:
+
+    if JS("object instanceof HTMLDocument"):
+        if JS("typeof(attr) === 'function'"):
+            def wrapper(args,kwargs):
+                return attr.apply(object, args)
+            return wrapper
+        else:
+            return attr
+    elif JS("object instanceof HTMLElement"):
+        if JS("typeof(attr) === 'function'"):
+            def wrapper(args,kwargs):
+                return attr.apply(object, args)
+            return wrapper
+        else:
+            return attr
+        
+    if attr:  ## what about cases where attr is zero?
         return attr
     var(__class__, __dict__, __get__, bases)
     # Check object.__class__.__dict__ for data descriptors named attr

@@ -12,6 +12,7 @@ from ast import Subscript
 from ast import Attribute
 from ast import FunctionDef
 from ast import BinOp
+from ast import Pass
 
 from ast import parse
 from ast import NodeVisitor
@@ -279,6 +280,8 @@ class PythonToPythonJS(NodeVisitor):
                 self.visit(item)  # this will output the code for the assign
                 writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.targets[0].id))
                 self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
+            elif isinstance(item, Pass):
+                pass
             else:
                 raise NotImplementedError
 
