@@ -229,24 +229,6 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
 
-    def _gen_getattr_helper(self, class_name, func_name):  ## DEPRECATED
-        '''
-        This helper is used to emulate how Python works, __getattr__ is only supposed
-        to be called when the attribute is not found on the instance.
-        '''
-        a = [
-            'def __%s____getattr_helper(args, kwargs):' %class_name,
-            '  var(signature, arguments)',
-            '  signature = JSObject(kwargs=JSObject(), args=JSArray("self", "name"))',
-            '  arguments = get_arguments(signature, args, kwargs)',
-            '''  JS("var self = arguments['self']")''',
-            '''  JS("var name = arguments['name']")''',
-            '  if name in get_attribute(self, "__dict__"):',
-            '    return get_attribute(getattr, "__call__")( JSArray(self,name), JSObject() )',
-            '  else:',
-            '    return %s( [self, name] )' %func_name
-        ]
-        return '\n'.join(a)
 
     def visit_ClassDef(self, node):
         name = node.name
@@ -258,8 +240,8 @@ class PythonToPythonJS(NodeVisitor):
         self._decorator_class_props[ name ] = self._decorator_properties
         self._instances[ 'self' ] = name
 
-        #for dec in node.decorator_list:
-        #    if isinstance(dec, Name) and dec.id == 'inline':
+        #for dec in node.decorator_list:  ## TODO class decorators
+        #    if isinstance(dec, Name) and dec.id == 'inline':  ## @inline class decorator is DEPRECATED
         #        self._catch_attributes = set()
         ## always catch attributes ##
         self._catch_attributes = set()
@@ -291,9 +273,6 @@ class PythonToPythonJS(NodeVisitor):
                 else:
                     writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.name))
 
-                #if item_name == '__getattr__':
-                #    writer.write( self._gen_getattr_helper(name, item.name) )
-
             elif isinstance(item, Assign) and isinstance(item.targets[0], Name):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name, item_name)
@@ -302,9 +281,6 @@ class PythonToPythonJS(NodeVisitor):
                 self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
             else:
                 raise NotImplementedError
-
-        #if self._catch_attributes:
-        #    self._instance_attributes[ name ] = self._catch_attributes
 
         self._catch_attributes = None
         self._decorator_properties = None
@@ -483,46 +459,6 @@ class PythonToPythonJS(NodeVisitor):
         else:
             return 'get_attribute(%s, "%s")' % (node_value, node.attr)
 
-
-    def visit_Attribute_OLD(self, node):
-        name = self.visit(node.value)
-        if name in self._instances:  ## support '.' operator overloading
-            klass = self._instances[ name ]
-            if '__getattr__' in self._classes[ klass ]:
-                if klass in self._instance_attributes:  ## static attribute
-                    if node.attr in self._instance_attributes[klass]:
-                        #return '''JS('%s.__dict__["%s"]')''' %(name, node.attr)  ## this is not ClosureCompiler compatible
-                        return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
-                    elif node.attr in self._classes[ klass ]: ## method
-                        return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
-                    elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
-                        getter = self._decorator_class_props[klass][node.attr]['get']
-                        return '''JS('%s( [%s] )')''' %(getter, name)
-                    else:
-                        return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
-
-                else:  ## dynamic python style
-                    return '__%s____getattr_helper( [%s, "%s"] )' % (klass, name, node.attr)
-            else:
-                if klass in self._instance_attributes:  ## static attribute
-                    if node.attr in self._instance_attributes[klass]:
-                        return '''JS('%s["__dict__"]["%s"]')''' %(name, node.attr)
-                    elif node.attr in self._classes[ klass ]: ## method
-                        return '''JS('__%s_attrs["%s"]')''' %(klass, node.attr)
-                    elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
-                        getter = self._decorator_class_props[klass][node.attr]['get']
-                        return '''JS('%s( [%s] )')''' %(getter, name)
-                    else:
-                        return '''JS('__%s___getattr__( [%s, "%s"] )')''' %(klass, name, node.attr)
-
-                elif klass in self._decorator_class_props and node.attr in self._decorator_class_props[klass]:
-                    getter = self._decorator_class_props[klass][node.attr]['get']
-                    return '''JS('%s( [%s] )')''' %(getter, name)
-
-                else:
-                    return 'get_attribute(%s, "%s")' % (name, node.attr)
-        else:
-            return 'get_attribute(%s, "%s")' % (name, node.attr)
 
     def visit_Index(self, node):
         return self.visit(node.value)
@@ -736,8 +672,6 @@ class PythonToPythonJS(NodeVisitor):
             if node.args.kwarg:
                 keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
-            #prebody = list()  ## NOT USED?
-
             # create a JS Object to store the value of each parameter
             signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
             writer.write('signature = JSObject(%s)' % signature)
@@ -759,21 +693,8 @@ class PythonToPythonJS(NodeVisitor):
 
         self._return_type = None
         map(self.visit, node.body)
-        #for child in node.body:
-        #    # simple test to drop triple quote comments
-        #    if hasattr(child, 'value'):
-        #        if isinstance(child.value, Str):
-        #            continue
-        #    if isinstance(child, GeneratorType):
-        #        for sub in child:
-        #            self.visit(sub)
-        #    else:
-        #        self.visit(child)
 
         if self._return_type:
-            #if hasattr(node, 'original_name'):
-            #    self._function_return_types[ node.original_name ] = self._return_type
-            #else:
             self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
