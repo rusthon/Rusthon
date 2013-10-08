@@ -501,14 +501,46 @@ class PythonToPythonJS(NodeVisitor):
             elif hasattr(target.value, 'returns_type'):
                 typedef = self.get_typedef( class_name=target.value.returns_type )
 
-            fallback = True
-            if typedef and target.attr in typedef.properties:
-                setter = typedef.properties[ target.attr ].get('set',None)
-                if setter:
-                    writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
-                    fallback = False
 
-            if fallback:
+            if typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
+                setter = typedef.properties[ target.attr ]['set']
+                writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
+            elif typedef and target.attr in typedef.class_attributes:
+                writer.write( '''%s['__class__']['__dict__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
+            elif typedef and target.attr in typedef.attributes:
+                writer.write( '''%s['__dict__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
+
+            elif typedef and typedef.parents:
+                parent_prop = typedef.check_for_parent_with( property=target.attr )
+                parent_classattr = typedef.check_for_parent_with( class_attribute=target.attr )
+                parent_setattr = typedef.check_for_parent_with( method='__setattr__' )
+                if parent_prop and 'set' in parent_prop.properties[target.attr]:
+                    setter = parent_prop.properties[target.attr]['set']
+                    writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
+                elif parent_classattr:
+                    writer.write( "window['__%s_attrs']['%s'] = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+                elif parent_setattr:
+                    func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
+                    writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+
+                elif '__setattr__' in typedef.methods:
+                    func = typedef.get_pythonjs_function_name( '__setattr__' )
+                    writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+
+                else:
+                    code = 'set_attribute(%s, "%s", %s)' % (
+                        target_value,
+                        target.attr,
+                        self.visit(node.value)
+                    )
+                    writer.write(code)
+
+            elif typedef and '__setattr__' in typedef.methods:
+                func = typedef.get_pythonjs_function_name( '__setattr__' )
+                writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+
+
+            else:
                 code = 'set_attribute(%s, "%s", %s)' % (
                     target_value,
                     target.attr,
