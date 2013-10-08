@@ -104,6 +104,26 @@ class Typedef(object):
         assert name in self.methods
         return '__%s_%s' %(self.name, name) ## class name
 
+    def check_for_parent_with(self, method=None, property=None, operator=None, class_attribute=None):
+        for parent_name in self.parents:
+            typedef = self.compiler.get_typedef( class_name=parent_name )
+            if method and method in typedef.methods:
+                return typedef
+            elif property and property in typedef.properties:
+                return typedef
+            elif operator and typedef.operators:
+                return typedef
+            elif class_attribute in typedef.class_attributes:
+                return typedef
+            elif typedef.parents:
+                res = typedef.check_for_parent_with(
+                    method=method, 
+                    property=property, 
+                    operator=operator,
+                    class_attribute=class_attribute
+                )
+                if res:
+                    return res
 
 class PythonToPythonJS(NodeVisitor):
 
@@ -112,6 +132,7 @@ class PythonToPythonJS(NodeVisitor):
     def __init__(self, module=None, module_path=None):
         super(PythonToPythonJS, self).__init__()
         self._classes = dict()    ## class name : [method names]
+        self._class_parents = dict()  ## class name : parents
         self._instance_attributes = dict()  ## class name : [attribute names]
         self._class_attributes = dict()
         self._catch_attributes = None
@@ -124,6 +145,8 @@ class PythonToPythonJS(NodeVisitor):
         self._module = module
         self._module_path = module_path
 
+        self._typedefs = dict()  ## class name : typedef  (not pickled)
+
     def get_typedef(self, instance=None, class_name=None):
         assert instance or class_name
         if isinstance(instance, Name) and instance.id in self._instances:
@@ -131,14 +154,18 @@ class PythonToPythonJS(NodeVisitor):
 
         if class_name:
             assert class_name in self._classes
-            typedef = Typedef(
-                name = class_name,
-                methods = self._classes[ class_name ],
-                properties = self._decorator_class_props[ class_name ],
-                attributes = self._instance_attributes[ class_name ],
-                class_attributes = self._class_attributes[ class_name ],
-            )
-            return typedef
+
+            if class_name not in self._typedefs:
+                self._typedefs[ class_name ] = Typedef(
+                    name = class_name,
+                    methods = self._classes[ class_name ],
+                    properties = self._decorator_class_props[ class_name ],
+                    attributes = self._instance_attributes[ class_name ],
+                    class_attributes = self._class_attributes[ class_name ],
+                    parents = self._class_parents[ class_name ],
+                    compiler = self,
+                )
+            return self._typedefs[ class_name ]
 
     def save_module(self):
         if self._module and self._module_path:
@@ -148,6 +175,7 @@ class PythonToPythonJS(NodeVisitor):
                 class_attributes = self._class_attributes,
                 decorator_class_props = self._decorator_class_props,
                 function_return_types = self._function_return_types,
+                class_parents = self._class_parents,
             )
             pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
 
@@ -165,6 +193,7 @@ class PythonToPythonJS(NodeVisitor):
             self._instance_attributes.update( a['instance_attributes'] )
             self._decorator_class_props.update( a['decorator_class_props'] )
             self._function_return_types.update( a['function_return_types'] )
+            self._class_parents.update( a['class_parents'] )
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
@@ -200,7 +229,7 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Yield(self, node):
         return 'yield %s' % self.visit(node.value)
 
-    def _gen_getattr_helper(self, class_name, func_name):
+    def _gen_getattr_helper(self, class_name, func_name):  ## DEPRECATED
         '''
         This helper is used to emulate how Python works, __getattr__ is only supposed
         to be called when the attribute is not found on the instance.
@@ -222,6 +251,7 @@ class PythonToPythonJS(NodeVisitor):
     def visit_ClassDef(self, node):
         name = node.name
         self._classes[ name ] = list()  ## method names
+        self._class_parents[ name ] = set()
         self._class_attributes[ name ] = set()
         self._catch_attributes = None
         self._decorator_properties = dict() ## property names :  {'get':func, 'set':func}
@@ -237,11 +267,16 @@ class PythonToPythonJS(NodeVisitor):
 
 
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
-        writer.write('__%s_attrs = JSObject()' % name)
-        writer.write('__%s_parents = JSArray()' % name)
+        writer.write('window["__%s_attrs"] = JSObject()' % name)
+        writer.write('window["__%s_parents"] = JSArray()' % name)
         for base in node.bases:
             code = '__%s_parents.push(%s)' % (name, self.visit(base))
             writer.write(code)
+            if isinstance(base, Name):
+                self._class_parents[ name ] = base.id
+            else:
+                raise NotImplementedError
+
         for item in node.body:
             if isinstance(item, FunctionDef):
                 self._classes[ name ].append( item.name )
@@ -254,7 +289,7 @@ class PythonToPythonJS(NodeVisitor):
                 if item_name in self._decorator_properties:
                     pass
                 else:
-                    writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
+                    writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.name))
 
                 #if item_name == '__getattr__':
                 #    writer.write( self._gen_getattr_helper(name, item.name) )
@@ -263,7 +298,7 @@ class PythonToPythonJS(NodeVisitor):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the assign
-                writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.targets[0].id))
+                writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.targets[0].id))
                 self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
             else:
                 raise NotImplementedError
@@ -275,7 +310,7 @@ class PythonToPythonJS(NodeVisitor):
         self._decorator_properties = None
         self._instances.pop('self')
 
-        writer.write('%s = create_class("%s", __%s_parents, __%s_attrs)' % (name, name, name, name))
+        writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"])' % (name, name, name, name))
 
     def visit_If(self, node):
         writer.write('if %s:' % self.visit(node.test))
@@ -427,6 +462,22 @@ class PythonToPythonJS(NodeVisitor):
             elif '__getattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__getattr__' )
                 return '%s([%s, "%s"])' %(func, node_value, node.attr)
+
+            elif typedef.check_for_parent_with( property=node.attr ):
+                parent = typedef.check_for_parent_with( property=node.attr )
+                getter = parent.properties[ node.attr ]['get']
+                if getter in self._function_return_types:
+                    node.returns_type = self._function_return_types[getter]
+                return '%s( [%s] )' %(getter, node_value)
+            elif typedef.check_for_parent_with( class_attribute=node.attr ):
+                #return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## get_attribute is broken with grandparent class attributes
+                parent = typedef.check_for_parent_with( class_attribute=node.attr )
+                return "window['__%s_attrs']['%s']" %(parent.name, node.attr)
+            elif typedef.check_for_parent_with( method='__getattr__' ):
+                parent = typedef.check_for_parent_with( method='__getattr__' )
+                func = parent.get_pythonjs_function_name( '__getattr__' )
+                return '%s([%s, "%s"])' %(func, node_value, node.attr)
+
             else:
                 return 'get_attribute(%s, "%s")' % (node_value, node.attr)
         else:
