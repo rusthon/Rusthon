@@ -235,7 +235,8 @@ class PythonToPythonJS(NodeVisitor):
         keys = [x.s for x in node.keys]
         values = map(self.visit, node.values)
         a = [ '%s=%s'%x for x in zip(keys, values) ]
-        return 'get_attribute(dict, "__call__")([], JSObject(%s))' % ', '.join(a)
+        b = 'js_object=JSObject(%s)' %', '.join(a)
+        return 'get_attribute(dict, "__call__")([], JSObject(%s))' % b
 
     def visit_Tuple(self, node):
         ## TODO how to deal with tuples
@@ -679,7 +680,10 @@ class PythonToPythonJS(NodeVisitor):
 
             name = self.visit(node.func)
             if call_has_args:
-                return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
+                if name == 'dict':
+                    return 'get_attribute(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
+                else:
+                    return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
             elif name in self._classes:
                 return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
             else:

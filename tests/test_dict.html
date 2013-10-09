@@ -6,20 +6,21 @@
 
 def test():
 	global d, l
-	d = dict(a=1, b=2)
+
+	d = dict(a=1, b=2) ## functional style
 	print( d['a'] )
 	print( d['b'] )
 	print( len(d) )
-	print( d )
 
 	d['a'] = 'hello'
 	d['b'] = 'world'
+	d['c'] = 'foobar'
 	print( d['a'] )
 	print( d['b'] )
+	print( d['c'] )
 	print( len(d) )
 
-
-	l = {'x':3, 'y':4}
+	l = {'x':3, 'y':4}  ## literal style
 	print( l['x'] )
 	print( l['y'] )
 	l['x'] = 'XXX'
