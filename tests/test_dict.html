@@ -1,0 +1,30 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+def test():
+	global d, l
+	d = dict(a=1, b=2)
+	print( d['a'] )
+	print( d['b'] )
+	print( len(d) )
+	#d['a'] = 'hello'
+	#d['b'] = 'world'
+	#print( d['a'] )
+	#print( d['b'] )
+	#print( len(d) )
+
+
+	l = {'x':3, 'y':4}
+	print( l['x'] )
+	print( l['y'] )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

@@ -151,11 +151,10 @@ def regenerate_runtime():
 	a = '// PythonScript Runtime - regenerated on: %s' %datetime.datetime.now().ctime()
 	b = pythonjs_to_javascript(
 		open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8'),
-		global_variable_scope = True  ## because we are not sure if the old code is compatible with the new style
 	)
 	c = python_to_javascript(
 		open(PATHS['runtime_builtins'],'rb').read().decode('utf-8'),
-		global_variable_scope = True
+		global_variable_scope = False ## this should be safe
 	)
 	src = '\n'.join( [a,b.strip(),c.strip()] )
 	file = open( PATHS['runtime'], 'wb')

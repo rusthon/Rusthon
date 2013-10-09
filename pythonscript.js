@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Oct  8 17:34:29 2013
+// PythonScript Runtime - regenerated on: Wed Oct  9 02:45:12 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -78,6 +78,10 @@ var get_attribute = function(object, attribute) {
 "Retrieve an attribute, method, property, or wrapper function.\n\n    method are actually functions which are converted to methods by\n    prepending their arguments with the current object. Properties are\n    not functions!\n\n    DOM support:\n        http://stackoverflow.com/questions/14202699/document-createelement-not-working\n        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n    Direct JavaScript Calls:\n        if an external javascript function is found, and it was not a wrapper that was generated here,\n        check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n        wrapper, cache it on the function, and return the wrapper.\n    ";
 if(attribute == "__call__") {
 if({}.toString.call(object) === '[object Function]') {
+if(object.pythonscript_function === true) {
+return object;
+}
+else {
 if(object.is_wrapper !== undefined) {
 return object;
 }
@@ -95,6 +99,8 @@ window["wrapper"] = wrapper
 wrapper.is_wrapper = true;
 object.cached_wrapper = wrapper;
 return wrapper;
+}
+
 }
 
 }
@@ -356,6 +362,7 @@ argslength = 0;
 }
 
 if(args.length > signature.args.length) {
+console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature);
 throw TypeError("function called with wrong number of arguments");
 }
 
@@ -376,6 +383,7 @@ if(arg  in  signature.kwargs) {
 out[arg] = signature.kwargs[arg];
 }
 else {
+console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
 throw TypeError("function called with wrong number of arguments");
 }
 
@@ -393,6 +401,7 @@ if(arg  in  signature.kwargs) {
 out[arg] = signature.kwargs[arg];
 }
 else {
+console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
 throw TypeError("function called with wrong number of arguments");
 }
 
@@ -518,6 +527,7 @@ return output;
 }
 window["json_to_pythonscript"] = json_to_pythonscript
 var range = function(args, kwargs) {
+var i, r;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("num")};
 arguments = get_arguments(signature, args, kwargs);
@@ -537,6 +547,7 @@ return r;
 }
 window["range"] = range 
 
+range.pythonscript_function = true;
 var StopIteration, __StopIteration_attrs, __StopIteration_parents;
 window["__StopIteration_attrs"] = Object();
 window["__StopIteration_parents"] = create_array();
@@ -550,6 +561,7 @@ return get_attribute(obj, "__len__")(create_array(), Object());
 }
 window["len"] = len 
 
+len.pythonscript_function = true;
 var next = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("obj")};
@@ -559,7 +571,9 @@ return get_attribute(obj, "next")(create_array(), Object());
 }
 window["next"] = next 
 
+next.pythonscript_function = true;
 var map = function(args, kwargs) {
+var out;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("func", "objs")};
 arguments = get_arguments(signature, args, kwargs);
@@ -574,6 +588,7 @@ return out;
 }
 window["map"] = map 
 
+map.pythonscript_function = true;
 var Iterator, __Iterator_attrs, __Iterator_parents;
 window["__Iterator_attrs"] = Object();
 window["__Iterator_parents"] = create_array();
@@ -589,8 +604,10 @@ self["__dict__"]["index"] = index;
 }
 window["__Iterator___init__"] = __Iterator___init__ 
 
+__Iterator___init__.pythonscript_function = true;
 window["__Iterator_attrs"]["__init__"] = __Iterator___init__;
 var __Iterator_next = function(args, kwargs) {
+var index, length, item;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -613,6 +630,7 @@ return item;
 }
 window["__Iterator_next"] = __Iterator_next 
 
+__Iterator_next.pythonscript_function = true;
 window["__Iterator_attrs"]["next"] = __Iterator_next;
 Iterator = create_class("Iterator", window["__Iterator_parents"], window["__Iterator_attrs"]);
 var list, __list_attrs, __list_parents;
@@ -634,8 +652,10 @@ self["__dict__"]["js_object"] = create_array();
 }
 window["__list___init__"] = __list___init__ 
 
+__list___init__.pythonscript_function = true;
 window["__list_attrs"]["__init__"] = __list___init__;
 var __list_append = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "obj")};
 arguments = get_arguments(signature, args, kwargs);
@@ -647,6 +667,7 @@ __array.push(obj);
 }
 window["__list_append"] = __list_append 
 
+__list_append.pythonscript_function = true;
 window["__list_attrs"]["append"] = __list_append;
 var __list_extend = function(args, kwargs) {
 var signature, arguments;
@@ -676,8 +697,10 @@ if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])
 }
 window["__list_extend"] = __list_extend 
 
+__list_extend.pythonscript_function = true;
 window["__list_attrs"]["extend"] = __list_extend;
 var __list_insert = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "index", "obj")};
 arguments = get_arguments(signature, args, kwargs);
@@ -690,8 +713,10 @@ __array.splice(index, 0, obj);
 }
 window["__list_insert"] = __list_insert 
 
+__list_insert.pythonscript_function = true;
 window["__list_attrs"]["insert"] = __list_insert;
 var __list_remove = function(args, kwargs) {
+var index, __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "obj")};
 arguments = get_arguments(signature, args, kwargs);
@@ -707,8 +732,10 @@ __array.splice(index, 1);
 }
 window["__list_remove"] = __list_remove 
 
+__list_remove.pythonscript_function = true;
 window["__list_attrs"]["remove"] = __list_remove;
 var __list_pop = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -719,8 +746,10 @@ return __array.pop();
 }
 window["__list_pop"] = __list_pop 
 
+__list_pop.pythonscript_function = true;
 window["__list_attrs"]["pop"] = __list_pop;
 var __list_index = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "obj")};
 arguments = get_arguments(signature, args, kwargs);
@@ -732,8 +761,10 @@ return __array.indexOf(obj);
 }
 window["__list_index"] = __list_index 
 
+__list_index.pythonscript_function = true;
 window["__list_attrs"]["index"] = __list_index;
 var __list_count = function(args, kwargs) {
+var i;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "obj")};
 arguments = get_arguments(signature, args, kwargs);
@@ -763,8 +794,10 @@ return i;
 }
 window["__list_count"] = __list_count 
 
+__list_count.pythonscript_function = true;
 window["__list_attrs"]["count"] = __list_count;
 var __list_reverse = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -775,8 +808,10 @@ self["__dict__"]["js_object"] = __array.reverse();
 }
 window["__list_reverse"] = __list_reverse 
 
+__list_reverse.pythonscript_function = true;
 window["__list_attrs"]["reverse"] = __list_reverse;
 var __list_shift = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -787,8 +822,10 @@ return __array.shift();
 }
 window["__list_shift"] = __list_shift 
 
+__list_shift.pythonscript_function = true;
 window["__list_attrs"]["shift"] = __list_shift;
 var __list_slice = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "start", "end")};
 arguments = get_arguments(signature, args, kwargs);
@@ -801,6 +838,7 @@ return __array.slice(start, end);
 }
 window["__list_slice"] = __list_slice 
 
+__list_slice.pythonscript_function = true;
 window["__list_attrs"]["slice"] = __list_slice;
 var __list___iter__ = function(args, kwargs) {
 var signature, arguments;
@@ -814,8 +852,10 @@ return get_attribute(Iterator, "__call__")(__args_6, __kwargs_6);
 }
 window["__list___iter__"] = __list___iter__ 
 
+__list___iter__.pythonscript_function = true;
 window["__list_attrs"]["__iter__"] = __list___iter__;
 var __list_get = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "index")};
 arguments = get_arguments(signature, args, kwargs);
@@ -827,8 +867,10 @@ return __array[index];
 }
 window["__list_get"] = __list_get 
 
+__list_get.pythonscript_function = true;
 window["__list_attrs"]["get"] = __list_get;
 var __list_set = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "index", "value")};
 arguments = get_arguments(signature, args, kwargs);
@@ -841,8 +883,10 @@ __array[index] = value;
 }
 window["__list_set"] = __list_set 
 
+__list_set.pythonscript_function = true;
 window["__list_attrs"]["set"] = __list_set;
 var __list___len__ = function(args, kwargs) {
+var __array;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -853,6 +897,7 @@ return __array.length;
 }
 window["__list___len__"] = __list___len__ 
 
+__list___len__.pythonscript_function = true;
 window["__list_attrs"]["__len__"] = __list___len__;
 list = create_class("list", window["__list_parents"], window["__list_attrs"]);
 var dict, __dict_attrs, __dict_parents;
@@ -874,8 +919,10 @@ self["__dict__"]["js_object"] = Object();
 }
 window["__dict___init__"] = __dict___init__ 
 
+__dict___init__.pythonscript_function = true;
 window["__dict_attrs"]["__init__"] = __dict___init__;
 var __dict_get = function(args, kwargs) {
+var __dict;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "key", "d")};
 arguments = get_arguments(signature, args, kwargs);
@@ -892,8 +939,10 @@ return d;
 }
 window["__dict_get"] = __dict_get 
 
+__dict_get.pythonscript_function = true;
 window["__dict_attrs"]["get"] = __dict_get;
 var __dict_set = function(args, kwargs) {
+var __dict;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "key", "value")};
 arguments = get_arguments(signature, args, kwargs);
@@ -906,8 +955,10 @@ __dict[key] = value;
 }
 window["__dict_set"] = __dict_set 
 
+__dict_set.pythonscript_function = true;
 window["__dict_attrs"]["set"] = __dict_set;
 var __dict___len__ = function(args, kwargs) {
+var __dict;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -918,8 +969,10 @@ return Object.keys(__dict).length;
 }
 window["__dict___len__"] = __dict___len__ 
 
+__dict___len__.pythonscript_function = true;
 window["__dict_attrs"]["__len__"] = __dict___len__;
 var __dict_keys = function(args, kwargs) {
+var __dict, __keys, out;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
@@ -933,7 +986,37 @@ return out;
 }
 window["__dict_keys"] = __dict_keys 
 
+__dict_keys.pythonscript_function = true;
 window["__dict_attrs"]["keys"] = __dict_keys;
+var __dict___getitem__ = function(args, kwargs) {
+var __dict;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "key")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var key = arguments['key'];
+__dict = self["__dict__"]["js_object"];
+return __dict[key];
+}
+window["__dict___getitem__"] = __dict___getitem__ 
+
+__dict___getitem__.pythonscript_function = true;
+window["__dict_attrs"]["__getitem__"] = __dict___getitem__;
+var __dict___setitem__ = function(args, kwargs) {
+var __dict;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "key", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var key = arguments['key'];
+var value = arguments['value'];
+__dict = self["__dict__"]["js_object"];
+__dict[key] = value;
+}
+window["__dict___setitem__"] = __dict___setitem__ 
+
+__dict___setitem__.pythonscript_function = true;
+window["__dict_attrs"]["__setitem__"] = __dict___setitem__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"]);
 var str, __str_attrs, __str_parents;
 window["__str_attrs"] = Object();
@@ -948,6 +1031,7 @@ self["__dict__"]["jsstring"] = jsstring;
 }
 window["__str___init__"] = __str___init__ 
 
+__str___init__.pythonscript_function = true;
 window["__str_attrs"]["__init__"] = __str___init__;
 var __str___iter__ = function(args, kwargs) {
 var signature, arguments;
@@ -961,5 +1045,6 @@ return get_attribute(Iterator, "__call__")(__args_7, __kwargs_7);
 }
 window["__str___iter__"] = __str___iter__ 
 
+__str___iter__.pythonscript_function = true;
 window["__str_attrs"]["__iter__"] = __str___iter__;
 str = create_class("str", window["__str_parents"], window["__str_attrs"]);

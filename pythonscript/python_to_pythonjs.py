@@ -166,6 +166,10 @@ class PythonToPythonJS(NodeVisitor):
         self._module_path = module_path
 
         self._typedefs = dict()  ## class name : typedef  (not pickled)
+        self.setup_builtins()
+
+    def setup_builtins(self):
+        self._classes['dict'] = set(['__getitem__', '__setitem__'])
 
     def get_typedef(self, instance=None, class_name=None):
         assert instance or class_name
@@ -225,6 +229,13 @@ class PythonToPythonJS(NodeVisitor):
             a,b = node.test.args
             if b.id in self._classes:
                 self._instances[ a.id ] = b.id
+
+    def visit_Dict(self, node):
+        node.returns_type = 'dict'
+        keys = [x.s for x in node.keys]
+        values = map(self.visit, node.values)
+        a = [ '%s=%s'%x for x in zip(keys, values) ]
+        return 'get_attribute(dict, "__call__")([], JSObject(%s))' % ', '.join(a)
 
     def visit_Tuple(self, node):
         ## TODO how to deal with tuples
@@ -716,7 +727,7 @@ class PythonToPythonJS(NodeVisitor):
                     local_vars.add( n.targets[0].id )
                 elif isinstance(n, Global):
                     global_vars.update( n.names )
-            if local_vars:
+            if local_vars-global_vars:
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
 
@@ -778,7 +789,7 @@ class PythonToPythonJS(NodeVisitor):
             self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
-
+        writer.write('%s.pythonscript_function=True'%node.name)
         # apply decorators
         for decorator in decorators:
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))

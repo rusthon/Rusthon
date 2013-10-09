@@ -161,6 +161,14 @@ class dict:
         out.js_object = __keys
         return out
 
+    def __getitem__(self, key):
+        __dict = self.js_object
+        return JS('__dict[key]')
+
+    def __setitem__(self, key, value):
+        __dict = self.js_object
+        JS('__dict[key] = value')
+
 
 class str:
 

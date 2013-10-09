@@ -80,7 +80,9 @@ def get_attribute(object, attribute):
     """
     if attribute == '__call__':
         if JS("{}.toString.call(object) === '[object Function]'"):
-            if JS("object.is_wrapper !== undefined"):
+            if JS("object.pythonscript_function === true"):
+                return object
+            elif JS("object.is_wrapper !== undefined"):
                 return object
             else:
                 JS("var cached = object.cached_wrapper")
@@ -247,6 +249,7 @@ def get_arguments(signature, args, kwargs):
         argslength = 0
 
     if args.length > signature.args.length:
+        print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
         raise TypeError('function called with wrong number of arguments')
 
     j = 0
@@ -261,12 +264,14 @@ def get_arguments(signature, args, kwargs):
             elif arg in signature.kwargs:
                 out[arg] = signature.kwargs[arg]
             else:
+                print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
                 raise TypeError('function called with wrong number of arguments')
         elif j < args.length:
             out[arg] = args[j]
         elif arg in signature.kwargs:
             out[arg] = signature.kwargs[arg]
         else:
+            print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
             raise TypeError('function called with wrong number of arguments')
         j += 1
 
