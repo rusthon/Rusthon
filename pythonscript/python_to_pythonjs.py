@@ -13,6 +13,7 @@ from ast import Attribute
 from ast import FunctionDef
 from ast import BinOp
 from ast import Pass
+from ast import Global
 
 from ast import parse
 from ast import NodeVisitor
@@ -33,6 +34,11 @@ def log(txt):
         _log_file.write( txt+'\n' )
         _log_file.flush()
 
+
+GLOBAL_VARIABLE_SCOPE = False              ## Python style
+if '--global-variable-scope' in sys.argv:  ## JavaScript style
+    GLOBAL_VARIABLE_SCOPE = True
+    log('not using python style variable scope')
 
 class Writer(object):
 
@@ -698,6 +704,21 @@ class PythonToPythonJS(NodeVisitor):
         log('function: %s'%node.name)
         writer.write('def %s(args, kwargs):' % node.name)
         writer.push()
+
+        ## the user will almost always want to use Python-style variable scope,
+        ## this is kept here as an option to be sure we are compatible with the
+        ## old-style code in runtime/pythonpythonjs.py and runtime/builtins.py
+        if not GLOBAL_VARIABLE_SCOPE:
+            local_vars = set()
+            global_vars = set()
+            for n in node.body:
+                if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local
+                    local_vars.add( n.targets[0].id )
+                elif isinstance(n, Global):
+                    global_vars.update( n.names )
+            if local_vars:
+                a = ','.join( local_vars-global_vars )
+                writer.write('var(%s)' %a)
 
         if len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
             # new pythonjs' python function arguments handling

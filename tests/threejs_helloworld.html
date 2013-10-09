@@ -3,46 +3,45 @@
 <script src="pythonscript.js"></script>
 <script src="libs/three/three.min.js"></script>
 <script src="bindings/three.py"></script>
-</head>
 
-<body>
 <script type="text/python" closure="false">
 from three import *
 
-div = document.createElement( 'div' )
-document.body.appendChild(div)
+def test():
+	global ren, scn, cam, mesh
 
-width = 640; height = 320
-scn = Scene()
-cam = PerspectiveCamera( 45, width, height, 0.01, 10000)
-cam.position.z = 100
-cam.position.x = 5
+	div = document.createElement( 'div' )
+	document.body.appendChild(div)
 
-#scn.add( cam )
+	width = 640; height = 320
+	scn = Scene()
+	cam = PerspectiveCamera( 45, width/height, 0.01, 10000)
+	cam.position.z = 100
+	cam.position.x = 5
 
-#ren = WebGLRenderer()
-ren = CanvasRenderer()
-ren.setSize( width, height )
-ren.setClearColor( red=0.1, green=0.8, blue=0.5 )
+	ren = CanvasRenderer()
+	ren.setSize( width, height )
+	ren.setClearColor( red=0.1, green=0.8, blue=0.5 )
 
-element = ren.getDomElement()
-div.appendChild( element )
+	div.appendChild( ren.domElement )
 
-geo = CubeGeometry( 10, 10, 10 )
-mat = MeshBasicMaterial()
-mesh = Mesh( geo, mat )
-print 'mesh scale', mesh.scale.x, mesh.scale.y, mesh.scale.z
-scn.add( mesh )
+	geo = CubeGeometry( 10, 10, 10 )
+	mat = MeshBasicMaterial()
+	mesh = Mesh( geo, mat )
+	scn.add( mesh )
+
+	animate()
 
 def animate():
-	JS('requestAnimationFrame( animate )')
-	#scn.updateMatrixWorld()
-
+	requestAnimationFrame( animate )
 	mesh.rotation.x = mesh.rotation.x + 0.01
 	mesh.rotation.y = mesh.rotation.y + 0.02
 	ren.render( scn, cam )
 
 </script>
-<button onclick="animate()">click me</button>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
 </body>
 </html>

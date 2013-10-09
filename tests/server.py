@@ -28,17 +28,19 @@ PATHS = dict(
 
 )
 
-REGENERATE_RUNTIME = '--regenerate-runtime' in sys.argv
 
-def python_to_pythonjs( src, module=None ):
+
+def python_to_pythonjs( src, module=None, global_variable_scope=False ):
 	cmdheader = '#!%s' %PATHS['module_cache']
 	if module:
 		assert '.' not in module
 		cmdheader += ';' + module
 	cmdheader += '\n'
 
+	cmd = ['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')]
+	if global_variable_scope: cmd.append('--global-variable-scope')
 	p = subprocess.Popen(
-		['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')],
+		cmd,
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
@@ -68,8 +70,8 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 
 	return a
 
-def python_to_javascript( src, module=None, closure_compiler=False, debug=False ):
-	a = python_to_pythonjs( src, module=module )
+def python_to_javascript( src, module=None, closure_compiler=False, debug=False, global_variable_scope=False ):
+	a = python_to_pythonjs( src, module=module, global_variable_scope=global_variable_scope )
 	if debug: print( a )
 	return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
 
@@ -146,11 +148,15 @@ def convert_python_html_document( data ):
 
 def regenerate_runtime():
 	print('regenerating pythonscript runtime...')
-	global REGENERATE_RUNTIME
-	REGENERATE_RUNTIME = False
 	a = '// PythonScript Runtime - regenerated on: %s' %datetime.datetime.now().ctime()
-	b = pythonjs_to_javascript( open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8') )
-	c = python_to_javascript( open(PATHS['runtime_builtins'],'rb').read().decode('utf-8') )
+	b = pythonjs_to_javascript(
+		open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8'),
+		global_variable_scope = True  ## because we are not sure if the old code is compatible with the new style
+	)
+	c = python_to_javascript(
+		open(PATHS['runtime_builtins'],'rb').read().decode('utf-8'),
+		global_variable_scope = True
+	)
 	src = '\n'.join( [a,b.strip(),c.strip()] )
 	file = open( PATHS['runtime'], 'wb')
 	file.write( src.encode('utf-8') )
@@ -163,10 +169,7 @@ class MainHandler( tornado.web.RequestHandler ):
 		if not path:
 			self.write( get_main_page() )
 		elif path == 'pythonscript.js':
-			if REGENERATE_RUNTIME:
-				data = regenerate_runtime()
-			else:
-				data = open( PATHS['runtime'], 'rb').read()
+			data = open( PATHS['runtime'], 'rb').read()
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))
 			self.write(data)
@@ -238,13 +241,17 @@ if __name__ == '__main__':
 	assert os.path.isdir( PATHS['pythonscript'] )
 	assert os.path.isdir( PATHS['bindings'] )
 
-	app = tornado.web.Application(
-		Handlers,
-		#cookie_secret = 'some random text',
-		#login_url = '/login',
-		#xsrf_cookies = False,
-	)
+	if '--regenerate-runtime' in sys.argv:
+		data = regenerate_runtime()
+		print(data)
 
-
-	app.listen( 8080 )
-	tornado.ioloop.IOLoop.instance().start()
+	else:
+		print('running server on localhost:8080')
+		app = tornado.web.Application(
+			Handlers,
+			#cookie_secret = 'some random text',
+			#login_url = '/login',
+			#xsrf_cookies = False,
+		)
+		app.listen( 8080 )
+		tornado.ioloop.IOLoop.instance().start()
