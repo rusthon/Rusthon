@@ -10,16 +10,21 @@ def test():
 	print( d['a'] )
 	print( d['b'] )
 	print( len(d) )
-	#d['a'] = 'hello'
-	#d['b'] = 'world'
-	#print( d['a'] )
-	#print( d['b'] )
-	#print( len(d) )
+	print( d )
+
+	d['a'] = 'hello'
+	d['b'] = 'world'
+	print( d['a'] )
+	print( d['b'] )
+	print( len(d) )
 
 
 	l = {'x':3, 'y':4}
 	print( l['x'] )
 	print( l['y'] )
+	l['x'] = 'XXX'
+	print( l['x'] )
+	print( len(l) )
 
 </script>
 </head>

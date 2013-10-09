@@ -526,7 +526,7 @@ class PythonToPythonJS(NodeVisitor):
         # XXX: support only one target for subscripts
         target = node.targets[0]
         if isinstance(target, Subscript):
-            code = "get_attribute(get_attribute('%s', '__setitem__'), '__call__')([%s, %s], JSObject())"
+            code = "get_attribute(get_attribute(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
             code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
             writer.write(code)
 
