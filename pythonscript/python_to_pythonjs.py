@@ -170,6 +170,9 @@ class PythonToPythonJS(NodeVisitor):
 
     def setup_builtins(self):
         self._classes['dict'] = set(['__getitem__', '__setitem__'])
+        self._classes['list'] = set(['__getitem__', '__setitem__'])
+        self._classes['tuple'] = set(['__getitem__', '__setitem__'])
+        self._builtins = set(['dict', 'list', 'tuple'])
 
     def get_typedef(self, instance=None, class_name=None):
         assert instance or class_name
@@ -187,10 +190,15 @@ class PythonToPythonJS(NodeVisitor):
                 self._typedefs[ class_name ] = Typedef(
                     name = class_name,
                     methods = self._classes[ class_name ],
-                    properties = self._decorator_class_props[ class_name ],
-                    attributes = self._instance_attributes[ class_name ],
-                    class_attributes = self._class_attributes[ class_name ],
-                    parents = self._class_parents[ class_name ],
+                    #properties = self._decorator_class_props[ class_name ],
+                    #attributes = self._instance_attributes[ class_name ],
+                    #class_attributes = self._class_attributes[ class_name ],
+                    #parents = self._class_parents[ class_name ],
+                    properties = self._decorator_class_props.get(  class_name, set()),
+                    attributes = self._instance_attributes.get(    class_name, set()),
+                    class_attributes = self._class_attributes.get( class_name, set()),
+                    parents = self._class_parents.get(             class_name, set()),
+
                     compiler = self,
                 )
             return self._typedefs[ class_name ]
@@ -235,15 +243,16 @@ class PythonToPythonJS(NodeVisitor):
         keys = [x.s for x in node.keys]
         values = map(self.visit, node.values)
         a = [ '%s=%s'%x for x in zip(keys, values) ]
-        b = 'js_object=JSObject(%s)' %', '.join(a)
-        return 'get_attribute(dict, "__call__")([], JSObject(%s))' % b
+        b = 'JSObject(%s)' %', '.join(a)
+        return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
 
     def visit_Tuple(self, node):
-        ## TODO how to deal with tuples
-        return '(%s)' % ', '.join(map(self.visit, node.elts))
+        a = '[%s]' % ', '.join(map(self.visit, node.elts))
+        return 'get_attribute(tuple, "__call__")([], JSObject(js_object=%s))' %a
 
     def visit_List(self, node):
-        return 'get_attribute(list, "__call__")(create_array([%s]), Object())' % ', '.join(map(self.visit, node.elts))
+        a = '[%s]' % ', '.join(map(self.visit, node.elts))
+        return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
 
     def visit_In(self, node):
         return ' in '
@@ -682,11 +691,15 @@ class PythonToPythonJS(NodeVisitor):
             if call_has_args:
                 if name == 'dict':
                     return 'get_attribute(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
+                elif name in ('list', 'tuple'):
+                    return 'get_attribute(%s, "__call__")([], JSObject(js_object=%s))' % (name, args_name)
                 else:
                     return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
-            elif name in self._classes:
+
+            elif name in self._classes or name in self._builtins:
                 return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
-            else:
+
+            else:  ## this could be a dangerous optimization ##
                 return '%s( JSArray(), JSObject() )' %name
 
     def visit_FunctionDef(self, node):

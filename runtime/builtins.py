@@ -11,7 +11,7 @@ def range(num):
     r = list()
     while i < num:
         r.append(i)
-        i = i + 1
+        i += 1
     return r
 
 
@@ -48,6 +48,39 @@ class Iterator:
         self.index = self.index + 1
         return item
 
+class tuple:
+    def __init__(self, js_object=None):
+        if js_object:
+            self.js_object = js_object
+        else:
+            self.js_object = JSArray()
+
+    def __getitem__(self, index):
+        __array = self.js_object
+        return JS('__array[index]')
+
+    def __iter__(self):
+        return Iterator(self, 0)
+
+    def __len__(self):
+        var(__array)
+        __array = self.js_object
+        return JS('__array.length')
+
+    def index(self, obj):
+        __array = self.js_object
+        return JS('__array.indexOf(obj)')
+
+    def count(self, obj):
+        i = 0
+        for other in self:
+            if other == obj:
+                i = i + 1
+        return i
+
+    def get(self, index): ## used by Iterator
+        __array = self.js_object
+        return JS('__array[index]')
 
 class list:
 
@@ -56,6 +89,14 @@ class list:
             self.js_object = js_object
         else:
             self.js_object = JSArray()
+
+    def __getitem__(self, index):
+        __array = self.js_object
+        return JS('__array[index]')
+
+    def __setitem__(self, index, value):
+        __array = self.js_object
+        JS('__array[index] = value')
 
     def append(self, obj):
         var(__array)

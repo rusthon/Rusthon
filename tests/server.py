@@ -70,9 +70,15 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 
 	return a
 
-def python_to_javascript( src, module=None, closure_compiler=False, debug=False, global_variable_scope=False ):
+def python_to_javascript( src, module=None, closure_compiler=False, debug=False, dump=False, global_variable_scope=False ):
 	a = python_to_pythonjs( src, module=module, global_variable_scope=global_variable_scope )
 	if debug: print( a )
+	if dump:
+		if isinstance(dump, str):
+			open(dump, 'wb').write( a.encode('utf-8') )
+		else:
+			open('/tmp/pythonjs.dump', 'wb').write( a.encode('utf-8') )
+
 	return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
 
 
@@ -154,6 +160,7 @@ def regenerate_runtime():
 	)
 	c = python_to_javascript(
 		open(PATHS['runtime_builtins'],'rb').read().decode('utf-8'),
+		dump='/tmp/runtime-builtins.dump.py',
 		global_variable_scope = False ## this should be safe
 	)
 	src = '\n'.join( [a,b.strip(),c.strip()] )

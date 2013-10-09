@@ -1,0 +1,45 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+def show(x):
+	assert isinstance(x, list)
+	print x, len(x)
+	print( '-testing for loop-')
+	for i in range(len(x)):
+		print( x[i] )
+	print( '-testing while loop-')
+	j = 0; length = len(x)
+	while j < length:
+		print( x[j] )
+		j += 1
+
+def test():
+	global a, b
+	print('--testing literal style--')
+	a = [1,2,3]  ## literal style
+	a.append( 4 )
+	show( a )
+	print('--testing functional style--')
+	b = list( a ) ## functional style
+	b.append( 'hello world')
+	show( b )
+
+	print('--testing functional style - no arg --')
+	c = list()
+	c.append('foo')
+	show(c)
+
+	print('--testing literal style - no arg --')
+	d = []
+	d.append('bar')
+	show(d)
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
