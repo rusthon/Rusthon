@@ -63,7 +63,7 @@ def create_class(class_name, parents, attrs):
 
 
 def get_attribute(object, attribute):
-    """Retrieve an attribute, method or property
+    """Retrieve an attribute, method, property, or wrapper function.
 
     method are actually functions which are converted to methods by
     prepending their arguments with the current object. Properties are
@@ -72,32 +72,52 @@ def get_attribute(object, attribute):
     DOM support:
         http://stackoverflow.com/questions/14202699/document-createelement-not-working
         https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof
+
+    Direct JavaScript Calls:
+        if an external javascript function is found, and it was not a wrapper that was generated here,
+        check the function for a 'cached_wrapper' attribute, if none is found then generate a new
+        wrapper, cache it on the function, and return the wrapper.
     """
     if attribute == '__call__':
         if JS("{}.toString.call(object) === '[object Function]'"):
-            return object
+            if JS("object.is_wrapper !== undefined"):
+                return object
+            else:
+                JS("var cached = object.cached_wrapper")
+                if cached:
+                    return cached
+                else:
+                    #print 'generating new wrapper'
+                    def wrapper(args,kwargs): return object.apply(None, args)
+                    wrapper.is_wrapper = True
+                    object.cached_wrapper = wrapper
+                    return wrapper
 
     var(attr)
     attr = object[attribute]
 
     if JS("object instanceof HTMLDocument"):
+        #print 'DYNAMIC wrapping HTMLDocument'
         if JS("typeof(attr) === 'function'"):
-            def wrapper(args,kwargs):
-                return attr.apply(object, args)
+            def wrapper(args,kwargs): return attr.apply(object, args)
+            wrapper.is_wrapper = True
             return wrapper
         else:
             return attr
     elif JS("object instanceof HTMLElement"):
+        #print 'DYNAMIC wrapping HTMLElement'
         if JS("typeof(attr) === 'function'"):
-            def wrapper(args,kwargs):
-                return attr.apply(object, args)
+            def wrapper(args,kwargs): return attr.apply(object, args)
+            wrapper.is_wrapper = True
             return wrapper
         else:
             return attr
         
     if attr:  ## what about cases where attr is zero?
         return attr
+
     var(__class__, __dict__, __get__, bases)
+
     # Check object.__class__.__dict__ for data descriptors named attr
     __class__ = object.__class__
     if __class__:
@@ -128,6 +148,7 @@ def get_attribute(object, attribute):
                 if __get__:
                     return __get__([None, __class__])
             return attr
+
     if bases:
         for i in jsrange(bases.length):
             var(base, attr)
@@ -137,6 +158,7 @@ def get_attribute(object, attribute):
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
                     return __get__([object, __class__])
+
     if __class__:
         var(__dict__)
         __dict__ = __class__.__dict__
@@ -151,8 +173,11 @@ def get_attribute(object, attribute):
                     else:
                         args = [object]
                     return attr.apply(None, args)
+                method.is_wrapper = True
                 return method
-            return attr
+            else:
+                return attr
+
         bases = __class__.bases
         for i in jsrange(bases.length):
             var(base, attr)
@@ -168,9 +193,10 @@ def get_attribute(object, attribute):
                         else:
                             args = [object]
                         return attr.apply(None, args)
+                    method.is_wrapper = True
                     return method
-
-                return attr
+                else:
+                    return attr
     return None  # XXX: raise AttributeError instead
 
 
@@ -220,6 +246,9 @@ def get_arguments(signature, args, kwargs):
     else:
         argslength = 0
 
+    if args.length > signature.args.length:
+        raise TypeError('function called with wrong number of arguments')
+
     j = 0
     while j < argslength:
         arg = JS('signature.args[j]')
@@ -232,16 +261,15 @@ def get_arguments(signature, args, kwargs):
             elif arg in signature.kwargs:
                 out[arg] = signature.kwargs[arg]
             else:
-                #out[arg] = args[j]
-                raise TypeError
+                raise TypeError('function called with wrong number of arguments')
         elif j < args.length:
             out[arg] = args[j]
         elif arg in signature.kwargs:
             out[arg] = signature.kwargs[arg]
         else:
-            #out[arg] = args[j]
-            raise TypeError
+            raise TypeError('function called with wrong number of arguments')
         j += 1
+
     args = args.slice(j)
     if signature.vararg:
         out[signature.vararg] = args

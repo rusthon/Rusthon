@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Oct  8 02:22:49 2013
+// PythonScript Runtime - regenerated on: Tue Oct  8 17:34:29 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -75,10 +75,30 @@ return klass;
 window["create_class"] = create_class 
 
 var get_attribute = function(object, attribute) {
-"Retrieve an attribute, method or property\n\n    method are actually functions which are converted to methods by\n    prepending their arguments with the current object. Properties are\n    not functions!\n\n    DOM support:\n        http://stackoverflow.com/questions/14202699/document-createelement-not-working\n        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n    ";
+"Retrieve an attribute, method, property, or wrapper function.\n\n    method are actually functions which are converted to methods by\n    prepending their arguments with the current object. Properties are\n    not functions!\n\n    DOM support:\n        http://stackoverflow.com/questions/14202699/document-createelement-not-working\n        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n    Direct JavaScript Calls:\n        if an external javascript function is found, and it was not a wrapper that was generated here,\n        check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n        wrapper, cache it on the function, and return the wrapper.\n    ";
 if(attribute == "__call__") {
 if({}.toString.call(object) === '[object Function]') {
+if(object.is_wrapper !== undefined) {
 return object;
+}
+else {
+var cached = object.cached_wrapper;
+if(cached) {
+return cached;
+}
+else {
+var wrapper = function(args, kwargs) {
+return object.apply(undefined, args);
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+object.cached_wrapper = wrapper;
+return wrapper;
+}
+
+}
+
 }
 
 }
@@ -92,6 +112,7 @@ return attr.apply(object, args);
 }
 window["wrapper"] = wrapper 
 
+wrapper.is_wrapper = true;
 return wrapper;
 }
 else {
@@ -107,6 +128,7 @@ return attr.apply(object, args);
 }
 window["wrapper"] = wrapper 
 
+wrapper.is_wrapper = true;
 return wrapper;
 }
 else {
@@ -214,10 +236,13 @@ return attr.apply(undefined, args);
 }
 window["method"] = method 
 
+method.is_wrapper = true;
 return method;
 }
-
+else {
 return attr;
+}
+
 }
 
 bases = __class__.bases;
@@ -244,10 +269,13 @@ return attr.apply(undefined, args);
 }
 window["method"] = method 
 
+method.is_wrapper = true;
 return method;
 }
-
+else {
 return attr;
+}
+
 }
 
 i = backup;
@@ -327,6 +355,10 @@ else {
 argslength = 0;
 }
 
+if(args.length > signature.args.length) {
+throw TypeError("function called with wrong number of arguments");
+}
+
 j = 0;
 while(j < argslength) {
 arg = signature.args[j];
@@ -344,7 +376,7 @@ if(arg  in  signature.kwargs) {
 out[arg] = signature.kwargs[arg];
 }
 else {
-throw TypeError;
+throw TypeError("function called with wrong number of arguments");
 }
 
 }
@@ -361,7 +393,7 @@ if(arg  in  signature.kwargs) {
 out[arg] = signature.kwargs[arg];
 }
 else {
-throw TypeError;
+throw TypeError("function called with wrong number of arguments");
 }
 
 }
