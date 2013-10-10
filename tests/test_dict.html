@@ -12,7 +12,14 @@ class Key2:
 	def bar(self):
 		print('BAR')
 
+def func1():
+	print('func1')
+
+def func2():
+	print('func2')
+
 def test():
+	global d, l, e1, e2
 
 	d = dict(a=1, b=2) ## functional style
 	print( d['a'] )
@@ -91,6 +98,11 @@ def test():
 
 	e1[ 1.333 ] = 'myfloat'
 	print e1[ 1.333 ]
+
+	e2[ func1 ] = 'my func1'
+	e2[ func2 ] = 'my func2'
+	print e2[func1]
+	print e2[func2]
 
 </script>
 </head>

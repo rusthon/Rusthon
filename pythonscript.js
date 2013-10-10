@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct  9 19:04:53 2013
+// PythonScript Runtime - regenerated on: Wed Oct  9 19:22:57 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1157,7 +1157,14 @@ var uid = key.uid;
 return __dict["@"+uid];
 }
 else {
+if(typeof(key) === 'function') {
+var uid = key.uid;
+return __dict["@"+uid];
+}
+else {
 return __dict[key];
+}
+
 }
 
 }
@@ -1175,7 +1182,17 @@ var key = arguments['key'];
 var value = arguments['value'];
 __dict = self["__dict__"]["js_object"];
 if(typeof(key) === 'object') {
-console.log("setitem-object->", key);
+if(key.uid === undefined) {
+uid = self["__class__"]["__dict__"]["UID"];
+key.uid = uid;
+self["__class__"]["__dict__"]["UID"] += 1
+}
+
+var uid = key.uid;
+__dict["@"+uid] = value;
+}
+else {
+if(typeof(key) === 'function') {
 if(key.uid === undefined) {
 uid = self["__class__"]["__dict__"]["UID"];
 key.uid = uid;
@@ -1187,6 +1204,8 @@ __dict["@"+uid] = value;
 }
 else {
 __dict[key] = value;
+}
+
 }
 
 }
