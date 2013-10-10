@@ -324,70 +324,95 @@ class array:
     }
     def __init__(self, typecode, initializer=None, little_endian=False):
         self.typecode = typecode
+        self.itemsize = self.typecodes[ typecode ]
         self.little_endian = little_endian
-        size = 0
+
         if initializer:
-            length = len(initializer)
-            print 'array.initalizer length', length
-            print 'array.typecode', typecode
-            print 'array.type size', self.typecodes[ typecode ]
-            size = length * self.typecodes[ typecode ]
-        else: size = 0
-        self.size = size
-        print 'array.init bytes', size
+            self.length = len(initializer)
+            self.bytes = self.length * self.itemsize
+        else:
+            self.length = 0
+            self.bytes = 0
+
+        size = self.bytes
         buff = JS('new ArrayBuffer(size)')
         self.dataview = JS('new DataView(buff)')
         self.buffer = buff
         self.fromlist( initializer )
 
-    def fromlist(self, lst):
-        print 'array.fromlist->', lst
-        length = len(lst)
-        step = self.typecodes[ self.typecode ]
-        size = length * step
-
-        dataview = self.dataview
-        func_name = 'set'+self.typecode_names[ self.typecode ]
-        print 'func name->', func_name
-        func = JS('dataview[func_name].bind(dataview)')
-        print 'func->', func
-        if size <= self.size:
-            i = 0; offset = 0
-            while i < length:
-                item = lst[i]
-                print '  item->', item
-                print '  index', i
-                print '  offset', offset
-                #JS('func.apply(dataview, [offset, item])')
-                #JS('func.call(dataview, offset, item)')
-                JS('func(offset,item)')
-                offset += step
-                i += 1
-        else:
-            raise TypeError
+    def __len__(self):
+        return self.length
 
     def __getitem__(self, index):
-        step = self.typecodes[ self.typecode ]
+        step = self.itemsize
         offset = step * index
 
         dataview = self.dataview
         func_name = 'get'+self.typecode_names[ self.typecode ]
         func = JS('dataview[func_name].bind(dataview)')
 
-        if offset < self.size:
+        if offset < self.bytes:
             return JS('func(offset)')
         else:
             raise IndexError
 
     def __setitem__(self, index, value):
-        step = self.typecodes[ self.typecode ]
+        step = self.itemsize
+        if index < 0: index = self.length + index -1
         offset = step * index
 
         dataview = self.dataview
         func_name = 'set'+self.typecode_names[ self.typecode ]
         func = JS('dataview[func_name].bind(dataview)')
 
-        if offset < self.size:
+        if offset < self.bytes:
             JS('func(offset, value)')
         else:
             raise IndexError
+
+    def __iter__(self):
+        return Iterator(self, 0)
+
+    def get(self, index):
+        return self[ index ]
+
+    def fromlist(self, lst):
+        length = len(lst)
+        step = self.itemsize
+        size = length * step
+
+        dataview = self.dataview
+        func_name = 'set'+self.typecode_names[ self.typecode ]
+        func = JS('dataview[func_name].bind(dataview)')
+        if size <= self.bytes:
+            i = 0; offset = 0
+            while i < length:
+                item = lst[i]
+                JS('func(offset,item)')
+                offset += step
+                i += 1
+        else:
+            raise TypeError
+
+    def resize(self, length):
+        buff = self.buffer
+        source = JS('new Uint8Array(buff)')
+
+        new_size = length * self.itemsize
+        new_buff = JS('new ArrayBuffer(new_size)')
+        target = JS('new Uint8Array(new_buff)')
+        JS('target.set(source)')
+
+        self.length = length
+        self.bytes = new_size
+        self.buffer = new_buff
+        self.dataview = JS('new DataView(new_buff)')
+
+    def append(self, value):
+        length = self.length
+        self.resize( self.length + 1 )
+        self[ length ] = value
+
+    def extend(self, lst):  ## TODO optimize
+        for value in lst:
+            self.append( value )

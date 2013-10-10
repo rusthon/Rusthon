@@ -19,6 +19,23 @@ def test():
 	a[0] = 1000
 	print a[0]
 
+	print( '--resizing--' )
+	a.resize( 8 )
+	a[4] = 5
+	a[5] = 6
+	a[6] = 7
+	a[7] = 8
+	for value in a:
+		print value
+	print( '--testing append--' )
+	a.append( 99 )
+	#print a[-1]  ## TODO fix negative indices
+
+	print( '--testing extend--' )
+	a.extend( [100, 101, 102] )
+	for value in a:
+		print value
+
 </script>
 </head>
 

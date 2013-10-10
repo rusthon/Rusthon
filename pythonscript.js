@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 10 00:32:54 2013
+// PythonScript Runtime - regenerated on: Thu Oct 10 06:35:59 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1335,3 +1335,243 @@ window["__str___iter__"] = __str___iter__
 __str___iter__.pythonscript_function = true;
 window["__str_attrs"]["__iter__"] = __str___iter__;
 str = create_class("str", window["__str_parents"], window["__str_attrs"]);
+var array, __array_attrs, __array_parents;
+window["__array_attrs"] = Object();
+window["__array_parents"] = create_array();
+__array_typecodes = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": 1}, {"key": "b", "value": 1}, {"key": "B", "value": 1}, {"key": "u", "value": 2}, {"key": "h", "value": 2}, {"key": "H", "value": 2}, {"key": "i", "value": 4}, {"key": "I", "value": 4}, {"key": "l", "value": 4}, {"key": "L", "value": 4}, {"key": "f", "value": 4}, {"key": "d", "value": 8}]});
+window["__array_attrs"]["typecodes"] = __array_typecodes;
+__array_typecode_names = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": "Int8"}, {"key": "b", "value": "Int8"}, {"key": "B", "value": "Uint8"}, {"key": "u", "value": "Uint16"}, {"key": "h", "value": "Int16"}, {"key": "H", "value": "Uint16"}, {"key": "i", "value": "Int32"}, {"key": "I", "value": "Uint32"}, {"key": "f", "value": "Float32"}, {"key": "d", "value": "Float64"}]});
+window["__array_attrs"]["typecode_names"] = __array_typecode_names;
+var __array___init__ = function(args, kwargs) {
+var size, buff;
+var signature, arguments;
+signature = {"kwargs": {"initializer": undefined, "little_endian": false}, "args": create_array("self", "typecode", "initializer", "little_endian")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var typecode = arguments['typecode'];
+var initializer = arguments['initializer'];
+var little_endian = arguments['little_endian'];
+self["__dict__"]["typecode"] = typecode;
+self["__dict__"]["itemsize"] = get_attribute(self["__class__"]["__dict__"]["typecodes"], "__getitem__")([typecode], Object());
+self["__dict__"]["little_endian"] = little_endian;
+if(initializer) {
+var __args_11, __kwargs_11;
+__args_11 = create_array(initializer);
+__kwargs_11 = Object();
+self["__dict__"]["length"] = get_attribute(len, "__call__")(__args_11, __kwargs_11);
+self["__dict__"]["bytes"] = self["__dict__"]["length"] * self["__dict__"]["itemsize"];
+}
+else {
+self["__dict__"]["length"] = 0;
+self["__dict__"]["bytes"] = 0;
+}
+
+size = self["__dict__"]["bytes"];
+buff = new ArrayBuffer(size);
+self["__dict__"]["dataview"] = new DataView(buff);
+self["__dict__"]["buffer"] = buff;
+var __args_12, __kwargs_12;
+__args_12 = create_array(initializer);
+__kwargs_12 = Object();
+get_attribute(get_attribute(self, "fromlist"), "__call__")(__args_12, __kwargs_12);
+}
+window["__array___init__"] = __array___init__ 
+
+__array___init__.pythonscript_function = true;
+window["__array_attrs"]["__init__"] = __array___init__;
+var __array___len__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+return self["__dict__"]["length"];
+}
+window["__array___len__"] = __array___len__ 
+
+__array___len__.pythonscript_function = true;
+window["__array_attrs"]["__len__"] = __array___len__;
+var __array___getitem__ = function(args, kwargs) {
+var func_name, step, dataview, func, offset;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "index")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var index = arguments['index'];
+step = self["__dict__"]["itemsize"];
+offset = step * index;
+dataview = self["__dict__"]["dataview"];
+func_name = "get" + get_attribute(self["__class__"]["__dict__"]["typecode_names"], "__getitem__")([self["__dict__"]["typecode"]], Object());
+func = dataview[func_name].bind(dataview);
+if(offset < self["__dict__"]["bytes"]) {
+return func(offset);
+}
+else {
+throw IndexError;
+}
+
+}
+window["__array___getitem__"] = __array___getitem__ 
+
+__array___getitem__.pythonscript_function = true;
+window["__array_attrs"]["__getitem__"] = __array___getitem__;
+var __array___setitem__ = function(args, kwargs) {
+var func_name, step, dataview, func, offset;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "index", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var index = arguments['index'];
+var value = arguments['value'];
+step = self["__dict__"]["itemsize"];
+if(index < 0) {
+index = self["__dict__"]["length"] + index - 1;
+}
+
+offset = step * index;
+dataview = self["__dict__"]["dataview"];
+func_name = "set" + get_attribute(self["__class__"]["__dict__"]["typecode_names"], "__getitem__")([self["__dict__"]["typecode"]], Object());
+func = dataview[func_name].bind(dataview);
+if(offset < self["__dict__"]["bytes"]) {
+func(offset, value);
+}
+else {
+throw IndexError;
+}
+
+}
+window["__array___setitem__"] = __array___setitem__ 
+
+__array___setitem__.pythonscript_function = true;
+window["__array_attrs"]["__setitem__"] = __array___setitem__;
+var __array___iter__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var __args_13, __kwargs_13;
+__args_13 = create_array(self, 0);
+__kwargs_13 = Object();
+return get_attribute(Iterator, "__call__")(__args_13, __kwargs_13);
+}
+window["__array___iter__"] = __array___iter__ 
+
+__array___iter__.pythonscript_function = true;
+window["__array_attrs"]["__iter__"] = __array___iter__;
+var __array_get = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "index")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var index = arguments['index'];
+return __array___getitem__([self, index]);
+}
+window["__array_get"] = __array_get 
+
+__array_get.pythonscript_function = true;
+window["__array_attrs"]["get"] = __array_get;
+var __array_fromlist = function(args, kwargs) {
+var func_name, dataview, length, step, func, size;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "lst")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var lst = arguments['lst'];
+var __args_14, __kwargs_14;
+__args_14 = create_array(lst);
+__kwargs_14 = Object();
+length = get_attribute(len, "__call__")(__args_14, __kwargs_14);
+step = self["__dict__"]["itemsize"];
+size = length * step;
+dataview = self["__dict__"]["dataview"];
+func_name = "set" + get_attribute(self["__class__"]["__dict__"]["typecode_names"], "__getitem__")([self["__dict__"]["typecode"]], Object());
+func = dataview[func_name].bind(dataview);
+if(size <= self["__dict__"]["bytes"]) {
+i = 0;
+offset = 0;
+while(i < length) {
+item = get_attribute(lst, "__getitem__")([i], Object());
+func(offset,item);
+offset += step
+i += 1
+}
+}
+else {
+throw TypeError;
+}
+
+}
+window["__array_fromlist"] = __array_fromlist 
+
+__array_fromlist.pythonscript_function = true;
+window["__array_attrs"]["fromlist"] = __array_fromlist;
+var __array_resize = function(args, kwargs) {
+var source, new_buff, target, new_size, buff;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "length")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var length = arguments['length'];
+buff = self["__dict__"]["buffer"];
+source = new Uint8Array(buff);
+new_size = length * self["__dict__"]["itemsize"];
+new_buff = new ArrayBuffer(new_size);
+target = new Uint8Array(new_buff);
+target.set(source);
+self["__dict__"]["length"] = length;
+self["__dict__"]["bytes"] = new_size;
+self["__dict__"]["buffer"] = new_buff;
+self["__dict__"]["dataview"] = new DataView(new_buff);
+}
+window["__array_resize"] = __array_resize 
+
+__array_resize.pythonscript_function = true;
+window["__array_attrs"]["resize"] = __array_resize;
+var __array_append = function(args, kwargs) {
+var length;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var value = arguments['value'];
+length = self["__dict__"]["length"];
+var __args_15, __kwargs_15;
+__args_15 = create_array(self["__dict__"]["length"] + 1);
+__kwargs_15 = Object();
+get_attribute(get_attribute(self, "resize"), "__call__")(__args_15, __kwargs_15);
+get_attribute(get_attribute(self, "__setitem__"), "__call__")([length, value], Object());
+}
+window["__array_append"] = __array_append 
+
+__array_append.pythonscript_function = true;
+window["__array_attrs"]["append"] = __array_append;
+var __array_extend = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "lst")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var lst = arguments['lst'];
+var __iterator__, value;
+__iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
+try {
+value = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+var __args_16, __kwargs_16;
+__args_16 = create_array(value);
+__kwargs_16 = Object();
+get_attribute(get_attribute(self, "append"), "__call__")(__args_16, __kwargs_16);
+value = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+
+}
+
+}
+
+}
+window["__array_extend"] = __array_extend 
+
+__array_extend.pythonscript_function = true;
+window["__array_attrs"]["extend"] = __array_extend;
+array = create_class("array", window["__array_parents"], window["__array_attrs"]);
