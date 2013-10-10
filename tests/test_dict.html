@@ -4,8 +4,15 @@
 
 <script type="text/python" closure="false">
 
+class Key1:
+	def foo(self):
+		print('FOO')
+
+class Key2:
+	def bar(self):
+		print('BAR')
+
 def test():
-	global d, l
 
 	d = dict(a=1, b=2) ## functional style
 	print( d['a'] )
@@ -33,6 +40,57 @@ def test():
 	e2 = dict()
 	e2['B'] = 2
 	print e1, e2
+
+	k1 = Key1()
+	k2 = Key2()
+	e1[ k1 ] = 'foo'
+	e1[ k2 ] = 'bar'
+	print 'k1', e1[k1]
+	print 'k2', e1[k2]
+
+	e1[ k1 ] = 'F'
+	e1[ k2 ] = 'B'
+	print 'k1', e1[k1]
+	print 'k2', e1[k2]
+	print( e1 )
+
+	e2[ k1 ] = 'key1 in e2'
+	e2[ k2 ] = 'key2 in e2'
+	print 'k1', e2[k1]
+	print 'k2', e2[k2]
+
+	e2[ 0 ] = 'key zero'
+	e2[ 1 ] = 'key one'
+	e2[ e1 ] = "in python you can't use a dict as a key!"  ## in PythonScript we allow this
+
+	print 'int-key:0', e2[0]
+	print 'int-key:1', e2[0]
+	print 'dict-key:e1', e2[ e1 ]
+
+	e2[ 'mykey' ] = 'simple string key'
+	print 'sting key', e2[ 'mykey' ]
+
+	s = 'XXX'
+	e2[ s ] = 'string var key'
+	print 'string var key', e2[s]
+
+	list1 = [1,2,3]
+	list2 = [1,2,3]
+
+	e1[ list1 ] = 'list1'  ## not allowed in python, in PythonScript it is allowed
+	e1[ list2 ] = 'list2'
+
+	print e1[ list1 ]
+	print e1[ list2 ]
+
+	list1.append( 4 )
+	list2.append( 5 )
+
+	print e1[ list1 ]
+	print e1[ list2 ]
+
+	e1[ 1.333 ] = 'myfloat'
+	print e1[ 1.333 ]
 
 </script>
 </head>

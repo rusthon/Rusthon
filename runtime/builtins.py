@@ -170,8 +170,10 @@ class list:
 
 
 class dict:
-
+    # http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
+    UID = 0
     def __init__(self, js_object=None):
+        #self.js_object = JS('Object.create(null)')
         if js_object:
             self.js_object = js_object
         else:
@@ -204,11 +206,24 @@ class dict:
 
     def __getitem__(self, key):
         __dict = self.js_object
-        return JS('__dict[key]')
+        if JS("typeof(key) === 'object'"):
+            JS('var uid = key.uid')
+            return JS('__dict["@"+uid]')  ## "@" is needed so that integers can also be used as keys
+        else:
+            return JS('__dict[key]')
 
     def __setitem__(self, key, value):
         __dict = self.js_object
-        JS('__dict[key] = value')
+        if JS("typeof(key) === 'object'"):
+            print 'setitem-object->', key
+            if JS("key.uid === undefined"):
+                uid = self.UID
+                JS("key.uid = uid")
+                self.UID += 1
+            JS('var uid = key.uid')
+            JS('__dict["@"+uid] = value')
+        else:
+            JS('__dict[key] = value')
 
 
 class str:

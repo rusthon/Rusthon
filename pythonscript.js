@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct  9 08:04:44 2013
+// PythonScript Runtime - regenerated on: Wed Oct  9 19:04:53 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1057,6 +1057,8 @@ list = create_class("list", window["__list_parents"], window["__list_attrs"]);
 var dict, __dict_attrs, __dict_parents;
 window["__dict_attrs"] = Object();
 window["__dict_parents"] = create_array();
+__dict_UID = 0;
+window["__dict_attrs"]["UID"] = __dict_UID;
 var __dict___init__ = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": {"js_object": undefined}, "args": create_array("self", "js_object")};
@@ -1150,7 +1152,14 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 __dict = self["__dict__"]["js_object"];
+if(typeof(key) === 'object') {
+var uid = key.uid;
+return __dict["@"+uid];
+}
+else {
 return __dict[key];
+}
+
 }
 window["__dict___getitem__"] = __dict___getitem__ 
 
@@ -1165,7 +1174,21 @@ var self = arguments['self'];
 var key = arguments['key'];
 var value = arguments['value'];
 __dict = self["__dict__"]["js_object"];
+if(typeof(key) === 'object') {
+console.log("setitem-object->", key);
+if(key.uid === undefined) {
+uid = self["__class__"]["__dict__"]["UID"];
+key.uid = uid;
+self["__class__"]["__dict__"]["UID"] += 1
+}
+
+var uid = key.uid;
+__dict["@"+uid] = value;
+}
+else {
 __dict[key] = value;
+}
+
 }
 window["__dict___setitem__"] = __dict___setitem__ 
 
