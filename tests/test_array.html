@@ -1,0 +1,28 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+
+def test():
+	global a
+	a = array('i', [1,2,3,4] )
+	print(a.typecode)
+	print(a.buffer)
+
+	print a[0]
+	print a[1]
+	print a[2]
+	print a[3]
+
+	a[0] = 1000
+	print a[0]
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

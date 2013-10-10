@@ -48,6 +48,8 @@ class Iterator:
         self.index = self.index + 1
         return item
 
+
+
 class tuple:
     def __init__(self, js_object=None):
         self.js_object = JSArray()
@@ -288,3 +290,104 @@ class str:
 
     def __iter__(self):
         return Iterator(self.jsstring, 0)
+
+
+class array:
+    ## note that class-level dicts can only be used after the dict class has been defined above
+    typecodes = {
+        'c': 1, # char
+        'b': 1, # signed char
+        'B': 1, # unsigned char
+        'u': 2, # unicode
+        'h': 2, # signed short
+        'H': 2, # unsigned short
+        'i': 4, # signed int
+        'I': 4, # unsigned int
+        'l': 4, # signed long
+        'L': 4, # unsigned long
+        'f': 4, # float
+        'd': 8, # double
+    }
+    typecode_names = {
+        'c': 'Int8',
+        'b': 'Int8',
+        'B': 'Uint8',
+        'u': 'Uint16',
+        'h': 'Int16',
+        'H': 'Uint16',
+        'i': 'Int32',
+        'I': 'Uint32',
+        #'l': 'TODO',
+        #'L': 'TODO',
+        'f': 'Float32',
+        'd': 'Float64'
+    }
+    def __init__(self, typecode, initializer=None, little_endian=False):
+        self.typecode = typecode
+        self.little_endian = little_endian
+        size = 0
+        if initializer:
+            length = len(initializer)
+            print 'array.initalizer length', length
+            print 'array.typecode', typecode
+            print 'array.type size', self.typecodes[ typecode ]
+            size = length * self.typecodes[ typecode ]
+        else: size = 0
+        self.size = size
+        print 'array.init bytes', size
+        buff = JS('new ArrayBuffer(size)')
+        self.dataview = JS('new DataView(buff)')
+        self.buffer = buff
+        self.fromlist( initializer )
+
+    def fromlist(self, lst):
+        print 'array.fromlist->', lst
+        length = len(lst)
+        step = self.typecodes[ self.typecode ]
+        size = length * step
+
+        dataview = self.dataview
+        func_name = 'set'+self.typecode_names[ self.typecode ]
+        print 'func name->', func_name
+        func = JS('dataview[func_name].bind(dataview)')
+        print 'func->', func
+        if size <= self.size:
+            i = 0; offset = 0
+            while i < length:
+                item = lst[i]
+                print '  item->', item
+                print '  index', i
+                print '  offset', offset
+                #JS('func.apply(dataview, [offset, item])')
+                #JS('func.call(dataview, offset, item)')
+                JS('func(offset,item)')
+                offset += step
+                i += 1
+        else:
+            raise TypeError
+
+    def __getitem__(self, index):
+        step = self.typecodes[ self.typecode ]
+        offset = step * index
+
+        dataview = self.dataview
+        func_name = 'get'+self.typecode_names[ self.typecode ]
+        func = JS('dataview[func_name].bind(dataview)')
+
+        if offset < self.size:
+            return JS('func(offset)')
+        else:
+            raise IndexError
+
+    def __setitem__(self, index, value):
+        step = self.typecodes[ self.typecode ]
+        offset = step * index
+
+        dataview = self.dataview
+        func_name = 'set'+self.typecode_names[ self.typecode ]
+        func = JS('dataview[func_name].bind(dataview)')
+
+        if offset < self.size:
+            JS('func(offset, value)')
+        else:
+            raise IndexError
