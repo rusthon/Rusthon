@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct  9 20:55:21 2013
+// PythonScript Runtime - regenerated on: Thu Oct 10 00:32:54 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -642,11 +642,21 @@ signature = {"kwargs": {"js_object": undefined}, "args": create_array("self", "j
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var js_object = arguments['js_object'];
-if(js_object) {
-self["__dict__"]["js_object"] = js_object;
+self["__dict__"]["js_object"] = create_array();
+if(js_object instanceof Array) {
+arr = self["__dict__"]["js_object"];
+i = 0;
+length = js_object.length;
+while(i < length) {
+arr.push( js_object[i] );
+i += 1
+}
 }
 else {
-self["__dict__"]["js_object"] = create_array();
+if(js_object) {
+throw TypeError;
+}
+
 }
 
 }

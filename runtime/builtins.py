@@ -50,10 +50,15 @@ class Iterator:
 
 class tuple:
     def __init__(self, js_object=None):
-        if js_object:
-            self.js_object = js_object
-        else:
-            self.js_object = JSArray()
+        self.js_object = JSArray()
+        if JS('js_object instanceof Array'):
+            arr = self.js_object
+            i = 0; length = JS('js_object.length')
+            while i < length:
+                JS('arr.push( js_object[i] )')
+                i += 1
+        elif js_object:
+            raise TypeError
 
     def __getitem__(self, index):
         __array = self.js_object
