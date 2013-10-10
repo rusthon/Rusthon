@@ -240,10 +240,17 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Dict(self, node):
         node.returns_type = 'dict'
-        keys = [x.s for x in node.keys]
-        values = map(self.visit, node.values)
-        a = [ '%s=%s'%x for x in zip(keys, values) ]
-        b = 'JSObject(%s)' %', '.join(a)
+        #keys = [x.s for x in node.keys]
+        #values = map(self.visit, node.values)
+        #a = [ '%s=%s'%x for x in zip(keys, values) ]
+        #b = 'JSObject(%s)' %', '.join(a)
+        #return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
+        a = []
+        for i in range( len(node.keys) ):
+            k = self.visit( node.keys[ i ] )
+            v = self.visit( node.values[i] )
+            a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
+        b = '[%s]' %', '.join(a)
         return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
 
     def visit_Tuple(self, node):

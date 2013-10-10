@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct  9 19:22:57 2013
+// PythonScript Runtime - regenerated on: Wed Oct  9 20:55:21 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1066,7 +1066,23 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var js_object = arguments['js_object'];
 if(js_object) {
+if(js_object instanceof Array) {
+self["__dict__"]["js_object"] = Object.create(null);
+i = 0;
+while(i < get_attribute(js_object, "length")) {
+var key = js_object[i]["key"];
+var value = js_object[i]["value"];
+var __args_8, __kwargs_8;
+__args_8 = create_array(key, value);
+__kwargs_8 = Object();
+get_attribute(get_attribute(self, "set"), "__call__")(__args_8, __kwargs_8);
+i += 1
+}
+}
+else {
 self["__dict__"]["js_object"] = js_object;
+}
+
 }
 else {
 self["__dict__"]["js_object"] = Object();
@@ -1080,18 +1096,37 @@ window["__dict_attrs"]["__init__"] = __dict___init__;
 var __dict_get = function(args, kwargs) {
 var __dict;
 var signature, arguments;
-signature = {"kwargs": Object(), "args": create_array("self", "key", "d")};
+signature = {"kwargs": {"_default": undefined}, "args": create_array("self", "key", "_default")};
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
-var d = arguments['d'];
-var __dict;
+var _default = arguments['_default'];
 __dict = self["__dict__"]["js_object"];
-if(__dict[key]) {
+if(typeof(key) === 'object') {
+var uid = "@"+key.uid;
+if(uid in __dict) {
+return __dict[uid];
+}
+
+}
+else {
+if(typeof(key) === 'function') {
+var uid = "@"+key.uid;
+if(uid in __dict) {
+return __dict[uid];
+}
+
+}
+else {
+if(key in __dict) {
 return __dict[key];
 }
 
-return d;
+}
+
+}
+
+return _default;
 }
 window["__dict_get"] = __dict_get 
 
@@ -1105,9 +1140,34 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 var value = arguments['value'];
-var __dict;
 __dict = self["__dict__"]["js_object"];
+if(typeof(key) === 'object') {
+if(key.uid === undefined) {
+uid = self["__class__"]["__dict__"]["UID"];
+key.uid = uid;
+self["__class__"]["__dict__"]["UID"] += 1
+}
+
+var uid = key.uid;
+__dict["@"+uid] = value;
+}
+else {
+if(typeof(key) === 'function') {
+if(key.uid === undefined) {
+uid = self["__class__"]["__dict__"]["UID"];
+key.uid = uid;
+self["__class__"]["__dict__"]["UID"] += 1
+}
+
+var uid = key.uid;
+__dict["@"+uid] = value;
+}
+else {
 __dict[key] = value;
+}
+
+}
+
 }
 window["__dict_set"] = __dict_set 
 
@@ -1119,7 +1179,6 @@ var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-var __dict;
 __dict = self["__dict__"]["js_object"];
 return Object.keys(__dict).length;
 }
@@ -1127,23 +1186,6 @@ window["__dict___len__"] = __dict___len__
 
 __dict___len__.pythonscript_function = true;
 window["__dict_attrs"]["__len__"] = __dict___len__;
-var __dict_keys = function(args, kwargs) {
-var __dict, __keys, out;
-var signature, arguments;
-signature = {"kwargs": Object(), "args": create_array("self")};
-arguments = get_arguments(signature, args, kwargs);
-var self = arguments['self'];
-var __dict, out;
-__dict = self["__dict__"]["js_object"];
-__keys = Object.keys(__dict);
-out = get_attribute(list, "__call__")(create_array(), Object());
-set_attribute(out, "js_object", __keys);
-return out;
-}
-window["__dict_keys"] = __dict_keys 
-
-__dict_keys.pythonscript_function = true;
-window["__dict_attrs"]["keys"] = __dict_keys;
 var __dict___getitem__ = function(args, kwargs) {
 var __dict;
 var signature, arguments;
@@ -1213,6 +1255,45 @@ window["__dict___setitem__"] = __dict___setitem__
 
 __dict___setitem__.pythonscript_function = true;
 window["__dict_attrs"]["__setitem__"] = __dict___setitem__;
+var __dict_keys = function(args, kwargs) {
+var __dict, __keys, out;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+__dict = self["__dict__"]["js_object"];
+__keys = Object.keys(__dict);
+out = get_attribute(list, "__call__")(create_array(), Object());
+set_attribute(out, "js_object", __keys);
+return out;
+}
+window["__dict_keys"] = __dict_keys 
+
+__dict_keys.pythonscript_function = true;
+window["__dict_attrs"]["keys"] = __dict_keys;
+var __dict_values = function(args, kwargs) {
+var __dict, __keys, i, out;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+__dict = self["__dict__"]["js_object"];
+__keys = Object.keys(__dict);
+out = get_attribute(list, "__call__")(create_array(), Object());
+i = 0;
+while(i < get_attribute(__keys, "length")) {
+var __args_9, __kwargs_9;
+__args_9 = create_array(__dict[ __keys[i] ]);
+__kwargs_9 = Object();
+get_attribute(get_attribute(out, "append"), "__call__")(__args_9, __kwargs_9);
+i += 1
+}
+return out;
+}
+window["__dict_values"] = __dict_values 
+
+__dict_values.pythonscript_function = true;
+window["__dict_attrs"]["values"] = __dict_values;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"]);
 var str, __str_attrs, __str_parents;
 window["__str_attrs"] = Object();
@@ -1234,10 +1315,10 @@ var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self")};
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-var __args_8, __kwargs_8;
-__args_8 = create_array(self["__dict__"]["jsstring"], 0);
-__kwargs_8 = Object();
-return get_attribute(Iterator, "__call__")(__args_8, __kwargs_8);
+var __args_10, __kwargs_10;
+__args_10 = create_array(self["__dict__"]["jsstring"], 0);
+__kwargs_10 = Object();
+return get_attribute(Iterator, "__call__")(__args_10, __kwargs_10);
 }
 window["__str___iter__"] = __str___iter__ 
 

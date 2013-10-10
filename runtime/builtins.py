@@ -175,36 +175,58 @@ class dict:
     # http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
     UID = 0
     def __init__(self, js_object=None):
-        #self.js_object = JS('Object.create(null)')
         if js_object:
-            self.js_object = js_object
+            if JS("js_object instanceof Array"):
+                self.js_object = JS('Object.create(null)')
+                i = 0
+                while i < js_object.length:
+                    JS('var key = js_object[i]["key"]')
+                    JS('var value = js_object[i]["value"]')
+                    self.set(key, value)
+                    i += 1
+            else:
+                self.js_object = js_object
         else:
             self.js_object = JSObject()
 
-    def get(self, key, d):
-        var(__dict)
+    def get(self, key, _default=None):
         __dict = self.js_object
-        if JS('__dict[key]'):
-            return JS('__dict[key]')
-        return d
+        if JS("typeof(key) === 'object'"):
+            JS('var uid = "@"+key.uid') ## gotcha - what if "@undefined" was in __dict ?
+            if JS('uid in __dict'):
+                return JS('__dict[uid]')
+        elif JS("typeof(key) === 'function'"):
+            JS('var uid = "@"+key.uid')
+            if JS('uid in __dict'):
+                return JS('__dict[uid]')
+        else:
+            if JS('key in __dict'):
+                return JS('__dict[key]')
+
+        return _default
 
     def set(self, key, value):
-        var(__dict)
         __dict = self.js_object
-        JS('__dict[key] = value')
+        if JS("typeof(key) === 'object'"):
+            if JS("key.uid === undefined"):
+                uid = self.UID
+                JS("key.uid = uid")
+                self.UID += 1
+            JS('var uid = key.uid')
+            JS('__dict["@"+uid] = value')
+        elif JS("typeof(key) === 'function'"):
+            if JS("key.uid === undefined"):
+                uid = self.UID
+                JS("key.uid = uid")
+                self.UID += 1
+            JS('var uid = key.uid')
+            JS('__dict["@"+uid] = value')
+        else:
+            JS('__dict[key] = value')
 
     def __len__(self):
-        var(__dict)
         __dict = self.js_object
         return JS('Object.keys(__dict).length')
-
-    def keys(self):
-        var(__dict, out)
-        __dict = self.js_object
-        __keys = JS('Object.keys(__dict)')
-        out = list()
-        out.js_object = __keys
-        return out
 
     def __getitem__(self, key):
         __dict = self.js_object
@@ -235,6 +257,23 @@ class dict:
             JS('__dict["@"+uid] = value')
         else:
             JS('__dict[key] = value')
+
+    def keys(self):
+        __dict = self.js_object
+        __keys = JS('Object.keys(__dict)')
+        out = list()
+        out.js_object = __keys
+        return out
+
+    def values(self):
+        __dict = self.js_object
+        __keys = JS('Object.keys(__dict)')
+        out = list()
+        i = 0
+        while i < __keys.length:
+            out.append( JS('__dict[ __keys[i] ]') )
+            i += 1
+        return out
 
 
 class str:
