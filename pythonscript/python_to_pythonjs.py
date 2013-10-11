@@ -620,7 +620,7 @@ class PythonToPythonJS(NodeVisitor):
                     if func in self._function_return_types:
                         self._instances[ target.id ] = self._function_return_types[ func ]
                     else:
-                        writer.write('## %s - unknown return type for: %s'(typedef.name, func))
+                        writer.write('## %s - unknown return type for: %s' % (typedef.name, func))
                 else:
                     writer.write('## %s - not a method: %s' %(typedef.name, method))
 

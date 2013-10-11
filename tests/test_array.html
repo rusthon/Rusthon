@@ -6,7 +6,7 @@
 
 
 def test():
-	global a
+	global a, b
 	a = array('i', [1,2,3,4] )
 	print(a.typecode)
 	print(a.buffer)
@@ -35,6 +35,27 @@ def test():
 	a.extend( [100, 101, 102] )
 	for value in a:
 		print value
+
+	print( '--testing float8--' )
+	b = array('float8', [3.14, 100.1, 5.5])
+	for value in b:
+		print value
+
+	print( '--testing float8--' )
+	c = array('float8', [0.12345, 0.5554, 0.99998])
+	for value in c:
+		print value
+
+	print( '--testing float8--' )
+	d = array('float8', [0.12345, 0.5554, 0.99998, 500.88283, -1001.88716])
+	for value in d:
+		print value
+
+	print( '--testing float16--' )
+	e = array('float16', [0.12345, 0.5554, 0.99998, 500.88283, -1001.88716])
+	for value in e:
+		print value
+
 
 </script>
 </head>

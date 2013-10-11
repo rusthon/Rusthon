@@ -158,11 +158,16 @@ def regenerate_runtime():
 	b = pythonjs_to_javascript(
 		open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8'),
 	)
+	if not b.strip():
+		raise RuntimeError
 	c = python_to_javascript(
 		open(PATHS['runtime_builtins'],'rb').read().decode('utf-8'),
 		dump='/tmp/runtime-builtins.dump.py',
 		global_variable_scope = False ## this should be safe
 	)
+	if not c.strip():
+		raise RuntimeError
+
 	src = '\n'.join( [a,b.strip(),c.strip()] )
 	file = open( PATHS['runtime'], 'wb')
 	file.write( src.encode('utf-8') )

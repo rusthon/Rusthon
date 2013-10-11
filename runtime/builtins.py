@@ -32,6 +32,28 @@ def map(func, objs):
     out.js_object = map(func, objs.js_object)
     return out
 
+def min( lst ):
+    a = None
+    for value in lst:
+        if a is None: a = value
+        elif value < a: a = value
+    return a
+
+def max( lst ):
+    a = None
+    for value in lst:
+        if a is None: a = value
+        elif value > a: a = value
+    return a
+
+def abs( num ):
+    return JS('Math.abs(num)')
+
+def ord( char ):
+    return JS('char.charCodeAt(0)')
+
+def chr( num ):
+    return JS('String.fromCharCode(num)')
 
 class Iterator:
 
@@ -307,6 +329,9 @@ class array:
         'L': 4, # unsigned long
         'f': 4, # float
         'd': 8, # double
+        'float32':4,
+        'float16':2,
+        'float8' :1,
     }
     typecode_names = {
         'c': 'Int8',
@@ -320,7 +345,11 @@ class array:
         #'l': 'TODO',
         #'L': 'TODO',
         'f': 'Float32',
-        'd': 'Float64'
+        'd': 'Float64',
+
+        'float32': 'Float32',
+        'float16': 'Int16',
+        'float8' : 'Int8'
     }
     def __init__(self, typecode, initializer=None, little_endian=False):
         self.typecode = typecode
@@ -330,6 +359,16 @@ class array:
         if initializer:
             self.length = len(initializer)
             self.bytes = self.length * self.itemsize
+
+            if self.typecode == 'float8':
+                self._scale = max( [abs(min(initializer)), max(initializer)] )
+                self._norm_get = self._scale / 127  ## half 8bits-1
+                self._norm_set = 1.0 / self._norm_get
+            elif self.typecode == 'float16':
+                self._scale = max( [abs(min(initializer)), max(initializer)] )
+                self._norm_get = self._scale / 32767  ## half 16bits-1
+                self._norm_set = 1.0 / self._norm_get
+
         else:
             self.length = 0
             self.bytes = 0
@@ -352,13 +391,18 @@ class array:
         func = JS('dataview[func_name].bind(dataview)')
 
         if offset < self.bytes:
-            return JS('func(offset)')
+            value = JS('func(offset)')
+            if self.typecode == 'float8':
+                value = value * self._norm_get
+            elif self.typecode == 'float16':
+                value = value * self._norm_get
+            return value
         else:
             raise IndexError
 
     def __setitem__(self, index, value):
         step = self.itemsize
-        if index < 0: index = self.length + index -1
+        if index < 0: index = self.length + index -1  ## TODO fixme
         offset = step * index
 
         dataview = self.dataview
@@ -366,6 +410,11 @@ class array:
         func = JS('dataview[func_name].bind(dataview)')
 
         if offset < self.bytes:
+            if self.typecode == 'float8':
+                value = value * self._norm_set
+            elif self.typecode == 'float16':
+                value = value * self._norm_set
+
             JS('func(offset, value)')
         else:
             raise IndexError
@@ -379,15 +428,20 @@ class array:
     def fromlist(self, lst):
         length = len(lst)
         step = self.itemsize
+        typecode = self.typecode
         size = length * step
-
         dataview = self.dataview
-        func_name = 'set'+self.typecode_names[ self.typecode ]
+        func_name = 'set'+self.typecode_names[ typecode ]
         func = JS('dataview[func_name].bind(dataview)')
         if size <= self.bytes:
             i = 0; offset = 0
             while i < length:
                 item = lst[i]
+                if typecode == 'float8':
+                    item *= self._norm_set
+                elif typecode == 'float16':
+                    item *= self._norm_set
+
                 JS('func(offset,item)')
                 offset += step
                 i += 1
@@ -416,3 +470,29 @@ class array:
     def extend(self, lst):  ## TODO optimize
         for value in lst:
             self.append( value )
+
+    def to_array(self):
+        arr = JSArray()
+        i = 0
+        while i < self.length:
+            item = self[i]
+            JS('arr.push( item )')
+            i += 1
+        return arr
+
+    def to_list(self):
+        #return list( js_object=self.to_array() )  ## TODO fixme
+        lst = list()
+        lst.js_object = self.to_array()
+        return lst
+
+    def to_ascii(self):
+        string = ''
+        arr = self.to_array()
+        i = 0; length = arr.length
+        while i < length:
+            JS('var num = arr[i]')
+            JS('var char = String.fromCharCode(num)')
+            string += char
+            i += 1
+        return string
