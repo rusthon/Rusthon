@@ -58,6 +58,7 @@ def create_class(class_name, parents, attrs):
         if init:
             init.apply(None, arguments)
         return object
+    __call__.pythonscript_function = True
     klass.__call__ = __call__
     return klass
 
@@ -89,7 +90,6 @@ def get_attribute(object, attribute):
                 if cached:
                     return cached
                 else:
-                    #print 'generating new wrapper'
                     def wrapper(args,kwargs): return object.apply(None, args)
                     wrapper.is_wrapper = True
                     object.cached_wrapper = wrapper
@@ -116,7 +116,16 @@ def get_attribute(object, attribute):
             return attr
         
     if attr:  ## what about cases where attr is zero?
-        return attr
+        if JS("typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
+            ## to avoid problems with other generated wrapper funcs not marked with:
+            ## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
+            ## bases, __name__, __dict__, __call__
+            #print 'wrapping something external', object, attribute
+            def wrapper(args,kwargs): return attr.apply(object, args)
+            wrapper.is_wrapper = True
+            return wrapper
+        else:
+            return attr
 
     var(__class__, __dict__, __get__, bases)
 
@@ -199,6 +208,26 @@ def get_attribute(object, attribute):
                     return method
                 else:
                     return attr
+
+    if JS('object instanceof Array'):
+        if attribute == '__getitem__':
+            def wrapper(args,kwargs): return object[ args[0] ]
+            wrapper.is_wrapper = True
+            return wrapper
+        elif attribute == '__setitem__':
+            def wrapper(args,kwargs): object[ args[0] ] = args[1]
+            wrapper.is_wrapper = True
+            return wrapper
+
+    elif attribute == '__getitem__':  ## this should be a JSObject - or anything else - is this always safe?
+        def wrapper(args,kwargs): return object[ args[0] ]
+        wrapper.is_wrapper = True
+        return wrapper
+    elif attribute == '__setitem__':
+        def wrapper(args,kwargs): object[ args[0] ] = args[1]
+        wrapper.is_wrapper = True
+        return wrapper
+
     return None  # XXX: raise AttributeError instead
 
 
@@ -230,6 +259,7 @@ def set_attribute(object, attribute, value):
         __dict__[attribute] = value
     else:
         object[attribute] = value
+set_attribute.pythonscript_function = True
 
 
 def get_arguments(signature, args, kwargs):
@@ -281,7 +311,7 @@ def get_arguments(signature, args, kwargs):
     if signature.varkwarg:
         out[signature.varkwarg] = kwargs
     return out
-
+get_arguments.pythonscript_function = True
 
 def type(args, kwargs):
     var(class_name, parents, attrs)
@@ -289,7 +319,7 @@ def type(args, kwargs):
     parents = args[1]
     attrs = args[2]
     return create_class(class_name, parents, attrs)
-
+type.pythonscript_function = True
 
 def getattr(args, kwargs):
     var(object, attribute)

@@ -47,14 +47,16 @@ def test():
 		print value
 
 	print( '--testing float8--' )
-	d = array('float8', [0.12345, 0.5554, 0.99998, 500.88283, -1001.88716])
-	for value in d:
-		print value
+	d = array('float8', [-10.0, 3.141592653589793, 10.0])
+	print 'error:', d[1] - 3.141592653589793
+
+	d = array('float8', [-50.0, 3.141592653589793, 50.0])
+	print 'error:', d[1] - 3.141592653589793
+	print d[1]
 
 	print( '--testing float16--' )
-	e = array('float16', [0.12345, 0.5554, 0.99998, 500.88283, -1001.88716])
-	for value in e:
-		print value
+	e = array('float16', [-10.0, 3.141592653589793, 10.0])
+	print 'error:', e[1] - 3.141592653589793
 
 
 </script>

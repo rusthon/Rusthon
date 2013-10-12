@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+a = 'hello'
+b = 'world'
+lst = [1,2,3]
+
+print JSON.stringify( a )
+print JSON.stringify( b )
+print JSON.stringify( lst )
+print JSON.stringify( lst.js_object )
+
+i = 0
+while i < lst.js_object.length:
+	print lst.js_object[i]
+	lst.js_object[i] = i * 100
+	i += 1
+print lst.js_object
+
+print 'test complete'
+
+</script>
+
+</head>
+<body>
+<button id="mybutton" onclick="test()">click me</button>
+</body>
+</html>

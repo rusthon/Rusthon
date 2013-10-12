@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 10 18:03:46 2013
+// PythonScript Runtime - regenerated on: Sat Oct 12 04:11:21 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -69,6 +69,7 @@ return object;
 }
 window["__call__"] = __call__ 
 
+__call__.pythonscript_function = true;
 klass.__call__ = __call__;
 return klass;
 }
@@ -146,7 +147,19 @@ return attr;
 }
 
 if(attr) {
+if(typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
+var wrapper = function(args, kwargs) {
+return attr.apply(object, args);
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+return wrapper;
+}
+else {
 return attr;
+}
+
 }
 
 var __class__, __dict__, __get__, bases;
@@ -289,6 +302,55 @@ i = backup;
 
 }
 
+if(object instanceof Array) {
+if(attribute == "__getitem__") {
+var wrapper = function(args, kwargs) {
+return object[args[0]];
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+return wrapper;
+}
+else {
+if(attribute == "__setitem__") {
+var wrapper = function(args, kwargs) {
+object[args[0]] = args[1];
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+return wrapper;
+}
+
+}
+
+}
+else {
+if(attribute == "__getitem__") {
+var wrapper = function(args, kwargs) {
+return object[args[0]];
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+return wrapper;
+}
+else {
+if(attribute == "__setitem__") {
+var wrapper = function(args, kwargs) {
+object[args[0]] = args[1];
+}
+window["wrapper"] = wrapper 
+
+wrapper.is_wrapper = true;
+return wrapper;
+}
+
+}
+
+}
+
 return undefined;
 }
 window["get_attribute"] = get_attribute 
@@ -343,6 +405,7 @@ object[attribute] = value;
 }
 window["set_attribute"] = set_attribute 
 
+set_attribute.pythonscript_function = true;
 var get_arguments = function(signature, args, kwargs) {
 "Based on ``signature`` and ``args``, ``kwargs`` parameters retrieve\n    the actual parameters.\n\n    This will set default keyword arguments and retrieve positional arguments\n    in kwargs if their called as such";
 if(args === undefined) {
@@ -424,6 +487,7 @@ return out;
 }
 window["get_arguments"] = get_arguments 
 
+get_arguments.pythonscript_function = true;
 var type = function(args, kwargs) {
 var class_name, parents, attrs;
 class_name = args[0];
@@ -433,6 +497,7 @@ return create_class(class_name, parents, attrs);
 }
 window["type"] = type 
 
+type.pythonscript_function = true;
 var getattr = function(args, kwargs) {
 var object, attribute;
 object = args[0];
