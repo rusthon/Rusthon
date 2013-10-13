@@ -65,7 +65,10 @@ class Writer(object):
 
     def _write(self, code):
         indentation = self.level * 4 * ' '
-        if self.with_javascript: code = """JS('''%s''')"""%code
+        if self.with_javascript:
+            if not code.endswith(':'):  ## will this rule always catch: while, and if/else blocks?
+                if not code.startswith('print '):
+                    code = """JS('''%s''')"""%code
         self.output.write('%s%s\n' % (indentation, code))
 
     def getvalue(self):
@@ -856,22 +859,28 @@ class PythonToPythonJS(NodeVisitor):
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
 
     def visit_For(self, node):
-        writer.write('var(__iterator__, %s)' % node.target.id)
-        writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
-        writer.write('try:')
-        writer.push()
-        writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
-        writer.write('while True:')
-        writer.push()
-        map(self.visit, node.body)
-        writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
-        writer.pull()
-        writer.pull()
-        writer.write('except StopIteration:')
-        writer.push()
-        writer.write('pass')
-        writer.pull()
-        return ''
+        if self._with_js:
+            writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))
+            writer.push()
+            map(self.visit, node.body)
+            writer.pull()
+        else:
+            writer.write('var(__iterator__, %s)' % node.target.id)
+            writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
+            writer.write('try:')
+            writer.push()
+            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+            writer.write('while True:')
+            writer.push()
+            map(self.visit, node.body)
+            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+            writer.pull()
+            writer.pull()
+            writer.write('except StopIteration:')
+            writer.push()
+            writer.write('pass')
+            writer.pull()
+            return ''
 
     def visit_While(self, node):
         writer.write('while %s:' % self.visit(node.test))

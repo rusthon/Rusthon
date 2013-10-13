@@ -14,8 +14,24 @@ def test():
 		arr.push('hello')
 		arr[1] = 'world'
 		ob = { x:'foo', y:'bar'}
-		console.log( arr )
-		console.log( ob )
+		print arr
+		print ob
+		i = 0
+		while i < arr.length:
+			print 'hi', arr[i]
+			i += 1
+
+		if arr[0] == 'hello':
+			print 'if test passed'
+
+		if arr[0] == 'XXX':
+			print 'this will not print'
+		else:
+			print 'else test passed'
+
+		print 'testing for value in arr...'
+		for value in arr:
+			print value
 
 </script>
 </head>
