@@ -31,7 +31,7 @@ except:
     _log_file = None
 def log(txt):
     if _log_file:
-        _log_file.write( txt+'\n' )
+        _log_file.write( str(txt)+'\n' )
         _log_file.flush()
 
 
@@ -46,6 +46,7 @@ class Writer(object):
         self.level = 0
         self.buffers = list()
         self.output = StringIO()
+        self.with_javascript = False
 
     def push(self):
         self.level += 1
@@ -64,6 +65,7 @@ class Writer(object):
 
     def _write(self, code):
         indentation = self.level * 4 * ' '
+        if self.with_javascript: code = """JS('''%s''')"""%code
         self.output.write('%s%s\n' % (indentation, code))
 
     def getvalue(self):
@@ -164,7 +166,7 @@ class PythonToPythonJS(NodeVisitor):
         self._return_type = None
         self._module = module
         self._module_path = module_path
-
+        self._with_js = False
         self._typedefs = dict()  ## class name : typedef  (not pickled)
         self.setup_builtins()
 
@@ -249,9 +251,16 @@ class PythonToPythonJS(NodeVisitor):
         for i in range( len(node.keys) ):
             k = self.visit( node.keys[ i ] )
             v = self.visit( node.values[i] )
-            a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
-        b = '[%s]' %', '.join(a)
-        return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
+            if self._with_js:
+                a.append( '%s:%s'%(k,v) )
+            else:
+                a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
+        if self._with_js:
+            b = ','.join( a )
+            return '{ %s }' %b
+        else:
+            b = '[%s]' %', '.join(a)
+            return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
 
     def visit_Tuple(self, node):
         a = '[%s]' % ', '.join(map(self.visit, node.elts))
@@ -259,7 +268,10 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_List(self, node):
         a = '[%s]' % ', '.join(map(self.visit, node.elts))
-        return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
+        if self._with_js:
+            return a
+        else:
+            return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
 
     def visit_In(self, node):
         return ' in '
@@ -475,6 +487,9 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Attribute(self, node):
         node_value = self.visit(node.value)
+
+        if self._with_js:
+            return '%s.%s' %(node_value, node.attr)
         typedef = None
         if isinstance(node.value, Name):
             typedef = self.get_typedef( instance=node.value )
@@ -521,6 +536,10 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Subscript(self, node):
         name = self.visit(node.value)
+
+        if self._with_js:
+            return '%s[ %s ]' %(name, self.visit(node.slice))
+
         if name in self._instances:  ## support x[y] operator overloading
             klass = self._instances[ name ]
             if '__getitem__' in self._classes[ klass ]:
@@ -543,7 +562,10 @@ class PythonToPythonJS(NodeVisitor):
         # XXX: support only one target for subscripts
         target = node.targets[0]
         if isinstance(target, Subscript):
-            code = "get_attribute(get_attribute(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
+            if self._with_js:
+                code = '%s[ %s ] = %s'
+            else:
+                code = "get_attribute(get_attribute(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
             code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
             writer.write(code)
 
@@ -657,12 +679,20 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('print %s' % ', '.join(map(self.visit, node.values)))
 
     def visit_Str(self, node):
-        return '"""%s"""' % node.s
+        if self._with_js:
+            return '"%s"' %node.s
+        else:
+            return '"""%s"""' % node.s
 
     def visit_Expr(self, node):
         writer.write(self.visit(node.value))
 
     def visit_Call(self, node):
+        if self._with_js:
+            args = list( map(self.visit, node.args) )
+            a = ','.join(args)
+            return '%s( %s )' %( self.visit(node.func), a )
+
         if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var'):
             args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
             if node.func.id == 'var':
@@ -849,6 +879,13 @@ class PythonToPythonJS(NodeVisitor):
         map(self.visit, node.body)
         writer.pull()
 
+    def visit_With(self, node):
+        if isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
+            self._with_js = True
+            writer.with_javascript = True
+            map(self.visit, node.body)
+            writer.with_javascript = False
+            self._with_js = False
 
 
 def main(script):
