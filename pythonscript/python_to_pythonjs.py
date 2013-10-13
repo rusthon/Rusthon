@@ -778,7 +778,19 @@ class PythonToPythonJS(NodeVisitor):
                 decorators.append( decorator )
 
         log('function: %s'%node.name)
-        writer.write('def %s(args, kwargs):' % node.name)
+        if self._with_js:
+            if node.args.defaults:
+                raise SyntaxError( 'pure javascript functions can not take keyword arguments')
+            elif node.args.vararg:
+                raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
+            elif node.args.kwarg:
+                raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
+
+            args = [ a.id for a in node.args.args ]
+            writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
+
+        else:
+            writer.write('def %s(args, kwargs):' % node.name)
         writer.push()
 
         ## the user will almost always want to use Python-style variable scope,
@@ -801,7 +813,7 @@ class PythonToPythonJS(NodeVisitor):
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
 
-        if len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
+        if not self._with_js and (len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg):
             # new pythonjs' python function arguments handling
             # create the structure representing the functions arguments
             # first create the defaultkwargs JSObject
@@ -859,7 +871,10 @@ class PythonToPythonJS(NodeVisitor):
             self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
-        writer.write('%s.pythonscript_function=True'%node.name)
+        if self._with_js:
+            writer.write('%s.pythonscript_function=true'%node.name)
+        else:
+            writer.write('%s.pythonscript_function=True'%node.name)
         # apply decorators
         for decorator in decorators:
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
