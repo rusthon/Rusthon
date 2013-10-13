@@ -26,7 +26,7 @@ def test():
 	div.appendChild( ren.domElement )
 
 	geo = CubeGeometry( 10, 10, 10 )
-	mat = MeshBasicMaterial()
+	mat = MeshBasicMaterial( color={'red':0.9, 'green':0.1, 'blue':0.5}, wireframe=False )
 	mesh = Mesh( geo, mat )
 	scn.add( mesh )
 

@@ -434,9 +434,10 @@ class _Material:
 class MeshBasicMaterial( _Material ):
 	def __init__(self, color=None, wireframe=False):
 		if not color: color = Color()
-		elif isinstance(color, dict):
+		else: #elif isinstance(color, dict):
 			color = Color(red=color['red'], green=color['green'], blue=color['blue'])
-		self._object = JS('new THREE.MeshBasicMaterial( {color:color, wireframe:wireframe} )')
+		clr = color._color
+		self._object = JS('new THREE.MeshBasicMaterial( {color:clr, wireframe:wireframe} )')
 
 class CubeGeometry:
 	def __init__(self, width, height, length):
