@@ -14,6 +14,7 @@ from ast import FunctionDef
 from ast import BinOp
 from ast import Pass
 from ast import Global
+from ast import With
 
 from ast import parse
 from ast import NodeVisitor
@@ -791,6 +792,11 @@ class PythonToPythonJS(NodeVisitor):
                     local_vars.add( n.targets[0].id )
                 elif isinstance(n, Global):
                     global_vars.update( n.names )
+                elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
+                    for c in n.body:
+                        if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
+                            local_vars.add( c.targets[0].id )
+
             if local_vars-global_vars:
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
