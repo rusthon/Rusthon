@@ -6,7 +6,7 @@
 
 
 def test():
-	global a, b, c
+	global a, b, c, d, e, s
 	a = 'hello'
 	b = 'world'
 	print a+b
@@ -34,6 +34,16 @@ def test():
 	if a.endswith('llo'):
 		print 'endswith test passed'
 
+	print a.upper()
+	print 'LOWERED'.lower()
+	print a.index( 'e' )
+	print a, '.isdigit->', a.isdigit()
+	print '100.isdigit->', '100'.isdigit()
+
+	s = str('functional style ok')
+	print s
+	e = str( 100 )
+	print e
 
 	print 'tests complete'
 

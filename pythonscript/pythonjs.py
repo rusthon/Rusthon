@@ -230,7 +230,7 @@ class JSGenerator(NodeVisitor):
         return 'return undefined;'
 
     def visit_Pass(self, node):
-        return ''
+        return '/*pass*/'
 
     def visit_Eq(self, node):
         return '=='

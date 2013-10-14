@@ -1,9 +1,20 @@
-#from pythonjs import JS
-#from pythonjs import var
-#from pythonjs import JSArray
-#from pythonjs import JSObject
+with javascript:
+    def _create_empty_object(arr):
+            o = Object.create(null)
+            for i in arr:
+                o[ i ] = True
+            return o
+
+
+def str(s):
+    return ''+s
 
 def _setup_str_prototype():
+    '''
+    Extend JavaScript String.prototype with methods that implement the Python str API.
+    The decorator @String.prototype.[name] assigns the function to the prototype,
+    and ensures that the special 'this' variable will work.
+    '''
     with javascript:
 
         @String.prototype.startswith
@@ -34,6 +45,27 @@ def _setup_str_prototype():
                 if i < arr.length:
                     out += this
             return out
+
+        @String.prototype.upper
+        def func():
+            return this.toUpperCase()
+
+        @String.prototype.lower
+        def func():
+            return this.toLowerCase()
+
+        @String.prototype.index
+        def func(a):
+            return this.indexOf(a)
+
+        @String.prototype.isdigit
+        def func():
+            digits = _create_empty_object( ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] )
+            for char in this:
+                if char in digits: pass
+                else: return False
+            return True
+
 
 _setup_str_prototype()
 
@@ -337,14 +369,14 @@ class dict:
             i += 1
         return out
 
-
-class str:
-
-    def __init__(self, jsstring):
-        self.jsstring = jsstring
-
-    def __iter__(self):
-        return Iterator(self.jsstring, 0)
+# DEPRECATED - see _setup_str_prototype
+#class str:
+#
+#    def __init__(self, jsstring):
+#        self.jsstring = jsstring
+#
+#    def __iter__(self):
+#        return Iterator(self.jsstring, 0)
 
 
 class array:
