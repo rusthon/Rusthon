@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sun Oct 13 21:03:22 2013
+// PythonScript Runtime - regenerated on: Mon Oct 14 00:26:47 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -33,7 +33,6 @@ var adapt_arguments = function(handler) {
 var func = function() {
 handler(Array.prototype.slice.call(arguments));
 }
-window["func"] = func 
 
 return func;
 }
@@ -67,7 +66,6 @@ init.apply(undefined, arguments);
 
 return object;
 }
-window["__call__"] = __call__ 
 
 __call__.pythonscript_function = true;
 klass.__call__ = __call__;
@@ -95,7 +93,6 @@ else {
 var wrapper = function(args, kwargs) {
 return object.apply(undefined, args);
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 object.cached_wrapper = wrapper;
@@ -117,7 +114,6 @@ if(typeof(attr) === 'function') {
 var wrapper = function(args, kwargs) {
 return attr.apply(object, args);
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -133,7 +129,6 @@ if(typeof(attr) === 'function') {
 var wrapper = function(args, kwargs) {
 return attr.apply(object, args);
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -151,7 +146,6 @@ if(typeof(attr) === 'function' && attr.pythonscript_function === undefined && at
 var wrapper = function(args, kwargs) {
 return attr.apply(object, args);
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -253,7 +247,6 @@ args = [object];
 
 return attr.apply(undefined, args);
 }
-window["method"] = method 
 
 method.is_wrapper = true;
 return method;
@@ -286,7 +279,6 @@ args = [object];
 
 return attr.apply(undefined, args);
 }
-window["method"] = method 
 
 method.is_wrapper = true;
 return method;
@@ -307,7 +299,6 @@ if(attribute == "__getitem__") {
 var wrapper = function(args, kwargs) {
 return object[args[0]];
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -317,7 +308,6 @@ if(attribute == "__setitem__") {
 var wrapper = function(args, kwargs) {
 object[args[0]] = args[1];
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -331,7 +321,6 @@ if(attribute == "__getitem__") {
 var wrapper = function(args, kwargs) {
 return object[args[0]];
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -341,7 +330,6 @@ if(attribute == "__setitem__") {
 var wrapper = function(args, kwargs) {
 object[args[0]] = args[1];
 }
-window["wrapper"] = wrapper 
 
 wrapper.is_wrapper = true;
 return wrapper;
@@ -601,10 +589,8 @@ return false;
 }
 
 }
-window["func"] = func 
 
-func.pythonscript_function=true;
-set_attribute(String.prototype, "startswith", func);
+String.prototype.startswith=func;
 var func = function(a) {
 if(this.substring(this.length - a.length, this.length) == a) {
 return true;
@@ -614,10 +600,8 @@ return false;
 }
 
 }
-window["func"] = func 
 
-func.pythonscript_function=true;
-set_attribute(String.prototype, "endswith", func);
+String.prototype.endswith=func;
 }
 window["_setup_str_prototype"] = _setup_str_prototype 
 

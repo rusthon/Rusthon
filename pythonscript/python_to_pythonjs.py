@@ -760,10 +760,13 @@ class PythonToPythonJS(NodeVisitor):
     def visit_FunctionDef(self, node):
         property_decorator = None
         decorators = []
+        with_js_decorators = []
         for decorator in reversed(node.decorator_list):
             log('@decorator: %s' %decorator)
+            if self._with_js:  ## decorators are special in with-js mode
+                with_js_decorators.append( self.visit( decorator ) )
 
-            if isinstance(decorator, Name) and decorator.id == 'property':
+            elif isinstance(decorator, Name) and decorator.id == 'property':
                 property_decorator = decorator
                 n = node.name + '__getprop__'
                 self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
@@ -878,12 +881,22 @@ class PythonToPythonJS(NodeVisitor):
             self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
-        if self._with_js:
+        if self._with_js and with_js_decorators:
+            ## these with-js functions are assigned to a some objects prototype,
+            ## here we assume that they depend on the special "this" variable,
+            ## therefore this function can not be marked as f.pythonscript_function,
+            ## because we need get_attribute(f,'__call__') to dynamically bind "this"
+            for dec in with_js_decorators:
+                assert '.prototype.' in dec
+                writer.write( '%s=%s'%(dec,node.name) )
+        elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
             writer.write('%s.pythonscript_function=true'%node.name)
         else:
             writer.write('%s.pythonscript_function=True'%node.name)
+
         # apply decorators
         for decorator in decorators:
+            assert not self._with_js
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
 
     def visit_For(self, node):

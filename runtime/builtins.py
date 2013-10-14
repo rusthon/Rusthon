@@ -5,19 +5,21 @@
 
 def _setup_str_prototype():
     with javascript:
+
+        @String.prototype.startswith
         def func(a):
             if this.substring(0, a.length) == a:
                 return True
             else:
                 return False
-        String.prototype.startswith = func
+        #String.prototype.startswith = func  ## the problem with this is "this" gets lost when get_attribute(f,'__call__') is used.
 
+        @String.prototype.endswith
         def func(a):
             if this.substring(this.length-a.length, this.length) == a:
                 return True
             else:
                 return False
-        String.prototype.endswith = func
 
 _setup_str_prototype()
 

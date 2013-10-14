@@ -60,6 +60,11 @@ class JSGenerator(NodeVisitor):
         return out
 
     def visit_FunctionDef(self, node):
+        if not hasattr(self, '_function_stack'):  ## track nested functions ##
+            self._function_stack = []
+
+        self._function_stack.append( node.name )
+
         args = self.visit(node.args)
         buffer = 'var %s = function(%s) {\n' % (
             node.name,
@@ -81,7 +86,11 @@ class JSGenerator(NodeVisitor):
                 body.append(self.visit(child))
         buffer += '\n'.join(body)
         buffer += '\n}\n'
-        buffer += 'window["%s"] = %s \n' % (node.name, node.name)  ## export to global namespace so Closure will not remove them
+
+        if node.name == self._function_stack[0]:  ## to be safe do not export nested functions
+            buffer += 'window["%s"] = %s \n' % (node.name, node.name)  ## export to global namespace so Closure will not remove them
+
+        assert node.name == self._function_stack.pop()
         return buffer
 
     def visit_Subscript(self, node):

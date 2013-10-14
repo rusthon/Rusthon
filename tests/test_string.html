@@ -10,12 +10,19 @@ def test():
 	a = 'hello'
 	b = 'world'
 	print a+b
+
 	with javascript:
 		if a.startswith('h'):
-			print 'startswith test passed'
+			print 'WITH - startswith test passed'
 
-		if a.endswith('h'):
-			print 'endswith test passed'
+		if a.endswith('lo'):
+			print 'WITH - endswith test passed'
+
+	if a.startswith('he'):
+		print 'startswith test passed'
+
+	if a.endswith('llo'):
+		print 'endswith test passed'
 
 
 </script>
