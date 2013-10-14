@@ -12,7 +12,6 @@ def _setup_str_prototype():
                 return True
             else:
                 return False
-        #String.prototype.startswith = func  ## the problem with this is "this" gets lost when get_attribute(f,'__call__') is used.
 
         @String.prototype.endswith
         def func(a):
@@ -20,6 +19,21 @@ def _setup_str_prototype():
                 return True
             else:
                 return False
+
+        @String.prototype.join
+        def func(a):
+            out = ''
+            if instanceof(a, Array):
+                arr = a
+            else:
+                arr = a.__dict__.js_object
+            i = 0
+            for value in arr:
+                out += value
+                i += 1
+                if i < arr.length:
+                    out += this
+            return out
 
 _setup_str_prototype()
 

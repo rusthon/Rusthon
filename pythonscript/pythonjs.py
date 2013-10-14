@@ -128,7 +128,14 @@ class JSGenerator(NodeVisitor):
 
     def visit_Call(self, node):
         name = self.visit(node.func)
-        if name == 'JSObject':
+        if name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
+            args = map(self.visit, node.args)
+            if len(args) == 2:
+                return '%s instanceof %s' %tuple(args)
+            else:
+                raise SyntaxError( args )
+
+        elif name == 'JSObject':
             if node.keywords:
                 kwargs = map(self.visit, node.keywords)
                 f = lambda x: '"%s": %s' % (x[0], x[1])
@@ -136,11 +143,11 @@ class JSGenerator(NodeVisitor):
                 return '{%s}' % out
             else:
                 return 'Object()'
-        if name == 'var':
+        elif name == 'var':
             args = map(self.visit, node.args)
             out = ', '.join(args)
             return 'var %s' % out
-        if name == 'JSArray':
+        elif name == 'JSArray':
             if node.args:
                 args = map(self.visit, node.args)
                 out = ', '.join(args)

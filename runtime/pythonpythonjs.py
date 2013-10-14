@@ -121,7 +121,9 @@ def get_attribute(object, attribute):
             ## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
             ## bases, __name__, __dict__, __call__
             #print 'wrapping something external', object, attribute
-            def wrapper(args,kwargs): return attr.apply(object, args)
+
+            def wrapper(args,kwargs): return attr.apply(object, args)  ## THIS IS CORRECT
+            #def wrapper(args,kwargs): return attr.call(object, args)  ## this is not correct
             wrapper.is_wrapper = True
             return wrapper
         else:
