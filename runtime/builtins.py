@@ -1,8 +1,25 @@
-from pythonjs import JS
-from pythonjs import var
-from pythonjs import JSArray
-from pythonjs import JSObject
+#from pythonjs import JS
+#from pythonjs import var
+#from pythonjs import JSArray
+#from pythonjs import JSObject
 
+def _setup_str_prototype():
+    with javascript:
+        def func(a):
+            if this.substring(0, a.length) == a:
+                return True
+            else:
+                return False
+        String.prototype.startswith = func
+
+        def func(a):
+            if this.substring(this.length-a.length, this.length) == a:
+                return True
+            else:
+                return False
+        String.prototype.endswith = func
+
+_setup_str_prototype()
 
 def range(num):
     """Emulates Python's range function"""

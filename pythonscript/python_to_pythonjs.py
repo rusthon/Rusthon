@@ -69,7 +69,8 @@ class Writer(object):
         if self.with_javascript:
             if not code.endswith(':'):  ## will this rule always catch: while, and if/else blocks?
                 if not code.startswith('print '):
-                    code = """JS('''%s''')"""%code
+                    if not code.startswith('var('):
+                        code = """JS('''%s''')"""%code
         self.output.write('%s%s\n' % (indentation, code))
 
     def getvalue(self):
@@ -396,6 +397,12 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('pass')
 
     def visit_Name(self, node):
+        if self._with_js:
+            if node.id == 'True':
+                return 'true'
+            elif node.id == 'False':
+                return 'false'
+
         return node.id
 
     def visit_Num(self, node):
