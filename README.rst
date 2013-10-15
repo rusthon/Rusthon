@@ -141,6 +141,7 @@ Inline JavaScript
 There are times that JavaScript needs to be directly inlined into PythonScript code, this is done with the special 'JS([str])' function that takes a string literal as its only argument.  The compiler will insert the string directly into the final output JavaScript.
 
 JS Example::
+
 	JS("var arr = new Array()")
 	JS("var ob = new Object()")
 	JS("ob['key'] = 'value'")
@@ -151,6 +152,7 @@ JS Example::
 In the example above we create a new JavaScript Array.  The if statement is still Python syntax, but its condition is allowed to be inlined JavaScript.  As the compiler becomes smarter and the PythonScript low-level API develops, there will be less need to write inline JavaScript in the above style.  Lets take a look at two alternative ways this can be rewritten.
 
 1. JSArray, JSObject, and instanceof::
+
 	arr = JSArray()
 	ob = JSObject()
 	if instanceof(arr, Array):
@@ -162,6 +164,7 @@ The special function JSArray will create a new JavaScript Array object, and JSOb
 This code is more clear than before, but the downside is that the calls to arr.push will be slower because it gets wrapped at runtime.  To have fast and clear code we need to use the final method below, 'with javascript'
 
 2. with javascript::
+
 	with javascript:
 		arr = []
 		ob = {}
