@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Mon Oct 14 07:00:04 2013
+// PythonScript Runtime - regenerated on: Mon Oct 14 23:23:48 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -595,6 +595,38 @@ return o;
 window["_create_empty_object"] = _create_empty_object 
 
 _create_empty_object.pythonscript_function=true;
+var int = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("a")};
+arguments = get_arguments(signature, args, kwargs);
+var a = arguments['a'];
+if(a instanceof String) {
+return window.parseInt( a );
+}
+else {
+return Math.round( a );
+}
+
+}
+window["int"] = int 
+
+int.pythonscript_function = true;
+var float = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("a")};
+arguments = get_arguments(signature, args, kwargs);
+var a = arguments['a'];
+if(a instanceof String) {
+return window.parseFloat( a );
+}
+else {
+return a;
+}
+
+}
+window["float"] = float 
+
+float.pythonscript_function = true;
 var str = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("s")};

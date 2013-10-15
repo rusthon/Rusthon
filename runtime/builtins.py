@@ -5,6 +5,19 @@ with javascript:
                 o[ i ] = True
             return o
 
+def int(a):
+    with javascript:
+        if instanceof(a, String):
+            return window.parseInt(a)
+        else:
+            return Math.round(a)
+
+def float(a):
+    with javascript:
+        if instanceof(a, String):
+            return window.parseFloat(a)
+        else:
+            return a
 
 def str(s):
     return ''+s

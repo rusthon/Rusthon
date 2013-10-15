@@ -133,3 +133,41 @@ HTML DOM Example::
 
 Numbers and strings can be passed directly to JavaScript functions.  Simple callbacks that do not take any arguments can also be passed as an argument to a JavaScript function, like window.setInterval.  PythonScript allows you to call any JavaScript function directly by wrapping it at runtime.  Attributes of JavaScript objects are also returned directly, like document.body.  This allows you to use the HTML DOM API just as you would in normal JavaScript.
 
+---------------
+
+Inline JavaScript
+---------------
+
+There are times that JavaScript needs to be directly inlined into PythonScript code, this is done with the special 'JS([str])' function that takes a string literal as its only argument.  The compiler will insert the string directly into the final output JavaScript.
+
+JS Example::
+	JS("var arr = new Array()")
+	JS("var ob = new Object()")
+	JS("ob['key'] = 'value'")
+	if JS("Object.prototype.toString.call( arr ) === '[object Array]'"):
+		JS("arr.push('hello world')")
+		JS("arr.push( ob )")
+
+In the example above we create a new JavaScript Array.  The if statement is still Python syntax, but its condition is allowed to be inlined JavaScript.  As the compiler becomes smarter and the PythonScript low-level API develops, there will be less need to write inline JavaScript in the above style.  Lets take a look at two alternative ways this can be rewritten.
+
+1. JSArray, JSObject, and instanceof::
+	arr = JSArray()
+	ob = JSObject()
+	if instanceof(arr, Array):
+		arr.push('hello world')
+		arr.push( ob )
+
+The special function JSArray will create a new JavaScript Array object, and JSObject creates a new JavaScript Object.  The 'instanceof' function will be translated into using the 'instanceof' JavaScript operator.  At the end, arr.push is called without wrapping it in JS(), this is allowed because from PythonScript, we can directly call JavaScript functions by dynamically wrapping it at runtime.
+
+This code is more clear than before, but the downside is that the calls to arr.push will be slower because it gets wrapped at runtime.  To have fast and clear code we need to use the final method below, 'with javascript'
+
+2. with javascript::
+	with javascript:
+		arr = []
+		ob = {}
+		if instanceof(arr, Array):
+			arr.push('hello world')
+			arr.push( ob )
+
+The "with javascript:" statement can be used to mark a block of code as being direct JavaScript.  The compiler will basically wrap each line it can in JS() calls.  The calls to arr.push will be fast because there is no longer any runtime wrapping.  Instead of using JSArray and JSObject you just use the literal notation to create them.
+
