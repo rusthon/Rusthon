@@ -1,4 +1,6 @@
+
 with javascript:
+
     def _create_empty_object(arr):
             o = Object.create(null)
             for i in arr:

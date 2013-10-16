@@ -253,6 +253,9 @@ class JSGenerator(NodeVisitor):
     def visit_Not(self, node):
         return '!'
 
+    def visit_IsNot(self, node):
+        return '!=='
+
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
 

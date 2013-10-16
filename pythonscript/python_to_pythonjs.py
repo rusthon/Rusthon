@@ -494,6 +494,9 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Not(self, node):
         return ' not '
 
+    def visit_IsNot(self, node):
+        return ' is not '
+
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
 

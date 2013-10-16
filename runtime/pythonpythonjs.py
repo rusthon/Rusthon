@@ -115,7 +115,7 @@ def get_attribute(object, attribute):
         else:
             return attr
         
-    if attr:  ## what about cases where attr is zero?
+    if attr is not None:  ## what about cases where attr is None?
         if JS("typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
             ## to avoid problems with other generated wrapper funcs not marked with:
             ## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
@@ -289,7 +289,8 @@ def get_arguments(signature, args, kwargs):
         arg = JS('signature.args[j]')
         if kwargs:
             kwarg = kwargs[arg]
-            if kwarg:
+            #if kwarg is not None:  ## what about cases where the caller wants None
+            if arg in kwargs:       ## TODO, JSObject here should be created with Object.create(null) so that the "in" test will not conflict with internal props like: "constructor", "hasOwnProperty", etc.
                 out[arg] = kwarg
             elif j < args.length:
                 out[arg] = args[j]
