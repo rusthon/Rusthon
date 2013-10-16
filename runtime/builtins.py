@@ -1,5 +1,8 @@
 
 with javascript:
+    def _JSNew(T):
+        print '_JSNew->', T
+        return JS("new T")
 
     def _create_empty_object(arr):
             o = Object.create(null)

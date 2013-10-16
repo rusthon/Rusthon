@@ -3,19 +3,18 @@
 <script src="pythonscript.js"></script>
 
 <script type="text/python">
-
-a = 'hello'
-b = 'world'
+class X:
+	pass
 
 def test():
+	global a,b
+	a = []
+	a[...] = 'hidden'
+	print a[...]
 
-	print(a+b)
-
-	s = '\\n'
-	c = s.join( [a,b] )
-	print( c )
-
-	print( a+s+b )
+	b = X()
+	b[...] = 'something'
+	print b[...]
 
 </script>
 </head>

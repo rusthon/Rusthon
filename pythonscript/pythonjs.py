@@ -135,6 +135,13 @@ class JSGenerator(NodeVisitor):
             else:
                 raise SyntaxError( args )
 
+        #elif name == 'new':
+        #    args = map(self.visit, node.args)
+        #    if len(args) == 1:
+        #        return ' new %s' %args[0]
+        #    else:
+        #        raise SyntaxError( args )
+
         elif name == 'JSObject':
             if node.keywords:
                 kwargs = map(self.visit, node.keywords)

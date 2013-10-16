@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Oct 15 19:07:52 2013
+// PythonScript Runtime - regenerated on: Tue Oct 15 22:47:06 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -579,6 +579,13 @@ key = backup;
 return output;
 }
 window["json_to_pythonscript"] = json_to_pythonscript
+var _JSNew = function(T) {
+console.log("_JSNew->", T);
+return new T;
+}
+window["_JSNew"] = _JSNew 
+
+_JSNew.pythonscript_function=true;
 var _create_empty_object = function(arr) {
 var o;
 o = Object.create( null );

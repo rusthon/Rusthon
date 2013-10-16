@@ -2,6 +2,7 @@
 import os, sys, pickle
 from types import GeneratorType
 
+import ast
 from ast import Str
 from ast import Call
 from ast import Name
@@ -25,7 +26,6 @@ if sys.version_info.major == 3:
 else:
     from cStringIO import StringIO as StringIO
 
-
 try:
     _log_file = open('/tmp/python_to_pythonjs.log', 'wb')
 except:
@@ -40,6 +40,7 @@ GLOBAL_VARIABLE_SCOPE = False              ## Python style
 if '--global-variable-scope' in sys.argv:  ## JavaScript style
     GLOBAL_VARIABLE_SCOPE = True
     log('not using python style variable scope')
+
 
 class Writer(object):
 
@@ -72,7 +73,8 @@ class Writer(object):
                     if not code.startswith('var('):
                         if not code == 'pass':
                             code = """JS('''%s''')"""%code
-        self.output.write('%s%s\n' % (indentation, code))
+        s = '%s%s\n' % (indentation, code)
+        self.output.write(s.encode('utf-8'))
 
     def getvalue(self):
         s = self.output.getvalue()
@@ -552,10 +554,13 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Subscript(self, node):
         name = self.visit(node.value)
 
-        if self._with_js:
+        if isinstance(node.slice, ast.Ellipsis):
+            return '%s["wrapped"]' %name
+
+        elif self._with_js:
             return '%s[ %s ]' %(name, self.visit(node.slice))
 
-        if name in self._instances:  ## support x[y] operator overloading
+        elif name in self._instances:  ## support x[y] operator overloading
             klass = self._instances[ name ]
             if '__getitem__' in self._classes[ klass ]:
                 return '__%s___getitem__( [%s, %s] )' % (klass, name, self.visit(node.slice))
@@ -577,11 +582,15 @@ class PythonToPythonJS(NodeVisitor):
         # XXX: support only one target for subscripts
         target = node.targets[0]
         if isinstance(target, Subscript):
-            if self._with_js:
+            if isinstance(target.slice, ast.Ellipsis):
+                code = '%s["wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
+            elif self._with_js:
                 code = '%s[ %s ] = %s'
+                code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
             else:
                 code = "get_attribute(get_attribute(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
-            code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
+                code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
+
             writer.write(code)
 
         elif isinstance(target, Attribute):
@@ -594,8 +603,9 @@ class PythonToPythonJS(NodeVisitor):
             elif hasattr(target.value, 'returns_type'):
                 typedef = self.get_typedef( class_name=target.value.returns_type )
 
-
-            if typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
+            if self._with_js:
+                writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
+            elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
                 setter = typedef.properties[ target.attr ]['set']
                 writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
             elif typedef and target.attr in typedef.class_attributes:
@@ -705,10 +715,18 @@ class PythonToPythonJS(NodeVisitor):
     def visit_Call(self, node):
         if self._with_js:
             args = list( map(self.visit, node.args) )
-            a = ','.join(args)
-            return '%s( %s )' %( self.visit(node.func), a )
+            if isinstance(node.func, Name) and node.func.id == 'new':
+                assert len(args) == 1
+                return ' new %s' %args[0]
 
-        if hasattr(node.func, 'id') and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var'):
+            elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
+                assert len(args) == 1
+                return node.args[0].s  ## string literal
+            else:
+                a = ','.join(args)
+                return '%s( %s )' %( self.visit(node.func), a )
+
+        if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof'):
             args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
             if node.func.id == 'var':
                 for k in node.keywords:
