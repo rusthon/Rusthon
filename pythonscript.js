@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct 16 05:27:25 2013
+// PythonScript Runtime - regenerated on: Wed Oct 16 10:03:05 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -296,6 +296,23 @@ return attr;
 i = backup;
 }
 
+if("__getattr__"  in  __dict__) {
+return __dict__["__getattr__"]([object, attribute]);
+}
+
+var iter = bases;
+for (var base=0; base < iter.length; base++) {
+var backup = base;
+base = iter[base];
+var f;
+f = _get_upstream_method(base, "__getattr__");
+if(f) {
+return f([object, attribute]);
+}
+
+base = backup;
+}
+
 }
 
 if(object instanceof Array) {
@@ -346,6 +363,22 @@ return wrapper;
 return undefined;
 }
 window["get_attribute"] = get_attribute 
+
+var _get_upstream_method = function(base, method) {
+if(method  in  base.__dict__) {
+return base.__dict__[method];
+}
+
+var iter = base.bases;
+for (var parent=0; parent < iter.length; parent++) {
+var backup = parent;
+parent = iter[parent];
+return _get_upstream_method(parent, method);
+parent = backup;
+}
+
+}
+window["_get_upstream_method"] = _get_upstream_method 
 
 var set_attribute = function(object, attribute, value) {
 "Set an attribute on an object by updating its __dict__ property";

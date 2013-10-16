@@ -217,6 +217,17 @@ def get_attribute(object, attribute):
                 else:
                     return attr
 
+        if '__getattr__' in __dict__:
+            return __dict__['__getattr__']( [object, attribute])
+
+        for base in bases:
+            #print 'checking base', base
+            #if '__getattr__' in base.__dict__:
+            #    return base.__dict__['__getattr__']( [object, attribute] )
+            var( f )
+            f = _get_upstream_method(base, '__getattr__')
+            if f:
+                return f( [object, attribute] )
 
     if JS('object instanceof Array'):
         if attribute == '__getitem__':
@@ -238,6 +249,13 @@ def get_attribute(object, attribute):
         return wrapper
 
     return None  # XXX: raise AttributeError instead
+
+def _get_upstream_method(base, method):
+    if method in base.__dict__:
+        return base.__dict__[ method ]
+    for parent in base.bases:
+        return _get_upstream_method(parent, method)
+
 
 
 def set_attribute(object, attribute, value):
