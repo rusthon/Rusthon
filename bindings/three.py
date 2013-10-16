@@ -435,15 +435,12 @@ class MeshBasicMaterial( _Material ):
 			color = Color(red=color['red'], green=color['green'], blue=color['blue'])
 
 		with javascript:
-			print 'enter with javascript:'
 			self[...] = new( THREE.MeshBasicMaterial({color:color[...], wireframe:wireframe}) )
 
 	@property
-	def color(self): ## TODO fixme
+	def color(self):
 		return Color( object=self[...].color )
 
-	def get_color(self):
-		return Color( object=self[...].color )
 
 class CubeGeometry:
 	def __init__(self, width, height, length):
@@ -454,7 +451,7 @@ class CubeGeometry:
 class Mesh:
 	def __init__(self, geometry, material):
 		self.geometry = geometry
-		self.material = material
+		self.material = material  ## the compile time type system can not know what type this is
 		with javascript:
 			self[...] = new( THREE.Mesh(geometry[...], material[...]))
 

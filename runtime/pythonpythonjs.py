@@ -34,7 +34,7 @@ def adapt_arguments(handler):
     return func
 
 
-def create_class(class_name, parents, attrs):
+def create_class(class_name, parents, attrs, props):
     """Create a PythonScript class"""
     if attrs.__metaclass__:
         var(metaclass)
@@ -46,6 +46,7 @@ def create_class(class_name, parents, attrs):
     klass.bases = parents
     klass.__name__ = class_name
     klass.__dict__ = attrs
+    klass.__properties__ = props
 
     def __call__():
         """Create a PythonScript object"""
@@ -173,10 +174,15 @@ def get_attribute(object, attribute):
                     return __get__([object, __class__])
 
     if __class__:
-        var(__dict__)
+
+        if attribute in __class__.__properties__:  ## @property decorators
+            return __class__.__properties__[ attribute ]( [object] )
+
+        #var(__dict__)
         __dict__ = __class__.__dict__
         attr = __dict__[attribute]
-        if attr:
+        #if attr:
+        if attribute in __dict__:
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     var(args)
@@ -210,6 +216,7 @@ def get_attribute(object, attribute):
                     return method
                 else:
                     return attr
+
 
     if JS('object instanceof Array'):
         if attribute == '__getitem__':

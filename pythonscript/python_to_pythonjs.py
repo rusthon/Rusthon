@@ -324,6 +324,8 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
         writer.write('window["__%s_attrs"] = JSObject()' % name)
         writer.write('window["__%s_parents"] = JSArray()' % name)
+        writer.write('window["__%s_properties"] = JSObject()' % name)
+
         for base in node.bases:
             code = '__%s_parents.push(%s)' % (name, self.visit(base))
             writer.write(code)
@@ -358,11 +360,15 @@ class PythonToPythonJS(NodeVisitor):
             else:
                 raise NotImplementedError
 
+        for prop_name in self._decorator_properties:
+            getter = self._decorator_properties[prop_name]['get']
+            writer.write('window["__%s_properties"]["%s"] = %s' %(name, prop_name, getter))
+
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
 
-        writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"])' % (name, name, name, name))
+        writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
 
     def visit_If(self, node):
         writer.write('if %s:' % self.visit(node.test))
