@@ -1,6 +1,6 @@
 # THREE.js wrapper for PythonScript
 # by Brett Hartshorn - copyright 2013
-# License: PSFLv2 - http://www.python.org/psf/license/
+# License: "New BSD"
 
 class Color:
 	def __init__(self, red=1.0, green=1.0, blue=1.0, object=None ):

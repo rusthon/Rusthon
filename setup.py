@@ -2,12 +2,12 @@ from setuptools import setup
 
 
 setup(
-    name='PythonScriptTranslator',
+    name='PythonJS',
     version='0.8.1',
     description='Python translator for the browser',
     author='Amirouche Boubekki',
     author_email='amirouche.boubekki@gmail.com',
-    url='https://github.com/amirouche/PythonScript',
+    url='https://github.com/PythonScript-/PythonJS.git',
     zip_safe=False,
     packages=['pythonscript'],
     entry_points="""
