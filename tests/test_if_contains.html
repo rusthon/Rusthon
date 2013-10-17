@@ -1,0 +1,37 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+class A:
+	def __init__(self):
+		self.x = 1
+		self.y = 2
+
+	def __contains__(self, name):
+		with javascript:
+			if name in self.__dict__:
+				return True
+
+def test():
+	print 'testing dict'
+	if 1 in {1:True}: print 'in dict ok'
+	print 'testing tuple'
+	if 1 in (1,2,3): print 'in tuple ok'
+	print 'testing list'
+	if 1 in [1,2,3]: print 'in list ok'
+
+	#with javascript:
+	#	if 1 in [1,2,3]: print 'in javascript this will not work'  ## TODO, should we make this work?
+	#	if 1 in {1:True}: print 'in javascript-object ok'
+
+	print 'test complete'
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

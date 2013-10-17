@@ -194,6 +194,14 @@ class tuple:
         __array = self.js_object
         return JS('__array[index]')
 
+    def __contains__(self, value):
+        with javascript:
+            for v in self.__dict__.js_object:
+                if v == value:
+                    return True
+            return False
+
+
 class list:
 
     def __init__(self, js_object=None):
@@ -280,6 +288,12 @@ class list:
         __array = self.js_object
         return JS('__array.length')
 
+    def __contains__(self, value):
+        with javascript:
+            for v in self.__dict__.js_object:
+                if v == value:
+                    return True
+            return False
 
 class dict:
     # http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
@@ -386,6 +400,13 @@ class dict:
             out.append( JS('__dict[ __keys[i] ]') )
             i += 1
         return out
+
+    def __contains__(self, value):
+        with javascript:
+            for v in Object.keys(self.__dict__.js_object):
+                if v == value:
+                    return True
+            return False
 
 # DEPRECATED - see _setup_str_prototype
 #class str:

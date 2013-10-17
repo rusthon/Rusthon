@@ -536,10 +536,19 @@ class PythonToPythonJS(NodeVisitor):
         return '<='
 
     def visit_Compare(self, node):
-        comp = [ self.visit(node.left) ]
+        left = self.visit(node.left)
+        comp = [ left ]
         for i in range( len(node.ops) ):
-            comp.append( self.visit(node.ops[i]) )
-            comp.append( self.visit(node.comparators[i]) )
+            if isinstance(node.ops[i], ast.In):
+                if comp[-1] == left:
+                    comp.pop()
+                else:
+                    comp.append( ' and ' )
+                a = ( self.visit(node.comparators[i]), left )
+                comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+            else:
+                comp.append( self.visit(node.ops[i]) )
+                comp.append( self.visit(node.comparators[i]) )
         return ' '.join( comp )
 
     def visit_Not(self, node):
@@ -592,9 +601,9 @@ class PythonToPythonJS(NodeVisitor):
                 return '%s([%s, "%s"])' %(func, node_value, node.attr)
 
             else:
-                return 'get_attribute(%s, "%s")' % (node_value, node.attr)
+                return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
         else:
-            return 'get_attribute(%s, "%s")' % (node_value, node.attr)
+            return 'get_attribute(%s, "%s")' % (node_value, node.attr)      ## TODO - double check this
 
 
     def visit_Index(self, node):
@@ -624,7 +633,7 @@ class PythonToPythonJS(NodeVisitor):
                 self.visit(node.slice),
             )
 
-    def visit_Slice(self, node):
+    def visit_Slice(self, node):  ## TODO - test this
         return "get_attribute(Slice, '__call__')([%s, %s, %s], JSObject())" % (self.visit(node.lower), self.visit(node.upper), self.visit(node.step))
 
     def visit_Assign(self, node):

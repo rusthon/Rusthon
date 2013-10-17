@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct 16 10:03:05 2013
+// PythonScript Runtime - regenerated on: Thu Oct 17 16:09:02 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -755,7 +755,7 @@ var iter = this;
 for (var char=0; char < iter.length; char++) {
 var backup = char;
 char = iter[char];
-if(char  in  digits) {
+if(get_attribute(get_attribute(digits, "__contains__"), "__call__")([char], Object())) {
 /*pass*/
 }
 else {
@@ -1122,6 +1122,29 @@ window["__tuple_get"] = __tuple_get
 
 __tuple_get.pythonscript_function = true;
 window["__tuple_attrs"]["get"] = __tuple_get;
+var __tuple___contains__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var value = arguments['value'];
+var iter = self.__dict__.js_object;
+for (var v=0; v < iter.length; v++) {
+var backup = v;
+v = iter[v];
+if(v == value) {
+return true;
+}
+
+v = backup;
+}
+
+return false;
+}
+window["__tuple___contains__"] = __tuple___contains__ 
+
+__tuple___contains__.pythonscript_function = true;
+window["__tuple_attrs"]["__contains__"] = __tuple___contains__;
 tuple = create_class("tuple", window["__tuple_parents"], window["__tuple_attrs"], window["__tuple_properties"]);
 var list, __list_attrs, __list_parents;
 window["__list_attrs"] = Object();
@@ -1419,6 +1442,29 @@ window["__list___len__"] = __list___len__
 
 __list___len__.pythonscript_function = true;
 window["__list_attrs"]["__len__"] = __list___len__;
+var __list___contains__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var value = arguments['value'];
+var iter = self.__dict__.js_object;
+for (var v=0; v < iter.length; v++) {
+var backup = v;
+v = iter[v];
+if(v == value) {
+return true;
+}
+
+v = backup;
+}
+
+return false;
+}
+window["__list___contains__"] = __list___contains__ 
+
+__list___contains__.pythonscript_function = true;
+window["__list_attrs"]["__contains__"] = __list___contains__;
 list = create_class("list", window["__list_parents"], window["__list_attrs"], window["__list_properties"]);
 var dict, __dict_attrs, __dict_parents;
 window["__dict_attrs"] = Object();
@@ -1661,6 +1707,29 @@ window["__dict_values"] = __dict_values
 
 __dict_values.pythonscript_function = true;
 window["__dict_attrs"]["values"] = __dict_values;
+var __dict___contains__ = function(args, kwargs) {
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var value = arguments['value'];
+var iter = Object.keys(self.__dict__.js_object);
+for (var v=0; v < iter.length; v++) {
+var backup = v;
+v = iter[v];
+if(v == value) {
+return true;
+}
+
+v = backup;
+}
+
+return false;
+}
+window["__dict___contains__"] = __dict___contains__ 
+
+__dict___contains__.pythonscript_function = true;
+window["__dict_attrs"]["__contains__"] = __dict___contains__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"], window["__dict_properties"]);
 var array, __array_attrs, __array_parents;
 window["__array_attrs"] = Object();
