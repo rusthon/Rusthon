@@ -8,7 +8,7 @@ class J:
         o = JS('j.add(arg)')
         return J(o)
 
-    def addClass(self, klass):
+    def add_class(self, klass):
         j = self.j
         o = JS('j.addClass(klass)')
         return J(o)
@@ -28,7 +28,7 @@ class J:
         o = JS('j.append(arg)')
         return J(o)
 
-    def appendTo(self, arg):
+    def append_to(self, arg):
         j = self.j
         o = JS('j.appendTo(arg)')
         return J(o)
@@ -111,6 +111,7 @@ class J:
         return J(o)
 
     def each(self, handler):
+        """Iterate over a jQuery object, executing a function for each matched element that takes index and element (js object) as argument"""
         j = self.j
         o = JS('j.each(adapt_arguments(handler))')
         return J(o)
@@ -331,8 +332,11 @@ class J:
 
     def text(self, text):
         j = self.j
-        o = JS('j.text(text)')
-        return J(o)
+        if text != None:
+            o = J(JS('j.text(text)'))
+        else:
+            o = JS('j.text()')
+        return o
 
     def toggle(self, duration, complete):
         j = self.j
@@ -356,8 +360,11 @@ class J:
 
     def value(self, value):
         j = self.j
-        o = JS('j.val(value)')
-        return J(o)
+        if value is None:
+            o = JS('j.val()')
+        else:
+            o = JS('j.val(value)')
+        return o
 
     def width(self, value):
         j = self.j
@@ -370,7 +377,7 @@ class J:
 
     def map(self, func):
         j = self.j
-        o = JS('j.map(func)')
+        o = JS('j.map(adapt_arguments(func))')
         return J(o)
 
     def mousedown(self, handler):

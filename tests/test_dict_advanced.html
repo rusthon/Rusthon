@@ -1,0 +1,51 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+class Key1:
+	def foo(self):
+		print('FOO')
+
+class Key2:
+	def bar(self):
+		print('BAR')
+
+
+def test():
+	global d, k1, k2
+
+	k1 = Key1()
+	k2 = Key2()
+
+	d = {
+		k1:'k1 instance', 
+		k2:'k2 instance',
+		Key1: 'K1 class',
+		Key2: 'K2 class',
+		Key1(): 'lost instance!'
+	}
+	print d[k1]
+	print d[k2]
+	print d[Key1]
+	print d[Key2]
+	print d['@4']  ## this is cheating!
+
+	print d.get('get default', 'My Default')
+	print 'this should be undefined:', d.get('get undefined')
+
+	d.set(k1, 'changed k1')
+	print d[k1]
+	print d.get( k1 )
+
+	print d.keys()
+	print d.values()
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

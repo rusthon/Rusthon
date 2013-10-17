@@ -1,25 +1,31 @@
 #!/usr/bin/env python
-"""
-Emulate Javascript object in Python those object will be converted to their Javascript equivalent by PythonScript compiler also functions can be converted to Javascript functions but only positional arguments are converted.
-
-At least the following doesn't work
-
-- functions don't take keyword arguments
-- args, **kwargs is not supported
-- assignements support only one target
-"""
 import sys
 from types import GeneratorType
 
 from ast import Str
+from ast import Name
+from ast import Tuple
 from ast import parse
+from ast import Attribute
 from ast import NodeVisitor
 
 
 class JSGenerator(NodeVisitor):
+    def visit_In(self, node):
+        return ' in '
+
+    def visit_AugAssign(self, node):
+        a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
+        return a
 
     def visit_Module(self, node):
         return '\n'.join(map(self.visit, node.body))
+
+    def visit_Tuple(self, node):
+        return '[%s]' % ', '.join(map(self.visit, node.elts))
+
+    def visit_List(self, node):
+        return '[%s]' % ', '.join(map(self.visit, node.elts))
 
     def visit_TryExcept(self, node):
         out = 'try {\n'
@@ -33,6 +39,15 @@ class JSGenerator(NodeVisitor):
     def visit_Raise(self, node):
         return 'throw %s;' % self.visit(node.type)
 
+    def visit_Yield(self, node):
+        return 'yield %s' % self.visit(node.value)
+
+    def visit_ImportFrom(self, node):
+        # print node.module
+        # print node.names[0].name
+        # print node.level
+        return ''
+
     def visit_ExceptHandler(self, node):
         out = ''
         if node.type:
@@ -45,6 +60,11 @@ class JSGenerator(NodeVisitor):
         return out
 
     def visit_FunctionDef(self, node):
+        if not hasattr(self, '_function_stack'):  ## track nested functions ##
+            self._function_stack = []
+
+        self._function_stack.append( node.name )
+
         args = self.visit(node.args)
         buffer = 'var %s = function(%s) {\n' % (
             node.name,
@@ -53,9 +73,12 @@ class JSGenerator(NodeVisitor):
         body = list()
         for child in node.body:
             # simple test to drop triple quote comments
-            if hasattr(child, 'value'):
-                if isinstance(child.value, Str):
-                    continue
+            #if hasattr(child, 'value'):
+            #    if isinstance(child.value, Str):
+            #        continue
+            if isinstance(child, Str):
+                continue
+
             if isinstance(child, GeneratorType):
                 for sub in child:
                     body.append(self.visit(sub))
@@ -63,7 +86,15 @@ class JSGenerator(NodeVisitor):
                 body.append(self.visit(child))
         buffer += '\n'.join(body)
         buffer += '\n}\n'
+
+        if node.name == self._function_stack[0]:  ## to be safe do not export nested functions
+            buffer += 'window["%s"] = %s \n' % (node.name, node.name)  ## export to global namespace so Closure will not remove them
+
+        assert node.name == self._function_stack.pop()
         return buffer
+
+    def visit_Subscript(self, node):
+        return '%s[%s]' % (self.visit(node.value), self.visit(node.slice.value))
 
     def visit_arguments(self, node):
         out = []
@@ -97,19 +128,33 @@ class JSGenerator(NodeVisitor):
 
     def visit_Call(self, node):
         name = self.visit(node.func)
-        if name == 'JSObject':
+        if name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
+            args = map(self.visit, node.args)
+            if len(args) == 2:
+                return '%s instanceof %s' %tuple(args)
+            else:
+                raise SyntaxError( args )
+
+        #elif name == 'new':
+        #    args = map(self.visit, node.args)
+        #    if len(args) == 1:
+        #        return ' new %s' %args[0]
+        #    else:
+        #        raise SyntaxError( args )
+
+        elif name == 'JSObject':
             if node.keywords:
                 kwargs = map(self.visit, node.keywords)
                 f = lambda x: '"%s": %s' % (x[0], x[1])
                 out = ', '.join(map(f, kwargs))
+                return '{%s}' % out
             else:
-                out = ''
-            return '{%s}' % out
-        if name == 'var':
+                return 'Object()'
+        elif name == 'var':
             args = map(self.visit, node.args)
             out = ', '.join(args)
             return 'var %s' % out
-        if name == 'JSArray':
+        elif name == 'JSArray':
             if node.args:
                 args = map(self.visit, node.args)
                 out = ', '.join(args)
@@ -131,7 +176,7 @@ class JSGenerator(NodeVisitor):
         return 'while(%s) {\n%s\n}' % (self.visit(node.test), body)
 
     def visit_Str(self, node):
-        return '"%s"' % node.s
+        return '"%s"' % node.s.replace('\n', '\\n')
 
     def visit_BinOp(self, node):
         left = self.visit(node.left)
@@ -139,11 +184,20 @@ class JSGenerator(NodeVisitor):
         right = self.visit(node.right)
         return '%s %s %s' % (left, op, right)
 
+    def visit_Mult(self, node):
+        return '*'
+
     def visit_Add(self, node):
         return '+'
 
     def visit_Sub(self, node):
         return '-'
+
+    def visit_Div(self, node):
+        return '/'
+
+    def visit_Mod(self, node):
+        return '%'
 
     def visit_Lt(self, node):
         return '<'
@@ -158,10 +212,15 @@ class JSGenerator(NodeVisitor):
         return '<='
 
     def visit_Assign(self, node):
-        target = self.visit(node.targets[0])  # XXX: support only one target
-        value = self.visit(node.value)
-        code = '%s = %s;' % (target, value)
-        return code
+        # XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
+        target = node.targets[0]
+        if isinstance(target, Tuple):
+            raise NotImplementedError
+        else:
+            target = self.visit(target)
+            value = self.visit(node.value)
+            code = '%s = %s;' % (target, value)
+            return code
 
     def visit_Expr(self, node):
         # XXX: this is UGLY
@@ -171,12 +230,14 @@ class JSGenerator(NodeVisitor):
         return s
 
     def visit_Return(self, node):
+        if isinstance(node.value, Tuple):
+            return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
         if node.value:
             return 'return %s;' % self.visit(node.value)
         return 'return undefined;'
 
     def visit_Pass(self, node):
-        return ''
+        return '/*pass*/'
 
     def visit_Eq(self, node):
         return '=='
@@ -198,6 +259,9 @@ class JSGenerator(NodeVisitor):
 
     def visit_Not(self, node):
         return '!'
+
+    def visit_IsNot(self, node):
+        return '!=='
 
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
@@ -232,7 +296,7 @@ def main(script):
 
 
 def command():
-    print main(sys.stdin.read())
+    print( main(sys.stdin.read()) )
 
 if __name__ == '__main__':
     command()

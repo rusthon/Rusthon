@@ -1,0 +1,49 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="true">
+
+class A:
+	def __init__(self):
+		self._x = 1
+		self._y = 2
+		self._z = 3
+
+	@property
+	def x(self):
+		return self._x
+	@x.setter
+	def x(self,value):
+		self._x = value
+
+	@property
+	def y(self):
+		return self._y
+	@y.setter
+	def y(self,value):
+		self._y = value
+
+	@property
+	def z(self):
+		return self._z
+	@z.setter
+	def z(self,value):
+		self._z = value
+
+def test():
+	a = A()
+	print( a.x )
+	print( a.y )
+	print( a.z )
+
+	a.x = 100
+	print( a.x )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
