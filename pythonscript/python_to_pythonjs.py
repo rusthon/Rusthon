@@ -176,7 +176,30 @@ class PythonToPythonJS(NodeVisitor):
         self._module_path = module_path
         self._with_js = False
         self._typedefs = dict()  ## class name : typedef  (not pickled)
+
+        self._custom_operators = {}
+
         self.setup_builtins()
+
+    def preprocess_custom_operators(self, data):
+        '''
+        custom operators must be defined before they are used
+        '''
+        code = []
+        for line in data.splitlines():
+            if line.strip().startswith('@custom_operator'):
+                l = line.replace('"', "'")
+                a,b,c = l.split("'")
+                self._custom_operators[ b ] = None
+            else:
+                for op in self._custom_operators:
+                    line = line.replace(op, '|u"%s"|'%op)
+
+            code.append( line )
+
+        data = '\n'.join( code )
+        print( data )
+        return data
 
     def setup_builtins(self):
         self._classes['dict'] = set(['__getitem__', '__setitem__'])
@@ -433,18 +456,25 @@ class PythonToPythonJS(NodeVisitor):
         left = self.visit(node.left)
         op = self.visit(node.op)
         right = self.visit(node.right)
-        #if isinstance(node.left, Name) and node.left.id in self._instances:
-        #    klass = self._instances[ node.left.id ]
-        #    if op == '*' and '__mul__' in self._classes[klass]:
-        #        node.operator_overloading = '__%s___mul__' %klass
-        #        assert node.operator_overloading
-        #        return '''JS('__%s___mul__( [%s, %s] )')''' %(klass, left, right)
+
+        if op == '|':
+            if isinstance(node.right, Str):
+                self._custom_op_hack = (node.right.s, left)
+                return ''
+            elif hasattr(self, '_custom_op_hack') and isinstance(node.left, BinOp):
+                op,left_operand = self._custom_op_hack
+                right_operand = self.visit(node.right)
+                #return '%s( %s, %s )' %(op, left_operand, right_operand)
+                if op in self._custom_operators:  ## swap name to python function
+                    op = self._custom_operators[ op ]
+                return '%s( [%s, %s] )' %(op, left_operand, right_operand)
+
         if isinstance(node.left, Name):
             typedef = self.get_typedef( node.left )
             if typedef and op in typedef.operators:
                 func = typedef.operators[ op ]
                 node.operator_overloading = func
-                return '''JS('%s( [%s, %s] )')''' %(func, left, right)
+                return '''JS('%s( [%s, %s] )')''' %(func, left, right)  ## TODO double check this without wrapping in JS()
 
         return '%s %s %s' % (left, op, right)
 
@@ -812,6 +842,13 @@ class PythonToPythonJS(NodeVisitor):
                 else:
                     raise RuntimeError
 
+            elif isinstance(decorator, Call) and decorator.func.id == 'custom_operator':
+                assert len(decorator.args) == 1
+                assert isinstance( decorator.args[0], Str )
+                op = decorator.args[0].s
+                assert op in self._custom_operators
+                self._custom_operators[ op ] = node.name
+
             else:
                 decorators.append( decorator )
 
@@ -985,7 +1022,10 @@ def command():
             module_path = header
 
     compiler = PythonToPythonJS( module=module, module_path=module_path )
+
+    data = compiler.preprocess_custom_operators( data )
     compiler.visit( parse(data) )
+
     compiler.save_module()
     output = writer.getvalue()
     print( output )  ## pipe to stdout

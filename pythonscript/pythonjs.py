@@ -211,6 +211,18 @@ class JSGenerator(NodeVisitor):
     def visit_LtE(self, node):
         return '<='
 
+    def visit_LShift(self, node):
+        return '<<'
+    def visit_RShift(self, node):
+        return '>>'
+    def visit_BitXor(self, node):
+        return '^'
+    def visit_BitOr(self, node):
+        return '|'
+    def visit_BitAnd(self, node):
+        return '&'
+
+
     def visit_Assign(self, node):
         # XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
         target = node.targets[0]
