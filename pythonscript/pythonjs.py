@@ -264,10 +264,11 @@ class JSGenerator(NodeVisitor):
         return '==='
 
     def visit_Compare(self, node):
-        left = self.visit(node.left)
-        ops = self.visit(node.ops[0])
-        comparator = self.visit(node.comparators[0])
-        return '%s %s %s' % (left, ops, comparator)
+        comp = [ self.visit(node.left) ]
+        for i in range( len(node.ops) ):
+            comp.append( self.visit(node.ops[i]) )
+            comp.append( self.visit(node.comparators[i]) )
+        return ' '.join( comp )
 
     def visit_Not(self, node):
         return '!'
