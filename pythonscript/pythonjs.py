@@ -269,9 +269,6 @@ class JSGenerator(NodeVisitor):
         comparator = self.visit(node.comparators[0])
         return '%s %s %s' % (left, ops, comparator)
 
-    def visit_Or(self, node):
-        return ' || '
-
     def visit_Not(self, node):
         return '!'
 
@@ -280,6 +277,17 @@ class JSGenerator(NodeVisitor):
 
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
+
+
+    def visit_And(self, node):
+        return ' && '
+
+    def visit_Or(self, node):
+        return ' || '
+
+    def visit_BoolOp(self, node):
+        op = self.visit(node.op)
+        return op.join( [self.visit(v) for v in node.values] )
 
     def visit_If(self, node):
         test = self.visit(node.test)

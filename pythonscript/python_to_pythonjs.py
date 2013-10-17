@@ -395,6 +395,16 @@ class PythonToPythonJS(NodeVisitor):
 
         writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
 
+    def visit_And(self, node):
+        return ' and '
+
+    def visit_Or(self, node):
+        return ' or '
+
+    def visit_BoolOp(self, node):
+        op = self.visit(node.op)
+        return op.join( [self.visit(v) for v in node.values] )
+
     def visit_If(self, node):
         writer.write('if %s:' % self.visit(node.test))
         writer.push()
@@ -530,9 +540,6 @@ class PythonToPythonJS(NodeVisitor):
         ops = self.visit(node.ops[0])
         comparator = self.visit(node.comparators[0])
         return '%s %s %s' % (left, ops, comparator)
-
-    def visit_Or(self, node):
-        return ' or '
 
     def visit_Not(self, node):
         return ' not '
@@ -971,8 +978,11 @@ class PythonToPythonJS(NodeVisitor):
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
 
     def visit_Continue(self, node):
-        #return 'continue'
-        writer.write('continue')
+        if self._with_js:
+            writer.write('continue')
+        else:
+            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
+            writer.write('continue')
         return ''
 
     def visit_For(self, node):
@@ -982,6 +992,7 @@ class PythonToPythonJS(NodeVisitor):
             map(self.visit, node.body)
             writer.pull()
         else:
+            self._for_iterator_target = node.target.id
             writer.write('var(__iterator__, %s)' % node.target.id)
             writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
             writer.write('try:')
