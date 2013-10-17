@@ -74,7 +74,8 @@ class Writer(object):
                         if not code == 'pass':
                             code = """JS('''%s''')"""%code
         s = '%s%s\n' % (indentation, code)
-        self.output.write(s.encode('utf-8'))
+        #self.output.write(s.encode('utf-8'))
+        self.output.write(s)
 
     def getvalue(self):
         s = self.output.getvalue()
@@ -190,15 +191,16 @@ class PythonToPythonJS(NodeVisitor):
             if line.strip().startswith('@custom_operator'):
                 l = line.replace('"', "'")
                 a,b,c = l.split("'")
-                self._custom_operators[ b ] = None
+                op = b.decode('utf-8')
+                self._custom_operators[ op ] = None
             else:
                 for op in self._custom_operators:
-                    line = line.replace(op, '|u"%s"|'%op)
+                    op = op.encode('utf-8')
+                    line = line.replace(op, '|"%s"|'%op)
 
             code.append( line )
 
         data = '\n'.join( code )
-        print( data )
         return data
 
     def setup_builtins(self):
@@ -465,8 +467,8 @@ class PythonToPythonJS(NodeVisitor):
                 op,left_operand = self._custom_op_hack
                 right_operand = self.visit(node.right)
                 #return '%s( %s, %s )' %(op, left_operand, right_operand)
-                if op in self._custom_operators:  ## swap name to python function
-                    op = self._custom_operators[ op ]
+                if op.decode('utf-8') in self._custom_operators:  ## swap name to python function
+                    op = self._custom_operators[ op.decode('utf-8') ]
                 return '%s( [%s, %s] )' %(op, left_operand, right_operand)
 
         if isinstance(node.left, Name):
@@ -528,6 +530,9 @@ class PythonToPythonJS(NodeVisitor):
         ops = self.visit(node.ops[0])
         comparator = self.visit(node.comparators[0])
         return '%s %s %s' % (left, ops, comparator)
+
+    def visit_Or(self, node):
+        return ' or '
 
     def visit_Not(self, node):
         return ' not '
@@ -845,8 +850,9 @@ class PythonToPythonJS(NodeVisitor):
             elif isinstance(decorator, Call) and decorator.func.id == 'custom_operator':
                 assert len(decorator.args) == 1
                 assert isinstance( decorator.args[0], Str )
-                op = decorator.args[0].s
-                assert op in self._custom_operators
+                op = decorator.args[0].s.decode('utf-8')
+                if op not in self._custom_operators:
+                    raise RuntimeError( op, self._custom_operators )
                 self._custom_operators[ op ] = node.name
 
             else:
@@ -964,6 +970,11 @@ class PythonToPythonJS(NodeVisitor):
             assert not self._with_js
             writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
 
+    def visit_Continue(self, node):
+        #return 'continue'
+        writer.write('continue')
+        return ''
+
     def visit_For(self, node):
         if self._with_js:
             writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))
@@ -1013,6 +1024,9 @@ def command():
     module = module_path = None
 
     data = sys.stdin.read()
+    #data = data.decode('utf-8')
+    #open('/tmp/testunicode.txt', 'wb').write(data.encode('utf-8'))
+
     if data.startswith('#!'):
         header = data[ 2 : data.index('\n') ]
         data = data[ data.index('\n')+1 : ]

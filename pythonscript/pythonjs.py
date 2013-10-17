@@ -269,6 +269,9 @@ class JSGenerator(NodeVisitor):
         comparator = self.visit(node.comparators[0])
         return '%s %s %s' % (left, ops, comparator)
 
+    def visit_Or(self, node):
+        return ' || '
+
     def visit_Not(self, node):
         return '!'
 
@@ -299,6 +302,9 @@ class JSGenerator(NodeVisitor):
         body = pre + body + post
         for_block = init_iter + 'for (var %s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
         return for_block
+
+    def visit_Continue(self, node):
+        return 'continue'
 
 
 def main(script):
