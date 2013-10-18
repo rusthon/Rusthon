@@ -354,6 +354,10 @@ class dict:
         else:
             self.js_object = JSObject()
 
+        jsob = self.js_object
+        with javascript:
+            self[...] = jsob
+
     def get(self, key, _default=None):
         __dict = self.js_object
         if JS("typeof(key) === 'object'"):

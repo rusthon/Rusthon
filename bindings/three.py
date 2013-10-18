@@ -418,24 +418,31 @@ class _ImageUtils:
 ImageUtils = _ImageUtils()
 
 class _Material:
+	def __init__(self, **kwargs):
+		params = kwargs  ## no need to copy
+		keys = kwargs.keys()
+		if 'color' in keys:
+			color = kwargs['color']
+			color = Color(red=color['red'], green=color['green'], blue=color['blue'])
+			params['color'] = color[...]
+
+		self._reset_material( params )  ## subclasses need to implement this
+
 	def __setattr__(self, name, value):
 		print '__setattr__', name, value
 		with javascript:
 			self[...][ name ] = value
 
-	def setValues(self, params):
+	def setValues(self, **params):
 		with javascript:
 			self[...].setValues( params[...] )
 
 
 class MeshBasicMaterial( _Material ):
-	def __init__(self, color=None, wireframe=False):
-		if not color: color = Color()
-		else: #elif isinstance(color, dict):
-			color = Color(red=color['red'], green=color['green'], blue=color['blue'])
-
+	def _reset_material(self, params):
 		with javascript:
-			self[...] = new( THREE.MeshBasicMaterial({color:color[...], wireframe:wireframe}) )
+			## the three.js API takes an javascript-object as params to configure the material
+			self[...] = new( THREE.MeshBasicMaterial( params[...] ) )
 
 	@property
 	def color(self):

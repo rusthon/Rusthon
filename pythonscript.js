@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Oct 18 01:22:00 2013
+// PythonScript Runtime - regenerated on: Fri Oct 18 01:51:32 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1534,6 +1534,7 @@ window["__dict_properties"] = Object();
 __dict_UID = 0;
 window["__dict_attrs"]["UID"] = __dict_UID;
 var __dict___init__ = function(args, kwargs) {
+var jsob;
 var signature, arguments;
 signature = {"kwargs": {"js_object": undefined}, "args": create_array("self", "js_object")};
 arguments = get_arguments(signature, args, kwargs);
@@ -1562,6 +1563,8 @@ else {
 self["__dict__"]["js_object"] = Object();
 }
 
+jsob = self["__dict__"]["js_object"];
+self["wrapped"] = jsob;
 }
 window["__dict___init__"] = __dict___init__ 
 

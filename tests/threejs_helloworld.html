@@ -27,7 +27,7 @@ def test():
 
 	geo = CubeGeometry( 10, 10, 10 )
 	print 'geo->', geo
-	mat = MeshBasicMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0}, wireframe=False )
+	mat = MeshBasicMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0}, wireframe=True )
 	print 'mat->', mat
 	mesh = Mesh( geo, mat )
 	scn.add( mesh )
