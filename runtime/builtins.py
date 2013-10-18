@@ -35,6 +35,14 @@ def _setup_str_prototype():
     '''
     with javascript:
 
+        @String.prototype.__getitem__
+        def func(idx):
+            return this[ idx ]
+
+        @String.prototype.__len__
+        def func():
+            return this.length
+
         @String.prototype.startswith
         def func(a):
             if this.substring(0, a.length) == a:
@@ -97,6 +105,10 @@ def _setup_array_prototype():
                 return True
             else:
                 return False
+
+        @Array.prototype.__len__
+        def func():
+            return this.length
 
 _setup_array_prototype()
 

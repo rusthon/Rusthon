@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 17 19:18:22 2013
+// PythonScript Runtime - regenerated on: Fri Oct 18 00:14:12 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -146,7 +146,7 @@ return attr;
 
 }
 
-if(attribute  in  object) {
+if(attr !== undefined) {
 if(typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
 var wrapper = function(args, kwargs) {
 return attr.apply(object, args);
@@ -687,6 +687,16 @@ window["str"] = str
 str.pythonscript_function = true;
 var _setup_str_prototype = function(args, kwargs) {
 "\n    Extend JavaScript String.prototype with methods that implement the Python str API.\n    The decorator @String.prototype.[name] assigns the function to the prototype,\n    and ensures that the special 'this' variable will work.\n    ";
+var func = function(idx) {
+return this[ idx ];
+}
+
+String.prototype.__getitem__=func;
+var func = function() {
+return this.length;
+}
+
+String.prototype.__len__=func;
 var func = function(a) {
 if(this.substring(0, a.length) == a) {
 return true;
@@ -792,6 +802,11 @@ return false;
 }
 
 Array.prototype.__contains__=func;
+var func = function() {
+return this.length;
+}
+
+Array.prototype.__len__=func;
 }
 window["_setup_array_prototype"] = _setup_array_prototype 
 

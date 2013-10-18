@@ -306,6 +306,46 @@ class PythonToPythonJS(NodeVisitor):
         else:
             return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
 
+    def visit_ListComp(self, node):
+        writer.write('var(__comprehension__)')
+        writer.write('__comprehension__ = JSArray()')
+
+        length = len( node.generators )
+        a = ['idx%s'%i for i in range(length)]
+        writer.write('var( %s )' %','.join(a) )
+        a = ['iter%s'%i for i in range(length)]
+        writer.write('var( %s )' %','.join(a) )
+        a = ['get%s'%i for i in range(length)]
+        writer.write('var( %s )' %','.join(a) )
+
+        generators = list( node.generators )
+        self._gen_comp( generators, node )
+
+        return 'get_attribute(list, "__call__")([], JSObject(js_object=__comprehension__))'
+
+
+    def _gen_comp(self, generators, node):
+        gen = generators.pop()
+        if len(gen.ifs): raise NotImplementedError  ## TODO
+        id = len(generators)
+        assert isinstance(gen.target, Name)
+        writer.write('idx%s = 0'%id)
+        writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
+        writer.write('get%s = get_attribute(iter%s, "__getitem__")'%(id,id) )
+        writer.write('while idx%s < get_attribute(len, "__call__")([iter%s], JSObject()):' %(id,id) )
+        writer.push()
+
+        writer.write('var(%s)'%gen.target.id)
+        writer.write('%s=get%s( [idx%s], JSObject() )' %(gen.target.id, id,id) )
+
+        if generators:
+            self._gen_comp( generators, node )
+        else:
+            writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
+
+        writer.write('idx%s+=1' %id )
+        writer.pull()
+
     def visit_In(self, node):
         return ' in '
 

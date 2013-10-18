@@ -119,8 +119,8 @@ def get_attribute(object, attribute):
         else:
             return attr
         
-    #if attr is not None:  ## what about cases where attr is None?
-    if attribute in object:
+    #if attribute in object:  ## in test not allowed with javascript-string
+    if attr is not None:  ## what about cases where attr is None?
         if JS("typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
             ## to avoid problems with other generated wrapper funcs not marked with:
             ## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
