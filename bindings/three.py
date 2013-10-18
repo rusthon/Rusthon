@@ -449,6 +449,61 @@ class MeshBasicMaterial( _Material ):
 		return Color( object=self[...].color )
 
 
+class MeshLambertMaterial( _Material ):
+	def _reset_material(self, params):
+		with javascript:
+			self[...] = new( THREE.MeshLambertMaterial( params[...] ) )
+
+	@property
+	def color(self):
+		return Color( object=self[...].color )
+	@property
+	def ambient(self):
+		return Color( object=self[...].ambient )
+	@property
+	def emissive(self):
+		return Color( object=self[...].emissive )
+
+
+class MeshPhongMaterial( _Material ):
+	def _reset_material(self, params):
+		with javascript:
+			self[...] = new( THREE.MeshPhongMaterial( params[...] ) )
+
+	@property
+	def color(self):
+		return Color( object=self[...].color )
+	@property
+	def ambient(self):
+		return Color( object=self[...].ambient )
+	@property
+	def emissive(self):
+		return Color( object=self[...].emissive )
+	@property
+	def specular(self):
+		return Color( object=self[...].specular )
+
+
+class MeshNormalMaterial( _Material ):
+	def _reset_material(self, params):
+		with javascript:
+			self[...] = new( THREE.MeshNormalMaterial( params[...] ) )
+
+
+class MeshDepthMaterial( _Material ):
+	def _reset_material(self, params):
+		with javascript:
+			self[...] = new( THREE.MeshDepthMaterial( params[...] ) )
+
+
+
+class ShaderMaterial( _Material ):
+	def _reset_material(self, params):
+		with javascript:
+			self[...] = new( THREE.ShaderMaterial( params[...] ) )
+
+
+
 class CubeGeometry:
 	def __init__(self, width, height, length):
 		with javascript:
