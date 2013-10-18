@@ -310,8 +310,11 @@ def get_arguments(signature, args, kwargs):
         argslength = 0
 
     if args.length > signature.args.length:
-        print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
-        raise TypeError('function called with wrong number of arguments')
+        if signature.vararg:
+            pass
+        else:
+            print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
+            raise TypeError('function called with too many arguments')
 
     j = 0
     while j < argslength:

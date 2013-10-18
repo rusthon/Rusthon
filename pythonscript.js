@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Oct 18 00:14:12 2013
+// PythonScript Runtime - regenerated on: Fri Oct 18 01:22:00 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -454,8 +454,14 @@ argslength = 0;
 }
 
 if(args.length > signature.args.length) {
+if(signature.vararg) {
+/*pass*/
+}
+else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature);
-throw TypeError("function called with wrong number of arguments");
+throw TypeError("function called with too many arguments");
+}
+
 }
 
 j = 0;
