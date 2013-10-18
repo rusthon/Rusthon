@@ -298,6 +298,16 @@ class JSGenerator(NodeVisitor):
             return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
         return 'if(%s) {\n%s}\n' % (test, body)
 
+    def visit_Dict(self, node):
+        a = []
+        for i in range( len(node.keys) ):
+            k = self.visit( node.keys[ i ] )
+            v = self.visit( node.values[i] )
+            a.append( '%s:%s'%(k,v) )
+        b = ','.join( a )
+        return '{ %s }' %b
+
+
     def visit_For(self, node):
         target = node.target.id
         iter = self.visit(node.iter)

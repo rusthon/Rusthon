@@ -84,8 +84,35 @@ def _setup_str_prototype():
                 else: return False
             return True
 
-
 _setup_str_prototype()
+
+def _setup_array_prototype():
+
+    with javascript:
+
+        @Array.prototype.__contains__
+        def func(a):
+            e = _create_empty_object( this )
+            if JS("a in e"):  ## JS() so that we don't call __contains__ again
+                return True
+            else:
+                return False
+
+_setup_array_prototype()
+
+def _setup_object_prototype():
+
+    with javascript:
+
+        @Object.prototype.__contains__
+        def func(a):
+            if JS("a in this"):  ## JS() so that we don't call __contains__ again
+                return True
+            else:
+                return False
+
+_setup_object_prototype()
+
 
 def range(num):
     """Emulates Python's range function"""
@@ -436,6 +463,13 @@ class array:
         'float32':4,
         'float16':2,
         'float8' :1,
+
+        'int32'  :4,
+        'uint32' :4,
+        'int16'  :2,
+        'uint16' :2,
+        'int8'  :1,
+        'uint8' :1,
     }
     typecode_names = {
         'c': 'Int8',
@@ -453,7 +487,15 @@ class array:
 
         'float32': 'Float32',
         'float16': 'Int16',
-        'float8' : 'Int8'
+        'float8' : 'Int8',
+
+        'int32'  : 'Int32',
+        'uint32' : 'Uint32',
+        'int16'  : 'Int16',
+        'uint16' : 'Uint16',
+        'int8'   : 'Int8',
+        'uint8'  : 'Uint8',
+
     }
     def __init__(self, typecode, initializer=None, little_endian=False):
         self.typecode = typecode
@@ -485,6 +527,10 @@ class array:
 
     def __len__(self):
         return self.length
+
+    def __contains__(self, value):
+        lst = self.to_list()
+        return value in lst
 
     def __getitem__(self, index):
         step = self.itemsize

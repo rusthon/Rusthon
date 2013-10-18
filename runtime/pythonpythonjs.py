@@ -97,6 +97,9 @@ def get_attribute(object, attribute):
                     return wrapper
 
     var(attr)
+    if attribute == '__contains__':
+        attribute = '__CONTAINS__'  ## we need this ugly hack because we have added javascript Object.prototype.__contains__
+
     attr = object[attribute]
 
     if JS("object instanceof HTMLDocument"):
@@ -116,7 +119,8 @@ def get_attribute(object, attribute):
         else:
             return attr
         
-    if attr is not None:  ## what about cases where attr is None?
+    #if attr is not None:  ## what about cases where attr is None?
+    if attribute in object:
         if JS("typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
             ## to avoid problems with other generated wrapper funcs not marked with:
             ## F.pythonscript_function or F.is_wrapper, we could check if object has these props:

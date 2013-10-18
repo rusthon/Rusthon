@@ -362,6 +362,10 @@ class PythonToPythonJS(NodeVisitor):
         for item in node.body:
             if isinstance(item, FunctionDef):
                 log('  method: %s'%item.name)
+
+                if item.name == '__contains__':  ## this is required because we added Object.prototype.__contains__
+                    item.name = item.name.upper()
+
                 self._classes[ name ].append( item.name )
                 item_name = item.name
                 item.original_name = item.name
@@ -545,7 +549,10 @@ class PythonToPythonJS(NodeVisitor):
                 else:
                     comp.append( ' and ' )
                 a = ( self.visit(node.comparators[i]), left )
-                comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+                if self._with_js:
+                    comp.append( "%s['__contains__'](%s)" %a )
+                else:
+                    comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
             else:
                 comp.append( self.visit(node.ops[i]) )
                 comp.append( self.visit(node.comparators[i]) )

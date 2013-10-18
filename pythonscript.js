@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 17 16:09:02 2013
+// PythonScript Runtime - regenerated on: Thu Oct 17 19:18:22 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -109,6 +109,10 @@ return wrapper;
 }
 
 var attr;
+if(attribute == "__contains__") {
+attribute = "__CONTAINS__";
+}
+
 attr = object[attribute];
 if(object instanceof HTMLDocument) {
 if(typeof(attr) === 'function') {
@@ -142,7 +146,7 @@ return attr;
 
 }
 
-if(attr !== undefined) {
+if(attribute  in  object) {
 if(typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
 var wrapper = function(args, kwargs) {
 return attr.apply(object, args);
@@ -755,7 +759,7 @@ var iter = this;
 for (var char=0; char < iter.length; char++) {
 var backup = char;
 char = iter[char];
-if(get_attribute(get_attribute(digits, "__contains__"), "__call__")([char], Object())) {
+if(digits["__contains__"](char)) {
 /*pass*/
 }
 else {
@@ -774,6 +778,42 @@ window["_setup_str_prototype"] = _setup_str_prototype
 
 _setup_str_prototype.pythonscript_function = true;
 _setup_str_prototype(create_array(), Object());
+var _setup_array_prototype = function(args, kwargs) {
+var func = function(a) {
+var e;
+e = _create_empty_object( this );
+if(a  in  e) {
+return true;
+}
+else {
+return false;
+}
+
+}
+
+Array.prototype.__contains__=func;
+}
+window["_setup_array_prototype"] = _setup_array_prototype 
+
+_setup_array_prototype.pythonscript_function = true;
+_setup_array_prototype(create_array(), Object());
+var _setup_object_prototype = function(args, kwargs) {
+var func = function(a) {
+if(a  in  this) {
+return true;
+}
+else {
+return false;
+}
+
+}
+
+Object.prototype.__contains__=func;
+}
+window["_setup_object_prototype"] = _setup_object_prototype 
+
+_setup_object_prototype.pythonscript_function = true;
+_setup_object_prototype(create_array(), Object());
 var range = function(args, kwargs) {
 var i, r;
 var signature, arguments;
@@ -1122,7 +1162,7 @@ window["__tuple_get"] = __tuple_get
 
 __tuple_get.pythonscript_function = true;
 window["__tuple_attrs"]["get"] = __tuple_get;
-var __tuple___contains__ = function(args, kwargs) {
+var __tuple___CONTAINS__ = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
 arguments = get_arguments(signature, args, kwargs);
@@ -1141,10 +1181,10 @@ v = backup;
 
 return false;
 }
-window["__tuple___contains__"] = __tuple___contains__ 
+window["__tuple___CONTAINS__"] = __tuple___CONTAINS__ 
 
-__tuple___contains__.pythonscript_function = true;
-window["__tuple_attrs"]["__contains__"] = __tuple___contains__;
+__tuple___CONTAINS__.pythonscript_function = true;
+window["__tuple_attrs"]["__CONTAINS__"] = __tuple___CONTAINS__;
 tuple = create_class("tuple", window["__tuple_parents"], window["__tuple_attrs"], window["__tuple_properties"]);
 var list, __list_attrs, __list_parents;
 window["__list_attrs"] = Object();
@@ -1442,7 +1482,7 @@ window["__list___len__"] = __list___len__
 
 __list___len__.pythonscript_function = true;
 window["__list_attrs"]["__len__"] = __list___len__;
-var __list___contains__ = function(args, kwargs) {
+var __list___CONTAINS__ = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
 arguments = get_arguments(signature, args, kwargs);
@@ -1461,10 +1501,10 @@ v = backup;
 
 return false;
 }
-window["__list___contains__"] = __list___contains__ 
+window["__list___CONTAINS__"] = __list___CONTAINS__ 
 
-__list___contains__.pythonscript_function = true;
-window["__list_attrs"]["__contains__"] = __list___contains__;
+__list___CONTAINS__.pythonscript_function = true;
+window["__list_attrs"]["__CONTAINS__"] = __list___CONTAINS__;
 list = create_class("list", window["__list_parents"], window["__list_attrs"], window["__list_properties"]);
 var dict, __dict_attrs, __dict_parents;
 window["__dict_attrs"] = Object();
@@ -1707,7 +1747,7 @@ window["__dict_values"] = __dict_values
 
 __dict_values.pythonscript_function = true;
 window["__dict_attrs"]["values"] = __dict_values;
-var __dict___contains__ = function(args, kwargs) {
+var __dict___CONTAINS__ = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
 arguments = get_arguments(signature, args, kwargs);
@@ -1726,18 +1766,18 @@ v = backup;
 
 return false;
 }
-window["__dict___contains__"] = __dict___contains__ 
+window["__dict___CONTAINS__"] = __dict___CONTAINS__ 
 
-__dict___contains__.pythonscript_function = true;
-window["__dict_attrs"]["__contains__"] = __dict___contains__;
+__dict___CONTAINS__.pythonscript_function = true;
+window["__dict_attrs"]["__CONTAINS__"] = __dict___CONTAINS__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"], window["__dict_properties"]);
 var array, __array_attrs, __array_parents;
 window["__array_attrs"] = Object();
 window["__array_parents"] = create_array();
 window["__array_properties"] = Object();
-__array_typecodes = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": 1}, {"key": "b", "value": 1}, {"key": "B", "value": 1}, {"key": "u", "value": 2}, {"key": "h", "value": 2}, {"key": "H", "value": 2}, {"key": "i", "value": 4}, {"key": "I", "value": 4}, {"key": "l", "value": 4}, {"key": "L", "value": 4}, {"key": "f", "value": 4}, {"key": "d", "value": 8}, {"key": "float32", "value": 4}, {"key": "float16", "value": 2}, {"key": "float8", "value": 1}]});
+__array_typecodes = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": 1}, {"key": "b", "value": 1}, {"key": "B", "value": 1}, {"key": "u", "value": 2}, {"key": "h", "value": 2}, {"key": "H", "value": 2}, {"key": "i", "value": 4}, {"key": "I", "value": 4}, {"key": "l", "value": 4}, {"key": "L", "value": 4}, {"key": "f", "value": 4}, {"key": "d", "value": 8}, {"key": "float32", "value": 4}, {"key": "float16", "value": 2}, {"key": "float8", "value": 1}, {"key": "int32", "value": 4}, {"key": "uint32", "value": 4}, {"key": "int16", "value": 2}, {"key": "uint16", "value": 2}, {"key": "int8", "value": 1}, {"key": "uint8", "value": 1}]});
 window["__array_attrs"]["typecodes"] = __array_typecodes;
-__array_typecode_names = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": "Int8"}, {"key": "b", "value": "Int8"}, {"key": "B", "value": "Uint8"}, {"key": "u", "value": "Uint16"}, {"key": "h", "value": "Int16"}, {"key": "H", "value": "Uint16"}, {"key": "i", "value": "Int32"}, {"key": "I", "value": "Uint32"}, {"key": "f", "value": "Float32"}, {"key": "d", "value": "Float64"}, {"key": "float32", "value": "Float32"}, {"key": "float16", "value": "Int16"}, {"key": "float8", "value": "Int8"}]});
+__array_typecode_names = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": "Int8"}, {"key": "b", "value": "Int8"}, {"key": "B", "value": "Uint8"}, {"key": "u", "value": "Uint16"}, {"key": "h", "value": "Int16"}, {"key": "H", "value": "Uint16"}, {"key": "i", "value": "Int32"}, {"key": "I", "value": "Uint32"}, {"key": "f", "value": "Float32"}, {"key": "d", "value": "Float64"}, {"key": "float32", "value": "Float32"}, {"key": "float16", "value": "Int16"}, {"key": "float8", "value": "Int8"}, {"key": "int32", "value": "Int32"}, {"key": "uint32", "value": "Uint32"}, {"key": "int16", "value": "Int16"}, {"key": "uint16", "value": "Uint16"}, {"key": "int8", "value": "Int8"}, {"key": "uint8", "value": "Uint8"}]});
 window["__array_attrs"]["typecode_names"] = __array_typecode_names;
 var __array___init__ = function(args, kwargs) {
 var size, buff;
@@ -1825,6 +1865,20 @@ window["__array___len__"] = __array___len__
 
 __array___len__.pythonscript_function = true;
 window["__array_attrs"]["__len__"] = __array___len__;
+var __array___CONTAINS__ = function(args, kwargs) {
+var lst;
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self", "value")};
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var value = arguments['value'];
+lst = get_attribute(self, "to_list")(create_array(), Object());
+return get_attribute(get_attribute(lst, "__contains__"), "__call__")([value], Object());
+}
+window["__array___CONTAINS__"] = __array___CONTAINS__ 
+
+__array___CONTAINS__.pythonscript_function = true;
+window["__array_attrs"]["__CONTAINS__"] = __array___CONTAINS__;
 var __array___getitem__ = function(args, kwargs) {
 var func_name, step, dataview, func, offset;
 var signature, arguments;
