@@ -428,8 +428,11 @@ class _Material:
 
 		self._reset_material( params )  ## subclasses need to implement this
 
+	def __getattr__(self, name):
+		with javascript:
+			return self[...][ name ]
+
 	def __setattr__(self, name, value):
-		print '__setattr__', name, value
 		with javascript:
 			self[...][ name ] = value
 
@@ -502,12 +505,50 @@ class ShaderMaterial( _Material ):
 		with javascript:
 			self[...] = new( THREE.ShaderMaterial( params[...] ) )
 
+class _Geometry:
+	def __getattr__(self, name):
+		with javascript:
+			return self[...][ name ]
 
+	def __setattr__(self, name, value):
+		with javascript:
+			self[...][ name ] = value
 
-class CubeGeometry:
+class CubeGeometry( _Geometry ):
+
 	def __init__(self, width, height, length):
 		with javascript:
 			self[...] = new( THREE.CubeGeometry(width, height, length) )
+
+
+class ExtrudeGeometry( _Geometry ):
+	def __init__(self, shapes, options ):
+		with javascript:
+			self[...] = new( THREE.ExtrudeGeometry( shapes[...], options[...] ) )
+
+	def addShape(self, shape, options ):
+		with javascript:
+			self[...].addShape( shape[...], options[...] )
+
+class TextGeometry( ExtrudeGeometry ):
+	def __init__(self, text, size=100, curveSegments=4, font='helvetiker', weight='normal', style='normal', height=50, bevelThickness=10, bevelSize=8, bevelEnabled=False ):
+		assert weight in ('normal','bold')
+		assert style in ('normal', 'italics')
+		params = {
+			'size':size,			## FontUtils.generateShapes
+			'curveSegments':curveSegments,
+			'font'  : font,
+			'weight': weight,
+			'style' : style,
+			'height': height,		## ExtrudeGeometry.call
+			'bevelThickness' : bevelThickness, 
+			'bevelSize'      : bevelSize,
+			'bevelEnabled'   : bevelEnabled
+		}
+		with javascript:
+			self[...] = new( THREE.TextGeometry( text, params[...] ) )
+
+
 
 
 class Mesh:

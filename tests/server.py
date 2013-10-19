@@ -88,7 +88,9 @@ def get_main_page():
 	root = PATHS['webroot']
 	r = ['<html><head><title>index</title></head><body>']
 	r.append( '<ul>' )
-	for name in os.listdir( root ):
+	files = os.listdir( root )
+	files.sort()
+	for name in files:
 		if name == os.path.split(__file__)[-1]: continue
 		path = os.path.join( root, name )
 		if os.path.isfile( path ):
@@ -222,7 +224,19 @@ class MainHandler( tornado.web.RequestHandler ):
 
 LIBS = dict(
 	three = {'three.min.js' : os.path.expanduser( '~/three.js/build/three.min.js')},
-	tween = {'tween' : os.path.expanduser( '~/tween.js/build/tween.min.js')},
+	tween = {'tween.min.js' : os.path.expanduser( '~/tween.js/build/tween.min.js')},
+	fonts = {
+		'gentilis_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/gentilis_bold.typeface.js'),
+		'gentilis_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/gentilis_regular.typeface.js'),
+		'optimer_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/optimer_bold.typeface.js'),
+		'optimer_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/optimer_regular.typeface.js'),
+		'helvetiker_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/helvetiker_bold.typeface.js'),
+		'helvetiker_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/helvetiker_regular.typeface.js'),
+		'droid_sans_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_sans_regular.typeface.js'),
+		'droid_sans_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_sans_bold.typeface.js'),
+		'droid_serif_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_serif_regular.typeface.js'),
+		'droid_serif_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_serif_bold.typeface.js'),
+	}
 )
 
 class LibsHandler( tornado.web.RequestHandler ):
