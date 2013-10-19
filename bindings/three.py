@@ -418,13 +418,16 @@ class _ImageUtils:
 ImageUtils = _ImageUtils()
 
 class _Material:
+	_color_props = []
+
 	def __init__(self, **kwargs):
 		params = kwargs  ## no need to copy
 		keys = kwargs.keys()
-		if 'color' in keys:
-			color = kwargs['color']
-			color = Color(red=color['red'], green=color['green'], blue=color['blue'])
-			params['color'] = color[...]
+		for name in self._color_props:  ## subclasses can redefine this
+			if name in keys:
+				color = kwargs[ name ]
+				color = Color(red=color['red'], green=color['green'], blue=color['blue'])
+				params[ name ] = color[...]
 
 		self._reset_material( params )  ## subclasses need to implement this
 
@@ -442,6 +445,8 @@ class _Material:
 
 
 class MeshBasicMaterial( _Material ):
+	_color_props = ['color']
+
 	def _reset_material(self, params):
 		with javascript:
 			## the three.js API takes an javascript-object as params to configure the material
@@ -453,6 +458,8 @@ class MeshBasicMaterial( _Material ):
 
 
 class MeshLambertMaterial( _Material ):
+	_color_props = ['color', 'ambient', 'emissive']
+
 	def _reset_material(self, params):
 		with javascript:
 			self[...] = new( THREE.MeshLambertMaterial( params[...] ) )
@@ -469,6 +476,8 @@ class MeshLambertMaterial( _Material ):
 
 
 class MeshPhongMaterial( _Material ):
+	_color_props = ['color', 'ambient', 'emissive', 'specular']
+
 	def _reset_material(self, params):
 		with javascript:
 			self[...] = new( THREE.MeshPhongMaterial( params[...] ) )
@@ -499,11 +508,12 @@ class MeshDepthMaterial( _Material ):
 			self[...] = new( THREE.MeshDepthMaterial( params[...] ) )
 
 
-
 class ShaderMaterial( _Material ):
 	def _reset_material(self, params):
 		with javascript:
 			self[...] = new( THREE.ShaderMaterial( params[...] ) )
+
+
 
 class _Geometry:
 	def __getattr__(self, name):

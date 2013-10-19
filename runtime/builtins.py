@@ -1,3 +1,5 @@
+_PythonJS_UID = 0
+
 
 with javascript:
     def _JSNew(T):
@@ -375,19 +377,21 @@ class dict:
         return _default
 
     def set(self, key, value):
+        global _PythonJS_UID
+
         __dict = self.js_object
         if JS("typeof(key) === 'object'"):
             if JS("key.uid === undefined"):
-                uid = self.UID
+                uid = _PythonJS_UID
                 JS("key.uid = uid")
-                self.UID += 1
+                _PythonJS_UID += 1
             JS('var uid = key.uid')
             JS('__dict["@"+uid] = value')
         elif JS("typeof(key) === 'function'"):
             if JS("key.uid === undefined"):
-                uid = self.UID
+                uid = _PythonJS_UID
                 JS("key.uid = uid")
-                self.UID += 1
+                _PythonJS_UID += 1
             JS('var uid = key.uid')
             JS('__dict["@"+uid] = value')
         else:
@@ -409,19 +413,21 @@ class dict:
             return JS('__dict[key]')
 
     def __setitem__(self, key, value):
+        global _PythonJS_UID
+
         __dict = self.js_object
         if JS("typeof(key) === 'object'"):
             if JS("key.uid === undefined"):
-                uid = self.UID
+                uid = _PythonJS_UID
                 JS("key.uid = uid")
-                self.UID += 1
+                _PythonJS_UID += 1
             JS('var uid = key.uid')
             JS('__dict["@"+uid] = value')
         elif JS("typeof(key) === 'function'"):
             if JS("key.uid === undefined"):
-                uid = self.UID
+                uid = _PythonJS_UID
                 JS("key.uid = uid")
-                self.UID += 1
+                _PythonJS_UID += 1
             JS('var uid = key.uid')
             JS('__dict["@"+uid] = value')
         else:

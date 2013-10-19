@@ -624,10 +624,17 @@ class PythonToPythonJS(NodeVisitor):
                 if getter in self._function_return_types:
                     node.returns_type = self._function_return_types[getter]
                 return '%s( [%s] )' %(getter, node_value)
-            elif node.attr in typedef.class_attributes:
+
+            elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
+                ## This optimization breaks when a subclass redefines a class attribute,
+                ## but we need it for inplace assignment operators, this is safe only when
+                ## other parent classes have not defined the same class attribute.
+                ## This is also not safe when node_value is "self".
                 return "%s['__class__']['__dict__']['%s']" %(node_value, node.attr)
+
             elif node.attr in typedef.attributes:
                 return "%s['__dict__']['%s']" %(node_value, node.attr)
+
             elif '__getattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__getattr__' )
                 return '%s([%s, "%s"])' %(func, node_value, node.attr)
@@ -638,10 +645,16 @@ class PythonToPythonJS(NodeVisitor):
                 if getter in self._function_return_types:
                     node.returns_type = self._function_return_types[getter]
                 return '%s( [%s] )' %(getter, node_value)
+
             elif typedef.check_for_parent_with( class_attribute=node.attr ):
                 #return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## get_attribute is broken with grandparent class attributes
-                parent = typedef.check_for_parent_with( class_attribute=node.attr )
-                return "window['__%s_attrs']['%s']" %(parent.name, node.attr)
+                if node.attr in typedef.class_attributes:
+                    ## this might not be always correct
+                    return "%s['__class__']['__dict__']['%s']" %(node_value, node.attr)
+                else:
+                    parent = typedef.check_for_parent_with( class_attribute=node.attr )
+                    return "window['__%s_attrs']['%s']" %(parent.name, node.attr)
+
             elif typedef.check_for_parent_with( method='__getattr__' ):
                 parent = typedef.check_for_parent_with( method='__getattr__' )
                 func = parent.get_pythonjs_function_name( '__getattr__' )
@@ -991,6 +1004,7 @@ class PythonToPythonJS(NodeVisitor):
             # create a JS Object to store the value of each parameter
             signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
             writer.write('signature = JSObject(%s)' % signature)
+            writer.write('signature["function_name"] = "%s"' %node.name)
             writer.write('arguments = get_arguments(signature, args, kwargs)')
             # # then for each argument assign its value
             for arg in node.args.args:

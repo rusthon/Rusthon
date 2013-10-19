@@ -142,7 +142,7 @@ def get_attribute(object, attribute):
         __dict__ = __class__.__dict__
         attr = __dict__[attribute]
         if attr:
-            __get__ = get_attribute(attr, '__get__')
+            __get__ = get_attribute(attr, '__get__')  ## what are data descriptors?
             if __get__:
                 return __get__([object, __class__])
         bases = __class__.bases
@@ -182,7 +182,6 @@ def get_attribute(object, attribute):
         if attribute in __class__.__properties__:  ## @property decorators
             return __class__.__properties__[ attribute ]( [object] )
 
-        #var(__dict__)
         __dict__ = __class__.__dict__
         attr = __dict__[attribute]
         #if attr:
@@ -202,10 +201,9 @@ def get_attribute(object, attribute):
                 return attr
 
         bases = __class__.bases
-        for i in jsrange(bases.length):
-            var(base, attr)
-            base = bases[i]
-            attr = get_attribute(base, attribute)
+
+        for base in bases:
+            attr = _get_upstream_attribute(base, attribute)
             if attr:
                 if JS("{}.toString.call(attr) === '[object Function]'"):
                     def method():
@@ -221,17 +219,35 @@ def get_attribute(object, attribute):
                 else:
                     return attr
 
+
+        #for i in jsrange(bases.length):  ## this calls get_attribute, ugly!
+        #    var(base, attr)
+        #    base = bases[i]
+        #    attr = get_attribute(base, attribute)
+        #    if attr:
+        #        if JS("{}.toString.call(attr) === '[object Function]'"):
+        #            def method():
+        #                var(args)
+        #                args = arguments
+        #                if(args.length > 0):
+        #                    args[0].splice(0, 0, object)
+        #                else:
+        #                    args = [object]
+        #                return attr.apply(None, args)
+        #            method.is_wrapper = True
+        #            return method
+        #        else:
+        #            return attr
+
         if '__getattr__' in __dict__:
             return __dict__['__getattr__']( [object, attribute])
 
         for base in bases:
-            #print 'checking base', base
-            #if '__getattr__' in base.__dict__:
-            #    return base.__dict__['__getattr__']( [object, attribute] )
             var( f )
-            f = _get_upstream_method(base, '__getattr__')
+            f = _get_upstream_attribute(base, '__getattr__')
             if f:
                 return f( [object, attribute] )
+
 
     if JS('object instanceof Array'):
         if attribute == '__getitem__':
@@ -254,11 +270,11 @@ def get_attribute(object, attribute):
 
     return None  # XXX: raise AttributeError instead
 
-def _get_upstream_method(base, method):
-    if method in base.__dict__:
-        return base.__dict__[ method ]
+def _get_upstream_attribute(base, attr):
+    if attr in base.__dict__:
+        return base.__dict__[ attr ]
     for parent in base.bases:
-        return _get_upstream_method(parent, method)
+        return _get_upstream_attribute(parent, attr)
 
 
 
