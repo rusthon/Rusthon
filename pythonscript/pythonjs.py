@@ -59,6 +59,11 @@ class JSGenerator(NodeVisitor):
             out += '}\n'
         return out
 
+    def visit_Lambda(self, node):
+        args = [self.visit(a) for a in node.args.args]
+        return '(function (%s) {%s})' %(','.join(args), self.visit(node.body))
+
+
     def visit_FunctionDef(self, node):
         if not hasattr(self, '_function_stack'):  ## track nested functions ##
             self._function_stack = []

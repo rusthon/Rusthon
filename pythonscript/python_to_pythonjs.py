@@ -897,6 +897,13 @@ class PythonToPythonJS(NodeVisitor):
             else:  ## this could be a dangerous optimization ##
                 return '%s( JSArray(), JSObject() )' %name
 
+    def visit_Lambda(self, node):
+        args = [self.visit(a) for a in node.args.args]
+        if self._with_js:
+            return '(function (%s) {%s})' %(','.join(args), self.visit(node.body))
+        else:
+            return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
+
     def visit_FunctionDef(self, node):
         property_decorator = None
         decorators = []
