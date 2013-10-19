@@ -397,9 +397,12 @@ class CSS3DRenderer( _Renderer ):
 
 
 class WebGLRenderer( _Renderer ):
-	def __init__(self):
+	def __init__(self, antialias=False ):
+		## note: antialias may not work depending on hardware and/or browser support,
+		## for example: Chrome 27 fails, while on the same machine FireFox 20 works.
+
 		with javascript:
-			self[...] = new( THREE.WebGLRenderer() )
+			self[...] = new( THREE.WebGLRenderer( {antialias:antialias}) )
 
 	def getContext(self):
 		return self[...].getContext()
@@ -416,6 +419,23 @@ class _ImageUtils:
 		return JS('THREE.ImageUtils.loadTextureCube(urls, _mapping)')
 
 ImageUtils = _ImageUtils()
+
+
+class _Light:
+	def __init__(self, color=None, energy=None):
+		self._reset_light()
+
+class PointLight( _Light ):
+	def _reset_light(self):
+		color = Color()
+		with javascript:
+			self[...] = new( THREE.PointLight( color[...], 1.5 ) )
+
+	@property
+	def position(self):
+		vec = self[...].position
+		return Vector3( object=vec )
+
 
 class _Material:
 	_color_props = []

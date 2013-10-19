@@ -22,9 +22,13 @@ def test():
 	cam.position.z = 40
 	cam.position.x = 5
 
-	ren = WebGLRenderer()
+	ren = WebGLRenderer( antialias=True )
 	ren.setSize( width, height )
 	ren.setClearColor( red=0.5, green=0.5, blue=0.5 )
+
+	light = PointLight()
+	light.position.set( 0, 100, 90 )
+	scn.add( light )
 
 	div.appendChild( ren.domElement )
 
