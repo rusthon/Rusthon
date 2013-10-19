@@ -13,6 +13,7 @@ except ImportError:
 
 import tornado.ioloop
 import tornado.web
+import tornado.websocket
 import os, sys, subprocess, datetime
 
 PATHS = dict(
@@ -27,7 +28,6 @@ PATHS = dict(
 	runtime_builtins = os.path.abspath('../runtime/builtins.py'),
 
 )
-
 
 
 def python_to_pythonjs( src, module=None, global_variable_scope=False ):
@@ -255,7 +255,21 @@ class LibsHandler( tornado.web.RequestHandler ):
 		self.write( data )
 
 
+class WebSocketHandler(tornado.websocket.WebSocketHandler):
+	def open(self):
+		print( self.request.connection )
+
+	def on_message(self, msg):
+		print('on message', msg)
+		self.write_message('hello client')
+
+	def on_close(self):
+		print('websocket closed')
+		self.close()
+
+
 Handlers = [
+	(r'/websocket', WebSocketHandler),
 	(r'/libs/(.*)', LibsHandler),
 	(r'/(.*)', MainHandler),  ## order is important, this comes last.
 ]
