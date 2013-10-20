@@ -2,13 +2,25 @@
 <head>
 
 <style type="text/css" media="screen">
+	body {
+		background-color:lightgray;
+	}
+	h3 {
+		font-family:arial;
+	}
     #editor { 
         top: 0;
         right: 0;
         bottom: 0;
         left: 0;
-        width: 500px;
-        height: 200px;
+        width: 400px;
+        height: 220px;
+    }
+    #javascript_output {
+    	position: absolute;
+    	top:50px;
+    	left:410px;
+        height: 220px;
     }
 </style>
 
@@ -62,7 +74,8 @@ def compile_python():
 
 <body>
 
-<h3>Python Input</h3>
+<h3>PythonJS Editor</h3>
+
 <div id="editor">
 a = []
 for i in range(10):
@@ -71,21 +84,22 @@ for i in range(10):
 print a
 </div>
 
+<textarea id="javascript_output" cols="70" rows="20" readonly="true" style="font-size: 7pt; important;">
+...
+</textarea>
+
 <p>
 <button onclick="connect_websocket()">connect to server</button>
 <button onclick="compile_python()">compile</button>
 </p>
 
-<h4>JavaScript Output</h4>
-<textarea id="javascript_output" cols="80" rows="10" readonly="true" style="font-size: 7pt; important;">
-...
-</textarea>
 
 <script src="libs/ace/ace.js" type="text/javascript" charset="utf-8"></script>
 <script>
     var editor = ace.edit("editor");
-    //editor.setTheme("ace/theme/monokai");
+    editor.setTheme("ace/theme/monokai");
     editor.getSession().setMode("ace/mode/python");
 </script>
+
 </body>
 </html>
