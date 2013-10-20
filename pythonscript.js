@@ -547,6 +547,7 @@ return get_attribute(object, attribute);
 }
 window["getattr"] = getattr 
 
+getattr.pythonscript_function = true;
 var setattr = function(args, kwargs) {
 var object, attribute, value;
 object = args[0];
@@ -556,6 +557,7 @@ return set_attribute(object, attribute, value);
 }
 window["setattr"] = setattr 
 
+setattr.pythonscript_function = true;
 var issubclass = function(args, kwargs) {
 var C, B, base;
 C = args[0];
@@ -580,6 +582,7 @@ return false;
 }
 window["issubclass"] = issubclass 
 
+issubclass.pythonscript_function = true;
 var isinstance = function(args, kwargs) {
 var object_class, object, klass;
 object = args[0];
@@ -593,6 +596,7 @@ return issubclass(create_array(object_class, klass));
 }
 window["isinstance"] = isinstance 
 
+isinstance.pythonscript_function = true;
 var json_to_pythonscript = function(json) {
 var jstype, item, output;
 jstype = typeof json;

@@ -382,7 +382,7 @@ def getattr(args, kwargs):
     object = args[0]
     attribute = args[1]
     return get_attribute(object, attribute)
-
+getattr.pythonscript_function = True
 
 def setattr(args, kwargs):
     var(object, attribute, value)
@@ -390,7 +390,7 @@ def setattr(args, kwargs):
     attribute = args[1]
     value = args[2]
     return set_attribute(object, attribute, value)
-
+setattr.pythonscript_function = True
 
 def issubclass(args, kwargs):
     var(C, B, base)
@@ -403,7 +403,7 @@ def issubclass(args, kwargs):
         if issubclass([base, B], JSObject()):
             return True
     return False
-
+issubclass.pythonscript_function = True
 
 def isinstance(args, kwargs):
     var(object_class, object, klass)
@@ -413,7 +413,7 @@ def isinstance(args, kwargs):
     if object_class is None:
         return False
     return issubclass(create_array(object_class, klass))
-
+isinstance.pythonscript_function = True
 
 # not part of Python, but it's here because it's easier to write
 # in PythonJS
