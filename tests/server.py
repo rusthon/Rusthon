@@ -14,7 +14,7 @@ except ImportError:
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-import os, sys, subprocess, datetime
+import os, sys, subprocess, datetime, json
 
 PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
@@ -261,11 +261,19 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 	def on_message(self, msg):
 		print('on message', msg)
-		self.write_message('hello client')
+		ob = json.loads( msg )
+		if isinstance(ob, dict):
+			if 'command' in ob:
+				if ob['command'] == 'compile':
+					js = python_to_javascript( ob['code'] )
+					self.write_message( {'eval':js})
+		else:
+			self.write_message('"hello client"')
 
 	def on_close(self):
 		print('websocket closed')
-		self.close()
+		if self.ws_connection:
+			self.close()
 
 
 Handlers = [
