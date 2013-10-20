@@ -856,11 +856,14 @@ class PythonToPythonJS(NodeVisitor):
             args = ', '.join(args)
             return '%s(%s)' % (node.func.id, args)
         else:
-
+            call_has_args_only = len(node.args) and not (len(node.keywords) or node.starargs or node.kwargs)
             call_has_args = len(node.args) or len(node.keywords) or node.starargs or node.kwargs
             name = self.visit(node.func)
 
-            if call_has_args:
+            if call_has_args_only:  ## lambda only supports simple args for now.
+                args = ', '.join(map(self.visit, node.args))
+
+            elif call_has_args:
                 args = ', '.join(map(self.visit, node.args))
                 kwargs = ', '.join(map(lambda x: '%s=%s' % (x.arg, self.visit(x.value)), node.keywords))
                 args_name = '__args_%s' % self.identifier
@@ -870,7 +873,7 @@ class PythonToPythonJS(NodeVisitor):
                 self.identifier += 1
 
                 if name in ('list', 'tuple'):
-                    writer.write( '%s = JS("%s.__dict__.js_object")' % (args_name, args))
+                    writer.append( '%s = JS("%s.__dict__.js_object")' % (args_name, args))
                 else:
                     writer.append('%s = JSArray(%s)' % (args_name, args))
 
@@ -883,7 +886,10 @@ class PythonToPythonJS(NodeVisitor):
                     code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
                     writer.append(code)
 
-            if call_has_args:
+            if call_has_args_only:
+                return 'get_attribute(%s, "__call__")([%s], JSObject())' % (name, args)
+
+            elif call_has_args:
                 if name == 'dict':
                     return 'get_attribute(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
                 elif name in ('list', 'tuple'):
