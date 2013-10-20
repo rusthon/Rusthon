@@ -114,18 +114,18 @@ def _setup_array_prototype():
 
 _setup_array_prototype()
 
-def _setup_object_prototype():
-
-    with javascript:
-
-        @Object.prototype.__contains__
-        def func(a):
-            if JS("a in this"):  ## JS() so that we don't call __contains__ again
-                return True
-            else:
-                return False
-
-_setup_object_prototype()
+#def _setup_object_prototype():  ## TODO fix code that had used with-javascript: if 'x' in ob
+#
+#    with javascript:
+#
+#        @Object.prototype.__contains__
+#        def func(a):
+#            if JS("a in this"):  ## JS() so that we don't call __contains__ again
+#                return True
+#            else:
+#                return False
+#
+#_setup_object_prototype()  ## this is not safe with external libraries like ace.js
 
 
 def range(num):

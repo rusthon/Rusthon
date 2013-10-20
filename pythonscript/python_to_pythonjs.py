@@ -589,7 +589,8 @@ class PythonToPythonJS(NodeVisitor):
                 else:
                     comp.append( ' and ' )
                 a = ( self.visit(node.comparators[i]), left )
-                if self._with_js:
+                if self._with_js:  ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
+                    comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, but it works
                     comp.append( "%s['__contains__'](%s)" %a )
                 else:
                     comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )

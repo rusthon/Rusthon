@@ -236,7 +236,12 @@ LIBS = dict(
 		'droid_sans_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_sans_bold.typeface.js'),
 		'droid_serif_regular.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_serif_regular.typeface.js'),
 		'droid_serif_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/droid/droid_serif_bold.typeface.js'),
-	}
+	},
+	ace = {
+		'ace.js': os.path.expanduser( '~/ace-builds/src-noconflict/ace.js'),
+		'theme-monokai.js':os.path.expanduser( '~/ace-builds/src-noconflict/theme-monokai.js'),
+		'mode-python.js':os.path.expanduser( '~/ace-builds/src-noconflict/mode-python.js'),
+	},
 )
 
 class LibsHandler( tornado.web.RequestHandler ):
