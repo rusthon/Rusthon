@@ -10,7 +10,7 @@ def main(script):
 
 
 def command():
-    print main(sys.stdin.read())
+    print(main(sys.stdin.read()))
 
 
 if __name__ == '__main__':
