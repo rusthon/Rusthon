@@ -1,4 +1,8 @@
-// PythonScript Runtime - regenerated on: Sat Oct 19 22:24:57 2013
+
+
+
+
+
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -623,7 +627,8 @@ key = backup;
 
 return output;
 }
-window["json_to_pythonscript"] = json_to_pythonscript
+window["json_to_pythonscript"] = json_to_pythonscript 
+
 _PythonJS_UID = 0;
 var _JSNew = function(T) {
 console.log("_JSNew->", T);
@@ -777,7 +782,7 @@ var iter = this;
 for (var char=0; char < iter.length; char++) {
 var backup = char;
 char = iter[char];
-if(digits["__contains__"](char)) {
+if(char  in  digits || digits["__contains__"](char)) {
 /*pass*/
 }
 else {
