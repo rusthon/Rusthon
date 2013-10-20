@@ -251,6 +251,10 @@ var method = function() {
 var args;
 args = arguments;
 if(args.length > 0) {
+if({}.toString.call(args[0]) != '[object Array]') {
+args[0] = [args[0]];
+}
+
 args[0].splice(0, 0, object);
 }
 else {
