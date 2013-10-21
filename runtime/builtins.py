@@ -258,7 +258,12 @@ class list:
 
     def __init__(self, js_object=None):
         if js_object:
-            self.js_object = js_object
+            if JS('js_object instanceof Array'):
+                self.js_object = js_object
+            elif isinstance(js_object, list) or isinstance(js_object, tuple):
+                self.js_object = js_object.js_object
+            else:
+                raise TypeError
         else:
             self.js_object = JSArray()
 
