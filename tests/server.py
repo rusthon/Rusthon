@@ -18,7 +18,7 @@ import os, sys, subprocess, datetime, json
 
 PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
-	pythonscript = os.path.abspath('../pythonscript'),
+	pythonscript = os.path.abspath('../pythonjs'),
 	bindings = os.path.abspath('../bindings'),
 	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
 	runtime = os.path.abspath('../pythonscript.js'),

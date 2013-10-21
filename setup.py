@@ -3,18 +3,18 @@ from setuptools import setup
 
 setup(
     name='PythonJS',
-    version='0.8.1',
+    version='0.8',
     description='Python translator for the browser',
     author='Amirouche Boubekki',
     author_email='amirouche.boubekki@gmail.com',
-    url='https://github.com/PythonScript-/PythonJS.git',
+    url='https://github.com/PythonJS/PythonJS.git',
     zip_safe=False,
-    packages=['pythonscript'],
+    packages=['pythonjs'],
     entry_points="""
     [console_scripts]
-    pythonjs=pythonscript.pythonjs:main
-    pythonscript=pythonscript.pythonscript:command
-    python_to_pythonjs=pythonscript.python_to_pythonjs:command
+    rpythonjs=pythonjs.pythonjs:main
+    pythonjs=pythonjs.pythonscript:command
+    python_to_rpythonjs=pythonscript.python_to_pythonjs:command
     """,
-    install_script='bin/pythonscript',
+    install_script='bin/pythonjs',
 )
