@@ -210,6 +210,13 @@ class tuple:
                 JS('arr.push( js_object[i] )')
                 i += 1
         elif js_object:
+            if isinstance( js_object, list):
+                self.js_object = js_object.js_object
+            elif isinstance( js_object, tuple):
+                self.js_object = js_object.js_object
+            else:
+                raise TypeError
+        elif js_object:
             raise TypeError
 
     def __getitem__(self, index):

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sun Oct 20 18:46:57 2013
+// PythonScript Runtime - regenerated on: Sun Oct 20 20:22:04 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1076,7 +1076,25 @@ i += 1
 }
 else {
 if(js_object) {
+if(get_attribute(isinstance, "__call__")([js_object, list], Object())) {
+self["__dict__"]["js_object"] = get_attribute(js_object, "js_object");
+}
+else {
+if(get_attribute(isinstance, "__call__")([js_object, tuple], Object())) {
+self["__dict__"]["js_object"] = get_attribute(js_object, "js_object");
+}
+else {
 throw TypeError;
+}
+
+}
+
+}
+else {
+if(js_object) {
+throw TypeError;
+}
+
 }
 
 }
