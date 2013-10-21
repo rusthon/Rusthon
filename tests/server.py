@@ -176,6 +176,11 @@ def regenerate_runtime():
 	file.close()
 	return src
 
+
+ResourcePaths = []
+if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
+	ResourcePaths.append( os.path.expanduser('~/blockly-read-only') )
+
 class MainHandler( tornado.web.RequestHandler ):
 	def get(self, path=None):
 		print('path', path)
@@ -219,7 +224,18 @@ class MainHandler( tornado.web.RequestHandler ):
 				self.write( data )
 
 			else:
-				self.write('Hello World')
+				found = False
+				for root in ResourcePaths:
+					local_path = os.path.join( root, path )
+					if os.path.isfile(local_path):
+						data = open(local_path, 'rb').read()
+						self.set_header("Content-Length", len(data))
+						self.write( data )
+						found = True
+						break
+
+				if not found:
+					print( 'FILE NOT FOUND', path)
 
 
 LIBS = dict(
