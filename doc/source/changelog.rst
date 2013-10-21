@@ -1,6 +1,24 @@
 Changelog
 #########
 
+0.8 - I need a hero
+-------------------
+
+A lot of changes and fixes among which
+
+- Changed the name from PythonScript to PythonJS
+- Changed license to BSD 2-clause
+- Support of Closure Compiler
+- ``__getitem__`` and ``__setitem__`` support
+- Operator creation and overloading
+- three.js bindings
+- Tornado server that compiles code
+- Javascript functions are callable from Python, which makes creating bindings almost not usefull except if you need further integration with the language (like operator overloading)
+- No need to var anything, it's automatic. ``global`` has the same semantic as in Python
+- You can use ``with javascript:`` to inline the block the generated javascript code
+
+Don't forget to checkout the ``tests`` directory, there, you might find some jewels ;)
+
 0.7.3 - Tricky
 --------------
 

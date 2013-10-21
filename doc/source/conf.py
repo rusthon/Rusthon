@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# PythonScript documentation build configuration file, created by
+# PythonJS documentation build configuration file, created by
 # sphinx-quickstart on Thu May  9 17:06:23 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -30,7 +30,6 @@ extensions = [
     'sphinx.ext.coverage',
     'sphinx.ext.viewcode',
     # contrib
-    'sphinxcontrib.blockdiag',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -46,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PythonScript'
+project = u'PythonJS'
 copyright = u'2013, Amirouche Boubekki'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -97,7 +96,7 @@ pygments_style = 'monokai'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'foundation'
+html_theme = 'not-much'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -170,7 +169,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PythonScriptdoc'
+htmlhelp_basename = 'PythonJSdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -189,7 +188,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PythonScript.tex', u'PythonScript Documentation',
+  ('index', 'PythonJS.tex', u'PythonJS Documentation',
    u'Amirouche Boubekki', 'manual'),
 ]
 
@@ -219,7 +218,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pythonscript', u'PythonScript Documentation',
+    ('index', 'pythonscript', u'PythonJS Documentation',
      [u'Amirouche Boubekki'], 1)
 ]
 
@@ -233,8 +232,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'PythonScript', u'PythonScript Documentation',
-   u'Amirouche Boubekki', 'PythonScript', 'One line description of project.',
+  ('index', 'PythonJS', u'PythonJS Documentation',
+   u'Amirouche Boubekki', 'PythonJS', 'One line description of project.',
    'Miscellaneous'),
 ]
 
@@ -251,7 +250,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = u'PythonScript'
+epub_title = u'PythonJS'
 epub_author = u'Amirouche Boubekki'
 epub_publisher = u'Amirouche Boubekki'
 epub_copyright = u'2013, Amirouche Boubekki'

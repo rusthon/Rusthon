@@ -8,45 +8,28 @@ Install PythonScriptTranslator:
 
 .. code-block:: sh
 
-  pip install PythonScriptTranslator
+  pip install PythonJS
 
-And download the latest version on the master branch of `pythonscript.js <https://raw.github.com/amirouche/PythonScript/master/pythonscript.js>`_.
+And download the latest version on the master branch of `pythonjs.js <https://raw.github.com/PythonJS/PythonJS/master/pythonjs.js>`_.
 
 Prepare a ``app.html`` file that can look like the following:
 
 .. code-block:: html
 
-   <script src="pythonscript.js" type="text/javascript" charset="utf-8"></script>
+   <script src="pythonjs.js" type="text/javascript" charset="utf-8"></script>
    <script src="app.py.js" type="text/javascript" charset="utf-8"></script>
 
 That is all, ``app.py.js`` is the result of the compilation of a ``app.py`` with the following command:
 
 .. code-block:: sh
 
-  pythonscript < app.py > app.py.js
+  pythonjs < app.py > app.py.js
 
-.. note:: The following tests can be done in the `online editor <http://apppyjs.appspot.com/>`_.
-
-.. note:: Or you can use the mini `demo Django project <https://github.com/amirouche/PythonScript/tree/master/django-demo>`_.
-
-.. note:: Whatever route you go you will need `firebug <https://addons.mozilla.org/fr/firefox/addon/firebug/>`_.
 
 Getting feedback
 ----------------
 
 The old ``print`` statement will be converted to Javascript ``console.log`` which are printed in browser consoles like firebug.
-
-Dealing with variables
-----------------------
-
-This is very important! Just like in Javascript you **must** «declare» the variables using the ``var`` function. For instance ``var(spam)``. It can take several arguments ``var(spam, egg, bottle)``. This is because PythonScript use the underlying Javascript variable scope and in Javascript a variable is by default global. The pratical consequence is that you **must** declare every usage of a variable *except* if you want to use a global (which seldom happens). Typical code in PythonScript looks like:
-
-.. code-block:: python
-
-   var(spam, egg, bottle)
-   spam = 1
-   egg = 2
-   bottle = spam + egg
 
 
 How to work with functions
@@ -67,7 +50,7 @@ The above code will print in a browser console the following:
 
   1 2 3 Object { __class__={...}, __dict__={...}} Object { __class__={...}, __dict__={...}}
 
-A bit cryptic but basically foo, bar, baz are respectively 1, 2, 3 and last two arguments, Javascript objects (but actually PythonScript objects) need more inspection.
+A bit cryptic but basically foo, bar, baz are respectively 1, 2, 3 and last two arguments, Javascript objects (but actually PythonJS objects) need more inspection.
 
 Let's define a function that is more verbose:
 
@@ -124,9 +107,9 @@ Also, as in Python, functions are objects so you can use them as such.
 How to work with classes?
 -------------------------
 
-Once functions are done, classes are just a piece of cake, except there is yet no ``__get_attribute__`` or ``__getattr__`` hook it similar to CPython. Data descriptors works the same way. And metaclass is explained in the following paragraph.
+Once functions are done, classes are just a piece of cake, except there is yet no ``__get_attribute__`` but there is a ``__getattr__``. Data descriptors works the same way. And metaclass is explained in the following paragraph.
 
-.. warning:: You don't have to inherit ``object`` actually there is no ``object`` object in PythonScript.
+.. warning:: You don't have to inherit ``object`` actually there is no ``object`` object in PythonJS.
 
 
 How to use ``__metaclass__`` property?
