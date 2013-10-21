@@ -1,6 +1,8 @@
 PythonScript internals
 ######################
 
+.. warning:: The code still use the old naming where PythonJS is the subset of Python that is actually translated to Javascript and PythonScript the language implemented on top of it.
+
 Big picture
 ===========
 
@@ -9,34 +11,16 @@ This might not make sens right now, but you can read it nonetheless and as you r
 Compilation
 -----------
 
-.. blockdiag::
+::
 
-   blockdiag {
-     "Python" -> PythonToPythonJS -> "PythonJS" -> JSGenerator -> "Javascript";
+   Python -> PythonToPythonJS -> PythonJS -> JSGenerator -> Javascript
 
-     PythonToPythonJS -> "PythonJS" [folded];
-     JSGenerator -> "Javascript" [folded];
-   }
+
 
 This is the description of ``pythonscript`` command.
 
 .. versionchanged:: 0.7
    There is now ``python_to_pythonjs`` command that allow you to review the python code generated before it's converted to javascript
-
-
-Execution
----------
-
-.. blockdiag::
-
-   blockdiag {
-     "pythonpythonjs.py" -> PythonJS -> "pythonscript.js";
-     "app.py" -> "pythonscript" -> "app.py.js";
-     "app.py.js"-> "running application";
-     "pythonscript.js"-> "running application";
-   }
-
-This is how a script can be run, it needs ``pythonscript.js`` which is the runtime library written in Python actually PythonJS. Read along the make things more clear.
 
 How does it executes ?
 ======================

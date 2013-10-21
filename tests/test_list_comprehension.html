@@ -1,0 +1,37 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+
+def test():
+	global lst, a, b
+
+	print 'testing list of chars...'
+	lst = ['h', 'e', 'l', 'l', 'o']
+	a = [ ord(c) for c in lst ]
+	for c in a:
+		print chr(c)
+
+	print 'testing string...'
+	b = [ ord(c) for c in 'hello' ]
+	for c in b:
+		print chr(c)
+
+	## note: 'string'.split is javascript function, and returns an array not a list!
+	print 'testing for char in word for word in words...'
+	words = 'hello world foo bar'.split(' ')
+	x = [ ord(c) for c in word for word in words ]
+	for v in x:
+		print chr(v)
+
+	print 'test complete'
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+
+def test():
+	global a, b, c, d, e, s
+	a = 'hello'
+	b = 'world'
+	print a+b
+
+	with javascript:
+		if a.startswith('h'):
+			print 'WITH - startswith test passed'
+
+		if a.endswith('lo'):
+			print 'WITH - endswith test passed'
+
+
+		print 'WITH - testing string.join...'
+		d = ','.join( [1,2,3,4] )
+		print( d )
+
+	print '--testing string.join...'
+	c = [1,2,3,4,5]
+	d = ','.join( c )
+	print( d )
+
+	if a.startswith('he'):
+		print 'startswith test passed'
+
+	if a.endswith('llo'):
+		print 'endswith test passed'
+
+	print a.upper()
+	print 'LOWERED'.lower()
+	print a.index( 'e' )
+	print 'testing isdigit'
+	print a, '.isdigit->', a.isdigit()
+	print '100.isdigit->', '100'.isdigit()
+
+	print 'testing functional style str(x)'
+	s = str('functional style ok')
+	print s
+	e = str( 100 )
+	print e
+
+	print 'tests complete'
+
+</script>
+
+</head>
+<body>
+<button id="mybutton" onclick="test()">click me</button>
+</body>
+</html>

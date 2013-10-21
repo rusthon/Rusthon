@@ -1,0 +1,76 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+
+class A:
+	def __init__(self):
+		print 'A.init-------'
+		self._x = 1
+		self._y = 2
+		self._z = 3
+
+	@property
+	def x(self):
+		return self._x
+	@x.setter
+	def x(self,value):
+		self._x = value + 1000
+
+	@property
+	def y(self):
+		return self._y
+	@y.setter
+	def y(self,value):
+		self._y = value
+
+	@property
+	def z(self):
+		return self._z
+	@z.setter
+	def z(self,value):
+		self._z = value
+
+class B( A ):
+	pass
+
+def unknown(x):  ## TODO make closure compatible
+	return x
+
+def test():
+	global a, b, c
+	print 'testing A...'
+	a = A()
+	print( a.x )
+	print( a.y )
+	print( a.z )
+
+	a.x = 100
+	print( a.x )
+
+	print 'testing B...'
+	b = B()
+	print( b.x )
+	print( b.y )
+	print( b.z )
+
+	b.x = 100
+	print( b.x )
+
+	print 'testing B as unknown type'
+	c = unknown( b )
+	print( c.x )
+	print( c.y )
+	print( c.z )
+	c.x = 101	## TODO fix setters on unknown types
+	print( c.x )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

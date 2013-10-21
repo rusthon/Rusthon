@@ -1,0 +1,83 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/three/three.min.js"></script>
+<script src="bindings/three.py"></script>
+
+<script type="text/python" closure="false">
+from three import *
+
+Meshes = []
+
+def test():
+	global ren, scn, cam
+
+	div = document.createElement( 'div' )
+	document.body.appendChild(div)
+
+	width = 640; height = 320
+	scn = Scene()
+	cam = PerspectiveCamera( 45, width/height, 0.01, 10000)
+	cam.position.z = 60
+	cam.position.x = 5
+
+	ren = WebGLRenderer()
+	ren.setSize( width, height )
+	ren.setClearColor( red=0.5, green=0.5, blue=0.5 )
+
+	div.appendChild( ren.domElement )
+
+	light = PointLight()
+	light.position.set( 0, 100, 90 )
+	scn.add( light )
+
+	geo = CircleGeometry( radius=4 )
+	mat = MeshPhongMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0} )
+	mesh = Mesh( geo, mat )
+	mesh.position.x = -30
+	scn.add( mesh )
+	Meshes.append( mesh )
+
+	geo = CylinderGeometry( radiusTop=3, radiusBottom=6, height=10 )
+	mat = MeshPhongMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0} )
+	mesh = Mesh( geo, mat )
+	mesh.position.x = -15
+	scn.add( mesh )
+	Meshes.append( mesh )
+
+	geo = IcosahedronGeometry( radius=4.0, detail=1 )
+	mat = MeshPhongMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0} )
+	mesh = Mesh( geo, mat )
+	mesh.position.x = 0
+	scn.add( mesh )
+	Meshes.append( mesh )
+
+	geo = OctahedronGeometry( radius=5.0, detail=1 )
+	mat = MeshPhongMaterial( color={'red':0.0, 'green':0.0, 'blue':0.0} )
+	mesh = Mesh( geo, mat )
+	mesh.position.x = 15
+	scn.add( mesh )
+	Meshes.append( mesh )
+
+	animate()
+
+def animate():
+	requestAnimationFrame( animate )
+
+	for mesh in Meshes:
+		mesh.rotation.x = mesh.rotation.x + 0.01
+		mesh.rotation.y = mesh.rotation.y + 0.02
+		x = mesh.quaternion.x
+		y = mesh.quaternion.y
+		z = mesh.quaternion.z
+		mesh.material.color.setRGB( x,y,z )
+
+	ren.render( scn, cam )
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
