@@ -28,6 +28,8 @@
 
 <script src="blockly_compressed.js" type="text/javascript" charset="utf-8"></script>
 <script src="blocks_compressed.js" type="text/javascript" charset="utf-8"></script>
+<script src="python_compressed.js" type="text/javascript"></script>
+
 <script type="text/javascript" src="msg/js/en.js"></script>
 
 <script src="pythonscript.js"></script>
@@ -206,6 +208,12 @@ Blockly.inject(
 	document.getElementById('blocklyDiv'),
 	{path: './', toolbox: document.getElementById('toolbox')}
 );
+
+function update_ace_editor() {
+	var code = Blockly.Python.workspaceToCode();
+	editor.setValue( code );
+}
+Blockly.addChangeListener( update_ace_editor );
 
 </script>
 
