@@ -2,7 +2,7 @@
 <head>
 <script src="pythonscript.js"></script>
 
-<script type="text/python" closure="true">
+<script type="text/python" closure="false">
 def myfunc():
 	return 1
 
@@ -10,7 +10,7 @@ myfunc.a = "i am first class"
 myfunc.b = 100
 myfunc.c = 3.14
 
-def other( f ):
+def other( f ):  ## TODO fix closure compiler
 	print( f.a )
 
 def test():

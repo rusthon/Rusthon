@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sun Oct 20 20:29:29 2013
+// PythonScript Runtime - regenerated on: Sun Oct 20 21:20:01 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1077,14 +1077,37 @@ i += 1
 else {
 if(js_object) {
 if(get_attribute(isinstance, "__call__")([js_object, list], Object())) {
-self["__dict__"]["js_object"] = get_attribute(js_object, "js_object");
+self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], Object());
 }
 else {
 if(get_attribute(isinstance, "__call__")([js_object, tuple], Object())) {
-self["__dict__"]["js_object"] = get_attribute(js_object, "js_object");
+self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], Object());
+}
+else {
+if(get_attribute(isinstance, "__call__")([js_object, array], Object())) {
+arr = create_array();
+var __iterator__, v;
+__iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
+try {
+v = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+arr.push( v );
+v = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+/*pass*/
+}
+
+}
+
+self["__dict__"]["js_object"] = arr;
 }
 else {
 throw TypeError;
+}
+
 }
 
 }
@@ -1251,8 +1274,24 @@ if(js_object instanceof Array) {
 set_attribute(self, "js_object", js_object);
 }
 else {
-if(get_attribute(isinstance, "__call__")([js_object, list], Object()) || get_attribute(isinstance, "__call__")([js_object, tuple], Object())) {
-set_attribute(self, "js_object", get_attribute(js_object, "js_object"));
+if(get_attribute(isinstance, "__call__")([js_object, list], Object()) || get_attribute(isinstance, "__call__")([js_object, tuple], Object()) || get_attribute(isinstance, "__call__")([js_object, array], Object())) {
+set_attribute(self, "js_object", create_array());
+var __iterator__, v;
+__iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
+try {
+v = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+get_attribute(get_attribute(self, "append"), "__call__")([v], Object());
+v = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+/*pass*/
+}
+
+}
+
 }
 else {
 throw TypeError;

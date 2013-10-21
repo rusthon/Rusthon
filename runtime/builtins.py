@@ -211,9 +211,15 @@ class tuple:
                 i += 1
         elif js_object:
             if isinstance( js_object, list):
-                self.js_object = js_object.js_object
+                self.js_object = js_object.js_object.slice(0)
             elif isinstance( js_object, tuple):
-                self.js_object = js_object.js_object
+                self.js_object = js_object.js_object.slice(0)
+            elif isinstance( js_object, array):
+                arr = JSArray()
+                for v in js_object:
+                    with javascript:
+                        arr.push( v )
+                self.js_object = arr
             else:
                 raise TypeError
         elif js_object:
@@ -260,8 +266,10 @@ class list:
         if js_object:
             if JS('js_object instanceof Array'):
                 self.js_object = js_object
-            elif isinstance(js_object, list) or isinstance(js_object, tuple):
-                self.js_object = js_object.js_object
+            elif isinstance(js_object, list) or isinstance(js_object, tuple) or isinstance(js_object, array):
+                self.js_object = JSArray()
+                for v in js_object:
+                    self.append( v )
             else:
                 raise TypeError
         else:
