@@ -66,7 +66,8 @@ class Vector3:
 		if object:
 			self[...] = object
 		else:
-			with javascript: self[...] = new(THREE.Vector3(x,y,z))
+			with javascript:
+				self[...] = new(THREE.Vector3(x,y,z))
 
 	@property
 	def x(self):
@@ -308,13 +309,188 @@ class Vector3:
 	def clone(self):
 		return Vector3( self.x, self.y, self.z )
 
+class Euler:
+	def __init__(self, x=0, y=0, z=0, object=None ):
+		if object:
+			self[...] = object
+		else:
+			with javascript:
+				self[...] = new(THREE.Euler(x,y,z))
 
-class _ObjectBase:
+	def set(self, x,y,z):
+		self[...].set(x,y,z)
+
+	@property
+	def x(self):
+		with javascript: return self[...].x
+	@x.setter
+	def x(self, value):
+		with javascript: self[...].x = value
+
+	@property
+	def y(self):
+		with javascript: return self[...].y
+	@y.setter
+	def y(self, value):
+		with javascript: self[...].y = value
+
+	@property
+	def z(self):
+		with javascript: return self[...].z
+	@z.setter
+	def z(self, value):
+		with javascript: self[...].z = value
+
+	def setFromRotationMatrix( m, order=None ):
+		#assert isinstance(m, Matrix3x3)
+		with javascript:
+			self[...].setFromRotationMatrix(m[...], order)
+
+	def setFromQuaternion(self, quat, order=None, update=True ):
+		with javascript:
+			self[...].setFromQuaternion( quat[...], order, update)
+
+	def reorder(self):
+		## warning: discards revolution information
+		with javascript:
+			self[...].reorder()
+
+	def equals(self, other):
+		with javascript:
+			return self[...].equals( other[...] )
+
+	def clone(self):
+		return Euler( x=self.x, y=self.y, z=self.z )
+
+
+class Face3:
+	def __init__(self, a, b, c, normal=None, color=None, materialIndex=None):
+		if normal: normal = normal[...]
+		if color: color = color[...]
+		with javascript:
+			self[...] = new( THREE.Face3(a,b,c, normal, color, materialIndex))
+
+	@property
+	def normal(self):
+		vec = self[...].normal
+		return Vector3( object=vec )
+
+	@property
+	def vertexNormals(self):
+		return self[...].vertexNormals  ## TODO wrap array in list
+
+	@property
+	def color(self):
+		vec = self[...].position
+		return Vector3( object=vec )
+
+	@property
+	def vertexColors(self):
+		return self[...].vertexColors  ## TODO wrap array in list
+
+	@property
+	def centroid(self):
+		vec = self[...].centroid
+		return Vector3( object=vec )
+
+
+class Object3D:
+	def __init__(self):
+		with javascript:
+			self[...] = new( THREE.Object3D() )
+
+	@property
+	def up(self):
+		vec = self[...].up
+		return Vector3( object=vec )
+
+	@property
+	def position(self):
+		vec = self[...].position
+		return Vector3( object=vec )
+
+	@property
+	def rotation(self):
+		vec = self[...].rotation
+		return Euler( object=vec )
+
+	@property
+	def scale(self):
+		vec = self[...].scale
+		return Vector3( object=vec )
+
+	@property
+	def quaternion(self):
+		return Quaternion( object=self[...].quaternion )
+
+	def setRotationFromAxisAngle(self, axis, angle):
+		with javascript:
+			self[...].setRotationFromAxisAngle(axis[...], angle)
+
+	def setRotationFromEuler(self, euler):
+		with javascript:
+			self[...].setRotationFromEuler( euler[...] )
+
+	def setRotationFromMatrix(self, m):
+		with javascript:
+			self[...].setRotationFromMatrix(m[...])
+
+	def setRotationFromQuaternion(self, quat):
+		with javascript:
+			self[...].setRotationFromQuaternion( quat[...] )
+
+	def rotateX(self, angle):	# rotate in local space
+		with javascript:
+			self[...].rotateX( angle )
+	def rotateY(self, angle):
+		with javascript:
+			self[...].rotateY( angle )
+	def rotateZ(self, angle):
+		with javascript:
+			self[...].rotateZ( angle )
+
+	def translateX(self, distance):		# translate in local space
+		with javascript:
+			self[...].translateX( distance )
+	def translateY(self, distance):
+		with javascript:
+			self[...].translateY( distance )
+	def translateZ(self, distance):
+		with javascript:
+			self[...].translateZ( distance )
+
+	def localToWorld(self, vec):
+		with javascript:
+			v = self[...].localToWorld( vec[...] )
+		return Vector3( object=v )
+
+	def worldToLocal(self, vec):
+		with javascript:
+			v = self[...].worldToLocal( vec[...] )
+		return Vector3( object=v )
+
+	def lookAt(self, vec):
+		assert not self.parent  ## this only works for objects without a parent
+		with javascript:
+
 	def add(self, child):
 		with javascript:
 			self[...].add( child[...] )
 
-class _Camera( _ObjectBase ):
+	def remove(self, child):
+		with javascript:
+			self[...].remove( child[...] )
+
+	def traverse(self, jsfunc):  ## TODO support pythonJS functions
+		with javascript:
+			self[...].traverse( jsfunc )
+
+	def getObjectById(self, ID, recursive=True ):  ## this returns unwrapped THREE.Object3D
+		with javascript:
+			return self[...].getObjectById( ID, recursive )
+
+
+class _Camera( Object3D ):
 
 	def updateProjectionMatrix(self):
 		with javascript:
@@ -322,7 +498,6 @@ class _Camera( _ObjectBase ):
 
 class OrthographicCamera( _Camera ):
 	def __init__(self, left, right, top, bottom, near, far):
-		#self._object = JS('new THREE.OrthographicCamera(left, right, top, bottom, near, far)')
 		with javascript:
 			self[...] = new( THREE.OrthographicCamera(left, right, top, bottom, near, far) )
 
@@ -345,10 +520,7 @@ class PerspectiveCamera( _Camera ):
 		'''
 		self[...].setViewOffset(fullWidth, fullHeight, x, y, width, height)
 
-	@property
-	def position(self):
-		vec = self[...].position
-		return Vector3( object=vec )
+
 
 
 
@@ -421,7 +593,7 @@ class _ImageUtils:
 ImageUtils = _ImageUtils()
 
 
-class _Light:
+class _Light( Object3D ):
 	def __init__(self, color=None, energy=None):
 		self._reset_light()
 
@@ -431,10 +603,6 @@ class PointLight( _Light ):
 		with javascript:
 			self[...] = new( THREE.PointLight( color[...], 1.5 ) )
 
-	@property
-	def position(self):
-		vec = self[...].position
-		return Vector3( object=vec )
 
 
 class _Material:
@@ -581,28 +749,10 @@ class TextGeometry( ExtrudeGeometry ):
 
 
 
-class Mesh:
+class Mesh( Object3D ):
 	def __init__(self, geometry, material):
 		self.geometry = geometry
 		self.material = material  ## the compile time type system can not know what type this is
 		with javascript:
 			self[...] = new( THREE.Mesh(geometry[...], material[...]))
 
-	@property
-	def position(self):
-		vec = self[...].position
-		return Vector3( object=vec )
-
-	@property
-	def rotation(self):
-		vec = self[...].rotation
-		return Vector3( object=vec )
-
-	@property
-	def scale(self):
-		vec = self[...].scale
-		return Vector3( object=vec )
-
-	@property
-	def quaternion(self):
-		return Quaternion( object=self[...].quaternion )
