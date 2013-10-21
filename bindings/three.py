@@ -472,6 +472,7 @@ class Object3D:
 	def lookAt(self, vec):
 		assert not self.parent  ## this only works for objects without a parent
 		with javascript:
+			self[...].lookAt( vec[...] )
 
 	def add(self, child):
 		with javascript:
@@ -488,6 +489,28 @@ class Object3D:
 	def getObjectById(self, ID, recursive=True ):  ## this returns unwrapped THREE.Object3D
 		with javascript:
 			return self[...].getObjectById( ID, recursive )
+
+	def getChildByName(self, name, recursive=True ):  ## this returns unwrapped THREE.Object3D
+		with javascript:
+			return self[...].getChildByName( name, recursive )
+
+	def getDescendants(self):
+		with javascript:
+			return self[...].getDescendants()
+
+	def updateMatrix(self):
+		with javascript:
+			self[...].updateMatrix()
+
+	def updateMatrixWorld(self):
+		with javascript:
+			self[...].updateMatrixWorld()
+
+
+	def clone(self, other, recursive=True):
+		with javascript:
+			self[...].clone( other, recursive )
+
 
 
 class _Camera( Object3D ):
@@ -532,6 +555,10 @@ class Scene:
 	def add(self, child):
 		with javascript:
 			self[...].add( child[...] )
+
+	def remove(self, child):
+		with javascript:
+			self[...].remove( child[...] )
 
 	def updateMatrixWorld(self):
 		with javascript:
@@ -712,11 +739,20 @@ class _Geometry:
 		with javascript:
 			self[...][ name ] = value
 
-class CubeGeometry( _Geometry ):
+class CircleGeometry( _Geometry ):
+	def __init__(self, radius=50, segments=8, thetaStart=0, thetaEnd=None ):
+		with javascript:
+			self[...] = new( THREE.CircleGeometry(radius, segments, thetaStart, thetaEnd) )
 
+class CubeGeometry( _Geometry ):
 	def __init__(self, width, height, length):
 		with javascript:
 			self[...] = new( THREE.CubeGeometry(width, height, length) )
+
+class CylinderGeometry( _Geometry ):
+	def __init__(self, radiusTop=20, radiusBottom=20, height=100, radialSegments=8, heightSegments=1, openEnded=False):
+		with javascript:
+			self[...] = new( THREE.CylinderGeometry(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded) )
 
 
 class ExtrudeGeometry( _Geometry ):
@@ -746,6 +782,26 @@ class TextGeometry( ExtrudeGeometry ):
 		with javascript:
 			self[...] = new( THREE.TextGeometry( text, params[...] ) )
 
+class LatheGeometry( _Geometry ):
+	def __init__(self, points, segments, phiStart, phiLength):
+		## TODO convert points and segments from lists to JSArray
+		with javascript:
+			self[...] = new( THREE.LatheGeometry(points, segments, phiStart, phiLength))
+
+class PolyhedronGeometry( _Geometry ):
+	def __init__(self, vertices, faces, radius=1.0, detail=0 ):
+		with javascript:
+			self[...] = new( THREE.PolyhedronGeometry( vertices, faces, radius, detail ) )
+
+class IcosahedronGeometry( PolyhedronGeometry ):
+	def __init__(self, radius=1.0, detail=0 ):
+		with javascript:
+			self[...] = new( THREE.IcosahedronGeometry( radius, detail ) )
+
+class OctahedronGeometry( PolyhedronGeometry ):
+	def __init__(self, radius=1.0, detail=0 ):
+		with javascript:
+			self[...] = new( THREE.OctahedronGeometry( radius, detail ) )
 
 
 
