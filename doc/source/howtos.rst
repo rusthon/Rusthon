@@ -1,10 +1,10 @@
-How to write Python in PythonScript
-===================================
+How to write Python in PythonJS
+===============================
 
-How to use PythonScript ?
+How to use PythonJS ?
 -------------------------
 
-Install PythonScriptTranslator:
+Install ``pythonjs``:
 
 .. code-block:: sh
 
