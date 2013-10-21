@@ -392,7 +392,7 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('window["__%s_properties"] = JSObject()' % name)
 
         for base in node.bases:
-            code = '__%s_parents.push(%s)' % (name, self.visit(base))
+            code = 'window["__%s_parents"].push(%s)' % (name, self.visit(base))
             writer.write(code)
             if isinstance(base, Name):
                 self._class_parents[ name ].add( base.id )
@@ -591,6 +591,7 @@ class PythonToPythonJS(NodeVisitor):
                 a = ( self.visit(node.comparators[i]), left )
                 if self._with_js:  ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
                     comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, but it works
+                    comp.append( 'Object.hasOwnProperty(%s, "__contains__") and' %a[0])
                     comp.append( "%s['__contains__'](%s)" %a )
                 else:
                     comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )

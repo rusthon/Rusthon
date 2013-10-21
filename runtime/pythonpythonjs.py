@@ -224,25 +224,11 @@ def get_attribute(object, attribute):
                 else:
                     return attr
 
-
-        #for i in jsrange(bases.length):  ## this calls get_attribute, ugly!
-        #    var(base, attr)
-        #    base = bases[i]
-        #    attr = get_attribute(base, attribute)
-        #    if attr:
-        #        if JS("{}.toString.call(attr) === '[object Function]'"):
-        #            def method():
-        #                var(args)
-        #                args = arguments
-        #                if(args.length > 0):
-        #                    args[0].splice(0, 0, object)
-        #                else:
-        #                    args = [object]
-        #                return attr.apply(None, args)
-        #            method.is_wrapper = True
-        #            return method
-        #        else:
-        #            return attr
+        for base in bases:  ## upstream property getters come before __getattr__
+            var( getter )
+            getter = _get_upstream_property(base, attribute)
+            if getter:
+                return getter( [object] )
 
         if '__getattr__' in __dict__:
             return __dict__['__getattr__']( [object, attribute])
@@ -281,7 +267,11 @@ def _get_upstream_attribute(base, attr):
     for parent in base.bases:
         return _get_upstream_attribute(parent, attr)
 
-
+def _get_upstream_property(base, attr):
+    if attr in base.__properties__:
+        return base.__properties__[ attr ]
+    for parent in base.bases:
+        return _get_upstream_property(parent, attr)
 
 def set_attribute(object, attribute, value):
     """Set an attribute on an object by updating its __dict__ property"""

@@ -44,7 +44,7 @@ Getting Started - Experimental Development Branch
 
 Get Source Code::
 
-	git clone -b develop https://github.com/PythonScript-/PythonJS.git
+	git clone -b develop https://github.com/PythonJS/PythonJS.git
 
 Install Tornado for Python3::
 

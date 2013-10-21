@@ -2,10 +2,12 @@
 <head>
 <script src="pythonscript.js"></script>
 
-<script type="text/python" closure="true">
+<script type="text/python" closure="false">
+
 
 class A:
 	def __init__(self):
+		print 'A.init-------'
 		self._x = 1
 		self._y = 2
 		self._z = 3
@@ -15,7 +17,7 @@ class A:
 		return self._x
 	@x.setter
 	def x(self,value):
-		self._x = value
+		self._x = value + 1000
 
 	@property
 	def y(self):
@@ -31,7 +33,15 @@ class A:
 	def z(self,value):
 		self._z = value
 
+class B( A ):
+	pass
+
+def unknown(x):  ## TODO make closure compatible
+	return x
+
 def test():
+	global a, b, c
+	print 'testing A...'
 	a = A()
 	print( a.x )
 	print( a.y )
@@ -39,6 +49,23 @@ def test():
 
 	a.x = 100
 	print( a.x )
+
+	print 'testing B...'
+	b = B()
+	print( b.x )
+	print( b.y )
+	print( b.z )
+
+	b.x = 100
+	print( b.x )
+
+	print 'testing B as unknown type'
+	c = unknown( b )
+	print( c.x )
+	print( c.y )
+	print( c.z )
+	c.x = 101	## TODO fix setters on unknown types
+	print( c.x )
 
 </script>
 </head>

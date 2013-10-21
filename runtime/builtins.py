@@ -3,14 +3,18 @@ _PythonJS_UID = 0
 
 with javascript:
     def _JSNew(T):
-        print '_JSNew->', T
         return JS("new T")
 
-    def _create_empty_object(arr):
-            o = Object.create(null)
-            for i in arr:
-                o[ i ] = True
-            return o
+    ## This can not be trusted because Object.hasOwnProperty will fail on an empty object with
+    ## TypeError: Cannot convert object to primitive value
+    ## It was not a good idea in the first place to try to use Javascript's "in" operator to
+    ## test if something had an attribute, because if something was a string that throws an error
+    ## note: Object.hasOwnProperty always returns false with strings and numbers.
+    #def _create_empty_object(arr):
+    #        o = Object.create(null)
+    #        for i in arr:
+    #            o[ i ] = True
+    #        return o
 
 def int(a):
     with javascript:
@@ -88,7 +92,7 @@ def _setup_str_prototype():
 
         @String.prototype.isdigit
         def func():
-            digits = _create_empty_object( ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'] )
+            digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
             for char in this:
                 if char in digits: pass
                 else: return False
@@ -102,11 +106,11 @@ def _setup_array_prototype():
 
         @Array.prototype.__contains__
         def func(a):
-            e = _create_empty_object( this )
-            if JS("a in e"):  ## JS() so that we don't call __contains__ again
-                return True
-            else:
-                return False
+            i = 0
+            while i < this.length:
+                if this[i] == a: return True
+                i += 1
+            return False
 
         @Array.prototype.__len__
         def func():

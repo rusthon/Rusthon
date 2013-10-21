@@ -10,7 +10,7 @@
 from three import *
 
 def test():
-	cam = PerspectiveCamera( 45, 640, 480, 0.01, 10000)
+	cam = PerspectiveCamera( 45, 640/480, 0.01, 10000)
 	p = cam.position
 	p.z = 100
 	print( p.z )

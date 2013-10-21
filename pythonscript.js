@@ -1,8 +1,4 @@
-
-
-
-
-
+// PythonScript Runtime - regenerated on: Sun Oct 20 18:46:57 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -306,6 +302,19 @@ return attr;
 base = backup;
 }
 
+var iter = bases;
+for (var base=0; base < iter.length; base++) {
+var backup = base;
+base = iter[base];
+var getter;
+getter = _get_upstream_property(base, attribute);
+if(getter) {
+return getter([object]);
+}
+
+base = backup;
+}
+
 if("__getattr__"  in  __dict__) {
 return __dict__["__getattr__"]([object, attribute]);
 }
@@ -389,6 +398,22 @@ parent = backup;
 
 }
 window["_get_upstream_attribute"] = _get_upstream_attribute 
+
+var _get_upstream_property = function(base, attr) {
+if(attr  in  base.__properties__) {
+return base.__properties__[attr];
+}
+
+var iter = base.bases;
+for (var parent=0; parent < iter.length; parent++) {
+var backup = parent;
+parent = iter[parent];
+return _get_upstream_property(parent, attr);
+parent = backup;
+}
+
+}
+window["_get_upstream_property"] = _get_upstream_property 
 
 var set_attribute = function(object, attribute, value) {
 "Set an attribute on an object by updating its __dict__ property";
@@ -635,32 +660,14 @@ key = backup;
 
 return output;
 }
-window["json_to_pythonscript"] = json_to_pythonscript 
-
+window["json_to_pythonscript"] = json_to_pythonscript
 _PythonJS_UID = 0;
 var _JSNew = function(T) {
-console.log("_JSNew->", T);
 return new T;
 }
 window["_JSNew"] = _JSNew 
 
 _JSNew.pythonscript_function=true;
-var _create_empty_object = function(arr) {
-var o;
-o = Object.create( null );
-var iter = arr;
-for (var i=0; i < iter.length; i++) {
-var backup = i;
-i = iter[i];
-o[ i ] = true;
-i = backup;
-}
-
-return o;
-}
-window["_create_empty_object"] = _create_empty_object 
-
-_create_empty_object.pythonscript_function=true;
 var int = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("a")};
@@ -785,12 +792,12 @@ return this.indexOf( a );
 String.prototype.index=func;
 var func = function() {
 var digits;
-digits = _create_empty_object( ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"] );
+digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
 var iter = this;
 for (var char=0; char < iter.length; char++) {
 var backup = char;
 char = iter[char];
-if(char  in  digits || digits["__contains__"](char)) {
+if(char  in  digits || Object.hasOwnProperty(digits, "__contains__") && digits["__contains__"](char)) {
 /*pass*/
 }
 else {
@@ -811,15 +818,16 @@ _setup_str_prototype.pythonscript_function = true;
 _setup_str_prototype(create_array(), Object());
 var _setup_array_prototype = function(args, kwargs) {
 var func = function(a) {
-var e;
-e = _create_empty_object( this );
-if(a  in  e) {
+var i;
+i = 0;
+while(i < this.length) {
+if(this[i] == a) {
 return true;
 }
-else {
-return false;
-}
 
+i += 1;
+}
+return false;
 }
 
 Array.prototype.__contains__=func;
