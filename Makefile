@@ -1,9 +1,6 @@
 CMD=pythonscript/pythonscript.py
 
-all: jquery pythonscript
-
-jquery:
-	$(CMD) < bindings/jquery.py > bindings/jquery.py.js
+all: pythonjs
 
 builtins:
 	$(CMD) < runtime/builtins.py > builtins.py.js
@@ -11,8 +8,8 @@ builtins:
 python:
 	./pythonscript/pythonjs.py < runtime/pythonpythonjs.py > python.js
 
-pythonscript: python builtins
-	cat python.js builtins.py.js > pythonscript.js
+pythonjs: python builtins
+	cat python.js builtins.py.js > pythonjs.js
 
 clean:
 	rm python.js builtins.py.js pythonscript.js bindings/*py.js
