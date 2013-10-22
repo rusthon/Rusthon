@@ -1,4 +1,4 @@
-# THREE.js wrapper for PythonScript
+# THREE.js wrapper for PythonJS
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 

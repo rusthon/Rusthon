@@ -257,6 +257,8 @@ LIBS = dict(
 		'ace.js': os.path.expanduser( '~/ace-builds/src-noconflict/ace.js'),
 		'theme-monokai.js':os.path.expanduser( '~/ace-builds/src-noconflict/theme-monokai.js'),
 		'mode-python.js':os.path.expanduser( '~/ace-builds/src-noconflict/mode-python.js'),
+		'mode-javascript.js':os.path.expanduser( '~/ace-builds/src-noconflict/mode-javascript.js'),
+		'worker-javascript.js':os.path.expanduser( '~/ace-builds/src-noconflict/worker-javascript.js'),
 	},
 )
 

@@ -824,9 +824,9 @@ class PythonToPythonJS(NodeVisitor):
                     elif type == 'dict':
                         self._global_typed_dicts[ target.id ] = set()
 
-                    writer.write('%s = %s ## global type: %s' % (target.id, node_value, type))
+                    writer.write('%s = %s' % (target.id, node_value))
                 else:
-                    writer.write('%s = %s ## type: %s' % (target.id, node_value, type))
+                    writer.write('%s = %s' % (target.id, node_value))
             else:
                 writer.write('%s = %s' % (target.id, node_value))
 

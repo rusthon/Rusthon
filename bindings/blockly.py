@@ -12,10 +12,10 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 		defaults = []
 		cats = {}
 		for block_name in BlocklyBlockGenerators.keys():
+			b = BlocklyBlockGenerators[ block_name ]
 			e = document.createElement('block')
 			e.setAttribute('type', block_name)
 
-			b = BlocklyBlockGenerators[ block_name ]
 			if b.category:
 				if b.category in cats:
 					cats[ b.category ].appendChild( e )
@@ -27,6 +27,19 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 					cats[ b.category ] = cat
 			else:
 				defaults.append( e )
+
+			i = 0
+			#for i in range(len(b.input_values)):  ## TODO check why this got broken
+			while i < len(b.input_values):
+				input = b.input_values[i]
+				v = document.createElement('value')
+				v.setAttribute('name', input['name'])
+				e.appendChild(v)
+				nb = document.createElement('block')
+				nb.setAttribute('type', 'logic_null')
+				v.appendChild(nb)
+				i += 1
+
 
 		if len(defaults):
 			cat = document.createElement('category')
@@ -226,7 +239,7 @@ class BlocklyBlock:
 						code += a + ';'
 
 				if is_statement:
-					return code  ## statements can directly return
+					return code + ';'	## statements can directly return
 				else:
 					return [ code, Blockly.Python.ORDER_NONE ]  ## return Array
 
@@ -239,13 +252,13 @@ class StatementBlock( BlocklyBlock ):
 	'''
 	A statement-block has a previous and/or next statement notch: stack_input and/or stack_output
 	'''
-	def __init__(self, name, title=None, stack_input=False, stack_output=False, color=150, category=None):
+	def __init__(self, name, title=None, stack_input=False, stack_output=False, color=170, category=None):
 		self.setup( name, title=title, color=color, category=category )
 		self.make_statement( stack_input=stack_input, stack_output=stack_output)
 
 
 class ValueBlock( BlocklyBlock ):
-	def __init__(self, name, title=None, output=None, color=120, category=None):
+	def __init__(self, name, title=None, output='*', color=100, category=None):
 		if output is None: raise TypeError
 		self.setup( name, title=title, color=color, category=category )
 		self.set_output( output )
