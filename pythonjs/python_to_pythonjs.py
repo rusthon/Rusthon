@@ -426,8 +426,10 @@ class PythonToPythonJS(NodeVisitor):
                 self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
             elif isinstance(item, Pass):
                 pass
+            elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
+                pass
             else:
-                raise NotImplementedError
+                raise NotImplementedError( item )
 
         for prop_name in self._decorator_properties:
             getter = self._decorator_properties[prop_name]['get']

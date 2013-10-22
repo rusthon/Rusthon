@@ -21,7 +21,7 @@ PATHS = dict(
 	pythonscript = os.path.abspath('../pythonjs'),
 	bindings = os.path.abspath('../bindings'),
 	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
-	runtime = os.path.abspath('../pythonscript.js'),
+	runtime = os.path.abspath('../pythonjs.js'),
 	module_cache = '/tmp',
 
 	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
@@ -186,7 +186,7 @@ class MainHandler( tornado.web.RequestHandler ):
 		print('path', path)
 		if not path:
 			self.write( get_main_page() )
-		elif path == 'pythonscript.js':
+		elif path == 'pythonscript.js' or path == 'pythonjs.js':
 			data = open( PATHS['runtime'], 'rb').read()
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))
