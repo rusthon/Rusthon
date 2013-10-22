@@ -9,14 +9,31 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 	print 'initialize_blockly'
 	if len( BlocklyBlockGenerators.keys() ):
 		toolbox = document.getElementById( toolbox_id )
-		cat = document.createElement('category')
-		cat.setAttribute('name', 'Callbacks')
-		toolbox.appendChild( cat )
+		defaults = []
+		cats = {}
 		for block_name in BlocklyBlockGenerators.keys():
 			e = document.createElement('block')
 			e.setAttribute('type', block_name)
-			cat.appendChild( e )
 
+			b = BlocklyBlockGenerators[ block_name ]
+			if b.category:
+				if b.category in cats:
+					cats[ b.category ].appendChild( e )
+				else:
+					cat = document.createElement('category')
+					cat.setAttribute('name', b.category)
+					cat.appendChild( e )
+					toolbox.appendChild( cat )
+					cats[ b.category ] = cat
+			else:
+				defaults.append( e )
+
+		if len(defaults):
+			cat = document.createElement('category')
+			cat.setAttribute('name', 'Callbacks')
+			toolbox.appendChild( cat )
+			for e in defaults:
+				cat.appendChild( e )
 
 	with javascript:
 		Blockly.inject(
@@ -50,15 +67,16 @@ class BlocklyBlock:
 		. a bare block can have no inputs or output, and no previous or next statement notches.
 
 	'''
-	def __init__(self, name, title=None, color=None):
-		self.setup( name, title=title, color=color )
+	def __init__(self, name, title=None, color=None, category=None):
+		self.setup( name, title=title, color=color, category=None )
 
-	def setup(self, name, title=None, color=None):
+	def setup(self, name, title=None, color=None, category=None):
 		if name in BlocklyBlockGenerators: raise TypeError
 		BlocklyBlockGenerators[ name ] = self
 		self.name = name
 		self.title = title
 		self.color = color
+		self.category = category
 		self.input_values = []
 		self.input_statements = []
 		self.output = None
@@ -70,7 +88,12 @@ class BlocklyBlock:
 		self.on_click_callback = None
 
 	def callback(self, jsfunc):  ## decorator
+		print '@callback', jsfunc
 		self.set_external_function( jsfunc.NAME )
+		with javascript: arr = jsfunc.args_signature
+		print 'arr', arr
+		for i in range(arr.length):
+			self.add_input_value( arr[i] )
 		return jsfunc
 
 	def set_on_click_callback(self, callback):
@@ -78,8 +101,8 @@ class BlocklyBlock:
 
 	def set_external_function(self, func_name):
 		self.external_function = func_name
-		if self.title:
-			self.title = self.title + ':  ' + func_name
+		if not self.title:
+			self.title = func_name
 
 	def set_output(self, output):
 		if self.stack_input: raise TypeError
@@ -105,13 +128,15 @@ class BlocklyBlock:
 		elif type == 'Number': pass
 		elif type == 'String': pass
 		elif type == 'Array': pass
-		else: raise TypeError
+		#else: raise TypeError
+		if title is None: title = name
 		self.input_values.append(
 			{'name':name, 'type':type, 'title':title}
 		)
 
 	def add_input_statement(self, name=None, title=None):
 		if name is None: raise TypeError
+		if title is None: title = name
 		self.input_statements.append(
 			{'name':name, 'title':title}
 		)
@@ -127,9 +152,9 @@ class BlocklyBlock:
 				raise TypeError
 
 		title = self.title
-		input_values = self.input_values
-		input_statements = self.input_statements
 		color = self.color
+		input_values = self.input_values.js_object
+		input_statements = self.input_statements.js_object
 
 		with javascript:
 			def init():
@@ -144,11 +169,19 @@ class BlocklyBlock:
 				if stack_output:
 					this.setNextStatement( True )
 
-				for input in input_values: # input[...]['name'] for a dict becomes: input.__dict__.js_object['name']
-					this.appendValueInput( input['name'] ).setCheck( input['type'] ).appendTitle( input['title'] )
-
-				for input in input_statements:
+				i = 0
+				while i < input_values.length:
+					input = input_values[i][...]
+					if input['type']:
+						this.appendValueInput(input['name'] ).setCheck( input['type'] ).appendTitle( '<'+input['type']+'> '+input['title'] ).setAlign(Blockly.ALIGN_RIGHT)
+					else:
+						this.appendValueInput(input['name'] ).appendTitle( input['title'] ).setAlign(Blockly.ALIGN_RIGHT)
+					i += 1
+				i = 0
+				while i < input_statements.length:
+					input = input_statements[i][...]
 					this.appendStatementInput( input['name'] ).appendTitle( input['title'] )
+					i += 1
 
 				if output == '*':
 					this.setOutput( True, null )  ## allows output of any type
@@ -161,22 +194,30 @@ class BlocklyBlock:
 	def bind_generator(self):
 		block_name = self.name
 		external_function = self.external_function
-		input_values = self.input_values
-		input_statements = self.input_statements
 		is_statement = self.is_statement
+		input_values = self.input_values.js_object
+		input_statements = self.input_statements.js_object
 
 		with javascript:
 			def generator(block):
 				code = ''
 
 				args = []
-				for input in input_values:
-					a = Blockly.Python.valueToCode(block, input['name'], Blockly.Python.ORDER_NONE)
-					args.push( a )
 
-				for input in input_statements:
+				i = 0
+				while i < input_values.length:
+					input = input_values[i][...]
+					a = Blockly.Python.valueToCode(block, input['name'], Blockly.Python.ORDER_NONE)
+					if a is not null:  ## blockly API not correct? is says this will return null when nothing is connected.
+						args.push( a )
+					i += 1
+				i = 0
+				while i < input_statements.length:
+					input = input_statements[i][...]
 					a = Blockly.Python.statementToCode(block, input['name'])
-					args.push( a )
+					if a != '':  ## blockly API would be better not returning an empty string here, in case we wanted to set an empty string
+						args.push( a )
+					i += 1
 
 				if external_function:
 					code += external_function + '(' + ','.join(args) + ')'
@@ -198,15 +239,15 @@ class StatementBlock( BlocklyBlock ):
 	'''
 	A statement-block has a previous and/or next statement notch: stack_input and/or stack_output
 	'''
-	def __init__(self, name, title=None, stack_input=False, stack_output=False, color=150):
-		self.setup( name, title=title, color=color )
+	def __init__(self, name, title=None, stack_input=False, stack_output=False, color=150, category=None):
+		self.setup( name, title=title, color=color, category=category )
 		self.make_statement( stack_input=stack_input, stack_output=stack_output)
 
 
 class ValueBlock( BlocklyBlock ):
-	def __init__(self, name, title=None, output=None, color=120):
+	def __init__(self, name, title=None, output=None, color=120, category=None):
 		if output is None: raise TypeError
-		self.setup( name, title=title, color=color )
+		self.setup( name, title=title, color=color, category=category )
 		self.set_output( output )
 
 
