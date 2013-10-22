@@ -135,9 +135,10 @@
 from blockly import *
 
 myblock = StatementBlock('myblock', title='My Block', stack_input=True)
-myblock.set_external_function('testextern')
+#myblock.set_external_function('testextern')
 
-def testextern():
+@myblock.callback
+def my_extern_func():
 	print 'hello extern func'
 
 def show_code():

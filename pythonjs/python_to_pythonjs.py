@@ -1047,6 +1047,10 @@ class PythonToPythonJS(NodeVisitor):
             self._function_return_types[ node.name ] = self._return_type
 
         writer.pull()
+        ## note, in javascript function.name is a non-standard readonly attribute,
+        ## the compiler creates anonymous functions with name set to an empty string.
+        writer.write('%s.NAME = "%s"' %(node.name,node.name))
+
         if self._with_js and with_js_decorators:
             ## these with-js functions are assigned to a some objects prototype,
             ## here we assume that they depend on the special "this" variable,
@@ -1063,7 +1067,7 @@ class PythonToPythonJS(NodeVisitor):
         # apply decorators
         for decorator in decorators:
             assert not self._with_js
-            writer.write('%s = %s(create_array(%s))' % (node.name, self.visit(decorator), node.name))
+            writer.write('%s = get_attribute(%s,"__call__")( [%s] )' % (node.name, self.visit(decorator), node.name))
 
     def visit_Continue(self, node):
         if self._with_js:

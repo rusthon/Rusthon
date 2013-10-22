@@ -69,6 +69,10 @@ class BlocklyBlock:
 		self.external_function = None
 		self.on_click_callback = None
 
+	def callback(self, jsfunc):  ## decorator
+		self.set_external_function( jsfunc.NAME )
+		return jsfunc
+
 	def set_on_click_callback(self, callback):
 		self.on_click_callback = callback
 
