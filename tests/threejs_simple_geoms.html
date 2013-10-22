@@ -64,13 +64,13 @@ def test():
 def animate():
 	requestAnimationFrame( animate )
 
-	for mesh in Meshes:
-		mesh.rotation.x = mesh.rotation.x + 0.01
-		mesh.rotation.y = mesh.rotation.y + 0.02
-		x = mesh.quaternion.x
-		y = mesh.quaternion.y
-		z = mesh.quaternion.z
-		mesh.material.color.setRGB( x,y,z )
+	for m in Meshes:
+		m.rotation.x = m.rotation.x + 0.01
+		m.rotation.y = m.rotation.y + 0.02
+		x = m.quaternion.x
+		y = m.quaternion.y
+		z = m.quaternion.z
+		m.material.color.setRGB( x,y,z )
 
 	ren.render( scn, cam )
 

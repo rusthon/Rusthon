@@ -50,6 +50,9 @@ class Writer(object):
         self.output = StringIO()
         self.with_javascript = False
 
+    def is_at_global_level(self):
+        return self.level == 0
+
     def push(self):
         self.level += 1
 
@@ -178,6 +181,11 @@ class PythonToPythonJS(NodeVisitor):
         self._with_js = False
         self._typedefs = dict()  ## class name : typedef  (not pickled)
 
+        self._globals = dict()
+        self._global_typed_lists = dict()  ## global name : set  (if len(set)==1 then we know it is a typed list)
+        self._global_typed_dicts = dict()
+        self._global_typed_tuples = dict()
+
         self._custom_operators = {}
 
         self.setup_builtins()
@@ -296,10 +304,12 @@ class PythonToPythonJS(NodeVisitor):
             return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
 
     def visit_Tuple(self, node):
+        node.returns_type = 'tuple'
         a = '[%s]' % ', '.join(map(self.visit, node.elts))
         return 'get_attribute(tuple, "__call__")([], JSObject(js_object=%s))' %a
 
     def visit_List(self, node):
+        node.returns_type = 'list'
         a = '[%s]' % ', '.join(map(self.visit, node.elts))
         if self._with_js:
             return a
@@ -307,6 +317,7 @@ class PythonToPythonJS(NodeVisitor):
             return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
 
     def visit_ListComp(self, node):
+        node.returns_type = 'list'
         writer.write('var(__comprehension__)')
         writer.write('__comprehension__ = JSArray()')
 
@@ -802,7 +813,22 @@ class PythonToPythonJS(NodeVisitor):
             elif target.id in self._instances:
                 self._instances.pop( target.id )
 
-            writer.write('%s = %s' % (target.id, node_value))
+            if target.id in self._instances:
+                type = self._instances[ target.id ]
+                if writer.is_at_global_level():
+                    self._globals[ target.id ] = type
+                    if type == 'list':
+                        self._global_typed_lists[ target.id ] = set()
+                    elif type == 'tuple':
+                        self._global_typed_tuples[ target.id ] = set()
+                    elif type == 'dict':
+                        self._global_typed_dicts[ target.id ] = set()
+
+                    writer.write('%s = %s ## global type: %s' % (target.id, node_value, type))
+                else:
+                    writer.write('%s = %s ## type: %s' % (target.id, node_value, type))
+            else:
+                writer.write('%s = %s' % (target.id, node_value))
 
         else:  # it's a Tuple
             id = self.identifier
@@ -860,6 +886,19 @@ class PythonToPythonJS(NodeVisitor):
             args = ', '.join(args)
             return '%s(%s)' % (node.func.id, args)
         else:
+
+            ## check if pushing to a global typed list ##
+            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._globals:
+                gtype = self._globals[ node.func.value.id ]
+                if gtype == 'list' and node.func.attr == 'append':
+                    if isinstance(node.args[0], Name):
+                        if node.args[0].id in self._instances:
+                            gset = self._global_typed_lists[ node.func.value.id ]
+                            gset.add( self._instances[node.args[0].id])
+                            assert len(gset) == 1
+                        else:
+                            raise SyntaxError('global lists can only contain one type: instance "%s" is unknown' %node.args[0].id)
+
             call_has_args_only = len(node.args) and not (len(node.keywords) or node.starargs or node.kwargs)
             call_has_args = len(node.args) or len(node.keywords) or node.starargs or node.kwargs
             name = self.visit(node.func)
@@ -1085,7 +1124,12 @@ class PythonToPythonJS(NodeVisitor):
             map(self.visit, node.body)
             writer.pull()
         else:
-            self._for_iterator_target = node.target.id
+
+            ## TODO else remove node.target.id from self._instances
+            if isinstance(node.iter, Name) and node.iter.id in self._global_typed_lists:
+                self._instances[ node.target.id ] = list( self._global_typed_lists[ node.iter.id ] )[0]
+
+            self._for_iterator_target = node.target.id  ## this could break with nested for loops
             writer.write('var(__iterator__, %s)' % node.target.id)
             writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
             writer.write('try:')
