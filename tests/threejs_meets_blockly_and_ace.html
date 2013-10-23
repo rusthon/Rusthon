@@ -239,7 +239,7 @@ Meshes = []
 
 block = StatementBlock(block_name='x', stack_input=True, category='Transform')
 @block.javascript_callback
-def vector(x,y,z):
+def vector(x=0,y=0,z=0):
 	print 'js-callback VECTOR', x,y,z
 	with javascript:
 		return [x,y,z]

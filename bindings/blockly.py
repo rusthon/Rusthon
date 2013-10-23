@@ -47,7 +47,14 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 				v.setAttribute('name', input['name'])
 				e.appendChild(v)
 				nb = document.createElement('block')
-				nb.setAttribute('type', 'logic_null')
+				if input['default_value'] is not None:
+					nb.setAttribute('type', 'math_number')  ## TODO support other types
+					t = document.createElement('title')
+					t.setAttribute('name', 'NUM')
+					t.appendChild( document.createTextNode(input['default_value']) )
+					nb.appendChild(t)
+				else:
+					nb.setAttribute('type', 'logic_null')
 				v.appendChild(nb)
 				i += 1
 
@@ -116,15 +123,23 @@ class BlocklyBlock:
 	def javascript_callback(self, jsfunc):
 		print '@callback', jsfunc
 		self.set_external_function( jsfunc.NAME, javascript=True )
-		with javascript: arr = jsfunc.args_signature
-		for i in range(arr.length): self.add_input_value( arr[i] )
+		with javascript:
+			arr = jsfunc.args_signature
+			defs = jsfunc.kwargs_signature
+		for i in range(arr.length):
+			name = arr[i]
+			self.add_input_value( name, default_value=defs[name] )
 		return jsfunc
 
 	def callback(self, jsfunc):  ## decorator
 		print '@callback', jsfunc
 		self.set_external_function( jsfunc.NAME )
-		with javascript: arr = jsfunc.args_signature
-		for i in range(arr.length): self.add_input_value( arr[i] )
+		with javascript:
+			arr = jsfunc.args_signature
+			defs = jsfunc.kwargs_signature
+		for i in range(arr.length):
+			name = arr[i]
+			self.add_input_value( name, default_value=defs[name] )
 		return jsfunc
 
 	def set_on_click_callback(self, callback):
@@ -154,7 +169,7 @@ class BlocklyBlock:
 		self.stack_output = stack_output
 		self.is_statement = True
 
-	def add_input_value(self, name=None, type=None, title=None):
+	def add_input_value(self, name=None, type=None, title=None, default_value=None):
 		if name is None: raise TypeError
 		elif type == 'Number': pass
 		elif type == 'String': pass
@@ -162,7 +177,7 @@ class BlocklyBlock:
 		#else: raise TypeError
 		if title is None: title = name
 		self.input_values.append(
-			{'name':name, 'type':type, 'title':title}
+			{'name':name, 'type':type, 'title':title, 'default_value':default_value}
 		)
 
 	def add_input_statement(self, name=None, title=None, callback=None):

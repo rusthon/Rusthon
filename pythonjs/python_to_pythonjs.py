@@ -1089,7 +1089,10 @@ class PythonToPythonJS(NodeVisitor):
         ## note, in javascript function.name is a non-standard readonly attribute,
         ## the compiler creates anonymous functions with name set to an empty string.
         writer.write('%s.NAME = "%s"' %(node.name,node.name))
+
         writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
+        defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
+        writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
 
         if self._with_js and with_js_decorators:
             for dec in with_js_decorators:
