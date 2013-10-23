@@ -191,11 +191,6 @@ def get_attribute(object, attribute):
                     var(args)
                     args = arguments
                     if args.length > 0:
-                        # if it's not an array convert to an array
-                        # this happens when a function/method is feed as callback
-                        # of javascript code
-                        if JS("{}.toString.call(args[0]) != '[object Array]'"):
-                            args[0] = [args[0]]
                         args[0].splice(0, 0, object)
                     else:
                         args = [object]

@@ -4,7 +4,7 @@ from difflib import Differ
 
 from envoy import run
 
-from pythonscript.pythonscript import main as pythonjs
+from pythonjs.pythonscript import main as pythonjs
 
 
 ROOT = os.path.join(os.path.dirname(__file__), 'unittests')

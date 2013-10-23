@@ -1,4 +1,4 @@
-CMD=pythonscript/pythonscript.py
+CMD=pythonjs/pythonscript.py
 
 all: pythonjs
 
@@ -6,7 +6,7 @@ builtins:
 	$(CMD) < runtime/builtins.py > builtins.py.js
 
 python:
-	./pythonscript/pythonjs.py < runtime/pythonpythonjs.py > python.js
+	./pythonjs/pythonjs.py < runtime/pythonpythonjs.py > python.js
 
 pythonjs: python builtins
 	cat python.js builtins.py.js > pythonjs.js
