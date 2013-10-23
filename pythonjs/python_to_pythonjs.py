@@ -1092,13 +1092,16 @@ class PythonToPythonJS(NodeVisitor):
         writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
 
         if self._with_js and with_js_decorators:
-            ## these with-js functions are assigned to a some objects prototype,
-            ## here we assume that they depend on the special "this" variable,
-            ## therefore this function can not be marked as f.pythonscript_function,
-            ## because we need get_attribute(f,'__call__') to dynamically bind "this"
             for dec in with_js_decorators:
-                assert '.prototype.' in dec
-                writer.write( '%s=%s'%(dec,node.name) )
+                if '.prototype.' in dec:
+                    ## these with-js functions are assigned to a some objects prototype,
+                    ## here we assume that they depend on the special "this" variable,
+                    ## therefore this function can not be marked as f.pythonscript_function,
+                    ## because we need get_attribute(f,'__call__') to dynamically bind "this"
+                    writer.write( '%s=%s'%(dec,node.name) )
+                else:  ## TODO fix with-javascript decorators
+                    writer.write( '%s = get_attribute(%s,"__call__")( [%s] )' %(node.name, dec, node.name))
+
         elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
             writer.write('%s.pythonscript_function=true'%node.name)
         else:

@@ -136,6 +136,7 @@
 <script src="blockly_compressed.js" type="text/javascript" charset="utf-8"></script>
 <script src="blocks_compressed.js" type="text/javascript" charset="utf-8"></script>
 <script src="python_compressed.js" type="text/javascript"></script>
+<script src="javascript_compressed.js" type="text/javascript"></script>
 
 <script type="text/javascript" src="msg/js/en.js"></script>
 
@@ -236,7 +237,24 @@ JsEditor = AceEditor( 'ace_javascript', mode='javascript' )
 
 Meshes = []
 
+block = StatementBlock(block_name='x', stack_input=True, category='Transform')
+@block.javascript_callback
+def vector(x,y,z):
+	print 'js-callback VECTOR', x,y,z
+	with javascript:
+		return [x,y,z]
+
+with javascript:  ## called from blockly generator update
+	def set_vector( vec, arr ):
+		print 'js-level blockly callback', vec, arr
+		vec.x = arr[0]
+		vec.y = arr[1]
+		vec.z = arr[2]
+
 geoblock1 = ValueBlock('geoblock1', category='Geometry')
+geoblock1.add_input_statement('position', callback=set_vector )
+geoblock1.add_input_statement('rotation')  # ,callback='xxxx')
+geoblock1.add_input_statement('scale')  # ,callback='xxxx')
 @geoblock1.callback
 def Circle( radius, segments, start, end, material=None, child=None ):
 	geo = CircleGeometry( radius, segments, start, end )
@@ -247,6 +265,8 @@ def Circle( radius, segments, start, end, material=None, child=None ):
 	return mesh
 
 geoblock2 = ValueBlock('geoblock2', category='Geometry')
+geoblock2.add_input_statement('position', callback=set_vector )
+
 @geoblock2.callback
 def Cube( width, height, length, material=None, child=None ):
 	geo = CubeGeometry( width, height, length )
@@ -289,13 +309,13 @@ def Icosahedron( radius, detail, material=None, child=None ):
 
 tblock1 = ValueBlock('tblock1', category='Transform')
 @tblock1.callback
-def move(object, x,y,z):
+def position(object, x,y,z):
 	object.position.set(x,y,z)
 	return object
 
 tblock2 = ValueBlock('tblock2', category='Transform')
 @tblock2.callback
-def rotate(object, x,y,z):
+def rotation(object, x,y,z):
 	object.rotation.set(x,y,z)
 	return object
 
@@ -304,6 +324,7 @@ tblock3 = ValueBlock('tblock3', category='Transform')
 def scale(object, x,y,z):
 	object.scale.set(x,y,z)
 	return object
+
 
 
 
