@@ -24,4 +24,8 @@ class AceEditor:
 		with javascript:
 			return self[...].getValue()
 
+	def setFontSize(self, size):
+		with javascript:
+			self[...].setFontSize( size )
+
 
