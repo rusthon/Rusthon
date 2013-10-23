@@ -249,14 +249,15 @@ if(attribute  in  __dict__) {
 if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
-args = arguments;
-if(args.length > 0) {
-args[0].splice(0, 0, object);
+args = Array.prototype.slice.call(arguments);
+if(args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+/*pass*/
 }
 else {
-args = [object];
+args = [args, Object()];
 }
 
+args[0].splice(0, 0, object);
 return attr.apply(undefined, args);
 }
 
@@ -280,13 +281,7 @@ if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
 args = arguments;
-if(args.length > 0) {
 args[0].splice(0, 0, object);
-}
-else {
-args = [object];
-}
-
 return attr.apply(undefined, args);
 }
 
@@ -513,7 +508,7 @@ out[arg] = signature.kwargs[arg];
 }
 else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments");
+throw TypeError("function called with wrong number of arguments (#1)");
 }
 
 }
@@ -531,7 +526,7 @@ out[arg] = signature.kwargs[arg];
 }
 else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments");
+throw TypeError("function called with wrong number of arguments (#2)");
 }
 
 }
