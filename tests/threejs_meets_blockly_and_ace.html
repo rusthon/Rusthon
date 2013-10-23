@@ -23,7 +23,7 @@
     }
     #buttons {
     	position: absolute;
-    	left: 420;
+    	left: 410;
     	top: 135;
     }
 
@@ -139,6 +139,13 @@
 	</category>
 	<category name="Variables" custom="VARIABLE"></category>
 	<category name="Functions" custom="PROCEDURE"></category>
+
+    <category name="Colors">
+      <block type="colour_picker"></block>
+      <block type="colour_random"></block>
+      <block type="colour_rgb"></block>
+      <block type="colour_blend"></block>
+    </category>
 </xml>
 
 
@@ -211,15 +218,25 @@ def compile_python():
 	src = PyEditor.getValue()
 	compile_request( src )
 
+_ANIMATE = True
+def start_animation():
+	global _ANIMATE
+	_ANIMATE = True
+	animate()
+
+def stop_animation():
+	global _ANIMATE
+	_ANIMATE = False
+
 </script>
 
 </head>
 
-<body>
+<body onload="javascript:connect_websocket()">
 
 
 
-<div id="blocklyDiv" style="height: 670px; width: 630px;"></div>
+<div id="blocklyDiv" style="height: 660px; width: 630px;"></div>
 
 
 <div id="ace_editors">
@@ -227,9 +244,9 @@ def compile_python():
 	<div id="ace_javascript" style="height: 150px; width: 300px;"></div>
 
 	<p id="buttons">
-	<button onclick="connect_websocket()">connect to server</button>
-	<button onclick="compile_python()">compile</button>
-	<button onclick="javascript:delete animate">stop</button>
+	<button onclick="javascript:compile_python()">recompile</button>
+	<button onclick="javascript:start_animation()">start</button>
+	<button onclick="javascript:stop_animation()">stop</button>
 	</p>
 
 <div id="THREE_container">
@@ -243,25 +260,67 @@ from three import *
 from ace import *
 
 
-PyEditor = AceEditor( 'ace_python', mode='python', theme='monokai' )
+PyEditor = AceEditor( 'ace_python', mode='python' )
 JsEditor = AceEditor( 'ace_javascript', mode='javascript' )
+JsEditor.setFontSize(9)
 
 Meshes = []
 
-block = StatementBlock(stack_input=True, category='Transform')
+block = StatementBlock(color=10, stack_input=True, category='Dynamic')
 @block.javascript_callback
 def vector(x=0,y=0,z=0):
 	with javascript:
 		return [x,y,z]
 
-with javascript:  ## called from blockly generator update
-	def set_vector( vec, arr ):
-		print 'js-level blockly callback', vec, arr
-		vec.x = arr[0]
-		vec.y = arr[1]
-		vec.z = arr[2]
+block = StatementBlock(color=20, stack_input=True, category='Dynamic')
+@block.javascript_callback
+def get_color( color ):
+	with javascript:
+		return parseInt( color.substring(1), 16 )
+
+
+## special callbacks called from blockly generator update ##
+with javascript:
+	def set_vector( mesh, vec, arr ):
+		if arr:
+			vec.x = arr[0]
+			vec.y = arr[1]
+			vec.z = arr[2]
+
+	def translate_local( mesh, vec, arr ):
+		mesh.translateX( arr[0] )
+		mesh.translateY( arr[1] )
+		mesh.translateZ( arr[2] )
+
+	def set_color( mat, color, hex ):
+		color.setHex( hex )
 
 ##########################################################
+
+block = StatementBlock(color=200, category='Materials')
+block.add_input_statement('color', callback=set_color )
+@block.callback
+def Flat():
+	mat = MeshBasicMaterial()
+	return mat
+
+block = StatementBlock(color=210, category='Materials')
+block.add_input_statement('color', callback=set_color )
+block.add_input_statement('ambient', callback=set_color )
+block.add_input_statement('emissive', callback=set_color )
+@block.callback
+def Lambert():
+	mat = MeshLambertMaterial()
+	return mat
+
+block = StatementBlock(color=220, category='Materials')
+block.add_input_statement('color', callback=set_color )
+block.add_input_statement('ambient', callback=set_color )
+block.add_input_statement('emissive', callback=set_color )
+@block.callback
+def Phong():
+	mat = MeshPhongMaterial()
+	return mat
 
 
 block = StatementBlock(category='Geometry')
@@ -270,6 +329,8 @@ block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
 @block.callback
 def Circle( radius=4, segments=8, start=0, end=1, material=null, child=null ):
+	start = 3.141592653589793 * 2 * start
+	end = 3.141592653589793 * 2 * end
 	geo = CircleGeometry( radius, segments, start, end )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -330,11 +391,15 @@ def Icosahedron( radius=1.0, detail=1, material=null, child=null ):
 	return mesh
 
 
+with javascript:
+	def set_clear_color(ren, meth, color):
+		print 'set-clear-color', ren, meth, color
+		meth( color )
 
-
-sblock1 = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
-@sblock1.callback
-def initialize(background_red=0.7, background_green=0.7, background_blue=0.7):
+block = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
+block.add_input_statement('setClearColor', callback=set_clear_color )
+@block.callback
+def initialize( antialias=None ):
 	global ren, scn, cam
 
 	div = document.getElementById( 'THREE_container' )
@@ -347,9 +412,9 @@ def initialize(background_red=0.7, background_green=0.7, background_blue=0.7):
 	cam.position.z = 100
 	cam.position.x = 5
 
-	ren = WebGLRenderer()
+	ren = WebGLRenderer( antialias=antialias )
 	ren.setSize( width, height )
-	ren.setClearColor( red=background_red, green=background_green, blue=background_blue )
+	ren.setClearColor( red=0.7, green=0.7, blue=0.7 )
 
 	div.appendChild( ren.domElement )
 
@@ -357,25 +422,24 @@ def initialize(background_red=0.7, background_green=0.7, background_blue=0.7):
 	light.position.set( 0, 100, 90 )
 	scn.add( light )
 
+	return ren
 
 sblock2 = StatementBlock(color=60, stack_input=True, stack_output=True, category='Scene')
 @sblock2.slot_callback
 def add_to_scene( object ):
 	scn.add( object )
 
+
+
 sblock3 = StatementBlock(color=30, category='Scene')
 @sblock3.callback
 def animate():
-	requestAnimationFrame( animate )
+	if _ANIMATE:
+		requestAnimationFrame( animate )
 
 	for m in Meshes:
 		m.rotation.x = m.rotation.x + 0.02
 		m.rotation.y = m.rotation.y + 0.01
-
-		x = m.quaternion.x
-		y = m.quaternion.y
-		z = m.quaternion.z
-		m.material.color.setRGB( x,y,z )
 
 	ren.render( scn, cam )
 

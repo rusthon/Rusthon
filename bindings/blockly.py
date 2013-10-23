@@ -139,8 +139,7 @@ class BlocklyBlock:
 			defs = jsfunc.kwargs_signature
 		for i in range(arr.length):
 			name = arr[i]
-			print 'checking for BSLOT', name, defs[name]
-			if defs[name] is null:
+			if defs[name] is null:  ## special case: null creates a non-dynamic "slot" input statement
 				self.add_input_statement( name )
 			else:
 				self.add_input_value( name, default_value=defs[name] )
@@ -260,16 +259,17 @@ class BlocklyBlock:
 					else:
 						this.appendValueInput(input['name'] ).appendTitle( input['title'] ).setAlign(Blockly.ALIGN_RIGHT)
 					i += 1
-				i = 0
-				while i < input_statements.length:
-					input = input_statements[i][...]
-					this.appendStatementInput( input['name'] ).appendTitle( '{' + input['title'] + '}' )
-					i += 1
 
 				i = 0
 				while i < input_slots.length:
 					input = input_slots[i][...]
 					this.appendStatementInput( input['name'] ).appendTitle( input['title'] )
+					i += 1
+
+				i = 0
+				while i < input_statements.length:
+					input = input_statements[i][...]
+					this.appendStatementInput( input['name'] ).appendTitle( '{' + input['title'] + '}' )
 					i += 1
 
 
@@ -278,7 +278,6 @@ class BlocklyBlock:
 				elif output:
 					this.setOutput( True, output )
 
-			print 'binding block:', block_name
 			Blockly.Blocks[ block_name ] = {'init':init}  ## register the block type with Blockly
 
 	def bind_generator(self):
@@ -299,6 +298,7 @@ class BlocklyBlock:
 				external_function = block.__external_function
 				external_javascript_function = block.__external_javascript_function
 				is_statement = block.__is_statement
+				dynamic = input_statements.length
 
 				code = ''
 				input = null  ## TODO fix local scope generator in python_to_pythonjs.py - need to traverse whileloops - the bug pops up here because this is recursive?
@@ -317,22 +317,17 @@ class BlocklyBlock:
 
 				## input statements are used for dynamic updates
 				if block.pythonjs_object:
-					print 'dynamic blockly js-------'
 					wrapper = block.pythonjs_object[...]
-					print 'dynamic wrapper:', wrapper
 					i = 0
 					while i < input_statements.length:
 						input = input_statements[i][...]
-						#if Object.hasOwnProperty(wrapper, input['name']):  ## this fails on THREE.Mesh.position, why?
 						attr = wrapper[ input['name'] ]
 						if attr:
-							print 'dynamic wrapper has attr:', input['name']
 							js = Blockly.JavaScript.statementToCode(block, input['name'])
 							if input['callback']:
-								print 'DYNAMIC--calling:', js
-								input['callback']( attr, eval(js) )
+								input['callback']( wrapper, attr, eval(js) )
 							else:
-								print 'WARN - input is missing callback', input
+								print 'ERROR - input is missing callback', input
 						i += 1
 
 				i = 0
@@ -350,22 +345,20 @@ class BlocklyBlock:
 					if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
 						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
 
-				else:  ## this should be a simple series of statements?
+				else:  ## TODO this should be a simple series of statements?
 					for a in args:
 						code += a + ';'
 
+				if dynamic:
+					code = '__blockinstance(  ' + code + '  ,' + block.uid + ')'
+
+
 				if is_statement: ## statements can directly return
-					#if block.parentBlock_:
-					#	if block.parentBlock_.nextConnection.sourceBlock_.id == block.id:
-					#		return code
-					#	else:
-					#		return code + NEW_LINE
 					if block.getSurroundParent():
 						return code
 					else:
 						return code + NEW_LINE
 				else:
-					code = '__blockinstance(  ' + code + '  ,' + block.uid + ')'
 					return [ code, Blockly.Python.ORDER_NONE ]  ## return Array
 
 			Blockly.Python[ block_name ] = generator
