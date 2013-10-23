@@ -27,6 +27,7 @@ Start by reading the howtos to learn more about the specific capabilities of Pyt
    :maxdepth: 2
 
    howtos
+   django
 
 Tutorials
 =========
@@ -35,6 +36,15 @@ Tutorials
    :maxdepth: 1
 
    tutorials/todo-list/index
+
+
+Changelog
+=========
+
+.. toctree::
+   :maxdepth: 2
+
+   changelog
 
 
 Internals
@@ -46,7 +56,5 @@ No. You don't need to understand how it works to use it. You might want to know 
 .. toctree::
    :maxdepth: 2
 
-   django
    internals
-   changelog
 

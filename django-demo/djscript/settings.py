@@ -109,7 +109,7 @@ TEMPLATE_DIRS = (
     os.path.join(ROOT, 'templates'),
 )
 
-COMPRESS_PRECOMPILERS = ( ('text/pythonscript', 'pythonscript < {infile} > {outfile}'), )
+COMPRESS_PRECOMPILERS = ( ('text/pythonjs', 'pythonjs < {infile} > {outfile}'), )
 
 INSTALLED_APPS = (
     'django.contrib.auth',
