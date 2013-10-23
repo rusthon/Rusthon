@@ -6,7 +6,7 @@
 
 h1, h2, h3, h4, h5, h6, h1 small {
     font-family: LeagueGothic;
-    color: yellow;
+    color: #f0dfaf;
     text-shadow: 3px 3px 0px black;
 }
 
@@ -30,4 +30,13 @@ body{
 
 #title small {
     color: white;
+}
+
+a:link, a:hover, a:active, a:visited {
+    color: #709080;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
 }
