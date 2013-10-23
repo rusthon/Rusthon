@@ -6,6 +6,12 @@
 PythonJS
 ########
 
+#. Create in Python
+#. Translate to Javascript
+#. Run in the browser
+#. ???
+#. Profit!
+
 Demos
 =====
 
