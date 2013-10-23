@@ -2,6 +2,7 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+
 BlocklyBlockGenerators = dict()  ## Blocks share a single namespace in Blockly
 _blockly_selected_block = None   ## for triggering on_click_callback
 
@@ -111,6 +112,7 @@ class BlocklyBlock:
 		self.category = category
 		self.input_values = []
 		self.input_statements = []
+		self.input_slots = []
 		self.output = None
 		self.stackable = False
 		self.stack_input = False
@@ -120,8 +122,7 @@ class BlocklyBlock:
 		self.external_javascript_function = None
 		self.on_click_callback = None
 
-	def javascript_callback(self, jsfunc):
-		print '@callback', jsfunc
+	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )
 		with javascript:
 			arr = jsfunc.args_signature
@@ -132,15 +133,28 @@ class BlocklyBlock:
 		return jsfunc
 
 	def callback(self, jsfunc):  ## decorator
-		print '@callback', jsfunc
 		self.set_external_function( jsfunc.NAME )
 		with javascript:
 			arr = jsfunc.args_signature
 			defs = jsfunc.kwargs_signature
 		for i in range(arr.length):
 			name = arr[i]
-			self.add_input_value( name, default_value=defs[name] )
+			print 'checking for BSLOT', name, defs[name]
+			if defs[name] is null:
+				self.add_input_statement( name )
+			else:
+				self.add_input_value( name, default_value=defs[name] )
 		return jsfunc
+
+	def slot_callback(self, jsfunc):  ## decorator
+		self.set_external_function( jsfunc.NAME )
+		with javascript:
+			arr = jsfunc.args_signature
+		for i in range(arr.length):
+			name = arr[i]
+			self.add_input_statement( name )
+		return jsfunc
+
 
 	def set_on_click_callback(self, callback):
 		self.on_click_callback = callback
@@ -183,10 +197,14 @@ class BlocklyBlock:
 	def add_input_statement(self, name=None, title=None, callback=None):
 		if name is None: raise TypeError
 		if title is None: title = name
-		self.input_statements.append(
-			{'name':name, 'title':title, 'callback':callback}
-		)
-
+		if callback:
+			self.input_statements.append(
+				{'name':name, 'title':title, 'callback':callback}
+			)
+		else:
+			self.input_slots.append(
+				{'name':name, 'title':title }
+			)
 
 	def bind_block(self):
 		global _blockly_instances_uid
@@ -203,12 +221,14 @@ class BlocklyBlock:
 		color = self.color
 		input_values = self.input_values.js_object
 		input_statements = self.input_statements.js_object
+		input_slots = self.input_slots.js_object
 		external_function = self.external_function
 		external_javascript_function = self.external_javascript_function
 		is_statement = self.is_statement
 
 		with javascript:
 			def init():
+				input = null
 				block_uid = _blockly_instances_uid
 				_blockly_instances_uid += 1
 				BlocklyBlockInstances[ block_uid ] = this
@@ -216,6 +236,7 @@ class BlocklyBlock:
 
 				this.__input_values = input_values
 				this.__input_statements = input_statements
+				this.__input_slots = input_slots
 				this.__external_function = external_function
 				this.__external_javascript_function = external_javascript_function
 				this.__is_statement = is_statement
@@ -242,8 +263,15 @@ class BlocklyBlock:
 				i = 0
 				while i < input_statements.length:
 					input = input_statements[i][...]
+					this.appendStatementInput( input['name'] ).appendTitle( '{' + input['title'] + '}' )
+					i += 1
+
+				i = 0
+				while i < input_slots.length:
+					input = input_slots[i][...]
 					this.appendStatementInput( input['name'] ).appendTitle( input['title'] )
 					i += 1
+
 
 				if output == '*':
 					this.setOutput( True, null )  ## allows output of any type
@@ -267,6 +295,7 @@ class BlocklyBlock:
 			def generator(block):
 				input_values = block.__input_values
 				input_statements = block.__input_statements
+				input_slots = block.__input_slots
 				external_function = block.__external_function
 				external_javascript_function = block.__external_javascript_function
 				is_statement = block.__is_statement
@@ -306,6 +335,14 @@ class BlocklyBlock:
 								print 'WARN - input is missing callback', input
 						i += 1
 
+				i = 0
+				while i < input_slots.length:
+					input = input_slots[i][...]
+					a = Blockly.Python.statementToCode(block, input['name'])
+					if a.length:
+						args.push(input['name'] + '=' +a)
+					i += 1
+
 				if external_function:
 					code += external_function + '(' + ','.join(args) + ')'
 				elif external_javascript_function:
@@ -317,8 +354,16 @@ class BlocklyBlock:
 					for a in args:
 						code += a + ';'
 
-				if is_statement:
-					return code + NEW_LINE	## statements can directly return
+				if is_statement: ## statements can directly return
+					#if block.parentBlock_:
+					#	if block.parentBlock_.nextConnection.sourceBlock_.id == block.id:
+					#		return code
+					#	else:
+					#		return code + NEW_LINE
+					if block.getSurroundParent():
+						return code
+					else:
+						return code + NEW_LINE
 				else:
 					code = '__blockinstance(  ' + code + '  ,' + block.uid + ')'
 					return [ code, Blockly.Python.ORDER_NONE ]  ## return Array
@@ -332,7 +377,7 @@ class StatementBlock( BlocklyBlock ):
 	'''
 	A statement-block has a previous and/or next statement notch: stack_input and/or stack_output
 	'''
-	def __init__(self, block_name=None, title=None, stack_input=False, stack_output=False, color=170, category=None):
+	def __init__(self, block_name=None, title=None, stack_input=True, stack_output=False, color=170, category=None):
 		self.setup( block_name=block_name, title=title, color=color, category=category )
 		self.make_statement( stack_input=stack_input, stack_output=stack_output)
 

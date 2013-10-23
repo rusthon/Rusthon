@@ -13,9 +13,18 @@
         top: 0;
         right: 0;
         bottom: 0;
-        left: 850px;
-        width: 640px;
-        height: 220px;
+        left: 650px;
+
+    }
+    #ace_javascript {
+    	position: absolute;
+    	left: 400px;
+    	top: 0;
+    }
+    #buttons {
+    	position: absolute;
+    	left: 420;
+    	top: 135;
     }
 
 </style>
@@ -210,20 +219,21 @@ def compile_python():
 
 
 
-<div id="blocklyDiv" style="height: 380px; width: 830px;"></div>
+<div id="blocklyDiv" style="height: 670px; width: 630px;"></div>
+
+
+<div id="ace_editors">
+	<div id="ace_python" style="height: 180px; width: 400px;"></div>
+	<div id="ace_javascript" style="height: 150px; width: 300px;"></div>
+
+	<p id="buttons">
+	<button onclick="connect_websocket()">connect to server</button>
+	<button onclick="compile_python()">compile</button>
+	<button onclick="javascript:delete animate">stop</button>
+	</p>
 
 <div id="THREE_container">
 </div>
-
-<div id="ace_editors">
-	<div id="ace_python" style="height: 380px; width: 500px;"></div>
-	<div id="ace_javascript" style="height: 180px; width: 500px;"></div>
-
-	<p>
-	<button onclick="connect_websocket()">connect to server</button>
-	<button onclick="compile_python()">compile</button>
-	<button onclick="test()">run test</button>
-	</p>
 
 </div>
 
@@ -232,15 +242,15 @@ from blockly import *
 from three import *
 from ace import *
 
+
 PyEditor = AceEditor( 'ace_python', mode='python', theme='monokai' )
 JsEditor = AceEditor( 'ace_javascript', mode='javascript' )
 
 Meshes = []
 
-block = StatementBlock(block_name='x', stack_input=True, category='Transform')
+block = StatementBlock(stack_input=True, category='Transform')
 @block.javascript_callback
 def vector(x=0,y=0,z=0):
-	print 'js-callback VECTOR', x,y,z
 	with javascript:
 		return [x,y,z]
 
@@ -251,12 +261,15 @@ with javascript:  ## called from blockly generator update
 		vec.y = arr[1]
 		vec.z = arr[2]
 
-geoblock1 = ValueBlock('geoblock1', category='Geometry')
-geoblock1.add_input_statement('position', callback=set_vector )
-geoblock1.add_input_statement('rotation')  # ,callback='xxxx')
-geoblock1.add_input_statement('scale')  # ,callback='xxxx')
-@geoblock1.callback
-def Circle( radius, segments, start, end, material=None, child=None ):
+##########################################################
+
+
+block = StatementBlock(category='Geometry')
+block.add_input_statement('position', callback=set_vector )
+block.add_input_statement('rotation', callback=set_vector )
+block.add_input_statement('scale',    callback=set_vector )
+@block.callback
+def Circle( radius=4, segments=8, start=0, end=1, material=null, child=null ):
 	geo = CircleGeometry( radius, segments, start, end )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -264,11 +277,12 @@ def Circle( radius, segments, start, end, material=None, child=None ):
 	if child: mesh.add( child )
 	return mesh
 
-geoblock2 = ValueBlock('geoblock2', category='Geometry')
-geoblock2.add_input_statement('position', callback=set_vector )
-
-@geoblock2.callback
-def Cube( width, height, length, material=None, child=None ):
+block = StatementBlock(category='Geometry')
+block.add_input_statement('position', callback=set_vector )
+block.add_input_statement('rotation', callback=set_vector )
+block.add_input_statement('scale',    callback=set_vector )
+@block.callback
+def Cube( width=10, height=10, length=10, material=null, child=null ):
 	geo = CubeGeometry( width, height, length )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -276,9 +290,12 @@ def Cube( width, height, length, material=None, child=None ):
 	if child: mesh.add( child )
 	return mesh
 
-geoblock3 = ValueBlock('geoblock3', category='Geometry')
-@geoblock3.callback
-def Cylinder( radiusTop, radiusBottom, height, material=None, child=None ):
+block = StatementBlock(category='Geometry')
+block.add_input_statement('position', callback=set_vector )
+block.add_input_statement('rotation', callback=set_vector )
+block.add_input_statement('scale',    callback=set_vector )
+@block.callback
+def Cylinder( radiusTop=2, radiusBottom=2, height=4, material=null, child=null ):
 	geo = CylinderGeometry( radiusTop, radiusBottom, height )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -286,9 +303,12 @@ def Cylinder( radiusTop, radiusBottom, height, material=None, child=None ):
 	if child: mesh.add( child )
 	return mesh
 
-geoblock4 = ValueBlock('geoblock4', category='Geometry')
-@geoblock4.callback
-def Text3D( text, size, material=None, child=None ):
+block = StatementBlock(category='Geometry')
+block.add_input_statement('position', callback=set_vector )
+block.add_input_statement('rotation', callback=set_vector )
+block.add_input_statement('scale',    callback=set_vector )
+@block.callback
+def Text3D( text, size=10, material=null, child=null ):
 	geo = TextGeometry( text, size )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -296,9 +316,12 @@ def Text3D( text, size, material=None, child=None ):
 	if child: mesh.add( child )
 	return mesh
 
-geoblock5 = ValueBlock('geoblock5', category='Geometry')
-@geoblock5.callback
-def Icosahedron( radius, detail, material=None, child=None ):
+block = StatementBlock(category='Geometry')
+block.add_input_statement('position', callback=set_vector )
+block.add_input_statement('rotation', callback=set_vector )
+block.add_input_statement('scale',    callback=set_vector )
+@block.callback
+def Icosahedron( radius=1.0, detail=1, material=null, child=null ):
 	geo = IcosahedronGeometry( radius, detail )
 	if not material: material = MeshLambertMaterial()
 	mesh = Mesh( geo, material )
@@ -307,37 +330,18 @@ def Icosahedron( radius, detail, material=None, child=None ):
 	return mesh
 
 
-tblock1 = ValueBlock('tblock1', category='Transform')
-@tblock1.callback
-def position(object, x,y,z):
-	object.position.set(x,y,z)
-	return object
-
-tblock2 = ValueBlock('tblock2', category='Transform')
-@tblock2.callback
-def rotation(object, x,y,z):
-	object.rotation.set(x,y,z)
-	return object
-
-tblock3 = ValueBlock('tblock3', category='Transform')
-@tblock3.callback
-def scale(object, x,y,z):
-	object.scale.set(x,y,z)
-	return object
 
 
-
-
-sblock1 = StatementBlock('sblock1', stack_output=True, category='Scene')
+sblock1 = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
 @sblock1.callback
-def initialize():
+def initialize(background_red=0.7, background_green=0.7, background_blue=0.7):
 	global ren, scn, cam
 
 	div = document.getElementById( 'THREE_container' )
 	if div.firstChild:
 		div.removeChild( div.firstChild )
 
-	width = 830; height = 280
+	width = 700; height = 500
 	scn = Scene()
 	cam = PerspectiveCamera( 45, width/height, 0.01, 10000)
 	cam.position.z = 100
@@ -345,7 +349,7 @@ def initialize():
 
 	ren = WebGLRenderer()
 	ren.setSize( width, height )
-	ren.setClearColor( red=0.7, green=0.7, blue=0.7 )
+	ren.setClearColor( red=background_red, green=background_green, blue=background_blue )
 
 	div.appendChild( ren.domElement )
 
@@ -354,12 +358,12 @@ def initialize():
 	scn.add( light )
 
 
-sblock2 = StatementBlock('sblock2', stack_input=True, stack_output=True, category='Scene')
-@sblock2.callback
+sblock2 = StatementBlock(color=60, stack_input=True, stack_output=True, category='Scene')
+@sblock2.slot_callback
 def add_to_scene( object ):
 	scn.add( object )
 
-sblock3 = StatementBlock('sblock3', stack_input=True, category='Scene')
+sblock3 = StatementBlock(color=30, category='Scene')
 @sblock3.callback
 def animate():
 	requestAnimationFrame( animate )

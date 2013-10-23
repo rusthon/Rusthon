@@ -110,10 +110,12 @@ class JSGenerator(NodeVisitor):
     def visit_Name(self, node):
         if node.id == 'None':
             return 'undefined'
-        if node.id == 'True':
+        elif node.id == 'True':
             return 'true'
-        if node.id == 'False':
+        elif node.id == 'False':
             return 'false'
+        elif node.id == 'null':
+            return 'null'
         return node.id
 
     def visit_Attribute(self, node):
