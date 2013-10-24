@@ -18,11 +18,11 @@ Getting Started - Stable Release
 
 First::
 
-   sudo pip install pythonscripttranslator
+   sudo pip install PythonJS
 
 Write some Python, and then run::
 
-   pythonscript < myapp.py > myapp.js
+   pythonjs < myapp.py > myapp.js
 
 Then copy myapp.js and the runtime pythonscript.js into your project.
 
