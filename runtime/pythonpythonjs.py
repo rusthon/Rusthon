@@ -190,7 +190,7 @@ def get_attribute(object, attribute):
                 def method():
                     var(args)
                     args =  Array.prototype.slice.call(arguments)
-                    if (JS('args[0] instanceof Array') and (JS("{}.toString.call(args[1]) === '[object Object]'") or args[1]) is None and args.length == 2):
+                    if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") is None and args.length == 2):
                         pass
                     else:
                         # in the case where the method was submitted to javascript code
