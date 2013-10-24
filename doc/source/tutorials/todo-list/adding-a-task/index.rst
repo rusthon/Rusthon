@@ -1,11 +1,6 @@
 Adding a task
 #############
 
-This is inspired from `todomvc.com <http://todomvc.com/>`_, Still PythonJS has not, at the time of writring, the code written to compete
-with such frameworks, nor does it has an equivalent of Django for the frontend. 
-
-The exercice is interesting has it allows to write a page with user interaction that can be useful.
-
 In what follows we will setup an application that allows the user to create a list of tasks.
 
 Getting started

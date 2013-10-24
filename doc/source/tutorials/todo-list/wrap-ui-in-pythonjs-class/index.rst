@@ -42,6 +42,14 @@ You only need to add... the following to the end of ``app.py``:
 
    NORMAL_TODOS = TodoList("#todo-normal")
 
+Changing tasks status
+=====================
+
+Update ``TodoItem`` class with the following code:
+
+.. literalinclude:: todo-item.py
+
+You will have a new button on todo items that allows to change their status.
 
 Several todo lists
 ==================
