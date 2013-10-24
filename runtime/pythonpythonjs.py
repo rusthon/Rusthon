@@ -189,14 +189,28 @@ def get_attribute(object, attribute):
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     var(args)
-                    args =  Array.prototype.slice.call(arguments)
-                    if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
-                        pass
+                    args = arguments
+                    if args.length > 0:  ## restored old code from before the Oct24th 2013 merge - by brett
+                        # if it's not an array convert to an array
+                        # this happens when a function/method is feed as callback
+                        # of javascript code
+                        if JS("{}.toString.call(args[0]) != '[object Array]'"):
+                            args[0] = [args[0]]
+                        args[0].splice(0, 0, object)
                     else:
-                        # in the case where the method was submitted to javascript code
-                        # put the arguments in order to be processed by PythonJS
-                        args = [args, JSObject()]
-                    args[0].splice(0, 0, object)
+                        args = [object]
+
+                    ## this needs to be double checked that is can work with the "array builtin" (runtime/builtins.py) that wraps the ArrayBuffer API
+                    ## and will not break the other tests.  The test that this broke was: tests/test_if_contains.html
+                    #args =  Array.prototype.slice.call(arguments)
+                    #if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+                    #    pass
+                    #else:
+                    #    # in the case where the method was submitted to javascript code
+                    #    # put the arguments in order to be processed by PythonJS
+                    #    args = [args, JSObject()]
+                    #args[0].splice(0, 0, object)
+
                     return attr.apply(None, args)
                 method.is_wrapper = True
                 return method

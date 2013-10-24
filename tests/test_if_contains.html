@@ -20,12 +20,20 @@ class B:
 def test():
 	print 'testing dict'
 	if 1 in {1:True}: print 'in dict OK'
+
 	print 'testing tuple'
 	if 1 in (1,2,3): print 'in tuple OK'
+
 	print 'testing list'
 	if 1 in [1,2,3]: print 'in list OK'
+
 	print 'testing int32 array'
-	if 1 in array('int32', [1,2,3,4]): print 'in array OK'
+	arr = array('int32', [1,2,3,4])
+	print 'testing get item from array'
+	arr[0]
+	print 'testing item in array'
+	if 1 in arr: print 'in array OK'
+
 	print 'testing overloaded custom class A'
 	a = A()
 	if 'x' in a: print 'instance of overloaded A OK'

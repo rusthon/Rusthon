@@ -519,7 +519,7 @@ class PythonToPythonJS(NodeVisitor):
             writer.write('return %s' % self.visit(node.value))
 
         else:
-            raise RuntimeError
+            writer.write('return')  ## empty return
 
     def visit_BinOp(self, node):
         left = self.visit(node.left)
@@ -1030,22 +1030,29 @@ class PythonToPythonJS(NodeVisitor):
 
 
         if not self._with_js and (len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg):
-            # First check the arguments are well formed 
-            # ie. that this function is not a callback of javascript code
-            writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
-            # XXX: there is bug in the underlying translator preventing me to write the condition
-            # in a more readble way... something to do with brakects...
-            writer.push()
-            writer.write('pass')  # do nothing if it's not called from javascript
-            writer.pull()
-            writer.write('else:')
-            writer.push()
-            # If it's the case, move use ``arguments`` to ``args`` 
-            writer.write('args = Array.prototype.slice.call(arguments)')
-            # This means you can't pass keyword argument from javascript but we already knew that
-            writer.write('kwargs = JSObject()')
-            writer.pull()
-            # done with pythonjs function used as callback of Python code 
+
+            if False:  ## TODO restore this - disabled by brett on Oct24th 2013
+                ## The test that this broke was: tests/test_if_contains.html
+                ## this breaks the "array builtin" at the bottom of runtime/builtins that wraps the ArrayBuffer and DataView API
+                ## the bug happens when trying to index an item in the array.
+
+                # First check the arguments are well formed 
+                # ie. that this function is not a callback of javascript code
+                writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
+                # XXX: there is bug in the underlying translator preventing me to write the condition
+                # in a more readble way... something to do with brakects...
+                writer.push()
+                #writer.write('pass')  # do nothing if it's not called from javascript
+                writer.write('print "OH SHIT"')  # do nothing if it's not called from javascript
+                writer.pull()
+                writer.write('else:')
+                writer.push()
+                # If it's the case, move use ``arguments`` to ``args`` 
+                writer.write('args = Array.prototype.slice.call(arguments)')
+                # This means you can't pass keyword argument from javascript but we already knew that
+                writer.write('kwargs = JSObject()')
+                writer.pull()
+                # done with pythonjs function used as callback of Python code 
 
             # new pythonjs' python function arguments handling
             # create the structure representing the functions arguments

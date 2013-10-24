@@ -579,8 +579,12 @@ class array:
         return self.length
 
     def __contains__(self, value):
-        lst = self.to_list()
-        return value in lst
+        #lst = self.to_list()
+        #return value in lst  ## this old style is deprecated
+        arr = self.to_array()
+        with javascript:
+            if arr.indexOf(value) == -1: return False
+            else: return True
 
     def __getitem__(self, index):
         step = self.itemsize
@@ -673,7 +677,7 @@ class array:
 
     def to_array(self):
         arr = JSArray()
-        i = 0
+        i = 0;
         while i < self.length:
             item = self[i]
             JS('arr.push( item )')
