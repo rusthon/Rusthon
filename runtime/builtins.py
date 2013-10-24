@@ -106,11 +106,8 @@ def _setup_array_prototype():
 
         @Array.prototype.__contains__
         def func(a):
-            i = 0
-            while i < this.length:
-                if this[i] == a: return True
-                i += 1
-            return False
+            if this.indexOf(a) == -1: return False
+            else: return True
 
         @Array.prototype.__len__
         def func():
@@ -225,6 +222,8 @@ class tuple:
         elif js_object:
             raise TypeError
 
+        self[...] = self.js_object  ## self.js_object is deprecated
+
     def __getitem__(self, index):
         __array = self.js_object
         return JS('__array[index]')
@@ -275,6 +274,9 @@ class list:
                 raise TypeError
         else:
             self.js_object = JSArray()
+
+        self[...] = self.js_object  ## self.js_object is deprecated
+
 
     def __getitem__(self, index):
         __array = self.js_object

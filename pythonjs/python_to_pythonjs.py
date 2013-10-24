@@ -1166,6 +1166,14 @@ class PythonToPythonJS(NodeVisitor):
             map(self.visit, node.body)
             writer.with_javascript = False
             self._with_js = False
+        elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'python':
+            if not self._with_js:
+                raise SyntaxError('"with python:" is only used inside of a "with javascript:" block')
+            self._with_js = False
+            writer.with_javascript = False
+            map(self.visit, node.body)
+            writer.with_javascript = True
+            self._with_js = True
 
 
 def main(script):

@@ -1,0 +1,56 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/tween/tween.min.js"></script>
+<script src="bindings/tween.py"></script>
+
+<script type="text/python" closure="false">
+from tween import *
+from random import random
+
+with javascript:
+	def on_update( delta ):
+		## note delta is in range from 0.0-1.0, it measures progress to target
+		## note: tween.js uses callback.call(source, delta), that sets "this" to source
+		print 'updating', this, delta
+		if delta > 0.5 and random() > 0.5:
+			print 'redirecting tween'
+			with python:
+				## the tween can be redirected by calling "tween.to"
+				## or by changing the target values inplace "target[0]=100"
+				#tween.to( {0:100,1:100,2:100}, seconds=1.0 )
+				#target[0] = 100  ## this also works
+				#target[1] = 100
+				#target[2] = 100
+				## above works ok only when redirecting to a vector that is greater than the
+				## previous target. It fails when we try to redirect back to towards the 
+				## original position, causing it to pop back to to the starting point.
+				tween.to( {0:0.1,1:0.1,2:0.1} )  ## this fails
+
+
+	def on_complete():
+		print 'finished', this
+		print source[...]
+
+def test():
+	global source, target, tween
+
+	source = {0 : 0,  1 : 0,  2 : 0}
+	target = {0 : 10, 1 : 20, 2 : 30}
+
+	tween = Tween( source, on_update_js=on_update, on_complete_js=on_complete )
+	tween.to( target, seconds=0.5 )
+	tween.start()
+	animate()
+
+def animate():
+	requestAnimationFrame( animate )
+	TweenManager.update()
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
