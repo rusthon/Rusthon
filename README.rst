@@ -49,6 +49,7 @@ Get Source Code::
 Install Tornado for Python3::
 
 	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
+	tar xvf tornado-3.1.1.tar.gz
 	cd tornado-3.1.1
 	python3 setup.py build
 	sudo python3 setup.py install
