@@ -106,11 +106,8 @@ def _setup_array_prototype():
 
         @Array.prototype.__contains__
         def func(a):
-            i = 0
-            while i < this.length:
-                if this[i] == a: return True
-                i += 1
-            return False
+            if this.indexOf(a) == -1: return False
+            else: return True
 
         @Array.prototype.__len__
         def func():
@@ -225,6 +222,8 @@ class tuple:
         elif js_object:
             raise TypeError
 
+        self[...] = self.js_object  ## self.js_object is deprecated
+
     def __getitem__(self, index):
         __array = self.js_object
         return JS('__array[index]')
@@ -253,11 +252,12 @@ class tuple:
         return JS('__array[index]')
 
     def __contains__(self, value):
+        arr = self.js_object
         with javascript:
-            for v in self.__dict__.js_object:
-                if v == value:
-                    return True
-            return False
+            if arr.indexOf(value) == -1:
+                return False
+            else:
+                return True
 
 
 class list:
@@ -274,6 +274,9 @@ class list:
                 raise TypeError
         else:
             self.js_object = JSArray()
+
+        self[...] = self.js_object  ## self.js_object is deprecated
+
 
     def __getitem__(self, index):
         __array = self.js_object
@@ -354,11 +357,12 @@ class list:
         return JS('__array.length')
 
     def __contains__(self, value):
+        arr = self.js_object
         with javascript:
-            for v in self.__dict__.js_object:
-                if v == value:
-                    return True
-            return False
+            if arr.indexOf(value) == -1:
+                return False
+            else:
+                return True
 
 class dict:
     # http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
@@ -476,10 +480,10 @@ class dict:
 
     def __contains__(self, value):
         with javascript:
-            for v in Object.keys(self.__dict__.js_object):
-                if v == value:
-                    return True
-            return False
+            if Object.keys(self[...]).indexOf(value) == -1:
+                return False
+            else:
+                return True
 
 # DEPRECATED - see _setup_str_prototype
 #class str:
@@ -575,8 +579,12 @@ class array:
         return self.length
 
     def __contains__(self, value):
-        lst = self.to_list()
-        return value in lst
+        #lst = self.to_list()
+        #return value in lst  ## this old style is deprecated
+        arr = self.to_array()
+        with javascript:
+            if arr.indexOf(value) == -1: return False
+            else: return True
 
     def __getitem__(self, index):
         step = self.itemsize
@@ -669,7 +677,7 @@ class array:
 
     def to_array(self):
         arr = JSArray()
-        i = 0
+        i = 0;
         while i < self.length:
             item = self[i]
             JS('arr.push( item )')
