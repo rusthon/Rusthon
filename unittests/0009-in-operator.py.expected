@@ -1,0 +1,19 @@
+testing dict
+in dict OK
+testing tuple
+in tuple OK
+testing list
+in list OK
+testing int32 array
+in array OK
+testing overloaded custom class A
+instance of overloaded A OK
+testing in Array
+in Array ok
+in javascript-object ok
+in literal Array ok
+in literal jsobject ok
+this is allowed because we are within-javascript where the rules are slightly different
+class name of instance b: B
+test complete
+  

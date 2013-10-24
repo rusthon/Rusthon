@@ -190,7 +190,7 @@ def get_attribute(object, attribute):
                 def method():
                     var(args)
                     args =  Array.prototype.slice.call(arguments)
-                    if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+                    if (JS('args[0] instanceof Array') and (JS("{}.toString.call(args[1]) === '[object Object]'") or args[1]) is None and args.length == 2):
                         pass
                     else:
                         # in the case where the method was submitted to javascript code
@@ -310,40 +310,28 @@ def get_arguments(signature, args, kwargs):
     if kwargs is None:
         kwargs = JSObject()
     out = JSObject()
-    if signature.args.length:
-        argslength = signature.args.length
-    else:
-        argslength = 0
 
+    # if the caller did not specify supplemental positional arguments e.g. *args in the signature
+    # raise an error
     if args.length > signature.args.length:
         if signature.vararg:
             pass
         else:
             print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
-            raise TypeError('function called with too many arguments')
+            raise TypeError("Supplemental positional arguments provided but signature doesn't accept them")
 
     j = 0
-    while j < argslength:
-        arg = JS('signature.args[j]')
-        if kwargs:
-            kwarg = kwargs[arg]
-            #if kwarg is not None:  ## what about cases where the caller wants None
-            if arg in kwargs:       ## TODO, JSObject here should be created with Object.create(null) so that the "in" test will not conflict with internal props like: "constructor", "hasOwnProperty", etc.
-                out[arg] = kwarg
-            elif j < args.length:
-                out[arg] = args[j]
-            elif arg in signature.kwargs:
-                out[arg] = signature.kwargs[arg]
-            else:
-                print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-                raise TypeError('function called with wrong number of arguments (#1)')
+    while j < signature.args.length:
+        name = signature.args[j]
+        if name in kwargs:
+            # value is provided as a keyword argument
+            out[name] = kwargs[name]
         elif j < args.length:
-            out[arg] = args[j]
-        elif arg in signature.kwargs:
-            out[arg] = signature.kwargs[arg]
-        else:
-            print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-            raise TypeError('function called with wrong number of arguments (#2)')
+            # value is positional and within the signature length
+            out[name] = args[j]
+        elif name in signature.kwargs:
+            # value is not found before and is in signature.length
+            out[name] = signature.kwargs[name]
         j += 1
 
     args = args.slice(j)
