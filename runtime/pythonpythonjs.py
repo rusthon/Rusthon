@@ -189,16 +189,14 @@ def get_attribute(object, attribute):
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     var(args)
-                    args = arguments
-                    if args.length > 0:
-                        # if it's not an array convert to an array
-                        # this happens when a function/method is feed as callback
-                        # of javascript code
-                        if JS("{}.toString.call(args[0]) != '[object Array]'"):
-                            args[0] = [args[0]]
-                        args[0].splice(0, 0, object)
+                    args =  Array.prototype.slice.call(arguments)
+                    if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+                        pass
                     else:
-                        args = [object]
+                        # in the case where the method was submitted to javascript code
+                        # put the arguments in order to be processed by PythonJS
+                        args = [args, JSObject()]
+                    args[0].splice(0, 0, object)
                     return attr.apply(None, args)
                 method.is_wrapper = True
                 return method
@@ -214,10 +212,7 @@ def get_attribute(object, attribute):
                     def method():
                         var(args)
                         args = arguments
-                        if(args.length > 0):
-                            args[0].splice(0, 0, object)
-                        else:
-                            args = [object]
+                        args[0].splice(0, 0, object)
                         return attr.apply(None, args)
                     method.is_wrapper = True
                     return method
@@ -341,14 +336,14 @@ def get_arguments(signature, args, kwargs):
                 out[arg] = signature.kwargs[arg]
             else:
                 print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-                raise TypeError('function called with wrong number of arguments')
+                raise TypeError('function called with wrong number of arguments (#1)')
         elif j < args.length:
             out[arg] = args[j]
         elif arg in signature.kwargs:
             out[arg] = signature.kwargs[arg]
         else:
             print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-            raise TypeError('function called with wrong number of arguments')
+            raise TypeError('function called with wrong number of arguments (#2)')
         j += 1
 
     args = args.slice(j)

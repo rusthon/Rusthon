@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Oct 23 16:21:37 2013
+// PythonScript Runtime - regenerated on: Thu Oct 24 02:55:58 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -280,13 +280,7 @@ if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
 args = arguments;
-if(args.length > 0) {
 args[0].splice(0, 0, object);
-}
-else {
-args = [object];
-}
-
 return attr.apply(undefined, args);
 }
 
@@ -513,7 +507,7 @@ out[arg] = signature.kwargs[arg];
 }
 else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments");
+throw TypeError("function called with wrong number of arguments (#1)");
 }
 
 }
@@ -531,7 +525,7 @@ out[arg] = signature.kwargs[arg];
 }
 else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments");
+throw TypeError("function called with wrong number of arguments (#2)");
 }
 
 }
@@ -2136,15 +2130,21 @@ __array___len__.kwargs_signature = {  };
 __array___len__.pythonscript_function = true;
 window["__array_attrs"]["__len__"] = __array___len__;
 var __array___CONTAINS__ = function(args, kwargs) {
-var lst;
+var arr;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
 signature["function_name"] = "__array___CONTAINS__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
-lst = get_attribute(self, "to_list")(create_array(), Object());
-return get_attribute(get_attribute(lst, "__contains__"), "__call__")([value], Object());
+arr = get_attribute(self, "to_array")(create_array(), Object());
+if(arr.indexOf(value) == -1) {
+return false;
+}
+else {
+return true;
+}
+
 }
 window["__array___CONTAINS__"] = __array___CONTAINS__ 
 
