@@ -874,7 +874,7 @@ class PythonToPythonJS(NodeVisitor):
                 a = ','.join(args)
                 return '%s( %s )' %( self.visit(node.func), a )
 
-        if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof'):
+        if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
             args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
             if node.func.id == 'var':
                 for k in node.keywords:
@@ -943,7 +943,15 @@ class PythonToPythonJS(NodeVisitor):
             elif name in self._classes or name in self._builtins:
                 return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
 
-            else:  ## this could be a dangerous optimization ##
+            else:
+                ## this a slightly dangerous optimization,
+                ## because if the user is trying to create an instance of some class
+                ## and that class is define in an external binding,
+                ## and they forgot to put "from mylibrary import *" in their script (an easy mistake to make)
+                ## then this fails to call __call__ to initalize the instance,
+                ## and throws a confusing error:
+                ## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
+                ## TODO - remove this optimization, or provide the user with a better error message.
                 return '%s( JSArray(), JSObject() )' %name
 
     def visit_Lambda(self, node):

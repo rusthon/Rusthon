@@ -49,11 +49,28 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 				e.appendChild(v)
 				nb = document.createElement('block')
 				if input['default_value'] is not None:
-					nb.setAttribute('type', 'math_number')  ## TODO support other types
-					t = document.createElement('title')
-					t.setAttribute('name', 'NUM')
-					t.appendChild( document.createTextNode(input['default_value']) )
-					nb.appendChild(t)
+					default_value = input['default_value']
+					if typeof(default_value) == 'boolean':
+						nb.setAttribute('type', 'logic_boolean')
+						t = document.createElement('title')
+						t.setAttribute('name', 'BOOL')
+						## Blockly is picky about these keywords, passing "True" or "true" will show 'true' in the UI but give you False for the actual value!
+						if default_value:
+							t.appendChild( document.createTextNode('TRUE') )
+						else:
+							t.appendChild( document.createTextNode('FALSE') )
+						nb.appendChild(t)
+
+					else:
+						nb.setAttribute('type', 'math_number')  ## TODO support other types
+						t = document.createElement('title')
+						t.setAttribute('name', 'NUM')
+						t.appendChild( document.createTextNode(default_value) )
+						nb.appendChild(t)
+
+				elif input['name'].startswith('color'):  ## this is hackish, but it works
+					nb.setAttribute('type', 'colour_picker')
+
 				else:
 					nb.setAttribute('type', 'logic_null')
 				v.appendChild(nb)
@@ -129,7 +146,10 @@ class BlocklyBlock:
 			defs = jsfunc.kwargs_signature
 		for i in range(arr.length):
 			name = arr[i]
-			self.add_input_value( name, default_value=defs[name] )
+			if defs[name] is null:  ## special case: null creates a non-dynamic "slot" input statement
+				self.add_input_statement( name )
+			else:
+				self.add_input_value( name, default_value=defs[name] )
 		return jsfunc
 
 	def callback(self, jsfunc):  ## decorator
@@ -315,35 +335,58 @@ class BlocklyBlock:
 						args.push( a )
 					i += 1
 
-				## input statements are used for dynamic updates
-				if block.pythonjs_object:
+				
+				if block.pythonjs_object: ## input statements are used for dynamic updates
 					wrapper = block.pythonjs_object[...]
+					print 'block.pythonjs_object.wrapper', wrapper
 					i = 0
 					while i < input_statements.length:
 						input = input_statements[i][...]
 						attr = wrapper[ input['name'] ]
 						if attr:
 							js = Blockly.JavaScript.statementToCode(block, input['name'])
-							if input['callback']:
-								input['callback']( wrapper, attr, eval(js) )
-							else:
-								print 'ERROR - input is missing callback', input
+							print('block.pythonjs_object - update-dynamic: code to eval')
+							print(js)
+							if js.length:
+								if input['callback']:
+									print 'callback', input['callback'].NAME
+									input['callback']( wrapper, attr, eval(js) )
+								else:
+									print 'ERROR - input is missing callback', input
 						i += 1
 
-				i = 0
-				while i < input_slots.length:
-					input = input_slots[i][...]
-					a = Blockly.Python.statementToCode(block, input['name'])
-					if a.length:
-						args.push(input['name'] + '=' +a)
-					i += 1
+				if external_javascript_function:
+					i = 0
+					while i < input_slots.length:
+						input = input_slots[i][...]
+						a = Blockly.JavaScript.statementToCode(block, input['name'])
+						if a.length:
+							args.push( a )
+						else:
+							args.push( "null" )
+						i += 1
+				else:
+					i = 0
+					while i < input_slots.length:
+						input = input_slots[i][...]
+						a = Blockly.Python.statementToCode(block, input['name'])
+						if a.length:
+							args.push(input['name'] + '=' +a)
+						i += 1
 
 				if external_function:
 					code += external_function + '(' + ','.join(args) + ')'
 				elif external_javascript_function:
 					## TODO what about pure javascript functions?
 					if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+						print 'is_statement with parent block - OK'
 						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						print code
+
+					elif block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+						print 'with parent block - OK'
+						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						print code
 
 				else:  ## TODO this should be a simple series of statements?
 					for a in args:

@@ -319,6 +319,7 @@ def get_arguments(signature, args, kwargs):
 
     This will set default keyword arguments and retrieve positional arguments
     in kwargs if their called as such"""
+
     if args is None:
         args = []
     if kwargs is None:
@@ -342,7 +343,7 @@ def get_arguments(signature, args, kwargs):
         if kwargs:
             kwarg = kwargs[arg]
             #if kwarg is not None:  ## what about cases where the caller wants None
-            if arg in kwargs:       ## TODO, JSObject here should be created with Object.create(null) so that the "in" test will not conflict with internal props like: "constructor", "hasOwnProperty", etc.
+            if arg in kwargs:       ## Object.hasOwnProperty.call(kwargs,arg) should be used here - TODO
                 out[arg] = kwarg
             elif j < args.length:
                 out[arg] = args[j]
@@ -360,7 +361,8 @@ def get_arguments(signature, args, kwargs):
             raise TypeError('function called with wrong number of arguments (#2)')
         j += 1
 
-    args = args.slice(j)
+    args = args.slice(j)  ## note that if this fails because args is not an array, then a pythonjs function was called from javascript in a bad way.
+
     if signature.vararg:
         out[signature.vararg] = args
     if signature.varkwarg:

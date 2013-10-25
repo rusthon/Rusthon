@@ -158,6 +158,9 @@
 
 <script src="pythonjs.js"></script>
 
+<script src="libs/tween/tween.min.js"></script>
+<script src="bindings/tween.py"></script>
+
 <script src="bindings/blockly.py"></script>
 <script src="bindings/websocket.py"></script>
 
@@ -222,7 +225,7 @@ _ANIMATE = True
 def start_animation():
 	global _ANIMATE
 	_ANIMATE = True
-	animate()
+	main_loop()
 
 def stop_animation():
 	global _ANIMATE
@@ -258,6 +261,7 @@ def stop_animation():
 from blockly import *
 from three import *
 from ace import *
+from tween import *
 
 
 PyEditor = AceEditor( 'ace_python', mode='python' )
@@ -270,30 +274,92 @@ block = StatementBlock(color=10, stack_input=True, category='Dynamic')
 @block.javascript_callback
 def vector(x=0,y=0,z=0):
 	with javascript:
-		return [x,y,z]
+		return {'x':x, 'y':y, 'z':z}
 
-block = StatementBlock(color=20, stack_input=True, category='Dynamic')
+block = StatementBlock(color=30, stack_input=True, category='Dynamic')
 @block.javascript_callback
 def get_color( color ):
 	with javascript:
 		return parseInt( color.substring(1), 16 )
 
+block = StatementBlock(color=50, stack_input=True, category='Dynamic')
+@block.javascript_callback
+def animate_vector( seconds=1.0, delay=0.0, repeat=3, yoyo=False, source=null, target=null ):
+	print '--animate: new Tween', source, target
+	tween = Tween( seconds=seconds, delay=delay, repeat=repeat, yoyo=yoyo )
+	print tween
+	tween.set_target( target_js=target )
+	if source:
+		tween.set_source( source_js=source )
+	return tween
+
+def hex_to_rgb(hex):
+	with javascript:
+		hex = hex.substring(1)
+		color = {
+			'r': parseInt( hex.substring(0,2), 16) / 255.0,
+			'g': parseInt( hex.substring(2,4), 16) / 255.0,
+			'b': parseInt( hex.substring(4,6), 16) / 255.0,
+		}
+		return color
+
+block = StatementBlock(color=280, stack_input=True, category='Dynamic')
+@block.javascript_callback
+def animate_color( color1, color2, seconds=1.0, delay=0.0, repeat=3, yoyo=False ):
+	print '--animate: new Tween', color1, color2
+	source = hex_to_rgb( color1 )
+	target = hex_to_rgb( color2 )
+	tween = Tween( seconds=seconds, delay=delay, repeat=repeat, yoyo=yoyo )
+	tween.set_target( target_js=target )
+	tween.set_source( source_js=source )
+	return tween
+
 
 ## special callbacks called from blockly generator update ##
+## these functions are passed unwrapped javascript objects,
+## the first argument is: "wrapper = block.pythonjs_object[...]"
+## the next argument is an attribute of wrapper that matches
+## the name set by: "block.add_input_statement('color',callback=set_color)"
 with javascript:
-	def set_vector( mesh, vec, arr ):
-		if arr:
-			vec.x = arr[0]
-			vec.y = arr[1]
-			vec.z = arr[2]
+	def set_vector( mesh, vec, ob ):
+		if not ob:
+			return
+		if instanceof(ob, Array):
+			vec.x = ob[0]
+			vec.y = ob[1]
+			vec.z = ob[2]
+		elif Object.hasOwnProperty.call(ob, 'x'):
+			vec.x = ob.x
+			vec.y = ob.y
+			vec.z = ob.z
 
-	def translate_local( mesh, vec, arr ):
-		mesh.translateX( arr[0] )
-		mesh.translateY( arr[1] )
-		mesh.translateZ( arr[2] )
+		elif ob:				## we assume this is a Tween instance		
+			print 'set_vector got a tween'
+			tween = ob
+			on_update = lambda t,v,d: vec.set(v.x,v.y,v.z)
+			with python:
+				if not tween.source:
+					tween.set_source( source_js=vec )
+				else:
+					tween.on_update = on_update
+				tween.start()  ## TODO stop previous tween if there is one
+
 
 	def set_color( mat, color, hex ):
-		color.setHex( hex )
+		if typeof( hex ) == 'number':
+			color.setHex( hex )
+
+		else: 					## assume this is a Tween instance
+			tween = hex
+			on_update = lambda t,c,d: color.setRGB(c.r,c.g,c.b)
+			with python:
+				if not tween.source:
+					tween.set_source( source_js=vec )
+				else:
+					tween.on_update = on_update
+				tween.start()
+
+
 
 ##########################################################
 
@@ -392,14 +458,16 @@ def Icosahedron( radius=1.0, detail=1, material=null, child=null ):
 
 
 with javascript:
-	def set_clear_color(ren, meth, color):
+	def set_clear_color(ren, meth, color):  ## TODO support tween animation here
 		print 'set-clear-color', ren, meth, color
 		meth( color )
+
+
 
 block = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
 block.add_input_statement('setClearColor', callback=set_clear_color )
 @block.callback
-def initialize( antialias=None ):
+def initialize_threejs( antialias=False, webgl=True ):
 	global ren, scn, cam
 
 	div = document.getElementById( 'THREE_container' )
@@ -411,8 +479,13 @@ def initialize( antialias=None ):
 	cam = PerspectiveCamera( 45, width/height, 0.01, 10000)
 	cam.position.z = 100
 	cam.position.x = 5
+	if webgl:
+		print 'using webgl'
+		ren = WebGLRenderer( antialias=antialias )
+	else:
+		print 'using html5 canvas'
+		ren = CanvasRenderer()
 
-	ren = WebGLRenderer( antialias=antialias )
 	ren.setSize( width, height )
 	ren.setClearColor( red=0.7, green=0.7, blue=0.7 )
 
@@ -433,18 +506,36 @@ def add_to_scene( object ):
 
 sblock3 = StatementBlock(color=30, category='Scene')
 @sblock3.callback
-def animate():
+def main_loop(animation=True, spin_meshes=True, render=True, debug=False):
 	if _ANIMATE:
-		requestAnimationFrame( animate )
+		## GOTCHA!
+		## Uncaught TypeError: Object 56260.80399999773 has no method 'slice' 
+		## ERROR from get_arguments, this is pretty confusing, what happen is
+		## that our main_loop with keyword arguments called as a javascript
+		## callback from requestAnimationFrame, passes the time as a float as
+		## the first argument, this shows we need some better call checking,
+		## or better error messages.
+		#requestAnimationFrame( main_loop ) # GOTCHA!
 
-	for m in Meshes:
-		m.rotation.x = m.rotation.x + 0.02
-		m.rotation.y = m.rotation.y + 0.01
+		func = lambda : main_loop(animation, spin_meshes, render, debug)
+		requestAnimationFrame( func )
 
-	ren.render( scn, cam )
+	if animation:
+		TweenManager.update()
+
+	if spin_meshes:
+		for m in Meshes:
+			m.rotation.x = m.rotation.x + 0.02
+			m.rotation.y = m.rotation.y + 0.01
+
+	if render:
+		ren.render( scn, cam )
+
+	if debug:
+		print 'mainloop...'
 
 
-
+################################################################
 def blockly_update_callback():
 	with javascript: code = Blockly.Python.workspaceToCode()
 	PyEditor.setValue( code )

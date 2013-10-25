@@ -13,8 +13,8 @@ def on_start( tween, source ):
 
 def on_update( tween, source, delta ):
 	print 'updating', source, delta
-	if delta > 0.5 and random() > 0.5:
-		tween.retarget( {0:0, 1:0, 2:0} )
+	#if delta > 0.5 and random() > 0.5:
+	#	tween.retarget( {0:0, 1:0, 2:0} )
 
 
 def on_complete( tween, source ):
