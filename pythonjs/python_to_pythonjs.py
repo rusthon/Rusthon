@@ -1140,9 +1140,13 @@ class PythonToPythonJS(NodeVisitor):
                 else:  ## TODO fix with-javascript decorators
                     writer.write( '%s = get_attribute(%s,"__call__")( [%s] )' %(node.name, dec, node.name))
 
-        elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
-            writer.write('%s.pythonscript_function=true'%node.name)
-        else:
+        ## Gotcha, this broke calling a "with javascript:" defined function from pythonjs, 
+        ## because get_attribute thought it was dealing with a pythonjs function and was
+        ## calling the function in the normal pythonjs way, ie. func( [args], {} )
+        #elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
+        #    writer.write('%s.pythonscript_function=true'%node.name)
+
+        if not self._with_js:
             writer.write('%s.pythonscript_function=True'%node.name)
 
         # apply decorators

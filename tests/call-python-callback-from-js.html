@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+-*
+<script type="text/python" closure="false">
+
+with javascript:
+	#JS('var call_callback = function(callback) {')  ## this workaround is no longer required
+	#callback(1,2,3)
+	#JS('}')
+
+	def call_callback( pyfunc ):
+		print 'func', pyfunc
+		pyfunc( 1,2,3 )
+
+def callback(foo, bar, baz):
+	print foo
+	print bar
+	print baz
+
+def test():
+	call_callback(callback)
+
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
