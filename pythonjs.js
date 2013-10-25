@@ -250,7 +250,7 @@ if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
 args = Array.prototype.slice.call(arguments);
-if(args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' || args[1] === undefined && args.length == 2) {
+if(args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
 /*pass*/
 }
 else {
@@ -280,7 +280,14 @@ if(attr) {
 if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
-args = arguments;
+args = Array.prototype.slice.call(arguments);
+if(args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+/*pass*/
+}
+else {
+args = [args, Object()];
+}
+
 args[0].splice(0, 0, object);
 return attr.apply(undefined, args);
 }

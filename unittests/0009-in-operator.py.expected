@@ -16,4 +16,3 @@ in literal jsobject ok
 this is allowed because we are within-javascript where the rules are slightly different
 class name of instance b: B
 test complete
-  
