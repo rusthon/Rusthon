@@ -211,7 +211,14 @@ def get_attribute(object, attribute):
                 if JS("{}.toString.call(attr) === '[object Function]'"):
                     def method():
                         var(args)
-                        args = arguments
+                        args =  Array.prototype.slice.call(arguments)
+                        if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") is None and args.length == 2):
+                            pass
+                        else:
+                            # in the case where the method was submitted to javascript code
+                            # put the arguments in order to be processed by PythonJS
+                            args = [args, JSObject()]
+
                         args[0].splice(0, 0, object)
                         return attr.apply(None, args)
                     method.is_wrapper = True
