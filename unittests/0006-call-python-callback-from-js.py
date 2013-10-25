@@ -1,6 +1,7 @@
 with javascript:
     def call_callback(callback):
-    	callback(1,2,3)
+    	with python:
+    		callback(1,2,3)
 
 
 def callback(foo, bar, baz):

@@ -5,13 +5,12 @@
 <script type="text/python" closure="false">
 
 with javascript:
-	#JS('var call_callback = function(callback) {')  ## this workaround is no longer required
-	#callback(1,2,3)
-	#JS('}')
 
 	def call_callback( pyfunc ):
-		print 'func', pyfunc
-		pyfunc( 1,2,3 )
+		#pyfunc( 1,2,3 )  ## this is not correct
+		#pyfunc( [1,2,3] ) ## this works but is not clear we are dealing with a pythonjs function
+		with python:
+			pyfunc( 1,2,3 )
 
 def callback(foo, bar, baz):
 	print foo
