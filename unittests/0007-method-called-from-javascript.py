@@ -1,7 +1,7 @@
 with javascript:
-    JS('var call_callback = function(callback) {')
-    callback('one', 'two', 'three')
-    JS('}')
+    def call_callback(callback):
+    	with python:
+    		callback('one', 'two', 'three')
 
 
 class SuperClass:
