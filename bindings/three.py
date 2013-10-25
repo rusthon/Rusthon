@@ -13,6 +13,31 @@ class Color:
 	def setRGB(self, red=1.0, green=1.0, blue=1.0):
 		with javascript: self[...].setRGB(red, green, blue)
 
+	def getHex(self):
+		with javascript:
+			return self[...].getHex()
+
+	def setHex(self, hex):
+		with javascript:
+			self[...].setHex(hex)
+
+	def getHexString(self):
+		with javascript:
+			return self[...].getHexString()
+
+	def getHSL(self):
+		with javascript:
+			return self[...].getHSL()
+
+	def setHSL(self, hex):
+		with javascript:
+			self[...].setHSL(hex)
+
+
+	def setStyle(self, style):
+		with javascript:
+			self[...].setStyle(style)
+
 	@property
 	def r(self):
 		with javascript: return self[...].r
@@ -25,6 +50,21 @@ class Color:
 
 	def clone(self):
 		return Color( red=self.r, green=self.g, blue=self.b )
+
+
+########################## helpers ############################
+def rgb_to_hex( red=1.0, green=1.0, blue=1.0, as_string=False ):
+	clr = Color( red=red, green=green, blue=blue )
+	if as_string:
+		return clr.getHexString()
+	else:
+		return clr.getHex()
+
+def rgb_to_hsl( red=1.0, green=1.0, blue=1.0 ):
+	clr = Color( red=red, green=green, blue=blue )
+	return clr.getHSL()
+
+
 
 class Quaternion:
 	def __init__(self, object=None ):
@@ -619,17 +659,77 @@ class _ImageUtils:
 
 ImageUtils = _ImageUtils()
 
+class AmbientLight( Object3D ):
+	def __init__(self, color=None, intensity=1.0 ):
+		if color:
+			hx = rgb_to_hex(
+				red=color['red'] * intensity, 
+				green=color['green'] * intensity, 
+				blue=color['blue'] * intensity
+			)
+		else:
+			hx = rgb_to_hex(red=intensity, green=intensity, blue=intensity )
 
-class _Light( Object3D ):
-	def __init__(self, color=None, energy=None):
-		self._reset_light()
-
-class PointLight( _Light ):
-	def _reset_light(self):
-		color = Color()
 		with javascript:
-			self[...] = new( THREE.PointLight( color[...], 1.5 ) )
+			self[...] = new( THREE.AmbientLight( hx ) )
 
+
+class DirectionalLight( Object3D ):
+	## TODO shadow map stuff
+	def __init__(self, color=None, intensity=1.0 ):
+		if color:
+			hx = rgb_to_hex( red=color['red'], green=color['green'], blue=color['blue'] )
+		else:
+			hx = rgb_to_hex( red=1, green=1, blue=1 )
+
+		with javascript:
+			self[...] = new( THREE.DirectionalLight( hx, intensity ) )
+
+
+class PointLight( Object3D ):
+	def __init__(self, color=None, intensity=1.0, distance=0 ):
+		if color:
+			hx = rgb_to_hex( red=color['red'], green=color['green'], blue=color['blue'] )
+		else:
+			hx = rgb_to_hex( red=1, green=1, blue=1 )
+
+		with javascript:
+			self[...] = new( THREE.PointLight( hx, intensity, distance ) )
+
+class SpotLight( Object3D ):
+	## TODO shadow map stuff
+	def __init__(self, color=None, intensity=1.0, distance=0, angle=1.0472, exponent=10 ):
+		if color:
+			hx = rgb_to_hex( red=color['red'], green=color['green'], blue=color['blue'] )
+		else:
+			hx = rgb_to_hex( red=1, green=1, blue=1 )
+
+		with javascript:
+			self[...] = new( THREE.SpotLight( hx, intensity, distance, angle, exponent ) )
+
+class HemisphereLight( Object3D ):
+	def __init__(self, sky_color=None, ground_color=None, intensity=1.0):
+		if sky_color:
+			shx = rgb_to_hex( red=sky_color['red'], green=sky_color['green'], blue=sky_color['blue'] )
+		else:
+			shx = rgb_to_hex( red=1, green=1, blue=1 )
+		if ground_color:
+			ghx = rgb_to_hex( red=ground_color['red'], green=ground_color['green'], blue=ground_color['blue'] )
+		else:
+			ghx = rgb_to_hex( red=1, green=1, blue=1 )
+
+		with javascript:
+			self[...] = new( THREE.HemisphereLight( shx, ghx, intensity ) )
+
+class AreaLight( Object3D ):
+	def __init__(self, color=None, intensity=1.0 ):
+		if color:
+			hx = rgb_to_hex( red=color['red'], green=color['green'], blue=color['blue'] )
+		else:
+			hx = rgb_to_hex( red=1, green=1, blue=1 )
+
+		with javascript:
+			self[...] = new( THREE.AreaLight( hx, intensity ) )
 
 
 class _Material:
