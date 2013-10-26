@@ -711,7 +711,7 @@ class PythonToPythonJS(NodeVisitor):
         elif name in self._instances:  ## support x[y] operator overloading
             klass = self._instances[ name ]
             if '__getitem__' in self._classes[ klass ]:
-                return '__%s___getitem__( [%s, %s] )' % (klass, name, self.visit(node.slice))
+                return '__%s___getitem__([%s, %s], JSObject())' % (klass, name, self.visit(node.slice))
             else:
                 return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
                     self.visit(node.value),

@@ -574,7 +574,7 @@ class array:
         else:
             self.length = 0
             self.bytes = 0
-
+        
         size = self.bytes
         buff = JS('new ArrayBuffer(size)')
         self.dataview = JS('new DataView(buff)')

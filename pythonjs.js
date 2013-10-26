@@ -1,4 +1,8 @@
-// PythonScript Runtime - regenerated on: Fri Oct 25 17:55:09 2013
+
+
+
+
+
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -279,7 +283,14 @@ if(attr) {
 if({}.toString.call(attr) === '[object Function]') {
 var method = function() {
 var args;
-args = arguments;
+args = Array.prototype.slice.call(arguments);
+if(args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+/*pass*/
+}
+else {
+args = [args, Object()];
+}
+
 args[0].splice(0, 0, object);
 return attr.apply(undefined, args);
 }
@@ -471,61 +482,30 @@ kwargs = Object();
 }
 
 out = Object();
-if(signature.args.length) {
-argslength = signature.args.length;
-}
-else {
-argslength = 0;
-}
-
 if(args.length > signature.args.length) {
 if(signature.vararg) {
 /*pass*/
 }
 else {
 console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature);
-throw TypeError("function called with too many arguments");
+throw TypeError("Supplemental positional arguments provided but signature doesn't accept them");
 }
 
 }
 
 j = 0;
-while(j < argslength) {
-arg = signature.args[j];
-if(kwargs) {
-kwarg = kwargs[arg];
-if(arg  in  kwargs) {
-out[arg] = kwarg;
+while(j < signature.args.length) {
+name = signature.args[j];
+if(name  in  kwargs) {
+out[name] = kwargs[name];
 }
 else {
 if(j < args.length) {
-out[arg] = args[j];
+out[name] = args[j];
 }
 else {
-if(arg  in  signature.kwargs) {
-out[arg] = signature.kwargs[arg];
-}
-else {
-console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments (#1)");
-}
-
-}
-
-}
-
-}
-else {
-if(j < args.length) {
-out[arg] = args[j];
-}
-else {
-if(arg  in  signature.kwargs) {
-out[arg] = signature.kwargs[arg];
-}
-else {
-console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature, j);
-throw TypeError("function called with wrong number of arguments (#2)");
+if(name  in  signature.kwargs) {
+out[name] = signature.kwargs[name];
 }
 
 }
@@ -654,7 +634,8 @@ key = backup;
 
 return output;
 }
-window["json_to_pythonscript"] = json_to_pythonscript
+window["json_to_pythonscript"] = json_to_pythonscript 
+
 _PythonJS_UID = 0;
 var _JSNew = function(T) {
 return new T;
@@ -2265,7 +2246,7 @@ signature["function_name"] = "__array_get";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var index = arguments['index'];
-return __array___getitem__([self, index]);
+return __array___getitem__([self, index], Object());
 }
 window["__array_get"] = __array_get 
 
@@ -2407,7 +2388,7 @@ var self = arguments['self'];
 arr = create_array();
 i = 0;
 while(i < self["__dict__"]["length"]) {
-item = __array___getitem__([self, i]);
+item = __array___getitem__([self, i], Object());
 arr.push( item );
 i += 1
 }
