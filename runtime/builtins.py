@@ -683,7 +683,7 @@ class array:
 
     def to_array(self):
         arr = JSArray()
-        i = 0;
+        i = 0
         while i < self.length:
             item = self[i]
             JS('arr.push( item )')
