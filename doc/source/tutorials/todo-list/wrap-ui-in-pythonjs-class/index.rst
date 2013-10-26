@@ -1,8 +1,6 @@
 Wrap UI in a PythonJS class
 ###########################
 
-.. warning:: this use the development version of PythonJS
-
 
 In the previous article (click the link on top of the page), we showed how to build a simple list using PythonJS and jQuery. This method perfectly works, but it doesn't scale well. As soon as your objects becomes complex, you need to store data somewhere. It happens that jQuery provides a `jQuery.data <http://api.jquery.com/data/>`_ method just for that. The thing is that it doesn't scale, and as soon you need to have methods on the UI element, you need somehow a way to map it to an object... So anyway you end up with what we will start with from the start: *a PythonJS object tree parallel to the HTML elements tree*. Of course HTML elements don't have to map one to one the PythonJS objects.
 
