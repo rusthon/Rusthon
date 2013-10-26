@@ -706,3 +706,53 @@ class array:
             string += char
             i += 1
         return string
+
+
+# JSON stuff
+
+def _to_pythonjs(json):
+    var(jstype, item, output)
+    jstype = JS('typeof json')
+    if jstype == 'number':
+        return json
+    if jstype == 'string':
+        return json
+    if JS("Object.prototype.toString.call(json) === '[object Array]'"):
+        output = list.__call__([])
+        var(append)
+        for item in json:
+            append = get_attribute(output, 'append')
+            append([json_to_pythonscript(item)])
+        return output
+    # else it's a map
+    output = dict.__call__([])
+    for key in JS('Object.keys(json)'):
+        set = get_attribute(output, 'set')
+        set([key, json_to_pythonscript(json[key])])
+    return output
+
+def json_to_pythonjs(json):
+    return JSON.parse(_to_pythonjs(json))
+
+# inverse function
+
+def _to_json(pythonjs):
+    if isinstance(pythonjs, list):
+        r = JSArray()
+        for i in pythonjs:
+            r.push(_to_json(i))
+    elif isinstance(pythonjs, dict):
+        var(r)
+        r = JSObject()
+        for key in pythonjs.keys():
+            value = _to_json(pythonjs.get(key))
+            key = _to_json(key)
+            with javascript:
+                r[key] = value
+    else:
+        r = pythonjs
+    return r
+
+
+def pythonjs_to_json(pythonjs):
+    return JSON.stringify(_to_json(pythonjs))

@@ -593,46 +593,6 @@ return issubclass(create_array(object_class, klass));
 window["isinstance"] = isinstance 
 
 isinstance.pythonscript_function = true;
-var json_to_pythonscript = function(json) {
-var jstype, item, output;
-jstype = typeof json;
-if(jstype == "number") {
-return json;
-}
-
-if(jstype == "string") {
-return json;
-}
-
-if(Object.prototype.toString.call(json) === '[object Array]') {
-output = list.__call__([]);
-var append;
-var iter = json;
-for (var item=0; item < iter.length; item++) {
-var backup = item;
-item = iter[item];
-append = get_attribute(output, "append");
-append([json_to_pythonscript(item)]);
-item = backup;
-}
-
-return output;
-}
-
-output = dict.__call__([]);
-var iter = Object.keys(json);
-for (var key=0; key < iter.length; key++) {
-var backup = key;
-key = iter[key];
-set = get_attribute(output, "set");
-set([key, json_to_pythonscript(json[key])]);
-key = backup;
-}
-
-return output;
-}
-window["json_to_pythonscript"] = json_to_pythonscript 
-
 _PythonJS_UID = 0;
 var _JSNew = function(T) {
 return new T;
@@ -1025,7 +985,7 @@ value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1074,7 +1034,7 @@ value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1268,7 +1228,7 @@ v = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1434,7 +1394,7 @@ other = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1544,7 +1504,7 @@ v = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1676,7 +1636,7 @@ obj = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -1829,7 +1789,7 @@ other = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -2841,7 +2801,7 @@ value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
 catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration])) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
 /*pass*/
 }
 
@@ -2947,3 +2907,191 @@ __array_to_ascii.kwargs_signature = {  };
 __array_to_ascii.pythonscript_function = true;
 window["__array_attrs"]["to_ascii"] = __array_to_ascii;
 array = create_class("array", window["__array_parents"], window["__array_attrs"], window["__array_properties"]);
+var _to_pythonjs = function(args, kwargs) {
+var output, jstype;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("json")};
+signature["function_name"] = "_to_pythonjs";
+arguments = get_arguments(signature, args, kwargs);
+var json = arguments['json'];
+var jstype, item, output;
+jstype = typeof json;
+if(jstype == "number") {
+return json;
+}
+
+if(jstype == "string") {
+return json;
+}
+
+if(Object.prototype.toString.call(json) === '[object Array]') {
+output = get_attribute(get_attribute(list, "__call__"), "__call__")([get_attribute(list, "__call__")([], {"js_object": []})], Object());
+var append;
+var __iterator__, item;
+__iterator__ = get_attribute(get_attribute(json, "__iter__"), "__call__")(create_array(), Object());
+try {
+item = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+append = get_attribute(get_attribute, "__call__")([output, "append"], Object());
+get_attribute(append, "__call__")([get_attribute(list, "__call__")([], {"js_object": [get_attribute(json_to_pythonscript, "__call__")([item], Object())]})], Object());
+item = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
+/*pass*/
+}
+
+}
+
+return output;
+}
+
+output = get_attribute(get_attribute(dict, "__call__"), "__call__")([get_attribute(list, "__call__")([], {"js_object": []})], Object());
+var __iterator__, key;
+__iterator__ = get_attribute(get_attribute(Object.keys(json), "__iter__"), "__call__")(create_array(), Object());
+try {
+key = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+set = get_attribute(get_attribute, "__call__")([output, "set"], Object());
+get_attribute(set, "__call__")([get_attribute(list, "__call__")([], {"js_object": [key, get_attribute(json_to_pythonscript, "__call__")([get_attribute(json, "__getitem__")([key], Object())], Object())]})], Object());
+key = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
+/*pass*/
+}
+
+}
+
+return output;
+}
+window["_to_pythonjs"] = _to_pythonjs 
+
+_to_pythonjs.NAME = "_to_pythonjs";
+_to_pythonjs.args_signature = ["json"];
+_to_pythonjs.kwargs_signature = {  };
+_to_pythonjs.pythonscript_function = true;
+var json_to_pythonjs = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("json")};
+signature["function_name"] = "json_to_pythonjs";
+arguments = get_arguments(signature, args, kwargs);
+var json = arguments['json'];
+return get_attribute(get_attribute(JSON, "parse"), "__call__")([get_attribute(_to_pythonjs, "__call__")([json], Object())], Object());
+}
+window["json_to_pythonjs"] = json_to_pythonjs 
+
+json_to_pythonjs.NAME = "json_to_pythonjs";
+json_to_pythonjs.args_signature = ["json"];
+json_to_pythonjs.kwargs_signature = {  };
+json_to_pythonjs.pythonscript_function = true;
+var _to_json = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("pythonjs")};
+signature["function_name"] = "_to_json";
+arguments = get_arguments(signature, args, kwargs);
+var pythonjs = arguments['pythonjs'];
+if(get_attribute(isinstance, "__call__")([pythonjs, list], Object())) {
+r = create_array();
+var __iterator__, i;
+__iterator__ = get_attribute(get_attribute(pythonjs, "__iter__"), "__call__")(create_array(), Object());
+try {
+i = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+get_attribute(get_attribute(r, "push"), "__call__")([get_attribute(_to_json, "__call__")([i], Object())], Object());
+i = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
+/*pass*/
+}
+
+}
+
+}
+else {
+if(get_attribute(isinstance, "__call__")([pythonjs, dict], Object())) {
+var r;
+r = Object();
+var __iterator__, key;
+__iterator__ = get_attribute(get_attribute(get_attribute(pythonjs, "keys")(create_array(), Object()), "__iter__"), "__call__")(create_array(), Object());
+try {
+key = get_attribute(__iterator__, "next")(create_array(), Object());
+while(true) {
+value = get_attribute(_to_json, "__call__")([get_attribute(get_attribute(pythonjs, "get"), "__call__")([key], Object())], Object());
+key = get_attribute(_to_json, "__call__")([key], Object());
+r[ key ] = value;
+key = get_attribute(__iterator__, "next")(create_array(), Object());
+}
+}
+catch(__exception__) {
+if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
+/*pass*/
+}
+
+}
+
+}
+else {
+r = pythonjs;
+}
+
+}
+
+return r;
+}
+window["_to_json"] = _to_json 
+
+_to_json.NAME = "_to_json";
+_to_json.args_signature = ["pythonjs"];
+_to_json.kwargs_signature = {  };
+_to_json.pythonscript_function = true;
+var pythonjs_to_json = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("pythonjs")};
+signature["function_name"] = "pythonjs_to_json";
+arguments = get_arguments(signature, args, kwargs);
+var pythonjs = arguments['pythonjs'];
+return get_attribute(get_attribute(JSON, "stringify"), "__call__")([get_attribute(_to_json, "__call__")([pythonjs], Object())], Object());
+}
+window["pythonjs_to_json"] = pythonjs_to_json 
+
+pythonjs_to_json.NAME = "pythonjs_to_json";
+pythonjs_to_json.args_signature = ["pythonjs"];
+pythonjs_to_json.kwargs_signature = {  };
+pythonjs_to_json.pythonscript_function = true;
