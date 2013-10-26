@@ -667,7 +667,7 @@ class PythonToPythonJS(NodeVisitor):
 
             elif '__getattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__getattr__' )
-                return '%s([%s, "%s"])' %(func, node_value, node.attr)
+                return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
             elif typedef.check_for_parent_with( property=node.attr ):
                 parent = typedef.check_for_parent_with( property=node.attr )
@@ -688,7 +688,7 @@ class PythonToPythonJS(NodeVisitor):
             elif typedef.check_for_parent_with( method='__getattr__' ):
                 parent = typedef.check_for_parent_with( method='__getattr__' )
                 func = parent.get_pythonjs_function_name( '__getattr__' )
-                return '%s([%s, "%s"])' %(func, node_value, node.attr)
+                return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
             else:
                 return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
@@ -936,12 +936,12 @@ class PythonToPythonJS(NodeVisitor):
                     writer.append('%s = JSArray(%s)' % (args_name, args))
 
                 if node.starargs:
-                    writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
+                    writer.append('%s.push.apply(%s, %s.__dict__.js_object)' % (args_name, args_name, self.visit(node.starargs)))
                 writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
 
                 if node.kwargs:
                     kwargs = self.visit(node.kwargs)
-                    code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
+                    code = "JS('for (var name in %s) { %s[name] = %s.__dict__.js_object[name]; }')" % (kwargs, kwargs_name, kwargs)
                     writer.append(code)
 
             if call_has_args_only:

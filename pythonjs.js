@@ -2323,6 +2323,41 @@ __dict_keys.args_signature = ["self"];
 __dict_keys.kwargs_signature = {  };
 __dict_keys.pythonscript_function = true;
 window["__dict_attrs"]["keys"] = __dict_keys;
+var __dict_pop = function(args, kwargs) {
+var v;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": {"d": undefined}, "args": create_array("self", "key", "d")};
+signature["function_name"] = "__dict_pop";
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+var key = arguments['key'];
+var d = arguments['d'];
+v = get_attribute(get_attribute(self, "get"), "__call__")([key, undefined], Object());
+if(v === undefined) {
+return d;
+}
+else {
+js_object = self["__dict__"]["js_object"];
+delete js_object[key];
+return v;
+}
+
+}
+window["__dict_pop"] = __dict_pop 
+
+__dict_pop.NAME = "__dict_pop";
+__dict_pop.args_signature = ["self", "key", "d"];
+__dict_pop.kwargs_signature = { d:undefined };
+__dict_pop.pythonscript_function = true;
+window["__dict_attrs"]["pop"] = __dict_pop;
 var __dict_values = function(args, kwargs) {
 var __dict, __keys, i, out;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
@@ -2908,7 +2943,7 @@ __array_to_ascii.pythonscript_function = true;
 window["__array_attrs"]["to_ascii"] = __array_to_ascii;
 array = create_class("array", window["__array_parents"], window["__array_attrs"], window["__array_properties"]);
 var _to_pythonjs = function(args, kwargs) {
-var output, jstype;
+var keys, output, jstype, set;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2933,15 +2968,17 @@ return json;
 }
 
 if(Object.prototype.toString.call(json) === '[object Array]') {
-output = get_attribute(get_attribute(list, "__call__"), "__call__")([get_attribute(list, "__call__")([], {"js_object": []})], Object());
+output = get_attribute(list, "__call__")(create_array(), Object());
+raw = get_attribute(list, "__call__")(create_array(), Object());
+set_attribute(raw, "js_object", json);
 var append;
+append = get_attribute(output, "append");
 var __iterator__, item;
-__iterator__ = get_attribute(get_attribute(json, "__iter__"), "__call__")(create_array(), Object());
+__iterator__ = get_attribute(get_attribute(raw, "__iter__"), "__call__")(create_array(), Object());
 try {
 item = get_attribute(__iterator__, "next")(create_array(), Object());
 while(true) {
-append = get_attribute(get_attribute, "__call__")([output, "append"], Object());
-get_attribute(append, "__call__")([get_attribute(list, "__call__")([], {"js_object": [get_attribute(json_to_pythonscript, "__call__")([item], Object())]})], Object());
+get_attribute(append, "__call__")([get_attribute(_to_pythonjs, "__call__")([item], Object())], Object());
 item = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
@@ -2955,14 +2992,17 @@ if (__exception__ == StopIteration || isinstance([__exception__, StopIteration],
 return output;
 }
 
-output = get_attribute(get_attribute(dict, "__call__"), "__call__")([get_attribute(list, "__call__")([], {"js_object": []})], Object());
+output = get_attribute(dict, "__call__")(create_array(), Object());
+var set;
+set = get_attribute(output, "set");
+keys = get_attribute(list, "__call__")(create_array(), Object());
+set_attribute(keys, "js_object", Object.keys(json));
 var __iterator__, key;
-__iterator__ = get_attribute(get_attribute(Object.keys(json), "__iter__"), "__call__")(create_array(), Object());
+__iterator__ = get_attribute(get_attribute(keys, "__iter__"), "__call__")(create_array(), Object());
 try {
 key = get_attribute(__iterator__, "next")(create_array(), Object());
 while(true) {
-set = get_attribute(get_attribute, "__call__")([output, "set"], Object());
-get_attribute(set, "__call__")([get_attribute(list, "__call__")([], {"js_object": [key, get_attribute(json_to_pythonscript, "__call__")([get_attribute(json, "__getitem__")([key], Object())], Object())]})], Object());
+get_attribute(set, "__call__")([key, get_attribute(_to_pythonjs, "__call__")([json[key]], Object())], Object());
 key = get_attribute(__iterator__, "next")(create_array(), Object());
 }
 }
@@ -2995,7 +3035,7 @@ signature = {"kwargs": Object(), "args": create_array("json")};
 signature["function_name"] = "json_to_pythonjs";
 arguments = get_arguments(signature, args, kwargs);
 var json = arguments['json'];
-return get_attribute(get_attribute(JSON, "parse"), "__call__")([get_attribute(_to_pythonjs, "__call__")([json], Object())], Object());
+return get_attribute(_to_pythonjs, "__call__")([get_attribute(get_attribute(JSON, "parse"), "__call__")([json], Object())], Object());
 }
 window["json_to_pythonjs"] = json_to_pythonjs 
 

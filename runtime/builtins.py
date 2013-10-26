@@ -468,6 +468,16 @@ class dict:
         out.js_object = __keys
         return out
 
+    def pop(self, key, d=None):
+        v = self.get(key, None)
+        if v is None:
+            return d
+        else:
+            js_object = self.js_object
+            JS("delete js_object[key]")
+            return v
+        
+
     def values(self):
         __dict = self.js_object
         __keys = JS('Object.keys(__dict)')
@@ -718,21 +728,26 @@ def _to_pythonjs(json):
     if jstype == 'string':
         return json
     if JS("Object.prototype.toString.call(json) === '[object Array]'"):
-        output = list.__call__([])
+        output = list()
+        raw = list()
+        raw.js_object = json
         var(append)
-        for item in json:
-            append = get_attribute(output, 'append')
-            append([json_to_pythonscript(item)])
+        append = output.append
+        for item in raw:
+            append(_to_pythonjs(item))
         return output
     # else it's a map
-    output = dict.__call__([])
-    for key in JS('Object.keys(json)'):
-        set = get_attribute(output, 'set')
-        set([key, json_to_pythonscript(json[key])])
+    output = dict()
+    var(set)
+    set = output.set
+    keys = list()
+    keys.js_object = JS('Object.keys(json)')
+    for key in keys:
+        set(key, _to_pythonjs(JS("json[key]")))
     return output
 
 def json_to_pythonjs(json):
-    return JSON.parse(_to_pythonjs(json))
+    return _to_pythonjs(JSON.parse(json))
 
 # inverse function
 
