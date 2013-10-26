@@ -1,0 +1,30 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+-*
+<script type="text/python" closure="false">
+
+with javascript:
+
+	def call_callback( pyfunc ):
+		#pyfunc( 1,2,3 )  ## this is not correct
+		#pyfunc( [1,2,3] ) ## this works but is not clear we are dealing with a pythonjs function
+		with python:
+			pyfunc( 1,2,3 )
+
+def callback(foo, bar, baz):
+	print foo
+	print bar
+	print baz
+
+def test():
+	call_callback(callback)
+
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

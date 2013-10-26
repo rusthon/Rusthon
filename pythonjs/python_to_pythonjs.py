@@ -360,6 +360,10 @@ class PythonToPythonJS(NodeVisitor):
     def visit_In(self, node):
         return ' in '
 
+    def visit_NotIn(self, node):
+        #return ' not in '
+        raise RuntimeError('"not in" is only allowed in if-test: see method - visit_Compare')
+
     def visit_AugAssign(self, node):
         target = self.visit( node.target )
         op = '%s=' %self.visit( node.op )
@@ -596,18 +600,29 @@ class PythonToPythonJS(NodeVisitor):
         left = self.visit(node.left)
         comp = [ left ]
         for i in range( len(node.ops) ):
-            if isinstance(node.ops[i], ast.In):
+            if isinstance(node.ops[i], ast.In) or isinstance(node.ops[i], ast.NotIn):
                 if comp[-1] == left:
                     comp.pop()
                 else:
                     comp.append( ' and ' )
+
+                if isinstance(node.ops[i], ast.NotIn):
+                    comp.append( ' not (')
+
                 a = ( self.visit(node.comparators[i]), left )
-                if self._with_js:  ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
-                    comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, but it works
-                    comp.append( 'Object.hasOwnProperty(%s, "__contains__") and' %a[0])
+                if self._with_js:
+                    ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
+                    ## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
+                    ## TODO double check this code
+                    comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
+                    comp.append( 'Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
                     comp.append( "%s['__contains__'](%s)" %a )
                 else:
                     comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+
+                if isinstance(node.ops[i], ast.NotIn):
+                    comp.append( ' )')  ## it is not required to enclose NotIn
+
             else:
                 comp.append( self.visit(node.ops[i]) )
                 comp.append( self.visit(node.comparators[i]) )
@@ -874,7 +889,7 @@ class PythonToPythonJS(NodeVisitor):
                 a = ','.join(args)
                 return '%s( %s )' %( self.visit(node.func), a )
 
-        if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof'):
+        if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
             args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
             if node.func.id == 'var':
                 for k in node.keywords:
@@ -943,7 +958,15 @@ class PythonToPythonJS(NodeVisitor):
             elif name in self._classes or name in self._builtins:
                 return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
 
-            else:  ## this could be a dangerous optimization ##
+            else:
+                ## this a slightly dangerous optimization,
+                ## because if the user is trying to create an instance of some class
+                ## and that class is define in an external binding,
+                ## and they forgot to put "from mylibrary import *" in their script (an easy mistake to make)
+                ## then this fails to call __call__ to initalize the instance,
+                ## and throws a confusing error:
+                ## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
+                ## TODO - remove this optimization, or provide the user with a better error message.
                 return '%s( JSArray(), JSObject() )' %name
 
     def visit_Lambda(self, node):
@@ -1132,9 +1155,13 @@ class PythonToPythonJS(NodeVisitor):
                 else:  ## TODO fix with-javascript decorators
                     writer.write( '%s = get_attribute(%s,"__call__")( [%s] )' %(node.name, dec, node.name))
 
-        elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
-            writer.write('%s.pythonscript_function=true'%node.name)
-        else:
+        ## Gotcha, this broke calling a "with javascript:" defined function from pythonjs, 
+        ## because get_attribute thought it was dealing with a pythonjs function and was
+        ## calling the function in the normal pythonjs way, ie. func( [args], {} )
+        #elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
+        #    writer.write('%s.pythonscript_function=true'%node.name)
+
+        if not self._with_js:
             writer.write('%s.pythonscript_function=True'%node.name)
 
         # apply decorators

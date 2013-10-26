@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 24 02:55:58 2013
+// PythonScript Runtime - regenerated on: Fri Oct 25 17:55:09 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -664,7 +664,6 @@ window["_JSNew"] = _JSNew
 _JSNew.NAME = "_JSNew";
 _JSNew.args_signature = ["T"];
 _JSNew.kwargs_signature = {};
-_JSNew.pythonscript_function=true;
 var int = function(args, kwargs) {
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("a")};
@@ -827,7 +826,7 @@ var iter = this;
 for (var char=0; char < iter.length; char++) {
 var backup = char;
 char = iter[char];
-if(char  in  digits || Object.hasOwnProperty(digits, "__contains__") && digits["__contains__"](char)) {
+if(char  in  digits || Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char)) {
 /*pass*/
 }
 else {
@@ -2035,13 +2034,22 @@ __dict_values.kwargs_signature = {  };
 __dict_values.pythonscript_function = true;
 window["__dict_attrs"]["values"] = __dict_values;
 var __dict___CONTAINS__ = function(args, kwargs) {
+var keys;
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
 signature["function_name"] = "__dict___CONTAINS__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
-if(Object.keys(self["wrapped"]).indexOf(value) == -1) {
+keys = Object.keys( self["wrapped"] );
+if(typeof(value) == "object") {
+key = "@" + value.uid;
+}
+else {
+key = "" + value;
+}
+
+if(keys.indexOf(key) == -1) {
 return false;
 }
 else {

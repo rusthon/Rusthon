@@ -463,7 +463,7 @@ class dict:
 
     def keys(self):
         __dict = self.js_object
-        __keys = JS('Object.keys(__dict)')
+        __keys = JS('Object.keys(__dict)')  ## the problem with this is that keys are coerced into strings
         out = list()
         out.js_object = __keys
         return out
@@ -480,7 +480,13 @@ class dict:
 
     def __contains__(self, value):
         with javascript:
-            if Object.keys(self[...]).indexOf(value) == -1:
+            keys = Object.keys(self[...])  ## the problem with this is that keys are coerced into strings
+            if typeof(value) == 'object':
+                key = '@'+value.uid
+            else:
+                key = ''+value  ## convert to string
+
+            if keys.indexOf( key ) == -1:
                 return False
             else:
                 return True

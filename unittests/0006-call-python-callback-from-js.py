@@ -1,7 +1,7 @@
 with javascript:
-    JS('var call_callback = function(callback) {')
-    callback(1,2,3)
-    JS('}')
+    def call_callback(callback):
+    	with python:
+    		callback(1,2,3)
 
 
 def callback(foo, bar, baz):

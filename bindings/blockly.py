@@ -49,11 +49,28 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 				e.appendChild(v)
 				nb = document.createElement('block')
 				if input['default_value'] is not None:
-					nb.setAttribute('type', 'math_number')  ## TODO support other types
-					t = document.createElement('title')
-					t.setAttribute('name', 'NUM')
-					t.appendChild( document.createTextNode(input['default_value']) )
-					nb.appendChild(t)
+					default_value = input['default_value']
+					if typeof(default_value) == 'boolean':
+						nb.setAttribute('type', 'logic_boolean')
+						t = document.createElement('title')
+						t.setAttribute('name', 'BOOL')
+						## Blockly is picky about these keywords, passing "True" or "true" will show 'true' in the UI but give you False for the actual value!
+						if default_value:
+							t.appendChild( document.createTextNode('TRUE') )
+						else:
+							t.appendChild( document.createTextNode('FALSE') )
+						nb.appendChild(t)
+
+					else:
+						nb.setAttribute('type', 'math_number')  ## TODO support other types
+						t = document.createElement('title')
+						t.setAttribute('name', 'NUM')
+						t.appendChild( document.createTextNode(default_value) )
+						nb.appendChild(t)
+
+				elif input['name'].startswith('color'):  ## this is hackish, but it works
+					nb.setAttribute('type', 'colour_picker')
+
 				else:
 					nb.setAttribute('type', 'logic_null')
 				v.appendChild(nb)
@@ -77,9 +94,11 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 			global _blockly_selected_block
 			if Blockly.selected != _blockly_selected_block:
 				_blockly_selected_block = Blockly.selected
-				if _blockly_selected_block and _blockly_selected_block.on_selected_callback:
+				if _blockly_selected_block:
 					print 'BLOCKLY - new block selected:', _blockly_selected_block
-					_blockly_selected_block.on_selected_callback()
+					if _blockly_selected_block.on_selected_callback:
+						print 'BLOCKLY - doing on select block callback'
+						_blockly_selected_block.on_selected_callback()
 
 			if on_changed_callback:  ## this gets triggered for any change, even moving a block in the workspace.
 				on_changed_callback()
@@ -121,6 +140,9 @@ class BlocklyBlock:
 		self.external_function = None
 		self.external_javascript_function = None
 		self.on_click_callback = None
+		self.on_removed = None  ## when a block is removed from its parent block
+		self.on_plugged = None
+		self.pythonjs_object = None
 
 	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )
@@ -129,7 +151,10 @@ class BlocklyBlock:
 			defs = jsfunc.kwargs_signature
 		for i in range(arr.length):
 			name = arr[i]
-			self.add_input_value( name, default_value=defs[name] )
+			if defs[name] is null:  ## special case: null creates a non-dynamic "slot" input statement
+				self.add_input_statement( name )
+			else:
+				self.add_input_value( name, default_value=defs[name] )
 		return jsfunc
 
 	def callback(self, jsfunc):  ## decorator
@@ -224,6 +249,8 @@ class BlocklyBlock:
 		external_function = self.external_function
 		external_javascript_function = self.external_javascript_function
 		is_statement = self.is_statement
+		on_unplugged = self.on_unplugged
+		on_plugged = self.on_plugged
 
 		with javascript:
 			def init():
@@ -239,6 +266,10 @@ class BlocklyBlock:
 				this.__external_function = external_function
 				this.__external_javascript_function = external_javascript_function
 				this.__is_statement = is_statement
+				this.__on_unplugged = on_unplugged
+				this.__on_plugged = on_plugged
+
+				this.__previous_child_blocks = []	## this is a hackish way to check for when a block is removed
 
 				if color:
 					this.setColour( color )
@@ -292,13 +323,42 @@ class BlocklyBlock:
 
 		with javascript:
 			def generator(block):
+
+				## TODO - hook into Blockly event system to catch when a block is removed ##
+				if block.__previous_child_blocks.length != block.childBlocks_.length:
+					if block.__previous_child_blocks.length > block.childBlocks_.length:
+						for child in block.__previous_child_blocks:
+							#if child not in block.childBlocks_:  ## TODO fix me
+							if block.childBlocks_.indexOf( child ) == -1:
+								print 'UNPLUGGED:', child
+								if child.__on_unplugged:
+									child.__on_unplugged( child.pythonjs_object, block.pythonjs_object, child, block )
+								break
+					else:
+						for child in block.childBlocks_:
+							if block.__previous_child_blocks.indexOf( child ) == -1:
+								print 'PLUGGED:', child
+								if child.__on_plugged:
+									child.__on_plugged( child.pythonjs_object, block.pythonjs_object, child, block )
+								break
+
+
+				block.__previous_child_blocks = block.childBlocks_.slice()
+
+
 				input_values = block.__input_values
 				input_statements = block.__input_statements
 				input_slots = block.__input_slots
 				external_function = block.__external_function
 				external_javascript_function = block.__external_javascript_function
 				is_statement = block.__is_statement
-				dynamic = input_statements.length
+
+				#dynamic = input_statements.length
+				#dynamic = True  ## for now make everything dynamic - TODO check if external_function returns something - this will not work!
+				#dynamic = not external_javascript_function  ## TODO fix "not" in 'with javascript:'
+				dynamic = True
+				if external_javascript_function:
+					dynamic = False
 
 				code = ''
 				input = null  ## TODO fix local scope generator in python_to_pythonjs.py - need to traverse whileloops - the bug pops up here because this is recursive?
@@ -315,35 +375,58 @@ class BlocklyBlock:
 						args.push( a )
 					i += 1
 
-				## input statements are used for dynamic updates
-				if block.pythonjs_object:
+				
+				if block.pythonjs_object: ## input statements are used for dynamic updates
 					wrapper = block.pythonjs_object[...]
+					print 'block.pythonjs_object.wrapper', wrapper
 					i = 0
 					while i < input_statements.length:
 						input = input_statements[i][...]
 						attr = wrapper[ input['name'] ]
 						if attr:
 							js = Blockly.JavaScript.statementToCode(block, input['name'])
-							if input['callback']:
-								input['callback']( wrapper, attr, eval(js) )
-							else:
-								print 'ERROR - input is missing callback', input
+							print('block.pythonjs_object - update-dynamic: code to eval')
+							print(js)
+							if js.length:
+								if input['callback']:
+									print 'callback', input['callback'].NAME
+									input['callback']( wrapper, attr, eval(js) )
+								else:
+									print 'ERROR - input is missing callback', input
 						i += 1
 
-				i = 0
-				while i < input_slots.length:
-					input = input_slots[i][...]
-					a = Blockly.Python.statementToCode(block, input['name'])
-					if a.length:
-						args.push(input['name'] + '=' +a)
-					i += 1
+				if external_javascript_function:
+					i = 0
+					while i < input_slots.length:
+						input = input_slots[i][...]
+						a = Blockly.JavaScript.statementToCode(block, input['name'])
+						if a.length:
+							args.push( a )
+						else:
+							args.push( "null" )
+						i += 1
+				else:
+					i = 0
+					while i < input_slots.length:
+						input = input_slots[i][...]
+						a = Blockly.Python.statementToCode(block, input['name'])
+						if a.length:
+							args.push(input['name'] + '=' +a)
+						i += 1
 
 				if external_function:
 					code += external_function + '(' + ','.join(args) + ')'
 				elif external_javascript_function:
 					## TODO what about pure javascript functions?
 					if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+						print 'is_statement with parent block - OK'
 						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						print code
+
+					elif block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+						print 'with parent block - OK'
+						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						print code
 
 				else:  ## TODO this should be a simple series of statements?
 					for a in args:

@@ -1,7 +1,7 @@
 PythonJS
 ############
 
-.. image:: http://3.bp.blogspot.com/-wd0nt-5J3Kg/Ul9RP_zmH5I/AAAAAAAAAd8/LjFdw0riJ0U/s320/pythonjs-v11.png
+.. image:: http://4.bp.blogspot.com/-oiwojUmueiM/UmjixTGKNYI/AAAAAAAAAfE/Tp4uNMx3iEE/s320/pythonjs-v9.png
 
 :dependency: Python 2.7
 :documentaiton: `PythonJS <https://pythonscript.readthedocs.org/en/latest/>`_
@@ -174,4 +174,31 @@ This code is more clear than before, but the downside is that the calls to arr.p
 			arr.push( ob )
 
 The "with javascript:" statement can be used to mark a block of code as being direct JavaScript.  The compiler will basically wrap each line it can in JS() calls.  The calls to arr.push will be fast because there is no longer any runtime wrapping.  Instead of using JSArray and JSObject you just use the literal notation to create them.
+
+---------------
+
+PythonJS JavaScript Callbacks
+---------------
+
+You can write functions in PythonJS that can be called from JavaScript by nesting the function declaration under a "with javascript:" block.  If inside the function you need to switch back into Python mode, you can use "with python:"  The following example shows how this works.
+
+Method Call Example::
+
+	with javascript:
+		def call_callback(callback):
+			with python:
+				callback('one', 'two', 'three')
+
+
+	class SuperClass:
+
+		def callback(self, foo, bar, baz):
+			print foo
+			print bar
+			print baz
+			print "viva l'algerie"
+
+
+	def test():
+		call_callback(SuperClass().callback)
 

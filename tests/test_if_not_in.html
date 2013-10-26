@@ -1,0 +1,79 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+class A:
+	def __init__(self):
+		self.x = 1
+		self.y = 2
+
+	def __contains__(self, name):
+		with javascript:
+			if name in self.__dict__:
+				return True
+
+class B:
+	pass
+
+def todo():
+
+	b = B()
+	#if '__name__' in b: print 'this will throw an error because B is lacking a __contains__ method'
+	with javascript:
+		if '__class__' in b:
+			print 'this is allowed because we are within-javascript where the rules are slightly different'
+			print 'class name of instance b:', b['__class__']['__name__']
+
+	print 'test complete'
+
+
+def test():
+	print 'testing list'
+	if 1 not in [1,2,3]: print 'in list fails'
+	else: print 'OK'
+
+	print 'testing dict'
+	if 1 not in {1:True}: print 'in dict fails'
+	else: print 'OK'
+
+	print 'testing tuple'
+	if 1 not in (1,2,3): print 'in tuple fails'
+	else: print 'OK'
+
+	print 'testing int32 array'
+	arr = array('int32', [1,2,3,4])
+	print 'testing get item from array'
+	arr[0]
+	print 'testing item in array'
+	if 1 not in arr: print 'in array failed'
+	else: print 'OK'
+
+	print 'testing overloaded custom class A'
+	a = A()
+	if 'x' not in a: print 'instance of overloaded A failed'
+	else: print 'OK'
+
+
+	with javascript:
+		print 'testing with javascript:'
+		arr = [1,2,3]
+		jsob = {1:True}
+		if 1 not in arr: print 'in Array failed'
+		else: print 'OK'
+		if 1 not in jsob: print 'in javascript-object failed'
+		else: print 'OK'
+
+		if 1 not in [1,2]: print 'in literal Array failed'
+		else: print 'OK'
+		if 'xx' not in {xx:True}: print 'in literal jsobject failed'
+		else: print 'OK'
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
