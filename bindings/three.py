@@ -435,9 +435,20 @@ class Face3:
 
 
 class Object3D:
-	def __init__(self):
+	def __init__(self, pointer=None):
 		with javascript:
-			self[...] = new( THREE.Object3D() )
+			if pointer:
+				self[...] = pointer
+			else:
+				self[...] = new( THREE.Object3D() )
+
+	@property
+	def parent(self):
+		with javascript: ptr = self[...].parent
+		if ptr:
+			## TODO check what type parent is and return the correct subclass
+			## not just Object3D.
+			return Object3D( pointer=ptr )
 
 	@property
 	def up(self):
@@ -597,6 +608,7 @@ class Scene:
 			self[...].add( child[...] )
 
 	def remove(self, child):
+		print 'Scene.remove', child
 		with javascript:
 			self[...].remove( child[...] )
 

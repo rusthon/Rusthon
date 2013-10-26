@@ -94,9 +94,11 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 			global _blockly_selected_block
 			if Blockly.selected != _blockly_selected_block:
 				_blockly_selected_block = Blockly.selected
-				if _blockly_selected_block and _blockly_selected_block.on_selected_callback:
+				if _blockly_selected_block:
 					print 'BLOCKLY - new block selected:', _blockly_selected_block
-					_blockly_selected_block.on_selected_callback()
+					if _blockly_selected_block.on_selected_callback:
+						print 'BLOCKLY - doing on select block callback'
+						_blockly_selected_block.on_selected_callback()
 
 			if on_changed_callback:  ## this gets triggered for any change, even moving a block in the workspace.
 				on_changed_callback()
@@ -138,6 +140,9 @@ class BlocklyBlock:
 		self.external_function = None
 		self.external_javascript_function = None
 		self.on_click_callback = None
+		self.on_removed = None  ## when a block is removed from its parent block
+		self.on_plugged = None
+		self.pythonjs_object = None
 
 	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )
@@ -244,6 +249,8 @@ class BlocklyBlock:
 		external_function = self.external_function
 		external_javascript_function = self.external_javascript_function
 		is_statement = self.is_statement
+		on_unplugged = self.on_unplugged
+		on_plugged = self.on_plugged
 
 		with javascript:
 			def init():
@@ -259,6 +266,10 @@ class BlocklyBlock:
 				this.__external_function = external_function
 				this.__external_javascript_function = external_javascript_function
 				this.__is_statement = is_statement
+				this.__on_unplugged = on_unplugged
+				this.__on_plugged = on_plugged
+
+				this.__previous_child_blocks = []	## this is a hackish way to check for when a block is removed
 
 				if color:
 					this.setColour( color )
@@ -312,13 +323,42 @@ class BlocklyBlock:
 
 		with javascript:
 			def generator(block):
+
+				## TODO - hook into Blockly event system to catch when a block is removed ##
+				if block.__previous_child_blocks.length != block.childBlocks_.length:
+					if block.__previous_child_blocks.length > block.childBlocks_.length:
+						for child in block.__previous_child_blocks:
+							#if child not in block.childBlocks_:  ## TODO fix me
+							if block.childBlocks_.indexOf( child ) == -1:
+								print 'UNPLUGGED:', child
+								if child.__on_unplugged:
+									child.__on_unplugged( child.pythonjs_object, block.pythonjs_object, child, block )
+								break
+					else:
+						for child in block.childBlocks_:
+							if block.__previous_child_blocks.indexOf( child ) == -1:
+								print 'PLUGGED:', child
+								if child.__on_plugged:
+									child.__on_plugged( child.pythonjs_object, block.pythonjs_object, child, block )
+								break
+
+
+				block.__previous_child_blocks = block.childBlocks_.slice()
+
+
 				input_values = block.__input_values
 				input_statements = block.__input_statements
 				input_slots = block.__input_slots
 				external_function = block.__external_function
 				external_javascript_function = block.__external_javascript_function
 				is_statement = block.__is_statement
-				dynamic = input_statements.length
+
+				#dynamic = input_statements.length
+				#dynamic = True  ## for now make everything dynamic - TODO check if external_function returns something - this will not work!
+				#dynamic = not external_javascript_function  ## TODO fix "not" in 'with javascript:'
+				dynamic = True
+				if external_javascript_function:
+					dynamic = False
 
 				code = ''
 				input = null  ## TODO fix local scope generator in python_to_pythonjs.py - need to traverse whileloops - the bug pops up here because this is recursive?

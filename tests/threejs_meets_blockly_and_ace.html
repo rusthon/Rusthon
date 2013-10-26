@@ -362,6 +362,28 @@ with javascript:
 
 
 ##########################################################
+block = StatementBlock(color=240, category='Lights')
+block.add_input_statement('color', callback=set_color )
+@block.callback
+def Ambient():
+	return AmbientLight()
+
+block = StatementBlock(color=250, category='Lights')
+block.add_input_statement('color', callback=set_color )
+block.add_input_statement('position', callback=set_vector )
+@block.callback
+def Point(intensity=1.0):
+	light = PointLight( intensity=intensity )
+	light.position.y = 10
+
+block = StatementBlock(color=260, category='Lights')
+block.add_input_statement('color', callback=set_color )
+@block.callback
+def Directional(intensity=1.0):
+	return DirectionalLight( intensity=intensity )
+
+
+##########################################################
 
 block = StatementBlock(color=200, category='Materials')
 block.add_input_statement('color', callback=set_color )
@@ -389,7 +411,24 @@ def Phong():
 	return mat
 
 
+##########################################################
+with javascript:
+	def on_unplugged(object, parent_object, block, parent_block):
+		print 'on-block-unplugged', object #, block, parent_block
+		with python:
+			if not object: return
+			elif object.parent:
+				object.parent.remove( object )
+
+	def on_plugged(object, parent_object, block, parent_block):
+		print 'on-block-plugged', object, parent_object
+		with python:
+			if object and parent_object:
+				parent_object.add( object )
+
 block = StatementBlock(category='Geometry')
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
@@ -405,6 +444,8 @@ def Circle( radius=4, segments=8, start=0, end=1, material=null, child=null ):
 	return mesh
 
 block = StatementBlock(category='Geometry')
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
@@ -418,6 +459,8 @@ def Cube( width=10, height=10, length=10, material=null, child=null ):
 	return mesh
 
 block = StatementBlock(category='Geometry')
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
@@ -431,6 +474,8 @@ def Cylinder( radiusTop=2, radiusBottom=2, height=4, material=null, child=null )
 	return mesh
 
 block = StatementBlock(category='Geometry')
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
@@ -444,6 +489,8 @@ def Text3D( text, size=10, material=null, child=null ):
 	return mesh
 
 block = StatementBlock(category='Geometry')
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
@@ -467,7 +514,7 @@ with javascript:
 block = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
 block.add_input_statement('setClearColor', callback=set_clear_color )
 @block.callback
-def initialize_threejs( antialias=False, webgl=True ):
+def initialize_threejs( antialias=False, webgl=True, default_light=True ):
 	global ren, scn, cam
 
 	div = document.getElementById( 'THREE_container' )
@@ -491,9 +538,10 @@ def initialize_threejs( antialias=False, webgl=True ):
 
 	div.appendChild( ren.domElement )
 
-	light = PointLight()
-	light.position.set( 0, 100, 90 )
-	scn.add( light )
+	if default_light:
+		light = PointLight()
+		light.position.set( 0, 100, 90 )
+		scn.add( light )
 
 	return ren
 
@@ -501,6 +549,7 @@ sblock2 = StatementBlock(color=60, stack_input=True, stack_output=True, category
 @sblock2.slot_callback
 def add_to_scene( object ):
 	scn.add( object )
+	return scn
 
 
 
