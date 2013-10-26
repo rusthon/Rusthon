@@ -258,21 +258,41 @@ class PythonToPythonJS(NodeVisitor):
             )
             pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
 
+    def _check_for_module(self, name):
+        if self._module_path and name+'.module' in os.listdir(self._module_path):
+            return True
+        else:
+            return False
+
+    def _load_module(self, name):
+        f = open( os.path.join(self._module_path, name+'.module'), 'rb' )
+        a = pickle.load( f ); f.close()
+        return a
+
+    def visit_Import(self, node):
+        for alias in node.names:
+            writer.write( '## import: %s :: %s' %(a.name,a.asname) )
+            raise SyntaxError('import with a namespace is not support yet, use "from module import *" instead')
+
     def visit_ImportFrom(self, node):
         if node.module in MINI_STDLIB:
             for n in node.names:
                 if n.name in MINI_STDLIB[ node.module ]:
                     writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] )
 
-        elif self._module_path and node.module+'.module' in os.listdir(self._module_path):
-            f = open( os.path.join(self._module_path, node.module+'.module'), 'rb' )
-            a = pickle.load( f ); f.close()
-            self._classes.update( a['classes'] )
-            self._class_attributes.update( a['class_attributes'] )
-            self._instance_attributes.update( a['instance_attributes'] )
-            self._decorator_class_props.update( a['decorator_class_props'] )
-            self._function_return_types.update( a['function_return_types'] )
-            self._class_parents.update( a['class_parents'] )
+        elif self._check_for_module( node.module ):
+            if node.names[0].name == '*':
+                a = self._load_module( node.module )
+                self._classes.update( a['classes'] )
+                self._class_attributes.update( a['class_attributes'] )
+                self._instance_attributes.update( a['instance_attributes'] )
+                self._decorator_class_props.update( a['decorator_class_props'] )
+                self._function_return_types.update( a['function_return_types'] )
+                self._class_parents.update( a['class_parents'] )
+            else:
+                raise SyntaxError('only "from module import *" is allowed')
+
+            writer.write('## import from: %s :: %s' %(node.module, [ (a.name,a.asname) for a in node.names]))
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
