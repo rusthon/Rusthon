@@ -360,6 +360,10 @@ class PythonToPythonJS(NodeVisitor):
     def visit_In(self, node):
         return ' in '
 
+    def visit_NotIn(self, node):
+        #return ' not in '
+        raise RuntimeError('"not in" is only allowed in if-test: see method - visit_Compare')
+
     def visit_AugAssign(self, node):
         target = self.visit( node.target )
         op = '%s=' %self.visit( node.op )
@@ -596,18 +600,29 @@ class PythonToPythonJS(NodeVisitor):
         left = self.visit(node.left)
         comp = [ left ]
         for i in range( len(node.ops) ):
-            if isinstance(node.ops[i], ast.In):
+            if isinstance(node.ops[i], ast.In) or isinstance(node.ops[i], ast.NotIn):
                 if comp[-1] == left:
                     comp.pop()
                 else:
                     comp.append( ' and ' )
+
+                if isinstance(node.ops[i], ast.NotIn):
+                    comp.append( ' not (')
+
                 a = ( self.visit(node.comparators[i]), left )
-                if self._with_js:  ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
-                    comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, but it works
-                    comp.append( 'Object.hasOwnProperty(%s, "__contains__") and' %a[0])
+                if self._with_js:
+                    ## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
+                    ## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
+                    ## TODO double check this code
+                    comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
+                    comp.append( 'Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
                     comp.append( "%s['__contains__'](%s)" %a )
                 else:
                     comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+
+                if isinstance(node.ops[i], ast.NotIn):
+                    comp.append( ' )')  ## it is not required to enclose NotIn
+
             else:
                 comp.append( self.visit(node.ops[i]) )
                 comp.append( self.visit(node.comparators[i]) )
