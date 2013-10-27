@@ -14,7 +14,7 @@ setup(
     [console_scripts]
     rpythonjs=pythonjs.pythonjs:main
     pythonjs=pythonjs.pythonscript:command
-    python_to_rpythonjs=pythonscript.python_to_pythonjs:command
+    python_to_rpythonjs=pythonjs.python_to_pythonjs:command
     """,
     install_script='bin/pythonjs',
 )

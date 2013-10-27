@@ -189,28 +189,14 @@ def get_attribute(object, attribute):
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
                     var(args)
-                    args = arguments
-                    if args.length > 0:  ## restored old code from before the Oct24th 2013 merge - by brett
-                        # if it's not an array convert to an array
-                        # this happens when a function/method is feed as callback
-                        # of javascript code
-                        if JS("{}.toString.call(args[0]) != '[object Array]'"):
-                            args[0] = [args[0]]
-                        args[0].splice(0, 0, object)
+                    args =  Array.prototype.slice.call(arguments)
+                    if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+                        pass
                     else:
-                        args = [object]
-
-                    ## this needs to be double checked that is can work with the "array builtin" (runtime/builtins.py) that wraps the ArrayBuffer API
-                    ## and will not break the other tests.  The test that this broke was: tests/test_if_contains.html
-                    #args =  Array.prototype.slice.call(arguments)
-                    #if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
-                    #    pass
-                    #else:
-                    #    # in the case where the method was submitted to javascript code
-                    #    # put the arguments in order to be processed by PythonJS
-                    #    args = [args, JSObject()]
-                    #args[0].splice(0, 0, object)
-
+                        # in the case where the method was submitted to javascript code
+                        # put the arguments in order to be processed by PythonJS
+                        args = [args, JSObject()]
+                    args[0].splice(0, 0, object)
                     return attr.apply(None, args)
                 method.is_wrapper = True
                 return method
@@ -225,7 +211,14 @@ def get_attribute(object, attribute):
                 if JS("{}.toString.call(attr) === '[object Function]'"):
                     def method():
                         var(args)
-                        args = arguments
+                        args =  Array.prototype.slice.call(arguments)
+                        if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+                            pass
+                        else:
+                            # in the case where the method was submitted to javascript code
+                            # put the arguments in order to be processed by PythonJS
+                            args = [args, JSObject()]
+
                         args[0].splice(0, 0, object)
                         return attr.apply(None, args)
                     method.is_wrapper = True
@@ -325,40 +318,28 @@ def get_arguments(signature, args, kwargs):
     if kwargs is None:
         kwargs = JSObject()
     out = JSObject()
-    if signature.args.length:
-        argslength = signature.args.length
-    else:
-        argslength = 0
 
+    # if the caller did not specify supplemental positional arguments e.g. *args in the signature
+    # raise an error
     if args.length > signature.args.length:
         if signature.vararg:
             pass
         else:
             print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
-            raise TypeError('function called with too many arguments')
+            raise TypeError("Supplemental positional arguments provided but signature doesn't accept them")
 
     j = 0
-    while j < argslength:
-        arg = JS('signature.args[j]')
-        if kwargs:
-            kwarg = kwargs[arg]
-            #if kwarg is not None:  ## what about cases where the caller wants None
-            if arg in kwargs:       ## Object.hasOwnProperty.call(kwargs,arg) should be used here - TODO
-                out[arg] = kwarg
-            elif j < args.length:
-                out[arg] = args[j]
-            elif arg in signature.kwargs:
-                out[arg] = signature.kwargs[arg]
-            else:
-                print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-                raise TypeError('function called with wrong number of arguments (#1)')
+    while j < signature.args.length:
+        name = signature.args[j]
+        if name in kwargs:
+            # value is provided as a keyword argument
+            out[name] = kwargs[name]
         elif j < args.length:
-            out[arg] = args[j]
-        elif arg in signature.kwargs:
-            out[arg] = signature.kwargs[arg]
-        else:
-            print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature, j
-            raise TypeError('function called with wrong number of arguments (#2)')
+            # value is positional and within the signature length
+            out[name] = args[j]
+        elif name in signature.kwargs:
+            # value is not found before and is in signature.length
+            out[name] = signature.kwargs[name]
         j += 1
 
     args = args.slice(j)  ## note that if this fails because args is not an array, then a pythonjs function was called from javascript in a bad way.
@@ -415,27 +396,3 @@ def isinstance(args, kwargs):
         return False
     return issubclass(create_array(object_class, klass))
 isinstance.pythonscript_function = True
-
-# not part of Python, but it's here because it's easier to write
-# in PythonJS
-
-def json_to_pythonscript(json):
-    var(jstype, item, output)
-    jstype = JS('typeof json')
-    if jstype == 'number':
-        return json
-    if jstype == 'string':
-        return json
-    if JS("Object.prototype.toString.call(json) === '[object Array]'"):
-        output = list.__call__([])
-        var(append)
-        for item in json:
-            append = get_attribute(output, 'append')
-            append([json_to_pythonscript(item)])
-        return output
-    # else it's a map
-    output = dict.__call__([])
-    for key in JS('Object.keys(json)'):
-        set = get_attribute(output, 'set')
-        set([key, json_to_pythonscript(json[key])])
-    return output

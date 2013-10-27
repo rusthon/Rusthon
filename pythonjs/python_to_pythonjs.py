@@ -687,7 +687,7 @@ class PythonToPythonJS(NodeVisitor):
 
             elif '__getattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__getattr__' )
-                return '%s([%s, "%s"])' %(func, node_value, node.attr)
+                return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
             elif typedef.check_for_parent_with( property=node.attr ):
                 parent = typedef.check_for_parent_with( property=node.attr )
@@ -708,7 +708,7 @@ class PythonToPythonJS(NodeVisitor):
             elif typedef.check_for_parent_with( method='__getattr__' ):
                 parent = typedef.check_for_parent_with( method='__getattr__' )
                 func = parent.get_pythonjs_function_name( '__getattr__' )
-                return '%s([%s, "%s"])' %(func, node_value, node.attr)
+                return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
             else:
                 return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
@@ -731,7 +731,7 @@ class PythonToPythonJS(NodeVisitor):
         elif name in self._instances:  ## support x[y] operator overloading
             klass = self._instances[ name ]
             if '__getitem__' in self._classes[ klass ]:
-                return '__%s___getitem__( [%s, %s] )' % (klass, name, self.visit(node.slice))
+                return '__%s___getitem__([%s, %s], JSObject())' % (klass, name, self.visit(node.slice))
             else:
                 return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
                     self.visit(node.value),
@@ -957,12 +957,12 @@ class PythonToPythonJS(NodeVisitor):
                     writer.append('%s = JSArray(%s)' % (args_name, args))
 
                 if node.starargs:
-                    writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
+                    writer.append('%s.push.apply(%s, %s.__dict__.js_object)' % (args_name, args_name, self.visit(node.starargs)))
                 writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
 
                 if node.kwargs:
                     kwargs = self.visit(node.kwargs)
-                    code = "JS('for (var name in %s) { %s[name] = %s[name]; }')" % (kwargs, kwargs_name, kwargs)
+                    code = "JS('for (var name in %s) { %s[name] = %s.__dict__.js_object[name]; }')" % (kwargs, kwargs_name, kwargs)
                     writer.append(code)
 
             if call_has_args_only:
@@ -1074,29 +1074,22 @@ class PythonToPythonJS(NodeVisitor):
 
 
         if not self._with_js and (len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg):
-
-            if False:  ## TODO restore this - disabled by brett on Oct24th 2013
-                ## The test that this broke was: tests/test_if_contains.html
-                ## this breaks the "array builtin" at the bottom of runtime/builtins that wraps the ArrayBuffer and DataView API
-                ## the bug happens when trying to index an item in the array.
-
-                # First check the arguments are well formed 
-                # ie. that this function is not a callback of javascript code
-                writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
-                # XXX: there is bug in the underlying translator preventing me to write the condition
-                # in a more readble way... something to do with brakects...
-                writer.push()
-                #writer.write('pass')  # do nothing if it's not called from javascript
-                writer.write('print "OH SHIT"')  # do nothing if it's not called from javascript
-                writer.pull()
-                writer.write('else:')
-                writer.push()
-                # If it's the case, move use ``arguments`` to ``args`` 
-                writer.write('args = Array.prototype.slice.call(arguments)')
-                # This means you can't pass keyword argument from javascript but we already knew that
-                writer.write('kwargs = JSObject()')
-                writer.pull()
-                # done with pythonjs function used as callback of Python code 
+            # First check the arguments are well formed 
+            # ie. that this function is not a callback of javascript code
+            writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
+            # XXX: there is bug in the underlying translator preventing me to write the condition
+            # in a more readble way... something to do with brakects...
+            writer.push()
+            writer.write('pass')  # do nothing if it's not called from javascript
+            writer.pull()
+            writer.write('else:')
+            writer.push()
+            # If it's the case, move use ``arguments`` to ``args`` 
+            writer.write('args = Array.prototype.slice.call(arguments)')
+            # This means you can't pass keyword argument from javascript but we already knew that
+            writer.write('kwargs = JSObject()')
+            writer.pull()
+            # done with pythonjs function used as callback of Python code 
 
             # new pythonjs' python function arguments handling
             # create the structure representing the functions arguments

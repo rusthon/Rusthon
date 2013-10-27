@@ -1,7 +1,7 @@
-with javascript:
+with javascript:  # should be a pure javascript function
+                  # it emulates jQuery.click behavior
     def call_callback(callback):
-    	with python:
-    		callback('one', 'two', 'three')
+        callback(1,2,3)
 
 
 class SuperClass:

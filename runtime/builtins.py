@@ -468,6 +468,16 @@ class dict:
         out.js_object = __keys
         return out
 
+    def pop(self, key, d=None):
+        v = self.get(key, None)
+        if v is None:
+            return d
+        else:
+            js_object = self.js_object
+            JS("delete js_object[key]")
+            return v
+        
+
     def values(self):
         __dict = self.js_object
         __keys = JS('Object.keys(__dict)')
@@ -574,7 +584,7 @@ class array:
         else:
             self.length = 0
             self.bytes = 0
-
+        
         size = self.bytes
         buff = JS('new ArrayBuffer(size)')
         self.dataview = JS('new DataView(buff)')
@@ -683,7 +693,7 @@ class array:
 
     def to_array(self):
         arr = JSArray()
-        i = 0;
+        i = 0
         while i < self.length:
             item = self[i]
             JS('arr.push( item )')
@@ -706,3 +716,58 @@ class array:
             string += char
             i += 1
         return string
+
+
+# JSON stuff
+
+def _to_pythonjs(json):
+    var(jstype, item, output)
+    jstype = JS('typeof json')
+    if jstype == 'number':
+        return json
+    if jstype == 'string':
+        return json
+    if JS("Object.prototype.toString.call(json) === '[object Array]'"):
+        output = list()
+        raw = list()
+        raw.js_object = json
+        var(append)
+        append = output.append
+        for item in raw:
+            append(_to_pythonjs(item))
+        return output
+    # else it's a map
+    output = dict()
+    var(set)
+    set = output.set
+    keys = list()
+    keys.js_object = JS('Object.keys(json)')
+    for key in keys:
+        set(key, _to_pythonjs(JS("json[key]")))
+    return output
+
+def json_to_pythonjs(json):
+    return _to_pythonjs(JSON.parse(json))
+
+# inverse function
+
+def _to_json(pythonjs):
+    if isinstance(pythonjs, list):
+        r = JSArray()
+        for i in pythonjs:
+            r.push(_to_json(i))
+    elif isinstance(pythonjs, dict):
+        var(r)
+        r = JSObject()
+        for key in pythonjs.keys():
+            value = _to_json(pythonjs.get(key))
+            key = _to_json(key)
+            with javascript:
+                r[key] = value
+    else:
+        r = pythonjs
+    return r
+
+
+def pythonjs_to_json(pythonjs):
+    return JSON.stringify(_to_json(pythonjs))

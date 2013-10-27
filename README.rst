@@ -18,11 +18,11 @@ Getting Started - Stable Release
 
 First::
 
-   sudo pip install pythonscripttranslator
+   sudo pip install PythonJS
 
 Write some Python, and then run::
 
-   pythonscript < myapp.py > myapp.js
+   pythonjs < myapp.py > myapp.js
 
 Then copy myapp.js and the runtime pythonscript.js into your project.
 
@@ -49,6 +49,7 @@ Get Source Code::
 Install Tornado for Python3::
 
 	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
+	tar xvf tornado-3.1.1.tar.gz
 	cd tornado-3.1.1
 	python3 setup.py build
 	sudo python3 setup.py install
@@ -177,27 +178,6 @@ The "with javascript:" statement can be used to mark a block of code as being di
 ---------------
 
 PythonJS JavaScript Callbacks
----------------
+------------------------------
 
-You can write functions in PythonJS that can be called from JavaScript by nesting the function declaration under a "with javascript:" block.  If inside the function you need to switch back into Python mode, you can use "with python:"  The following example shows how this works.
-
-Method Call Example::
-
-	with javascript:
-		def call_callback(callback):
-			with python:
-				callback('one', 'two', 'three')
-
-
-	class SuperClass:
-
-		def callback(self, foo, bar, baz):
-			print foo
-			print bar
-			print baz
-			print "viva l'algerie"
-
-
-	def test():
-		call_callback(SuperClass().callback)
-
+PythonJS functions can be used as callbacks of Javascript code.

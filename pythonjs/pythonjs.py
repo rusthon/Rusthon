@@ -51,7 +51,7 @@ class JSGenerator(NodeVisitor):
     def visit_ExceptHandler(self, node):
         out = ''
         if node.type:
-            out = 'if (__exception__ == %s || isinstance([__exception__, %s])) {\n' % (self.visit(node.type), self.visit(node.type))
+            out = 'if (__exception__ == %s || isinstance([__exception__, %s], Object())) {\n' % (self.visit(node.type), self.visit(node.type))
         if node.name:
             out += 'var %s = __exception__;\n' % self.visit(node.name)
         out += '\n'.join(map(self.visit, node.body)) + '\n'
@@ -183,7 +183,10 @@ class JSGenerator(NodeVisitor):
         return 'while(%s) {\n%s\n}' % (self.visit(node.test), body)
 
     def visit_Str(self, node):
-        return '"%s"' % node.s.replace('\n', '\\n')
+        s = node.s.replace('\n', '\\n')
+        if '"' in s:
+            return "'%s'" % s
+        return '"%s"' % s
 
     def visit_BinOp(self, node):
         left = self.visit(node.left)

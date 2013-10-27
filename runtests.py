@@ -9,7 +9,7 @@ from pythonjs.pythonscript import main as pythonjs
 
 ROOT = os.path.join(os.path.dirname(__file__), 'unittests')
 
-with open('pythonscript.js') as f:
+with open('pythonjs.js') as f:
     PYTHONJS = f.read()
 
 MOCK = """
