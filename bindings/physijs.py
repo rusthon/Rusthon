@@ -2,6 +2,8 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+from three import *
+
 def Physijs_initialize( worker='/libs/physijs/physijs_worker.js', ammo='/libs/ammo/ammo.js'):
 	with javascript:
 		Physijs.scripts.worker = worker
@@ -188,7 +190,8 @@ class PhysijsScene( _Eventable ):
 		with javascript:
 			self[...].simulate( time_step, max_substeps )
 
-class PhysijsMesh:
+#class PhysijsMesh( Object3D, _Eventable ):  ## TODO, check why this is broken - bug is in: get_attribute
+class PhysijsMesh( _Eventable, Object3D ):
 	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
 		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
 		print 'Physijs.mat', mat

@@ -14,9 +14,16 @@ print 'init physijs'
 Physijs_initialize()
 print 'OK'
 
-def update():
-	print 'updating...'
-	scn.simulate( 1.0/30.0 )
+with javascript:
+	def on_update():
+		with python:
+			scn.simulate( time_step=1.0/60.0 )
+
+	def on_collision(other, linear_vel, angular_vel):
+		print 'on-collision', this, other
+		print linear_vel, angular_vel
+		this.material.color.setRGB(1.0, 0, 0)
+
 
 def test():
 	global ren, scn, cam, mesh
@@ -30,7 +37,7 @@ def test():
 	scn = PhysijsScene()
 	print 'scene', scn
 	scn.setGravity( y=-30 )
-	scn.addEventListener('update', update)
+	scn.addEventListener('update', on_update)
 
 
 	cam = PerspectiveCamera( 45, width/height, 0.01, 10000)
@@ -48,14 +55,17 @@ def test():
 	geo = CubeGeometry( 50, 10, 50 )  ## ground
 	mat = MeshBasicMaterial( color={'red':0.0, 'green':0.8, 'blue':0.0} )
 	mesh = PhysijsBoxMesh( geo, mat, mass=0, friction=0.8, restitution=0.4 )  ## no mass means not moveable?
+	mesh.position.y = -10
 	scn.add( mesh )
 
 	print 'creating box'
 	geo = CubeGeometry( 5, 5, 5 )  ## test cube
 	mat = MeshBasicMaterial( color={'red':0.8, 'green':0.6, 'blue':0.0} )
 	mesh = PhysijsBoxMesh( geo, mat, mass=0.5, friction=0.4, restitution=0.6 )
-	with javascript:
-		mesh[...].position.set(0, 30, 0)
+	mesh.position.y = 30
+
+	mesh.addEventListener('collision', on_collision)
+
 	scn.add( mesh )
 
 	print 'OK...'
