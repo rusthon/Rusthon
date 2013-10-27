@@ -930,7 +930,8 @@ class PythonToPythonJS(NodeVisitor):
                         if node.args[0].id in self._instances:
                             gset = self._global_typed_lists[ node.func.value.id ]
                             gset.add( self._instances[node.args[0].id])
-                            assert len(gset) == 1
+                            if len(gset) != 1:
+                                raise SyntaxError('global lists can only contain one type: instance "%s" is different' %node.args[0].id)
                         else:
                             raise SyntaxError('global lists can only contain one type: instance "%s" is unknown' %node.args[0].id)
 

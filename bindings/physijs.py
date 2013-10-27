@@ -190,14 +190,36 @@ class PhysijsScene( _Eventable ):
 		with javascript:
 			self[...].simulate( time_step, max_substeps )
 
+#########################################################
+
+
+
 #class PhysijsMesh( Object3D, _Eventable ):  ## TODO, check why this is broken - bug is in: get_attribute
 class PhysijsMesh( _Eventable, Object3D ):
-	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
+	def __init__(self, geo, material, type=None, mass=1.0, friction=0.8, restitution=0.2 ):
 		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
-		print 'Physijs.mat', mat
 		self.material = mat  ## note this is unwrapped
 		with javascript:
-			self[...] = new( Physijs.Mesh(geo[...], mat, mass) )
+			if type is None:  ## print is this allowed?
+				self[...] = new( Physijs.Mesh(geo[...], mat, mass) )
+			elif type == 'plane':
+				self[...] = new( Physijs.PlaneMesh(geo[...], mat, mass) )
+			elif type == 'box':
+				self[...] = new( Physijs.BoxMesh(geo[...], mat, mass) )
+			elif type == 'sphere':
+				self[...] = new( Physijs.SphereMesh(geo[...], material[...], mass) )
+			elif type == 'cylinder':
+				self[...] = new( Physijs.CylinderMesh(geo[...], material[...], mass) )
+			elif type == 'capsule':
+				self[...] = new( Physijs.CapsuleMesh(geo[...], material[...], mass) )
+			elif type == 'cone':
+				self[...] = new( Physijs.ConeMesh(geo[...], material[...], mass) )
+			elif type == 'concave':
+				self[...] = new( Physijs.ConcaveMesh(geo[...], material[...], mass) )
+			elif type == 'convex':
+				self[...] = new( Physijs.ConvexMesh(geo[...], material[...], mass) )
+			else:
+				print 'error: invalid type->' + type
 
 	def applyCentralImpulse(self, x=0, y=0, z=0):
 		with javascript:
@@ -260,65 +282,14 @@ class PhysijsMesh( _Eventable, Object3D ):
 			self[...].setCcdSweptSphereRadius( radius )
 
 
-class PhysijsPlaneMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
-		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
-		print 'Physijs.mat', mat
-		self.material = mat  ## note this is unwrapped
-
-		with javascript:
-			self[...] = new( Physijs.PlaneMesh(geo[...], mat, mass) )
-
-class PhysijsHeightfieldMesh( PhysijsMesh ):
+class HeightfieldMesh( PhysijsMesh ):  ## keep this as a special case?
 	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2, xdiv=16, ydiv=16 ):
 		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
-		print 'Physijs.mat', mat
 		self.material = mat  ## note this is unwrapped
-
 		with javascript:
 			self[...] = new( Physijs.HeightfieldMesh(geo[...], mat, mass, xdiv, ydiv) )
 
 
-class PhysijsBoxMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
-		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
-		print 'Physijs.mat', mat
-		self.material = mat  ## note this is unwrapped
-		with javascript:
-			self[...] = new( Physijs.BoxMesh(geo[...], mat, mass) )
-
-
-class PhysijsSphereMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
-		with javascript:
-			self[...] = new( Physijs.SphereMesh(geo[...], material[...], mass) )
-
-
-class PhysijsCylinderMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
-		with javascript:
-			self[...] = new( Physijs.CylinderMesh(geo[...], material[...], mass) )
-
-class PhysijsCapsuleMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
-		with javascript:
-			self[...] = new( Physijs.CapsuleMesh(geo[...], material[...], mass) )
-
-class PhysijsConeMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
-		with javascript:
-			self[...] = new( Physijs.ConeMesh(geo[...], material[...], mass) )
-
-class PhysijsConcaveMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
-		with javascript:
-			self[...] = new( Physijs.ConcaveMesh(geo[...], material[...], mass) )
-
-
-class PhysijsConvexMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
-		with javascript:
-			self[...] = new( Physijs.ConvexMesh(geo[...], material[...], mass) )
 
 
 class Vehicle:

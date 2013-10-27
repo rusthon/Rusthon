@@ -54,14 +54,14 @@ def test():
 	print 'creating ground'
 	geo = CubeGeometry( 50, 10, 50 )  ## ground
 	mat = MeshBasicMaterial( color={'red':0.0, 'green':0.8, 'blue':0.0} )
-	mesh = PhysijsBoxMesh( geo, mat, mass=0, friction=0.8, restitution=0.4 )  ## no mass means not moveable?
+	mesh = PhysijsMesh( geo, mat, type='box', mass=0, friction=0.8, restitution=0.4 ) # zero mass is static
 	mesh.position.y = -10
 	scn.add( mesh )
 
 	print 'creating box'
 	geo = CubeGeometry( 5, 5, 5 )  ## test cube
 	mat = MeshBasicMaterial( color={'red':0.8, 'green':0.6, 'blue':0.0} )
-	mesh = PhysijsBoxMesh( geo, mat, mass=0.5, friction=0.4, restitution=0.6 )
+	mesh = PhysijsMesh( geo, mat, type='box', mass=0.5, friction=0.4, restitution=0.6 )
 	mesh.position.y = 30
 
 	mesh.addEventListener('collision', on_collision)
