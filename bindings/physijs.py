@@ -193,3 +193,131 @@ class PhysijsMesh:
 			self[...].applyForce( {x:x, y:y, z:z}, {x:offset_x, y:offset_y, z:offset_z} )
 
 
+	def getAngularVelocity(self):
+		with javascript:
+			return self[...].getAngularVelocity()  ## TODO, wrap this in a Vector3
+
+	def setAngularVelocity(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setAngularVelocity( {x:x, y:y, z:z} )
+
+
+	def getLinearVelocity(self):
+		with javascript:
+			return self[...].getLinearVelocity()  ## TODO, wrap this in a Vector3
+
+	def setLinearVelocity(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setLinearVelocity( {x:x, y:y, z:z} )
+
+	def setAngularFactor(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setAngularFactor( {x:x, y:y, z:z} )
+
+	def setLinearFactor(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setLinearFactor( {x:x, y:y, z:z} )
+
+	## slightly different API - TODO test if this works
+	def setLinearDamping(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setDamping( {x:x, y:y, z:z}, None )
+	## slightly different API - TODO test if this works
+	def setAngularDamping(self, x=0, y=0, z=0):
+		with javascript:
+			self[...].setDamping( None, {x:x, y:y, z:z} )
+
+
+	def setCcdMotionThreshold(self, threshold):
+		with javascript:
+			self[...].setCcdMotionThreshold( threshold )
+
+	def setCcdSweptSphereRadius(self, radius):
+		with javascript:
+			self[...].setCcdSweptSphereRadius( radius )
+
+
+class PhysijsPlaneMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.PlaneMesh(geo[...], material[...], mass) )
+
+class PhysijsHeightfieldMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass, xdiv, ydiv ):
+		with javascript:
+			self[...] = new( Physijs.HeightfieldMesh(geo[...], material[...], mass, xdiv, ydiv) )
+
+
+class PhysijsBoxMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.BoxMesh(geo[...], material[...], mass) )
+
+
+class PhysijsSphereMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.SphereMesh(geo[...], material[...], mass) )
+
+
+class PhysijsCylinderMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.CylinderMesh(geo[...], material[...], mass) )
+
+class PhysijsCapsuleMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.CapsuleMesh(geo[...], material[...], mass) )
+
+class PhysijsConeMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.ConeMesh(geo[...], material[...], mass) )
+
+class PhysijsConcaveMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.ConcaveMesh(geo[...], material[...], mass) )
+
+
+class PhysijsConvexMesh( PhysijsMesh ):
+	def __init__(self, geo, material, mass ):
+		with javascript:
+			self[...] = new( Physijs.ConvexMesh(geo[...], material[...], mass) )
+
+
+class Vehicle:
+	def __init__(self, mesh, tuning ):
+		with javascript:
+			self[...] = new( Physijs.Vehicle(mesh[...], tuning) )
+
+	def addWheel(self, geo, material, connection_point, direction, axle, rest_length, radius, is_front, tuning):
+		with javascript:
+			self[...].addWheel(
+				geo[...], 
+				material[...], 
+				connection_point[...], 
+				direction[...], 
+				axle[...], 
+				rest_length, 
+				radius, 
+				is_front, 
+				tuning
+			)
+
+
+	def setSteering(self, amount, wheel):
+		with javascript:
+			self[...].setSteering( amount, wheel[...] )
+
+	def setBrake(self, amount, wheel):
+		with javascript:
+			self[...].setBrake( amount, wheel[...] )
+
+	def applyEngineForce(self, amount, wheel):
+		with javascript:
+			self[...].applyEngineForce( amount, wheel[...] )
+
+
+## TODO Physijs.VehicleTuning
