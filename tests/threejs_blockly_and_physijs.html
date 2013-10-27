@@ -217,7 +217,7 @@ def stop_animation():
 	global _ANIMATE
 	_ANIMATE = False
 
-_SIM = True
+_SIM = False
 def start_sim():
 	global _SIM
 	_SIM = True
@@ -294,7 +294,9 @@ with javascript:
 			vec.y = ob.y
 			vec.z = ob.z
 
-		mesh.__dirtyPosition = true
+		mesh.__dirtyPosition = True
+		mesh.__dirtyRotation = True
+		mesh.__dirtyScale = True  ## is this required?
 
 	def set_color( mat, color, hex ):
 		if typeof( hex ) == 'number':
@@ -368,6 +370,16 @@ with javascript:
 			if object and parent_object:
 				parent_object.add( object )
 
+	def call_apply_impulse( mesh, method, vec ):
+		#method(vec) ## fails because world is lost, because of the calling context "this" is not bound,
+		## should the blockly wrapper be changed to method.bind(mesh) to return a callback wrapper here?
+		mesh.applyCentralImpulse( vec )
+
+	def call_apply_force( mesh, method, vec ):
+		mesh.applyCentralForce( vec )
+
+	def call_angular( mesh, method, vec ):
+		mesh.setAngularVelocity( vec )
 
 
 block = StatementBlock(category='Geometry')
@@ -376,6 +388,10 @@ block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
+block.add_input_statement('applyCentralImpulse',	callback=call_apply_impulse )
+block.add_input_statement('applyCentralForce',		callback=call_apply_force )
+block.add_input_statement('setAngularVelocity',		callback=call_angular )
+
 @block.callback
 def Cube( width=10, height=10, length=10, mass=0, friction=0.8, restitution=0.4, material=null, child=null ):
 	geo = CubeGeometry( width, height, length )
@@ -391,6 +407,10 @@ block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
+block.add_input_statement('applyCentralImpulse',	callback=call_apply_impulse )
+block.add_input_statement('applyCentralForce',		callback=call_apply_force )
+block.add_input_statement('setAngularVelocity',		callback=call_angular )
+
 @block.callback
 def Cylinder( radiusTop=2, radiusBottom=2, height=10, friction=0.8, restitution=0.4, material=null, child=null ):
 	geo = CylinderGeometry( radiusTop, radiusBottom, height )
@@ -407,6 +427,11 @@ block.on_unplugged = on_unplugged
 block.add_input_statement('position', callback=set_vector )
 block.add_input_statement('rotation', callback=set_vector )
 block.add_input_statement('scale',    callback=set_vector )
+
+block.add_input_statement('applyCentralImpulse',	callback=call_apply_impulse )
+block.add_input_statement('applyCentralForce',		callback=call_apply_force )
+block.add_input_statement('setAngularVelocity',		callback=call_angular )
+
 @block.callback
 def Icosahedron( radius=3.0, detail=2, friction=0.8, restitution=0.4, material=null, child=null ):
 	geo = IcosahedronGeometry( radius, detail )
@@ -423,9 +448,9 @@ with javascript:
 		meth( color )
 
 	def on_physijs_update():
-		print 'physics update'
 		with python:
-			scn.simulate( time_step=1.0/60.0 )
+			if _SIM:
+				scn.simulate( time_step=1.0/60.0 )
 
 block = StatementBlock(color=90, stack_input=False, stack_output=True, category='Scene')
 block.add_input_statement('setClearColor', callback=set_clear_color )
