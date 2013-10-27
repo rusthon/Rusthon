@@ -560,14 +560,14 @@ class PythonToPythonJS(NodeVisitor):
                 #return '%s( %s, %s )' %(op, left_operand, right_operand)
                 if op.decode('utf-8') in self._custom_operators:  ## swap name to python function
                     op = self._custom_operators[ op.decode('utf-8') ]
-                return '%s( [%s, %s] )' %(op, left_operand, right_operand)
+                return '%s( [%s, %s], JSObject() )' %(op, left_operand, right_operand)
 
         if isinstance(node.left, Name):
             typedef = self.get_typedef( node.left )
             if typedef and op in typedef.operators:
                 func = typedef.operators[ op ]
                 node.operator_overloading = func
-                return '''JS('%s( [%s, %s] )')''' %(func, left, right)  ## TODO double check this without wrapping in JS()
+                return '''JS('%s( [%s, %s], JSObject() )')''' %(func, left, right)  ## TODO double check this without wrapping in JS()
 
         return '%s %s %s' % (left, op, right)
 
