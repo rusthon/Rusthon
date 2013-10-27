@@ -10,7 +10,8 @@ from websocket import *
 def on_json_message( ob ):
 	print 'on json message:', ob
 	with javascript:
-		if instanceof( ob, String ):
+		#if instanceof( ob, String ):
+		if typeof(ob) == 'string':
 			print 'got string from server', ob
 		elif 'eval' in ob:
 			print 'got eval from server', ob

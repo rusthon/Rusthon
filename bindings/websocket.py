@@ -13,10 +13,13 @@ class websocket:
 		if not on_close:
 			on_close = on_close_default
 
+		on_message = self.on_message
+
 		with javascript:
 			ws = new( WebSocket(addr) )
 			ws.binaryType = 'arraybuffer'
-			ws.onmessage = lambda evt: self.__class__.__dict__.on_message([self,evt])
+			#ws.onmessage = lambda evt: self.__class__.__dict__.on_message([self,evt])
+			ws.onmessage = on_message
 			ws.onopen = on_open
 			ws.onclose = on_close
 			self[...] = ws
