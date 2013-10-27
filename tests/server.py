@@ -240,6 +240,7 @@ class MainHandler( tornado.web.RequestHandler ):
 
 LIBS = dict(
 	three = {'three.min.js' : os.path.expanduser( '~/three.js/build/three.min.js')},
+	#three = {'three.min.js' : os.path.expanduser( '~/Physijs/examples/js/three.min.js')},
 	tween = {'tween.min.js' : os.path.expanduser( '~/tween.js/build/tween.min.js')},
 	fonts = {
 		'gentilis_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/gentilis_bold.typeface.js'),
@@ -260,6 +261,14 @@ LIBS = dict(
 		'mode-javascript.js':os.path.expanduser( '~/ace-builds/src-noconflict/mode-javascript.js'),
 		'worker-javascript.js':os.path.expanduser( '~/ace-builds/src-noconflict/worker-javascript.js'),
 	},
+	physijs = {
+		'physi.js' : os.path.expanduser( '~/Physijs/physi.js'),
+		'physijs_worker.js' : os.path.expanduser( '~/Physijs/physijs_worker.js'),
+	},
+	ammo = {
+		'ammo.js' : os.path.expanduser( '~/Physijs/examples/js/ammo.js'),
+	},
+
 )
 
 class LibsHandler( tornado.web.RequestHandler ):

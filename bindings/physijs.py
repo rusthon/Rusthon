@@ -2,6 +2,22 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+def Physijs_initialize( worker='/libs/physijs/physijs_worker.js', ammo='/libs/ammo/ammo.js'):
+	with javascript:
+		Physijs.scripts.worker = worker
+		Physijs.scripts.ammo = ammo
+
+
+def PhysijsMaterial( material, friction=0.8, restitution=0.2):  ## TODO should this be wrapped in its own class?
+	print 'converting material to physijs material', material
+	with javascript:
+		return Physijs.createMaterial( material[...], friction, restitution )
+
+class _Eventable:
+	def addEventListener(self, name, callback):
+		with javascript:
+			self[...].addEventListener( name, callback )
+
 class PointConstraint:
 	def __init__(self, object1, object2, position=None):
 		'''
@@ -138,7 +154,7 @@ class DOFConstraint:
 			self[...].configureAngularMotor( which, low, high, velocity, max_force )
 
 
-class PhysijsScene:
+class PhysijsScene( _Eventable ):
 	def __init__(self, time_step=0.016666666666666666, rate_limit=True ):
 		with javascript:
 			self[...] = new( Physijs.Scene({fixedTimeStep:time_step, rateLimit:rate_limit}) )
@@ -152,29 +168,33 @@ class PhysijsScene:
 			self[...].removeConstraint( cns[...] )
 
 	def add(self, ob):
+		'phyisjs-SCENE.add', ob
 		with javascript:
-			self[...].add( ob )
+			self[...].add( ob[...] )
 
 	def remove(self, ob):
 		with javascript:
-			self[...].remove( ob )
+			self[...].remove( ob[...] )
 
 	def setFixedTimeStep(self, t):
 		with javascript:
 			self[...].setFixedTimeStep( t )
 
-	def setGravity(self, g):
+	def setGravity(self, x=0, y=0, z=0):
 		with javascript:
-			self[...].setGravity( g )
+			self[...].setGravity( {x:x, y:y, z:z} )
 
-	def simulate(self, time_step, max_substeps):
+	def simulate(self, time_step=None, max_substeps=1):
 		with javascript:
 			self[...].simulate( time_step, max_substeps )
 
 class PhysijsMesh:
-	def __init__(self, geo, material, mass ):
+	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
+		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
+		print 'Physijs.mat', mat
+		self.material = mat  ## note this is unwrapped
 		with javascript:
-			self[...] = new( Physijs.Mesh(geo[...], material[...], mass) )
+			self[...] = new( Physijs.Mesh(geo[...], mat, mass) )
 
 	def applyCentralImpulse(self, x=0, y=0, z=0):
 		with javascript:
@@ -238,24 +258,35 @@ class PhysijsMesh:
 
 
 class PhysijsPlaneMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
+	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
+		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
+		print 'Physijs.mat', mat
+		self.material = mat  ## note this is unwrapped
+
 		with javascript:
-			self[...] = new( Physijs.PlaneMesh(geo[...], material[...], mass) )
+			self[...] = new( Physijs.PlaneMesh(geo[...], mat, mass) )
 
 class PhysijsHeightfieldMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass, xdiv, ydiv ):
+	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2, xdiv=16, ydiv=16 ):
+		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
+		print 'Physijs.mat', mat
+		self.material = mat  ## note this is unwrapped
+
 		with javascript:
-			self[...] = new( Physijs.HeightfieldMesh(geo[...], material[...], mass, xdiv, ydiv) )
+			self[...] = new( Physijs.HeightfieldMesh(geo[...], mat, mass, xdiv, ydiv) )
 
 
 class PhysijsBoxMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
+	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
+		mat = PhysijsMaterial( material, friction=friction, restitution=restitution )
+		print 'Physijs.mat', mat
+		self.material = mat  ## note this is unwrapped
 		with javascript:
-			self[...] = new( Physijs.BoxMesh(geo[...], material[...], mass) )
+			self[...] = new( Physijs.BoxMesh(geo[...], mat, mass) )
 
 
 class PhysijsSphereMesh( PhysijsMesh ):
-	def __init__(self, geo, material, mass ):
+	def __init__(self, geo, material, mass=1.0, friction=0.8, restitution=0.2 ):
 		with javascript:
 			self[...] = new( Physijs.SphereMesh(geo[...], material[...], mass) )
 
