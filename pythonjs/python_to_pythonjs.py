@@ -673,7 +673,7 @@ class PythonToPythonJS(NodeVisitor):
                 getter = typedef.properties[ node.attr ]['get']
                 if getter in self._function_return_types:
                     node.returns_type = self._function_return_types[getter]
-                return '%s( [%s] )' %(getter, node_value)
+                return '%s( [%s], JSObject() )' %(getter, node_value)
 
             elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
                 ## This optimization breaks when a subclass redefines a class attribute,
@@ -694,7 +694,7 @@ class PythonToPythonJS(NodeVisitor):
                 getter = parent.properties[ node.attr ]['get']
                 if getter in self._function_return_types:
                     node.returns_type = self._function_return_types[getter]
-                return '%s( [%s] )' %(getter, node_value)
+                return '%s( [%s], JSObject() )' %(getter, node_value)
 
             elif typedef.check_for_parent_with( class_attribute=node.attr ):
                 #return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## get_attribute is broken with grandparent class attributes
@@ -775,7 +775,7 @@ class PythonToPythonJS(NodeVisitor):
                 writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
             elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
                 setter = typedef.properties[ target.attr ]['set']
-                writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
+                writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
             elif typedef and target.attr in typedef.class_attributes:
                 writer.write( '''%s['__class__']['__dict__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
             elif typedef and target.attr in typedef.attributes:
@@ -787,16 +787,16 @@ class PythonToPythonJS(NodeVisitor):
                 parent_setattr = typedef.check_for_parent_with( method='__setattr__' )
                 if parent_prop and 'set' in parent_prop.properties[target.attr]:
                     setter = parent_prop.properties[target.attr]['set']
-                    writer.write( '%s( [%s, %s] )' %(setter, target_value, self.visit(node.value)) )
+                    writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
                 elif parent_classattr:
                     writer.write( "window['__%s_attrs']['%s'] = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
                 elif parent_setattr:
                     func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
-                    writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+                    writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
 
                 elif '__setattr__' in typedef.methods:
                     func = typedef.get_pythonjs_function_name( '__setattr__' )
-                    writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+                    writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
 
                 else:
                     code = 'set_attribute(%s, "%s", %s)' % (
@@ -809,7 +809,7 @@ class PythonToPythonJS(NodeVisitor):
             elif typedef and '__setattr__' in typedef.methods:
                 func = typedef.get_pythonjs_function_name( '__setattr__' )
                 log('__setattr__ in instance typedef.methods - func:%s target_value:%s target_attr:%s' %(func, target_value, target_attr))
-                writer.write( '%s([%s, "%s", %s])' %(func, target_value, target.attr, self.visit(node.value)) )
+                writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
 
 
             else:
@@ -1167,7 +1167,7 @@ class PythonToPythonJS(NodeVisitor):
                     ## because we need get_attribute(f,'__call__') to dynamically bind "this"
                     writer.write( '%s=%s'%(dec,node.name) )
                 else:  ## TODO fix with-javascript decorators
-                    writer.write( '%s = get_attribute(%s,"__call__")( [%s] )' %(node.name, dec, node.name))
+                    writer.write( '%s = get_attribute(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
 
         ## Gotcha, this broke calling a "with javascript:" defined function from pythonjs, 
         ## because get_attribute thought it was dealing with a pythonjs function and was
@@ -1181,7 +1181,7 @@ class PythonToPythonJS(NodeVisitor):
         # apply decorators
         for decorator in decorators:
             assert not self._with_js
-            writer.write('%s = get_attribute(%s,"__call__")( [%s] )' % (node.name, self.visit(decorator), node.name))
+            writer.write('%s = get_attribute(%s,"__call__")( [%s], {} )' % (node.name, self.visit(decorator), node.name))
 
     def visit_Continue(self, node):
         if self._with_js:

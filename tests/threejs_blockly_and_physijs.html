@@ -8,12 +8,16 @@
 	h3 {
 		font-family:arial;
 	}
+	#blocklyDiv {
+		height: 1000px;
+		width: 1100px;
+	}
     #right_view { 
     	position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
-        left: 650px;
+        left: 1120px;
     }
 
 </style>
@@ -236,7 +240,7 @@ def stop_sim():
 
 
 
-<div id="blocklyDiv" style="height: 660px; width: 630px;"></div>
+<div id="blocklyDiv"></div>
 
 
 <div id="right_view">
@@ -412,7 +416,7 @@ block.add_input_statement('applyCentralForce',		callback=call_apply_force )
 block.add_input_statement('setAngularVelocity',		callback=call_angular )
 
 @block.callback
-def Cylinder( radiusTop=2, radiusBottom=2, height=10, friction=0.8, restitution=0.4, material=null, child=null ):
+def Cylinder( radiusTop=2, radiusBottom=2, height=10, mass=0, friction=0.8, restitution=0.4, material=null, child=null ):
 	geo = CylinderGeometry( radiusTop, radiusBottom, height )
 	if not material: material = MeshLambertMaterial()
 	mesh = PhysijsMesh( geo, material, type='cylinder', mass=mass, friction=friction, restitution=restitution )
@@ -433,7 +437,7 @@ block.add_input_statement('applyCentralForce',		callback=call_apply_force )
 block.add_input_statement('setAngularVelocity',		callback=call_angular )
 
 @block.callback
-def Icosahedron( radius=3.0, detail=2, friction=0.8, restitution=0.4, material=null, child=null ):
+def Icosahedron( radius=3.0, detail=2, mass=0, friction=0.8, restitution=0.4, material=null, child=null ):
 	geo = IcosahedronGeometry( radius, detail )
 	if not material: material = MeshLambertMaterial()
 	mesh = PhysijsMesh( geo, material, type='sphere', mass=mass, friction=friction, restitution=restitution )
@@ -464,7 +468,7 @@ def initialize_threejs( gravity=-30, antialias=False, webgl=True, default_light=
 
 	Physijs_initialize()
 
-	width = 700; height = 600
+	width = 900; height = 960
 
 	scn = PhysijsScene()
 	scn.setGravity( y=gravity )
@@ -475,6 +479,8 @@ def initialize_threejs( gravity=-30, antialias=False, webgl=True, default_light=
 	cam.position.x = 5
 	cam.position.y = 10
 	cam.position.z = 60
+	cam.lookAt( Vector3(0,0,0) )
+
 	if webgl:
 		print 'using webgl'
 		ren = WebGLRenderer( antialias=antialias )
@@ -498,7 +504,8 @@ def initialize_threejs( gravity=-30, antialias=False, webgl=True, default_light=
 sblock2 = StatementBlock(color=60, stack_input=True, stack_output=True, category='Scene')
 @sblock2.slot_callback
 def add_to_scene( object ):
-	scn.add( object )
+	if object:
+		scn.add( object )
 	return scn
 
 

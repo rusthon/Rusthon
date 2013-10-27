@@ -52,18 +52,22 @@ def test():
 
 	print 'testing B...'
 	b = B()
+	print 'created B - OK'
 	print( b.x )
 	print( b.y )
 	print( b.z )
-
+	print 'testing b.x=100'
 	b.x = 100
 	print( b.x )
+	print 'OK'
 
 	print 'testing B as unknown type'
 	c = unknown( b )
 	print( c.x )
 	print( c.y )
 	print( c.z )
+	print 'unknown get_attribute is OK'
+	
 	c.x = 101	## TODO fix setters on unknown types
 	print( c.x )
 
