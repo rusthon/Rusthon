@@ -162,6 +162,8 @@ class BlocklyBlock:
 		with javascript:
 			arr = jsfunc.args_signature
 			defs = jsfunc.kwargs_signature
+		print 'jsfunc', jsfunc
+		print 'arr', arr
 		for i in range(arr.length):
 			name = arr[i]
 			if defs[name] is null:  ## special case: null creates a non-dynamic "slot" input statement
@@ -420,12 +422,12 @@ class BlocklyBlock:
 					## TODO what about pure javascript functions?
 					if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
 						print 'is_statement with parent block - OK'
-						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
 						print code
 
 					elif block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
 						print 'with parent block - OK'
-						code += external_javascript_function + '( [' + ','.join(args) + '] )'  ## calling from js a pyjs function
+						code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
 						print code
 
 				else:  ## TODO this should be a simple series of statements?

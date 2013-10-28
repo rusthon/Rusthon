@@ -462,11 +462,14 @@ class dict:
             JS('__dict[key] = value')
 
     def keys(self):
-        __dict = self.js_object
-        __keys = JS('Object.keys(__dict)')  ## the problem with this is that keys are coerced into strings
-        out = list()
-        out.js_object = __keys
-        return out
+        #__dict = self.js_object
+        #__keys = JS('Object.keys(__dict)')  ## the problem with this is that keys are coerced into strings
+        #out = list( js_object=__keys )  ## some bug in the translator prevents this
+        #out.js_object = __keys  ## this style is deprecated
+        #return out
+        with javascript:
+            arr = Object.keys( self[...] )
+        return list( js_object=arr )
 
     def pop(self, key, d=None):
         v = self.get(key, None)

@@ -138,24 +138,29 @@ myblock1 = StatementBlock('myblock1', title='My Block1', stack_input=True, categ
 myblock1.set_external_function('func1')
 myblock1.add_input_value('a', type='Number')
 myblock1.add_input_value('b', type='String')
-
+print( myblock1 )
 def func1(a,b):
 	print 'a', a
 	print 'b', b
 
-myblock2 = ValueBlock('myblock2', output='Number')
+print 'testing myblock2'
+#myblock2 = ValueBlock('myblock2', output='Number')
+myblock2 = StatementBlock('myblock2')
+print 'myblock2', myblock2
 @myblock2.callback
 def my_extern_func(x,y,z, w=None):
 	print 'hello extern func'
 	return x+y+z
 
+print 'OK'
 def show_code():
 	with javascript:
 		code = Blockly.Python.workspaceToCode()
 		print( code )
 
+print 'init blockly'
 initialize_blockly( on_changed_callback=show_code )
-
+print 'DONE'
 </script>
 
 </body>

@@ -952,7 +952,11 @@ class PythonToPythonJS(NodeVisitor):
                 self.identifier += 1
 
                 if name in ('list', 'tuple'):
-                    writer.append( '%s = JS("%s.__dict__.js_object")' % (args_name, args))
+                    #writer.append( '%s = JS("%s.__dict__.js_object")' % (args_name, args))
+                    if args:
+                        writer.append( '%s = %s.__dict__.js_object' % (args_name, args))  ## test this
+                    else:
+                        writer.append( '%s = []' %args_name )
                 else:
                     writer.append('%s = JSArray(%s)' % (args_name, args))
 
@@ -972,7 +976,10 @@ class PythonToPythonJS(NodeVisitor):
                 if name == 'dict':
                     return 'get_attribute(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
                 elif name in ('list', 'tuple'):
-                    return 'get_attribute(%s, "__call__")([], JSObject(js_object=%s))' % (name, args_name)
+                    if len(node.args):
+                        return 'get_attribute(%s, "__call__")([], JSObject(js_object=%s))' % (name, args_name)
+                    else:
+                        return 'get_attribute(%s, "__call__")([], %s)' % (name, kwargs_name)
                 else:
                     return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 
