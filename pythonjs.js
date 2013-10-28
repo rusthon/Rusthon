@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sun Oct 27 19:53:20 2013
+// PythonScript Runtime - regenerated on: Mon Oct 28 16:21:46 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -307,14 +307,14 @@ base = iter[base];
 var getter;
 getter = _get_upstream_property(base, attribute);
 if(getter) {
-return getter([object]);
+return getter([object], Object());
 }
 
 base = backup;
 }
 
 if("__getattr__"  in  __dict__) {
-return __dict__["__getattr__"]([object, attribute]);
+return __dict__["__getattr__"]([object, attribute], Object());
 }
 
 var iter = bases;
@@ -324,7 +324,7 @@ base = iter[base];
 var f;
 f = _get_upstream_attribute(base, "__getattr__");
 if(f) {
-return f([object, attribute]);
+return f([object, attribute], Object());
 }
 
 base = backup;

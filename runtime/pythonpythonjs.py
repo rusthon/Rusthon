@@ -144,7 +144,7 @@ def get_attribute(object, attribute):
         if attr:
             __get__ = get_attribute(attr, '__get__')  ## what are data descriptors?
             if __get__:
-                return __get__([object, __class__])
+                return __get__([object, __class__])  ## TODO - we need JSObject here?
         bases = __class__.bases
         for i in jsrange(bases.length):
             var(base, attr)
@@ -153,7 +153,7 @@ def get_attribute(object, attribute):
             if attr:
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
-                    return __get__([object, __class__])
+                    return __get__([object, __class__])  ## TODO - we need JSObject here?
     # Check object.__dict__ for attr and its bases if it a class
     # in the case if the descriptor is found return it
     __dict__ = object.__dict__
@@ -162,7 +162,7 @@ def get_attribute(object, attribute):
         attr = __dict__[attribute]
         if attr != None:
             if bases:
-                __get__ = get_attribute(attr, '__get__')
+                __get__ = get_attribute(attr, '__get__')  ## TODO - we need JSObject here?
                 if __get__:
                     return __get__([None, __class__])
             return attr
@@ -175,7 +175,7 @@ def get_attribute(object, attribute):
             if attr:
                 __get__ = get_attribute(attr, '__get__')
                 if __get__:
-                    return __get__([object, __class__])
+                    return __get__([object, __class__])  ## TODO - we need JSObject here?
 
     if __class__:
 
@@ -230,16 +230,16 @@ def get_attribute(object, attribute):
             var( getter )
             getter = _get_upstream_property(base, attribute)
             if getter:
-                return getter( [object] )
+                return getter( [object], JSObject() )
 
         if '__getattr__' in __dict__:
-            return __dict__['__getattr__']( [object, attribute])
+            return __dict__['__getattr__']( [object, attribute], JSObject() )
 
         for base in bases:
             var( f )
             f = _get_upstream_attribute(base, '__getattr__')
             if f:
-                return f( [object, attribute] )
+                return f( [object, attribute], JSObject() )
 
 
     if JS('object instanceof Array'):
