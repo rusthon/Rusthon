@@ -70,7 +70,15 @@ def animate():
 		x = m.quaternion.x
 		y = m.quaternion.y
 		z = m.quaternion.z
-		m.material.color.setRGB( x,y,z )
+
+		#m.material.color.setRGB( x,y,z )  ## this is broken because get_attribute is broken  - TODO fix get_attribute
+
+		## workaround by static typing,
+		## but this is not a good workaround because it is impractical to always declare the type
+		## of the material this way.
+		mat = m.material
+		assert isinstance(mat, MeshPhongMaterial)
+		mat.color.setRGB( x,y,z )
 
 	ren.render( scn, cam )
 
