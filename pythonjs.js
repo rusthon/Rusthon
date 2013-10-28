@@ -1,8 +1,4 @@
-
-
-
-
-
+// PythonScript Runtime - regenerated on: Sun Oct 27 19:53:20 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -2296,7 +2292,7 @@ __dict___setitem__.kwargs_signature = {  };
 __dict___setitem__.pythonscript_function = true;
 window["__dict_attrs"]["__setitem__"] = __dict___setitem__;
 var __dict_keys = function(args, kwargs) {
-var __dict, __keys, out;
+var arr;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2310,11 +2306,11 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__dict_keys";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-__dict = self["__dict__"]["js_object"];
-__keys = Object.keys(__dict);
-out = get_attribute(list, "__call__")(create_array(), Object());
-set_attribute(out, "js_object", __keys);
-return out;
+arr = Object.keys( self["wrapped"] );
+var __args_0, __kwargs_0;
+__args_0 = [];
+__kwargs_0 = {"js_object": arr};
+return get_attribute(list, "__call__")([], __kwargs_0);
 }
 window["__dict_keys"] = __dict_keys 
 

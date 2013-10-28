@@ -162,8 +162,6 @@ class BlocklyBlock:
 		with javascript:
 			arr = jsfunc.args_signature
 			defs = jsfunc.kwargs_signature
-		print 'jsfunc', jsfunc
-		print 'arr', arr
 		for i in range(arr.length):
 			name = arr[i]
 			if defs[name] is null:  ## special case: null creates a non-dynamic "slot" input statement
@@ -186,6 +184,7 @@ class BlocklyBlock:
 		self.on_click_callback = callback
 
 	def set_external_function(self, func_name, javascript=False):
+		print 'setting external function:', func_name
 		if javascript: self.external_javascript_function = func_name
 		else: self.external_function = func_name
 		if not self.title: self.title = func_name
@@ -446,10 +445,18 @@ class BlocklyBlock:
 				else:
 					return [ code, Blockly.Python.ORDER_NONE ]  ## return Array
 
-			Blockly.Python[ block_name ] = generator
-			Blockly.JavaScript[ block_name ] = generator
+			if Blockly.Python:
+				Blockly.Python[ block_name ] = generator
+			else:
+				print 'WARNING - Blockly.Python has not been loaded'
 
+			if Blockly.JavaScript:
+				Blockly.JavaScript[ block_name ] = generator
+			else:
+				print 'WARNING - Blockly.JavaScript has not been loaded'
 
+			if Blockly.Python is None and Blockly.JavaScript is None:
+				print 'ERROR - no blockly languages have been loaded.'
 
 class StatementBlock( BlocklyBlock ):
 	'''
