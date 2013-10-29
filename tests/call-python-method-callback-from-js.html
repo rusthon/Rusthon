@@ -26,6 +26,12 @@ with javascript:
 		ob.callback('four', 'five', 'six')
 		print 'instance.name=', ob.name
 
+	def call_foo_bar( pyob ):
+		pyob.foo( 1,2,3 )
+		pyob.bar( 4,5,6 )
+
+
+
 class SuperClass:
 	def __init__(self, name):
 		self.name = name
@@ -42,6 +48,18 @@ class SuperClass:
 		print x,y,z
 		print self.name
 
+
+class jsfriendly:
+	def __init__(self):
+		with self as jsobject:
+			foo
+			bar
+
+	def foo(self, a,b,c):
+		print a+b+c
+
+	def bar(self, a,b,c):
+		print a*b*c
 
 def test():
 	a = SuperClass( 'instance1' )
@@ -69,7 +87,9 @@ def test():
 	print '- a.name is not correct anymore in: `print instance.name=, ob.name`'
 	call_instance_methods_without_with_python( a )  ## this fails to see the new a.name
 
-
+	print 'testing with self as jsobject'
+	f = jsfriendly()
+	call_foo_bar( f )
 
 </script>
 

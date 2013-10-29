@@ -7,15 +7,19 @@
 with javascript:
 
 	def call_callback( pyfunc ):
-		#pyfunc( 1,2,3 )  ## this is not correct
-		#pyfunc( [1,2,3] ) ## this works but is not clear we are dealing with a pythonjs function
-		with python:
-			pyfunc( 1,2,3 )
+		#with python:  ## this style is not required anymore
+		#	pyfunc( 1,2,3 )
 
-def callback(foo, bar, baz):
+		print 'testing simple call'
+		pyfunc( 1,2,3 )
+		print 'testing call with optional keyword arg'
+		pyfunc( 1,2,3, 'keyword arg works OK' )
+
+def callback(foo, bar, baz, kw='my default'):
 	print foo
 	print bar
 	print baz
+	print kw
 
 def test():
 	call_callback(callback)

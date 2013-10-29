@@ -177,7 +177,180 @@ The "with javascript:" statement can be used to mark a block of code as being di
 
 ---------------
 
-PythonJS JavaScript Callbacks
+Calling PythonJS Functions from JavaScript
 ------------------------------
 
-PythonJS functions can be used as callbacks of Javascript code.
+PythonJS functions can be used as callbacks in Javascript code, there are no special calling conventions that you need to worry about.  Simply define a function in PythonJS and call it from JavaScript.  Note that if your PythonJS function uses keyword arguments, you can use them as a normal positional arguments.
+
+Example::
+
+	# PythonJS
+	def my_pyfunction( a,b,c, optional='some default'):
+		print a,b,c, optional
+
+	// javascript
+	my_pyfunction( 1,2,3, 'my kwarg' );
+
+
+---------------
+
+Calling PythonJS Methods from JavaScript
+------------------------------
+
+Calling PythonJS methods is also simple, you just need to create an instance of the class in PythonJS and then pass the method to a JavaScript function, or assign it to a new variable that the JavaScript code will use.  PythonJS takes care of wrapping the method for you so that "self" is bound to the method, and is callable from JavaScript.
+
+Example::
+
+	// javascript
+	function js_call_method( method_callback ) {
+		method_callback( 1,2,3 )
+	}
+
+	# PythonJS
+	class A:
+		def my_method(self, a,b,c):
+			print self, a,b,c
+			self.a = a
+			self.b = b
+			self.c = c
+
+	a = A()
+	js_call_method( a.my_method )
+
+
+---------------
+
+Passing PythonJS Instances to JavaScript
+------------------------------
+
+If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callback from JavaScript you can do this now using our hijacked with-syntax.  The format is: `with x as jsobject:` followed by the method names you wish to call from JavaScript.
+
+Example::
+
+	// javascript
+	function js_function( pyob ) {
+		pyob.foo( 1,2,3 )
+		pyob.bar( 4,5,6 )
+	}
+
+	# PythonJS
+	class A:
+		def foo(self, a,b,c):
+			print a+b+c
+		def bar(self, a,b,c):
+			print a*b*c
+
+	a = A()
+	with a as jsobject:
+		foo
+		bar
+
+	js_function( a )
+
+Above is just an example, in practice, declaring which methods you want to export for each instance after creation is too verbose.  Instead you should use "with self as jsobject:" in __init__ to export the methods you want to call from JavaScript.  The memory overhead for exporting all methods for every instance of a class is small, it only caches the methods on the top-level wrapper object for each instance.
+
+Example::
+
+	class A:
+		__init__(self):
+			with self as jsobject:
+				foo
+				bar
+
+
+---------------
+
+Define JavaScript Prototypes from PythonJS
+------------------------------
+
+If you are going beyond simple integration with an external JavaScript library, and perhaps want to change the way it works on a deeper level, you can modify JavaScript prototypes from PythonJS using some special syntax.
+
+Example::
+
+	with javascript:
+
+		@String.prototype.upper
+		def func():
+			return this.toUpperCase()
+
+		@String.prototype.lower
+		def func():
+			return this.toLowerCase()
+
+		@String.prototype.index
+		def func(a):
+			return this.indexOf(a)
+
+The above example shows how we modify the String type in JavaScript to act more like a Python string type.  The functions must be defined inside a "with javascript:" block, and the decorator format is: `[class name].prototype.[function name]`
+
+
+---------------
+
+Making PythonJS Wrappers for JavaScript Libraries
+------------------------------
+
+The above techniques provide all the tools you will need to interact with JavaScript code, and easily write wrapper code in PythonJS.  The last tool you will need, is a standard way of creating JavaScript objects, storing a reference to the instance, and later passing the instance to wrapped JavaScript function.  In JavaScript objects are created with the `new` keyword, in PythonJS you can use the `new()` function instead.  To store an instance created by `new()`, you should assign it to `self` like this: `self[...] = new( SomeJavaScriptClass() )`.  
+
+If you have never seen `...` syntax in Python it is the rarely used Ellipsis syntax, we have hijacked it in PythonJS as a special case to assign something to a hidden attribute.  The builtin types: tuple, list, dict, etc, are wrappers that internally use JavaScript Arrays or Objects, to get to these internal objects you use the Ellipsis syntax.  The following example shows how the THREE.js binding wraps the Vector3 object and combines operator overloading.
+
+Example::
+
+	class Vector3:
+		def __init__(self, x=0, y=0, z=0, object=None ):
+			if object:
+				self[...] = object
+			else:
+				with javascript:
+					self[...] = new(THREE.Vector3(x,y,z))
+
+		@property
+		def x(self):
+			with javascript: return self[...].x
+		@x.setter
+		def x(self, value):
+			with javascript: self[...].x = value
+
+		@property
+		def y(self):
+			with javascript: return self[...].y
+		@y.setter
+		def y(self, value):
+			with javascript: self[...].y = value
+
+		@property
+		def z(self):
+			with javascript: return self[...].z
+		@z.setter
+		def z(self, value):
+			with javascript: self[...].z = value
+
+		def set(self, x,y,z):
+			self[...].set(x,y,z)
+
+		def add(self, other):
+			assert isinstance(other, Vector3)
+			self.set( self.x+other.x, self.y+other.y, self.z+other.z )
+			return self
+
+		def __add__(self, other):
+			if instanceof(other, Object):
+				assert isinstance(other, Vector3)
+				return Vector3( self.x+other.x, self.y+other.y, self.z+other.z )
+			else:
+				return Vector3( self.x+other, self.y+other, self.z+other )
+
+		def __iadd__(self, other):
+			if instanceof(other, Object):
+				self.add( other )
+			else:
+				self.addScalar( other )
+
+		def addScalar(self, s):
+			self.set( self.x+s, self.y+s, self.z+s )
+			return self
+
+		def sub(self, other):
+			assert isinstance(other, Vector3)
+			self.set( self.x-other.x, self.y-other.y, self.z-other.z )
+			return self
+
