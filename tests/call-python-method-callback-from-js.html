@@ -6,21 +6,69 @@
 
 with javascript:
 	def call_callback(callback):
+		print 'testing with python: style...'
 		with python:
 			callback('one', 'two', 'three')
 
+		print 'testing callback directly...'
+		callback('four', 'five', 'six')
+
+	def call_instance_methods( ob ):
+		#ob.some_method( 1,2,3 )  ## this will not work, "with python:" is required
+
+		with python:
+			ob.some_method( 1,2,3 )
+			ob.callback('four', 'five', 'six')
+
+
+	def call_instance_methods_without_with_python( ob ):
+		ob.some_method( 1,2,3 )
+		ob.callback('four', 'five', 'six')
+		print 'instance.name=', ob.name
 
 class SuperClass:
+	def __init__(self, name):
+		self.name = name
 
 	def callback(self, foo, bar, baz):
 		print foo
 		print bar
 		print baz
 		print "viva l'algerie"
+		print self.name
+
+	def some_method(self, x,y,z):
+		print 'some_method'
+		print x,y,z
+		print self.name
 
 
 def test():
-	call_callback(SuperClass().callback)
+	a = SuperClass( 'instance1' )
+	call_callback(a.callback)
+
+	b = SuperClass( 'instance2' )
+	call_callback(b.callback)
+
+	call_instance_methods( a )
+
+	print 'testing "with a as jsobject:'
+
+	with a as jsobject:
+		callback
+		some_method
+		name ## this only works properly for constant readonly attributes
+
+	call_instance_methods_without_with_python( a )
+
+	## GOTCHA!
+	## this could be inlined as "a['__dict__']['name'] = ..." so we can not rely
+	## on set_attribute to do some magic to update both the wrapper and its __dict__
+	a.name = 'CHANGED'  ## this will not work properly
+
+	print '- a.name is not correct anymore in: `print instance.name=, ob.name`'
+	call_instance_methods_without_with_python( a )  ## this fails to see the new a.name
+
 
 
 </script>
