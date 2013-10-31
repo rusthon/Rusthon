@@ -68,6 +68,27 @@ class Point:
 
 
 class DisplayObject:
+	def set_pressed_callback(self, callback, touch=True):
+		print 'setting pressed callback', callback
+		with javascript:
+			self[...].mousedown = callback
+			if touch:
+				self[...].touchstart = callback
+
+	def set_released_callback(self, callback, touch=True, outside=True):
+		with javascript:
+			self[...].mouseup = callback
+			if touch:
+				self[...].touchend = callback
+			if outside:
+				self[...].mouseupoutside = callback
+
+	def set_drag_callback(self, callback, touch=True):
+		with javascript:
+			self[...].mousemove = callback
+			if touch:
+				self[...].touchmove = callback
+
 	@property
 	def position(self):
 		with javascript: ptr = self[...].position
@@ -198,9 +219,9 @@ class DisplayObjectContainer( DisplayObject ):
 
 
 class Stage( DisplayObjectContainer ):
-	def __init__(self):
+	def __init__(self, backgroundColor=0, interactive=False ):
 		with javascript:
-			self[...] = new( PIXI.Stage() )
+			self[...] = new( PIXI.Stage(backgroundColor, interactive) )
 
 	def setBackgroundColor(self, color):
 		with javascript:
