@@ -239,8 +239,13 @@ class MainHandler( tornado.web.RequestHandler ):
 
 
 LIBS = dict(
-	three = {'three.min.js' : os.path.expanduser( '~/three.js/build/three.min.js')},
-	#three = {'three.min.js' : os.path.expanduser( '~/Physijs/examples/js/three.min.js')},
+	three = {
+		'three.min.js' : os.path.expanduser( '~/three.js/build/three.min.js'),
+		'FlyControls.js' : os.path.expanduser( '~/three.js/examples/js/controls/FlyControls.js'),
+		'OrbitControls.js' : os.path.expanduser( '~/three.js/examples/js/controls/OrbitControls.js'),
+		'TrackballControls.js' : os.path.expanduser( '~/three.js/examples/js/controls/TrackballControls.js'),
+
+	},
 	tween = {'tween.min.js' : os.path.expanduser( '~/tween.js/build/tween.min.js')},
 	fonts = {
 		'gentilis_bold.typeface.js' : os.path.expanduser( '~/three.js/examples/fonts/gentilis_bold.typeface.js'),
