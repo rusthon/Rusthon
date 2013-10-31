@@ -273,6 +273,9 @@ LIBS = dict(
 	ammo = {
 		'ammo.js' : os.path.expanduser( '~/Physijs/examples/js/ammo.js'),
 	},
+	pixi = {
+		'pixi.js' : os.path.expanduser( '~/pixi.js/bin/pixi.js'),	
+	}
 
 )
 
