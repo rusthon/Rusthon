@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Mon Oct 28 16:21:46 2013
+// PythonScript Runtime - regenerated on: Thu Oct 31 12:27:11 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -463,7 +463,6 @@ object[attribute] = value;
 }
 window["set_attribute"] = set_attribute 
 
-set_attribute.pythonscript_function = true;
 var get_arguments = function(signature, args, kwargs) {
 "Based on ``signature`` and ``args``, ``kwargs`` parameters retrieve\n    the actual parameters.\n\n    This will set default keyword arguments and retrieve positional arguments\n    in kwargs if their called as such";
 if(args === undefined) {
@@ -518,77 +517,7 @@ out[signature.varkwarg] = kwargs;
 
 return out;
 }
-window["get_arguments"] = get_arguments 
-
-get_arguments.pythonscript_function = true;
-var type = function(args, kwargs) {
-var class_name, parents, attrs;
-class_name = args[0];
-parents = args[1];
-attrs = args[2];
-return create_class(class_name, parents, attrs);
-}
-window["type"] = type 
-
-type.pythonscript_function = true;
-var getattr = function(args, kwargs) {
-var object, attribute;
-object = args[0];
-attribute = args[1];
-return get_attribute(object, attribute);
-}
-window["getattr"] = getattr 
-
-getattr.pythonscript_function = true;
-var setattr = function(args, kwargs) {
-var object, attribute, value;
-object = args[0];
-attribute = args[1];
-value = args[2];
-return set_attribute(object, attribute, value);
-}
-window["setattr"] = setattr 
-
-setattr.pythonscript_function = true;
-var issubclass = function(args, kwargs) {
-var C, B, base;
-C = args[0];
-B = args[1];
-if(C === B) {
-return true;
-}
-
-var iter = jsrange(C.bases.length);
-for (var index=0; index < iter.length; index++) {
-var backup = index;
-index = iter[index];
-base = C.bases[index];
-if(issubclass([base, B], Object())) {
-return true;
-}
-
-index = backup;
-}
-
-return false;
-}
-window["issubclass"] = issubclass 
-
-issubclass.pythonscript_function = true;
-var isinstance = function(args, kwargs) {
-var object_class, object, klass;
-object = args[0];
-klass = args[1];
-object_class = object.__class__;
-if(object_class === undefined) {
-return false;
-}
-
-return issubclass(create_array(object_class, klass));
-}
-window["isinstance"] = isinstance 
-
-isinstance.pythonscript_function = true;
+window["get_arguments"] = get_arguments
 _PythonJS_UID = 0;
 var _JSNew = function(T) {
 return new T;
@@ -598,6 +527,152 @@ window["_JSNew"] = _JSNew
 _JSNew.NAME = "_JSNew";
 _JSNew.args_signature = ["T"];
 _JSNew.kwargs_signature = {};
+var type = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": {"bases": undefined, "class_dict": undefined}, "args": create_array("ob_or_class_name", "bases", "class_dict")};
+signature["function_name"] = "type";
+arguments = get_arguments(signature, args, kwargs);
+var ob_or_class_name = arguments['ob_or_class_name'];
+var bases = arguments['bases'];
+var class_dict = arguments['class_dict'];
+"\n    type(object) -> the object's type\n    type(name, bases, dict) -> a new type  ## broken? - TODO test\n    ";
+if(bases === undefined && class_dict === undefined) {
+return ob_or_class_name.__class__;
+}
+else {
+return create_class( ob_or_class_name,bases,class_dict );
+}
+
+}
+window["type"] = type 
+
+type.NAME = "type";
+type.args_signature = ["ob_or_class_name", "bases", "class_dict"];
+type.kwargs_signature = { bases:undefined,class_dict:undefined };
+type.pythonscript_function = true;
+var getattr = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("ob", "attr")};
+signature["function_name"] = "getattr";
+arguments = get_arguments(signature, args, kwargs);
+var ob = arguments['ob'];
+var attr = arguments['attr'];
+return get_attribute( ob,attr );
+}
+window["getattr"] = getattr 
+
+getattr.NAME = "getattr";
+getattr.args_signature = ["ob", "attr"];
+getattr.kwargs_signature = {  };
+getattr.pythonscript_function = true;
+var setattr = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("ob", "attr", "value")};
+signature["function_name"] = "setattr";
+arguments = get_arguments(signature, args, kwargs);
+var ob = arguments['ob'];
+var attr = arguments['attr'];
+var value = arguments['value'];
+return set_attribute( ob,attr,value );
+}
+window["setattr"] = setattr 
+
+setattr.NAME = "setattr";
+setattr.args_signature = ["ob", "attr", "value"];
+setattr.kwargs_signature = {  };
+setattr.pythonscript_function = true;
+var issubclass = function(args, kwargs) {
+var i, bases;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("C", "B")};
+signature["function_name"] = "issubclass";
+arguments = get_arguments(signature, args, kwargs);
+var C = arguments['C'];
+var B = arguments['B'];
+if(C === B) {
+return true;
+}
+
+bases = C.bases;
+i = 0;
+while(i < get_attribute(bases, "length")) {
+if(get_attribute(issubclass, "__call__")([get_attribute(bases, "__getitem__")([i], Object()), B], Object())) {
+return true;
+}
+
+i += 1
+}
+return false;
+}
+window["issubclass"] = issubclass 
+
+issubclass.NAME = "issubclass";
+issubclass.args_signature = ["C", "B"];
+issubclass.kwargs_signature = {  };
+issubclass.pythonscript_function = true;
+var isinstance = function(args, kwargs) {
+var ob_class;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("ob", "klass")};
+signature["function_name"] = "isinstance";
+arguments = get_arguments(signature, args, kwargs);
+var ob = arguments['ob'];
+var klass = arguments['klass'];
+ob_class = ob.__class__;
+if(ob_class === undefined) {
+return false;
+}
+else {
+return get_attribute(issubclass, "__call__")([ob_class, klass], Object());
+}
+
+}
+window["isinstance"] = isinstance 
+
+isinstance.NAME = "isinstance";
+isinstance.args_signature = ["ob", "klass"];
+isinstance.kwargs_signature = {  };
+isinstance.pythonscript_function = true;
 var int = function(args, kwargs) {
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/

@@ -36,6 +36,26 @@ def test():
 	if isinstance(y,X):
 		print 'class Y subclass OK'
 
+	print 'testing with javascript:'
+	with javascript:
+		if isinstance( a, list):
+			print 'list OK'
+
+		if isinstance( b, dict ):
+			print 'dict OK'
+
+		if isinstance( c, tuple ):
+			print 'tuple OK'
+
+		if isinstance(x,X):
+			print 'class X OK'
+
+		if isinstance(y,Y):
+			print 'class Y OK'
+
+		if isinstance(y,X):
+			print 'class Y subclass OK'
+
 </script>
 <button onclick="test()">click me</button>
 </body>

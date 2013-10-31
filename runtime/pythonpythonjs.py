@@ -303,7 +303,8 @@ def set_attribute(object, attribute, value):
         __dict__[attribute] = value
     else:
         object[attribute] = value
-set_attribute.pythonscript_function = True
+
+##set_attribute.pythonscript_function = True  ## let this get wrapped
 
 
 def get_arguments(signature, args, kwargs):
@@ -349,50 +350,6 @@ def get_arguments(signature, args, kwargs):
     if signature.varkwarg:
         out[signature.varkwarg] = kwargs
     return out
-get_arguments.pythonscript_function = True
 
-def type(args, kwargs):
-    var(class_name, parents, attrs)
-    class_name = args[0]
-    parents = args[1]
-    attrs = args[2]
-    return create_class(class_name, parents, attrs)
-type.pythonscript_function = True
+##get_arguments.pythonscript_function = True  ## this was not required
 
-def getattr(args, kwargs):
-    var(object, attribute)
-    object = args[0]
-    attribute = args[1]
-    return get_attribute(object, attribute)
-getattr.pythonscript_function = True
-
-def setattr(args, kwargs):
-    var(object, attribute, value)
-    object = args[0]
-    attribute = args[1]
-    value = args[2]
-    return set_attribute(object, attribute, value)
-setattr.pythonscript_function = True
-
-def issubclass(args, kwargs):
-    var(C, B, base)
-    C = args[0]
-    B = args[1]
-    if C is B:
-        return True
-    for index in jsrange(C.bases.length):
-        base = C.bases[index]
-        if issubclass([base, B], JSObject()):
-            return True
-    return False
-issubclass.pythonscript_function = True
-
-def isinstance(args, kwargs):
-    var(object_class, object, klass)
-    object = args[0]
-    klass = args[1]
-    object_class = object.__class__
-    if object_class is None:
-        return False
-    return issubclass(create_array(object_class, klass))
-isinstance.pythonscript_function = True

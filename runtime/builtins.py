@@ -1,20 +1,49 @@
 _PythonJS_UID = 0
 
-
 with javascript:
     def _JSNew(T):
         return JS("new T")
 
-    ## This can not be trusted because Object.hasOwnProperty will fail on an empty object with
-    ## TypeError: Cannot convert object to primitive value
-    ## It was not a good idea in the first place to try to use Javascript's "in" operator to
-    ## test if something had an attribute, because if something was a string that throws an error
-    ## note: Object.hasOwnProperty always returns false with strings and numbers.
-    #def _create_empty_object(arr):
-    #        o = Object.create(null)
-    #        for i in arr:
-    #            o[ i ] = True
-    #        return o
+
+def type(ob_or_class_name, bases=None, class_dict=None):
+    '''
+    type(object) -> the object's type
+    type(name, bases, dict) -> a new type  ## broken? - TODO test
+    '''
+    with javascript:
+        if bases is None and class_dict is None:
+            return ob_or_class_name.__class__
+        else:
+            return create_class(ob_or_class_name, bases, class_dict)  ## TODO rename create_class to _pyjs_create_class
+
+def getattr(ob, attr):
+    with javascript:
+        return get_attribute(ob, attr)  ## TODO rename to _pyjs_get_attribute
+
+def setattr(ob, attr, value):
+    with javascript:
+        return set_attribute(ob, attr, value)
+
+def issubclass(C, B):
+    if C is B:
+        return True
+    with javascript: bases = C.bases  ## js-array
+    i = 0
+    while i < bases.length:
+        if issubclass( bases[i], B ):
+            return True
+        i += 1
+    return False
+
+def isinstance( ob, klass):
+    with javascript:
+        ob_class = ob.__class__
+    if ob_class is None:
+        return False
+    else:
+        return issubclass( ob_class, klass )
+
+
 
 def int(a):
     with javascript:
