@@ -1,0 +1,50 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/pixi/pixi.js"></script>
+<script src="bindings/pixi.py"></script>
+
+<script type="text/python" closure="false">
+from pixi import *
+
+def test():
+	global stage, renderer, sprite
+
+	div = document.createElement( 'div' )
+	document.body.appendChild(div)
+
+	renderer = WebGLRenderer()
+	div.appendChild(renderer.view);
+
+	stage = Stage()
+
+	tex = Texture( fromImage='media/trashbody.png' )
+	sprite = Sprite( texture=tex )
+	sprite.anchor.x = 0.5
+	sprite.anchor.y = 0.5
+	sprite.position.x = 200
+	sprite.position.y = 150
+
+	stage.addChild( sprite )
+
+	animate()
+
+
+
+
+def animate():
+	requestAnimationFrame( animate )
+
+	#sprite.rotation += 0.1  ## TODO fix inplace assignment and properties
+	sprite.rotation = sprite.rotation + 0.1
+	print sprite.rotation
+
+	renderer.render(stage)
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

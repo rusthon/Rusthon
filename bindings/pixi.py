@@ -2,12 +2,40 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
-class WebGLRenderer:
+class Texture:
+	def __init__(self, baseTexture=None, crop=None, fromImage=None, crossOrigin=False, fromFrame=None, fromCanvas=None):
+		with javascript:
+			if baseTexture:
+				self[...] = new( PIXI.Texture(baseTexture[...], crop) )
+			elif fromCanvas:
+				self[...] = PIXI.Texture.fromCanvas( fromCanvas )
+			elif fromFrame:
+				self[...] = PIXI.Texture.fromFrame( fromFrame )
+			elif fromImage:
+				self[...] = PIXI.Texture.fromImage( fromImage, crossOrigin )
+
+	def setFrame(self, rect):
+		with javascript:
+			self[...].setFrame( rect[...] )
+
+
+class _Renderer:
+	@property
+	def view(self):
+		with javascript:
+			return self[...].view
+
+	def render(self, stage):
+		with javascript:
+			self[...].render( stage[...] )
+
+
+class WebGLRenderer( _Renderer ):
 	def __init__(self, width=800, height=600, view=None, transparent=False, antialias=False):
 		with javascript:
 			self[...] = new( PIXI.WebGLRenderer(width, height, view, transparent, antialias) )
 
-class CanvasRenderer:
+class CanvasRenderer( _Renderer ):
 	def __init__(self, width=800, height=600, view=None, transparent=False, antialias=False):
 		with javascript:
 			self[...] = new( PIXI.CanvasRenderer(width, height, view, transparent, antialias) )
@@ -60,7 +88,7 @@ class DisplayObject:
 	def rotation(self):
 		with javascript: return self[...].rotation
 	@rotation.setter
-	def interactive(self, value):
+	def rotation(self, value):
 		with javascript: self[...].rotation = value
 
 
@@ -184,10 +212,14 @@ class Stage( DisplayObjectContainer ):
 
 
 class Sprite( DisplayObjectContainer ):
-	def __init__(self, texture=None, url=None, blendMode='NORMAL'):
+	def __init__(self, texture=None, blendMode='NORMAL'):
 		with javascript:
-			if url: texture = PIXI.Texture.fromImage( url )
+			## texture can be low level PIXI.Texture or high level PythonJS Texture
+			if isinstance( texture, Texture ):
+				texture = texture[...]
+
 			self[...] = new( PIXI.Sprite(texture) )
+
 			if blendMode == 'NORMAL':
 				self[...].blendMode = PIXI.blendModes.NORMAL
 			elif blendMode == 'SCREEN':
@@ -217,10 +249,18 @@ class Sprite( DisplayObjectContainer ):
 		with javascript: ptr = self[...].anchor
 		return Point( object=ptr )
 
+
 class MovieClip( Sprite ):
 	def __init__(self, textures=None, animationSpeed=1.0, loop=True, onComplete=None):
+		with javascript: arr = []
+		for tex in textures:
+			if isinstance(tex, Texture):
+				arr.push( tex[...] )
+			else:
+				arr.push( tex )
+
 		with javascript:
-			self[...] = new( PIXI.MovieClip( textures[...] ) )
+			self[...] = new( PIXI.MovieClip( arr ) )
 			self[...].animationSpeed = animationSpeed
 			self[...].loop = loop
 			self[...].onComplete = onComplete
