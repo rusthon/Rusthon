@@ -2,9 +2,247 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+Blockly.SCALE = 1.0
+
+with javascript:
+	def on_mouse_wheel(e):
+		delta = 0
+		if e.wheelDelta:  ## WebKit, Opera, IE9
+			delta = e.wheelDelta
+		elif e.detail:   ## firefox
+			delta = -e.detail
+
+		e.preventDefault()
+		e.stopPropagation()
+		if Blockly.SCALE >= 0.25 and Blockly.SCALE <= 1.0:
+			Blockly.SCALE += delta * 0.001
+
+		if Blockly.SCALE < 0.25:
+			Blockly.SCALE = 0.25
+		elif Blockly.SCALE > 1.0:
+			Blockly.SCALE = 1.0
+
+		#Blockly.fireUiEvent(window, 'resize')  ## this will not fire if blockly is inside a div with absolute height and width
+		Blockly.mainWorkspace.setMetrics()  ## forces a direct redraw
+
+def init_node_blockly( blockly_id ):
+	document.getElementById( blockly_id ).addEventListener( 'mousewheel', on_mouse_wheel, False );
+	document.getElementById( blockly_id ).addEventListener( 'DOMMouseScroll', on_mouse_wheel, False ); ## firefox
+
+	## special node block ##
+	_node_block = StatementBlock('node_input', color=0, title='<node>', category='HIDDEN')
+
+
+	with javascript:
+		
+		## fully override Blockly.onMouseMove_
+		def func(e):  ## bypass scroll bars
+			if Blockly.mainWorkspace.dragMode:
+				dx = e.clientX - Blockly.mainWorkspace.startDragMouseX
+				dy = e.clientY - Blockly.mainWorkspace.startDragMouseY
+				x = Blockly.mainWorkspace.startScrollX + dx
+				y = Blockly.mainWorkspace.startScrollY + dy
+				Blockly.mainWorkspace.scrollX = x
+				Blockly.mainWorkspace.scrollY = y
+				Blockly.fireUiEvent(window, 'resize')
+		Blockly.onMouseMove_ = func
+
+		Blockly.__getMainWorkspaceMetrics__ = Blockly.getMainWorkspaceMetrics_
+		def func():
+			m = Blockly.__getMainWorkspaceMetrics__()
+			m['scale'] = Blockly.SCALE
+			return m
+		Blockly.getMainWorkspaceMetrics_ = func
+
+		## fully override Blockly.setMainWorkspaceMetrics_
+		def func( xyRatio ):
+			metrics = Blockly.getMainWorkspaceMetrics_();
+
+			## TODO fix scroll bars
+			#if goog.isNumber(xyRatio.x):
+			#	Blockly.mainWorkspace.scrollX = -metrics.contentWidth * xyRatio.x - metrics.contentLeft
+			#if goog.isNumber(xyRatio.y):
+			#	Blockly.mainWorkspace.scrollY = -metrics.contentHeight * xyRatio.y - metrics.contentTop
+
+			x = Blockly.mainWorkspace.scrollX + metrics.absoluteLeft
+			y = Blockly.mainWorkspace.scrollY + metrics.absoluteTop
+			trans = 'translate(' + x + ',' + y + ')'
+			trans = trans + ',' + 'scale(' + metrics.scale + ',' + metrics.scale + ')'
+			Blockly.mainWorkspace.getCanvas().setAttribute('transform', trans)
+			Blockly.mainWorkspace.getBubbleCanvas().setAttribute('transform', trans)
+		Blockly.setMainWorkspaceMetrics_ = func
+
+		############################ override prototypes #########################
+
+		Blockly.BlockSvg.prototype.__init__ = Blockly.BlockSvg.prototype.init
+		@Blockly.BlockSvg.prototype.init
+		def func():
+			this.__init__()
+			print 'MY INIT'
+			this.svgLinks = Blockly.createSvgElement(
+				'path',
+				{}, 
+				null
+			)
+			this.svgLinks.setAttribute('stroke','#000000')
+			#this.svgLinks.setAttribute('style','stroke-width:2px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0.5')
+			this.svgLinks.setAttribute('style','stroke-width:3px;stroke-linecap:round;stroke-linejoin:miter;stroke-opacity:0.5;stroke-dasharray:44, 22')
+
+		@Blockly.BlockSvg.prototype.renderSvgLinks
+		def func():
+			if this.block_.nodeOutputBlocks != None and this.block_.nodeOutputBlocks.length:
+				pt = this.block_.getRelativeToSurfaceXY()
+				pt.y += 10
+				d = []
+				for block in this.block_.nodeOutputBlocks:
+					xy = block.getRelativeToSurfaceXY()
+					hw = block.getHeightWidth()
+					x = xy.x + hw.width
+					y = xy.y + 10
+					d.push( 'M' )
+					d.push( pt.x + ',' + pt.y )
+					d.push( x + ',' + y )
+				this.svgLinks.setAttribute('d', ' '.join(d) )
+
+		Blockly.BlockSvg.prototype.__render__ = Blockly.BlockSvg.prototype.render
+		@Blockly.BlockSvg.prototype.render
+		def func():
+			this.renderSvgLinks()
+			this.__render__()
+
+		Blockly.Block.prototype.__initSvg__ = Blockly.Block.prototype.initSvg
+		@Blockly.Block.prototype.initSvg
+		def func():
+			this.__initSvg__()
+			this.workspace.getCanvas().appendChild(this.svg_.svgLinks)
+
+
+def override_blockly_prototypes():
+
+	with javascript:
+
+		Blockly.Block.prototype.__onMouseDown__ = Blockly.Block.prototype.onMouseDown_
+		@Blockly.Block.prototype.onMouseDown_
+		def func(e):
+			if e.button == 1: ## middle click
+				x = e.clientX * 1.0 / Blockly.SCALE
+				y = e.clientY * 1.0 / Blockly.SCALE
+				b = e.button
+				ee = {clientX:x, clientY:y, button:b}
+				ee.stopPropagation = lambda : e.stopPropagation()
+				this.__onMouseDown__(ee)
+			elif e.button == 0: ## left click
+				x = e.clientX * 1.0 / Blockly.SCALE
+				y = e.clientY * 1.0 / Blockly.SCALE
+				b = e.button
+				ee = {clientX:x, clientY:y, button:b}
+				ee.stopPropagation = lambda : e.stopPropagation()
+				this.__onMouseDown__(ee)
+			else:
+				this.__onMouseDown__(e)
+
+		Blockly.Block.prototype.__onMouseUp__ = Blockly.Block.prototype.onMouseUp_
+		@Blockly.Block.prototype.onMouseUp_
+		def func(e):
+			parent = this.getParent()
+			connection = Blockly.highlightedConnection_
+			this.__onMouseUp__(e)
+
+			if this.__dragging:
+				print 'drag done', this.svg_.getRootElement().getAttribute('transform')
+				this.__dragging = False
+
+			if parent is null and this.getParent():
+				print 'plugged:', this
+				parent = this.getParent()
+
+				if this.__on_plugged:
+					this.__on_plugged( this.pythonjs_object, parent.pythonjs_object, this, parent )
+
+				if this.nodeOutputBlocks != None and e.button == 1:  ## middle click
+
+					this.setParent(null)
+					this.moveTo( this.startDragX, this.startDragY )
+
+					if parent.nodeInputBlocks.indexOf( this ) == -1:
+						parent.nodeInputBlocks.push( this )
+
+					dom = document.createElement('block')
+					dom.setAttribute('type', 'node_input')
+					node = Blockly.Xml.domToBlock_( this.workspace, dom )
+					node.previousConnection.targetConnection = connection
+					connection.targetConnection = node.previousConnection
+					node.setParent( parent )
+					parent.render()  ## rerendering moves the node block
+
+					node.nodeInputBlocks.push( this )  ## temp just for proper rendering
+
+					this.nodeOutputBlocks.push( node )
+
+					this.render()
+
+		Blockly.Block.prototype.__onMouseMove__ = Blockly.Block.prototype.onMouseMove_
+		@Blockly.Block.prototype.onMouseMove_
+		def func(e):
+
+			if this.svg_.renderSvgLinks != None:
+				this.svg_.renderSvgLinks()  ## render output node links
+			## also need to call renderSvgLinks on our inputs
+			if this.nodeInputBlocks != None and this.nodeInputBlocks.length:
+				for block in this.nodeInputBlocks:
+					block.svg_.renderSvgLinks()
+
+
+
+			parent = this.getParent()
+			x = e.clientX * 1.0 / Blockly.SCALE
+			y = e.clientY * 1.0 / Blockly.SCALE
+			b = e.button
+			ee = {clientX:x, clientY:y, button:b}
+			ee.stopPropagation = lambda : e.stopPropagation()
+
+			this.__onMouseMove__(ee)
+			this.__dragging = True
+			if parent and this.getParent() is null:
+				print 'unplugged:', this
+				if this.__on_unplugged:
+					this.__on_unplugged( this.pythonjs_object, parent.pythonjs_object, this, parent )
+
+
+		Blockly.FieldTextInput.prototype.__onHtmlInputChange__ = Blockly.FieldTextInput.prototype.onHtmlInputChange_
+		@Blockly.FieldTextInput.prototype.onHtmlInputChange_
+		def func(e):
+			this.__onHtmlInputChange__( e )
+			if e.keyCode == 13: ## enter
+				print 'ENTER KEY'
+				print this.getText()
+				if this.name == 'NUM':
+					value = parseInt( this.getText() )
+
+		Blockly.FieldCheckbox.prototype.__showEditor__ = Blockly.FieldCheckbox.prototype.showEditor_
+		@Blockly.FieldCheckbox.prototype.showEditor_
+		def func():
+			state = this.getValue() ## returns "TRUE" or "FALSE", (this.state_ is the raw bool)
+			this.__showEditor__()
+			if state != this.getValue():
+				print 'check box changed'
+
+		Blockly.FieldColour.prototype.__setValue__ = Blockly.FieldColour.prototype.setValue
+		@Blockly.FieldColour.prototype.setValue
+		def func( color ):
+			this.__setValue__(color)
+			if this.sourceBlock_ and this.sourceBlock_.rendered:
+				print 'color changed', color
+
+		Blockly.FieldDropdown.prototype.__setValue__ = Blockly.FieldDropdown.prototype.setValue
+		@Blockly.FieldDropdown.prototype.setValue
+		def func( value ):
+			this.__setValue__(value)
+			if this.sourceBlock_ and this.sourceBlock_.rendered:
+				print 'dropdown changed', value
+
 
 BlocklyBlockGenerators = dict()  ## Blocks share a single namespace in Blockly
-_blockly_selected_block = None   ## for triggering on_click_callback
 
 with javascript: BlocklyBlockInstances = {}   ## block-uid : block instance
 _blockly_instances_uid = 0
@@ -12,13 +250,23 @@ _blockly_instances_uid = 0
 with javascript:
 	NEW_LINE = String.fromCharCode(10)
 
+def bind_blockly_event( element, name, callback ):
+	Blockly.bindEvent_( element, name, None, callback )
+
+
 def __blockinstance( result, block_uid ):
 	with javascript:
 		BlocklyBlockInstances[ block_uid ].pythonjs_object = result
 	return result
 
-def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_changed_callback=None ):
+def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_changed_callback=None, node_blockly=False ):
 	print 'initialize_blockly'
+
+	override_blockly_prototypes()
+	if node_blockly:
+		init_node_blockly( blockly_id )
+
+
 	if len( BlocklyBlockGenerators.keys() ):
 		toolbox = document.getElementById( toolbox_id )
 		defaults = []
@@ -28,7 +276,10 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 			e = document.createElement('block')
 			e.setAttribute('type', block_name)
 
-			if b.category:
+			if b.category == 'HIDDEN':
+				pass
+
+			elif b.category:
 				if b.category in cats:
 					cats[ b.category ].appendChild( e )
 				else:
@@ -37,6 +288,7 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 					cat.appendChild( e )
 					toolbox.appendChild( cat )
 					cats[ b.category ] = cat
+
 			else:
 				defaults.append( e )
 
@@ -90,25 +342,29 @@ def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_change
 			{path : './', toolbox : document.getElementById(toolbox_id)}
 		)
 
-		def on_changed():
-			global _blockly_selected_block
-			if Blockly.selected != _blockly_selected_block:
-				_blockly_selected_block = Blockly.selected
-				if _blockly_selected_block:
-					print 'BLOCKLY - new block selected:', _blockly_selected_block
-					if _blockly_selected_block.on_selected_callback:
-						print 'BLOCKLY - doing on select block callback'
-						_blockly_selected_block.on_selected_callback()
 
-			if on_changed_callback:  ## this gets triggered for any change, even moving a block in the workspace.
-				on_changed_callback()
-
-		Blockly.addChangeListener( on_changed )
+	if on_changed_callback:
+		Blockly.addChangeListener( on_changed_callback )
 
 	for block_name in BlocklyBlockGenerators.keys():
 		b = BlocklyBlockGenerators[ block_name ]
 		b.bind_block()
 		b.bind_generator()
+
+
+	bind_blockly_event(
+		Blockly.getMainWorkspace().getCanvas(),
+		'blocklySelectChange',
+		on_select_changed
+	)
+
+
+def on_select_changed():
+	if Blockly.selected:
+		print 'new selection', Blockly.selected
+		if Blockly.selected.on_selected_callback:
+			Blockly.selected.on_selected_callback()
+
 
 class BlocklyBlock:
 	'''
@@ -118,10 +374,10 @@ class BlocklyBlock:
 		. a bare block can have no inputs or output, and no previous or next statement notches.
 
 	'''
-	def __init__(self, block_name=None, title=None, color=None, category=None):
-		self.setup( block_name=block_name, title=title, color=color, category=None )
+	def __init__(self, block_name=None, title=None, color=None, category=None, inputs_inline=False):
+		self.setup( block_name=block_name, title=title, color=color, category=None, inputs_inline=inputs_inline )
 
-	def setup(self, block_name=None, title=None, color=None, category=None):
+	def setup(self, block_name=None, title=None, color=None, category=None, inputs_inline=False):
 		if block_name is None: block_name = '_generated_block' + str(len(BlocklyBlockGenerators.keys()))
 		if block_name in BlocklyBlockGenerators: raise TypeError
 		BlocklyBlockGenerators[ block_name ] = self
@@ -129,6 +385,7 @@ class BlocklyBlock:
 		self.title = title
 		self.color = color
 		self.category = category
+		self.inputs_inline = inputs_inline
 		self.input_values = []
 		self.input_statements = []
 		self.input_slots = []
@@ -244,6 +501,7 @@ class BlocklyBlock:
 
 		title = self.title
 		color = self.color
+		inputs_inline = self.inputs_inline
 		input_values = self.input_values.js_object
 		input_statements = self.input_statements.js_object
 		input_slots = self.input_slots.js_object
@@ -270,7 +528,11 @@ class BlocklyBlock:
 				this.__on_unplugged = on_unplugged
 				this.__on_plugged = on_plugged
 
-				this.__previous_child_blocks = []	## this is a hackish way to check for when a block is removed
+				if inputs_inline:
+					this.setInputsInline( True )
+
+				this.nodeOutputBlocks = []
+				this.nodeInputBlocks = []
 
 				if color:
 					this.setColour( color )
@@ -323,28 +585,10 @@ class BlocklyBlock:
 		#input_statements = self.input_statements.js_object
 
 		with javascript:
-			def generator(block):
+			def generator(block, from_node):
 
-				## TODO - hook into Blockly event system to catch when a block is removed ##
-				if block.__previous_child_blocks.length != block.childBlocks_.length:
-					if block.__previous_child_blocks.length > block.childBlocks_.length:
-						for child in block.__previous_child_blocks:
-							#if child not in block.childBlocks_:  ## TODO fix me
-							if block.childBlocks_.indexOf( child ) == -1:
-								print 'UNPLUGGED:', child
-								if child.__on_unplugged:
-									child.__on_unplugged( child.pythonjs_object, block.pythonjs_object, child, block )
-								break
-					else:
-						for child in block.childBlocks_:
-							if block.__previous_child_blocks.indexOf( child ) == -1:
-								print 'PLUGGED:', child
-								if child.__on_plugged:
-									child.__on_plugged( child.pythonjs_object, block.pythonjs_object, child, block )
-								break
-
-
-				block.__previous_child_blocks = block.childBlocks_.slice()
+				if block.nodeOutputBlocks.length and from_node is None:
+					return ''
 
 
 				input_values = block.__input_values
@@ -354,16 +598,18 @@ class BlocklyBlock:
 				external_javascript_function = block.__external_javascript_function
 				is_statement = block.__is_statement
 
-				#dynamic = input_statements.length
-				#dynamic = True  ## for now make everything dynamic - TODO check if external_function returns something - this will not work!
-				#dynamic = not external_javascript_function  ## TODO fix "not" in 'with javascript:'
-				dynamic = True
-				if external_javascript_function:
-					dynamic = False
-
 				code = ''
 				input = null  ## TODO fix local scope generator in python_to_pythonjs.py - need to traverse whileloops - the bug pops up here because this is recursive?
 				args = []
+
+				dynamic = True
+				if external_javascript_function:
+					dynamic = False
+				if this.type == 'node_input':
+					dynamic = False
+					link = this.nodeInputBlocks[0]  ## node_input only has a single input
+					code = Blockly.Python[ link.type ]( link, this )  ## from_node
+
 
 				i = 0
 				while i < input_values.length:
@@ -385,15 +631,18 @@ class BlocklyBlock:
 						input = input_statements[i][...]
 						attr = wrapper[ input['name'] ]
 						if attr:
-							js = Blockly.JavaScript.statementToCode(block, input['name'])
-							print('block.pythonjs_object - update-dynamic: code to eval')
-							print(js)
-							if js.length:
-								if input['callback']:
-									print 'callback', input['callback'].NAME
-									input['callback']( wrapper, attr, eval(js) )
-								else:
-									print 'ERROR - input is missing callback', input
+							#js = Blockly.JavaScript.statementToCode(block, input['name'])
+							target_block = block.getInput( input['name'] ).connection.targetBlock()
+							if target_block:
+								if target_block.type == 'node_input':
+									target_block = target_block.nodeInputBlocks[0]
+								js = Blockly.JavaScript[ target_block.type ]( target_block, True )
+								if js.length:
+									if input['callback']:
+										print 'callback', input['callback'].NAME
+										input['callback']( wrapper, attr, eval(js) )
+									else:
+										print 'ERROR - input is missing callback', input
 						i += 1
 
 				if external_javascript_function:
@@ -419,19 +668,22 @@ class BlocklyBlock:
 					code += external_function + '(' + ','.join(args) + ')'
 				elif external_javascript_function:
 					## TODO what about pure javascript functions?
-					if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
-						print 'is_statement with parent block - OK'
-						code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
-						print code
+					#if is_statement and block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+					#	print 'is_statement with parent block - OK'
+					#	code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
+					#	print code
+					#elif block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
+					#	print 'with parent block - OK'
+					#	code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
+					#	print code
 
-					elif block.parentBlock_:  ## TODO request Blockly API change: "parentBlock_" to "parentBlock"
-						print 'with parent block - OK'
-						code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
-						print code
+					code += external_javascript_function + '( [' + ','.join(args) + '], {} )'  ## calling from js a pyjs function
+
 
 				else:  ## TODO this should be a simple series of statements?
 					for a in args:
 						code += a + ';'
+
 
 				if dynamic:
 					code = '__blockinstance(  ' + code + '  ,' + block.uid + ')'
@@ -468,9 +720,9 @@ class StatementBlock( BlocklyBlock ):
 
 
 class ValueBlock( BlocklyBlock ):
-	def __init__(self, block_name=None, title=None, output='*', color=100, category=None):
+	def __init__(self, block_name=None, title=None, output='*', color=100, category=None, inputs_inline=True):
 		if output is None: raise TypeError
-		self.setup( block_name=block_name, title=title, color=color, category=category )
+		self.setup( block_name=block_name, title=title, color=color, category=category, inputs_inline=inputs_inline )
 		self.set_output( output )
 
 

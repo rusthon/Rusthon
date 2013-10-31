@@ -924,3 +924,41 @@ class Mesh( Object3D ):
 		with javascript:
 			self[...] = new( THREE.Mesh(geometry[...], material[...]))
 
+class _Controls:
+	def update(self):
+		clock = self.clock
+		with javascript:
+			delta = clock.getDelta()
+			self[...].update( delta )
+
+class FlyControls( _Controls ):
+	def __init__(self, ob, movementSpeed=1000, autoForward=False, dragToLook=False ):
+		with javascript:
+			self[...] = new( THREE.FlyControls(ob[...]) )
+			self[...].movementSpeed = movementSpeed
+			self[...].autoForward = autoForward
+			self[...].dragToLook = dragToLook
+			clock = new( THREE.Clock() )
+		self.clock = clock
+
+
+class OrbitControls( _Controls ):
+	def __init__(self, ob):
+		with javascript:
+			self[...] = new( THREE.OrbitControls(ob[...]) )
+			clock = new( THREE.Clock() )
+		self.clock = clock
+
+class TrackballControls( _Controls ):
+	def __init__(self, ob, rotateSpeed=1.0, zoomSpeed=1.2, panSpeed=0.8, noZoom=False, noPan=False, staticMoving=True, dynamicDampingFactor=0.3):
+		with javascript:
+			self[...] = new( THREE.TrackballControls(ob[...]) )
+			self[...].rotateSpeed = rotateSpeed
+			self[...].zoomSpeed = zoomSpeed
+			self[...].panSpeed = panSpeed
+			self[...].noZoom = noZoom
+			self[...].noPan = noPan
+			self[...].staticMoving = staticMoving
+			self[...].dynamicDampingFactor = dynamicDampingFactor
+			clock = new( THREE.Clock() )
+		self.clock = clock
