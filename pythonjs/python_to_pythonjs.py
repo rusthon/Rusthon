@@ -655,7 +655,14 @@ class PythonToPythonJS(NodeVisitor):
         return ' is not '
 
     def visit_UnaryOp(self, node):
-        return self.visit(node.op) + self.visit(node.operand)
+        op = self.visit(node.op)
+        if op is None: raise RuntimeError( node.op )
+        operand = self.visit(node.operand)
+        if operand is None: raise RuntimeError( node.operand )
+        return op + operand
+
+    def visit_USub(self, node):
+        return '-'
 
     def visit_Attribute(self, node):
         node_value = self.visit(node.value)
