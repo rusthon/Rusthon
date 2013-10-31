@@ -39,12 +39,12 @@ See also
 
 ---------------
 
-Getting Started - Experimental Development Branch
+Getting Started - Main Development Branch
 ---------------
 
 Get Source Code::
 
-	git clone -b develop https://github.com/PythonJS/PythonJS.git
+	git clone https://github.com/PythonJS/PythonJS.git
 
 Install Tornado for Python3::
 
@@ -349,8 +349,5 @@ Example::
 			self.set( self.x+s, self.y+s, self.z+s )
 			return self
 
-		def sub(self, other):
-			assert isinstance(other, Vector3)
-			self.set( self.x-other.x, self.y-other.y, self.z-other.z )
-			return self
+
 
