@@ -438,8 +438,8 @@ class PythonToPythonJS(NodeVisitor):
             if isinstance(item, FunctionDef):
                 log('  method: %s'%item.name)
 
-                if item.name == '__contains__':  ## this is required because we added Object.prototype.__contains__
-                    item.name = item.name.upper()
+                #if item.name == '__contains__':  ## this is required because we added Object.prototype.__contains__ - DEPRECATED!
+                #    item.name = item.name.upper()
 
                 self._classes[ name ].append( item.name )
                 item_name = item.name

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 31 19:31:25 2013
+// PythonScript Runtime - regenerated on: Thu Oct 31 21:00:39 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1548,7 +1548,7 @@ __tuple_get.args_signature = ["self", "index"];
 __tuple_get.kwargs_signature = {  };
 __tuple_get.pythonscript_function = true;
 window["__tuple_attrs"]["get"] = __tuple_get;
-var __tuple___CONTAINS__ = function(args, kwargs) {
+var __tuple___contains__ = function(args, kwargs) {
 var arr;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -1560,7 +1560,7 @@ kwargs = Object();
 
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
-signature["function_name"] = "__tuple___CONTAINS__";
+signature["function_name"] = "__tuple___contains__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
@@ -1573,13 +1573,13 @@ return true;
 }
 
 }
-window["__tuple___CONTAINS__"] = __tuple___CONTAINS__ 
+window["__tuple___contains__"] = __tuple___contains__ 
 
-__tuple___CONTAINS__.NAME = "__tuple___CONTAINS__";
-__tuple___CONTAINS__.args_signature = ["self", "value"];
-__tuple___CONTAINS__.kwargs_signature = {  };
-__tuple___CONTAINS__.pythonscript_function = true;
-window["__tuple_attrs"]["__CONTAINS__"] = __tuple___CONTAINS__;
+__tuple___contains__.NAME = "__tuple___contains__";
+__tuple___contains__.args_signature = ["self", "value"];
+__tuple___contains__.kwargs_signature = {  };
+__tuple___contains__.pythonscript_function = true;
+window["__tuple_attrs"]["__contains__"] = __tuple___contains__;
 tuple = create_class("tuple", window["__tuple_parents"], window["__tuple_attrs"], window["__tuple_properties"]);
 var list, __list_attrs, __list_parents;
 window["__list_attrs"] = Object();
@@ -2101,7 +2101,7 @@ __list___len__.args_signature = ["self"];
 __list___len__.kwargs_signature = {  };
 __list___len__.pythonscript_function = true;
 window["__list_attrs"]["__len__"] = __list___len__;
-var __list___CONTAINS__ = function(args, kwargs) {
+var __list___contains__ = function(args, kwargs) {
 var arr;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -2113,7 +2113,7 @@ kwargs = Object();
 
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
-signature["function_name"] = "__list___CONTAINS__";
+signature["function_name"] = "__list___contains__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
@@ -2126,13 +2126,13 @@ return true;
 }
 
 }
-window["__list___CONTAINS__"] = __list___CONTAINS__ 
+window["__list___contains__"] = __list___contains__ 
 
-__list___CONTAINS__.NAME = "__list___CONTAINS__";
-__list___CONTAINS__.args_signature = ["self", "value"];
-__list___CONTAINS__.kwargs_signature = {  };
-__list___CONTAINS__.pythonscript_function = true;
-window["__list_attrs"]["__CONTAINS__"] = __list___CONTAINS__;
+__list___contains__.NAME = "__list___contains__";
+__list___contains__.args_signature = ["self", "value"];
+__list___contains__.kwargs_signature = {  };
+__list___contains__.pythonscript_function = true;
+window["__list_attrs"]["__contains__"] = __list___contains__;
 list = create_class("list", window["__list_parents"], window["__list_attrs"], window["__list_properties"]);
 var dict, __dict_attrs, __dict_parents;
 window["__dict_attrs"] = Object();
@@ -2503,7 +2503,7 @@ __dict_values.args_signature = ["self"];
 __dict_values.kwargs_signature = {  };
 __dict_values.pythonscript_function = true;
 window["__dict_attrs"]["values"] = __dict_values;
-var __dict___CONTAINS__ = function(args, kwargs) {
+var __dict___contains__ = function(args, kwargs) {
 var keys;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -2515,7 +2515,7 @@ kwargs = Object();
 
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
-signature["function_name"] = "__dict___CONTAINS__";
+signature["function_name"] = "__dict___contains__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
@@ -2535,13 +2535,13 @@ return true;
 }
 
 }
-window["__dict___CONTAINS__"] = __dict___CONTAINS__ 
+window["__dict___contains__"] = __dict___contains__ 
 
-__dict___CONTAINS__.NAME = "__dict___CONTAINS__";
-__dict___CONTAINS__.args_signature = ["self", "value"];
-__dict___CONTAINS__.kwargs_signature = {  };
-__dict___CONTAINS__.pythonscript_function = true;
-window["__dict_attrs"]["__CONTAINS__"] = __dict___CONTAINS__;
+__dict___contains__.NAME = "__dict___contains__";
+__dict___contains__.args_signature = ["self", "value"];
+__dict___contains__.kwargs_signature = {  };
+__dict___contains__.pythonscript_function = true;
+window["__dict_attrs"]["__contains__"] = __dict___contains__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"], window["__dict_properties"]);
 var array, __array_attrs, __array_parents;
 window["__array_attrs"] = Object();
@@ -2631,7 +2631,7 @@ __array___len__.args_signature = ["self"];
 __array___len__.kwargs_signature = {  };
 __array___len__.pythonscript_function = true;
 window["__array_attrs"]["__len__"] = __array___len__;
-var __array___CONTAINS__ = function(args, kwargs) {
+var __array___contains__ = function(args, kwargs) {
 var arr;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -2643,7 +2643,7 @@ kwargs = Object();
 
 var signature, arguments;
 signature = {"kwargs": Object(), "args": create_array("self", "value")};
-signature["function_name"] = "__array___CONTAINS__";
+signature["function_name"] = "__array___contains__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
@@ -2656,13 +2656,13 @@ return true;
 }
 
 }
-window["__array___CONTAINS__"] = __array___CONTAINS__ 
+window["__array___contains__"] = __array___contains__ 
 
-__array___CONTAINS__.NAME = "__array___CONTAINS__";
-__array___CONTAINS__.args_signature = ["self", "value"];
-__array___CONTAINS__.kwargs_signature = {  };
-__array___CONTAINS__.pythonscript_function = true;
-window["__array_attrs"]["__CONTAINS__"] = __array___CONTAINS__;
+__array___contains__.NAME = "__array___contains__";
+__array___contains__.args_signature = ["self", "value"];
+__array___contains__.kwargs_signature = {  };
+__array___contains__.pythonscript_function = true;
+window["__array_attrs"]["__contains__"] = __array___contains__;
 var __array___getitem__ = function(args, kwargs) {
 var func_name, step, dataview, func, offset;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
