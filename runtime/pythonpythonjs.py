@@ -97,8 +97,8 @@ def get_attribute(object, attribute):
                     return wrapper
 
     var(attr)
-    if attribute == '__contains__':
-        attribute = '__CONTAINS__'  ## we need this ugly hack because we have added javascript Object.prototype.__contains__
+    #if attribute == '__contains__': ## DO NOT TOUCH Object.prototype !!
+    #    attribute = '__CONTAINS__'  ## we need this ugly hack because we have added javascript Object.prototype.__contains__
 
     attr = object[attribute]
 

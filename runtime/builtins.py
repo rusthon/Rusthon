@@ -70,6 +70,20 @@ def _setup_str_prototype():
     '''
     with javascript:
 
+        @String.prototype.__contains__
+        def func(a):
+            if this.indexOf(a) == -1: return False
+            else: return True
+
+        @String.prototype.get
+        def func(index):
+            return this[ index ]
+
+        @String.prototype.__iter__
+        def func(self):
+            with python:
+                return Iterator(this, 0)
+
         @String.prototype.__getitem__
         def func(idx):
             return this[ idx ]
@@ -142,6 +156,14 @@ def _setup_array_prototype():
         def func():
             return this.length
 
+        @Array.prototype.get
+        def func(index):
+            return this[ index ]
+        @Array.prototype.__iter__
+        def func(self):
+            with python:
+                return Iterator(this, 0)
+
 _setup_array_prototype()
 
 #def _setup_object_prototype():  ## TODO fix code that had used with-javascript: if 'x' in ob
@@ -210,14 +232,15 @@ def chr( num ):
     return JS('String.fromCharCode(num)')
 
 class Iterator:
-
+    ## rather than throwing an exception, it could be more optimized to have the iterator set a done flag,
+    ## and another downside is having the try/catch around this makes errors in in the loop go slient.
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index
 
     def next(self):
         index = self.index
-        length = len(self.obj)
+        length = len(self.obj)  ## why call len each iteration? do we really want to loop over something that is changing?
         if index == length:
             raise StopIteration
         item = self.obj.get(self.index)

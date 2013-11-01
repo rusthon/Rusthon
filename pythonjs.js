@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 31 12:27:11 2013
+// PythonScript Runtime - regenerated on: Thu Oct 31 19:31:25 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -109,10 +109,6 @@ return wrapper;
 }
 
 var attr;
-if(attribute == "__contains__") {
-attribute = "__CONTAINS__";
-}
-
 attr = object[attribute];
 if(object instanceof HTMLDocument) {
 if(typeof(attr) === 'function') {
@@ -753,6 +749,36 @@ str.kwargs_signature = {  };
 str.pythonscript_function = true;
 var _setup_str_prototype = function(args, kwargs) {
 "\n    Extend JavaScript String.prototype with methods that implement the Python str API.\n    The decorator @String.prototype.[name] assigns the function to the prototype,\n    and ensures that the special 'this' variable will work.\n    ";
+var func = function(a) {
+if(this.indexOf(a) == -1) {
+return false;
+}
+else {
+return true;
+}
+
+}
+
+func.NAME = "func";
+func.args_signature = ["a"];
+func.kwargs_signature = {};
+String.prototype.__contains__=func;
+var func = function(index) {
+return this[ index ];
+}
+
+func.NAME = "func";
+func.args_signature = ["index"];
+func.kwargs_signature = {};
+String.prototype.get=func;
+var func = function(self) {
+return get_attribute(Iterator, "__call__")([this, 0], Object());
+}
+
+func.NAME = "func";
+func.args_signature = ["self"];
+func.kwargs_signature = {};
+String.prototype.__iter__=func;
 var func = function(idx) {
 return this[ idx ];
 }
@@ -907,6 +933,22 @@ func.NAME = "func";
 func.args_signature = [];
 func.kwargs_signature = {};
 Array.prototype.__len__=func;
+var func = function(index) {
+return this[ index ];
+}
+
+func.NAME = "func";
+func.args_signature = ["index"];
+func.kwargs_signature = {};
+Array.prototype.get=func;
+var func = function(self) {
+return get_attribute(Iterator, "__call__")([this, 0], Object());
+}
+
+func.NAME = "func";
+func.args_signature = ["self"];
+func.kwargs_signature = {};
+Array.prototype.__iter__=func;
 }
 window["_setup_array_prototype"] = _setup_array_prototype 
 
