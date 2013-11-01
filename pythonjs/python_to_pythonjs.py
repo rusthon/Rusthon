@@ -468,7 +468,11 @@ class PythonToPythonJS(NodeVisitor):
 
         for prop_name in self._decorator_properties:
             getter = self._decorator_properties[prop_name]['get']
-            writer.write('window["__%s_properties"]["%s"] = %s' %(name, prop_name, getter))
+            writer.write('window["__%s_properties"]["%s"] = JSObject()' %(name, prop_name))
+            writer.write('window["__%s_properties"]["%s"]["get"] = %s' %(name, prop_name, getter))
+            if 'set' in self._decorator_properties[prop_name]:
+                setter = self._decorator_properties[prop_name]['set']
+                writer.write('window["__%s_properties"]["%s"]["set"] = %s' %(name, prop_name, setter))
 
         self._catch_attributes = None
         self._decorator_properties = None
@@ -1171,6 +1175,19 @@ class PythonToPythonJS(NodeVisitor):
         writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
         defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
         writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
+
+        #types = ['%s:%s'%(self.visit(x[0]), '"%s"'%type(self.visit(x[1])).__name__ ) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
+        types = []
+        for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults):
+            key = x[0]
+            value = x[1]
+            if isinstance(value, ast.Name):
+                value = value.id
+            else:
+                value = type(value).__name__.lower()
+            types.append( '%s : "%s"' %(self.visit(key), value) )
+
+        writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
 
         if self._with_js and with_js_decorators:
             for dec in with_js_decorators:

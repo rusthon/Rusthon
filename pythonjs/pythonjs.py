@@ -319,10 +319,24 @@ class JSGenerator(NodeVisitor):
 
 
     def visit_For(self, node):
+        '''
+        for loops inside a `with javascript:` block will produce this faster for loop.
+
+        note that the rules are python-style, even though we are inside a `with javascript:` block:
+            . an Array is like a list, `for x in Array` gives you the value (not the index as you would get in pure javascript)
+            . an Object is like a dict, `for v in Object` gives you the key (not the value as you would get in pure javascript)
+
+        if your are trying to opitmize looping over a PythonJS list, you can do this:
+            for v in mylist[...]:
+                print v
+        above works because [...] returns the internal Array of mylist
+
+        '''
         target = node.target.id
         iter = self.visit(node.iter)
         # iter is the python iterator
         init_iter = 'var iter = %s;\n' % iter
+        init_iter += 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }\n'  ## support "for key in JSObject"
         # backup iterator and affect value of the next element to the target
         pre = 'var backup = %s;\n%s = iter[%s];\n' % (target, target, target)
         # replace the replace target with the javascript iterator

@@ -180,7 +180,7 @@ def get_attribute(object, attribute):
     if __class__:
 
         if attribute in __class__.__properties__:  ## @property decorators
-            return __class__.__properties__[ attribute ]( [object] )
+            return __class__.__properties__[ attribute ]['get']( [object], JSObject() )
 
         __dict__ = __class__.__dict__
         attr = __dict__[attribute]
@@ -227,10 +227,10 @@ def get_attribute(object, attribute):
                     return attr
 
         for base in bases:  ## upstream property getters come before __getattr__
-            var( getter )
-            getter = _get_upstream_property(base, attribute)
-            if getter:
-                return getter( [object], JSObject() )
+            var( prop )
+            prop = _get_upstream_property(base, attribute)
+            if prop:
+                return prop['get']( [object], JSObject() )
 
         if '__getattr__' in __dict__:
             return __dict__['__getattr__']( [object, attribute], JSObject() )
