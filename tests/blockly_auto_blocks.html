@@ -134,6 +134,9 @@
 <script type="text/python">
 from blockly import *
 
+block = StatementBlock(title='My Block', category='Classes')
+
+@block.bind_class
 @pythonjs.init_callbacks
 @pythonjs.property_callbacks
 class A:
@@ -164,8 +167,7 @@ class A:
 		self._z = value
 
 
-block = StatementBlock(title='My Block', category='Classes')
-block.bind_class( A )
+#block.bind_class( A )  ## this also works
 
 
 def show_code():

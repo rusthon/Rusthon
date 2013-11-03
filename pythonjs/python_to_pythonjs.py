@@ -414,6 +414,7 @@ class PythonToPythonJS(NodeVisitor):
         self._decorator_class_props[ name ] = self._decorator_properties
         self._instances[ 'self' ] = name
 
+        class_decorators = []
         self._injector = []
         for decorator in node.decorator_list:  ## class decorators
             if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'pythonjs':
@@ -425,7 +426,8 @@ class PythonToPythonJS(NodeVisitor):
                     raise SyntaxError( 'unsupported pythonjs class decorator' )
 
             else:
-                raise SyntaxError( 'unsupported class decorator' )
+                #raise SyntaxError( 'unsupported class decorator' )
+                class_decorators.append( decorator )
 
         ## always catch attributes ##
         self._catch_attributes = set()
@@ -492,9 +494,10 @@ class PythonToPythonJS(NodeVisitor):
         writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
         if 'init' in self._injector:
             writer.write('%s.init_callbacks = JSArray()' %name)
-
         self._injector = []
 
+        for dec in class_decorators:
+            writer.write('%s = get_attribute(%s,"__call__")( [%s], JSObject() )' % (name, self.visit(dec), name))
 
     def visit_And(self, node):
         return ' and '
@@ -1269,7 +1272,7 @@ class PythonToPythonJS(NodeVisitor):
         # apply decorators
         for decorator in decorators:
             assert not self._with_js
-            writer.write('%s = get_attribute(%s,"__call__")( [%s], {} )' % (node.name, self.visit(decorator), node.name))
+            writer.write('%s = get_attribute(%s,"__call__")( [%s], JSObject() )' % (node.name, self.visit(decorator), node.name))
 
     def visit_Continue(self, node):
         if self._with_js:
