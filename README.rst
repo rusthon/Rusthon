@@ -5,7 +5,6 @@ PythonJS
 
 :dependency: Python 2.7
 :documentaiton: `PythonJS <https://pythonscript.readthedocs.org/en/latest/>`_
-:try: `apppyjs <http://apppyjs.appspot.com/>`_
 
 Introduction
 ======
