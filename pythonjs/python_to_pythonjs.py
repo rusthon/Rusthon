@@ -1208,7 +1208,7 @@ class PythonToPythonJS(NodeVisitor):
             value_name = node.args.args[1].id
             inject = [
                 'if self.__dict__.property_callbacks["%s"]:' %prop_name,
-                'self.__dict__.property_callbacks["%s"]([%s], JSObject(instance=self))' %(prop_name, value_name)
+                'self.__dict__.property_callbacks["%s"](["%s", %s, self], JSObject())' %(prop_name, prop_name, value_name)
             ]
             writer.write( ' '.join(inject) )
 

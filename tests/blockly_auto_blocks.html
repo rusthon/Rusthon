@@ -165,9 +165,7 @@ class A:
 
 
 block = StatementBlock(title='My Block', category='Classes')
-block.generate_from_class( A )
-#a = block.create_class()
-#assert isinstance(a, A)
+block.bind_class( A )
 
 
 def show_code():
@@ -175,17 +173,41 @@ def show_code():
 		code = Blockly.Python.workspaceToCode()
 		print( code )
 
+
 print 'init blockly'
-#initialize_blockly( on_changed_callback=show_code )
-initialize_blockly(  )
+initialize_blockly( on_changed_callback=show_code )
 
-for i in range(10):
-	a = A()
-	#a.x = 'hello world'
-	a.block.moveTo( i*90, 30 )
+## nov3rd - there is a bug in our scope and var generator, 
+## a.block.moveTo fails because `i` becomes zero after `a=A()`
+#for i in range(4):
+#	a = A()
+#	a.x = '99'
+#	a.block.moveTo( i*130, 30 )
 
-print 'DONE'
+instances = []
+def test():
+	for i in range(4):
+		a = A()
+		a.x = '99'
+		a.block.moveTo( i*130, 30 )
+		instances.append( a )
+test()
 
+x = 0
+y = 1
+z = 2
+def test_fields():
+	global x,y,z
+	for item in instances:
+		item.x = x
+		item.y = y
+		item.z = z
+
+	x += 1
+	y += 1
+	z += 1
+
+window.setInterval(test_fields, 1000)
 
 </script>
 

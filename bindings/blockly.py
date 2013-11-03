@@ -424,14 +424,7 @@ class BlocklyBlock:
 		return a
 
 	def _on_class_init(self, instance):
-		def func(value, instance=None):
-			print 'hacked!!!!', value
-
-		for name in self._class_setters:
-			print 'setting property-callbacks', name
-			instance.property_callbacks[ name ] = func
-
-
+		
 		name = self.name
 		with javascript:
 			block = new( Blockly.Block( Blockly.getMainWorkspace(), name ) )
@@ -439,10 +432,44 @@ class BlocklyBlock:
 			block.render()
 
 		instance.block = block
+		fields = {}
 
-	def generate_from_class(self, cls):
-		print 'generate-from-class'
-		print cls
+		#for input in self.input_values:  ## TODO - check how this got broken.
+		i = 0
+		while i < len(self.input_values):
+			input = self.input_values[ i ]
+			default_value = input['default_value']
+			name = input['name']
+			print 'input name', name
+			with javascript:
+				sub = new( Blockly.Block( Blockly.getMainWorkspace(), 'math_number' ) )
+				sub.initSvg()
+				sub.render()
+				con = block.getInput( name ).connection
+				con.connect( sub.outputConnection )
+				#sub.outputConnection.connect( con )  ## not required
+				#sub.moveTo( con.x_, con.y_ )		## not required
+				#sub.getInput('')  ## hackish
+				field = sub.inputList[0].titleRow[0]
+				field.setValue(''+default_value)
+				#func = lambda val,inst: field.setValue(''+val)
+
+			print 'input name-callback', name
+			fields[ name ] = field
+			#instance.property_callbacks[ name ] = lambda val,inst: field.setValue(''+val)
+			#instance.property_callbacks[ name ] = func
+
+			i += 1
+
+		#func = lambda n,val,inst: fields[n].setValue(''+val)  ## TODO - check why this got broken
+		def func(n, val, inst):
+			fields[n].setValue(''+val)
+		for name in self._class_setters:
+			print 'setting property-callbacks', name
+			instance.property_callbacks[ name ] = func
+
+
+	def bind_class(self, cls):  ## can be used as a decorator
 		self._class = cls
 		class_init_cb = self._on_class_init
 		with javascript:
@@ -470,6 +497,7 @@ class BlocklyBlock:
 					with python:
 						self._class_setters.append( key )
 
+		return cls
 
 	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )

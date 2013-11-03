@@ -1,0 +1,55 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+
+def test_for( x, callback=None ):
+	with javascript:
+		print 'test-for...'
+
+	for i in range(x):
+		print 'test-for:' + i
+		if callback:
+			callback(x-2)
+
+def test_while( x, callback=None ):
+	with javascript:
+		print 'test-while...'
+
+	i = 0
+	while i<x:
+		print 'test-while:'+i
+		i += 1
+
+def test():
+	print 'testing loops'
+	test_for(4)
+	test_while(4)
+	print 'testing nested'
+	test_for( 4, test_while )
+
+
+print 'for - testing nested - global level'
+test_for( 4, test_while )
+
+print 'for - testing nested - global level bare'
+for i in range(4):
+	print 'test-for:' + i
+	test_while(2)
+
+
+print 'while - testing nested - global level bare'
+i = 0
+while i<4:
+	print 'test-while:'+i
+	test_for(2)
+	i += 1
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
