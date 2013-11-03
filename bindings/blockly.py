@@ -431,6 +431,15 @@ class BlocklyBlock:
 			print 'setting property-callbacks', name
 			instance.property_callbacks[ name ] = func
 
+
+		name = self.name
+		with javascript:
+			block = new( Blockly.Block( Blockly.getMainWorkspace(), name ) )
+			block.initSvg()
+			block.render()
+
+		instance.block = block
+
 	def generate_from_class(self, cls):
 		print 'generate-from-class'
 		print cls
@@ -595,6 +604,7 @@ class BlocklyBlock:
 				this.nodeOutputBlocks = []
 				this.nodeInputBlocks = []
 
+				print 'THIS', this
 				if color:
 					this.setColour( color )
 

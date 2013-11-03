@@ -168,8 +168,6 @@ block = StatementBlock(title='My Block', category='Classes')
 block.generate_from_class( A )
 #a = block.create_class()
 #assert isinstance(a, A)
-a = A()
-a.x = 'hello world'
 
 
 def show_code():
@@ -178,7 +176,14 @@ def show_code():
 		print( code )
 
 print 'init blockly'
-initialize_blockly( on_changed_callback=show_code )
+#initialize_blockly( on_changed_callback=show_code )
+initialize_blockly(  )
+
+for i in range(10):
+	a = A()
+	#a.x = 'hello world'
+	a.block.moveTo( i*90, 30 )
+
 print 'DONE'
 
 
