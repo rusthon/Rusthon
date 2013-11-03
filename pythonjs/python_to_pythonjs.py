@@ -1096,18 +1096,30 @@ class PythonToPythonJS(NodeVisitor):
         ## this is kept here as an option to be sure we are compatible with the
         ## old-style code in runtime/pythonpythonjs.py and runtime/builtins.py
         if not GLOBAL_VARIABLE_SCOPE:
-            local_vars = set()
-            global_vars = set()
-            for n in node.body:
-                if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local
-                    local_vars.add( n.targets[0].id )
-                elif isinstance(n, Global):
-                    global_vars.update( n.names )
-                elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
-                    for c in n.body:
-                        if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
-                            local_vars.add( c.targets[0].id )
+            def retrieve_vars(body):
+                local_vars = set()
+                global_vars = set()
+                for n in body:
+                    if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local
+                        local_vars.add( n.targets[0].id )
+                    elif isinstance(n, Global):
+                        global_vars.update( n.names )
+                    elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
+                        for c in n.body:
+                            if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
+                                local_vars.add( c.targets[0].id )
+                    elif hasattr(n, 'body') and not isinstance(n, FunctionDef):
+                        # do a recursive search inside new block except function def
+                        l, g = retrieve_vars(n.body)
+                        local_vars.update(l)
+                        global_vars.update(g)
+                        if hasattr(n, 'orelse'):
+                            l, g = retrieve_vars(n.orelse)
+                            local_vars.update(l)
+                            global_vars.update(g) 
+                return local_vars, global_vars
 
+            local_vars, global_vars = retrieve_vars(node.body)
             if local_vars-global_vars:
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
