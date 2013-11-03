@@ -187,6 +187,7 @@ class PythonToPythonJS(NodeVisitor):
         self._global_typed_tuples = dict()
 
         self._custom_operators = {}
+        self._injector = []  ## advanced meta-programming hacks
 
         self.setup_builtins()
 
@@ -413,9 +414,19 @@ class PythonToPythonJS(NodeVisitor):
         self._decorator_class_props[ name ] = self._decorator_properties
         self._instances[ 'self' ] = name
 
-        #for dec in node.decorator_list:  ## TODO class decorators
-        #    if isinstance(dec, Name) and dec.id == 'inline':  ## @inline class decorator is DEPRECATED
-        #        self._catch_attributes = set()
+        self._injector = []
+        for decorator in node.decorator_list:  ## class decorators
+            if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'pythonjs':
+                if decorator.attr == 'property_callbacks':
+                    self._injector.append('set')
+                elif decorator.attr == 'init_callbacks':
+                    self._injector.append('init')
+                else:
+                    raise SyntaxError( 'unsupported pythonjs class decorator' )
+
+            else:
+                raise SyntaxError( 'unsupported class decorator' )
+
         ## always catch attributes ##
         self._catch_attributes = set()
         self._instance_attributes[ name ] = self._catch_attributes
@@ -479,6 +490,11 @@ class PythonToPythonJS(NodeVisitor):
         self._instances.pop('self')
 
         writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
+        if 'init' in self._injector:
+            writer.write('%s.init_callbacks = JSArray()' %name)
+
+        self._injector = []
+
 
     def visit_And(self, node):
         return ' and '
@@ -1006,7 +1022,9 @@ class PythonToPythonJS(NodeVisitor):
                 ## and throws a confusing error:
                 ## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
                 ## TODO - remove this optimization, or provide the user with a better error message.
-                return '%s( JSArray(), JSObject() )' %name
+                #return '%s( JSArray(), JSObject() )' %name  ## this also breaks passing a class to a factory!
+
+                return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
 
     def visit_Lambda(self, node):
         args = [self.visit(a) for a in node.args.args]
@@ -1019,6 +1037,8 @@ class PythonToPythonJS(NodeVisitor):
         property_decorator = None
         decorators = []
         with_js_decorators = []
+        setter = False
+
         for decorator in reversed(node.decorator_list):
             log('@decorator: %s' %decorator)
             if self._with_js:  ## decorators are special in with-js mode
@@ -1037,6 +1057,9 @@ class PythonToPythonJS(NodeVisitor):
                     n = node.name + '__setprop__'
                     self._decorator_properties[ decorator.value.id ]['set'] = n
                     node.name = n
+                    setter = True
+                    prop_name = node.original_name
+
                 elif decorator.attr == 'deleter':
                     raise NotImplementedError
                 else:
@@ -1174,10 +1197,32 @@ class PythonToPythonJS(NodeVisitor):
             log('(function has no arguments)')
 
         self._return_type = None
-        map(self.visit, node.body)
 
-        if self._return_type:
+        map(self.visit, node.body)  ## write function body
+
+        if self._return_type:       ## check if a return type was caught
             self._function_return_types[ node.name ] = self._return_type
+        self._return_type = None
+
+        if setter and 'set' in self._injector:  ## inject extra code
+            value_name = node.args.args[1].id
+            inject = [
+                'if self.__dict__.property_callbacks["%s"]:' %prop_name,
+                'self.__dict__.property_callbacks["%s"]([%s], JSObject(instance=self))' %(prop_name, value_name)
+            ]
+            writer.write( ' '.join(inject) )
+
+        elif self._injector and node.original_name == '__init__':
+            if 'set' in self._injector:
+                writer.write( 'self["__dict__"]["property_callbacks"] = JSObject()' )
+            if 'init' in self._injector:
+                writer.write('if self.__class__.init_callbacks.length:')
+                writer.push()
+                writer.write('for callback in self.__class__.init_callbacks:')
+                writer.push()
+                writer.write('callback( [self], JSObject() )')
+                writer.pull()
+                writer.pull()
 
         writer.pull()
         ## note, in javascript function.name is a non-standard readonly attribute,

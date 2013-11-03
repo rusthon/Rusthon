@@ -4,6 +4,23 @@
 
 Blockly.SCALE = 1.0
 
+BlocklyBlockGenerators = dict()  ## Blocks share a single namespace in Blockly
+
+with javascript: BlocklyBlockInstances = {}   ## block-uid : block instance
+_blockly_instances_uid = 0
+
+with javascript:
+	NEW_LINE = String.fromCharCode(10)
+
+def bind_blockly_event( element, name, callback ):
+	Blockly.bindEvent_( element, name, None, callback )
+
+
+def __blockinstance( result, block_uid ):
+	with javascript:
+		BlocklyBlockInstances[ block_uid ].pythonjs_object = result
+	return result
+
 with javascript:
 	def on_mouse_wheel(e):
 		delta = 0
@@ -120,6 +137,12 @@ def init_node_blockly( blockly_id ):
 def override_blockly_prototypes():
 
 	with javascript:
+		Blockly.Block.prototype.__duplicate__ = Blockly.Block.prototype.duplicate_
+		@Blockly.Block.prototype.duplicate_
+		def func():
+			block = this.__duplicate__()
+			print 'NEW BLOCKKKKKKK', block
+			return block
 
 		Blockly.Block.prototype.__onMouseDown__ = Blockly.Block.prototype.onMouseDown_
 		@Blockly.Block.prototype.onMouseDown_
@@ -242,22 +265,7 @@ def override_blockly_prototypes():
 				print 'dropdown changed', value
 
 
-BlocklyBlockGenerators = dict()  ## Blocks share a single namespace in Blockly
 
-with javascript: BlocklyBlockInstances = {}   ## block-uid : block instance
-_blockly_instances_uid = 0
-
-with javascript:
-	NEW_LINE = String.fromCharCode(10)
-
-def bind_blockly_event( element, name, callback ):
-	Blockly.bindEvent_( element, name, None, callback )
-
-
-def __blockinstance( result, block_uid ):
-	with javascript:
-		BlocklyBlockInstances[ block_uid ].pythonjs_object = result
-	return result
 
 def initialize_blockly( blockly_id='blocklyDiv', toolbox_id='toolbox', on_changed_callback=None, node_blockly=False ):
 	print 'initialize_blockly'
@@ -400,6 +408,59 @@ class BlocklyBlock:
 		self.on_removed = None  ## when a block is removed from its parent block
 		self.on_plugged = None
 		self.pythonjs_object = None
+
+		self._class = None
+		self._class_setters = []
+
+	def create_class(self):
+		a = self._class()
+		def func(value, instance=None):
+			print 'hacked!', value
+
+		for name in self._class_setters:
+			print 'setting property-callbacks', name
+			a.property_callbacks[ name ] = func
+
+		return a
+
+	def _on_class_init(self, instance):
+		def func(value, instance=None):
+			print 'hacked!!!!', value
+
+		for name in self._class_setters:
+			print 'setting property-callbacks', name
+			instance.property_callbacks[ name ] = func
+
+	def generate_from_class(self, cls):
+		print 'generate-from-class'
+		print cls
+		self._class = cls
+		class_init_cb = self._on_class_init
+		with javascript:
+			init = cls.__dict__.__init__
+			cls.init_callbacks.push( class_init_cb )
+			print 'init'
+			print init.args_signature
+			print init.kwargs_signature
+			print init.types_signature
+			for name in init.args_signature:
+				print 'adding input value:', name
+				#if name == 'self': continue  ## TODO fix continue under `with javascript`
+				if name == 'self':
+					pass
+				else:
+					with python:
+						self.add_input_value( name=name, default_value=init.kwargs_signature[name] )
+
+			for key in cls.__properties__:
+				print 'prop-key', key
+				prop = cls.__properties__[ key ]
+				print 'getter-prop', prop['get'].NAME
+				if 'set' in prop:
+					print 'setter-prop', prop['set'].NAME
+					with python:
+						self._class_setters.append( key )
+
 
 	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )
