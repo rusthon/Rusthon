@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Oct 31 23:27:16 2013
+// PythonScript Runtime - regenerated on: Sun Nov  3 20:33:11 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -849,7 +849,7 @@ func.kwargs_signature = {};
 func.types_signature = {};
 String.prototype.endswith=func;
 var func = function(a) {
-var i, out;
+var i, arr, out;
 out = "";
 if(a instanceof Array) {
 arr = a;
@@ -942,7 +942,7 @@ _setup_str_prototype.args_signature = [];
 _setup_str_prototype.kwargs_signature = {  };
 _setup_str_prototype.types_signature = {  };
 _setup_str_prototype.pythonscript_function = true;
-_setup_str_prototype(create_array(), Object());
+get_attribute(_setup_str_prototype, "__call__")(create_array(), Object());
 var _setup_array_prototype = function(args, kwargs) {
 var func = function(a) {
 if(this.indexOf(a) == -1) {
@@ -994,7 +994,7 @@ _setup_array_prototype.args_signature = [];
 _setup_array_prototype.kwargs_signature = {  };
 _setup_array_prototype.types_signature = {  };
 _setup_array_prototype.pythonscript_function = true;
-_setup_array_prototype(create_array(), Object());
+get_attribute(_setup_array_prototype, "__call__")(create_array(), Object());
 var range = function(args, kwargs) {
 var i, r;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
@@ -1046,7 +1046,7 @@ signature = {"kwargs": Object(), "args": create_array("obj")};
 signature["function_name"] = "len";
 arguments = get_arguments(signature, args, kwargs);
 var obj = arguments['obj'];
-return get_attribute(obj, "__len__")(create_array(), Object());
+return get_attribute(get_attribute(obj, "__len__"), "__call__")(create_array(), Object());
 }
 window["len"] = len 
 
@@ -1069,7 +1069,7 @@ signature = {"kwargs": Object(), "args": create_array("obj")};
 signature["function_name"] = "next";
 arguments = get_arguments(signature, args, kwargs);
 var obj = arguments['obj'];
-return get_attribute(obj, "next")(create_array(), Object());
+return get_attribute(get_attribute(obj, "next"), "__call__")(create_array(), Object());
 }
 window["next"] = next 
 
@@ -1344,6 +1344,7 @@ window["__tuple_attrs"] = Object();
 window["__tuple_parents"] = create_array();
 window["__tuple_properties"] = Object();
 var __tuple___init__ = function(args, kwargs) {
+var i, arr, length;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2216,7 +2217,7 @@ window["__dict_properties"] = Object();
 __dict_UID = 0;
 window["__dict_attrs"]["UID"] = __dict_UID;
 var __dict___init__ = function(args, kwargs) {
-var jsob;
+var i, jsob;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2233,7 +2234,7 @@ var self = arguments['self'];
 var js_object = arguments['js_object'];
 if(js_object) {
 if(js_object instanceof Array) {
-self["__dict__"]["js_object"] = Object.create(null);
+self["__dict__"]["js_object"] = Object();
 i = 0;
 while(i < get_attribute(js_object, "length")) {
 var key = js_object[i]["key"];
@@ -2315,7 +2316,7 @@ __dict_get.types_signature = { _default:"None" };
 __dict_get.pythonscript_function = true;
 window["__dict_attrs"]["get"] = __dict_get;
 var __dict_set = function(args, kwargs) {
-var __dict;
+var __dict, uid;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2436,7 +2437,7 @@ __dict___getitem__.types_signature = {  };
 __dict___getitem__.pythonscript_function = true;
 window["__dict_attrs"]["__getitem__"] = __dict___getitem__;
 var __dict___setitem__ = function(args, kwargs) {
-var __dict;
+var __dict, uid;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2519,7 +2520,7 @@ __dict_keys.types_signature = {  };
 __dict_keys.pythonscript_function = true;
 window["__dict_attrs"]["keys"] = __dict_keys;
 var __dict_pop = function(args, kwargs) {
-var v;
+var js_object, v;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2627,6 +2628,30 @@ __dict___contains__.kwargs_signature = {  };
 __dict___contains__.types_signature = {  };
 __dict___contains__.pythonscript_function = true;
 window["__dict_attrs"]["__contains__"] = __dict___contains__;
+var __dict___iter__ = function(args, kwargs) {
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+signature["function_name"] = "__dict___iter__";
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+return get_attribute(Iterator, "__call__")([get_attribute(get_attribute(self, "keys"), "__call__")(create_array(), Object()), 0], Object());
+}
+window["__dict___iter__"] = __dict___iter__ 
+
+__dict___iter__.NAME = "__dict___iter__";
+__dict___iter__.args_signature = ["self"];
+__dict___iter__.kwargs_signature = {  };
+__dict___iter__.types_signature = {  };
+__dict___iter__.pythonscript_function = true;
+window["__dict_attrs"]["__iter__"] = __dict___iter__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"], window["__dict_properties"]);
 var array, __array_attrs, __array_parents;
 window["__array_attrs"] = Object();
@@ -2734,7 +2759,7 @@ signature["function_name"] = "__array___contains__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
-arr = get_attribute(self, "to_array")(create_array(), Object());
+arr = get_attribute(get_attribute(self, "to_array"), "__call__")(create_array(), Object());
 if(arr.indexOf(value) == -1) {
 return false;
 }
@@ -2752,7 +2777,7 @@ __array___contains__.types_signature = {  };
 __array___contains__.pythonscript_function = true;
 window["__array_attrs"]["__contains__"] = __array___contains__;
 var __array___getitem__ = function(args, kwargs) {
-var func_name, step, dataview, func, offset;
+var func_name, dataview, value, step, func, offset;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2800,7 +2825,7 @@ __array___getitem__.types_signature = {  };
 __array___getitem__.pythonscript_function = true;
 window["__array_attrs"]["__getitem__"] = __array___getitem__;
 var __array___setitem__ = function(args, kwargs) {
-var func_name, step, dataview, func, offset;
+var index, func_name, dataview, value, step, func, offset;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -2901,7 +2926,7 @@ __array_get.types_signature = {  };
 __array_get.pythonscript_function = true;
 window["__array_attrs"]["get"] = __array_get;
 var __array_fromlist = function(args, kwargs) {
-var typecode, func_name, dataview, length, step, func, size;
+var typecode, i, func_name, dataview, length, item, step, func, offset, size;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -3060,7 +3085,7 @@ __array_extend.types_signature = {  };
 __array_extend.pythonscript_function = true;
 window["__array_attrs"]["extend"] = __array_extend;
 var __array_to_array = function(args, kwargs) {
-var i, arr;
+var i, item, arr;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -3107,7 +3132,7 @@ signature["function_name"] = "__array_to_list";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 lst = get_attribute(list, "__call__")(create_array(), Object());
-set_attribute(lst, "js_object", get_attribute(self, "to_array")(create_array(), Object()));
+set_attribute(lst, "js_object", get_attribute(get_attribute(self, "to_array"), "__call__")(create_array(), Object()));
 return lst;
 }
 window["__array_to_list"] = __array_to_list 
@@ -3134,7 +3159,7 @@ signature["function_name"] = "__array_to_ascii";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 string = "";
-arr = get_attribute(self, "to_array")(create_array(), Object());
+arr = get_attribute(get_attribute(self, "to_array"), "__call__")(create_array(), Object());
 i = 0;
 length = get_attribute(arr, "length");
 while(i < length) {
@@ -3155,7 +3180,7 @@ __array_to_ascii.pythonscript_function = true;
 window["__array_attrs"]["to_ascii"] = __array_to_ascii;
 array = create_class("array", window["__array_parents"], window["__array_attrs"], window["__array_properties"]);
 var _to_pythonjs = function(args, kwargs) {
-var keys, output, jstype, set;
+var set, keys, raw, jstype, output, append;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -3258,6 +3283,7 @@ json_to_pythonjs.kwargs_signature = {  };
 json_to_pythonjs.types_signature = {  };
 json_to_pythonjs.pythonscript_function = true;
 var _to_json = function(args, kwargs) {
+var r, key, value;
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
 }
@@ -3295,7 +3321,7 @@ if(get_attribute(isinstance, "__call__")([pythonjs, dict], Object())) {
 var r;
 r = Object();
 var __iterator__, key;
-__iterator__ = get_attribute(get_attribute(get_attribute(pythonjs, "keys")(create_array(), Object()), "__iter__"), "__call__")(create_array(), Object());
+__iterator__ = get_attribute(get_attribute(get_attribute(get_attribute(pythonjs, "keys"), "__call__")(create_array(), Object()), "__iter__"), "__call__")(create_array(), Object());
 try {
 key = get_attribute(__iterator__, "next")(create_array(), Object());
 while(true) {

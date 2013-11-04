@@ -424,7 +424,7 @@ class dict:
     def __init__(self, js_object=None):
         if js_object:
             if JS("js_object instanceof Array"):
-                self.js_object = JS('Object.create(null)')
+                self.js_object = JSObject()
                 i = 0
                 while i < js_object.length:
                     JS('var key = js_object[i]["key"]')
@@ -555,6 +555,10 @@ class dict:
                 return False
             else:
                 return True
+
+    def __iter__(self):
+        return Iterator(self.keys(), 0)
+
 
 # DEPRECATED - see _setup_str_prototype
 #class str:
