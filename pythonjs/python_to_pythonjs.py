@@ -1041,6 +1041,7 @@ class PythonToPythonJS(NodeVisitor):
         decorators = []
         with_js_decorators = []
         setter = False
+        return_type = None
 
         for decorator in reversed(node.decorator_list):
             log('@decorator: %s' %decorator)
@@ -1075,6 +1076,11 @@ class PythonToPythonJS(NodeVisitor):
                 if op not in self._custom_operators:
                     raise RuntimeError( op, self._custom_operators )
                 self._custom_operators[ op ] = node.name
+
+            elif isinstance(decorator, Call) and decorator.func.id == 'returns':
+                assert len(decorator.args) == 1
+                assert isinstance( decorator.args[0], Name)
+                return_type = decorator.args[0].id
 
             else:
                 decorators.append( decorator )
@@ -1199,11 +1205,15 @@ class PythonToPythonJS(NodeVisitor):
         else:
             log('(function has no arguments)')
 
-        self._return_type = None
+        self._return_type = None # tries to catch a return type in visit_Return
 
         map(self.visit, node.body)  ## write function body
 
         if self._return_type:       ## check if a return type was caught
+            if return_type:
+                assert return_type == self._return_type
+            else:
+                return_type = self._return_type
             self._function_return_types[ node.name ] = self._return_type
         self._return_type = None
 
@@ -1248,6 +1258,8 @@ class PythonToPythonJS(NodeVisitor):
             types.append( '%s : "%s"' %(self.visit(key), value) )
 
         writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
+        if return_type:
+            writer.write('%s.return_type = "%s"'%(node.name, return_type))
 
         if self._with_js and with_js_decorators:
             for dec in with_js_decorators:
