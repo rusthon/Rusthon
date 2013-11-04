@@ -1,0 +1,130 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="libs/pixi/pixi.js"></script>
+<script src="bindings/pixi.py"></script>
+<script src="bindings/websocket.py"></script>
+
+<script type="text/python" closure="false">
+from pixi import *
+from websocket import *
+
+ws = websocket('ws://localhost:8080/websocket')
+
+def websocket_upload(name, data):
+	ws.signal( 'upload', file_name=name, binary=True )
+	ws.send( data )
+
+	def func(): create_sprite( '/uploads/'+name )
+	setTimeout(func, 1000)  # can not load the image right away
+
+
+def allow_drop(e):
+	e.preventDefault()
+
+def on_drop(e):
+	e.preventDefault()
+	if e.dataTransfer.files.length:
+		file = e.dataTransfer.files[0]
+		if file.name.endswith('.jpg') or file.name.endswith('.png'):
+
+			with javascript:
+				reader = new( FileReader() )
+				def custom_on_load(event):
+					contents = event.target.result
+					with python:
+						websocket_upload( file.name, contents )
+
+				reader.onload = custom_on_load
+				reader.readAsArrayBuffer( file )
+
+
+
+def create_sprite( url ):
+	tex = Texture( fromImage=url )
+	sprite = Sprite( texture=tex )
+	sprite.anchor.x = 0.5
+	sprite.anchor.y = 0.5
+	sprite.position.x = 200
+	sprite.position.y = 150
+
+	sprite.interactive = True
+	sprite.button = True
+	sprite.set_drag_callback( on_drag )
+	sprite.set_pressed_callback( on_pressed )
+	sprite.set_released_callback( on_released )
+
+	stage.addChild( sprite )
+
+with javascript:
+	def on_drag( data ):
+		if this.dragging:
+			if this.data.originalEvent.button == 0:
+				newPosition = this.data.getLocalPosition(this.parent)
+				this.position.x = newPosition.x
+				this.position.y = newPosition.y
+			else:
+				dx = data['global'].x - this.drag_start_x
+				dy = data['global'].y - this.drag_start_y
+				dx *= 0.005
+				dy *= 0.005
+				dx += 1
+				dy += 1
+				this.scale.x = dx
+				this.scale.y = dx
+
+	def on_pressed( data ):
+		print 'on-pressed'
+		this.dragging = True
+		this.data = data
+		e = data.originalEvent
+		e.preventDefault()
+		e.stopPropagation()
+		this.drag_start_x = data['global'].x
+		this.drag_start_y = data['global'].y
+
+	def on_released( data ):
+		print 'on-released'
+		this.dragging = False
+		this.data = null
+		e = data.originalEvent
+		e.preventDefault()
+
+def test():
+	global stage, renderer, sprite
+
+	div = document.createElement( 'div' )
+	document.body.appendChild(div)
+
+	renderer = WebGLRenderer()
+	div.appendChild(renderer.view);
+
+	stage = Stage( interactive=True )
+
+
+	text = Text( 'PythonJS and Pixi', fill='white' )
+	stage.addChild( text )
+	text.interactive = True
+	text.button = True
+	text.set_drag_callback( on_drag )
+	text.set_pressed_callback( on_pressed )
+	text.set_released_callback( on_released )
+
+	animate()
+
+
+
+
+def animate():
+	requestAnimationFrame( animate )
+
+	renderer.render(stage)
+
+
+</script>
+
+</head>
+<body onload="test()" ondrop="on_drop(event)" ondragover="allow_drop(event)">
+<p><i>drop image to load</i></p>
+</body>
+</html>
