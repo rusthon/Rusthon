@@ -6,6 +6,8 @@
 PythonJS
 ########
 
+#. ``pip install pythonjs``
+#. ``wget https://raw.github.com/PythonJS/PythonJS/0.8.2/pythonjs.js``
 #. Create in Python
 #. Translate to Javascript
 #. Run in the browser
@@ -21,7 +23,7 @@ Demos
 Getting started
 ===============
 
-Start by reading the howtos to learn more about the specific capabilities of PythonScript, then the remaining part if you feel advanturous.
+Start by reading the howtos to learn more about the specific capabilities of PythonJS, then the remaining part if you feel advanturous.
 
 .. toctree::
    :maxdepth: 2

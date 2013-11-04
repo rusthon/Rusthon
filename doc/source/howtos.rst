@@ -10,7 +10,7 @@ Install ``pythonjs``:
 
   pip install PythonJS
 
-And download the latest version on the master branch of `pythonjs.js <https://raw.github.com/PythonJS/PythonJS/master/pythonjs.js>`_.
+And download the latest version on the master branch of `pythonjs.js <https://raw.github.com/PythonJS/PythonJS/0.8.2/pythonjs.js>`_.
 
 Prepare a ``app.html`` file that can look like the following:
 
