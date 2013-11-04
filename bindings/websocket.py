@@ -46,7 +46,21 @@ class websocket:
 		elif ob:
 			self.on_json_message( ob )
 
+	def signal(self, name, **kw):
+		print 'sending signal!!!', kw
+		with javascript: msg = {'command':name}
+		for key in kw:
+			print 'key', key
+			msg[key] = kw[key]
+		self.send_json_message( msg )
+		#print 'self', self
+		#with javascript:
+		#	self[...].send( JSON.stringify(msg) )
 
 	def send_json_message(self, ob):
 		with javascript:
 			self[...].send( JSON.stringify(ob) )
+
+	def send(self, data ):  ## data can be text or binary
+		with javascript:
+			self[...].send( data )

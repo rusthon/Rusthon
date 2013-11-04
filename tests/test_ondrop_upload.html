@@ -1,16 +1,34 @@
 <html>
 <head>
 <script src="pythonscript.js"></script>
+<script src="bindings/websocket.py"></script>
 
 <script type="text/python">
+from websocket import *
+
+ws = websocket('ws://localhost:8080/websocket')
+def upload(name, data):
+	print 'calling upload', name
+	print ws
+	ws.signal( 'upload', file_name=name, binary=True )
+	ws.send( data )
+	if name.endswith('.jpg') or name.endswith('.png'):
+
+		def func():
+			img = document.createElement('img')
+			img.setAttribute('src', '/uploads/'+name)
+			document.body.appendChild( img )
+
+		setTimeout(func, 1000)  # can not load the image right away
+
+	else:
+		a = document.createElement('a')
+		a.setAttribute('href', '/uploads/'+name)
+		a.appendChild( document.createTextNode(name) )
+		document.body.appendChild( a )
 
 with javascript:
 	Reader = new( FileReader() )
-	def on_load(event):
-		print 'on-load', event
-		contents = event.target.result
-		print contents
-	Reader.onload = on_load
 
 def allow_drop(e):
 	e.preventDefault()
@@ -25,13 +43,13 @@ def on_drop(e):
 	if e.dataTransfer.files.length:
 		file = e.dataTransfer.files[0]
 		print file
-		#Reader.readAsText( file )
 		Reader.readAsArrayBuffer( file )
 		with javascript:
 			def custom_on_load(event):
 				contents = event.target.result
-				print contents
 				print 'contents loaded for file: ' + file.name
+				with python:
+					upload( file.name, contents )
 		Reader.onload = custom_on_load
 
 
@@ -41,12 +59,8 @@ def on_drop(e):
 
 <body>
 
-<p>
-<img src="media/trashbody.png">
-</p>
-
 <h1 ondrop="on_drop(event)" ondragover="allow_drop(event)">
-drop here
+drop file here
 </h1>
 
 </body>

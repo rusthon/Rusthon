@@ -177,6 +177,7 @@ def regenerate_runtime():
 	return src
 
 
+UploadDirectory = '/tmp'
 ResourcePaths = []
 if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
 	ResourcePaths.append( os.path.expanduser('~/blockly-read-only') )
@@ -206,6 +207,18 @@ class MainHandler( tornado.web.RequestHandler ):
 				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False, module=module )
 
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
+			self.set_header("Content-Length", len(data))
+			self.write( data )
+
+		elif path.startswith('uploads/'):
+			name = path.split('/')[-1]
+			local_path = os.path.join( UploadDirectory, name )
+
+			if os.path.isfile( local_path ):
+				data = open(local_path, 'rb').read()
+			else:
+				raise tornado.web.HTTPError(404)
+
 			self.set_header("Content-Length", len(data))
 			self.write( data )
 
@@ -300,15 +313,35 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 		print( self.request.connection )
 
 	def on_message(self, msg):
-		print('on message', msg)
-		ob = json.loads( msg )
-		if isinstance(ob, dict):
-			if 'command' in ob:
-				if ob['command'] == 'compile':
-					js = python_to_javascript( ob['code'] )
-					self.write_message( {'eval':js})
+		if hasattr(self.ws_connection, 'previous_command') and self.ws_connection.previous_command and self.ws_connection.previous_command.get('binary', False):
+			if self.ws_connection.previous_command['command'] == 'upload':
+				path = os.path.join(
+					UploadDirectory, 
+					self.ws_connection.previous_command['file_name']
+				)
+				f = open( path, 'wb' )
+				f.write( msg )
+				f.close()
+
+			self.ws_connection.previous_command = None
+
 		else:
-			self.write_message('"hello client"')
+			print('on json message', msg)
+
+			ob = json.loads( msg )
+			if isinstance(ob, dict):
+				if 'command' in ob:
+					if ob['command'] == 'compile':
+						js = python_to_javascript( ob['code'] )
+						self.write_message( {'eval':js})
+					elif ob['command'] == 'upload':
+						print('ready for upload...')
+						print( ob['file_name'] )
+
+					self.ws_connection.previous_command = ob
+
+			else:
+				self.write_message('"hello client"')
 
 	def on_close(self):
 		print('websocket closed')
