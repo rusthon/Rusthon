@@ -45,9 +45,9 @@ def test():
 	sprite.interactive = True
 	print 'sprite is interactive', sprite.interactive
 	sprite.button = True
-	sprite.set_drag_callback( on_drag )
-	sprite.set_pressed_callback( on_pressed )
-	sprite.set_released_callback( on_released )
+	sprite.set_drag_callback( js_callback=on_drag )
+	sprite.set_pressed_callback( js_callback=on_pressed )
+	sprite.set_released_callback( js_callback=on_released )
 
 	stage.addChild( sprite )
 
@@ -55,9 +55,9 @@ def test():
 	stage.addChild( text )
 	text.interactive = True
 	text.button = True
-	text.set_drag_callback( on_drag )
-	text.set_pressed_callback( on_pressed )
-	text.set_released_callback( on_released )
+	text.set_drag_callback( js_callback=on_drag )
+	text.set_pressed_callback( js_callback=on_pressed )
+	text.set_released_callback( js_callback=on_released )
 
 	animate()
 

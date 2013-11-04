@@ -493,9 +493,10 @@ class BlocklyBlock:
 				prop = cls.__properties__[ key ]
 				print 'getter-prop', prop['get'].NAME
 				if 'set' in prop:
-					print 'setter-prop', prop['set'].NAME
-					with python:
-						self._class_setters.append( key )
+					if prop['set'] != None:
+						print 'setter-prop', prop['set'].NAME
+						with python:
+							self._class_setters.append( key )
 
 		return cls
 
@@ -611,6 +612,8 @@ class BlocklyBlock:
 
 		with javascript:
 			def init():
+				global BlocklyImageHack
+
 				input = null
 				block_uid = _blockly_instances_uid
 				_blockly_instances_uid += 1
@@ -632,12 +635,16 @@ class BlocklyBlock:
 				this.nodeOutputBlocks = []
 				this.nodeInputBlocks = []
 
-				print 'THIS', this
 				if color:
 					this.setColour( color )
 
 				if title:
-					this.appendDummyInput().appendTitle(title)
+					header = this.appendDummyInput()
+					if BlocklyImageHack:  ## TODO - find a better way to do this
+						img = new( Blockly.FieldImage(BlocklyImageHack, 64, 64) )
+						header.appendTitle( img )
+						BlocklyImageHack = null
+					header.appendTitle(title)
 
 				if stack_input:
 					this.setPreviousStatement( True )

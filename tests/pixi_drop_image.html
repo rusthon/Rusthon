@@ -41,6 +41,7 @@ def on_drop(e):
 
 
 def create_sprite( url ):
+	global sprite
 	tex = Texture( fromImage=url )
 	sprite = Sprite( texture=tex )
 	sprite.anchor.x = 0.5
@@ -50,26 +51,36 @@ def create_sprite( url ):
 
 	sprite.interactive = True
 	sprite.button = True
-	sprite.set_drag_callback( on_drag )
-	sprite.set_pressed_callback( on_pressed )
-	sprite.set_released_callback( on_released )
+	sprite.set_drag_callback( js_callback=on_drag )
+	sprite.set_pressed_callback( js_callback=on_pressed )
+	sprite.set_released_callback( js_callback=on_released )
 
 	stage.addChild( sprite )
 
 with javascript:
 	def on_drag( data ):
 		if this.dragging:
+			wrapper = this[...]
+			assert isinstance(wrapper, Sprite)
+
 			if this.data.originalEvent.button == 0:
 				newPosition = this.data.getLocalPosition(this.parent)
-				this.position.x = newPosition.x
-				this.position.y = newPosition.y
+
+				## this also works, this is direct and faster ##
+				#this.position.x = newPosition.x
+				#this.position.y = newPosition.y
+
+				with python:  ## indirect - via property setter ##
+					wrapper.position.x = newPosition.x
+					wrapper.position.y = newPosition.y
+
 			else:
 				dx = data['global'].x - this.drag_start_x
 				dy = data['global'].y - this.drag_start_y
 				dx *= 0.005
 				dy *= 0.005
-				dx += 1
-				dy += 1
+				dx += this.drag_scale_x
+				dy += this.drag_scale_y
 				this.scale.x = dx
 				this.scale.y = dx
 
@@ -82,6 +93,9 @@ with javascript:
 		e.stopPropagation()
 		this.drag_start_x = data['global'].x
 		this.drag_start_y = data['global'].y
+		this.drag_scale_x = this.scale.x
+		this.drag_scale_y = this.scale.y
+
 
 	def on_released( data ):
 		print 'on-released'
@@ -91,7 +105,7 @@ with javascript:
 		e.preventDefault()
 
 def test():
-	global stage, renderer, sprite
+	global stage, renderer
 
 	div = document.createElement( 'div' )
 	document.body.appendChild(div)
@@ -106,9 +120,9 @@ def test():
 	stage.addChild( text )
 	text.interactive = True
 	text.button = True
-	text.set_drag_callback( on_drag )
-	text.set_pressed_callback( on_pressed )
-	text.set_released_callback( on_released )
+	text.set_drag_callback( js_callback=on_drag )
+	text.set_pressed_callback( js_callback=on_pressed )
+	text.set_released_callback( js_callback=on_released )
 
 	animate()
 

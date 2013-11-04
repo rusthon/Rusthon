@@ -68,14 +68,29 @@ class Point:
 
 
 class DisplayObject:
-	def set_pressed_callback(self, callback, touch=True):
-		print 'setting pressed callback', callback
+	def on_pressed_callback(self, data):
+		self._on_pressed_callback( self, data )
+
+	def set_pressed_callback(self, js_callback=None, callback=None, touch=True):
+		if js_callback:
+			callback = js_callback
+		else:
+			self._on_pressed_callback = callback
+			callback = self.on_pressed_callback
 		with javascript:
 			self[...].mousedown = callback
 			if touch:
 				self[...].touchstart = callback
 
-	def set_released_callback(self, callback, touch=True, outside=True):
+	def on_released_callback(self, data):
+		self._on_released_callback( self, data )
+
+	def set_released_callback(self, js_callback=None, callback=None, touch=True, outside=True):
+		if js_callback:
+			callback = js_callback
+		else:
+			self._on_released_callback = callback
+			callback = self.on_released_callback
 		with javascript:
 			self[...].mouseup = callback
 			if touch:
@@ -83,7 +98,15 @@ class DisplayObject:
 			if outside:
 				self[...].mouseupoutside = callback
 
-	def set_drag_callback(self, callback, touch=True):
+	def on_drag_callback(self, data):
+		self._on_drag_callback( self, data )
+
+	def set_drag_callback(self, js_callback=None, callback=None, touch=True):
+		if js_callback:
+			callback = js_callback
+		else:
+			self._on_drag_callback = callback
+			callback = self.on_drag_callback
 		with javascript:
 			self[...].mousemove = callback
 			if touch:
@@ -222,6 +245,7 @@ class Stage( DisplayObjectContainer ):
 	def __init__(self, backgroundColor=0, interactive=False ):
 		with javascript:
 			self[...] = new( PIXI.Stage(backgroundColor, interactive) )
+			self[...][...] = self ## this[...] points to self
 
 	def setBackgroundColor(self, color):
 		with javascript:
@@ -231,22 +255,41 @@ class Stage( DisplayObjectContainer ):
 		with javascript:
 			return self[...].getMousePosition()
 
-
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
 class Sprite( DisplayObjectContainer ):
-	def __init__(self, texture=None, blendMode='NORMAL'):
+	def __init__(self, texture=None, image=None, blendMode='NORMAL', position_x=0.0, position_y=0.0, anchor_x=0.0, anchor_y=0.0, interactive=False, on_drag=None, on_pressed=None, on_released=None, parent=None):
+
+		if image: texture = Texture( fromImage=image )
 		with javascript:
 			## texture can be low level PIXI.Texture or high level PythonJS Texture
 			if isinstance( texture, Texture ):
 				texture = texture[...]
 
-			self[...] = new( PIXI.Sprite(texture) )
+			sprite = new( PIXI.Sprite(texture) )
+			self[...] = sprite
+			sprite[...] = self  ## this[...] points to self - the wrapper
+			sprite.position.x = position_x
+			sprite.position.y = position_y
+			sprite.anchor.x = anchor_x
+			sprite.anchor.y = anchor_y
+			sprite.interactive = interactive
 
 			if blendMode == 'NORMAL':
-				self[...].blendMode = PIXI.blendModes.NORMAL
+				sprite.blendMode = PIXI.blendModes.NORMAL
 			elif blendMode == 'SCREEN':
-				self[...].blendMode = PIXI.blendModes.SCREEN
+				sprite.blendMode = PIXI.blendModes.SCREEN
 			else:
 				print 'ERROR: unknown blend mode type for Sprite:' + blendMode
+
+		if on_drag:
+			self.set_drag_callback( on_drag )
+		if on_pressed:
+			self.set_pressed_callback( on_pressed )
+		if on_released:
+			self.set_released_callback( on_released )
+		if parent:
+			parent.addChild( self )
 
 	@property
 	def width(self):
@@ -263,6 +306,7 @@ class Sprite( DisplayObjectContainer ):
 		with javascript: self[...].height = value
 
 	def setTexture(self, texture):
+		if isinstance( texture, Texture ): texture = texture[...]
 		with javascript: self[...].setTexture( texture )
 
 	@property
@@ -282,6 +326,7 @@ class MovieClip( Sprite ):
 
 		with javascript:
 			self[...] = new( PIXI.MovieClip( arr ) )
+			self[...][...] = self
 			self[...].animationSpeed = animationSpeed
 			self[...].loop = loop
 			self[...].onComplete = onComplete
@@ -312,6 +357,7 @@ class Text( Sprite ):
 		with javascript:
 			style = {font:font, fill:fill, align:align, stroke:stroke, strokeThickness:strokeThickness, wordWrap:wordWrap, wordWrapWidth:wordWrapWidth}
 			self[...] = new( PIXI.Text( text, style ) )
+			self[...][...] = self
 
 	def setStyle(self, font='bold 20pt Arial', fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100):
 		with javascript:
