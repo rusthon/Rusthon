@@ -270,6 +270,11 @@ def override_blockly_prototypes():
 			this.__setValue__(value)
 			if this.sourceBlock_ and this.sourceBlock_.rendered:
 				print 'dropdown changed', value
+				if this.on_changed_callback:
+					if value == 'FALSE':
+						this.on_changed_callback( False )
+					else:
+						this.on_changed_callback( True )
 
 
 
@@ -414,7 +419,7 @@ class BlocklyBlock:
 		self.on_click_callback = None
 		self.on_removed = None  ## when a block is removed from its parent block
 		self.on_plugged = None
-		self.pythonjs_object = None
+		self.pythonjs_object = None  ## this is not correct, it goes on the block instance
 
 		self.input_class_slots = []
 		self._class = None
@@ -436,14 +441,20 @@ class BlocklyBlock:
 		return a
 
 	def _on_class_init(self, instance):
-		
 		name = self.name
 		with javascript:
 			block = new( Blockly.Block( Blockly.getMainWorkspace(), name ) )
 			block.initSvg()
 			block.render()
 
+			## an infinite loop is avoided because we directly update the
+			## wrapped pixi javascript object: instance[...]
+			## this.property_name is set below on the field object
+			def sync_pixi(val):
+				instance[...][this.property_name] = val
+
 		instance.block = block
+		block.pythonjs_object = instance
 		fields = {}
 
 		#for input in self.input_values:  ## TODO - check how this got broken.
@@ -453,8 +464,6 @@ class BlocklyBlock:
 			name = input['name']
 			print 'input name', name
 
-			#if 'default_value' in input:
-			#default_value = input['default_value']
 			default_value = getattr(instance, name)
 
 			btype = 'text'
@@ -470,27 +479,19 @@ class BlocklyBlock:
 				sub.render()
 				con = block.getInput( name ).connection
 				con.connect( sub.outputConnection )
-				#sub.outputConnection.connect( con )  ## not required
-				#sub.moveTo( con.x_, con.y_ )		## not required
-				#sub.getInput('')  ## hackish
-
-
-				def myfunc(val):
-					print 'myfunction - on enter', this.property_name, val
-					instance[...][this.property_name] = val
 
 				if btype == 'math_number':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
-					field.on_enter_callback = myfunc
+					field.on_enter_callback = sync_pixi
 
 				elif btype == 'logic_boolean':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
+					field.on_changed_callback = sync_pixi
 
 				field.property_name = name
 
-			print 'input name-callback', name
 			fields[ name ] = field
 
 			i += 1
@@ -511,11 +512,6 @@ class BlocklyBlock:
 			con = block.getInput( name ).connection
 			con.connect( sblock.previousConnection )
 
-			#sblock.setParent( instance.block )  ## not correct
-			#node.previousConnection.targetConnection = connection
-			#connection.targetConnection = node.previousConnection
-			#node.setParent( parent )
-
 			instance.block.render()
 
 	def bind_class(self, cls):  ## can be used as a decorator
@@ -524,23 +520,9 @@ class BlocklyBlock:
 		with javascript:
 			class_name = cls.__name__
 
-			init = cls.__dict__.__init__
 			if cls.init_callbacks is None:
 				print 'ERROR: class needs to be decorated with: @pythonjs.init_callbacks'
 			cls.init_callbacks.push( class_init_cb )
-			print 'init'
-			print init.args_signature
-			print init.kwargs_signature
-			print init.types_signature
-			for name in init.args_signature:
-				print 'adding input value:', name
-				#if name == 'self': continue  ## TODO fix continue under `with javascript`
-				if name == 'self':
-					pass
-				else:
-					#with python:
-					#	self.add_input_value( name=name, default_value=init.kwargs_signature[name] )
-					pass
 
 			with python:
 				self._generate_from_properties( cls )
@@ -558,19 +540,18 @@ class BlocklyBlock:
 				print 'getter-prop', prop['get'].NAME
 				return_type = prop['get'].return_type
 				print 'returns:', return_type
-				#if 'set' in prop:
-				print prop
+
 				if prop['set'] != None:
 					print 'setter-prop', prop['set'].NAME
 
 					with python:
 						self._class_setters.append( key )
 						if return_type == 'float':
-							self.add_input_value( name=key, default_value=0.0 )  ## TODO call the getter on class init
+							self.add_input_value( name=key )
 						elif return_type == 'int':
-							self.add_input_value( name=key, default_value=0.0 )
+							self.add_input_value( name=key )
 						elif return_type == 'bool':
-							self.add_input_value( name=key, default_value=False )
+							self.add_input_value( name=key)
 						else:
 							self.add_input_statement(name=key)
 

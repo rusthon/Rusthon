@@ -267,7 +267,9 @@ class Stage( DisplayObjectContainer ):
 class Sprite( DisplayObjectContainer ):
 	def __init__(self, texture=None, image=None, blendMode='NORMAL', position_x=0.0, position_y=0.0, anchor_x=0.0, anchor_y=0.0, interactive=False, on_drag=None, on_pressed=None, on_released=None, parent=None):
 
-		if image: texture = Texture( fromImage=image )
+		if image:
+			texture = Texture( fromImage=image )
+
 		with javascript:
 			## texture can be low level PIXI.Texture or high level PythonJS Texture
 			if isinstance( texture, Texture ):
@@ -288,6 +290,10 @@ class Sprite( DisplayObjectContainer ):
 				sprite.blendMode = PIXI.blendModes.SCREEN
 			else:
 				print 'ERROR: unknown blend mode type for Sprite:' + blendMode
+
+			if image:
+				sprite._image_url = image
+
 
 		if on_drag:
 			self.set_drag_callback( on_drag )
