@@ -289,7 +289,9 @@ class JSGenerator(NodeVisitor):
     def visit_UnaryOp(self, node):
         return self.visit(node.op) + self.visit(node.operand)
 
-
+    def visit_USub(self, node):
+        return '-'
+        
     def visit_And(self, node):
         return ' && '
 
