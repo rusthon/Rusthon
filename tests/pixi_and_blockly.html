@@ -157,7 +157,7 @@ from pixi import *
 from websocket import *
 from blockly import *
 
-block = StatementBlock(category='Classes')
+block = StatementBlock(color=120, inputs_inline=True, category='Classes')
 block.bind_class( Point )
 
 block = StatementBlock(category='Classes')
@@ -231,8 +231,11 @@ with javascript:
 				dy *= 0.005
 				dx += this.drag_scale_x
 				dy += this.drag_scale_y
-				this.scale.x = dx
-				this.scale.y = dx
+				#this.scale.x = dx
+				#this.scale.y = dx
+				with python:
+					wrapper.scale.x = round( dx, 5 )
+					wrapper.scale.y = round( dx, 5 )
 
 	def on_pressed( data ):
 		print 'on-pressed'

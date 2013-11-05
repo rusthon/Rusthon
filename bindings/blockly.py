@@ -239,9 +239,15 @@ def override_blockly_prototypes():
 			this.__onHtmlInputChange__( e )
 			if e.keyCode == 13: ## enter
 				print 'ENTER KEY'
-				print this.getText()
+				value = this.getText()
 				if this.name == 'NUM':
-					value = parseInt( this.getText() )
+					if value.indexOf('.') != -1:
+						value = parseFloat( value )
+					else:
+						value = parseInt( value )
+
+				if this.on_enter_callback:
+					this.on_enter_callback( value )
 
 		Blockly.FieldCheckbox.prototype.__showEditor__ = Blockly.FieldCheckbox.prototype.showEditor_
 		@Blockly.FieldCheckbox.prototype.showEditor_
@@ -444,9 +450,12 @@ class BlocklyBlock:
 		i = 0
 		while i < len(self.input_values):
 			input = self.input_values[ i ]
-			default_value = input['default_value']
 			name = input['name']
 			print 'input name', name
+
+			#if 'default_value' in input:
+			#default_value = input['default_value']
+			default_value = getattr(instance, name)
 
 			btype = 'text'
 			if typeof( default_value ) == 'number':
@@ -464,17 +473,25 @@ class BlocklyBlock:
 				#sub.outputConnection.connect( con )  ## not required
 				#sub.moveTo( con.x_, con.y_ )		## not required
 				#sub.getInput('')  ## hackish
+
+
+				def myfunc(val):
+					print 'myfunction - on enter', this.property_name, val
+					instance[...][this.property_name] = val
+
 				if btype == 'math_number':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
+					field.on_enter_callback = myfunc
+
 				elif btype == 'logic_boolean':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
 
+				field.property_name = name
+
 			print 'input name-callback', name
 			fields[ name ] = field
-			#instance.property_callbacks[ name ] = lambda val,inst: field.setValue(''+val)
-			#instance.property_callbacks[ name ] = func
 
 			i += 1
 
@@ -485,6 +502,21 @@ class BlocklyBlock:
 			print 'setting property-callbacks', name
 			instance.property_callbacks[ name ] = func
 
+		for input in self.input_class_slots:
+			name = input['name']
+			print 'getting attr from instance', name
+			sinst = getattr(instance, name)
+			sblock = sinst.block
+
+			con = block.getInput( name ).connection
+			con.connect( sblock.previousConnection )
+
+			#sblock.setParent( instance.block )  ## not correct
+			#node.previousConnection.targetConnection = connection
+			#connection.targetConnection = node.previousConnection
+			#node.setParent( parent )
+
+			instance.block.render()
 
 	def bind_class(self, cls):  ## can be used as a decorator
 		self._class = cls
@@ -888,8 +920,8 @@ class StatementBlock( BlocklyBlock ):
 	'''
 	A statement-block has a previous and/or next statement notch: stack_input and/or stack_output
 	'''
-	def __init__(self, block_name=None, title=None, stack_input=True, stack_output=False, color=170, category=None):
-		self.setup( block_name=block_name, title=title, color=color, category=category )
+	def __init__(self, block_name=None, title=None, stack_input=True, stack_output=False, color=170, category=None, inputs_inline=False):
+		self.setup( block_name=block_name, title=title, color=color, category=category, inputs_inline=inputs_inline )
 		self.make_statement( stack_input=stack_input, stack_output=stack_output)
 
 
