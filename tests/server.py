@@ -205,6 +205,10 @@ class MainHandler( tornado.web.RequestHandler ):
 				print('converting python binding to javascript', name)
 				module = name.split('.')[0]
 				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False, module=module )
+				if '--dump-js' in sys.argv:
+					f = open( os.path.join('/tmp',name+'.js'), 'wb' )
+					f.write(data.encode('utf-8'))
+					f.close()
 
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))

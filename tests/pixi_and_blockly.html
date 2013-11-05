@@ -143,6 +143,8 @@
 <script src="blockly_compressed.js" type="text/javascript" charset="utf-8"></script>
 <script src="blocks_compressed.js" type="text/javascript" charset="utf-8"></script>
 <script src="python_compressed.js" type="text/javascript"></script>
+<script type="text/javascript" src="msg/js/en.js"></script>
+
 
 <script src="pythonscript.js"></script>
 <script src="libs/pixi/pixi.js"></script>
@@ -155,7 +157,10 @@ from pixi import *
 from websocket import *
 from blockly import *
 
-block = StatementBlock(title='My Block', category='Classes')
+block = StatementBlock(category='Classes')
+block.bind_class( Point )
+
+block = StatementBlock(category='Classes')
 block.bind_class( Sprite )
 
 ws = websocket('ws://localhost:8080/websocket')

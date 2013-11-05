@@ -40,7 +40,8 @@ class CanvasRenderer( _Renderer ):
 		with javascript:
 			self[...] = new( PIXI.CanvasRenderer(width, height, view, transparent, antialias) )
 
-
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
 class Point:
 	def __init__(self, x=0, y=0, object=None):
 		with javascript:
@@ -49,6 +50,7 @@ class Point:
 			else:
 				self[...] = new( PIXI.Point() )
 
+	@returns( float )
 	@property
 	def x(self):
 		with javascript: return self[...].x
@@ -56,6 +58,7 @@ class Point:
 	def x(self, value):
 		with javascript: self[...].x = value
 
+	@returns( float )
 	@property
 	def y(self):
 		with javascript: return self[...].y
@@ -112,22 +115,23 @@ class DisplayObject:
 			if touch:
 				self[...].touchmove = callback
 
-	@property
+	@cached_property
 	def position(self):
 		with javascript: ptr = self[...].position
 		return Point( object=ptr )
 
-	@property
+	@cached_property
 	def scale(self):
 		with javascript: ptr = self[...].scale
 		return Point( object=ptr )
 
-	@property
+	@cached_property
 	def pivot(self):
 		with javascript: ptr = self[...].pivot
 		return Point( object=ptr )
 
 
+	@returns( float )
 	@property
 	def rotation(self):
 		with javascript: return self[...].rotation
@@ -135,7 +139,7 @@ class DisplayObject:
 	def rotation(self, value):
 		with javascript: self[...].rotation = value
 
-
+	@returns( float )
 	@property
 	def alpha(self):
 		with javascript: return self[...].alpha
@@ -143,7 +147,7 @@ class DisplayObject:
 	def alpha(self, value):
 		with javascript: self[...].alpha = value
 
-
+	@returns( bool )
 	@property
 	def visible(self):
 		with javascript: return self[...].visible
@@ -158,6 +162,7 @@ class DisplayObject:
 	def hitArea(self, value):
 		with javascript: self[...].hitArea = value
 
+	@returns( bool )
 	@property
 	def buttonMode(self):
 		with javascript: return self[...].buttonMode
@@ -165,6 +170,7 @@ class DisplayObject:
 	def buttonMode(self, value):
 		with javascript: self[...].buttonMode = value
 
+	@returns( bool )
 	@property
 	def renderable(self):
 		with javascript: return self[...].renderable
@@ -193,6 +199,7 @@ class DisplayObject:
 			else:
 				self[...].interactive = False
 
+	@returns( bool )
 	@property
 	def interactive(self):
 		with javascript: return self[...].interactive
@@ -291,6 +298,7 @@ class Sprite( DisplayObjectContainer ):
 		if parent:
 			parent.addChild( self )
 
+	@returns( float )
 	@property
 	def width(self):
 		with javascript: return self[...].width
@@ -298,6 +306,7 @@ class Sprite( DisplayObjectContainer ):
 	def width(self, value):
 		with javascript: self[...].width = value
 
+	@returns( float )
 	@property
 	def height(self):
 		with javascript: return self[...].height
@@ -309,7 +318,7 @@ class Sprite( DisplayObjectContainer ):
 		if isinstance( texture, Texture ): texture = texture[...]
 		with javascript: self[...].setTexture( texture )
 
-	@property
+	@cached_property
 	def anchor(self):
 		with javascript: ptr = self[...].anchor
 		return Point( object=ptr )

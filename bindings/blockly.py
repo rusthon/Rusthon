@@ -3,8 +3,9 @@
 # License: "New BSD"
 
 Blockly.SCALE = 1.0
-
+BlocklyImageHack = None
 BlocklyBlockGenerators = dict()  ## Blocks share a single namespace in Blockly
+BlocklyClasses = dict()
 
 with javascript: BlocklyBlockInstances = {}   ## block-uid : block instance
 _blockly_instances_uid = 0
@@ -409,8 +410,13 @@ class BlocklyBlock:
 		self.on_plugged = None
 		self.pythonjs_object = None
 
+		self.input_class_slots = []
 		self._class = None
+		self._class_name = None
 		self._class_setters = []
+
+	def get_class(self):
+		return self._class
 
 	def create_class(self):
 		a = self._class()
@@ -441,8 +447,16 @@ class BlocklyBlock:
 			default_value = input['default_value']
 			name = input['name']
 			print 'input name', name
+
+			btype = 'text'
+			if typeof( default_value ) == 'number':
+				btype = 'math_number'
+			elif typeof( default_value ) == 'boolean':
+				btype = 'logic_boolean'
+
 			with javascript:
-				sub = new( Blockly.Block( Blockly.getMainWorkspace(), 'math_number' ) )
+				sub = new( Blockly.Block( Blockly.getMainWorkspace(), btype ) )
+				print btype, sub
 				sub.initSvg()
 				sub.render()
 				con = block.getInput( name ).connection
@@ -450,9 +464,12 @@ class BlocklyBlock:
 				#sub.outputConnection.connect( con )  ## not required
 				#sub.moveTo( con.x_, con.y_ )		## not required
 				#sub.getInput('')  ## hackish
-				field = sub.inputList[0].titleRow[0]
-				field.setValue(''+default_value)
-				#func = lambda val,inst: field.setValue(''+val)
+				if btype == 'math_number':
+					field = sub.inputList[0].titleRow[0]
+					field.setValue(''+default_value)
+				elif btype == 'logic_boolean':
+					field = sub.inputList[0].titleRow[0]
+					field.setValue(''+default_value)
 
 			print 'input name-callback', name
 			fields[ name ] = field
@@ -473,7 +490,11 @@ class BlocklyBlock:
 		self._class = cls
 		class_init_cb = self._on_class_init
 		with javascript:
+			class_name = cls.__name__
+
 			init = cls.__dict__.__init__
+			if cls.init_callbacks is None:
+				print 'ERROR: class needs to be decorated with: @pythonjs.init_callbacks'
 			cls.init_callbacks.push( class_init_cb )
 			print 'init'
 			print init.args_signature
@@ -485,20 +506,53 @@ class BlocklyBlock:
 				if name == 'self':
 					pass
 				else:
-					with python:
-						self.add_input_value( name=name, default_value=init.kwargs_signature[name] )
+					#with python:
+					#	self.add_input_value( name=name, default_value=init.kwargs_signature[name] )
+					pass
 
-			for key in cls.__properties__:
-				print 'prop-key', key
-				prop = cls.__properties__[ key ]
-				print 'getter-prop', prop['get'].NAME
-				if 'set' in prop:
-					if prop['set'] != None:
-						print 'setter-prop', prop['set'].NAME
-						with python:
-							self._class_setters.append( key )
+			with python:
+				self._generate_from_properties( cls )
+
+		self.title = class_name
+		self._class_name = class_name
+		BlocklyClasses[ class_name ] = self
 
 		return cls
+
+	def _generate_from_properties(self, cls):
+		with javascript:
+			for key in cls.__properties__:
+				prop = cls.__properties__[ key ]
+				print 'getter-prop', prop['get'].NAME
+				return_type = prop['get'].return_type
+				print 'returns:', return_type
+				#if 'set' in prop:
+				print prop
+				if prop['set'] != None:
+					print 'setter-prop', prop['set'].NAME
+
+					with python:
+						self._class_setters.append( key )
+						if return_type == 'float':
+							self.add_input_value( name=key, default_value=0.0 )  ## TODO call the getter on class init
+						elif return_type == 'int':
+							self.add_input_value( name=key, default_value=0.0 )
+						elif return_type == 'bool':
+							self.add_input_value( name=key, default_value=False )
+						else:
+							self.add_input_statement(name=key)
+
+				with python:
+					if return_type in BlocklyClasses:
+						klass = BlocklyClasses[return_type].get_class()
+						self.add_input_statement(name=key, class_type=klass)
+
+
+			if cls.bases.length:
+				for base in cls.bases:
+					with python:
+						self._generate_from_properties( base )
+
 
 	def javascript_callback(self, jsfunc):  ## decorator
 		self.set_external_function( jsfunc.NAME, javascript=True )
@@ -575,10 +629,14 @@ class BlocklyBlock:
 			{'name':name, 'type':type, 'title':title, 'default_value':default_value}
 		)
 
-	def add_input_statement(self, name=None, title=None, callback=None):
+	def add_input_statement(self, name=None, title=None, callback=None, class_type=None):
 		if name is None: raise TypeError
 		if title is None: title = name
-		if callback:
+		if class_type:
+			self.input_class_slots.append(
+				{'name':name, 'title':title, 'class_type':class_type}
+			)
+		elif callback:
 			self.input_statements.append(
 				{'name':name, 'title':title, 'callback':callback}
 			)
@@ -601,9 +659,12 @@ class BlocklyBlock:
 		title = self.title
 		color = self.color
 		inputs_inline = self.inputs_inline
-		input_values = self.input_values.js_object
-		input_statements = self.input_statements.js_object
-		input_slots = self.input_slots.js_object
+
+		input_values = self.input_values[...]
+		input_statements = self.input_statements[...]
+		input_slots = self.input_slots[...]
+		input_class_slots = self.input_class_slots[...]
+
 		external_function = self.external_function
 		external_javascript_function = self.external_javascript_function
 		is_statement = self.is_statement
@@ -659,6 +720,13 @@ class BlocklyBlock:
 					else:
 						this.appendValueInput(input['name'] ).appendTitle( input['title'] ).setAlign(Blockly.ALIGN_RIGHT)
 					i += 1
+
+				i = 0
+				while i < input_class_slots.length:
+					input = input_class_slots[i][...]
+					this.appendStatementInput( input['name'] ).appendTitle( input['title']+':' )
+					i += 1
+
 
 				i = 0
 				while i < input_slots.length:
