@@ -483,7 +483,7 @@ class PythonToPythonJS(NodeVisitor):
             getter = self._decorator_properties[prop_name]['get']
             writer.write('window["__%s_properties"]["%s"] = JSObject()' %(name, prop_name))
             writer.write('window["__%s_properties"]["%s"]["get"] = %s' %(name, prop_name, getter))
-            if 'set' in self._decorator_properties[prop_name]:
+            if self._decorator_properties[prop_name]['set']:
                 setter = self._decorator_properties[prop_name]['set']
                 writer.write('window["__%s_properties"]["%s"]["set"] = %s' %(name, prop_name, setter))
 
@@ -563,7 +563,11 @@ class PythonToPythonJS(NodeVisitor):
             elif isinstance(node.value, Name) and node.value.id == 'self' and 'self' in self._instances:
                 self._return_type = self._instances['self']
 
-            writer.write('return %s' % self.visit(node.value))
+            if self._cached_property:
+                writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
+                writer.write('return self["__dict__"]["%s"]' %self._cached_property)
+            else:
+                writer.write('return %s' % self.visit(node.value))
 
         else:
             writer.write('return')  ## empty return
@@ -1042,17 +1046,20 @@ class PythonToPythonJS(NodeVisitor):
         with_js_decorators = []
         setter = False
         return_type = None
+        self._cached_property = None
 
         for decorator in reversed(node.decorator_list):
             log('@decorator: %s' %decorator)
             if self._with_js:  ## decorators are special in with-js mode
                 with_js_decorators.append( self.visit( decorator ) )
 
-            elif isinstance(decorator, Name) and decorator.id == 'property':
+            elif isinstance(decorator, Name) and decorator.id in ('property', 'cached_property'):
                 property_decorator = decorator
                 n = node.name + '__getprop__'
                 self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
                 node.name = n
+                if decorator.id == 'cached_property':
+                    self._cached_property = node.original_name
 
             elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
                 if decorator.attr == 'setter':
@@ -1204,6 +1211,11 @@ class PythonToPythonJS(NodeVisitor):
                 writer.write(expr)
         else:
             log('(function has no arguments)')
+
+        ################# function body #################
+        if self._cached_property:
+            writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
+
 
         self._return_type = None # tries to catch a return type in visit_Return
 
