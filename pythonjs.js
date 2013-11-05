@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sun Nov  3 20:33:11 2013
+// PythonScript Runtime - regenerated on: Mon Nov  4 21:44:15 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -742,6 +742,41 @@ float.args_signature = ["a"];
 float.kwargs_signature = {  };
 float.types_signature = {  };
 float.pythonscript_function = true;
+var round = function(args, kwargs) {
+var b;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("a", "places")};
+signature["function_name"] = "round";
+arguments = get_arguments(signature, args, kwargs);
+var a = arguments['a'];
+var places = arguments['places'];
+b = "" + a;
+if(b.indexOf(".") == -1) {
+return a;
+}
+else {
+c = b.split( "." );
+x = c[ 0 ];
+y = c[ 1 ].substring( 0,places );
+return parseFloat( x + "." + y );
+}
+
+}
+window["round"] = round 
+
+round.NAME = "round";
+round.args_signature = ["a", "places"];
+round.kwargs_signature = {  };
+round.types_signature = {  };
+round.pythonscript_function = true;
 var str = function(args, kwargs) {
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -1476,6 +1511,7 @@ __tuple___iter__.NAME = "__tuple___iter__";
 __tuple___iter__.args_signature = ["self"];
 __tuple___iter__.kwargs_signature = {  };
 __tuple___iter__.types_signature = {  };
+__tuple___iter__.return_type = "Iterator";
 __tuple___iter__.pythonscript_function = true;
 window["__tuple_attrs"]["__iter__"] = __tuple___iter__;
 var __tuple___len__ = function(args, kwargs) {
@@ -2090,6 +2126,7 @@ __list___iter__.NAME = "__list___iter__";
 __list___iter__.args_signature = ["self"];
 __list___iter__.kwargs_signature = {  };
 __list___iter__.types_signature = {  };
+__list___iter__.return_type = "Iterator";
 __list___iter__.pythonscript_function = true;
 window["__list_attrs"]["__iter__"] = __list___iter__;
 var __list_get = function(args, kwargs) {
@@ -2517,6 +2554,7 @@ __dict_keys.NAME = "__dict_keys";
 __dict_keys.args_signature = ["self"];
 __dict_keys.kwargs_signature = {  };
 __dict_keys.types_signature = {  };
+__dict_keys.return_type = "list";
 __dict_keys.pythonscript_function = true;
 window["__dict_attrs"]["keys"] = __dict_keys;
 var __dict_pop = function(args, kwargs) {
@@ -2650,6 +2688,7 @@ __dict___iter__.NAME = "__dict___iter__";
 __dict___iter__.args_signature = ["self"];
 __dict___iter__.kwargs_signature = {  };
 __dict___iter__.types_signature = {  };
+__dict___iter__.return_type = "Iterator";
 __dict___iter__.pythonscript_function = true;
 window["__dict_attrs"]["__iter__"] = __dict___iter__;
 dict = create_class("dict", window["__dict_parents"], window["__dict_attrs"], window["__dict_properties"]);
@@ -2898,6 +2937,7 @@ __array___iter__.NAME = "__array___iter__";
 __array___iter__.args_signature = ["self"];
 __array___iter__.kwargs_signature = {  };
 __array___iter__.types_signature = {  };
+__array___iter__.return_type = "Iterator";
 __array___iter__.pythonscript_function = true;
 window["__array_attrs"]["__iter__"] = __array___iter__;
 var __array_get = function(args, kwargs) {

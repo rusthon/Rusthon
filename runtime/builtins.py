@@ -59,6 +59,18 @@ def float(a):
         else:
             return a
 
+def round(a, places):
+    with javascript:
+        b = '' + a
+        if b.indexOf('.') == -1:
+            return a
+        else:
+            c = b.split('.')
+            x = c[0]
+            y = c[1].substring(0, places)
+            return parseFloat( x+'.'+y )
+
+
 def str(s):
     return ''+s
 
