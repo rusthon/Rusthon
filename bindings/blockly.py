@@ -92,11 +92,11 @@ def init_node_blockly( blockly_id ):
 
 		############################ override prototypes #########################
 
+		## override BlockSvg init so that we can create the node link lines ##
 		Blockly.BlockSvg.prototype.__init__ = Blockly.BlockSvg.prototype.init
 		@Blockly.BlockSvg.prototype.init
 		def func():
 			this.__init__()
-			print 'MY INIT'
 			this.svgLinks = Blockly.createSvgElement(
 				'path',
 				{}, 
@@ -429,16 +429,7 @@ class BlocklyBlock:
 	def get_class(self):
 		return self._class
 
-	def create_class(self):
-		a = self._class()
-		def func(value, instance=None):
-			print 'hacked!', value
 
-		for name in self._class_setters:
-			print 'setting property-callbacks', name
-			a.property_callbacks[ name ] = func
-
-		return a
 
 	def _on_class_init(self, instance):
 		name = self.name
@@ -500,12 +491,10 @@ class BlocklyBlock:
 		def func(n, val, inst):
 			fields[n].setValue(''+val)
 		for name in self._class_setters:
-			print 'setting property-callbacks', name
 			instance.property_callbacks[ name ] = func
 
 		for input in self.input_class_slots:
 			name = input['name']
-			print 'getting attr from instance', name
 			sinst = getattr(instance, name)
 			sblock = sinst.block
 
@@ -537,12 +526,9 @@ class BlocklyBlock:
 		with javascript:
 			for key in cls.__properties__:
 				prop = cls.__properties__[ key ]
-				print 'getter-prop', prop['get'].NAME
 				return_type = prop['get'].return_type
-				print 'returns:', return_type
 
 				if prop['set'] != None:
-					print 'setter-prop', prop['set'].NAME
 
 					with python:
 						self._class_setters.append( key )

@@ -69,7 +69,7 @@ class Point:
 
 
 
-
+@pythonjs.property_callbacks
 class DisplayObject:
 	def on_pressed_callback(self, data):
 		self._on_pressed_callback( self, data )
