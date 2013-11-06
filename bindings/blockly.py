@@ -247,10 +247,13 @@ def override_blockly_prototypes():
 						value = parseInt( value )
 
 				if this.on_enter_callback:
-					print 'on_enter_callback:', value, this.on_enter_callback
+					print 'on_enter_callback:', value
 					this.on_enter_callback( value )
 				else:
 					print 'WARNING: field has no on_enter_callback', this
+
+			elif this.on_key_callback:
+					this.on_key_callback( this.getText() )
 
 		Blockly.FieldCheckbox.prototype.__showEditor__ = Blockly.FieldCheckbox.prototype.showEditor_
 		@Blockly.FieldCheckbox.prototype.showEditor_
@@ -274,9 +277,9 @@ def override_blockly_prototypes():
 			if this.sourceBlock_ and this.sourceBlock_.rendered:
 				print 'dropdown changed', value
 				if this.on_changed_callback:
-					if value == 'FALSE':
+					if value == 'FALSE' or value == 'false' or value is False:
 						this.on_changed_callback( False )
-					else:
+					elif value == 'TRUE' or value == 'true' or value is True:
 						this.on_changed_callback( True )
 
 
@@ -445,10 +448,17 @@ class BlocklyBlock:
 			## low level wrapped javascript object: instance[...]
 			## this.property_name is set below on the field object
 			def sync_low_level(val):
-				instance[...][this.property_name] = val
+				if Object.hasOwnProperty.call( instance[...], this.property_name ):
+					instance[...][this.property_name] = val
+				else:
+					with python:
+						setattr( instance, this.property_name, val, property=True )
+
 			def sync_high_level(val):
 				with python:
-					setattr( instance, this.property_name, val, property=True )
+					prev = getattr( instance, this.property_name, property=True )
+					if prev != val:
+						setattr( instance, this.property_name, val, property=True )
 
 		instance.block = block
 		block.pythonjs_object = instance
@@ -485,12 +495,13 @@ class BlocklyBlock:
 				elif btype == 'logic_boolean':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
-					field.on_changed_callback = sync_low_level
+					field.on_changed_callback = sync_high_level
 
 				elif btype == 'text':
 					field = sub.inputList[0].titleRow[1]
 					field.setValue(''+default_value)
 					field.on_enter_callback = sync_high_level
+					field.on_key_callback = sync_high_level
 
 				field.property_name = name
 

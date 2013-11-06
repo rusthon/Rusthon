@@ -198,14 +198,6 @@ from blockly import *
 block = StatementBlock(color=120, inputs_inline=True, category='Classes')
 block.bind_class( Point )
 
-block = StatementBlock(color=150, category='Classes')
-block.bind_class( Text )
-
-
-def create_pixi_text( txt ):
-	global text
-	text = Text( txt )
-	stage.addChild( text )
 
 with javascript:
 	def on_unplugged(object, parent_object, block, parent_block):
@@ -227,6 +219,25 @@ block.bind_class( Sprite )
 block.on_plugged = on_plugged
 block.on_unplugged = on_unplugged
 block.add_input_statement( name='child' )
+
+
+block = StatementBlock(color=150, category='Classes')
+block.bind_class( Text )
+block.on_plugged = on_plugged
+block.on_unplugged = on_unplugged
+block.add_input_statement( name='child' )
+
+
+def create_pixi_text( txt ):
+	global text
+	text = Text(
+		txt, 
+		on_drag = on_drag,
+		on_pressed = on_pressed,
+		on_released = on_released,
+		interactive=True,
+		parent=stage,
+	)
 
 
 ws = websocket('ws://localhost:8080/websocket')

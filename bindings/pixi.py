@@ -369,7 +369,7 @@ class MovieClip( Sprite ):
 @pythonjs.init_callbacks
 @pythonjs.property_callbacks
 class Text( Sprite ):
-	def __init__(self, text, font='Arial', size=20, bold=False, fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100 ):
+	def __init__(self, text, font='Arial', size=20, bold=False, fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100, interactive=False, on_drag=None, on_pressed=None, on_released=None, parent=None ):
 		self._text = text
 		self._font = font
 		self._size = size
@@ -384,6 +384,16 @@ class Text( Sprite ):
 		with javascript:
 			self[...] = new( PIXI.Text( text, style ) )
 			self[...][...] = self
+			self[...].interactive = interactive
+
+		if on_drag:
+			self.set_drag_callback( on_drag )
+		if on_pressed:
+			self.set_pressed_callback( on_pressed )
+		if on_released:
+			self.set_released_callback( on_released )
+		if parent:
+			parent.addChild( self )
 
 	def _get_style(self):
 		font = self._font
@@ -431,8 +441,27 @@ class Text( Sprite ):
 	def text(self, txt):
 		self.setText(txt)
 
+	@returns( bool )
+	@property
+	def bold(self):
+		return self._bold
+	@bold.setter
+	def bold(self, v):
+		self._bold = v
+		style = self._get_style()
+		with javascript:
+			self[...].setStyle( style )
 
-
+	@returns( float )
+	@property
+	def size(self):
+		return self._size
+	@size.setter
+	def size(self, v):
+		self._size = v
+		style = self._get_style()
+		with javascript:
+			self[...].setStyle( style )
 
 
 	def destroy(self, destroyTexture=False):
