@@ -16,13 +16,27 @@ def type(ob_or_class_name, bases=None, class_dict=None):
         else:
             return create_class(ob_or_class_name, bases, class_dict)  ## TODO rename create_class to _pyjs_create_class
 
-def getattr(ob, attr):
+def getattr(ob, attr, property=False):
     with javascript:
-        return get_attribute(ob, attr)  ## TODO rename to _pyjs_get_attribute
+        if property:
+            prop = _get_upstream_property( ob.__class__, attr )
+            if prop and prop['get']:
+                return prop['get']( [ob], {} )
+            else:
+                print "ERROR: getattr property error", prop
+        else:
+            return get_attribute(ob, attr)  ## TODO rename to _pyjs_get_attribute
 
-def setattr(ob, attr, value):
+def setattr(ob, attr, value, property=False):
     with javascript:
-        return set_attribute(ob, attr, value)
+        if property:
+            prop = _get_upstream_property( ob.__class__, attr )
+            if prop and prop['set']:
+                prop['set']( [ob, value], {} )
+            else:
+                print "ERROR: setattr property error", prop
+        else:
+            set_attribute(ob, attr, value)
 
 def issubclass(C, B):
     if C is B:

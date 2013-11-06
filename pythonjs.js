@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Mon Nov  4 21:44:15 2013
+// PythonScript Runtime - regenerated on: Tue Nov  5 17:54:04 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -575,19 +575,33 @@ kwargs = Object();
 }
 
 var signature, arguments;
-signature = {"kwargs": Object(), "args": create_array("ob", "attr")};
+signature = {"kwargs": {"property": false}, "args": create_array("ob", "attr", "property")};
 signature["function_name"] = "getattr";
 arguments = get_arguments(signature, args, kwargs);
 var ob = arguments['ob'];
 var attr = arguments['attr'];
+var property = arguments['property'];
+if(property) {
+prop = _get_upstream_property( ob.__class__,attr );
+if(prop && prop["get"]) {
+return prop[ "get" ]( [ob],{  } );
+}
+else {
+console.log("ERROR: getattr property error", prop);
+}
+
+}
+else {
 return get_attribute( ob,attr );
+}
+
 }
 window["getattr"] = getattr 
 
 getattr.NAME = "getattr";
-getattr.args_signature = ["ob", "attr"];
-getattr.kwargs_signature = {  };
-getattr.types_signature = {  };
+getattr.args_signature = ["ob", "attr", "property"];
+getattr.kwargs_signature = { property:false };
+getattr.types_signature = { property:"False" };
 getattr.pythonscript_function = true;
 var setattr = function(args, kwargs) {
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
@@ -599,20 +613,34 @@ kwargs = Object();
 }
 
 var signature, arguments;
-signature = {"kwargs": Object(), "args": create_array("ob", "attr", "value")};
+signature = {"kwargs": {"property": false}, "args": create_array("ob", "attr", "value", "property")};
 signature["function_name"] = "setattr";
 arguments = get_arguments(signature, args, kwargs);
 var ob = arguments['ob'];
 var attr = arguments['attr'];
 var value = arguments['value'];
-return set_attribute( ob,attr,value );
+var property = arguments['property'];
+if(property) {
+prop = _get_upstream_property( ob.__class__,attr );
+if(prop && prop["set"]) {
+prop[ "set" ]( [ob, value],{  } );
+}
+else {
+console.log("ERROR: setattr property error", prop);
+}
+
+}
+else {
+set_attribute( ob,attr,value );
+}
+
 }
 window["setattr"] = setattr 
 
 setattr.NAME = "setattr";
-setattr.args_signature = ["ob", "attr", "value"];
-setattr.kwargs_signature = {  };
-setattr.types_signature = {  };
+setattr.args_signature = ["ob", "attr", "value", "property"];
+setattr.kwargs_signature = { property:false };
+setattr.types_signature = { property:"False" };
 setattr.pythonscript_function = true;
 var issubclass = function(args, kwargs) {
 var i, bases;

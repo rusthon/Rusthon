@@ -17,6 +17,7 @@ class A:
 		return self._x
 	@x.setter
 	def x(self,value):
+		print '--calling x setter: ', value
 		self._x = value + 1000
 
 	@property
@@ -69,7 +70,15 @@ def test():
 	print 'unknown get_attribute is OK'
 	
 	c.x = 101	## TODO fix setters on unknown types
-	print( c.x )
+	print( c.x )  ## this prints 101 but the setter was not called
+	with javascript:
+		print c.__dict__._x
+
+	print 'testing setattr(c,"x", property=True)'
+	setattr( c, 'x', 10, property=True )
+	with javascript:
+		print c.__dict__._x
+	print getattr( c, 'x', property=True )
 
 </script>
 </head>
