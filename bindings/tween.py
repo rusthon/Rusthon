@@ -32,6 +32,8 @@ class _TweenManagerSingleton:
 
 TweenManager = _TweenManagerSingleton()
 
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
 class Tween:
 	'''
 	This wrapper class for TWEEN.Tween is slightly different that the Tween.js API,
@@ -55,7 +57,7 @@ class Tween:
 		after tween.to has been called.  Can we call tween.to multiple times?
 
 	'''
-	def __init__(self, source=None, on_start=None, on_update=None, seconds=None, delay=None, repeat=None, yoyo=False, on_complete=None, on_start_js=None, on_update_js=None, on_complete_js=None ):
+	def __init__(self, source=None, on_start=None, on_update=None, seconds=1.0, delay=0, repeat=0, yoyo=False, on_complete=None, on_start_js=None, on_update_js=None, on_complete_js=None ):
 		self.source = source
 		self.source_is_raw = False
 		self.on_start = on_start
@@ -64,8 +66,8 @@ class Tween:
 		self._on_start_js = on_start_js
 		self._on_update_js = on_update_js
 		self._on_complete_js = on_complete_js
-		self.seconds = seconds
-		self.seconds_remaining = seconds
+		self._seconds = seconds
+		self._seconds_remaining = seconds
 		self.active = True
 		self.started = False
 
@@ -73,9 +75,9 @@ class Tween:
 		self.target_is_raw = False
 		self.target_armed = False
 
-		self.delay = delay
-		self.repeat = repeat
-		self.yoyo = yoyo
+		self._delay = delay
+		self._repeat = repeat
+		self._yoyo = yoyo
 
 		if source:
 			self.set_source( source )
@@ -129,11 +131,11 @@ class Tween:
 
 			self[...] = tween
 
-		if self.target and not self.target_armed and self.seconds:
+		if self.target and not self.target_armed and self._seconds:
 			if self.target_is_raw:
-				self.to( target_js=self.target, seconds=self.seconds )
+				self.to( target_js=self.target, seconds=self._seconds )
 			else:
-				self.to( target=self.target, seconds=self.seconds )
+				self.to( target=self.target, seconds=self._seconds )
 
 
 	def set_target(self, target=None, target_js=None ):
@@ -147,19 +149,29 @@ class Tween:
 
 		if self.target_armed:  ## redirect target
 			if self.target_is_raw:
-				self.to( target_js=self.target, seconds=self.seconds )
+				self.to( target_js=self.target, seconds=self._seconds )
 			else:
-				self.to( target=self.target, seconds=self.seconds )
+				self.to( target=self.target, seconds=self._seconds )
 
 
 	def set_seconds(self, seconds=1.0):
-		self.seconds = seconds
-		self.seconds_remaining = seconds
+		self._seconds = seconds
+		self._seconds_remaining = seconds
 		if self.started and self.target:
 			if self.target_is_raw:
 				self.to( target_js=self.target, seconds=seconds)
 			else:
 				self.to( target=self.target, seconds=seconds)
+
+	@returns( float )
+	@property
+	def seconds(self):
+		return self._seconds
+	@seconds.setter
+	def seconds(self, v):
+		self.set_seconds( v )
+
+
 
 	#############################################
 	def _on_start(self, jsob):
@@ -174,7 +186,7 @@ class Tween:
 			TweenManager.paused = True
 			raise TypeError
 
-		self.seconds_remaining = self.seconds - (self.seconds * delta)
+		self._seconds_remaining = self._seconds - (self._seconds * delta)
 
 		if self.on_update:
 			self.on_update( self, self.source, delta )
@@ -182,6 +194,7 @@ class Tween:
 	def _on_complete(self, jsob):
 		print '-on-complete', jsob
 		self.active = False
+		self.target_armed = False  ## need this so the tween can be restarted
 		if self.on_complete:
 			self.on_complete( self, self.source )
 
@@ -191,8 +204,8 @@ class Tween:
 		print 'TWEEN.TO', target, target_js, seconds
 		if seconds is None:
 			raise TypeError
-		self.seconds = seconds
-		self.seconds_remaining = seconds
+		self._seconds = seconds
+		self._seconds_remaining = seconds
 		if target:
 			self.target = target
 			target = target[...]
@@ -210,15 +223,15 @@ class Tween:
 	def start(self):
 		print '--starting tweeen'
 		## set these in case they were set from __init__
-		if self.yoyo: self.set_yoyo( self.yoyo )
-		if self.delay: self.set_delay( self.delay )
-		if self.repeat: self.set_repeat( self.repeat )
+		if self._yoyo: self.set_yoyo( self._yoyo )
+		if self._delay: self.set_delay( self._delay )
+		if self._repeat: self.set_repeat( self._repeat )
 
 		if self.target and not self.target_armed:
 			if self.target_is_raw:
-				self.to( target_js=self.target, seconds=self.seconds )
+				self.to( target_js=self.target, seconds=self._seconds )
 			else:
-				self.to( target=self.target, seconds=self.seconds )
+				self.to( target=self.target, seconds=self._seconds )
 
 		with javascript:
 			self[...].start()
@@ -231,19 +244,46 @@ class Tween:
 			self[...].stop()
 
 	def set_delay(self, seconds):
-		self.delay = seconds
+		self._delay = seconds
 		with javascript:
 			self[...].delay( seconds*1000 )
 
+	@returns( float )
+	@property
+	def delay(self):
+		return self._delay
+	@delay.setter
+	def delay(self, v):
+		self.set_delay( v )
+
 	def set_repeat(self, amount):
-		self.repeat = amount
+		self._repeat = amount
 		with javascript:
 			self[...].repeat( amount )
 
+
+	@returns( int )
+	@property
+	def repeat(self):
+		return self._repeat
+	@repeat.setter
+	def repeat(self, v):
+		self.set_repeat( v )
+
+
 	def set_yoyo(self, yoyo):
-		self.yoyo = yoyo
+		self._yoyo = yoyo
 		with javascript:
 			self[...].yoyo( yoyo )
+
+	@returns( bool )
+	@property
+	def yoyo(self):
+		return self._yoyo
+	@yoyo.setter
+	def yoyo(self, v):
+		self.set_yoyo( v )
+
 
 	## TODO test these
 	def set_easing(self, easing ):
@@ -262,7 +302,7 @@ class Tween:
 
 	############# retarget helper #############
 	def retarget(self, target):
-		assert self.seconds_remaining
+		assert self._seconds_remaining
 		assert self.active
 
 		on_complete = self.on_complete ## get this so that when we call stop below, this will not get triggered
@@ -282,5 +322,5 @@ class Tween:
 			self[...] = tween
 
 		self.on_complete = on_complete
-		self.to( target, self.seconds_remaining )
+		self.to( target, self._seconds_remaining )
 		self.start()

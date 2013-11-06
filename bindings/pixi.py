@@ -48,7 +48,7 @@ class Point:
 			if object:
 				self[...] = object
 			else:
-				self[...] = new( PIXI.Point() )
+				self[...] = new( PIXI.Point(x,y) )
 
 	@returns( float )
 	@property

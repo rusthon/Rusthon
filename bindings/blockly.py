@@ -562,13 +562,17 @@ class BlocklyBlock:
 							self.add_input_value( name=key)
 						elif return_type == 'str':
 							self.add_input_value( name=key)
+						elif return_type in BlocklyClasses:
+							klass = BlocklyClasses[return_type].get_class()
+							self.add_input_statement(name=key, class_type=klass)
+
 						else:
 							self.add_input_statement(name=key)
-
-				with python:
-					if return_type in BlocklyClasses:
-						klass = BlocklyClasses[return_type].get_class()
-						self.add_input_statement(name=key, class_type=klass)
+				else:
+					with python:
+						if return_type in BlocklyClasses:
+							klass = BlocklyClasses[return_type].get_class()
+							self.add_input_statement(name=key, class_type=klass)
 
 
 			if cls.bases.length:
