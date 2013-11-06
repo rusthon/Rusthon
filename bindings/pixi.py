@@ -366,22 +366,78 @@ class MovieClip( Sprite ):
 	def gotoAndStop(self, frame):
 		with javascript: return self[...].gotoAndStop( frame )
 
-
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
 class Text( Sprite ):
-	def __init__(self, text, font='bold 20pt Arial', fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100 ):
+	def __init__(self, text, font='Arial', size=20, bold=False, fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100 ):
+		self._text = text
+		self._font = font
+		self._size = size
+		self._bold = bold
+		self._fill = fill
+		self._align = align
+		self._stroke = stroke
+		self._strokeThickness = strokeThickness
+		self._wordWrap = wordWrap
+		self._wordWrapWidth = wordWrapWidth
+		style = self._get_style()
 		with javascript:
-			style = {font:font, fill:fill, align:align, stroke:stroke, strokeThickness:strokeThickness, wordWrap:wordWrap, wordWrapWidth:wordWrapWidth}
 			self[...] = new( PIXI.Text( text, style ) )
 			self[...][...] = self
 
-	def setStyle(self, font='bold 20pt Arial', fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100):
+	def _get_style(self):
+		font = self._font
+		size = self._size
+		bold = self._bold
+		fill = self._fill
+		align = self._align
+		stroke = self._stroke
+		strokeThickness = self._strokeThickness
+		wordWrap = self._wordWrap
+		wordWrapWidth = self._wordWrapWidth
+		if bold:
+			font = 'bold ' + size + 'pt ' + font
+		else:
+			font = size + 'pt ' + font
 		with javascript:
-			style = {font:font, fill:fill, align:align, stroke:stroke, strokeThickness:strokeThickness, wordWrap:wordWrap, wordWrapWidth:wordWrapWidth}
+			return {font:font, fill:fill, align:align, stroke:stroke, strokeThickness:strokeThickness, wordWrap:wordWrap, wordWrapWidth:wordWrapWidth}
+
+	def setStyle(self, font='Arial', size=20, bold=False, fill='black', align='left', stroke='blue', strokeThickness=0, wordWrap=False, wordWrapWidth=100):
+		self._text = text
+		self._font = font
+		self._size = size
+		self._bold = bold
+		self._fill = fill
+		self._align = align
+		self._stroke = stroke
+		self._strokeThickness = strokeThickness
+		self._wordWrap = wordWrap
+		self._wordWrapWidth = wordWrapWidth
+		style = self._get_style()
+		with javascript:
 			self[...].setStyle( style )
 
 	def setText(self, text):
+		self._text = text
+		print 'setting new text:', text
 		with javascript:
 			self[...].setText( text )
+
+	@returns( str )
+	@property
+	def text(self):
+		return self._text
+	@text.setter
+	def text(self, txt):
+		self.setText(txt)
+
+
+
+
+
+	def destroy(self, destroyTexture=False):
+		with javascript:
+			return self[...].destroy( destroyTexture )
 
 	def updateText(self):  ## private
 		with javascript:
@@ -394,8 +450,3 @@ class Text( Sprite ):
 	def determineFontHeight(self):  ## private
 		with javascript:
 			return self[...].determineFontHeight()
-
-	def destroy(self, destroyTexture=False):
-		with javascript:
-			return self[...].destroy( destroyTexture )
-

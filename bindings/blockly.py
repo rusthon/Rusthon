@@ -247,7 +247,10 @@ def override_blockly_prototypes():
 						value = parseInt( value )
 
 				if this.on_enter_callback:
+					print 'on_enter_callback:', value, this.on_enter_callback
 					this.on_enter_callback( value )
+				else:
+					print 'WARNING: field has no on_enter_callback', this
 
 		Blockly.FieldCheckbox.prototype.__showEditor__ = Blockly.FieldCheckbox.prototype.showEditor_
 		@Blockly.FieldCheckbox.prototype.showEditor_
@@ -439,10 +442,13 @@ class BlocklyBlock:
 			block.render()
 
 			## an infinite loop is avoided because we directly update the
-			## wrapped pixi javascript object: instance[...]
+			## low level wrapped javascript object: instance[...]
 			## this.property_name is set below on the field object
-			def sync_pixi(val):
+			def sync_low_level(val):
 				instance[...][this.property_name] = val
+			def sync_high_level(val):
+				with python:
+					setattr( instance, this.property_name, val, property=True )
 
 		instance.block = block
 		block.pythonjs_object = instance
@@ -474,12 +480,17 @@ class BlocklyBlock:
 				if btype == 'math_number':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
-					field.on_enter_callback = sync_pixi
+					field.on_enter_callback = sync_low_level
 
 				elif btype == 'logic_boolean':
 					field = sub.inputList[0].titleRow[0]
 					field.setValue(''+default_value)
-					field.on_changed_callback = sync_pixi
+					field.on_changed_callback = sync_low_level
+
+				elif btype == 'text':
+					field = sub.inputList[0].titleRow[1]
+					field.setValue(''+default_value)
+					field.on_enter_callback = sync_high_level
 
 				field.property_name = name
 
@@ -537,6 +548,8 @@ class BlocklyBlock:
 						elif return_type == 'int':
 							self.add_input_value( name=key )
 						elif return_type == 'bool':
+							self.add_input_value( name=key)
+						elif return_type == 'str':
 							self.add_input_value( name=key)
 						else:
 							self.add_input_statement(name=key)

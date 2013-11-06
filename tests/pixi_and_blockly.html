@@ -137,6 +137,44 @@
       <block type="colour_rgb"></block>
       <block type="colour_blend"></block>
     </category>
+
+    <category name="Text">
+      <block type="text"></block>
+      <block type="text_join"></block>
+      <block type="text_append">
+        <value name="TEXT">
+          <block type="text"></block>
+        </value>
+      </block>
+      <block type="text_length"></block>
+      <block type="text_isEmpty"></block>
+      <block type="text_indexOf">
+        <value name="VALUE">
+          <block type="variables_get">
+            <title name="VAR">text</title>
+          </block>
+        </value>
+      </block>
+      <block type="text_charAt">
+        <value name="VALUE">
+          <block type="variables_get">
+            <title name="VAR">text</title>
+          </block>
+        </value>
+      </block>
+      <block type="text_getSubstring">
+        <value name="STRING">
+          <block type="variables_get">
+            <title name="VAR">text</title>
+          </block>
+        </value>
+      </block>
+      <block type="text_changeCase"></block>
+      <block type="text_trim"></block>
+      <block type="text_print"></block>
+      <block type="text_prompt"></block>
+    </category>
+
 </xml>
 
 
@@ -160,6 +198,14 @@ from blockly import *
 block = StatementBlock(color=120, inputs_inline=True, category='Classes')
 block.bind_class( Point )
 
+block = StatementBlock(color=150, category='Classes')
+block.bind_class( Text )
+
+
+def create_pixi_text( txt ):
+	global text
+	text = Text( txt )
+	stage.addChild( text )
 
 with javascript:
 	def on_unplugged(object, parent_object, block, parent_block):
@@ -331,7 +377,12 @@ def animate():
 
 <div id="blocklyDiv" style="height: 660px; width: 630px;"></div>
 
-<div id="pixi_container""></div>
+<div id="pixi_container">
+<input id="text_input"/>
+<button onclick="create_pixi_text(document.getElementById('text_input').value)">create text</button>
+
+</div>
+
 
 </body>
 </html>
