@@ -55,7 +55,11 @@ def init_node_blockly( blockly_id ):
 		
 		## fully override Blockly.onMouseMove_
 		def func(e):  ## bypass scroll bars
-			if Blockly.mainWorkspace.dragMode:
+			drag = True
+			if Blockly.on_mouse_move_workspace:
+				drag = Blockly.on_mouse_move_workspace(e)
+
+			if Blockly.mainWorkspace.dragMode and drag:
 				dx = e.clientX - Blockly.mainWorkspace.startDragMouseX
 				dy = e.clientY - Blockly.mainWorkspace.startDragMouseY
 				x = Blockly.mainWorkspace.startScrollX + dx
@@ -64,6 +68,13 @@ def init_node_blockly( blockly_id ):
 				Blockly.mainWorkspace.scrollY = y
 				Blockly.fireUiEvent(window, 'resize')
 		Blockly.onMouseMove_ = func
+
+		Blockly.__onMouseDown__ = Blockly.onMouseDown_
+		def func(e):
+			if Blockly.on_mouse_down_workspace:
+				Blockly.on_mouse_down_workspace( e )
+			Blockly.__onMouseDown__( e )
+		Blockly.onMouseDown_ = func
 
 		Blockly.__getMainWorkspaceMetrics__ = Blockly.getMainWorkspaceMetrics_
 		def func():
@@ -183,6 +194,9 @@ def override_blockly_prototypes():
 				if this.__on_plugged:
 					this.__on_plugged( this.pythonjs_object, parent.pythonjs_object, this, parent )
 
+				if parent.on_child_plugged:
+					parent.on_child_plugged( this )
+
 				if this.nodeOutputBlocks != None and e.button == 1:  ## middle click
 
 					this.setParent(null)
@@ -281,6 +295,8 @@ def override_blockly_prototypes():
 						this.on_changed_callback( False )
 					elif value == 'TRUE' or value == 'true' or value is True:
 						this.on_changed_callback( True )
+					else:
+						this.on_changed_callback( value )
 
 
 
@@ -423,14 +439,17 @@ class BlocklyBlock:
 		self.external_function = None
 		self.external_javascript_function = None
 		self.on_click_callback = None
-		self.on_removed = None  ## when a block is removed from its parent block
+		self.on_unplugged = None  ## when a block is removed from its parent block
 		self.on_plugged = None
+		self.on_child_plugged = None
 		self.pythonjs_object = None  ## this is not correct, it goes on the block instance
 
 		self.input_class_slots = []
 		self._class = None
 		self._class_name = None
 		self._class_setters = []
+
+		self.dropdowns = []
 
 	def get_class(self):
 		return self._class
@@ -672,6 +691,14 @@ class BlocklyBlock:
 				{'name':name, 'title':title }
 			)
 
+	def add_dropdown(self, name=None, items=None, callback=None):
+		with javascript:
+			jsob = []
+			for item in items[...]:
+				jsob.push( [item, item] )
+
+		self.dropdowns.append( {'name':name, 'items':jsob, 'callback':callback} )
+
 	def bind_block(self):
 		global _blockly_instances_uid
 
@@ -697,6 +724,9 @@ class BlocklyBlock:
 		is_statement = self.is_statement
 		on_unplugged = self.on_unplugged
 		on_plugged = self.on_plugged
+		on_child_plugged = self.on_child_plugged
+
+		dropdowns = self.dropdowns[...]
 
 		with javascript:
 			def init():
@@ -716,6 +746,7 @@ class BlocklyBlock:
 				this.__is_statement = is_statement
 				this.__on_unplugged = on_unplugged
 				this.__on_plugged = on_plugged
+				this.on_child_plugged = on_child_plugged
 
 				if inputs_inline:
 					this.setInputsInline( True )
@@ -734,10 +765,27 @@ class BlocklyBlock:
 						BlocklyImageHack = null
 					header.appendTitle(title)
 
+				if dropdowns.length:
+					row = header
+					i = 0
+					while i < dropdowns.length:
+						a = dropdowns[i][...]
+						if a['title']:
+							row = this.appendDummyInput()
+							row.appendTitle( a['title'] )
+
+						field = new( Blockly.FieldDropdown(a['items']) )
+						field.on_changed_callback = a['callback']
+						field.property_name = a['name']
+						row.appendTitle( field )
+						i += 1
+
+
 				if stack_input:
 					this.setPreviousStatement( True )
 				if stack_output:
 					this.setNextStatement( True )
+
 
 				i = 0
 				while i < input_values.length:

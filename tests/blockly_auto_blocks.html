@@ -10,14 +10,6 @@
 <script src="pythonjs.js"></script>
 <script src="bindings/blockly.py"></script>
 
-
-</head>
-
-<body>
-
-
-<div id="blocklyDiv" style="height: 380px; width: 700px;"></div>
-
 <xml id="toolbox" style="display: none">
 	<category name="Conditionals">
 	<block type="controls_if"></block>
@@ -131,6 +123,17 @@
 </xml>
 
 
+</head>
+
+<body>
+
+<button onclick="test()">set test values using setInterval</button>
+
+
+<div id="blocklyDiv" style="height: 380px; width: 700px;"></div>
+
+
+
 <script type="text/python">
 from blockly import *
 
@@ -145,6 +148,7 @@ class A:
 		self._y=y
 		self._z=z
 
+	@returns( float )
 	@property
 	def x(self):
 		return self._x
@@ -152,6 +156,7 @@ class A:
 	def x(self, value):
 		self._x = value
 
+	@returns( float )
 	@property
 	def y(self):
 		return self._y
@@ -159,6 +164,7 @@ class A:
 	def y(self, value):
 		self._y = value
 
+	@returns( float )
 	@property
 	def z(self):
 		return self._z
@@ -169,6 +175,18 @@ class A:
 
 #block.bind_class( A )  ## this also works
 
+with javascript:
+	def dd_callback(value):
+		print this
+		print this.property_name
+		print value
+
+block.add_dropdown(
+	'myoption',		# name
+	title = None,	# no title puts it on header
+	items=['a','b','c'],
+	callback=dd_callback
+)
 
 def show_code():
 	with javascript:
@@ -187,13 +205,13 @@ initialize_blockly( on_changed_callback=show_code )
 #	a.block.moveTo( i*130, 30 )
 
 instances = []
-def test():
+def setup():
 	for i in range(4):
 		a = A()
 		a.x = '99'
 		a.block.moveTo( i*130, 30 )
 		instances.append( a )
-test()
+setup()
 
 x = 0
 y = 1
@@ -209,9 +227,11 @@ def test_fields():
 	y += 1
 	z += 1
 
-window.setInterval(test_fields, 1000)
+def test():
+	window.setInterval(test_fields, 300)
 
 </script>
+
 
 </body>
 </html>

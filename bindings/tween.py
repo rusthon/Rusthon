@@ -82,7 +82,7 @@ class Tween:
 		if source:
 			self.set_source( source )
 
-	def set_source(self, source=None, source_js=None):
+	def set_source(self, source=None, source_js=None, clone=False):
 		'''
 		Sometimes we need to create the Tween without a source, and then later set the source,
 		for example: this helps with integration with GoogleBlockly where we need to create the
@@ -90,6 +90,8 @@ class Tween:
 		Use source_js to pass a raw javascript object to use as source, only use this if you
 		know what your doing.
 		'''
+
+		self._clone = clone
 
 		if source:
 			self.source = source
@@ -111,6 +113,14 @@ class Tween:
 		on_update_js = self._on_update_js
 		on_complete_js = self._on_complete_js
 
+		if self.source_restart:
+			for key in self.source_restart:
+				value = self.source_restart
+				source[key] = value
+		elif self._clone:  ## the low-level javascript object needs a clone method
+			source = source.clone()
+			self.source_restart = source
+
 
 		with javascript:
 			tween = new( TWEEN.Tween( source ) )
@@ -122,7 +132,7 @@ class Tween:
 			if on_update_js:
 				tween.onUpdate( on_update_js )
 			else:
-				tween.onUpdate( lambda delta: on_update_method([this, delta]) )
+				tween.onUpdate( lambda delta: on_update_method([this, delta],{}) )
 
 			if on_complete_js:
 				tween.onComplete( on_complete_js )
@@ -187,6 +197,14 @@ class Tween:
 			raise TypeError
 
 		self._seconds_remaining = self._seconds - (self._seconds * delta)
+
+		if self.sync_object:
+			with javascript:
+				for key in jsob:
+					value = jsob[key]
+					print 'jsob:', key, value
+					with python:
+						setattr( self.sync_object, key, value, property=True )
 
 		if self.on_update:
 			self.on_update( self, self.source, delta )
@@ -295,6 +313,11 @@ class Tween:
 			self[...].interpolation( interp )
 
 	def chain(self, chain):
+		'''
+		The Tween API allows for multiple tweens to be chained,
+		they all get started at the same time when this tween
+		has finished.
+		'''
 		with javascript:
 			self[...].chain( chain )
 

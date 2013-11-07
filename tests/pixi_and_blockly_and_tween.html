@@ -10,12 +10,12 @@
 	}
 	#pixi_container { 
 		position: absolute;
-		top: 0;
+		top: 30px;
 		right: 0;
 		bottom: 0;
-		left: 650px;
-
+		left: 0;
 	}
+
 
 </style>
 
@@ -215,7 +215,7 @@ block = StatementBlock(
 	color=120, 
 	inputs_inline=True,
 	stack_input=True,
-	stack_output=True,	
+	stack_output=False,	
 	category='HIDDEN',
 )
 block.bind_class( Point )
@@ -235,12 +235,124 @@ with javascript:
 			if point and parent_object:
 				if isinstance( parent_object, Keyframe ):
 					tween = parent_object
-					tween.set_source( point )
-					tween.start()
+					tween.set_source( point, clone=True )  ## copy point before
+					tween.sync_object = point
+					tween.start()				## and set_source_update_object
+				elif isinstance( parent_object, PointController ):
+					print 'plugged into a PointController'
+					parent_object.set_point( point )
 
 
 block.on_plugged = point_plugged
 block.on_unplugged = point_unplugged
+
+####################### controller ####################
+class WrapBooleanBlock:
+	def __init__(self, block):
+		self.block
+
+	def execute(self):
+		if self.block.getInput('').titleRow[0].getValue() == 'TRUE':
+			self.do_animation()
+			return True
+		else:
+			return False
+
+	def set_animation(self, block):
+		self.anim_block = block
+
+	def do_animation(self):
+		block = self.anim_block
+		keys = []
+		kblock = block.getInput('keys').connection.targetBlock()
+		while kblock:
+			if kblock and kblock.type == 'keyframe_block':
+				keys.append( kblock )
+
+			kblock = kblock.nextConnection.targetBlock()
+
+class Logic:
+	def __init__(self, block):
+		self.stack = []
+
+		node = None
+		if block.type == 'controls_if':
+			target = block.getInput('IF0').connection.targetBlock()
+			if target:
+				if target.type == 'logic_boolean':
+					node = WrapBooleanBlock( target )
+
+			if node:
+				target = block.getInput('DO0').connection.targetBlock()
+				if target:
+					if target.type == 'animation_block':
+						node.set_animation( target )
+
+
+
+
+
+
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
+class SpriteController:
+	def __init__(self):
+		self.logic = None
+	def reset_logic(self, block):
+		self.logic = Logic( block )
+
+block = StatementBlock(
+	color=300, 
+	inputs_inline=True, 
+	stack_input=True, 
+	stack_output=False, 
+	category='HIDDEN'
+)
+block.bind_class( SpriteController )
+block.add_input_statement( name='logic' )
+
+with javascript:
+	def on_child_plugged( child ):
+		this.pythonjs_object.reset_logic( child )
+
+block.on_child_plugged = on_child_plugged
+
+
+def create_controller():
+	controller = SpriteController()
+
+
+####################### animation ####################
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
+class Animation:
+	def __init__(self):
+		pass
+
+block = StatementBlock(
+	'animation_block',
+	stack_input=True, 
+	stack_output=True, 
+	category='HIDDEN'
+)
+block.bind_class( Animation )
+block.add_input_statement( name='keys' )
+
+with javascript:
+	def dd_callback(value):
+		print this
+		print this.property_name
+		print value
+
+block.add_dropdown(
+	'myoption',		# name
+	title = None,	# no title puts it on header
+	items=['position','rotation','scale'],
+	callback=dd_callback
+)
+
+def create_animation():
+	anim = Animation()
 
 ####################### keyframe ####################
 @pythonjs.init_callbacks
@@ -278,12 +390,16 @@ with javascript:
 		with python:
 			tween = object
 			if tween and parent_object:
-				if isinstance( parent_object, Point ):
-					print 'plugged to a point'
-					tween.set_source( parent_object )
-					tween.start()
+				#if isinstance( parent_object, Point ):
+				#	print 'plugged to a point'
+				#	tween.set_source( parent_object )
+				#	tween.start()
+				if isinstance( parent_object, Keyframe ):
+					pass
+
 
 block = StatementBlock(
+	'keyframe_block',
 	color=280, 
 	inputs_inline=True, 
 	stack_input=True, 
@@ -463,14 +579,56 @@ with javascript:
 		this.data = null
 		e = data.originalEvent
 		e.preventDefault()
+		with python:
+			SELECTED.set( null )
+
 
 def test():
-	global stage, renderer
+	global stage, renderer, canvas
+
+	print Blockly.Css.CONTENT[1]
+	Blockly.Css.CONTENT[1] = '	background-color: #00000000;'
 
 	initialize_blockly( node_blockly=True )
+	with javascript:
+		def func(e):
+			print 'trapping mouse down on workspace'
+			stage[...].interactionManager.onMouseDown(e)
+		Blockly.on_mouse_down_workspace = func
 
-	renderer = WebGLRenderer( width=700, height=640, transparent=True )
-	document.getElementById('pixi_container').appendChild(renderer.view);
+		def func(e):
+			stage[...].interactionManager.onMouseMove(e)
+			with python:
+				if SELECTED.sprite:
+					return False
+				else:
+					return True
+		Blockly.on_mouse_move_workspace = func
+
+	container = document.getElementById('pixi_container')
+
+	#ns = 'http://www.w3.org/1999/xhtml'
+	#container = document.createElementNS(ns, 'foreignObject')
+	#container.setAttribute('id', 'pixi_container')
+	#canvas = document.createElementNS(ns, 'canvas')
+	#Blockly.svg.appendChild( container )
+
+	canvas = document.createElement('canvas')
+	container.appendChild( canvas )
+
+	renderer = WebGLRenderer(
+		width = window.innerWidth-10, 
+		height = window.innerHeight-40,
+		view = canvas,
+		transparent=True
+	)
+	#container.appendChild(renderer.view);
+
+	def on_resize():
+		container = document.getElementById('pixi_container')
+		renderer.resize(window.innerWidth-10, window.innerHeight-40)
+	window.addEventListener( 'resize', on_resize, False )
+
 
 	def prevent_context_menu(e): e.preventDefault()
 	document.getElementById('pixi_container').addEventListener( 'contextmenu', prevent_context_menu )
@@ -494,16 +652,29 @@ def animate():
 
 <body onload="test()" ondrop="on_drop(event)" ondragover="allow_drop(event)">
 
-<div id="blocklyDiv" style="height: 660px; width: 630px;"></div>
+<button onclick="create_controller()">new controller</button>
 
-<div id="pixi_container">
-<button onclick="create_keyframe()">new keyframe block</button>
+<button onclick="create_animation()">new animation</button>
+
+<button onclick="create_keyframe()">new keyframe</button>
 
 <input id="text_input"/>
 <button onclick="create_pixi_text(document.getElementById('text_input').value)">create text</button>
 
-</div>
+<input 
+	type="button" value="Blockly Workspace" 
+	onclick="document.getElementById('pixi_container').setAttribute('style','z-index:-1')"
+/>
 
+
+<input 
+	type="button" value="Pixi Workspace" 
+	onclick="document.getElementById('pixi_container').setAttribute('style','z-index:0')"
+/>
+
+<div id="blocklyDiv" style="height: 96%; width: 99%;"></div>
+
+<div id="pixi_container" style="z-index: -1;"></div>
 
 </body>
 </html>

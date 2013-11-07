@@ -29,6 +29,9 @@ class _Renderer:
 		with javascript:
 			self[...].render( stage[...] )
 
+	def resize(self, w, h):
+		with javascript:
+			self[...].resize( w, h )
 
 class WebGLRenderer( _Renderer ):
 	def __init__(self, width=800, height=600, view=None, transparent=False, antialias=False):
@@ -66,7 +69,8 @@ class Point:
 	def y(self, value):
 		with javascript: self[...].y = value
 
-
+	def clone(self):
+		return Point(x=self.x, y=self.y)
 
 
 @pythonjs.property_callbacks
