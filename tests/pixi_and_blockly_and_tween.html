@@ -268,6 +268,7 @@ class WrapBooleanBlock:
 		while kblock:
 			if kblock and kblock.type == 'keyframe_block':
 				keys.append( kblock )
+				print 'got keyframe', kblock
 
 			kblock = kblock.nextConnection.targetBlock()
 
@@ -277,17 +278,28 @@ class Logic:
 
 		node = None
 		if block.type == 'controls_if':
+			print 'got if block'
 			target = block.getInput('IF0').connection.targetBlock()
 			if target:
 				if target.type == 'logic_boolean':
+					print 'got boolean'
 					node = WrapBooleanBlock( target )
 
+
 			if node:
+				print 'node created'
 				target = block.getInput('DO0').connection.targetBlock()
 				if target:
+					'if block has DO0'
 					if target.type == 'animation_block':
+						print 'got animation block'
 						node.set_animation( target )
+						self.stack.append( node )
 
+	def execute(self):
+		print 'running logic'
+		for node in self.stack:
+			node.execute()
 
 
 
@@ -298,8 +310,13 @@ class Logic:
 class SpriteController:
 	def __init__(self):
 		self.logic = None
+
 	def reset_logic(self, block):
 		self.logic = Logic( block )
+
+	def execute(self):
+		print 'exe sprite controller'
+		self.logic.execute()
 
 block = StatementBlock(
 	color=300, 
@@ -345,7 +362,7 @@ with javascript:
 		print value
 
 block.add_dropdown(
-	'myoption',		# name
+	'transform',		# name
 	title = None,	# no title puts it on header
 	items=['position','rotation','scale'],
 	callback=dd_callback
@@ -586,8 +603,9 @@ with javascript:
 def test():
 	global stage, renderer, canvas
 
-	print Blockly.Css.CONTENT[1]
+	print Blockly.Css.CONTENT[230]
 	Blockly.Css.CONTENT[1] = '	background-color: #00000000;'
+	Blockly.Css.CONTENT[230] = '	background-color: #dddddddd;'
 
 	initialize_blockly( node_blockly=True )
 	with javascript:
@@ -651,6 +669,9 @@ def animate():
 </head>
 
 <body onload="test()" ondrop="on_drop(event)" ondragover="allow_drop(event)">
+
+<button onclick="Blockly.selected.execute()">run controller</button>
+
 
 <button onclick="create_controller()">new controller</button>
 
