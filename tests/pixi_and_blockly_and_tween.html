@@ -266,23 +266,25 @@ class WrapBooleanBlock:
 	def do_animation(self, sprite):
 		print 'doing animation...'
 		block = self.anim_block
-		point = self.anim_block.getPythonObject().get_tween_source( sprite )
-		print 'point:', point
 		keys = []
 		kblock = block.getInput('keys').connection.targetBlock()
 		while kblock:
 			if kblock and kblock.type == 'keyframe_block':
-				keys.append( kblock )
-				print 'got keyframe', kblock
-				tween = kblock.getPythonObject()
-				print 'tween::', tween
-				tween.set_source( point )
-				tween.start()
+				keyframe = kblock.getPythonObject()
+				keys.append( keyframe )
 
 			kblock = kblock.nextConnection.targetBlock()
 
 		if len(keys) == 0:
 			print 'no keyframes in animation!'
+		else:
+			point = self.anim_block.getPythonObject().get_tween_source( sprite )
+			print 'point:', point
+			keyframe = keys[0]
+			tween = keyframe.tween
+			print 'tween::', tween
+			tween.set_source( point )
+			tween.start()
 
 
 class Logic:
@@ -428,14 +430,40 @@ def create_animation():
 ####################### keyframe ####################
 @pythonjs.init_callbacks
 @pythonjs.property_callbacks
-class Keyframe( Tween ):
+class Keyframe:
+	def __init__(self):
+		self.tween = Tween( on_complete=self.on_complete )
+		self.next = None
+		self._seconds = 1.0
+		self._point = Point(x=SELECTED.cursor_x, y=SELECTED.cursor_y)
+		self.tween.set_target( self._point )
+
+	def on_complete(self, tween, source):
+		if self.next:
+			tween = self.next.tween
+			tween.set_source( source )
+			tween.start()
+		else:
+			print 'ANIM finished'
+
+
+	@returns( float )
+	@property
+	def seconds(self):
+		return self._seconds
+	@seconds.setter
+	def seconds(self, s):
+		self._seconds = s
+
+
 	@returns( Point )
 	@cached_property
 	def point(self):
-		return self.target
+		return self._point
 	@point.setter
 	def point(self, point):
-		self.set_target( point )
+		self._point = point
+		self.tween.set_target( point )
 		con = self.block.getInput("point").connection
 		print 'con-point', con
 		con.connect( point.block.previousConnection )
@@ -443,9 +471,7 @@ class Keyframe( Tween ):
 
 
 def create_keyframe():
-	tween = Keyframe()
-	point = Point(x=SELECTED.cursor_x, y=SELECTED.cursor_y)
-	tween.point = point
+	keyframe = Keyframe()
 
 
 with javascript:
@@ -456,17 +482,12 @@ with javascript:
 			else:
 				pass
 
-	def key_plugged(object, parent_object, block, parent_block):
-		print 'key-block-plugged', object, parent_object
+	def key_plugged(keyframe, parent, block, parent_block):
+		print 'key-block-plugged', keyframe, parent
 		with python:
-			tween = object
-			if tween and parent_object:
-				#if isinstance( parent_object, Point ):
-				#	print 'plugged to a point'
-				#	tween.set_source( parent_object )
-				#	tween.start()
-				if isinstance( parent_object, Keyframe ):
-					pass
+			if keyframe and parent:
+				if isinstance( parent, Keyframe ):
+					parent.next = keyframe
 
 
 block = StatementBlock(
