@@ -41,7 +41,7 @@ def setattr(ob, attr, value, property=False):
 def issubclass(C, B):
     if C is B:
         return True
-    with javascript: bases = C.bases  ## js-array
+    with javascript: bases = C.__bases__  ## js-array
     i = 0
     while i < bases.length:
         if issubclass( bases[i], B ):

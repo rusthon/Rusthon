@@ -43,7 +43,7 @@ def create_class(class_name, parents, attrs, props):
         return metaclass([class_name, parents, attrs])
     var(klass)
     klass = JSObject()
-    klass.bases = parents
+    klass.__bases__ = parents
     klass.__name__ = class_name
     klass.__dict__ = attrs
     klass.__properties__ = props
@@ -145,7 +145,7 @@ def get_attribute(object, attribute):
             __get__ = get_attribute(attr, '__get__')  ## what are data descriptors?
             if __get__:
                 return __get__([object, __class__])  ## TODO - we need JSObject here?
-        bases = __class__.bases
+        bases = __class__.__bases__
         for i in jsrange(bases.length):
             var(base, attr)
             base = bases[i]
@@ -206,7 +206,7 @@ def get_attribute(object, attribute):
             else:
                 return attr
 
-        bases = __class__.bases
+        bases = __class__.__bases__
 
         for base in bases:
             attr = _get_upstream_attribute(base, attribute)
@@ -272,13 +272,13 @@ def get_attribute(object, attribute):
 def _get_upstream_attribute(base, attr):
     if attr in base.__dict__:
         return base.__dict__[ attr ]
-    for parent in base.bases:
+    for parent in base.__bases__:
         return _get_upstream_attribute(parent, attr)
 
 def _get_upstream_property(base, attr):
     if attr in base.__properties__:
         return base.__properties__[ attr ]
-    for parent in base.bases:
+    for parent in base.__bases__:
         return _get_upstream_property(parent, attr)
 
 def set_attribute(object, attribute, value):
@@ -294,7 +294,7 @@ def set_attribute(object, attribute, value):
             if __set__:
                 __set__([object, value])
                 return
-        bases = __class__.bases
+        bases = __class__.__bases__
         for i in jsrange(bases.length):
             var(base)
             base = bases[i]

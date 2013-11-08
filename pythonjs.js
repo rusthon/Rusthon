@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov  7 16:05:23 2013
+// PythonScript Runtime - regenerated on: Thu Nov  7 16:45:41 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -50,7 +50,7 @@ return metaclass([class_name, parents, attrs]);
 
 var klass;
 klass = Object();
-klass.bases = parents;
+klass.__bases__ = parents;
 klass.__name__ = class_name;
 klass.__dict__ = attrs;
 klass.__properties__ = props;
@@ -171,7 +171,7 @@ return __get__([object, __class__]);
 
 }
 
-bases = __class__.bases;
+bases = __class__.__bases__;
 var iter = jsrange(bases.length);
 if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
 for (var i=0; i < iter.length; i++) {
@@ -266,7 +266,7 @@ return attr;
 
 }
 
-bases = __class__.bases;
+bases = __class__.__bases__;
 var iter = bases;
 if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
 for (var base=0; base < iter.length; base++) {
@@ -390,7 +390,7 @@ if(attr  in  base.__dict__) {
 return base.__dict__[attr];
 }
 
-var iter = base.bases;
+var iter = base.__bases__;
 if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
 for (var parent=0; parent < iter.length; parent++) {
 var backup = parent;
@@ -407,7 +407,7 @@ if(attr  in  base.__properties__) {
 return base.__properties__[attr];
 }
 
-var iter = base.bases;
+var iter = base.__bases__;
 if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
 for (var parent=0; parent < iter.length; parent++) {
 var backup = parent;
@@ -436,7 +436,7 @@ return undefined;
 
 }
 
-bases = __class__.bases;
+bases = __class__.__bases__;
 var iter = jsrange(bases.length);
 if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
 for (var i=0; i < iter.length; i++) {
@@ -664,7 +664,7 @@ if(C === B) {
 return true;
 }
 
-bases = C.bases;
+bases = C.__bases__;
 i = 0;
 while(i < get_attribute(bases, "length")) {
 if(get_attribute(issubclass, "__call__")([get_attribute(bases, "__getitem__")([i], Object()), B], Object())) {
