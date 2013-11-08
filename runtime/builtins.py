@@ -1,8 +1,34 @@
 _PythonJS_UID = 0
 
 with javascript:
-    def _JSNew(T):
-        return JS("new T")
+
+    def create_class(class_name, parents, attrs, props):
+        """Create a PythonScript class"""
+        if attrs.__metaclass__:
+            metaclass = attrs.__metaclass__
+            attrs.__metaclass__ = None
+            return metaclass([class_name, parents, attrs])
+
+        klass = {}
+        klass.__bases__ = parents
+        klass.__name__ = class_name
+        klass.__dict__ = attrs
+        klass.__properties__ = props
+
+        def __call__():
+            """Create a PythonJS object"""
+            JS('var object')
+            object = {}
+            object.__class__ = klass
+            object.__dict__ = {}
+
+            init = get_attribute(object, '__init__')
+            if init:
+                init.apply(None, arguments)
+            return object
+        __call__.pythonscript_function = True
+        klass.__call__ = __call__
+        return klass
 
 
 def type(ob_or_class_name, bases=None, class_dict=None):

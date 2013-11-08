@@ -34,34 +34,34 @@ def adapt_arguments(handler):
     return func
 
 
-def create_class(class_name, parents, attrs, props):
-    """Create a PythonScript class"""
-    if attrs.__metaclass__:
-        var(metaclass)
-        metaclass = attrs.__metaclass__
-        attrs.__metaclass__ = None
-        return metaclass([class_name, parents, attrs])
-    var(klass)
-    klass = JSObject()
-    klass.__bases__ = parents
-    klass.__name__ = class_name
-    klass.__dict__ = attrs
-    klass.__properties__ = props
-
-    def __call__():
-        """Create a PythonScript object"""
-        JS('var object')
-        object = JSObject()
-        object.__class__ = klass
-        object.__dict__ = JSObject()
-        JS('var init')
-        init = get_attribute(object, '__init__')
-        if init:
-            init.apply(None, arguments)
-        return object
-    __call__.pythonscript_function = True
-    klass.__call__ = __call__
-    return klass
+#def create_class(class_name, parents, attrs, props):
+#    """Create a PythonScript class"""
+#    if attrs.__metaclass__:
+#        var(metaclass)
+#        metaclass = attrs.__metaclass__
+#        attrs.__metaclass__ = None
+#        return metaclass([class_name, parents, attrs])
+#    var(klass)
+#    klass = JSObject()
+#    klass.__bases__ = parents
+#    klass.__name__ = class_name
+#    klass.__dict__ = attrs
+#    klass.__properties__ = props
+#
+#    def __call__():
+#        """Create a PythonScript object"""
+#        JS('var object')
+#        object = JSObject()
+#        object.__class__ = klass
+#        object.__dict__ = JSObject()
+#        JS('var init')
+#        init = get_attribute(object, '__init__')
+#        if init:
+#            init.apply(None, arguments)
+#        return object
+#    __call__.pythonscript_function = True
+#    klass.__call__ = __call__
+#    return klass
 
 
 def get_attribute(object, attribute):

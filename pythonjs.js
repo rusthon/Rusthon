@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov  7 16:45:41 2013
+// PythonScript Runtime - regenerated on: Thu Nov  7 17:36:41 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -38,42 +38,6 @@ handler(Array.prototype.slice.call(arguments));
 return func;
 }
 window["adapt_arguments"] = adapt_arguments 
-
-var create_class = function(class_name, parents, attrs, props) {
-"Create a PythonScript class";
-if(attrs.__metaclass__) {
-var metaclass;
-metaclass = attrs.__metaclass__;
-attrs.__metaclass__ = undefined;
-return metaclass([class_name, parents, attrs]);
-}
-
-var klass;
-klass = Object();
-klass.__bases__ = parents;
-klass.__name__ = class_name;
-klass.__dict__ = attrs;
-klass.__properties__ = props;
-var __call__ = function() {
-"Create a PythonScript object";
-var object;
-object = Object();
-object.__class__ = klass;
-object.__dict__ = Object();
-var init;
-init = get_attribute(object, "__init__");
-if(init) {
-init.apply(undefined, arguments);
-}
-
-return object;
-}
-
-__call__.pythonscript_function = true;
-klass.__call__ = __call__;
-return klass;
-}
-window["create_class"] = create_class 
 
 var get_attribute = function(object, attribute) {
 "Retrieve an attribute, method, property, or wrapper function.\n\n    method are actually functions which are converted to methods by\n    prepending their arguments with the current object. Properties are\n    not functions!\n\n    DOM support:\n        http://stackoverflow.com/questions/14202699/document-createelement-not-working\n        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n    Direct JavaScript Calls:\n        if an external javascript function is found, and it was not a wrapper that was generated here,\n        check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n        wrapper, cache it on the function, and return the wrapper.\n    ";
@@ -526,15 +490,49 @@ return out;
 }
 window["get_arguments"] = get_arguments
 _PythonJS_UID = 0;
-var _JSNew = function(T) {
-return new T;
+var create_class = function(class_name, parents, attrs, props) {
+var metaclass, klass;
+"Create a PythonScript class";
+if(attrs.__metaclass__) {
+metaclass = attrs.__metaclass__;
+attrs.__metaclass__=undefined;
+return metaclass( [class_name, parents, attrs] );
 }
-window["_JSNew"] = _JSNew 
 
-_JSNew.NAME = "_JSNew";
-_JSNew.args_signature = ["T"];
-_JSNew.kwargs_signature = {};
-_JSNew.types_signature = {};
+klass = {  };
+klass.__bases__=parents;
+klass.__name__=class_name;
+klass.__dict__=attrs;
+klass.__properties__=props;
+var __call__ = function() {
+var init, object;
+"Create a PythonJS object";
+var object;
+object = {  };
+object.__class__=klass;
+object.__dict__={  };
+init = get_attribute( object,"__init__" );
+if(init) {
+init.apply( undefined,arguments );
+}
+
+return object;
+}
+
+__call__.NAME = "__call__";
+__call__.args_signature = [];
+__call__.kwargs_signature = {};
+__call__.types_signature = {};
+__call__.pythonscript_function=true;
+klass.__call__=__call__;
+return klass;
+}
+window["create_class"] = create_class 
+
+create_class.NAME = "create_class";
+create_class.args_signature = ["class_name","parents","attrs","props"];
+create_class.kwargs_signature = {};
+create_class.types_signature = {};
 var type = function(args, kwargs) {
 if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
 /*pass*/
@@ -2301,7 +2299,7 @@ var self = arguments['self'];
 var js_object = arguments['js_object'];
 if(js_object) {
 if(js_object instanceof Array) {
-self["__dict__"]["js_object"] = Object();
+set_attribute(self, "js_object", Object());
 i = 0;
 while(i < get_attribute(js_object, "length")) {
 var key = js_object[i]["key"];
@@ -2311,15 +2309,15 @@ i += 1
 }
 }
 else {
-self["__dict__"]["js_object"] = js_object;
+set_attribute(self, "js_object", js_object);
 }
 
 }
 else {
-self["__dict__"]["js_object"] = Object();
+set_attribute(self, "js_object", Object());
 }
 
-jsob = self["__dict__"]["js_object"];
+jsob = get_attribute(self, "js_object");
 self["wrapped"] = jsob;
 }
 window["__dict___init__"] = __dict___init__ 
@@ -2347,7 +2345,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 var _default = arguments['_default'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 if(typeof(key) === 'object') {
 var uid = "@"+key.uid;
 if(uid in __dict) {
@@ -2399,7 +2397,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 var value = arguments['value'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 if(typeof(key) === 'object') {
 if(key.uid === undefined) {
 uid = _PythonJS_UID;
@@ -2451,7 +2449,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__dict___len__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 return Object.keys(__dict).length;
 }
 window["__dict___len__"] = __dict___len__ 
@@ -2478,7 +2476,7 @@ signature["function_name"] = "__dict___getitem__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 if(typeof(key) === 'object') {
 var uid = key.uid;
 return __dict["@"+uid];
@@ -2520,7 +2518,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 var value = arguments['value'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 if(typeof(key) === 'object') {
 if(key.uid === undefined) {
 uid = _PythonJS_UID;
@@ -2609,7 +2607,7 @@ if(v === undefined) {
 return d;
 }
 else {
-js_object = self["__dict__"]["js_object"];
+js_object = get_attribute(self, "js_object");
 delete js_object[key];
 return v;
 }
@@ -2638,7 +2636,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__dict_values";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-__dict = self["__dict__"]["js_object"];
+__dict = get_attribute(self, "js_object");
 __keys = Object.keys(__dict);
 out = get_attribute(list, "__call__")(create_array(), Object());
 i = 0;

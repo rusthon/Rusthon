@@ -550,6 +550,8 @@ class PythonToPythonJS(NodeVisitor):
                 return 'true'
             elif node.id == 'False':
                 return 'false'
+            elif node.id == 'None':
+                return 'undefined'
 
         return node.id
 
