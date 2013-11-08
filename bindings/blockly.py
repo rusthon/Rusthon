@@ -594,8 +594,8 @@ class BlocklyBlock:
 							self.add_input_statement(name=key, class_type=klass)
 
 
-			if cls.bases.length:
-				for base in cls.bases:
+			if cls.__bases__.length:
+				for base in cls.__bases__:
 					with python:
 						self._generate_from_properties( base )
 

@@ -14,7 +14,6 @@ with javascript:
 		callback('four', 'five', 'six')
 
 	def call_instance_methods( ob ):
-		#ob.some_method( 1,2,3 )  ## this will not work, "with python:" is required
 
 		with python:
 			ob.some_method( 1,2,3 )
@@ -25,10 +24,6 @@ with javascript:
 		ob.some_method( 1,2,3 )
 		ob.callback('four', 'five', 'six')
 		print 'instance.name=', ob.name
-
-	def call_foo_bar( pyob ):
-		pyob.foo( 1,2,3 )
-		pyob.bar( 4,5,6 )
 
 
 
@@ -49,17 +44,6 @@ class SuperClass:
 		print self.name
 
 
-class jsfriendly:
-	def __init__(self):
-		with self as jsobject:
-			foo
-			bar
-
-	def foo(self, a,b,c):
-		print a+b+c
-
-	def bar(self, a,b,c):
-		print a*b*c
 
 def test():
 	a = SuperClass( 'instance1' )
@@ -70,26 +54,9 @@ def test():
 
 	call_instance_methods( a )
 
-	print 'testing "with a as jsobject:'
-
-	with a as jsobject:
-		callback
-		some_method
-		name ## this only works properly for constant readonly attributes
 
 	call_instance_methods_without_with_python( a )
 
-	## GOTCHA!
-	## this could be inlined as "a['__dict__']['name'] = ..." so we can not rely
-	## on set_attribute to do some magic to update both the wrapper and its __dict__
-	a.name = 'CHANGED'  ## this will not work properly
-
-	print '- a.name is not correct anymore in: `print instance.name=, ob.name`'
-	call_instance_methods_without_with_python( a )  ## this fails to see the new a.name
-
-	print 'testing with self as jsobject'
-	f = jsfriendly()
-	call_foo_bar( f )
 
 </script>
 

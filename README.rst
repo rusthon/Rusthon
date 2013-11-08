@@ -222,7 +222,7 @@ Example::
 Passing PythonJS Instances to JavaScript
 ------------------------------
 
-If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callback from JavaScript you can do this now using our hijacked with-syntax.  The format is: `with x as jsobject:` followed by the method names you wish to call from JavaScript.
+If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callable from JavaScript, you can do this now simply by passing the instance.  This only works for normal methods, not with property getter/setters.
 
 Example::
 
@@ -240,21 +240,7 @@ Example::
 			print a*b*c
 
 	a = A()
-	with a as jsobject:
-		foo
-		bar
-
 	js_function( a )
-
-Above is just an example, in practice, declaring which methods you want to export for each instance after creation is too verbose.  Instead you should use "with self as jsobject:" in __init__ to export the methods you want to call from JavaScript.  The memory overhead for exporting all methods for every instance of a class is small, it only caches the methods on the top-level wrapper object for each instance.
-
-Example::
-
-	class A:
-		__init__(self):
-			with self as jsobject:
-				foo
-				bar
 
 
 ---------------

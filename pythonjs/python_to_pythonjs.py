@@ -1361,13 +1361,14 @@ class PythonToPythonJS(NodeVisitor):
             self._with_js = True
 
         elif isinstance( node.context_expr, Name ) and node.optional_vars and isinstance(node.optional_vars, Name) and node.optional_vars.id == 'jsobject':
-            instance_name = node.context_expr.id
-            for n in node.body:
-                if isinstance(n, ast.Expr) and isinstance(n.value, Name):
-                    attr_name = n.value.id
-                    writer.write('%s.%s = get_attribute(%s, "%s")'%(instance_name, attr_name, instance_name, attr_name))
-                else:
-                    raise SyntaxError('invalid statement inside of "with x as jsobject:" block')
+            #instance_name = node.context_expr.id
+            #for n in node.body:
+            #    if isinstance(n, ast.Expr) and isinstance(n.value, Name):
+            #        attr_name = n.value.id
+            #        writer.write('%s.%s = get_attribute(%s, "%s")'%(instance_name, attr_name, instance_name, attr_name))
+            #    else:
+            #        raise SyntaxError('invalid statement inside of "with x as jsobject:" block')
+            raise SyntaxError('"with x as jsobject:" is DEPRECATED - methods on instances are now callable by default from JavaScript')
 
         else:
             raise SyntaxError('improper use of "with" statement')
