@@ -249,19 +249,22 @@ block.on_unplugged = point_unplugged
 ####################### controller ####################
 class WrapBooleanBlock:
 	def __init__(self, block):
-		self.block
+		self.block = block
 
 	def execute(self):
+		print 'OK'
 		if self.block.getInput('').titleRow[0].getValue() == 'TRUE':
 			self.do_animation()
 			return True
 		else:
+			print 'skipping animation because boolean is FALSE'
 			return False
 
 	def set_animation(self, block):
 		self.anim_block = block
 
 	def do_animation(self):
+		print 'doing animation...'
 		block = self.anim_block
 		keys = []
 		kblock = block.getInput('keys').connection.targetBlock()
@@ -272,19 +275,28 @@ class WrapBooleanBlock:
 
 			kblock = kblock.nextConnection.targetBlock()
 
+		if len(keys) == 0:
+			print 'no keyframes in animation!'
+
+
 class Logic:
 	def __init__(self, block):
-		self.stack = []
+		self.root = block
 
+	def execute(self):
 		node = None
+		self.stack = []
+		block = self.root
+
 		if block.type == 'controls_if':
-			print 'got if block'
+			print 'got if-block'
 			target = block.getInput('IF0').connection.targetBlock()
 			if target:
 				if target.type == 'logic_boolean':
 					print 'got boolean'
 					node = WrapBooleanBlock( target )
-
+			else:
+				print 'skipping if-block, because IF0 is empty'
 
 			if node:
 				print 'node created'
@@ -295,10 +307,15 @@ class Logic:
 						print 'got animation block'
 						node.set_animation( target )
 						self.stack.append( node )
+					else:
+						print 'DO requires an animation block'
+				else:
+					print 'skipping if-block, because DO0 is empty'
 
-	def execute(self):
-		print 'running logic'
+
+		print 'running logic - stack:', len(self.stack)
 		for node in self.stack:
+			print 'running node', node
 			node.execute()
 
 
@@ -312,11 +329,15 @@ class SpriteController:
 		self.logic = None
 
 	def reset_logic(self, block):
+		print 'reset-logic'
 		self.logic = Logic( block )
 
 	def execute(self):
-		print 'exe sprite controller'
-		self.logic.execute()
+		if self.logic is None:
+			print 'SpriteController is empty'
+		else:
+			print 'exe sprite controller'
+			self.logic.execute()
 
 block = StatementBlock(
 	color=300, 
@@ -670,7 +691,7 @@ def animate():
 
 <body onload="test()" ondrop="on_drop(event)" ondragover="allow_drop(event)">
 
-<button onclick="Blockly.selected.execute()">run controller</button>
+<button onclick="Blockly.selected.getPythonObject().execute()">run controller</button>
 
 
 <button onclick="create_controller()">new controller</button>
@@ -693,7 +714,7 @@ def animate():
 	onclick="document.getElementById('pixi_container').setAttribute('style','z-index:0')"
 />
 
-<div id="blocklyDiv" style="height: 96%; width: 99%;"></div>
+<div id="blocklyDiv" style="height: 92%; width: 99%;"></div>
 
 <div id="pixi_container" style="z-index: -1;"></div>
 

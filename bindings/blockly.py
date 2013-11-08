@@ -149,6 +149,14 @@ def init_node_blockly( blockly_id ):
 def override_blockly_prototypes():
 
 	with javascript:
+
+		## returns class instance attached to this Block,
+		## see bind_class for details
+		@Blockly.Block.prototype.getPythonObject
+		def func():
+			return this.pythonjs_object
+
+
 		Blockly.Block.prototype.__duplicate__ = Blockly.Block.prototype.duplicate_
 		@Blockly.Block.prototype.duplicate_
 		def func():
@@ -531,18 +539,27 @@ class BlocklyBlock:
 		#func = lambda n,val,inst: fields[n].setValue(''+val)  ## TODO - check why this got broken
 		def func(n, val, inst):
 			fields[n].setValue(''+val)
-		for name in self._class_setters:
+
+		## not all setters will have fields, only input-values,
+		## not input-class-slots.
+		#for name in self._class_setters:
+		for name in fields:
 			instance.property_callbacks[ name ] = func
+
 
 		for input in self.input_class_slots:
 			name = input['name']
 			sinst = getattr(instance, name)
-			sblock = sinst.block
-
-			con = block.getInput( name ).connection
-			con.connect( sblock.previousConnection )
-
-			instance.block.render()
+			## if sinst is None that means a subclass has defined a setter,
+			## but did not initialize it, this is normal if the instance is
+			## created "factory-style", and gets set afterward,
+			## the factory maker or the setter, just needs to make sure it 
+			## connects the block like below and calls self.block.render()
+			if sinst:
+				sblock = sinst.block
+				con = block.getInput( name ).connection
+				con.connect( sblock.previousConnection )
+				instance.block.render()
 
 	def bind_class(self, cls):  ## can be used as a decorator
 		self._class = cls
