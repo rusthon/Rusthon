@@ -22,6 +22,11 @@ with javascript:
             object.__class__ = klass
             object.__dict__ = {}
 
+            ## cache all methods on object ##
+            for name in klass.__dict__:
+                if typeof( klass.__dict__[name] ) == 'function':
+                    get_attribute( object, name )
+
             init = get_attribute(object, '__init__')
             if init:
                 init.apply(None, arguments)
