@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov  7 17:56:11 2013
+// PythonScript Runtime - regenerated on: Thu Nov  7 21:54:00 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -1198,9 +1198,10 @@ var lst = arguments['lst'];
 a = undefined;
 var __iterator__, value;
 __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
-try {
-value = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+value = __next__();
 if(a === undefined) {
 a = value;
 }
@@ -1211,16 +1212,7 @@ a = value;
 
 }
 
-value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return a;
 }
 window["min"] = min 
@@ -1248,9 +1240,10 @@ var lst = arguments['lst'];
 a = undefined;
 var __iterator__, value;
 __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
-try {
-value = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+value = __next__();
 if(a === undefined) {
 a = value;
 }
@@ -1261,16 +1254,7 @@ a = value;
 
 }
 
-value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return a;
 }
 window["max"] = max 
@@ -1371,6 +1355,8 @@ var obj = arguments['obj'];
 var index = arguments['index'];
 self["__dict__"]["obj"] = obj;
 self["__dict__"]["index"] = index;
+self["__dict__"]["length"] = get_attribute(len, "__call__")([obj], Object());
+self["__dict__"]["obj_get"] = get_attribute(obj, "get");
 }
 window["__Iterator___init__"] = __Iterator___init__ 
 
@@ -1413,6 +1399,33 @@ __Iterator_next.kwargs_signature = {  };
 __Iterator_next.types_signature = {  };
 __Iterator_next.pythonscript_function = true;
 window["__Iterator_attrs"]["next"] = __Iterator_next;
+var __Iterator_next_fast = function(args, kwargs) {
+var index;
+if(args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+/*pass*/
+}
+else {
+args = Array.prototype.slice.call(arguments);
+kwargs = Object();
+}
+
+var signature, arguments;
+signature = {"kwargs": Object(), "args": create_array("self")};
+signature["function_name"] = "__Iterator_next_fast";
+arguments = get_arguments(signature, args, kwargs);
+var self = arguments['self'];
+index = self.__dict__.index;
+self.__dict__.index += 1;
+return self.__dict__.obj_get( [index],{  } );
+}
+window["__Iterator_next_fast"] = __Iterator_next_fast 
+
+__Iterator_next_fast.NAME = "__Iterator_next_fast";
+__Iterator_next_fast.args_signature = ["self"];
+__Iterator_next_fast.kwargs_signature = {  };
+__Iterator_next_fast.types_signature = {  };
+__Iterator_next_fast.pythonscript_function = true;
+window["__Iterator_attrs"]["next_fast"] = __Iterator_next_fast;
 Iterator = create_class("Iterator", window["__Iterator_parents"], window["__Iterator_attrs"], window["__Iterator_properties"]);
 var tuple, __tuple_attrs, __tuple_parents;
 window["__tuple_attrs"] = Object();
@@ -1458,20 +1471,12 @@ if(get_attribute(isinstance, "__call__")([js_object, array], Object())) {
 arr = create_array();
 var __iterator__, v;
 __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
-try {
-v = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+v = __next__();
 arr.push( v );
-v = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 self["__dict__"]["js_object"] = arr;
 }
 else {
@@ -1627,23 +1632,15 @@ var obj = arguments['obj'];
 i = 0;
 var __iterator__, other;
 __iterator__ = get_attribute(get_attribute(self, "__iter__"), "__call__")(create_array(), Object());
-try {
-other = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+other = __next__();
 if(other == obj) {
 i = i + 1;
 }
 
-other = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return i;
 }
 window["__tuple_count"] = __tuple_count 
@@ -1743,20 +1740,12 @@ if(get_attribute(isinstance, "__call__")([js_object, list], Object()) || get_att
 set_attribute(self, "js_object", create_array());
 var __iterator__, v;
 __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
-try {
-v = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+v = __next__();
 get_attribute(get_attribute(self, "append"), "__call__")([v], Object());
-v = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 }
 else {
 throw TypeError;
@@ -1879,20 +1868,12 @@ var self = arguments['self'];
 var other = arguments['other'];
 var __iterator__, obj;
 __iterator__ = get_attribute(get_attribute(other, "__iter__"), "__call__")(create_array(), Object());
-try {
-obj = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+obj = __next__();
 get_attribute(get_attribute(self, "append"), "__call__")([obj], Object());
-obj = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 }
 window["__list_extend"] = __list_extend 
 
@@ -2034,23 +2015,15 @@ var obj = arguments['obj'];
 i = 0;
 var __iterator__, other;
 __iterator__ = get_attribute(get_attribute(self, "__iter__"), "__call__")(create_array(), Object());
-try {
-other = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+other = __next__();
 if(other == obj) {
 i = i + 1;
 }
 
-other = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return i;
 }
 window["__list_count"] = __list_count 
@@ -3141,20 +3114,12 @@ var self = arguments['self'];
 var lst = arguments['lst'];
 var __iterator__, value;
 __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
-try {
-value = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+value = __next__();
 get_attribute(get_attribute(self, "append"), "__call__")([value], Object());
-value = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 }
 window["__array_extend"] = __array_extend 
 
@@ -3292,20 +3257,12 @@ var append;
 append = get_attribute(output, "append");
 var __iterator__, item;
 __iterator__ = get_attribute(get_attribute(raw, "__iter__"), "__call__")(create_array(), Object());
-try {
-item = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+item = __next__();
 get_attribute(append, "__call__")([get_attribute(_to_pythonjs, "__call__")([item], Object())], Object());
-item = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return output;
 }
 
@@ -3316,20 +3273,12 @@ keys = get_attribute(list, "__call__")(create_array(), Object());
 set_attribute(keys, "js_object", Object.keys(json));
 var __iterator__, key;
 __iterator__ = get_attribute(get_attribute(keys, "__iter__"), "__call__")(create_array(), Object());
-try {
-key = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+key = __next__();
 get_attribute(set, "__call__")([key, get_attribute(_to_pythonjs, "__call__")([json[key]], Object())], Object());
-key = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 return output;
 }
 window["_to_pythonjs"] = _to_pythonjs 
@@ -3381,20 +3330,12 @@ if(get_attribute(isinstance, "__call__")([pythonjs, list], Object())) {
 r = create_array();
 var __iterator__, i;
 __iterator__ = get_attribute(get_attribute(pythonjs, "__iter__"), "__call__")(create_array(), Object());
-try {
-i = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+i = __next__();
 get_attribute(get_attribute(r, "push"), "__call__")([get_attribute(_to_json, "__call__")([i], Object())], Object());
-i = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 }
 else {
 if(get_attribute(isinstance, "__call__")([pythonjs, dict], Object())) {
@@ -3402,22 +3343,14 @@ var r;
 r = Object();
 var __iterator__, key;
 __iterator__ = get_attribute(get_attribute(get_attribute(get_attribute(pythonjs, "keys"), "__call__")(create_array(), Object()), "__iter__"), "__call__")(create_array(), Object());
-try {
-key = get_attribute(__iterator__, "next")(create_array(), Object());
-while(true) {
+var __next__;
+__next__ = get_attribute(__iterator__, "next_fast");
+while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+key = __next__();
 value = get_attribute(_to_json, "__call__")([get_attribute(get_attribute(pythonjs, "get"), "__call__")([key], Object())], Object());
 key = get_attribute(_to_json, "__call__")([key], Object());
 r[ key ] = value;
-key = get_attribute(__iterator__, "next")(create_array(), Object());
 }
-}
-catch(__exception__) {
-if (__exception__ == StopIteration || isinstance([__exception__, StopIteration], Object())) {
-/*pass*/
-}
-
-}
-
 }
 else {
 r = pythonjs;

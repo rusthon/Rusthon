@@ -294,16 +294,25 @@ class Iterator:
     def __init__(self, obj, index):
         self.obj = obj
         self.index = index
+        self.length = len(obj)
+        self.obj_get = obj.get  ## cache this for speed
 
     def next(self):
+        ## slow for looping over something that grows or shrinks while looping,
+        ## this conforms to standard Python, but it is slow, and probably not often needed.
         index = self.index
-        length = len(self.obj)  ## why call len each iteration? do we really want to loop over something that is changing?
+        length = len(self.obj)
         if index == length:
             raise StopIteration
         item = self.obj.get(self.index)
         self.index = self.index + 1
         return item
 
+    def next_fast(self):
+        with javascript:
+            index = self.__dict__.index
+            self.__dict__.index += 1
+            return self.__dict__.obj_get( [index], {} )
 
 
 class tuple:

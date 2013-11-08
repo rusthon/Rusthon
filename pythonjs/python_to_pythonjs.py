@@ -1300,11 +1300,19 @@ class PythonToPythonJS(NodeVisitor):
             assert not self._with_js
             writer.write('%s = get_attribute(%s,"__call__")( [%s], JSObject() )' % (node.name, self.visit(decorator), node.name))
 
+    #################### loops ###################
+    ## the old-style for loop that puts a while loop inside a try/except and catches StopIteration,
+    ## has a problem because at runtime if there is an error inside the loop, it will not show up in a strack trace,
+    ## the error is slient.  FAST_FOR is safer and faster, although it is not strictly Python because in standard
+    ## Python a list is allowed to grow or string while looping over it.  FAST_FOR only deals with a fixed size thing to loop over.
+    FAST_FOR = True
+
     def visit_Continue(self, node):
         if self._with_js:
             writer.write('continue')
         else:
-            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
+            if not self.FAST_FOR:
+                writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
             writer.write('continue')
         return ''
 
@@ -1323,19 +1331,32 @@ class PythonToPythonJS(NodeVisitor):
             self._for_iterator_target = node.target.id  ## this could break with nested for loops
             writer.write('var(__iterator__, %s)' % node.target.id)
             writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
-            writer.write('try:')
-            writer.push()
-            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
-            writer.write('while True:')
-            writer.push()
-            map(self.visit, node.body)
-            writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
-            writer.pull()
-            writer.pull()
-            writer.write('except StopIteration:')
-            writer.push()
-            writer.write('pass')
-            writer.pull()
+
+            if self.FAST_FOR:
+                writer.write('var(__next__)')
+                writer.write('__next__ = get_attribute(__iterator__, "next_fast")')
+
+                writer.write('while __iterator__.__dict__.index < __iterator__.__dict__.length:')
+                writer.push()
+                writer.write('%s = __next__()' % node.target.id)
+                map(self.visit, node.body)
+                writer.pull()
+
+            else:
+                writer.write('try:')
+                writer.push()
+                writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+                writer.write('while True:')
+                writer.push()
+                map(self.visit, node.body)
+                writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+                writer.pull()
+                writer.pull()
+                writer.write('except StopIteration:')
+                writer.push()
+                writer.write('pass')
+                writer.pull()
+    
             return ''
 
     def visit_While(self, node):
