@@ -251,10 +251,10 @@ class WrapBooleanBlock:
 	def __init__(self, block):
 		self.block = block
 
-	def execute(self):
+	def execute(self, sprite):
 		print 'OK'
 		if self.block.getInput('').titleRow[0].getValue() == 'TRUE':
-			self.do_animation()
+			self.do_animation( sprite )
 			return True
 		else:
 			print 'skipping animation because boolean is FALSE'
@@ -263,15 +263,21 @@ class WrapBooleanBlock:
 	def set_animation(self, block):
 		self.anim_block = block
 
-	def do_animation(self):
+	def do_animation(self, sprite):
 		print 'doing animation...'
 		block = self.anim_block
+		point = self.anim_block.getPythonObject().get_tween_source( sprite )
+		print 'point:', point
 		keys = []
 		kblock = block.getInput('keys').connection.targetBlock()
 		while kblock:
 			if kblock and kblock.type == 'keyframe_block':
 				keys.append( kblock )
 				print 'got keyframe', kblock
+				tween = kblock.getPythonObject()
+				print 'tween::', tween
+				tween.set_source( point )
+				tween.start()
 
 			kblock = kblock.nextConnection.targetBlock()
 
@@ -283,7 +289,7 @@ class Logic:
 	def __init__(self, block):
 		self.root = block
 
-	def execute(self):
+	def execute(self, sprite):
 		node = None
 		self.stack = []
 		block = self.root
@@ -316,7 +322,7 @@ class Logic:
 		print 'running logic - stack:', len(self.stack)
 		for node in self.stack:
 			print 'running node', node
-			node.execute()
+			node.execute( sprite )
 
 
 
@@ -327,6 +333,10 @@ class Logic:
 class SpriteController:
 	def __init__(self):
 		self.logic = None
+		self.sprite = None
+
+	def set_sprite(self, sprite):
+		self.sprite = sprite
 
 	def reset_logic(self, block):
 		print 'reset-logic'
@@ -335,9 +345,11 @@ class SpriteController:
 	def execute(self):
 		if self.logic is None:
 			print 'SpriteController is empty'
+		elif self.sprite is None:
+			print 'SpriteController is not connected to a Sprite'
 		else:
 			print 'exe sprite controller'
-			self.logic.execute()
+			self.logic.execute( self.sprite )
 
 block = StatementBlock(
 	color=300, 
@@ -353,8 +365,17 @@ with javascript:
 	def on_child_plugged( child ):
 		this.pythonjs_object.reset_logic( child )
 
-block.on_child_plugged = on_child_plugged
+	def controller_plugged(controller, parent, block, parent_block):
+		print 'on-controller-plugged', controller, parent
+		with python:
+			if controller and parent:
+				if isinstance(parent, Sprite):
+					controller.set_sprite( parent )
+				else:
+					print 'ERROR: only plug a SpriteController into a Sprite'
 
+block.on_child_plugged = on_child_plugged
+block.on_plugged = controller_plugged
 
 def create_controller():
 	controller = SpriteController()
@@ -365,7 +386,21 @@ def create_controller():
 @pythonjs.property_callbacks
 class Animation:
 	def __init__(self):
-		pass
+		self.mode = 'position'
+
+	def set_mode(self, value):
+		print 'setting new mode:', value
+		self.mode = value
+
+	def get_tween_source(self, sprite):
+		print 'get-tween-source from:', sprite
+		assert isinstance(sprite, Sprite)
+		if self.mode == 'position':
+			return sprite.position
+		elif self.mode == 'scale':
+			return sprite.scale
+		else:
+			print 'TODO mode:', self.mode
 
 block = StatementBlock(
 	'animation_block',
@@ -378,9 +413,7 @@ block.add_input_statement( name='keys' )
 
 with javascript:
 	def dd_callback(value):
-		print this
-		print this.property_name
-		print value
+		this.block.getPythonObject().set_mode( value )
 
 block.add_dropdown(
 	'transform',		# name
@@ -463,7 +496,10 @@ with javascript:
 		print 'on-block-plugged', object, parent_object
 		with python:
 			if object and parent_object:
-				parent_object.addChild( object )
+				if isinstance(parent_object, Sprite):
+					parent_object.addChild( object )
+				else:
+					print 'ERROR: only plug a Sprite into another Sprite'
 
 
 block = StatementBlock(category='Classes')
@@ -471,6 +507,7 @@ block.bind_class( Sprite )
 block.on_plugged = on_plugged
 block.on_unplugged = on_unplugged
 block.add_input_statement( name='child' )
+block.add_input_statement( name='controller' )
 
 
 block = StatementBlock(color=150, category='Classes')

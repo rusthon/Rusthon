@@ -794,6 +794,7 @@ class BlocklyBlock:
 						field = new( Blockly.FieldDropdown(a['items']) )
 						field.on_changed_callback = a['callback']
 						field.property_name = a['name']
+						field.block = this
 						row.appendTitle( field )
 						i += 1
 
