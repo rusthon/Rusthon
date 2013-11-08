@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Nov  5 17:54:04 2013
+// PythonScript Runtime - regenerated on: Thu Nov  7 16:05:23 2013
 var jsrange = function(num) {
 "Emulates Python's range function";
 var i, r;
@@ -257,6 +257,7 @@ return attr.apply(undefined, args);
 }
 
 method.is_wrapper = true;
+object[attribute] = method;
 return method;
 }
 else {
@@ -289,6 +290,7 @@ return attr.apply(undefined, args);
 }
 
 method.is_wrapper = true;
+object[attribute] = method;
 return method;
 }
 else {

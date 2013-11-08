@@ -199,6 +199,9 @@ def get_attribute(object, attribute):
                     args[0].splice(0, 0, object)
                     return attr.apply(None, args)
                 method.is_wrapper = True
+
+                object[attribute] = method  ## cache method - we assume that methods do not change
+
                 return method
             else:
                 return attr
@@ -222,6 +225,9 @@ def get_attribute(object, attribute):
                         args[0].splice(0, 0, object)
                         return attr.apply(None, args)
                     method.is_wrapper = True
+
+                    object[attribute] = method  ## cache method - we assume that methods do not change
+
                     return method
                 else:
                     return attr
