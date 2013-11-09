@@ -1330,17 +1330,32 @@ class PythonToPythonJS(NodeVisitor):
 
             self._for_iterator_target = node.target.id  ## this could break with nested for loops
             writer.write('var(__iterator__, %s)' % node.target.id)
-            writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
+    
+            is_range = False
+            if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
+                is_range = True
+            else:
+                writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
 
             if self.FAST_FOR:
-                writer.write('var(__next__)')
-                writer.write('__next__ = get_attribute(__iterator__, "next_fast")')
-
-                writer.write('while __iterator__.__dict__.index < __iterator__.__dict__.length:')
-                writer.push()
-                writer.write('%s = __next__()' % node.target.id)
-                map(self.visit, node.body)
-                writer.pull()
+                if is_range:
+                    iter_name = node.target.id
+                    range_num = self.visit( node.iter.args[0] )
+                    writer.write('var(%s)' %iter_name)
+                    writer.write('%s = 0' %iter_name)
+                    writer.write('while %s < %s:' %(iter_name, range_num))
+                    writer.push()
+                    map(self.visit, node.body)
+                    writer.write('%s += 1' %iter_name )
+                    writer.pull()
+                else:
+                    writer.write('var(__next__)')
+                    writer.write('__next__ = get_attribute(__iterator__, "next_fast")')
+                    writer.write('while __iterator__.__dict__.index < __iterator__.__dict__.length:')
+                    writer.push()
+                    writer.write('%s = __next__()' % node.target.id)
+                    map(self.visit, node.body)
+                    writer.pull()
 
             else:
                 writer.write('try:')
