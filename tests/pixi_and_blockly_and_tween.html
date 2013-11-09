@@ -392,12 +392,9 @@ class WrapBooleanBlock( EventNode ):
 class Logic:
 	def __init__(self, block):
 		self.root = block
-
-	def execute(self, sprite):
-		node = None
 		self.stack = []
-		block = self.root
 
+	def build(self, block):
 		if block.type == 'controls_if':
 			print 'got if-block'
 			target = block.getInput('IF0').connection.targetBlock()
@@ -415,17 +412,26 @@ class Logic:
 				print 'node created'
 				target = block.getInput('DO0').connection.targetBlock()
 				if target:
-					'if block has DO0'
+					print 'if block has DO0'
 					if target.type == 'animation_block':
 						print 'got animation block'
 						node.set_animation( target )
-						self.stack.append( node )
+						self.stack.append( node )  ## add to stack
 					else:
 						print 'DO requires an animation block'
 				else:
 					print 'skipping if-block, because DO0 is empty'
+		else:
+			print 'skipping block:', block.type
 
+		if block.nextConnection:
+			if block.nextConnection.targetBlock():
+				self.build( block.nextConnection.targetBlock() )
 
+	def execute(self, sprite):
+		node = None
+		self.stack = []
+		self.build( self.root )
 		print 'running logic - stack:', len(self.stack)
 		for node in self.stack:
 			print 'running node', node
