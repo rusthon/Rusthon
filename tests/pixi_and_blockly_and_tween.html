@@ -203,14 +203,104 @@ class _Selected:
 	def __init__(self):
 		self.cursor_x = 0
 		self.cursor_y = 0
+		self.scale_x = 1.0
+		self.scale_y = 1.0
 		self.sprite = None
 
 	def set(self, sprite):
 		self.sprite = sprite
+		if sprite:
+			self.scale_x = sprite.scale.x
+			self.scale_y = sprite.scale.y
 
 SELECTED = _Selected()
 
+class _EventSystem:
+	def __init__(self, canvas=None):
+		self.listeners = dict()
+		self.register_event( 'keypress' )
+		if canvas:
+			canvas.addEventListener( 'keydown', self.on_keypressed, False )
+		else:
+			## note: 'keypress' event will not catch arrow keys ##
+			#window.addEventListener( 'keypress', self.on_keypressed, False )
+			window.addEventListener( 'keydown', self.on_keypressed, False )
 
+
+	def register_event(self, name):
+		if name not in self.listeners:
+			self.listeners[ name ] = list()
+			print 'new event type:', name
+
+
+	def register_listener(self, name, callback):
+		if name not in self.listeners: self.register_event( name )
+		self.listeners[ name ].append( callback )
+
+	def trigger(self, name, value):
+		print 'trigger', name, value
+		for callback in self.listeners[name]:
+			callback( value )
+
+	def on_keypressed(self, event):
+		code = event.keyCode
+		if code == 38:   # up
+			self.trigger( 'keypress', 'UP' )
+		elif code == 37: # left
+			self.trigger( 'keypress', 'LEFT' )
+		elif code == 40: # down
+			self.trigger( 'keypress', 'DOWN' )
+		elif code == 39: # right
+			self.trigger( 'keypress', 'RIGHT' )
+		elif code == 8:  # backspace
+			event.preventDefault()
+
+EventSystem = _EventSystem()
+
+
+block = ValueBlock(
+	'keypressed_event',
+	color=120, 
+	inputs_inline=False,
+	category='HIDDEN',
+)
+@block.bind_class
+@pythonjs.init_callbacks
+@pythonjs.property_callbacks
+class KeypressedEvent:
+	def __init__(self, mode='UP'):
+		self.mode = mode
+		self.callback = None
+		EventSystem.register_listener('keypress', self.on_trigger)
+
+	def set_mode(self, value):
+		print 'setting new mode:', value
+		self.mode = value
+
+	def on_trigger(self, value):
+		if self.mode == value:
+			if self.callback:
+				self.callback()
+
+def create_keypressed_event():
+	e = KeypressedEvent()
+
+with javascript:
+	def dd_callback(value):
+		this.block.getPythonObject().set_mode( value )
+
+block.add_dropdown(
+	'keypressed',	# name
+	title = None,	# no title puts it on header
+	items=['UP','DOWN','LEFT', 'RIGHT'],
+	callback=dd_callback
+)
+
+
+
+
+
+######################## point ######################
 block = StatementBlock(
 	color=120, 
 	inputs_inline=True,
@@ -247,23 +337,23 @@ block.on_plugged = point_plugged
 block.on_unplugged = point_unplugged
 
 ####################### controller ####################
-class WrapBooleanBlock:
+class EventNode:
 	def __init__(self, block):
 		self.block = block
 
 	def execute(self, sprite):
-		print 'OK'
-		if self.block.getInput('').titleRow[0].getValue() == 'TRUE':
-			self.do_animation( sprite )
-			return True
-		else:
-			print 'skipping animation because boolean is FALSE'
-			return False
+		self.sprite = sprite
+		event_type = self.block.getPythonObject()  ## KeypressedEvent
+		## the event_type has already registered its own on_trigger listeners
+		## with the EventSystem, and when called it will call self.callback,
+		## so here we only need to set the callback to self.do_animation.
+		event_type.callback = self.do_animation
+
 
 	def set_animation(self, block):
 		self.anim_block = block
 
-	def do_animation(self, sprite):
+	def do_animation(self):
 		print 'doing animation...'
 		block = self.anim_block
 		keys = []
@@ -278,13 +368,25 @@ class WrapBooleanBlock:
 		if len(keys) == 0:
 			print 'no keyframes in animation!'
 		else:
-			point = self.anim_block.getPythonObject().get_tween_source( sprite )
+			point = self.anim_block.getPythonObject().get_tween_source( self.sprite )
 			print 'point:', point
 			keyframe = keys[0]
 			tween = keyframe.tween
 			print 'tween::', tween
 			tween.set_source( point )
 			tween.start()
+
+
+class WrapBooleanBlock( EventNode ):
+
+	def execute(self, sprite):
+		self.sprite = sprite
+
+		if self.block.getInput('').titleRow[0].getValue() == 'TRUE':
+			self.do_animation()
+		else:
+			print 'skipping animation because boolean is FALSE'
+
 
 
 class Logic:
@@ -303,6 +405,9 @@ class Logic:
 				if target.type == 'logic_boolean':
 					print 'got boolean'
 					node = WrapBooleanBlock( target )
+				elif target.type == 'keypressed_event':
+					print 'got keypressed event'
+					node = EventNode( target )
 			else:
 				print 'skipping if-block, because IF0 is empty'
 
@@ -703,13 +808,6 @@ def test():
 		Blockly.on_mouse_move_workspace = func
 
 	container = document.getElementById('pixi_container')
-
-	#ns = 'http://www.w3.org/1999/xhtml'
-	#container = document.createElementNS(ns, 'foreignObject')
-	#container.setAttribute('id', 'pixi_container')
-	#canvas = document.createElementNS(ns, 'canvas')
-	#Blockly.svg.appendChild( container )
-
 	canvas = document.createElement('canvas')
 	container.appendChild( canvas )
 
@@ -751,6 +849,7 @@ def animate():
 
 <button onclick="Blockly.selected.getPythonObject().execute()">run controller</button>
 
+<button onclick="create_keypressed_event()">new key-pressed event</button>
 
 <button onclick="create_controller()">new controller</button>
 
