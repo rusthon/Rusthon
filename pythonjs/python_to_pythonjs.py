@@ -185,10 +185,12 @@ class PythonToPythonJS(NodeVisitor):
         self._global_typed_lists = dict()  ## global name : set  (if len(set)==1 then we know it is a typed list)
         self._global_typed_dicts = dict()
         self._global_typed_tuples = dict()
+        self._global_functions = set()
 
         self._custom_operators = {}
         self._injector = []  ## advanced meta-programming hacks
-
+        self._in_class = None
+        self._with_fastdef = False
         self.setup_builtins()
 
     def preprocess_custom_operators(self, data):
@@ -406,6 +408,7 @@ class PythonToPythonJS(NodeVisitor):
     def visit_ClassDef(self, node):
         name = node.name
         log('ClassDef: %s'%name)
+        self._in_class = name
         self._classes[ name ] = list()  ## method names
         self._class_parents[ name ] = set()
         self._class_attributes[ name ] = set()
@@ -490,6 +493,7 @@ class PythonToPythonJS(NodeVisitor):
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
+        self._in_class = False
 
         writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
         if 'init' in self._injector:
@@ -972,11 +976,16 @@ class PythonToPythonJS(NodeVisitor):
                             raise SyntaxError('global lists can only contain one type: instance "%s" is unknown' %node.args[0].id)
 
             call_has_args_only = len(node.args) and not (len(node.keywords) or node.starargs or node.kwargs)
+            call_has_args_kwargs_only = len(node.args) and len(node.keywords) and not (node.starargs or node.kwargs)
             call_has_args = len(node.args) or len(node.keywords) or node.starargs or node.kwargs
             name = self.visit(node.func)
 
             if call_has_args_only:  ## lambda only supports simple args for now.
                 args = ', '.join(map(self.visit, node.args))
+
+            elif call_has_args_kwargs_only:
+                args = ', '.join(map(self.visit, node.args))
+                kwargs = ', '.join(map(lambda x: '%s:%s' % (x.arg, self.visit(x.value)), node.keywords))
 
             elif call_has_args:
                 args = ', '.join(map(self.visit, node.args))
@@ -1006,7 +1015,17 @@ class PythonToPythonJS(NodeVisitor):
                     writer.append(code)
 
             if call_has_args_only:
-                return 'get_attribute(%s, "__call__")([%s], JSObject())' % (name, args)
+                if name in self._global_functions or name in self._builtins:
+                    return '%s( [%s], __NULL_OBJECT__ )' %(name,args)
+                else:
+                    return 'get_attribute(%s, "__call__")([%s], JSObject())' % (name, args)
+
+            elif call_has_args_kwargs_only:
+                if name in self._global_functions or name in self._builtins:
+                    return '%s( [%s], {%s} )' %(name,args, kwargs)
+                else:
+                    return 'get_attribute(%s, "__call__")([%s], {%s} )' % (name, args, kwargs)
+
 
             elif call_has_args:
                 if name == 'dict':
@@ -1019,21 +1038,25 @@ class PythonToPythonJS(NodeVisitor):
                 else:
                     return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 
-            elif name in self._classes or name in self._builtins:
-                return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
+            elif name in self._classes:
+                return 'get_attribute(%s, "__call__")( )' %name
+
+            elif name in self._global_functions or name in self._builtins:
+                #return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name  ## SLOW ##
+                return '%s( )' %name  ## this is much FASTER ##
 
             else:
-                ## this a slightly dangerous optimization,
-                ## because if the user is trying to create an instance of some class
+                ## if the user is trying to create an instance of some class
                 ## and that class is define in an external binding,
                 ## and they forgot to put "from mylibrary import *" in their script (an easy mistake to make)
                 ## then this fails to call __call__ to initalize the instance,
-                ## and throws a confusing error:
+                ## or a factory function was used that was passed the class to make,
+                ## it will throw this confusing error:
                 ## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
                 ## TODO - remove this optimization, or provide the user with a better error message.
-                #return '%s( JSArray(), JSObject() )' %name  ## this also breaks passing a class to a factory!
 
-                return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name
+                ## So to be safe we still wrap with get_attribute and "__call__"
+                return 'get_attribute(%s, "__call__")( )' %name
 
     def visit_Lambda(self, node):
         args = [self.visit(a) for a in node.args.args]
@@ -1049,6 +1072,9 @@ class PythonToPythonJS(NodeVisitor):
         setter = False
         return_type = None
         self._cached_property = None
+
+        if writer.is_at_global_level():
+            self._global_functions.add( node.name )
 
         for decorator in reversed(node.decorator_list):
             log('@decorator: %s' %decorator)
@@ -1142,9 +1168,19 @@ class PythonToPythonJS(NodeVisitor):
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
 
+        if self._with_js:
+            pass  ## with javascript: functions are fast, and args are already set.
 
+        elif self._with_fastdef:
+            for i, arg in enumerate(node.args.args):
+                dindex = i - len(node.args.defaults)
+                if dindex >= 0 and node.args.defaults:
+                    default_value = self.visit( node.args.defaults[dindex] )
+                    writer.write("""JS("var %s = kwargs[ '%s' ]  || %s ")""" % (arg.id, arg.id, default_value))
+                else:
+                    writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
-        if not self._with_js and (len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg):
+        elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
             # First check the arguments are well formed 
             # ie. that this function is not a callback of javascript code
             writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
@@ -1395,6 +1431,12 @@ class PythonToPythonJS(NodeVisitor):
             map(self.visit, node.body)
             writer.with_javascript = True
             self._with_js = True
+
+        elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'fastdef':
+            self._with_fastdef = True
+            map(self.visit, node.body)
+            self._with_fastdef = False
+
 
         elif isinstance( node.context_expr, Name ) and node.optional_vars and isinstance(node.optional_vars, Name) and node.optional_vars.id == 'jsobject':
             #instance_name = node.context_expr.id

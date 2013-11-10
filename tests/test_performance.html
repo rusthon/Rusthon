@@ -8,8 +8,13 @@ from time import time
 def no_args():
 	return 1
 
-def no_kwargs(a,b,c):
-	return a+b+c
+with fastdef:
+	def no_kwargs(a,b,c):
+		return a+b+c
+
+	def call_kwargs(a,b,c, x=0, y=0, z=1):
+		return a+b+c+x+y+z
+
 
 def test():
 	print 'testing for x in range'
@@ -29,6 +34,35 @@ def test():
 		i += 1
 	print time()-now
 	print a
+
+	print 'testing for x in range - calling no_args'
+	## before optimized: 0.287 - after 0.004
+	now = time()
+	a = 0
+	for x in range(1000000):
+		a += no_args()
+	print time()-now
+	print a
+
+
+	print 'testing for x in range - calling no_kwargs'
+	## before optimized: 4.6 - after
+	now = time()
+	a = 0
+	for x in range(1000000):
+		a += no_kwargs(1,2,3)
+	print time()-now
+	print a
+
+
+	print 'testing for x in range - calling with kwargs'
+	now = time()
+	a = 0
+	for x in range(1000000):
+		a += call_kwargs(1,2,3, x=1, y=2, z=3)
+	print time()-now
+	print a
+
 
 </script>
 </head>

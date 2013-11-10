@@ -1,8 +1,4 @@
-from pythonjs import JS
-from pythonjs import var
-from pythonjs import Array
-from pythonjs import JSObject
-from pythonjs import arguments
+__NULL_OBJECT__ = Object.create( null )
 
 
 def jsrange(num):
