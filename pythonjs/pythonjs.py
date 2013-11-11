@@ -11,6 +11,18 @@ from ast import NodeVisitor
 
 
 class JSGenerator(NodeVisitor):
+    _indent = 0
+    @classmethod
+    def push(cls):
+        cls._indent += 1
+    @classmethod
+    def pull(cls):
+        if cls._indent > 0:
+            cls._indent -= 1
+    @classmethod
+    def indent(cls):
+        return '  ' * cls._indent
+
     def visit_In(self, node):
         return ' in '
 
@@ -28,13 +40,21 @@ class JSGenerator(NodeVisitor):
         return '[%s]' % ', '.join(map(self.visit, node.elts))
 
     def visit_TryExcept(self, node):
-        out = 'try {\n'
-        out += '\n'.join(map(self.visit, node.body))
-        out += '\n}\n'
-        out += 'catch(__exception__) {\n'
-        out += '\n'.join(map(self.visit, node.handlers))
-        out += '\n}\n'
-        return out
+        out = []
+        out.append( self.indent() + 'try {' )
+        self.push()
+        out.extend(
+            list( map(self.visit, node.body) )
+        )
+        self.pull()
+        out.append( self.indent() + '} catch(__exception__) {' )
+        self.push()
+        out.extend(
+            list( map(self.visit, node.handlers) )
+        )
+        self.pull()
+        out.append( '}' )
+        return '\n'.join( out )
 
     def visit_Raise(self, node):
         return 'throw %s;' % self.visit(node.type)
@@ -71,10 +91,11 @@ class JSGenerator(NodeVisitor):
         self._function_stack.append( node.name )
 
         args = self.visit(node.args)
-        buffer = 'var %s = function(%s) {\n' % (
+        buffer = self.indent() + 'var %s = function(%s) {\n' % (
             node.name,
             ', '.join(args),
         )
+        self.push()
         body = list()
         for child in node.body:
             # simple test to drop triple quote comments
@@ -86,14 +107,15 @@ class JSGenerator(NodeVisitor):
 
             if isinstance(child, GeneratorType):
                 for sub in child:
-                    body.append(self.visit(sub))
+                    body.append( self.indent()+self.visit(sub))
             else:
-                body.append(self.visit(child))
+                body.append( self.indent()+self.visit(child))
         buffer += '\n'.join(body)
-        buffer += '\n}\n'
+        self.pull()
+        buffer += '\n%s}\n' %self.indent()
 
-        if node.name == self._function_stack[0]:  ## to be safe do not export nested functions
-            buffer += 'window["%s"] = %s \n' % (node.name, node.name)  ## export to global namespace so Closure will not remove them
+        if node.name == self._function_stack[0]:  ## could do something special here with global function
+            pass
 
         assert node.name == self._function_stack.pop()
         return buffer
@@ -179,8 +201,13 @@ class JSGenerator(NodeVisitor):
             return '%s(%s)' % (name, args)
 
     def visit_While(self, node):
-        body = '\n'.join(map(self.visit, node.body))
-        return 'while(%s) {\n%s\n}' % (self.visit(node.test), body)
+        body = [ 'while(%s) {' %self.visit(node.test)]
+        self.push()
+        for line in list( map(self.visit, node.body) ):
+            body.append( self.indent()+line )
+        self.pull()
+        body.append( self.indent() + '}' )
+        return '\n'.join( body )
 
     def visit_Str(self, node):
         s = node.s.replace('\n', '\\n')
@@ -303,12 +330,26 @@ class JSGenerator(NodeVisitor):
         return op.join( [self.visit(v) for v in node.values] )
 
     def visit_If(self, node):
-        test = self.visit(node.test)
-        body = '\n'.join(map(self.visit, node.body)) + '\n'
-        orelse = '\n'.join(map(self.visit, node.orelse)) + '\n'
-        if not orelse.isspace():
-            return 'if(%s) {\n%s}\nelse {\n%s}\n' % (test, body, orelse)
-        return 'if(%s) {\n%s}\n' % (test, body)
+        out = []
+        out.append( 'if (%s) {' %self.visit(node.test) )
+        self.push()
+
+        for line in list(map(self.visit, node.body)):
+            out.append( self.indent() + line )
+
+        orelse = []
+        for line in list(map(self.visit, node.orelse)):
+            orelse.append( self.indent() + line )
+
+        self.pull()
+
+        if orelse:
+            out.append( self.indent() + '} else {')
+            out.extend( orelse )
+        out.append( self.indent() + '}' )
+
+        return '\n'.join( out )
+
 
     def visit_Dict(self, node):
         a = []
@@ -335,18 +376,32 @@ class JSGenerator(NodeVisitor):
 
         '''
         target = node.target.id
-        iter = self.visit(node.iter)
-        # iter is the python iterator
-        init_iter = 'var iter = %s;\n' % iter
-        init_iter += 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }\n'  ## support "for key in JSObject"
+        iter = self.visit(node.iter) # iter is the python iterator
+
+        out = []
+        out.append( self.indent() + 'var iter = %s;\n' % iter )
+        ## support "for key in JSObject" ##
+        out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
+        out.append( self.indent() + 'for (var %s=0; %s < iter.length; %s++) {' % (target, target, target) )
+        self.push()
+
+        body = []
         # backup iterator and affect value of the next element to the target
-        pre = 'var backup = %s;\n%s = iter[%s];\n' % (target, target, target)
+        pre = 'var backup = %s; %s = iter[%s];' % (target, target, target)
+        body.append( self.indent() + pre )
+
+        for line in list(map(self.visit, node.body)):
+            body.append( self.indent() + line )
+
         # replace the replace target with the javascript iterator
-        post = '%s = backup;\n' % target
-        body = '\n'.join(map(self.visit, node.body)) + '\n'
-        body = pre + body + post
-        for_block = init_iter + 'for (var %s=0; %s < iter.length; %s++) {\n%s}\n' % (target, target, target, body)
-        return for_block
+        post = '%s = backup;' % target
+        body.append( self.indent() + post )
+
+        self.pull()
+        out.extend( body )
+        out.append( self.indent() + '}' )
+
+        return '\n'.join( out )
 
     def visit_Continue(self, node):
         return 'continue'

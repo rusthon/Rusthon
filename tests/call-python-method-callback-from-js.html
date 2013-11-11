@@ -47,16 +47,12 @@ class SuperClass:
 
 def test():
 	a = SuperClass( 'instance1' )
-	call_callback(a.callback)
-
 	b = SuperClass( 'instance2' )
-	call_callback(b.callback)
-
-	call_instance_methods( a )
-
-
-	call_instance_methods_without_with_python( a )
-
+	with javascript:
+		call_callback(a.callback)
+		call_callback(b.callback)
+		call_instance_methods( a )
+		call_instance_methods_without_with_python( a )
 
 </script>
 

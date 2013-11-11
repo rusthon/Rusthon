@@ -438,12 +438,12 @@ class PythonToPythonJS(NodeVisitor):
 
 
         writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
-        writer.write('window["__%s_attrs"] = JSObject()' % name)
-        writer.write('window["__%s_parents"] = JSArray()' % name)
-        writer.write('window["__%s_properties"] = JSObject()' % name)
+        writer.write('__%s_attrs = JSObject()' % name)
+        writer.write('__%s_parents = JSArray()' % name)
+        writer.write('__%s_properties = JSObject()' % name)
 
         for base in node.bases:
-            code = 'window["__%s_parents"].push(%s)' % (name, self.visit(base))
+            code = '__%s_parents.push(%s)' % (name, self.visit(base))
             writer.write(code)
             if isinstance(base, Name):
                 self._class_parents[ name ].add( base.id )
@@ -467,13 +467,13 @@ class PythonToPythonJS(NodeVisitor):
                 if item_name in self._decorator_properties:
                     pass
                 else:
-                    writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.name))
+                    writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
 
             elif isinstance(item, Assign) and isinstance(item.targets[0], Name):
                 item_name = item.targets[0].id
                 item.targets[0].id = '__%s_%s' % (name, item_name)
                 self.visit(item)  # this will output the code for the assign
-                writer.write('window["__%s_attrs"]["%s"] = %s' % (name, item_name, item.targets[0].id))
+                writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.targets[0].id))
                 self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
             elif isinstance(item, Pass):
                 pass
@@ -484,18 +484,18 @@ class PythonToPythonJS(NodeVisitor):
 
         for prop_name in self._decorator_properties:
             getter = self._decorator_properties[prop_name]['get']
-            writer.write('window["__%s_properties"]["%s"] = JSObject()' %(name, prop_name))
-            writer.write('window["__%s_properties"]["%s"]["get"] = %s' %(name, prop_name, getter))
+            writer.write('__%s_properties["%s"] = JSObject()' %(name, prop_name))
+            writer.write('__%s_properties["%s"]["get"] = %s' %(name, prop_name, getter))
             if self._decorator_properties[prop_name]['set']:
                 setter = self._decorator_properties[prop_name]['set']
-                writer.write('window["__%s_properties"]["%s"]["set"] = %s' %(name, prop_name, setter))
+                writer.write('__%s_properties["%s"]["set"] = %s' %(name, prop_name, setter))
 
         self._catch_attributes = None
         self._decorator_properties = None
         self._instances.pop('self')
         self._in_class = False
 
-        writer.write('%s = create_class("%s", window["__%s_parents"], window["__%s_attrs"], window["__%s_properties"])' % (name, name, name, name, name))
+        writer.write('%s = create_class("%s", __%s_parents, __%s_attrs, __%s_properties)' % (name, name, name, name, name))
         if 'init' in self._injector:
             writer.write('%s.init_callbacks = JSArray()' %name)
         self._injector = []
@@ -743,7 +743,7 @@ class PythonToPythonJS(NodeVisitor):
                     return "%s['__class__']['__dict__']['%s']" %(node_value, node.attr)
                 else:
                     parent = typedef.check_for_parent_with( class_attribute=node.attr )
-                    return "window['__%s_attrs']['%s']" %(parent.name, node.attr)
+                    return "__%s_attrs['%s']" %(parent.name, node.attr)  ## TODO, get from class.__dict__
 
             elif typedef.check_for_parent_with( method='__getattr__' ):
                 parent = typedef.check_for_parent_with( method='__getattr__' )
@@ -828,8 +828,10 @@ class PythonToPythonJS(NodeVisitor):
                 if parent_prop and 'set' in parent_prop.properties[target.attr]:
                     setter = parent_prop.properties[target.attr]['set']
                     writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
-                elif parent_classattr:
-                    writer.write( "window['__%s_attrs']['%s'] = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+
+                elif parent_classattr:  ## TODO fix get/set class attributes
+                    writer.write( "__%s_attrs['%s'] = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+
                 elif parent_setattr:
                     func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
                     writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )

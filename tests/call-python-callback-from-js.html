@@ -2,7 +2,7 @@
 <head>
 <script src="pythonscript.js"></script>
 -*
-<script type="text/python" closure="false">
+<script type="text/python">
 
 with javascript:
 
@@ -22,7 +22,8 @@ def callback(foo, bar, baz, kw='my default'):
 	print kw
 
 def test():
-	call_callback(callback)
+	with javascript:
+		call_callback(callback)
 
 
 </script>
