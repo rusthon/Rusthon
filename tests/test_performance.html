@@ -12,56 +12,68 @@ with fastdef:
 	def no_kwargs(a,b,c):
 		return a+b+c
 
-	def call_kwargs(a,b,c, x=0, y=0, z=1):
-		return a+b+c+x+y+z
+@fastdef
+def call_kwargs(a,b,c, x=0, y=0, z=1):
+	return a+b+c+x+y+z
 
+@javascript
+def call_kwargs_js(a,b,c, x=10, y=20, z=30):
+	return a+b+c+x+y+z
+
+N = 100000
 
 def test():
-	print 'testing for x in range'
+	print( 'testing for x in range')
 	now = time()
 	a = 0
-	for x in range(1000000):
+	for x in range( N ):
 		a += 1
-	print time()-now
-	print a
+	print( time()-now )
+	print( a )
 
-	print 'testing while'
+	print( 'testing while')
 	now = time()
 	a = 0
 	i = 0
-	while i < 1000000:
+	while i < N:
 		a += 1
 		i += 1
-	print time()-now
-	print a
+	print( time()-now)
+	print( a )
 
-	print 'testing for x in range - calling no_args'
-	## before optimized: 0.287 - after 0.004
+	print( 'testing for x in range - calling no_args')
 	now = time()
 	a = 0
-	for x in range(1000000):
+	for x in range(N):
 		a += no_args()
-	print time()-now
-	print a
+	print( time()-now)
+	print( a )
 
-
-	print 'testing for x in range - calling no_kwargs'
-	## before optimized: 4.6 - after
+	print( 'testing for x in range - calling no_kwargs')
 	now = time()
 	a = 0
-	for x in range(1000000):
+	for x in range(N):
 		a += no_kwargs(1,2,3)
-	print time()-now
-	print a
+	print( time()-now)
+	print( a )
 
-
-	print 'testing for x in range - calling with kwargs'
+	print( 'testing for x in range - calling with kwargs')
 	now = time()
 	a = 0
-	for x in range(1000000):
+	for x in range(N):
 		a += call_kwargs(1,2,3, x=1, y=2, z=3)
-	print time()-now
-	print a
+	print( time()-now)
+	print( a )
+
+
+	print( 'testing for x in range - calling with javascript kwargs')
+	now = time()
+	a = 0
+	for x in range(N):
+		with javascript:
+			a += call_kwargs_js(1,2,3, null, null, 10)
+	print( time()-now)
+	print( a )
 
 
 </script>

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Sat Nov  9 21:41:45 2013
+// PythonScript Runtime - regenerated on: Sun Nov 10 18:28:12 2013
 __NULL_OBJECT__ = Object.create(null);
 var jsrange = function(num) {
 "Emulates Python's range function";
@@ -868,7 +868,7 @@ func.kwargs_signature = {};
 func.types_signature = {};
 String.prototype.get=func;
 var func = function(self) {
-return get_attribute(Iterator, "__call__")([this, 0], Object());
+return get_attribute(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
 }
 
 func.NAME = "func";
@@ -1054,7 +1054,7 @@ func.kwargs_signature = {};
 func.types_signature = {};
 Array.prototype.get=func;
 var func = function(self) {
-return get_attribute(Iterator, "__call__")([this, 0], Object());
+return get_attribute(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
 }
 
 func.NAME = "func";
@@ -1091,7 +1091,7 @@ var i, r;
 i = 0;
 r = get_attribute(list, "__call__")();
 while(i < num) {
-get_attribute(get_attribute(r, "append"), "__call__")([i], Object());
+get_attribute(get_attribute(r, "append"), "__call__")([i], __NULL_OBJECT__);
 i += 1
 }
 return r;
@@ -1388,7 +1388,7 @@ if(index == length) {
 throw StopIteration;
 }
 
-item = get_attribute(get_attribute(self["__dict__"]["obj"], "get"), "__call__")([self["__dict__"]["index"]], Object());
+item = get_attribute(get_attribute(self["__dict__"]["obj"], "get"), "__call__")([self["__dict__"]["index"]], __NULL_OBJECT__);
 self["__dict__"]["index"] = self["__dict__"]["index"] + 1;
 return item;
 }
@@ -1461,11 +1461,11 @@ i += 1
 else {
 if(js_object) {
 if(isinstance([js_object, list], __NULL_OBJECT__)) {
-self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], Object());
+self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], __NULL_OBJECT__);
 }
 else {
 if(isinstance([js_object, tuple], __NULL_OBJECT__)) {
-self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], Object());
+self["__dict__"]["js_object"] = get_attribute(get_attribute(get_attribute(js_object, "js_object"), "slice"), "__call__")([0], __NULL_OBJECT__);
 }
 else {
 if(isinstance([js_object, array], __NULL_OBJECT__)) {
@@ -1549,7 +1549,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__tuple___iter__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-return get_attribute(Iterator, "__call__")([self, 0], Object());
+return get_attribute(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
 }
 window["__tuple___iter__"] = __tuple___iter__ 
 
@@ -1745,7 +1745,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 v = __next__();
-get_attribute(get_attribute(self, "append"), "__call__")([v], Object());
+get_attribute(get_attribute(self, "append"), "__call__")([v], __NULL_OBJECT__);
 }
 }
 else {
@@ -1873,7 +1873,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 obj = __next__();
-get_attribute(get_attribute(self, "append"), "__call__")([obj], Object());
+get_attribute(get_attribute(self, "append"), "__call__")([obj], __NULL_OBJECT__);
 }
 }
 window["__list_extend"] = __list_extend 
@@ -1930,7 +1930,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var obj = arguments['obj'];
 var __array;
-index = get_attribute(get_attribute(self, "index"), "__call__")([obj], Object());
+index = get_attribute(get_attribute(self, "index"), "__call__")([obj], __NULL_OBJECT__);
 __array = get_attribute(self, "js_object");
 __array.splice(index, 1);
 }
@@ -2132,7 +2132,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__list___iter__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-return get_attribute(Iterator, "__call__")([self, 0], Object());
+return get_attribute(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
 }
 window["__list___iter__"] = __list___iter__ 
 
@@ -2290,7 +2290,7 @@ i = 0;
 while(i < get_attribute(js_object, "length")) {
 var key = js_object[i]["key"];
 var value = js_object[i]["value"];
-get_attribute(get_attribute(self, "set"), "__call__")([key, value], Object());
+get_attribute(get_attribute(self, "set"), "__call__")([key, value], __NULL_OBJECT__);
 i += 1
 }
 }
@@ -2588,7 +2588,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var key = arguments['key'];
 var d = arguments['d'];
-v = get_attribute(get_attribute(self, "get"), "__call__")([key, undefined], Object());
+v = get_attribute(get_attribute(self, "get"), "__call__")([key, undefined], __NULL_OBJECT__);
 if(v === undefined) {
 return d;
 }
@@ -2627,7 +2627,7 @@ __keys = Object.keys(__dict);
 out = get_attribute(list, "__call__")();
 i = 0;
 while(i < get_attribute(__keys, "length")) {
-get_attribute(get_attribute(out, "append"), "__call__")([__dict[ __keys[i] ]], Object());
+get_attribute(get_attribute(out, "append"), "__call__")([__dict[ __keys[i] ]], __NULL_OBJECT__);
 i += 1
 }
 return out;
@@ -2694,7 +2694,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__dict___iter__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-return get_attribute(Iterator, "__call__")([get_attribute(get_attribute(self, "keys"), "__call__")(), 0], Object());
+return get_attribute(Iterator, "__call__")([get_attribute(get_attribute(self, "keys"), "__call__")(), 0], __NULL_OBJECT__);
 }
 window["__dict___iter__"] = __dict___iter__ 
 
@@ -2762,7 +2762,7 @@ size = self["__dict__"]["bytes"];
 buff = new ArrayBuffer(size);
 self["__dict__"]["dataview"] = new DataView(buff);
 self["__dict__"]["buffer"] = buff;
-get_attribute(get_attribute(self, "fromlist"), "__call__")([initializer], Object());
+get_attribute(get_attribute(self, "fromlist"), "__call__")([initializer], __NULL_OBJECT__);
 }
 window["__array___init__"] = __array___init__ 
 
@@ -2943,7 +2943,7 @@ signature = {"kwargs": Object(), "args": create_array("self")};
 signature["function_name"] = "__array___iter__";
 arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
-return get_attribute(Iterator, "__call__")([self, 0], Object());
+return get_attribute(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
 }
 window["__array___iter__"] = __array___iter__ 
 
@@ -3087,7 +3087,7 @@ arguments = get_arguments(signature, args, kwargs);
 var self = arguments['self'];
 var value = arguments['value'];
 length = self["__dict__"]["length"];
-get_attribute(get_attribute(self, "resize"), "__call__")([self["__dict__"]["length"] + 1], Object());
+get_attribute(get_attribute(self, "resize"), "__call__")([self["__dict__"]["length"] + 1], __NULL_OBJECT__);
 get_attribute(get_attribute(self, "__setitem__"), "__call__")([length, value], Object());
 }
 window["__array_append"] = __array_append 
@@ -3119,7 +3119,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 value = __next__();
-get_attribute(get_attribute(self, "append"), "__call__")([value], Object());
+get_attribute(get_attribute(self, "append"), "__call__")([value], __NULL_OBJECT__);
 }
 }
 window["__array_extend"] = __array_extend 
@@ -3262,7 +3262,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 item = __next__();
-get_attribute(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], Object());
+get_attribute(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 return output;
 }
@@ -3278,7 +3278,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 key = __next__();
-get_attribute(set, "__call__")([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], Object());
+get_attribute(set, "__call__")([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 return output;
 }
@@ -3303,7 +3303,7 @@ signature = {"kwargs": Object(), "args": create_array("json")};
 signature["function_name"] = "json_to_pythonjs";
 arguments = get_arguments(signature, args, kwargs);
 var json = arguments['json'];
-return _to_pythonjs([get_attribute(get_attribute(JSON, "parse"), "__call__")([json], Object())], __NULL_OBJECT__);
+return _to_pythonjs([get_attribute(get_attribute(JSON, "parse"), "__call__")([json], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 window["json_to_pythonjs"] = json_to_pythonjs 
 
@@ -3335,7 +3335,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 i = __next__();
-get_attribute(get_attribute(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], Object());
+get_attribute(get_attribute(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 }
 else {
@@ -3348,7 +3348,7 @@ var __next__;
 __next__ = get_attribute(__iterator__, "next_fast");
 while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
 key = __next__();
-value = _to_json([get_attribute(get_attribute(pythonjs, "get"), "__call__")([key], Object())], __NULL_OBJECT__);
+value = _to_json([get_attribute(get_attribute(pythonjs, "get"), "__call__")([key], __NULL_OBJECT__)], __NULL_OBJECT__);
 key = _to_json([key], __NULL_OBJECT__);
 r[ key ] = value;
 }
@@ -3382,7 +3382,7 @@ signature = {"kwargs": Object(), "args": create_array("pythonjs")};
 signature["function_name"] = "pythonjs_to_json";
 arguments = get_arguments(signature, args, kwargs);
 var pythonjs = arguments['pythonjs'];
-return get_attribute(get_attribute(JSON, "stringify"), "__call__")([_to_json([pythonjs], __NULL_OBJECT__)], Object());
+return get_attribute(get_attribute(JSON, "stringify"), "__call__")([_to_json([pythonjs], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 window["pythonjs_to_json"] = pythonjs_to_json 
 

@@ -317,6 +317,10 @@ Example::
 			self.set( self.x+other.x, self.y+other.y, self.z+other.z )
 			return self
 
+		def addScalar(self, s):
+			self.set( self.x+s, self.y+s, self.z+s )
+			return self
+
 		def __add__(self, other):
 			if instanceof(other, Object):
 				assert isinstance(other, Vector3)
@@ -330,9 +334,40 @@ Example::
 			else:
 				self.addScalar( other )
 
-		def addScalar(self, s):
-			self.set( self.x+s, self.y+s, self.z+s )
-			return self
 
+---------------
+
+Optimized Function Calls
+------------------------------
+
+By default PythonJS functions have runtime call checking that ensures you have called the function with the required number of arguments, and also checks to see if you had called the function from JavaScript - and if so adapt the arguments.  This adds some overhead each time the function is called, and will generally be about 15 times slower than normal Python.  When performance is a concern you can decorate functions that need to be fast with @fastdef, or use the `with fastdef:` with statement.  Note that functions that do not have arguments are always fast.  Using fastdef will make each call to your function 100 times faster, so if you call the same function many times in a loop, it is a good idea to decorate it with @fastdef.
+
+Example::
+
+	@fastdef
+	def f1( a, b, c ):
+		return a+b+c
+
+	with fastdef:
+		def f2( a,b,c, x=1,y=2,z=3):
+			return a+b+c+x+y+z
+
+If you need to call a fastdef function from JavaScript you will need to call it with arguments packed into an array as the first argument, and keyword args packed into an Object as the second argument.
+
+Example::
+
+	// javascript
+	f2( [1,2,3], {x:100, y:200, z:300} );
+
+If you need fast function that is callable from javascript without packing its arguments like above, you can use the @javascript decorator, or nest the function inside a `with javascript:` statement.
+
+Example::
+
+	@javascript
+	def f( a,b,c, x=1, y=2, z=3 ):
+		return a+b+c+x+y+z
+
+	// javascript
+	f( 1,2,3, 100, 200, 300 );
 
 

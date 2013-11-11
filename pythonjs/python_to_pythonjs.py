@@ -218,7 +218,7 @@ class PythonToPythonJS(NodeVisitor):
         self._classes['dict'] = set(['__getitem__', '__setitem__'])
         self._classes['list'] = set(['__getitem__', '__setitem__'])
         self._classes['tuple'] = set(['__getitem__', '__setitem__'])
-        self._builtins = set(['dict', 'list', 'tuple'])
+        self._builtin_classes = set(['dict', 'list', 'tuple'])
 
     def get_typedef(self, instance=None, class_name=None):
         assert instance or class_name
@@ -997,7 +997,6 @@ class PythonToPythonJS(NodeVisitor):
                 self.identifier += 1
 
                 if name in ('list', 'tuple'):
-                    #writer.append( '%s = JS("%s.__dict__.js_object")' % (args_name, args))
                     if args:
                         writer.append( '%s = %s.__dict__.js_object' % (args_name, args))  ## test this
                     else:
@@ -1015,13 +1014,13 @@ class PythonToPythonJS(NodeVisitor):
                     writer.append(code)
 
             if call_has_args_only:
-                if name in self._global_functions or name in self._builtins:
+                if name in self._global_functions:
                     return '%s( [%s], __NULL_OBJECT__ )' %(name,args)
                 else:
-                    return 'get_attribute(%s, "__call__")([%s], JSObject())' % (name, args)
+                    return 'get_attribute(%s, "__call__")([%s], __NULL_OBJECT__)' % (name, args)
 
             elif call_has_args_kwargs_only:
-                if name in self._global_functions or name in self._builtins:
+                if name in self._global_functions:
                     return '%s( [%s], {%s} )' %(name,args, kwargs)
                 else:
                     return 'get_attribute(%s, "__call__")([%s], {%s} )' % (name, args, kwargs)
@@ -1041,7 +1040,10 @@ class PythonToPythonJS(NodeVisitor):
             elif name in self._classes:
                 return 'get_attribute(%s, "__call__")( )' %name
 
-            elif name in self._global_functions or name in self._builtins:
+            elif name in self._builtin_classes:
+                return 'get_attribute(%s, "__call__")( )' %name
+
+            elif name in self._global_functions:
                 #return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name  ## SLOW ##
                 return '%s( )' %name  ## this is much FASTER ##
 
@@ -1071,6 +1073,8 @@ class PythonToPythonJS(NodeVisitor):
         with_js_decorators = []
         setter = False
         return_type = None
+        fastdef = False
+        javascript = False
         self._cached_property = None
 
         if writer.is_at_global_level():
@@ -1080,6 +1084,12 @@ class PythonToPythonJS(NodeVisitor):
             log('@decorator: %s' %decorator)
             if self._with_js:  ## decorators are special in with-js mode
                 with_js_decorators.append( self.visit( decorator ) )
+
+            elif isinstance(decorator, Name) and decorator.id == 'fastdef':
+                fastdef = True
+
+            elif isinstance(decorator, Name) and decorator.id == 'javascript':
+                javascript = True
 
             elif isinstance(decorator, Name) and decorator.id in ('property', 'cached_property'):
                 property_decorator = decorator
@@ -1121,10 +1131,8 @@ class PythonToPythonJS(NodeVisitor):
                 decorators.append( decorator )
 
         log('function: %s'%node.name)
-        if self._with_js:
-            if node.args.defaults:
-                raise SyntaxError( 'pure javascript functions can not take keyword arguments')
-            elif node.args.vararg:
+        if self._with_js or javascript:
+            if node.args.vararg:
                 raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
             elif node.args.kwarg:
                 raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
@@ -1168,10 +1176,16 @@ class PythonToPythonJS(NodeVisitor):
                 a = ','.join( local_vars-global_vars )
                 writer.write('var(%s)' %a)
 
-        if self._with_js:
-            pass  ## with javascript: functions are fast, and args are already set.
+        if self._with_js or javascript:
+            if node.args.defaults:
+                for i, arg in enumerate(node.args.args):
+                    dindex = i - len(node.args.defaults)
+                    if dindex >= 0:
+                        default_value = self.visit( node.args.defaults[dindex] )
+                        writer.write("""JS("var %s = %s  || %s ")""" % (arg.id, arg.id, default_value))
 
-        elif self._with_fastdef:
+
+        elif self._with_fastdef or fastdef:
             for i, arg in enumerate(node.args.args):
                 dindex = i - len(node.args.defaults)
                 if dindex >= 0 and node.args.defaults:
@@ -1328,7 +1342,7 @@ class PythonToPythonJS(NodeVisitor):
         #elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
         #    writer.write('%s.pythonscript_function=true'%node.name)
 
-        if not self._with_js:
+        if not self._with_js and not javascript:
             writer.write('%s.pythonscript_function=True'%node.name)
 
         # apply decorators
