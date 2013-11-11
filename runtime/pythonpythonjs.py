@@ -1,5 +1,8 @@
 __NULL_OBJECT__ = Object.create( null )
-
+__NODEJS__ = False
+if 'process' in this and 'require' in this:
+    print 'PythonJS inside NodeJS'
+    __NODEJS__ = True
 
 def jsrange(num):
     """Emulates Python's range function"""
@@ -66,22 +69,23 @@ def get_attribute(object, attribute):
     var(attr)
     attr = object[attribute]  ## this could be a javascript object with cached method
 
-    if JS("object instanceof HTMLDocument"):
-        #print 'DYNAMIC wrapping HTMLDocument'
-        if JS("typeof(attr) === 'function'"):
-            def wrapper(args,kwargs): return attr.apply(object, args)
-            wrapper.is_wrapper = True
-            return wrapper
-        else:
-            return attr
-    elif JS("object instanceof HTMLElement"):
-        #print 'DYNAMIC wrapping HTMLElement'
-        if JS("typeof(attr) === 'function'"):
-            def wrapper(args,kwargs): return attr.apply(object, args)
-            wrapper.is_wrapper = True
-            return wrapper
-        else:
-            return attr
+    if __NODEJS__ is False:
+        if JS("object instanceof HTMLDocument"):
+            #print 'DYNAMIC wrapping HTMLDocument'
+            if JS("typeof(attr) === 'function'"):
+                def wrapper(args,kwargs): return attr.apply(object, args)
+                wrapper.is_wrapper = True
+                return wrapper
+            else:
+                return attr
+        elif JS("object instanceof HTMLElement"):
+            #print 'DYNAMIC wrapping HTMLElement'
+            if JS("typeof(attr) === 'function'"):
+                def wrapper(args,kwargs): return attr.apply(object, args)
+                wrapper.is_wrapper = True
+                return wrapper
+            else:
+                return attr
         
     #if attribute in object:  ## in test not allowed with javascript-string
     if attr is not None:  ## what about cases where attr is None?

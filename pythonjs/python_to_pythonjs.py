@@ -479,6 +479,21 @@ class PythonToPythonJS(NodeVisitor):
                 pass
             elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
                 pass
+            elif isinstance(item, ast.With) and isinstance( item.context_expr, Name ) and item.context_expr.id == 'javascript':
+                self._with_js = True
+                writer.with_javascript = True
+                for sub in item.body:
+                    if isinstance(sub, Assign) and isinstance(sub.targets[0], Name):
+                        item_name = sub.targets[0].id
+                        sub.targets[0].id = '__%s_%s' % (name, item_name)
+                        self.visit(sub)  # this will output the code for the assign
+                        writer.write('__%s_attrs["%s"] = %s' % (name, item_name, sub.targets[0].id))
+                        self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
+                    else:
+                        raise NotImplementedError( sub )
+                writer.with_javascript = False
+                self._with_js = False
+
             else:
                 raise NotImplementedError( item )
 

@@ -637,57 +637,61 @@ class dict:
 
 
 class array:
-    ## note that class-level dicts can only be used after the dict class has been defined above
-    typecodes = {
-        'c': 1, # char
-        'b': 1, # signed char
-        'B': 1, # unsigned char
-        'u': 2, # unicode
-        'h': 2, # signed short
-        'H': 2, # unsigned short
-        'i': 4, # signed int
-        'I': 4, # unsigned int
-        'l': 4, # signed long
-        'L': 4, # unsigned long
-        'f': 4, # float
-        'd': 8, # double
-        'float32':4,
-        'float16':2,
-        'float8' :1,
+    ## note that class-level dicts can only be used after the dict class has been defined above,
+    ## however, we can still not rely on using a dict here because dict creation relies on get_attribute,
+    ## and get_attribute relies on __NODEJS__ global variable to be set to False when inside NodeJS,
+    ## to be safe this is changed to use JSObjects
+    with javascript:
+        typecodes = {
+            'c': 1, # char
+            'b': 1, # signed char
+            'B': 1, # unsigned char
+            'u': 2, # unicode
+            'h': 2, # signed short
+            'H': 2, # unsigned short
+            'i': 4, # signed int
+            'I': 4, # unsigned int
+            'l': 4, # signed long
+            'L': 4, # unsigned long
+            'f': 4, # float
+            'd': 8, # double
+            'float32':4,
+            'float16':2,
+            'float8' :1,
 
-        'int32'  :4,
-        'uint32' :4,
-        'int16'  :2,
-        'uint16' :2,
-        'int8'  :1,
-        'uint8' :1,
-    }
-    typecode_names = {
-        'c': 'Int8',
-        'b': 'Int8',
-        'B': 'Uint8',
-        'u': 'Uint16',
-        'h': 'Int16',
-        'H': 'Uint16',
-        'i': 'Int32',
-        'I': 'Uint32',
-        #'l': 'TODO',
-        #'L': 'TODO',
-        'f': 'Float32',
-        'd': 'Float64',
+            'int32'  :4,
+            'uint32' :4,
+            'int16'  :2,
+            'uint16' :2,
+            'int8'  :1,
+            'uint8' :1,
+        }
+        typecode_names = {
+            'c': 'Int8',
+            'b': 'Int8',
+            'B': 'Uint8',
+            'u': 'Uint16',
+            'h': 'Int16',
+            'H': 'Uint16',
+            'i': 'Int32',
+            'I': 'Uint32',
+            #'l': 'TODO',
+            #'L': 'TODO',
+            'f': 'Float32',
+            'd': 'Float64',
 
-        'float32': 'Float32',
-        'float16': 'Int16',
-        'float8' : 'Int8',
+            'float32': 'Float32',
+            'float16': 'Int16',
+            'float8' : 'Int8',
 
-        'int32'  : 'Int32',
-        'uint32' : 'Uint32',
-        'int16'  : 'Int16',
-        'uint16' : 'Uint16',
-        'int8'   : 'Int8',
-        'uint8'  : 'Uint8',
+            'int32'  : 'Int32',
+            'uint32' : 'Uint32',
+            'int16'  : 'Int16',
+            'uint16' : 'Uint16',
+            'int8'   : 'Int8',
+            'uint8'  : 'Uint8',
+        }
 
-    }
     def __init__(self, typecode, initializer=None, little_endian=False):
         self.typecode = typecode
         self.itemsize = self.typecodes[ typecode ]

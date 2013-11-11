@@ -1,5 +1,10 @@
-// PythonScript Runtime - regenerated on: Mon Nov 11 02:12:44 2013
+// PythonScript Runtime - regenerated on: Mon Nov 11 14:52:23 2013
 __NULL_OBJECT__ = Object.create(null);
+__NODEJS__ = false;
+if ("process"  in  this && "require"  in  this) {
+  console.log("PythonJS inside NodeJS");
+  __NODEJS__ = true;
+}
 var jsrange = function(num) {
   "Emulates Python's range function";
   var i, r;
@@ -64,19 +69,8 @@ var get_attribute = function(object, attribute) {
   }
   var attr;
   attr = object[attribute];
-  if (object instanceof HTMLDocument) {
-    if (typeof(attr) === 'function') {
-            var wrapper = function(args, kwargs) {
-        return attr.apply(object, args);
-      }
-
-      wrapper.is_wrapper = true;
-      return wrapper;
-    } else {
-      return attr;
-    }
-  } else {
-    if (object instanceof HTMLElement) {
+  if (__NODEJS__ === false) {
+    if (object instanceof HTMLDocument) {
       if (typeof(attr) === 'function') {
                 var wrapper = function(args, kwargs) {
           return attr.apply(object, args);
@@ -86,6 +80,19 @@ var get_attribute = function(object, attribute) {
         return wrapper;
       } else {
         return attr;
+      }
+    } else {
+      if (object instanceof HTMLElement) {
+        if (typeof(attr) === 'function') {
+                    var wrapper = function(args, kwargs) {
+            return attr.apply(object, args);
+          }
+
+          wrapper.is_wrapper = true;
+          return wrapper;
+        } else {
+          return attr;
+        }
       }
     }
   }
@@ -2258,9 +2265,9 @@ var array, __array_attrs, __array_parents;
 __array_attrs = Object();
 __array_parents = create_array();
 __array_properties = Object();
-__array_typecodes = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": 1}, {"key": "b", "value": 1}, {"key": "B", "value": 1}, {"key": "u", "value": 2}, {"key": "h", "value": 2}, {"key": "H", "value": 2}, {"key": "i", "value": 4}, {"key": "I", "value": 4}, {"key": "l", "value": 4}, {"key": "L", "value": 4}, {"key": "f", "value": 4}, {"key": "d", "value": 8}, {"key": "float32", "value": 4}, {"key": "float16", "value": 2}, {"key": "float8", "value": 1}, {"key": "int32", "value": 4}, {"key": "uint32", "value": 4}, {"key": "int16", "value": 2}, {"key": "uint16", "value": 2}, {"key": "int8", "value": 1}, {"key": "uint8", "value": 1}]});
+__array_typecodes = { "c":1,"b":1,"B":1,"u":2,"h":2,"H":2,"i":4,"I":4,"l":4,"L":4,"f":4,"d":8,"float32":4,"float16":2,"float8":1,"int32":4,"uint32":4,"int16":2,"uint16":2,"int8":1,"uint8":1 };
 __array_attrs["typecodes"] = __array_typecodes;
-__array_typecode_names = get_attribute(dict, "__call__")([], {"js_object": [{"key": "c", "value": "Int8"}, {"key": "b", "value": "Int8"}, {"key": "B", "value": "Uint8"}, {"key": "u", "value": "Uint16"}, {"key": "h", "value": "Int16"}, {"key": "H", "value": "Uint16"}, {"key": "i", "value": "Int32"}, {"key": "I", "value": "Uint32"}, {"key": "f", "value": "Float32"}, {"key": "d", "value": "Float64"}, {"key": "float32", "value": "Float32"}, {"key": "float16", "value": "Int16"}, {"key": "float8", "value": "Int8"}, {"key": "int32", "value": "Int32"}, {"key": "uint32", "value": "Uint32"}, {"key": "int16", "value": "Int16"}, {"key": "uint16", "value": "Uint16"}, {"key": "int8", "value": "Int8"}, {"key": "uint8", "value": "Uint8"}]});
+__array_typecode_names = { "c":"Int8","b":"Int8","B":"Uint8","u":"Uint16","h":"Int16","H":"Uint16","i":"Int32","I":"Uint32","f":"Float32","d":"Float64","float32":"Float32","float16":"Int16","float8":"Int8","int32":"Int32","uint32":"Uint32","int16":"Int16","uint16":"Uint16","int8":"Int8","uint8":"Uint8" };
 __array_attrs["typecode_names"] = __array_typecode_names;
 var __array___init__ = function(args, kwargs) {
   var size, buff;
