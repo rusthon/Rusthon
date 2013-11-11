@@ -1,8 +1,12 @@
 __NULL_OBJECT__ = Object.create( null )
-__NODEJS__ = False
-if 'process' in this and 'require' in this:
-    print 'PythonJS inside NodeJS'
+if 'window' in this and 'document' in this:
+    __NODEJS__ = False
+else:
+    ## note, we can not test for: '"process" in this' or '"process" in global'
+    ## make sure we are really inside NodeJS by letting this fail, and halting the program.
     __NODEJS__ = True
+    print process.title
+    print process.version
 
 def jsrange(num):
     """Emulates Python's range function"""

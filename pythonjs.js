@@ -1,9 +1,11 @@
-// PythonScript Runtime - regenerated on: Mon Nov 11 14:52:23 2013
+// PythonScript Runtime - regenerated on: Mon Nov 11 15:35:19 2013
 __NULL_OBJECT__ = Object.create(null);
-__NODEJS__ = false;
-if ("process"  in  this && "require"  in  this) {
-  console.log("PythonJS inside NodeJS");
+if ("window"  in  this && "document"  in  this) {
+  __NODEJS__ = false;
+} else {
   __NODEJS__ = true;
+  console.log(process.title);
+  console.log(process.version);
 }
 var jsrange = function(num) {
   "Emulates Python's range function";
