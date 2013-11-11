@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='PythonJS',
-    version='0.8.2',
+    version='0.8.3',
     description='Python translator for the browser',
     author='Amirouche Boubekki',
     author_email='amirouche.boubekki@gmail.com',
