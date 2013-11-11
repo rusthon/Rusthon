@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Mon Nov 11 01:18:02 2013
+// PythonScript Runtime - regenerated on: Mon Nov 11 02:12:44 2013
 __NULL_OBJECT__ = Object.create(null);
 var jsrange = function(num) {
   "Emulates Python's range function";
@@ -101,67 +101,15 @@ var get_attribute = function(object, attribute) {
       return attr;
     }
   }
-  var __class__, __dict__, __get__, bases;
-  __class__ = object.__class__;
-  if (__class__) {
-    __dict__ = __class__.__dict__;
-    attr = __dict__[attribute];
-    if (attr) {
-      __get__ = get_attribute(attr, "__get__");
-      if (__get__) {
-        return __get__([object, __class__]);
-      }
-    }
-    bases = __class__.__bases__;
-        var iter = jsrange(bases.length);
-
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
-    for (var i=0; i < iter.length; i++) {
-      var backup = i; i = iter[i];
-      var base, attr;
-      base = bases[i];
-      attr = get_attribute(base, attribute);
-      if (attr) {
-        __get__ = get_attribute(attr, "__get__");
-        if (__get__) {
-          return __get__([object, __class__]);
-        }
-      }
-      i = backup;
-    }
-  }
+  var __class__, __dict__, bases;
   __dict__ = object.__dict__;
-  bases = object.__bases__;
   if (__dict__) {
     attr = __dict__[attribute];
     if (attr != undefined) {
-      if (bases) {
-        __get__ = get_attribute(attr, "__get__");
-        if (__get__) {
-          return __get__([undefined, __class__]);
-        }
-      }
       return attr;
     }
   }
-  if (bases) {
-        var iter = jsrange(bases.length);
-
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
-    for (var i=0; i < iter.length; i++) {
-      var backup = i; i = iter[i];
-      var base, attr;
-      base = bases[i];
-      attr = get_attribute(base, attribute);
-      if (attr) {
-        __get__ = get_attribute(attr, "__get__");
-        if (__get__) {
-          return __get__([object, __class__]);
-        }
-      }
-      i = backup;
-    }
-  }
+  __class__ = object.__class__;
   if (__class__) {
     if (attribute  in  __class__.__properties__) {
       return __class__.__properties__[attribute]["get"]([object], Object());
@@ -319,36 +267,6 @@ var set_attribute = function(object, attribute, value) {
   "Set an attribute on an object by updating its __dict__ property";
   var __dict__, __class__;
   __class__ = object.__class__;
-  if (__class__) {
-    var attr, bases;
-    __dict__ = __class__.__dict__;
-    attr = __dict__[attribute];
-    if (attr != undefined) {
-      __set__ = get_attribute(attr, "__set__");
-      if (__set__) {
-        __set__([object, value]);
-        return undefined;
-      }
-    }
-    bases = __class__.__bases__;
-        var iter = jsrange(bases.length);
-
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
-    for (var i=0; i < iter.length; i++) {
-      var backup = i; i = iter[i];
-      var base;
-      base = bases[i];
-      attr = get_attribute(base, attribute);
-      if (attr) {
-        __set__ = get_attribute(attr, "__set__");
-        if (__set__) {
-          __set__([object, value]);
-          return undefined;
-        }
-      }
-      i = backup;
-    }
-  }
   __dict__ = object.__dict__;
   if (__dict__) {
     __dict__[attribute] = value;

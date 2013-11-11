@@ -30,35 +30,6 @@ def adapt_arguments(handler):
     return func
 
 
-#def create_class(class_name, parents, attrs, props):
-#    """Create a PythonScript class"""
-#    if attrs.__metaclass__:
-#        var(metaclass)
-#        metaclass = attrs.__metaclass__
-#        attrs.__metaclass__ = None
-#        return metaclass([class_name, parents, attrs])
-#    var(klass)
-#    klass = JSObject()
-#    klass.__bases__ = parents
-#    klass.__name__ = class_name
-#    klass.__dict__ = attrs
-#    klass.__properties__ = props
-#
-#    def __call__():
-#        """Create a PythonScript object"""
-#        JS('var object')
-#        object = JSObject()
-#        object.__class__ = klass
-#        object.__dict__ = JSObject()
-#        JS('var init')
-#        init = get_attribute(object, '__init__')
-#        if init:
-#            init.apply(None, arguments)
-#        return object
-#    __call__.pythonscript_function = True
-#    klass.__call__ = __call__
-#    return klass
-
 
 def get_attribute(object, attribute):
     """Retrieve an attribute, method, property, or wrapper function.
@@ -93,10 +64,7 @@ def get_attribute(object, attribute):
                     return wrapper
 
     var(attr)
-    #if attribute == '__contains__': ## DO NOT TOUCH Object.prototype !!
-    #    attribute = '__CONTAINS__'  ## we need this ugly hack because we have added javascript Object.prototype.__contains__
-
-    attr = object[attribute]
+    attr = object[attribute]  ## this could be a javascript object with cached method
 
     if JS("object instanceof HTMLDocument"):
         #print 'DYNAMIC wrapping HTMLDocument'
@@ -123,64 +91,32 @@ def get_attribute(object, attribute):
             ## bases, __name__, __dict__, __call__
             #print 'wrapping something external', object, attribute
 
-            def wrapper(args,kwargs): return attr.apply(object, args)  ## THIS IS CORRECT
-            #def wrapper(args,kwargs): return attr.call(object, args)  ## this is not correct
+            def wrapper(args,kwargs): return attr.apply(object, args)
             wrapper.is_wrapper = True
             return wrapper
         else:
             return attr
 
-    var(__class__, __dict__, __get__, bases)
+    var(__class__, __dict__, bases)
 
-    # Check object.__class__.__dict__ for data descriptors named attr
-    __class__ = object.__class__
-    if __class__:
-        __dict__ = __class__.__dict__
-        attr = __dict__[attribute]
-        if attr:
-            __get__ = get_attribute(attr, '__get__')  ## what are data descriptors?
-            if __get__:
-                return __get__([object, __class__])  ## TODO - we need JSObject here?
-        bases = __class__.__bases__
-        for i in jsrange(bases.length):
-            var(base, attr)
-            base = bases[i]
-            attr = get_attribute(base, attribute)
-            if attr:
-                __get__ = get_attribute(attr, '__get__')
-                if __get__:
-                    return __get__([object, __class__])  ## TODO - we need JSObject here?
-    # Check object.__dict__ for attr and its bases if it a class
-    # in the case if the descriptor is found return it
+    # next check object.__dict__ for attr, note that object could be a class, and classes have a __dict__
     __dict__ = object.__dict__
-    bases = object.__bases__
     if __dict__:
         attr = __dict__[attribute]
         if attr != None:
-            if bases:
-                __get__ = get_attribute(attr, '__get__')  ## TODO - we need JSObject here?
-                if __get__:
-                    return __get__([None, __class__])
             return attr
 
-    if bases:
-        for i in jsrange(bases.length):
-            var(base, attr)
-            base = bases[i]
-            attr = get_attribute(base, attribute)
-            if attr:
-                __get__ = get_attribute(attr, '__get__')
-                if __get__:
-                    return __get__([object, __class__])  ## TODO - we need JSObject here?
 
-    if __class__:
+    # next check for object.__class__
+    __class__ = object.__class__
+    if __class__:  ## at this point we can assume we are dealing with a pythonjs class instance
 
         if attribute in __class__.__properties__:  ## @property decorators
             return __class__.__properties__[ attribute ]['get']( [object], JSObject() )
 
         __dict__ = __class__.__dict__
         attr = __dict__[attribute]
-        #if attr:
+
         if attribute in __dict__:
             if JS("{}.toString.call(attr) === '[object Function]'"):
                 def method():
@@ -193,7 +129,7 @@ def get_attribute(object, attribute):
                         # put the arguments in order to be processed by PythonJS
                         args = [args, JSObject()]
                     args[0].splice(0, 0, object)
-                    return attr.apply(None, args)
+                    return attr.apply(None, args)  ## should we bind `this` here so callback can use this?
                 method.is_wrapper = True
 
                 object[attribute] = method  ## cache method - we assume that methods do not change
@@ -263,7 +199,8 @@ def get_attribute(object, attribute):
         wrapper.is_wrapper = True
         return wrapper
 
-    return None  # XXX: raise AttributeError instead
+    # raise AttributeError instead? or should we allow this? maybe we should be javascript style here and return undefined
+    return None
 
 def _get_upstream_attribute(base, attr):
     if attr in base.__dict__:
@@ -281,32 +218,13 @@ def set_attribute(object, attribute, value):
     """Set an attribute on an object by updating its __dict__ property"""
     var(__dict__, __class__)
     __class__ = object.__class__
-    if __class__:
-        var(attr, bases)
-        __dict__ = __class__.__dict__
-        attr = __dict__[attribute]
-        if attr != None:
-            __set__ = get_attribute(attr, '__set__')
-            if __set__:
-                __set__([object, value])
-                return
-        bases = __class__.__bases__
-        for i in jsrange(bases.length):
-            var(base)
-            base = bases[i]
-            attr = get_attribute(base, attribute)
-            if attr:
-                __set__ = get_attribute(attr, '__set__')
-                if __set__:
-                    __set__([object, value])
-                    return
+    #if __class__:  ## TODO property setter
     __dict__ = object.__dict__
     if __dict__:
         __dict__[attribute] = value
     else:
         object[attribute] = value
 
-##set_attribute.pythonscript_function = True  ## let this get wrapped
 
 
 def get_arguments(signature, args, kwargs):
@@ -352,6 +270,4 @@ def get_arguments(signature, args, kwargs):
     if signature.varkwarg:
         out[signature.varkwarg] = kwargs
     return out
-
-##get_arguments.pythonscript_function = True  ## this was not required
 
