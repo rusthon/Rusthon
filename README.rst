@@ -371,6 +371,7 @@ Example::
 	f( 1,2,3, 100, 200, 300 );
 
 
+
 ---------------
 
 NodeJS
@@ -393,4 +394,11 @@ Example::
 	path = sys.argv[ len(sys.argv)-1 ]
 	f = open( path, 'rb' )
 	print f.read()
+
+------------------------------
+
+
+.. image:: https://d2weczhvl823v0.cloudfront.net/PythonJS/pythonjs/trend.png
+   :alt: Bitdeli badge
+   :target: https://bitdeli.com/free
 
