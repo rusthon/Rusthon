@@ -1,7 +1,7 @@
 PythonJS
 ############
 
-.. image:: http://4.bp.blogspot.com/-oiwojUmueiM/UmjixTGKNYI/AAAAAAAAAfE/Tp4uNMx3iEE/s320/pythonjs-v9.png
+.. image:: http://4.bp.blogspot.com/-24HxG7miZnE/UoHEmzmAByI/AAAAAAAAAgM/C_NwyODm5gY/s400/pythonjs-nodejs-0.8.4.png
 
 :dependency: Python 2.7
 :documentaiton: `PythonJS <https://pythonscript.readthedocs.org/en/latest/>`_
