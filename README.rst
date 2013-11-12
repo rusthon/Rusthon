@@ -371,3 +371,26 @@ Example::
 	f( 1,2,3, 100, 200, 300 );
 
 
+---------------
+
+NodeJS
+------------------------------
+
+PythonJS can also be used to write server side software using NodeJS.  You can use the nodejs.py helper script to translate your python script and run it in NodeJS.  This has been tested with NodeJS v0.6.19.
+
+Example::
+
+	cd PythonJS
+	./nodejs.py myscript.py
+
+The directory PythonJS/nodejs/bindings contains wrappers for using NodeJS modules.  Some of these wrappers emulate parts of Pythons standard library, like: os, sys and io.  The example below imports the fake io and sys libraries, and prints the contents of a file passed as the last command line argument to nodejs.py.
+
+Example::
+
+	from nodejs.io import *
+	from nodejs.sys import *
+
+	path = sys.argv[ len(sys.argv)-1 ]
+	f = open( path, 'rb' )
+	print f.read()
+

@@ -274,8 +274,8 @@ class PythonToPythonJS(NodeVisitor):
 
     def visit_Import(self, node):
         for alias in node.names:
-            writer.write( '## import: %s :: %s' %(a.name,a.asname) )
-            raise SyntaxError('import with a namespace is not support yet, use "from module import *" instead')
+            writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
+            raise NotImplementedError  ## TODO namespaces: import x as y
 
     def visit_ImportFrom(self, node):
         if node.module in MINI_STDLIB:
@@ -296,6 +296,13 @@ class PythonToPythonJS(NodeVisitor):
                 raise SyntaxError('only "from module import *" is allowed')
 
             writer.write('## import from: %s :: %s' %(node.module, [ (a.name,a.asname) for a in node.names]))
+
+        elif node.module.startswith('nodejs.'):
+            ## this import syntax is now used to import NodeJS bindings see: PythonJS/nodejs/bindings
+            ## the helper script (nodejs.py) checks for these import statements, and loads the binding,
+            pass
+        else:
+            raise SyntaxError( 'invalid import' )
 
     def visit_Assert(self, node):
         ## hijacking "assert isinstance(a,A)" as a type system ##
