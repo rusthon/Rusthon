@@ -25,6 +25,7 @@ def test():
 	mixed_args_kwargs(9,9, z=420)
 
 	test_kwargs(3, 2, 1)
+	print 'next should print: 0 0 undefined'
 	test_kwargs(x=0, y=0, z=None)
 
 	a = None
@@ -34,7 +35,8 @@ def test():
 		print 'is not None test ok'
 
 	test_simple(1,2)
-	test_simple(1)  ## calling with too few args throw a TypeError
+	print 'next should thow an error'
+	test_simple(1)  ## calling with too few args throw a TypeError  ## TODO fixme
 
 </script>
 </head>
