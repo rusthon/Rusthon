@@ -12,9 +12,9 @@ class file:
 		self.path = path
 		self.flags = flags
 		#self.fd = _fs.openSync( path, flags )
-		self.stat = _fs.statSync( path )
-		print 'stat', self.stat
-		print 'self.path:', self.path
+		#self.stat = _fs.statSync( path )
+		#print 'stat', self.stat
+		#print 'self.path:', self.path
 
 	def read(self, binary=False):
 		path = self.path

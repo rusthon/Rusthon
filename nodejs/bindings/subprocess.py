@@ -3,6 +3,7 @@ __cp__ = require('child_process')
 class Popen:
 	def __init__(self, executeable=None, args=[], stdin='ignore', stdout='ignore', stderr='ignore', cwd=None, env=None, detached=False, callback=None, error_callback=None, returns_binary=False):
 		if stdin is None: stdin = process.stdin
+		elif stdin == -1: stdin = 'pipe'  ## TODO fixme
 		self._echo_stdout = False
 		self._echo_stderr = False
 		if stdout is None:
@@ -12,6 +13,10 @@ class Popen:
 			stderr = process.stderr
 			self._echo_stderr = True
 
+		#print 'Popen executeable->', executeable
+		#print 'Popen args:'
+		#for arg in args:
+		#	print '  arg=', arg
 
 		with javascript:
 			if env is None: env = process.env
@@ -23,6 +28,7 @@ class Popen:
 			}
 			proc = __cp__.spawn( executeable, args[...], options )
 			self[...] = proc
+			#print 'proc.stdio', proc.stdio ## this is in the new API?
 
 		self.stdin = proc.stdin
 		self.stdout = proc.stdout
@@ -35,8 +41,12 @@ class Popen:
 		self._stdout_buff = []
 		self._stderr_buff = []
 
-		if self._echo_stdout:
-			self._hookup_stdout()
+		if self._echo_stdout or self.stdout_callback:
+			if self.stdout_callback:
+				self._hookup_stdout( echo=False )
+			else:
+				self._hookup_stdout( echo=True )
+
 		if self._echo_stderr:
 			self._hookup_stderr()
 
@@ -65,9 +75,9 @@ class Popen:
 		if self.stderr_callback:
 			self.stderr_callback( data )
 
-	def _hookup_stdout(self):
-		print 'hookup'
+	def _hookup_stdout(self, echo=False):
 		self._stdout_buff = []
+		self._echo_stdout = echo
 		if not self._returns_binary: self.stdout.setEncoding( 'utf8' )
 		self.stdout.on('data', self._read_stdout )
 		self.stdout.on('end', self._end_stdout )
@@ -79,25 +89,27 @@ class Popen:
 
 
 	def communicate(self, data, encoding='utf8', returns_binary=False, callback=None, error_callback=None):
+		## TODO fix me
 		def flushed(): print 'write data flushed'
+		print 'communicate->', data
 		self.stdin.write( data, encoding, flushed )
 		self.stdout_callback = callback
 		self.stderr_callback = error_callback
 		self._returns_binary = returns_binary
-		self._hookup_stdout()
+		self._hookup_stdout( echo=True )
 		self._hookup_stderr()
-		return [ self._stdout_buff, self._stderr_buff ]
+		return [ self.stdout, self.stderr ]
 
 
 
 class _fake_subprocess:
 	def __init__(self):
-		self.PIPE = 'pipe'  ## in python this is -1
+		self.PIPE = -1 ## in python this is -1, nodejs has "pipe"
 		self.Popen = Popen
 		
 
-	def call(self, executeable=None, args=[], stdin='ignore', stdout=None, stderr='ignore', cwd=None, env=None):
-		p = Popen( executeable=executeable, args=args, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
+	def call(self, executeable=None, args=[], callback=None, stdin='ignore', stdout=None, stderr='ignore', cwd=None, env=None):
+		p = Popen( executeable=executeable, args=args, callback=callback, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
 		return p
 
 

@@ -7,7 +7,7 @@
 import os, sys, subprocess
 
 PATHS = dict(
-	pythonscript = os.path.abspath('pythonjs'),
+	pythonjs = os.path.abspath('pythonjs'),
 	nodejs_bindings = os.path.abspath('nodejs/bindings'),
 	runtime = os.path.abspath('pythonjs.js'),
 	module_cache = '/tmp',
@@ -21,7 +21,7 @@ def python_to_pythonjs( src, module=None ):
 		cmdheader += ';' + module
 	cmdheader += '\n'
 
-	cmd = ['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')]
+	cmd = ['python2', os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py')]
 	p = subprocess.Popen(
 		cmd,
 		stdin = subprocess.PIPE,
@@ -32,7 +32,7 @@ def python_to_pythonjs( src, module=None ):
 
 def pythonjs_to_javascript( src ):
 	p = subprocess.Popen(
-		['python2', os.path.join( PATHS['pythonscript'],'pythonjs.py')],
+		['python2', os.path.join( PATHS['pythonjs'],'pythonjs.py')],
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)

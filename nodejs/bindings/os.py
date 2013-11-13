@@ -20,6 +20,9 @@ class _fake_path:
 	def exists(self, path):  ## this is new - missing in Node v0.6.19
 		return _fs.existsSync(path)
 
+	def abspath(self, path):
+		return _path.resolve( path )
+
 class _fake_os:
 	def __init__(self):
 		self.environ = process.env

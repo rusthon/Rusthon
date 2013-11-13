@@ -1497,10 +1497,19 @@ def main(script):
 
 def command():
     module = module_path = None
+    scripts = []
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if arg.endswith('.py'):
+                scripts.append( arg )
 
-    data = sys.stdin.read()
-    #data = data.decode('utf-8')
-    #open('/tmp/testunicode.txt', 'wb').write(data.encode('utf-8'))
+    if len(scripts):
+        a = []
+        for script in scripts:
+            a.append( open(script, 'rb').read() )
+        data = '\n'.join( a )
+    else:
+        data = sys.stdin.read()
 
     if data.startswith('#!'):
         header = data[ 2 : data.index('\n') ]
