@@ -91,10 +91,13 @@ class JSGenerator(NodeVisitor):
         self._function_stack.append( node.name )
 
         args = self.visit(node.args)
-        buffer = self.indent() + 'var %s = function(%s) {\n' % (
-            node.name,
-            ', '.join(args),
-        )
+        if len(self._function_stack) == 1:
+            ## this style will not make function global to the eval context in NodeJS ##
+            #buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
+            ## this is required for eval to be able to work in NodeJS, note there is no var keyword.
+            buffer = self.indent() + '%s = function(%s) {\n' % (node.name, ', '.join(args))
+        else:
+            buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
         self.push()
         body = list()
         for child in node.body:
@@ -115,6 +118,7 @@ class JSGenerator(NodeVisitor):
         buffer += '\n%s}\n' %self.indent()
 
         if node.name == self._function_stack[0]:  ## could do something special here with global function
+            #buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
             pass
 
         assert node.name == self._function_stack.pop()

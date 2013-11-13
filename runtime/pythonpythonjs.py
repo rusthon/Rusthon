@@ -1,12 +1,17 @@
 __NULL_OBJECT__ = Object.create( null )
 if 'window' in this and 'document' in this:
     __NODEJS__ = False
+    pythonjs = {}
 else:
     ## note, we can not test for: '"process" in this' or '"process" in global'
     ## make sure we are really inside NodeJS by letting this fail, and halting the program.
     __NODEJS__ = True
     print process.title
     print process.version
+    #vm = require( 'vm' )
+    #pythonjs = vm.createContext( GLOBAL )  ## in nodejs "GLOBAL" is another alias for "global"
+    #pythonjs.pythonjs = pythonjs
+    #pythonjs.__NULL_OBJECT__ = __NULL_OBJECT__
 
 def jsrange(num):
     """Emulates Python's range function"""
@@ -28,7 +33,6 @@ def create_array():
     for i in jsrange(arguments.length):
         array.push(arguments[i])
     return array
-
 
 def adapt_arguments(handler):
     """Useful to transform Javascript arguments to Python arguments"""
