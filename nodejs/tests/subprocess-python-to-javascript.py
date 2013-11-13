@@ -17,21 +17,31 @@ def show_result( data ):
 	print data
 
 
-def python_to_pythonjs( src ):
-	f = open( '/tmp/test.py', 'w' )
-	f.write( src )
-
+def python_to_pythonjs( src, callback ):
+	path = '/tmp/input.py'
+	open( path, 'w' ).write( src )
 	args = [
 		os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py'),
-		'/tmp/test.py'
+		path
 	]
-	p = subprocess.call('python2', args, callback=show_result )
-
+	p = subprocess.call('python2', args, callback=callback )
 
 
 source = 'def test(): print("hello world")'
 print 'testing python_to_pythonjs'
-python_to_pythonjs( source )
+python_to_pythonjs( source, show_result )
 
 
+def pythonjs_to_javascript( src, callback ):
+	path = '/tmp/input.py'
+	open( path, 'w' ).write( src )
+	args = [
+		os.path.join( PATHS['pythonjs'], 'pythonjs.py'),
+		path
+	]
+	p = subprocess.call('python2', args, callback=callback )
+
+
+print 'testing pythonjs_to_javascript'
+pythonjs_to_javascript( source, show_result )
 

@@ -414,7 +414,23 @@ def main(script):
 
 
 def command():
-    print( main(sys.stdin.read()) )
+    scripts = []
+    if len(sys.argv) > 1:
+        for arg in sys.argv[1:]:
+            if arg.endswith('.py'):
+                scripts.append( arg )
+
+    if len(scripts):
+        a = []
+        for script in scripts:
+            a.append( open(script, 'rb').read() )
+        data = '\n'.join( a )
+    else:
+        data = sys.stdin.read()
+
+    js = main( data )
+    print( js )
+
 
 if __name__ == '__main__':
     command()
