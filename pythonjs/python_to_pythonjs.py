@@ -452,10 +452,7 @@ class PythonToPythonJS(NodeVisitor):
         for base in node.bases:
             code = '__%s_parents.push(%s)' % (name, self.visit(base))
             writer.write(code)
-            if isinstance(base, Name):
-                self._class_parents[ name ].add( base.id )
-            else:
-                raise NotImplementedError
+            self._class_parents[ name ].add( self.visit(base) )
 
         for item in node.body:
             if isinstance(item, FunctionDef):
