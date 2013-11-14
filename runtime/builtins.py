@@ -343,8 +343,11 @@ class tuple:
         self[...] = self.js_object  ## self.js_object is deprecated
 
     def __getitem__(self, index):
-        __array = self.js_object
-        return JS('__array[index]')
+        if index < 0:
+            index = self[...].length + index
+        with javascript:
+            return self[...][index]
+
 
     def __iter__(self):
         return Iterator(self, 0)
@@ -397,8 +400,10 @@ class list:
 
 
     def __getitem__(self, index):
-        __array = self.js_object
-        return JS('__array[index]')
+        if index < 0:
+            index = self[...].length + index
+        with javascript:
+            return self[...][index]
 
     def __setitem__(self, index, value):
         __array = self.js_object

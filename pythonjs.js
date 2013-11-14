@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Nov 13 04:22:57 2013
+// PythonScript Runtime - regenerated on: Wed Nov 13 21:30:11 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -1220,7 +1220,7 @@ __tuple___init__.types_signature = { js_object:"None" };
 __tuple___init__.pythonscript_function = true;
 __tuple_attrs["__init__"] = __tuple___init__;
 __tuple___getitem__ = function(args, kwargs) {
-  var __array;
+  var index;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
     /*pass*/
   } else {
@@ -1233,8 +1233,10 @@ __tuple___getitem__ = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var index = arguments['index'];
-  __array = self["__dict__"]["js_object"];
-  return __array[index];
+  if (index < 0) {
+    index = get_attribute(self["wrapped"], "length") + index;
+  }
+  return self["wrapped"][ index ];
 }
 
 __tuple___getitem__.NAME = "__tuple___getitem__";
@@ -1448,7 +1450,7 @@ __list___init__.types_signature = { js_object:"None" };
 __list___init__.pythonscript_function = true;
 __list_attrs["__init__"] = __list___init__;
 __list___getitem__ = function(args, kwargs) {
-  var __array;
+  var index;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
     /*pass*/
   } else {
@@ -1461,8 +1463,10 @@ __list___getitem__ = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var index = arguments['index'];
-  __array = get_attribute(self, "js_object");
-  return __array[index];
+  if (index < 0) {
+    index = get_attribute(self["wrapped"], "length") + index;
+  }
+  return self["wrapped"][ index ];
 }
 
 __list___getitem__.NAME = "__list___getitem__";
