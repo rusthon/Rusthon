@@ -18,6 +18,17 @@ Get Source Code::
 
 	git clone https://github.com/PythonJS/PythonJS.git
 
+Translate Your Script::
+
+	cd PythonJS/pythonjs
+	./translator.py myscript1.py myscript2.py > ~/myapp.js
+
+The translator.py script can take in multiple Python scripts, these are appended together, and translated into a single JavaScript.  The output is printed to stdout.  If no command line arguments is given, then translator.py takes input from stdin.
+
+
+Test Server (server.py)
+========
+
 Install Tornado for Python3::
 
 	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
@@ -32,10 +43,6 @@ Run Test Server::
 	./server.py
 
 Then open a web browser and go to: http://localhost:8080
-
-
-Test Server (server.py)
-========
 
 The test server dynamically compiles Python into JavaScript, this greatly speeds up the testing and development process.  Any html file you place in the PythonJS/tests directory will become available as a new web-page.  When this web-page is requested the server will parse the html and check all the <script> tags for external or embedded Python, and dynamically convert it to JavaScript.
 
