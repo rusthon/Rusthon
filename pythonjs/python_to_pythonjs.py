@@ -782,7 +782,7 @@ class PythonToPythonJS(NodeVisitor):
         name = self.visit(node.value)
 
         if isinstance(node.slice, ast.Ellipsis):
-            return '%s["wrapped"]' %name
+            return '%s["$wrapped"]' %name
 
         elif self._with_js:
             return '%s[ %s ]' %(name, self.visit(node.slice))
@@ -810,7 +810,7 @@ class PythonToPythonJS(NodeVisitor):
         target = node.targets[0]
         if isinstance(target, Subscript):
             if isinstance(target.slice, ast.Ellipsis):
-                code = '%s["wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
+                code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
             elif self._with_js:
                 code = '%s[ %s ] = %s'
                 code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
@@ -1019,19 +1019,19 @@ class PythonToPythonJS(NodeVisitor):
 
                 if name in ('list', 'tuple'):
                     if args:
-                        writer.append( '%s = %s.__dict__.js_object' % (args_name, args))  ## test this
+                        writer.append( '%s = %s[...]' % (args_name, args))  ## test this
                     else:
                         writer.append( '%s = []' %args_name )
                 else:
                     writer.append('%s = JSArray(%s)' % (args_name, args))
 
                 if node.starargs:
-                    writer.append('%s.push.apply(%s, %s.__dict__.js_object)' % (args_name, args_name, self.visit(node.starargs)))
+                    writer.append('%s.push.apply(%s, %s[...])' % (args_name, args_name, self.visit(node.starargs)))
                 writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
 
                 if node.kwargs:
                     kwargs = self.visit(node.kwargs)
-                    code = "JS('for (var name in %s) { %s[name] = %s.__dict__.js_object[name]; }')" % (kwargs, kwargs_name, kwargs)
+                    code = "JS('for (var name in %s) { %s[name] = %s[...][name]; }')" % (kwargs, kwargs_name, kwargs)
                     writer.append(code)
 
             if call_has_args_only:

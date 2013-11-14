@@ -19,6 +19,7 @@ def test():
 	global a, b
 	print('--testing literal style--')
 	a = [1,2,3]  ## literal style
+	print 'testing append'
 	a.append( 4 )
 	show( a )
 	print('--testing functional style--')
@@ -42,6 +43,16 @@ def test():
 	print 'should print 4 again'
 	t = tuple( a )
 	print t[-1]
+
+	print 'testing count'
+	print a.count(4)
+	a.append(4)
+	print a.count(4)
+	a.append( 'A' )
+	a.append( 'A' )
+	a.append( 'A' )
+	print 'should print 3'
+	print a.count('A')
 
 </script>
 </head>

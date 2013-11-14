@@ -169,7 +169,7 @@ def _setup_str_prototype():
             if instanceof(a, Array):
                 arr = a
             else:
-                arr = a.__dict__.js_object
+                arr = a[...]
             i = 0
             for value in arr:
                 out += value
@@ -261,9 +261,7 @@ def next(obj):
 
 
 def map(func, objs):
-    out = list()
-    out.js_object = map(func, objs.js_object)
-    return out
+    return list( js_object = map(func, objs[...]) )
 
 def min( lst ):
     a = None
@@ -317,30 +315,23 @@ class Iterator:
 
 class tuple:
     def __init__(self, js_object=None):
-        self.js_object = JSArray()
-        if JS('js_object instanceof Array'):
-            arr = self.js_object
-            i = 0; length = JS('js_object.length')
-            while i < length:
-                JS('arr.push( js_object[i] )')
-                i += 1
+        with javascript:
+            arr = []
+            self[...] = arr
+
+        if instanceof( js_object, Array ):
+            for item in js_object:
+                arr.push( item )
+
         elif js_object:
-            if isinstance( js_object, list):
-                self.js_object = js_object.js_object.slice(0)
-            elif isinstance( js_object, tuple):
-                self.js_object = js_object.js_object.slice(0)
-            elif isinstance( js_object, array):
-                arr = JSArray()
+
+            if isinstance( js_object, array) or isinstance( js_object, tuple) or isinstance( js_object, list):
                 for v in js_object:
-                    with javascript:
-                        arr.push( v )
-                self.js_object = arr
+                    arr.push( v )
             else:
                 raise TypeError
-        elif js_object:
-            raise TypeError
 
-        self[...] = self.js_object  ## self.js_object is deprecated
+
 
     def __getitem__(self, index):
         if index < 0:
@@ -353,29 +344,29 @@ class tuple:
         return Iterator(self, 0)
 
     def __len__(self):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.length')
+        with javascript:
+            return self[...].length
 
     def index(self, obj):
-        __array = self.js_object
-        return JS('__array.indexOf(obj)')
+        with javascript:
+            return self[...].indexOf(obj)
 
     def count(self, obj):
-        i = 0
-        for other in self:
-            if other == obj:
-                i = i + 1
-        return i
+        with javascript:
+            a = 0
+            for item in self[...]:
+                if item == obj:
+                    a += 1
+            return a
+
 
     def get(self, index): ## used by Iterator
-        __array = self.js_object
-        return JS('__array[index]')
+        with javascript:
+            return self[...][index]
 
     def __contains__(self, value):
-        arr = self.js_object
         with javascript:
-            if arr.indexOf(value) == -1:
+            if self[...].indexOf(value) == -1:
                 return False
             else:
                 return True
@@ -384,19 +375,21 @@ class tuple:
 class list:
 
     def __init__(self, js_object=None):
-        if js_object:
-            if JS('js_object instanceof Array'):
-                self.js_object = js_object
-            elif isinstance(js_object, list) or isinstance(js_object, tuple) or isinstance(js_object, array):
-                self.js_object = JSArray()
+        with javascript:
+            arr = []
+            self[...] = arr
+
+        if instanceof( js_object, Array ):
+            for item in js_object:
+                arr.push( item )
+
+        elif js_object:
+
+            if isinstance( js_object, array) or isinstance( js_object, tuple) or isinstance( js_object, list):
                 for v in js_object:
-                    self.append( v )
+                    arr.push( v )
             else:
                 raise TypeError
-        else:
-            self.js_object = JSArray()
-
-        self[...] = self.js_object  ## self.js_object is deprecated
 
 
     def __getitem__(self, index):
@@ -406,83 +399,72 @@ class list:
             return self[...][index]
 
     def __setitem__(self, index, value):
-        __array = self.js_object
-        JS('__array[index] = value')
+        with javascript:
+            self[...][ index ] = value
 
     def append(self, obj):
-        var(__array)
-        __array = self.js_object
-        JS('__array.push(obj)')
+        with javascript:
+            self[...].push( obj )
 
     def extend(self, other):
         for obj in other:
             self.append(obj)
 
     def insert(self, index, obj):
-        var(__array)
-        __array = self.js_object
-        JS('__array.splice(index, 0, obj)')
+        with javascript:
+            self[...].splice(index, 0, obj)
 
     def remove(self, obj):
-        var(__array)
         index = self.index(obj)
-        __array = self.js_object
-        JS('__array.splice(index, 1)')
+        with javascript:
+            self[...].splice(index, 1)
 
     def pop(self):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.pop()')
+        with javascript:
+            return self[...].pop()
 
     def index(self, obj):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.indexOf(obj)')
+        with javascript:
+            return self[...].indexOf(obj)
 
     def count(self, obj):
-        i = 0
-        for other in self:
-            if other == obj:
-                i = i + 1
-        return i
+        with javascript:
+            a = 0
+            for item in self[...]:
+                if item == obj:
+                    a += 1
+            return a
 
     def reverse(self):
-        var(__array)
-        __array = self.js_object
-        self.js_object = JS('__array.reverse()')
+        with javascript:
+            self[...] = self[...].reverse()
 
     def shift(self):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.shift()')
+        with javascript:
+            return self[...].shift()
 
     def slice(self, start, end):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.slice(start, end)')
+        with javascript:
+            return self[...].slice(start, end)
 
     def __iter__(self):
         return Iterator(self, 0)
 
     def get(self, index):
-        var(__array)
-        __array = self.js_object
-        return JS('__array[index]')
+        with javascript:
+            return self[...][index]
 
     def set(self, index, value):
-        var(__array)
-        __array = self.js_object
-        JS('__array[index] = value')
+        with javascript:
+            self[...][index] = value
 
     def __len__(self):
-        var(__array)
-        __array = self.js_object
-        return JS('__array.length')
+        with javascript:
+            return self[...].length
 
     def __contains__(self, value):
-        arr = self.js_object
         with javascript:
-            if arr.indexOf(value) == -1:
+            if self[...].indexOf(value) == -1:
                 return False
             else:
                 return True
@@ -493,9 +475,11 @@ class dict:
     # http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
     UID = 0
     def __init__(self, js_object=None):
+        with javascript:
+            self[...] = {}
+
         if js_object:
             if JS("js_object instanceof Array"):
-                self.js_object = JSObject()
                 i = 0
                 while i < js_object.length:
                     JS('var key = js_object[i]["key"]')
@@ -503,16 +487,11 @@ class dict:
                     self.set(key, value)
                     i += 1
             else:
-                self.js_object = js_object
-        else:
-            self.js_object = JSObject()
+                self[...] = js_object
 
-        jsob = self.js_object
-        with javascript:
-            self[...] = jsob
 
     def get(self, key, _default=None):
-        __dict = self.js_object
+        __dict = self[...]
         if JS("typeof(key) === 'object'"):
             JS('var uid = "@"+key.uid') ## gotcha - what if "@undefined" was in __dict ?
             if JS('uid in __dict'):
@@ -530,7 +509,7 @@ class dict:
     def set(self, key, value):
         global _PythonJS_UID
 
-        __dict = self.js_object
+        __dict = self[...]
         if JS("typeof(key) === 'object'"):
             if JS("key.uid === undefined"):
                 uid = _PythonJS_UID
@@ -549,11 +528,11 @@ class dict:
             JS('__dict[key] = value')
 
     def __len__(self):
-        __dict = self.js_object
+        __dict = self[...]
         return JS('Object.keys(__dict).length')
 
     def __getitem__(self, key):
-        __dict = self.js_object
+        __dict = self[...]
         if JS("typeof(key) === 'object'"):
             JS('var uid = key.uid')
             return JS('__dict["@"+uid]')  ## "@" is needed so that integers can also be used as keys
@@ -566,7 +545,7 @@ class dict:
     def __setitem__(self, key, value):
         global _PythonJS_UID
 
-        __dict = self.js_object
+        __dict = self[...]
         if JS("typeof(key) === 'object'"):
             if JS("key.uid === undefined"):
                 uid = _PythonJS_UID
@@ -599,13 +578,13 @@ class dict:
         if v is None:
             return d
         else:
-            js_object = self.js_object
+            js_object = self[...]
             JS("delete js_object[key]")
             return v
         
 
     def values(self):
-        __dict = self.js_object
+        __dict = self[...]
         __keys = JS('Object.keys(__dict)')
         out = list()
         i = 0
@@ -631,14 +610,6 @@ class dict:
         return Iterator(self.keys(), 0)
 
 
-# DEPRECATED - see _setup_str_prototype
-#class str:
-#
-#    def __init__(self, jsstring):
-#        self.jsstring = jsstring
-#
-#    def __iter__(self):
-#        return Iterator(self.jsstring, 0)
 
 
 class array:
@@ -835,10 +806,7 @@ class array:
         return arr
 
     def to_list(self):
-        #return list( js_object=self.to_array() )  ## TODO fixme
-        lst = list()
-        lst.js_object = self.to_array()
-        return lst
+        return list( js_object=self.to_array() )
 
     def to_ascii(self):
         string = ''
@@ -863,8 +831,7 @@ def _to_pythonjs(json):
         return json
     if JS("Object.prototype.toString.call(json) === '[object Array]'"):
         output = list()
-        raw = list()
-        raw.js_object = json
+        raw = list( js_object=json )
         var(append)
         append = output.append
         for item in raw:
@@ -874,8 +841,7 @@ def _to_pythonjs(json):
     output = dict()
     var(set)
     set = output.set
-    keys = list()
-    keys.js_object = JS('Object.keys(json)')
+    keys = list( js_object=JS('Object.keys(json)') )
     for key in keys:
         set(key, _to_pythonjs(JS("json[key]")))
     return output

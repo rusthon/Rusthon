@@ -2,6 +2,7 @@
 import sys
 from types import GeneratorType
 
+import ast
 from ast import Str
 from ast import Name
 from ast import Tuple
@@ -125,7 +126,11 @@ class JSGenerator(NodeVisitor):
         return buffer
 
     def visit_Subscript(self, node):
-        return '%s[%s]' % (self.visit(node.value), self.visit(node.slice.value))
+        if isinstance(node.slice, ast.Ellipsis):
+            name = self.visit(node.value)
+            return '%s["$wrapped"]' %name
+        else:
+            return '%s[%s]' % (self.visit(node.value), self.visit(node.slice.value))
 
     def visit_arguments(self, node):
         out = []
