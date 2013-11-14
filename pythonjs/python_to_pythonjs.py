@@ -140,6 +140,9 @@ class Typedef(object):
         log('self.parents: %s'%self.parents)
 
         for parent_name in self.parents:
+            if not self.compiler.is_known_class_name( parent_name ):
+                continue
+
             typedef = self.compiler.get_typedef( class_name=parent_name )
             if method and method in typedef.methods:
                 return typedef
@@ -219,6 +222,9 @@ class PythonToPythonJS(NodeVisitor):
         self._classes['list'] = set(['__getitem__', '__setitem__'])
         self._classes['tuple'] = set(['__getitem__', '__setitem__'])
         self._builtin_classes = set(['dict', 'list', 'tuple'])
+
+    def is_known_class_name(self, name):
+        return name in self._classes
 
     def get_typedef(self, instance=None, class_name=None):
         assert instance or class_name

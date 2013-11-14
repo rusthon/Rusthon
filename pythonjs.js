@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 14 00:41:08 2013
+// PythonScript Runtime - regenerated on: Thu Nov 14 01:20:48 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -328,13 +328,6 @@ get_arguments = function(signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
-
-function sprintf(format, etc) {
-    var arg = arguments;
-    var i = 1;
-    return format.replace(/%((%)|s)/g, function (m) { return m[2] || arg[i++] })
-}
-;
 __sprintf = function(fmt, args) {
   var i;
   i = 0;
