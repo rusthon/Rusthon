@@ -614,12 +614,16 @@ class PythonToPythonJS(NodeVisitor):
                     op = self._custom_operators[ op.decode('utf-8') ]
                 return '%s( [%s, %s], JSObject() )' %(op, left_operand, right_operand)
 
-        if isinstance(node.left, Name):
+        elif op == '%' and isinstance(node.left, ast.Str):
+            return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
+
+        elif isinstance(node.left, Name):
             typedef = self.get_typedef( node.left )
             if typedef and op in typedef.operators:
                 func = typedef.operators[ op ]
                 node.operator_overloading = func
-                return '''JS('%s( [%s, %s], JSObject() )')''' %(func, left, right)  ## TODO double check this without wrapping in JS()
+                return '%s( [%s, %s], JSObject() )' %(func, left, right)
+
 
         return '%s %s %s' % (left, op, right)
 

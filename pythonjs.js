@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Nov 13 23:43:34 2013
+// PythonScript Runtime - regenerated on: Thu Nov 14 00:41:08 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -328,6 +328,23 @@ get_arguments = function(signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
+
+function sprintf(format, etc) {
+    var arg = arguments;
+    var i = 1;
+    return format.replace(/%((%)|s)/g, function (m) { return m[2] || arg[i++] })
+}
+;
+__sprintf = function(fmt, args) {
+  var i;
+  i = 0;
+  return fmt.replace(/%((%)|s)/g, function (m) { return m[2] || args[i++] });
+}
+
+__sprintf.NAME = "__sprintf";
+__sprintf.args_signature = ["fmt","args"];
+__sprintf.kwargs_signature = {};
+__sprintf.types_signature = {};
 create_class = function(class_name, parents, attrs, props) {
   var metaclass, klass;
   "Create a PythonScript class";

@@ -1,6 +1,18 @@
 _PythonJS_UID = 0
 
+JS("""
+function sprintf(format, etc) {
+    var arg = arguments;
+    var i = 1;
+    return format.replace(/%((%)|s)/g, function (m) { return m[2] || arg[i++] })
+}
+""")
+
 with javascript:
+
+    def __sprintf(fmt, args):
+        i = 0
+        return JS("fmt.replace(/%((%)|s)/g, function (m) { return m[2] || args[i++] })")
 
     def create_class(class_name, parents, attrs, props):
         """Create a PythonScript class"""
