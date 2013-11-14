@@ -1,7 +1,0 @@
-print pythonjs_to_json(dict(a=1, b=2))
-print pythonjs_to_json(dict(a=1.2, b=undefined))
-a = list()
-a.append("spam")
-a.append("egg")
-print pythonjs_to_json(a)
-print pythonjs_to_json(dict(a_list=a))

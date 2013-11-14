@@ -1,1 +1,0 @@
-alert('Héllo from PythonJS')

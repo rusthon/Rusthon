@@ -3,42 +3,15 @@ PythonJS
 
 .. image:: http://4.bp.blogspot.com/-24HxG7miZnE/UoHEmzmAByI/AAAAAAAAAgM/C_NwyODm5gY/s400/pythonjs-nodejs-0.8.4.png
 
-:dependency: Python 2.7
-:documentaiton: `PythonJS <https://pythonscript.readthedocs.org/en/latest/>`_
 
 Introduction
 ======
 
-PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn. It converts a subset of Python into a subset of Javascript.  It features: list comprehensions, classes, multiple inheritance, first-class functions, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.
-
-
-Getting Started - Stable Release
----------------
-
-First::
-
-   sudo pip install PythonJS
-
-Write some Python, and then run::
-
-   pythonjs < myapp.py > myapp.js
-
-Then copy myapp.js and the runtime pythonscript.js into your project.
-
-Demos
-=====
-
-- `sudo python <http://amirouche.github.io/sudo-python/>`_
-
-See also
-========
-
-- `Type Inference <http://en.wikipedia.org/wiki/Type_inference>`_
-- `The Missing Python AST Docs <http://greentreesnakes.readthedocs.org/en/latest/>`_
+PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn. It converts a subset of Python into a subset of Javascript.  It features: list comprehensions, classes, multiple inheritance, first-class functions, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.
 
 ---------------
 
-Getting Started - Main Development Branch
+Getting Started
 ---------------
 
 Get Source Code::
