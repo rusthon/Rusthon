@@ -13,7 +13,7 @@ PATHS = dict(
 
 
 
-def python_to_pythonjs( src, callback ):
+def python_to_pythonjs( src, callback, module=None ):
 	path = '/tmp/input1.py'
 	open( path, 'w' ).write( src )
 	args = [
@@ -58,7 +58,7 @@ def convert_python_html_document( data ):
 	'''
 	rewrites html document, converts python scripts into javascript.
 	example:
-		<script type="text/python" closure="true">
+		<script type="text/python">
 		print("hello world")
 		</script>
 
@@ -69,23 +69,22 @@ def convert_python_html_document( data ):
 	'''
 	doc = list()
 	script = None
-	use_closure = False
+
 	for line in data.splitlines():
 		if line.strip().startswith('<script'):
 			if 'src="bindings/' in line:
 				doc.append( line )
-				a,b,c = line.split('"')
+
+				a,b,c = line.split('"')  ## TODO unpack assign
+
 				if b.endswith('.py'):  ## make sure the module is cached ##
 					name = b.split('/')[-1]
 					path = os.path.join( PATHS['bindings'], name )
 					src = open(path, 'rb').read().decode('utf-8')
 					pyjs = python_to_pythonjs( src, module=name.split('.')[0] )
-					print(pyjs)
-					print('_'*80)
+
 
 			elif 'type="text/python"' in line:
-				if 'closure="true"' in line.lower(): use_closure = True
-				else: use_closure = False
 				doc.append( '<script type="text/javascript">')
 				script = list()
 			else:
@@ -94,7 +93,7 @@ def convert_python_html_document( data ):
 		elif line.strip() == '</script>':
 			if script:
 				src = '\n'.join( script )
-				js = python_to_javascript( src, closure_compiler=use_closure, debug=True )
+				js = python_to_javascript( src )
 				doc.append( js )
 			doc.append( line )
 			script = None
@@ -138,7 +137,9 @@ class MainHandler( tornado.web.RequestHandler ):
 			if path.endswith('.py'):
 				print('converting python binding to javascript', name)
 				module = name.split('.')[0]
-				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False, module=module )
+
+				#############################################################
+				data = python_to_javascript( data, module=module )
 
 
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
@@ -161,11 +162,13 @@ class MainHandler( tornado.web.RequestHandler ):
 			local_path = os.path.join( PATHS['webroot'], path )
 			if os.path.isfile( local_path ):
 				data = open(local_path, 'rb').read()
+
 				if path.endswith( '.html' ):
-					data = convert_python_html_document( data.decode('utf-8') )
+					data = convert_python_html_document( data )
 					self.set_header("Content-Type", "text/html; charset=utf-8")
+
 				elif path.endswith('.py'):
-					data = python_to_javascript( data.decode('utf-8'), closure_compiler=True )
+					data = python_to_javascript( data )
 					self.set_header("Content-Type", "text/html; charset=utf-8")
 
 				self.set_header("Content-Length", len(data))

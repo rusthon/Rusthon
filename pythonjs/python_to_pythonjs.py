@@ -972,7 +972,7 @@ class PythonToPythonJS(NodeVisitor):
 					)
 					writer.write(code)
 				else:
-					writer.write('%s = %s[%s]' % (target.id, r, i))
+					writer.write("%s = get_attribute(get_attribute(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (target.id, r, i))
 
 	def visit_Print(self, node):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
