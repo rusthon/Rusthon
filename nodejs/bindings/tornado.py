@@ -16,6 +16,10 @@ class _fake_RequestHandler:
 		self._response.write( data )
 		self._response.end()
 
+	def finish(self):
+		self._response.end()
+
+
 class _fake_app:
 	def __init__(self, handlers):
 		self._handlers = {}
@@ -41,7 +45,7 @@ class _fake_app:
 			hclass = self._handlers[ url.pathname ]
 			handler = hclass( response )
 			handler.set_header('Transfer-Encoding', 'chunked')
-			handler.get( url.pathname )
+			handler.get( url.pathname[1:] )  ## strip root forward slash
 		else:
 			response.writeHead(404)
 			response.end()

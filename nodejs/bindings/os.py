@@ -5,6 +5,7 @@ _path = require('path')
 class _fake_path:
 	def __init__(self):
 		self.sep = _path.sep
+
 	def join(self, a, b):
 		return _path.join( a, b )
 
@@ -26,6 +27,26 @@ class _fake_path:
 	def expanduser(self, path):
 		## assume that path starts with "~/"
 		return self.join( process.env.HOME, path[2:] )
+
+	def isdir(self, path):
+		if self.exists( path ):
+			with javascript:
+				stat = _fs.statSync( path )
+				if stat:
+					return stat.isDirectory()
+				else:
+					return False
+		return False
+
+	def isfile(self, path):
+		if self.exists( path ):
+			with javascript:
+				stat = _fs.statSync( path )
+				if stat:
+					return stat.isFile()
+				else:
+					return False
+		return False
 
 class _fake_os:
 	def __init__(self):

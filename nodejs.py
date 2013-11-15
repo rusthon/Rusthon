@@ -2,7 +2,7 @@
 # NodeJS Wrapper for PythonJS
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
-# tested with NodeJS v0.6.19
+# tested with NodeJS v0.10.22
 
 import os, sys, subprocess
 
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
 	if len(sys.argv) == 1:  ## interactive nodejs console
 		nodejs = subprocess.Popen(
-			['nodejs'],
+			['node'],
 			stdin = sys.stdin,
 			stdout = sys.stdout,
 		)
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 		if 'NODE_PATH' not in os.environ:
 			os.environ['NODE_PATH'] = '/usr/local/lib/node_modules/'
 
-		cmd = ['nodejs', '/tmp/nodejs-input.js']
+		cmd = ['node', '/tmp/nodejs-input.js']
 		if len(sys.argv) > 2:
 			for arg in sys.argv[2:]:
 				print 'ARG', arg
