@@ -185,6 +185,7 @@ class PythonToPythonJS(NodeVisitor):
         self._typedefs = dict()  ## class name : typedef  (not pickled)
 
         self._globals = dict()
+        self._with_static_type = None
         self._global_typed_lists = dict()  ## global name : set  (if len(set)==1 then we know it is a typed list)
         self._global_typed_dicts = dict()
         self._global_typed_tuples = dict()
@@ -936,12 +937,14 @@ class PythonToPythonJS(NodeVisitor):
                 type = self._instances[ target.id ]
                 if writer.is_at_global_level():
                     self._globals[ target.id ] = type
-                    if type == 'list':
-                        self._global_typed_lists[ target.id ] = set()
-                    elif type == 'tuple':
-                        self._global_typed_tuples[ target.id ] = set()
-                    elif type == 'dict':
-                        self._global_typed_dicts[ target.id ] = set()
+
+                    if self._with_static_type:
+                        if type == 'list':
+                            self._global_typed_lists[ target.id ] = set()
+                        elif type == 'tuple':
+                            self._global_typed_tuples[ target.id ] = set()
+                        elif type == 'dict':
+                            self._global_typed_dicts[ target.id ] = set()
 
                     writer.write('%s = %s' % (target.id, node_value))
                 else:
@@ -1007,7 +1010,7 @@ class PythonToPythonJS(NodeVisitor):
         else:
 
             ## check if pushing to a global typed list ##
-            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._globals:
+            if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._global_typed_lists and node.func.attr == 'append':
                 gtype = self._globals[ node.func.value.id ]
                 if gtype == 'list' and node.func.attr == 'append':
                     if isinstance(node.args[0], Name):
@@ -1495,6 +1498,10 @@ class PythonToPythonJS(NodeVisitor):
             map(self.visit, node.body)
             self._with_fastdef = False
 
+        elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'static':
+            self._with_static_type = True
+            map(self.visit, node.body)
+            self._with_static_type = False
 
         elif isinstance( node.context_expr, Name ) and node.optional_vars and isinstance(node.optional_vars, Name) and node.optional_vars.id == 'jsobject':
             #instance_name = node.context_expr.id
