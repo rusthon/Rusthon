@@ -313,7 +313,7 @@ class PythonToPythonJS(NodeVisitor):
 			## the helper script (nodejs.py) checks for these import statements, and loads the binding,
 			pass
 		else:
-			raise SyntaxError( 'invalid import' )
+			raise SyntaxError( 'invalid import - could not find cached module: %s' %node.module )
 
 	def visit_Assert(self, node):
 		## hijacking "assert isinstance(a,A)" as a type system ##
@@ -1533,12 +1533,18 @@ def main(script):
 
 
 def command():
-	module = module_path = None
+	module = None
+	module_path = '/tmp'
 	scripts = []
 	if len(sys.argv) > 1:
-		for arg in sys.argv[1:]:
+		argv = sys.argv[1:]
+		for i,arg in enumerate(argv):
 			if arg.endswith('.py'):
 				scripts.append( arg )
+				module = arg.split('.')[0]
+			elif module is None and i > 0:
+				if argv[i-1] == '--module':
+					module = arg
 
 	if len(scripts):
 		a = []
@@ -1548,13 +1554,13 @@ def command():
 	else:
 		data = sys.stdin.read()
 
-	if data.startswith('#!'):
-		header = data[ 2 : data.index('\n') ]
-		data = data[ data.index('\n')+1 : ]
-		if ';' in header:
-			module_path, module = header.split(';')
-		else:
-			module_path = header
+	#if data.startswith('#!'):
+	#	header = data[ 2 : data.index('\n') ]
+	#	data = data[ data.index('\n')+1 : ]
+	#	if ';' in header:
+	#		module_path, module = header.split(';')
+	#	else:
+	#		module_path = header
 
 	compiler = PythonToPythonJS( module=module, module_path=module_path )
 

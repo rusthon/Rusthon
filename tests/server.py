@@ -31,20 +31,24 @@ PATHS = dict(
 
 
 def python_to_pythonjs( src, module=None, global_variable_scope=False ):
-	cmdheader = '#!%s' %PATHS['module_cache']
-	if module:
-		assert '.' not in module
-		cmdheader += ';' + module
-	cmdheader += '\n'
+	#cmdheader = '#!%s' %PATHS['module_cache']
+	#if module:
+	#	assert '.' not in module
+	#	cmdheader += ';' + module
+	#cmdheader += '\n'
 
 	cmd = ['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')]
 	if global_variable_scope: cmd.append('--global-variable-scope')
+	if module:
+		cmd.append( '--module' )
+		cmd.append( module )
+
 	p = subprocess.Popen(
 		cmd,
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
-	stdout, stderr = p.communicate( (cmdheader + src).encode('utf-8') )
+	stdout, stderr = p.communicate( src.encode('utf-8') )
 	return stdout.decode('utf-8')
 
 def pythonjs_to_javascript( src, closure_compiler=False ):
