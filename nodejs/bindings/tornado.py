@@ -1,22 +1,35 @@
-__http = require('http')
-__urlparser = require('url')
+with javascript:
+	__http = require('http')
+	__urlparser = require('url')
+	__ws = require('ws')  ## npm install ws
 
 class _fake_RequestHandler:
 	def __init__(self, response):
 		self._response = response
+		self._headers = {}
 
 	def set_header(self, key, value):
-		pass
+		self._headers[ key ] = value
 
 	def write(self, data):
+		self._response.writeHead(200, self._headers[...])
 		self._response.write( data )
 		self._response.end()
 
 class _fake_app:
 	def __init__(self, handlers):
 		self._handlers = {}
+		#self._ws_handlers = {}  ## TODO support multiple websocket paths
+		self._ws_handler = None
 		for a in handlers:
-			self._handlers[ a[0] ] = a[1]
+			hclass = a[1]
+			if issubclass( hclass, _fake_WebSocketHandler):
+				#self._ws_handlers[ a[0] ] = hclass
+				self._ws_handler = hclass
+				self._ws_path = a[0]
+			else:
+				self._handlers[ a[0] ] = hclass
+
 
 		self[...] = __http.createServer( self.on_request )
 
@@ -24,14 +37,43 @@ class _fake_app:
 		print 'got request'
 		url = __urlparser.parse( request.url )
 		print url.pathname
-		hclass = self._handlers[ url.pathname ]
-		handler = hclass( response )
-		handler.get( url.pathname )
+		if url.pathname in self._handlers:
+			hclass = self._handlers[ url.pathname ]
+			handler = hclass( response )
+			handler.set_header('Transfer-Encoding', 'chunked')
+			handler.get( url.pathname )
+		else:
+			response.writeHead(404)
+			response.end()
 
 	def listen(self, port):
 		print 'listening on:', port
-		with javascript:
-			self[...].listen( port )
+
+		server = self[...]
+
+		if self._ws_handler:
+			options = {
+				'server' : server,
+				'path' : self._ws_path
+			}
+			with javascript:
+				wss = new( __ws.Server(options[...]) )
+			print 'wss', wss
+			self.wss = wss
+			self.wss.on('connection', self.on_ws_connection)
+
+		server.listen( port )
+
+	def on_ws_connection(self, ws):  ## ws is a websocket client
+		print 'new ws connection'
+		handler = self._ws_handler( ws )
+		handler.open()
+		## handler.on_message will be called with: data, flags
+		## flags.binary = true/false
+		## flags.masked = true/false
+		ws.on('message', handler.on_message)
+
+
 
 class _fake_web:
 	def __init__(self):
@@ -41,18 +83,27 @@ class _fake_web:
 	def HTTPError(self, code):
 		return code
 
-class _fake_WebSocketHandler:
-	def __init__(self):
-		self.ws_connection = None
+class _fake_request:
+	def __init__(self, client):
+		self.connection = client
 
+class _fake_WebSocketHandler:
+	def __init__(self, client):
+		self.request = _fake_request( client )
+		self.ws_connection = client
+
+	def write_message(self, data, binary=False, mask=False):
+		self.ws_connection.send( data, {'binary':binary, 'mask':mask}[...] )
+
+	## subclass overloads these
 	def open(self):
-		pass
+		print 'on websocket open'
 
 	def on_message(self, msg):
-		pass
+		print 'on websocket message'
 
 	def on_close(self):
-		print 'closed connection'
+		print 'closed websocket connection'
 		
 
 class _fake_websocket:
