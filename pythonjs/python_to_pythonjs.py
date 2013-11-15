@@ -806,14 +806,27 @@ class PythonToPythonJS(NodeVisitor):
                     self.visit(node.value),
                     self.visit(node.slice),
                 )
+        elif isinstance(node.slice, ast.Slice):
+            return 'get_attribute(%s, "__getslice__")([%s], JSObject())' % (
+                self.visit(node.value),
+                self.visit(node.slice),
+            )
+
         else:
             return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
                 self.visit(node.value),
                 self.visit(node.slice),
             )
 
-    def visit_Slice(self, node):  ## TODO - test this
-        return "get_attribute(Slice, '__call__')([%s, %s, %s], JSObject())" % (self.visit(node.lower), self.visit(node.upper), self.visit(node.step))
+    def visit_Slice(self, node):
+        lower = upper = step = None
+        if node.lower:
+            lower = self.visit(node.lower)
+        if node.upper:
+            upper = self.visit(node.upper)
+        if node.step:
+            step = self.visit(node.step)
+        return "%s, %s, %s" % (lower, upper, step)
 
     def visit_Assign(self, node):
         # XXX: support only one target for subscripts

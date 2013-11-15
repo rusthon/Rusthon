@@ -51,6 +51,15 @@ def type(ob_or_class_name, bases=None, class_dict=None):
         else:
             return create_class(ob_or_class_name, bases, class_dict)  ## TODO rename create_class to _pyjs_create_class
 
+def hasattr(ob, attr, method=False):
+    with javascript:
+        if method:
+            return Object.hasOwnProperty.call(ob, attr)
+        elif Object.hasOwnProperty(ob, '__dict__'):
+            return Object.hasOwnProperty.call(ob.__dict__, attr)
+        else:
+            return Object.hasOwnProperty.call(ob, attr)
+
 def getattr(ob, attr, property=False):
     with javascript:
         if property:
@@ -152,6 +161,13 @@ def _setup_str_prototype():
         @String.prototype.__len__
         def func():
             return this.length
+
+        @String.prototype.__getslice__
+        def func(start, stop, step):
+            if stop < 0:
+                stop = this.length + stop
+            return this.substring(start, stop)
+
 
         @String.prototype.startswith
         def func(a):

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 14 01:20:48 2013
+// PythonScript Runtime - regenerated on: Fri Nov 15 00:09:58 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -415,6 +415,36 @@ type.args_signature = ["ob_or_class_name", "bases", "class_dict"];
 type.kwargs_signature = { bases:undefined,class_dict:undefined };
 type.types_signature = { bases:"None",class_dict:"None" };
 type.pythonscript_function = true;
+hasattr = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": {"method": false}, "args": create_array("ob", "attr", "method")};
+  signature["function_name"] = "hasattr";
+  arguments = get_arguments(signature, args, kwargs);
+  var ob = arguments['ob'];
+  var attr = arguments['attr'];
+  var method = arguments['method'];
+  if (method) {
+    return Object.hasOwnProperty.call( ob,attr );
+  } else {
+    if (Object.hasOwnProperty(ob, "__dict__")) {
+      return Object.hasOwnProperty.call( ob.__dict__,attr );
+    } else {
+      return Object.hasOwnProperty.call( ob,attr );
+    }
+  }
+}
+
+hasattr.NAME = "hasattr";
+hasattr.args_signature = ["ob", "attr", "method"];
+hasattr.kwargs_signature = { method:false };
+hasattr.types_signature = { method:"False" };
+hasattr.pythonscript_function = true;
 getattr = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
     /*pass*/
@@ -687,6 +717,19 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   String.prototype.__len__=func;
+    var func = function(start, stop, step) {
+    var stop;
+    if (stop < 0) {
+      stop = this.length + stop;
+    }
+    return this.substring( start,stop );
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["start","stop","step"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  String.prototype.__getslice__=func;
     var func = function(a) {
     if (this.substring(0, a.length) == a) {
       return true;

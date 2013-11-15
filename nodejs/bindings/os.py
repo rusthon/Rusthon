@@ -23,6 +23,10 @@ class _fake_path:
 	def abspath(self, path):
 		return _path.resolve( path )
 
+	def expanduser(self, path):
+		## assume that path starts with "~/"
+		return self.join( process.env.HOME, path[2:] )
+
 class _fake_os:
 	def __init__(self):
 		self.environ = process.env
