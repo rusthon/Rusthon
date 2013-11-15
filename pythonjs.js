@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 15 00:09:58 2013
+// PythonScript Runtime - regenerated on: Fri Nov 15 03:31:51 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -21,7 +21,7 @@ jsrange = function(num) {
 }
 
 create_array = function() {
-  "Used to fix a bug/feature of Javascript where new Array(number)\n    created a array with number of undefined elements which is not\n    what we want";
+  "Used to fix a bug/feature of Javascript where new Array(number)\n	created a array with number of undefined elements which is not\n	what we want";
   var array;
   array = [];
     var iter = jsrange(arguments.length);
@@ -45,7 +45,7 @@ adapt_arguments = function(handler) {
 }
 
 get_attribute = function(object, attribute) {
-  "Retrieve an attribute, method, property, or wrapper function.\n\n    method are actually functions which are converted to methods by\n    prepending their arguments with the current object. Properties are\n    not functions!\n\n    DOM support:\n        http://stackoverflow.com/questions/14202699/document-createelement-not-working\n        https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n    Direct JavaScript Calls:\n        if an external javascript function is found, and it was not a wrapper that was generated here,\n        check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n        wrapper, cache it on the function, and return the wrapper.\n    ";
+  "Retrieve an attribute, method, property, or wrapper function.\n\n	method are actually functions which are converted to methods by\n	prepending their arguments with the current object. Properties are\n	not functions!\n\n	DOM support:\n		http://stackoverflow.com/questions/14202699/document-createelement-not-working\n		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n	Direct JavaScript Calls:\n		if an external javascript function is found, and it was not a wrapper that was generated here,\n		check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n		wrapper, cache it on the function, and return the wrapper.\n	";
   if (attribute == "__call__") {
     if ({}.toString.call(object) === '[object Function]') {
       if (object.pythonscript_function === true) {
@@ -286,7 +286,7 @@ set_attribute = function(object, attribute, value) {
 }
 
 get_arguments = function(signature, args, kwargs) {
-  "Based on ``signature`` and ``args``, ``kwargs`` parameters retrieve\n    the actual parameters.\n\n    This will set default keyword arguments and retrieve positional arguments\n    in kwargs if their called as such";
+  "Based on ``signature`` and ``args``, ``kwargs`` parameters retrieve\n	the actual parameters.\n\n	This will set default keyword arguments and retrieve positional arguments\n	in kwargs if their called as such";
   if (args === undefined) {
     args = [];
   }
@@ -402,7 +402,7 @@ type = function(args, kwargs) {
   var ob_or_class_name = arguments['ob_or_class_name'];
   var bases = arguments['bases'];
   var class_dict = arguments['class_dict'];
-  "\n    type(object) -> the object's type\n    type(name, bases, dict) -> a new type  ## broken? - TODO test\n    ";
+  "\n	type(object) -> the object's type\n	type(name, bases, dict) -> a new type  ## broken? - TODO test\n	";
   if (bases === undefined && class_dict === undefined) {
     return ob_or_class_name.__class__;
   } else {
@@ -667,7 +667,7 @@ str.kwargs_signature = {  };
 str.types_signature = {  };
 str.pythonscript_function = true;
 _setup_str_prototype = function(args, kwargs) {
-  "\n    Extend JavaScript String.prototype with methods that implement the Python str API.\n    The decorator @String.prototype.[name] assigns the function to the prototype,\n    and ensures that the special 'this' variable will work.\n    ";
+  "\n	Extend JavaScript String.prototype with methods that implement the Python str API.\n	The decorator @String.prototype.[name] assigns the function to the prototype,\n	and ensures that the special 'this' variable will work.\n	";
     var func = function(a) {
     if (this.indexOf(a) == -1) {
       return false;
@@ -730,6 +730,15 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   String.prototype.__getslice__=func;
+    var func = function() {
+    return this.split( "\n" );
+  }
+
+  func.NAME = "func";
+  func.args_signature = [];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  String.prototype.splitlines=func;
     var func = function(a) {
     if (this.substring(0, a.length) == a) {
       return true;

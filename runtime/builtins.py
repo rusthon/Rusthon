@@ -173,6 +173,9 @@ def _setup_str_prototype():
 				stop = this.length + stop
 			return this.substring(start, stop)
 
+		@String.prototype.splitlines
+		def func():
+			return this.split('\n')
 
 		@String.prototype.startswith
 		def func(a):

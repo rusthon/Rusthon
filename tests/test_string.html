@@ -59,6 +59,16 @@ def test():
 	print 'testing string.join'
 	print '\n'.join( [1,2,3] )
 
+	print 'testing splitlines'
+	m = """
+	some
+	multi
+	line
+	string
+	"""
+	for line in m.splitlines():
+		print line
+
 	print 'tests complete'
 
 </script>

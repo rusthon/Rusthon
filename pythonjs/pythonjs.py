@@ -204,8 +204,10 @@ class JSGenerator(NodeVisitor):
 			else:
 				out = ''
 			return 'create_array(%s)' % out
+
 		elif name == 'JS':
-			return node.args[0].s
+			return node.args[0].s.replace('\n', '\\n')
+
 		else:
 			if node.args:
 				args = [self.visit(e) for e in node.args]
