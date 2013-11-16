@@ -1542,7 +1542,7 @@ def command():
 			if arg.endswith('.py'):
 				scripts.append( arg )
 				module = arg.split('.')[0]
-			elif module is None and i > 0:
+			elif i > 0:
 				if argv[i-1] == '--module':
 					module = arg
 
@@ -1554,13 +1554,6 @@ def command():
 	else:
 		data = sys.stdin.read()
 
-	#if data.startswith('#!'):
-	#	header = data[ 2 : data.index('\n') ]
-	#	data = data[ data.index('\n')+1 : ]
-	#	if ';' in header:
-	#		module_path, module = header.split(';')
-	#	else:
-	#		module_path = header
 
 	compiler = PythonToPythonJS( module=module, module_path=module_path )
 

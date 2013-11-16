@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 15 17:51:58 2013
+// PythonScript Runtime - regenerated on: Fri Nov 15 20:21:08 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -555,6 +555,13 @@ isinstance = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var ob = arguments['ob'];
   var klass = arguments['klass'];
+  if (ob === undefined || ob === null) {
+    return false;
+  } else {
+    if (!Object.hasOwnProperty.call(ob, "__class__")) {
+      return false;
+    }
+  }
   ob_class = ob.__class__;
   if (ob_class === undefined) {
     return false;
@@ -739,6 +746,15 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   String.prototype.splitlines=func;
+    var func = function() {
+    return this.trim(  );
+  }
+
+  func.NAME = "func";
+  func.args_signature = [];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  String.prototype.strip=func;
     var func = function(a) {
     if (this.substring(0, a.length) == a) {
       return true;

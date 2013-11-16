@@ -2,21 +2,16 @@ __cp__ = require('child_process')
 
 class Popen:
 	def __init__(self, executeable=None, args=[], stdin='ignore', stdout='ignore', stderr='ignore', cwd=None, env=None, detached=False, callback=None, error_callback=None, returns_binary=False):
-		if stdin is None: stdin = process.stdin
-		elif stdin == -1: stdin = 'pipe'  ## TODO fixme
+		if stdin is None: stdin = 'pipe'
+		elif stdin == -1: stdin = 'pipe'
 		self._echo_stdout = False
 		self._echo_stderr = False
 		if stdout is None:
-			stdout = process.stdout
+			stdout = 'pipe'
 			self._echo_stdout = True
 		if stderr is None:
 			stderr = process.stderr
 			self._echo_stderr = True
-
-		#print 'Popen executeable->', executeable
-		#print 'Popen args:'
-		#for arg in args:
-		#	print '  arg=', arg
 
 		with javascript:
 			if env is None: env = process.env
@@ -33,7 +28,8 @@ class Popen:
 		self.stdin = proc.stdin
 		self.stdout = proc.stdout
 		self.stderr = proc.stderr
-		self.stderr.setEncoding('utf8')  ## assume that errors are always text
+		if self.stderr:
+			self.stderr.setEncoding('utf8')  ## assume that errors are always text
 
 		self.stdout_callback = callback
 		self.stderr_callback = error_callback
@@ -78,9 +74,12 @@ class Popen:
 	def _hookup_stdout(self, echo=False):
 		self._stdout_buff = []
 		self._echo_stdout = echo
-		if not self._returns_binary: self.stdout.setEncoding( 'utf8' )
-		self.stdout.on('data', self._read_stdout )
-		self.stdout.on('end', self._end_stdout )
+		if self.stdout:
+			if not self._returns_binary: self.stdout.setEncoding( 'utf8' )
+			self.stdout.on('data', self._read_stdout )
+			self.stdout.on('end', self._end_stdout )
+		else:
+			print 'WARNING: tried to hookup stdout, but it is null'
 
 	def _hookup_stderr(self):
 		self._stderr_buff = []
@@ -109,6 +108,8 @@ class _fake_subprocess:
 		
 
 	def call(self, executeable=None, args=[], callback=None, stdin='ignore', stdout=None, stderr='ignore', cwd=None, env=None):
+		print 'subprocess.call'
+		print executeable
 		p = Popen( executeable=executeable, args=args, callback=callback, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
 		return p
 

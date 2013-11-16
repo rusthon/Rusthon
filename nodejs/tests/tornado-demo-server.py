@@ -1,5 +1,6 @@
 from nodejs.io import *
 from nodejs.os import *
+from nodejs.subprocess import *
 from nodejs.tornado import *
 
 #import os, sys, subprocess, json
@@ -13,13 +14,16 @@ PATHS = dict(
 
 
 
-def python_to_pythonjs( src, callback, module=None ):
+def python_to_pythonjs( src, callback=None, module=None ):
 	path = '/tmp/input1.py'
 	open( path, 'w' ).write( src )
 	args = [
 		os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py'),
 		path
 	]
+	if module:
+		args.append( '--module' )
+		args.append( module )
 	p = subprocess.call('python2', args, callback=callback )
 
 def pythonjs_to_javascript( src, callback ):
@@ -54,7 +58,7 @@ def get_main_page():
 	return ''.join(r)
 
 
-def convert_python_html_document( data ):
+def convert_python_html_document( data, callback ):
 	'''
 	rewrites html document, converts python scripts into javascript.
 	example:
@@ -67,21 +71,31 @@ def convert_python_html_document( data ):
 		because later scripts may use classes from the bindings, and we need have the 
 		AST introspected data available here to properly inline and for operator overloading.
 	'''
+	print 'convert_python_html_document....'
 	doc = list()
+	lines = data.splitlines()
+	index = 0
+	_convert_page( doc, lines, index, callback )
+
+def _convert_page(doc, lines, index, callback):
 	script = None
 
-	for line in data.splitlines():
+	#for line in data.splitlines():
+	while index < len( lines ):
+		line = lines[ index ]
+		index += 1
+
 		if line.strip().startswith('<script'):
 			if 'src="bindings/' in line:
 				doc.append( line )
 
 				a,b,c = line.split('"')  ## TODO unpack assign
 
-				if b.endswith('.py'):  ## make sure the module is cached ##
+				if b.endswith('.py'):  ## make sure the special file module is cached in /tmp ##
 					name = b.split('/')[-1]
 					path = os.path.join( PATHS['bindings'], name )
 					src = open(path, 'rb').read().decode('utf-8')
-					pyjs = python_to_pythonjs( src, module=name.split('.')[0] )
+					python_to_pythonjs( src, module=name.split('.')[0] )  ## TODO cache the js output
 
 
 			elif 'type="text/python"' in line:
@@ -93,10 +107,16 @@ def convert_python_html_document( data ):
 		elif line.strip() == '</script>':
 			if script:
 				src = '\n'.join( script )
-				js = python_to_javascript( src )
-				doc.append( js )
-			doc.append( line )
-			script = None
+				def f(data):
+					print 'enter WRAPPER func'
+					doc.append( data )
+					doc.append( line )
+					_convert_page(doc, lines, index, callback)
+				python_to_javascript( src, f )
+				return
+			else:
+				doc.append( line )
+				script = None
 
 		elif isinstance( script, list ):
 			script.append( line )
@@ -104,7 +124,11 @@ def convert_python_html_document( data ):
 		else:
 			doc.append( line )
 
-	return '\n'.join( doc )
+	if index == len( lines ):
+		data = '\n'.join( doc )
+		print data
+		print '--convert-page OK'
+		callback( data )
 
 
 
@@ -134,17 +158,20 @@ class MainHandler( tornado.web.RequestHandler ):
 			else:
 				raise tornado.web.HTTPError(404)
 
+			self.set_header("Content-Type", "text/javascript; charset=utf-8")
+
 			if path.endswith('.py'):
 				print('converting python binding to javascript', name)
 				module = name.split('.')[0]
 
 				#############################################################
-				data = python_to_javascript( data, module=module )
-
-
-			self.set_header("Content-Type", "text/javascript; charset=utf-8")
-			self.set_header("Content-Length", len(data))
-			self.write( data )
+				python_to_javascript(
+					data, 
+					callback=self.write,
+					module=module
+				)
+			else:
+				raise tornado.web.HTTPError(404)  ## only py files are allowed in bindings
 
 		elif path.startswith('uploads/'):
 			name = path.split('/')[-1]
@@ -160,19 +187,15 @@ class MainHandler( tornado.web.RequestHandler ):
 
 		else:
 			local_path = os.path.join( PATHS['webroot'], path )
+			print 'looking for', local_path
 			if os.path.isfile( local_path ):
-				data = open(local_path, 'rb').read()
-
+				print 'GOT TEST HTML'
 				if path.endswith( '.html' ):
-					data = convert_python_html_document( data )
 					self.set_header("Content-Type", "text/html; charset=utf-8")
-
-				elif path.endswith('.py'):
-					data = python_to_javascript( data )
-					self.set_header("Content-Type", "text/html; charset=utf-8")
-
-				self.set_header("Content-Length", len(data))
-				self.write( data )
+					data = open(local_path, 'rb').read()
+					convert_python_html_document( data, callback=self.write )
+				else:  ## only html files are allowed in the webroot
+					raise tornado.web.HTTPError(404)
 
 			else:
 				found = False
@@ -249,7 +272,7 @@ class LibsHandler( tornado.web.RequestHandler ):
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
-		print( self.request.connection )
+		print( 'new websocket connection' )
 
 	def on_message(self, msg, flags=None):
 		if hasattr(self.ws_connection, 'previous_command') and self.ws_connection.previous_command and self.ws_connection.previous_command.get('binary', False):

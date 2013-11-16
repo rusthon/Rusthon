@@ -100,6 +100,10 @@ def issubclass(C, B):
 
 def isinstance( ob, klass):
 	with javascript:
+		if ob is None or ob is null:
+			return False
+		elif not Object.hasOwnProperty.call(ob, '__class__'):
+			return False
 		ob_class = ob.__class__
 	if ob_class is None:
 		return False
@@ -176,6 +180,10 @@ def _setup_str_prototype():
 		@String.prototype.splitlines
 		def func():
 			return this.split('\n')
+
+		@String.prototype.strip
+		def func():
+			return this.trim()  ## missing in IE8
 
 		@String.prototype.startswith
 		def func(a):

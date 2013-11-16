@@ -41,12 +41,19 @@ class _fake_app:
 		print 'got request'
 		url = __urlparser.parse( request.url )
 		print url.pathname
-		if url.pathname in self._handlers:
-			hclass = self._handlers[ url.pathname ]
-			handler = hclass( response )
+		handler = None
+		prefix = None
+		for key in self._handlers:
+			if url.pathname.startswith(key):
+				handler = self._handlers[key]( response )
+				prefix = key
+				break
+
+		if handler:
 			handler.set_header('Transfer-Encoding', 'chunked')
-			handler.get( url.pathname[1:] )  ## strip root forward slash
+			handler.get( url.pathname[len(prefix):] )  ## strip prefix
 		else:
+			print 'ERROR: no handler'
 			response.writeHead(404)
 			response.end()
 
