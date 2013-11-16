@@ -850,6 +850,12 @@ class array:
 
 # JSON stuff
 
+with javascript:
+	json = {
+		'loads': lambda s: JSON.parse(s),
+		'dumps': lambda o: JSON.stringify(o)
+	}
+
 def _to_pythonjs(json):
 	var(jstype, item, output)
 	jstype = JS('typeof json')

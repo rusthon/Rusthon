@@ -87,7 +87,7 @@ class JSGenerator(NodeVisitor):
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
-		return '(function (%s) {%s})' %(','.join(args), self.visit(node.body))
+		return '(function (%s) {return %s})' %(','.join(args), self.visit(node.body))
 
 
 	def visit_FunctionDef(self, node):

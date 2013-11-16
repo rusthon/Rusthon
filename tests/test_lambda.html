@@ -6,6 +6,7 @@
 
 def func(x):
 	print 'func:', x
+	return 'hello world'
 
 def test():
 	print 'testing lambda...'
@@ -14,7 +15,7 @@ def test():
 		f( 'with-javascript lambda OK' )
 
 	e = lambda b: func(b)
-	e( 'lambda OK' )
+	print e( 'lambda OK' )
 
 </script>
 </head>

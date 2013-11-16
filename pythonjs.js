@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 15 03:31:51 2013
+// PythonScript Runtime - regenerated on: Fri Nov 15 17:51:58 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -2730,6 +2730,7 @@ __array_to_ascii.types_signature = {  };
 __array_to_ascii.pythonscript_function = true;
 __array_attrs["to_ascii"] = __array_to_ascii;
 array = create_class("array", __array_parents, __array_attrs, __array_properties);
+json = { "loads":(function (s) {return JSON.parse( s )}),"dumps":(function (o) {return JSON.stringify( o )}) };
 _to_pythonjs = function(args, kwargs) {
   var set, keys, raw, jstype, output, append;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {

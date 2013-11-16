@@ -10,15 +10,18 @@ lst = [1,2,3]
 
 print JSON.stringify( a )
 print JSON.stringify( b )
+print 'testing list object stringify'
 print JSON.stringify( lst )
-print JSON.stringify( lst.js_object )
+print 'testing Array stringify'
+s = JSON.stringify( lst[...] )
+print s
 
-i = 0
-while i < lst.js_object.length:
-	print lst.js_object[i]
-	lst.js_object[i] = i * 100
-	i += 1
-print lst.js_object
+print 'testing loading json string of Array'
+s2 = json.loads( s )
+print s2
+
+print 'testing dumping Array back to string'
+print json.dumps( s2 )
 
 print 'test complete'
 
