@@ -422,6 +422,8 @@ class JSGenerator(NodeVisitor):
 	def visit_Continue(self, node):
 		return 'continue'
 
+	def visit_Break(self, node):
+		return 'break'
 
 def main(script):
 	input = parse(script)

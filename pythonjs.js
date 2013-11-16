@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 15 20:21:08 2013
+// PythonScript Runtime - regenerated on: Fri Nov 15 21:50:42 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -860,6 +860,24 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   String.prototype.isdigit=func;
+    var func = function(encoding) {
+    return this;
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["encoding"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  String.prototype.decode=func;
+    var func = function(encoding) {
+    return this;
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["encoding"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  String.prototype.encode=func;
 }
 
 _setup_str_prototype.NAME = "_setup_str_prototype";
@@ -909,6 +927,19 @@ _setup_array_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   Array.prototype.__iter__=func;
+    var func = function(start, stop, step) {
+    var stop;
+    if (stop < 0) {
+      stop = this.length + stop;
+    }
+    return this.slice( start,stop );
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["start","stop","step"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  Array.prototype.__getslice__=func;
 }
 
 _setup_array_prototype.NAME = "_setup_array_prototype";
@@ -931,7 +962,6 @@ range = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var num = arguments['num'];
   "Emulates Python's range function";
-  var i, r;
   i = 0;
   r = get_attribute(list, "__call__")();
   while(i < num) {

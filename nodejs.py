@@ -68,7 +68,7 @@ if __name__ == '__main__':
 		nodejs.wait()
 	else:
 		#http://stackoverflow.com/questions/12594541/npm-global-install-cannot-find-module
-		## node modules installed with "npm install xxx" need this
+		## node modules installed with "npm install -g xxx" need this
 		if 'NODE_PATH' not in os.environ:
 			os.environ['NODE_PATH'] = '/usr/local/lib/node_modules/'
 

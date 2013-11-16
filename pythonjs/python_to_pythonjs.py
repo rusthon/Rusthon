@@ -1423,6 +1423,9 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('continue')
 		return ''
 
+	def visit_Break(self, node):
+		writer.write('break')
+
 	def visit_For(self, node):
 		if self._with_js:
 			writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))

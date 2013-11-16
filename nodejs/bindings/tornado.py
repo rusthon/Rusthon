@@ -23,6 +23,7 @@ class _fake_RequestHandler:
 class _fake_app:
 	def __init__(self, handlers):
 		self._handlers = {}
+		self._handler_keys = []
 		#self._ws_handlers = {}  ## TODO support multiple websocket paths
 		self._ws_handler = None
 		for a in handlers:
@@ -33,6 +34,7 @@ class _fake_app:
 				self._ws_path = a[0]
 			else:
 				self._handlers[ a[0] ] = hclass
+				self._handler_keys.append( a[0] )
 
 
 		self[...] = __http.createServer( self.on_request )
@@ -43,10 +45,13 @@ class _fake_app:
 		print url.pathname
 		handler = None
 		prefix = None
-		for key in self._handlers:
+		#for key in self._handlers:
+		for key in self._handler_keys:
+			print 'checking handler->', key
 			if url.pathname.startswith(key):
 				handler = self._handlers[key]( response )
 				prefix = key
+				print 'GOT HANDLER', key
 				break
 
 		if handler:
