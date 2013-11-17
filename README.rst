@@ -1,7 +1,7 @@
-PythonJS
+PythonJS 0.8.5
 ############
 
-.. image:: http://4.bp.blogspot.com/-24HxG7miZnE/UoHEmzmAByI/AAAAAAAAAgM/C_NwyODm5gY/s400/pythonjs-nodejs-0.8.4.png
+.. image:: http://1.bp.blogspot.com/-yG3zuA_sEM4/Uogurz5xBnI/AAAAAAAAAgk/57_Zv2iSfgo/s400/pythonjs-0.8.5.png
 
 
 Introduction
