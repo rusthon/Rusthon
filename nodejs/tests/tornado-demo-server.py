@@ -43,7 +43,7 @@ def pythonjs_to_javascript( src, callback, module=None ):
 	]
 	p = subprocess.call('python2', args, callback=callback )
 
-def python_to_javascript(source, callback, module=None):
+def python_to_javascript(source, callback=None, module=None):
 	func = lambda data: pythonjs_to_javascript(data, callback, module)
 	python_to_pythonjs( source, func, module=module )
 
@@ -305,10 +305,16 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 				print('on json message', msg)
 
 				ob = json.loads( msg )
-				if 'command' in ob:
+				if ob.command:
 					if ob['command'] == 'compile':
-						js = python_to_javascript( ob['code'] )
-						self.write_message( {'eval':js} )
+
+						with python:
+							def f(js):
+								self.write_message( {'eval':js} )
+
+							python_to_javascript( ob['code'], callback=f )
+							
+
 					elif ob['command'] == 'upload':
 						print('ready for upload...')
 						print( ob['file_name'] )

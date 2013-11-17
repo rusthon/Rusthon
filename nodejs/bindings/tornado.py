@@ -117,7 +117,7 @@ class _fake_WebSocketHandler:
 
 	def write_message(self, data, binary=False, mask=False):
 		if isinstance( data, dict):
-			data = json.dumps( data )
+			data = json.dumps( data[...] )
 			self.ws_connection.send( data, {'binary':False, 'mask':False}[...] )
 		else:
 			self.ws_connection.send( data, {'binary':binary, 'mask':mask}[...] )

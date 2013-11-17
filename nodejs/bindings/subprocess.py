@@ -65,6 +65,8 @@ class Popen:
 			print 'TODO'
 		if self.stdout_callback:
 			self.stdout_callback( data )
+		else:
+			print 'WARNING: no stdout callback assigned'
 
 	def _end_stderr(self):
 		data = ''.join( self._stderr_buffer )

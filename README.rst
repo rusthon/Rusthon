@@ -9,10 +9,13 @@ Introduction
 
 PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn. It converts a subset of Python into a subset of Javascript.  It features: list comprehensions, classes, multiple inheritance, first-class functions, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.
 
+NodeJS
 ---------------
+Using PythonJS you can quickly port your server side code to using NodeJS.  If you are using Tornado, porting is even simpler because we have written a compatibility layer that emulates the Tornado API and hides the NodeJS internal modules.
+
 
 Getting Started
----------------
+===============
 
 Get Source Code::
 
@@ -26,8 +29,28 @@ Translate Your Script::
 The translator.py script can take in multiple Python scripts, these are appended together, and translated into a single JavaScript.  The output is printed to stdout.  If no command line arguments is given, then translator.py takes input from stdin.
 
 
-Test Server (server.py)
-========
+Test Server
+-----------
+
+PythonJS includes two test servers that run the HTML tests in PythonJS/tests.  Both of these servers are written using the Tornado API.  The NodeJS version is a port of the original test server adapted to work with the Tornado compatible binding.
+
+
+NodeJS Tornado
+---------------
+
+Install Modules::
+
+	sudo npm install -g mime
+	sudo npm install -g ws
+
+Run NodeJS Server::
+
+	cd PythonJS
+	./nodejs.py nodejs/tests/tornado-demo-server.py
+
+
+Python Tornado
+---------------
 
 Install Tornado for Python3::
 
@@ -37,12 +60,15 @@ Install Tornado for Python3::
 	python3 setup.py build
 	sudo python3 setup.py install
 
-Run Test Server::
+Run Python Server::
 
 	cd PythonJS/tests
 	./server.py
 
-Then open a web browser and go to: http://localhost:8080
+Testing
+-------
+
+After running one of the test servers above, open a web browser and go to: http://localhost:8080
 
 The test server dynamically compiles Python into JavaScript, this greatly speeds up the testing and development process.  Any html file you place in the PythonJS/tests directory will become available as a new web-page.  When this web-page is requested the server will parse the html and check all the <script> tags for external or embedded Python, and dynamically convert it to JavaScript.
 
@@ -69,7 +95,9 @@ The server knows that above is an embedded Python script because the script tag 
 
 The syntax "from three import *" tells the compiler to load static type information about the previously compiled binding "three.py" into the compilers namespace, this is required because three.py uses operator overloading to wrap the THREE.js API.  PythonJS programs are explicitly and implicitly statically typed to allow for operator overloading and optimizations.
 
----------------
+
+Writing PythonJS Scripts
+=====================
 
 Directly Calling JavaScript Functions
 ---------------
@@ -355,16 +383,16 @@ Example::
 ---------------
 
 NodeJS
-------------------------------
+======
 
-PythonJS can also be used to write server side software using NodeJS.  You can use the nodejs.py helper script to translate your python script and run it in NodeJS.  This has been tested with NodeJS v0.6.19.
+PythonJS can also be used to write server side software using NodeJS.  You can use the nodejs.py helper script to translate your python script and run it in NodeJS.  This has been tested with NodeJS v0.10.22.
 
 Example::
 
 	cd PythonJS
 	./nodejs.py myscript.py
 
-The directory PythonJS/nodejs/bindings contains wrappers for using NodeJS modules.  Some of these wrappers emulate parts of Pythons standard library, like: os, sys and io.  The example below imports the fake io and sys libraries, and prints the contents of a file passed as the last command line argument to nodejs.py.
+The directory PythonJS/nodejs/bindings contains wrappers for using NodeJS modules.  Some of these wrappers emulate parts of Pythons standard library, like: os, sys, io, and subprocess.  The example below imports the fake io and sys libraries, and prints the contents of a file passed as the last command line argument to nodejs.py.
 
 Example::
 
