@@ -22,7 +22,7 @@ class file:
 			if binary:
 				return _fs.readFileSync( path )
 			else:
-				return _fs.readFileSync( path, 'utf8' )  ## in newer nodejs this should be {encoding:'utf8'}
+				return _fs.readFileSync( path, {encoding:'utf8'} )
 
 	def write(self, data, binary=False):
 		path = self.path
@@ -30,7 +30,7 @@ class file:
 			if binary:
 				_fs.writeFileSync( path, data )
 			else:
-				_fs.writeFileSync( path, data, 'utf8' )
+				_fs.writeFileSync( path, data, {encoding:'utf8'} )
 
 	def close(self):
 		pass

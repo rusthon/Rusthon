@@ -204,7 +204,9 @@ initialize_blockly( on_changed_callback=show_code )
 #	a.x = '99'
 #	a.block.moveTo( i*130, 30 )
 
-instances = []
+with static:
+	instances = []
+
 def setup():
 	for i in range(4):
 		a = A()

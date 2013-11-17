@@ -10,6 +10,13 @@ class _fake_RequestHandler:
 
 	def set_header(self, key, value):
 		self._headers[ key ] = value
+		if key == 'Content-Length':
+			self._headers.pop( 'Transfer-Encoding' )
+			print 'set Content-Length and popped Transfer-Encoding'
+			print value
+		elif key == 'Content-Type':
+			print 'set Content-Type'
+			print value
 
 	def write(self, data):
 		self._response.writeHead(200, self._headers[...])
@@ -109,7 +116,11 @@ class _fake_WebSocketHandler:
 		self.ws_connection = client
 
 	def write_message(self, data, binary=False, mask=False):
-		self.ws_connection.send( data, {'binary':binary, 'mask':mask}[...] )
+		if isinstance( data, dict):
+			data = json.dumps( data )
+			self.ws_connection.send( data, {'binary':False, 'mask':False}[...] )
+		else:
+			self.ws_connection.send( data, {'binary':binary, 'mask':mask}[...] )
 
 	## subclass overloads these
 	def open(self):

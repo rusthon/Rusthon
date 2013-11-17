@@ -1209,8 +1209,11 @@ class PythonToPythonJS(NodeVisitor):
 				local_vars = set()
 				global_vars = set()
 				for n in body:
-					if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local
+					if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local - TODO support `a=b=c`
 						local_vars.add( n.targets[0].id )
+					elif isinstance(n, Assign) and isinstance(n.targets[0], ast.Tuple):
+						for c in n.targets[0].elts:
+							local_vars.add( c.id )
 					elif isinstance(n, Global):
 						global_vars.update( n.names )
 					elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':

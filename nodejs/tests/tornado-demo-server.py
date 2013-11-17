@@ -3,7 +3,7 @@ from nodejs.os import *
 from nodejs.subprocess import *
 from nodejs.tornado import *
 
-#import os, sys, subprocess, json
+mime = require('mime')  ## sudo npm install mime
 
 PATHS = dict(
 	webroot = os.path.abspath('tests'),
@@ -15,7 +15,11 @@ PATHS = dict(
 
 
 def python_to_pythonjs( src, callback=None, module=None ):
-	path = '/tmp/input1.py'
+	if module:
+		path = os.path.join( '/tmp', module+'.py' )
+	else:
+		path = '/tmp/input1.py'
+
 	open( path, 'w' ).write( src )
 	args = [
 		os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py'),
@@ -26,8 +30,12 @@ def python_to_pythonjs( src, callback=None, module=None ):
 		args.append( module )
 	p = subprocess.call('python2', args, callback=callback )
 
-def pythonjs_to_javascript( src, callback ):
-	path = '/tmp/input2.py'
+def pythonjs_to_javascript( src, callback, module=None ):
+	if module:
+		path = os.path.join( '/tmp', module+'-pyjs.py')
+	else:
+		path = '/tmp/input2.py'
+
 	open( path, 'w' ).write( src )
 	args = [
 		os.path.join( PATHS['pythonjs'], 'pythonjs.py'),
@@ -35,9 +43,9 @@ def pythonjs_to_javascript( src, callback ):
 	]
 	p = subprocess.call('python2', args, callback=callback )
 
-def python_to_javascript(source, callback):
-	func = lambda data: pythonjs_to_javascript(data, callback)
-	python_to_pythonjs( source, func )
+def python_to_javascript(source, callback, module=None):
+	func = lambda data: pythonjs_to_javascript(data, callback, module)
+	python_to_pythonjs( source, func, module=module )
 
 
 
@@ -92,7 +100,7 @@ def _convert_page(doc, lines, index, callback):
 				a,b,c = line.split('"')  ## TODO unpack assign
 
 				if b.endswith('.py'):  ## make sure the special file module is cached in /tmp ##
-					name = b.split('/')[-1]
+					name = list( b.split('/') )[-1]  ## GOTCHA - need to convert to list to use negative indices
 					path = os.path.join( PATHS['bindings'], name )
 					src = open(path, 'rb').read().decode('utf-8')
 					python_to_pythonjs( src, module=name.split('.')[0] )  ## TODO cache the js output
@@ -141,7 +149,8 @@ if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
 
 class MainHandler( tornado.web.RequestHandler ):
 	def get(self, path=None):
-		print('path', path)
+		print 'MainHandler...'
+
 		if not path:
 			self.write( get_main_page() )
 		elif path == 'pythonscript.js' or path == 'pythonjs.js':
@@ -150,7 +159,7 @@ class MainHandler( tornado.web.RequestHandler ):
 			self.set_header("Content-Length", len(data))
 			self.write(data)
 		elif path.startswith('bindings/'):
-			name = path.split('/')[-1]
+			name = list( path.split('/') )[-1]
 			local_path = os.path.join( PATHS['bindings'], name )
 
 			if os.path.isfile( local_path ):
@@ -174,15 +183,15 @@ class MainHandler( tornado.web.RequestHandler ):
 				raise tornado.web.HTTPError(404)  ## only py files are allowed in bindings
 
 		elif path.startswith('uploads/'):
-			name = path.split('/')[-1]
+			name = list( path.split('/') )[-1]
 			local_path = os.path.join( UploadDirectory, name )
 
 			if os.path.isfile( local_path ):
-				data = open(local_path, 'rb').read()
+				data = open(local_path, 'rb').read( binary=True )
 			else:
 				raise tornado.web.HTTPError(404)
 
-			self.set_header("Content-Length", len(data))
+			#self.set_header("Content-Length", len(data))
 			self.write( data )
 
 		else:
@@ -202,8 +211,9 @@ class MainHandler( tornado.web.RequestHandler ):
 				for root in ResourcePaths:
 					local_path = os.path.join( root, path )
 					if os.path.isfile(local_path):
-						data = open(local_path, 'rb').read()
-						self.set_header("Content-Length", len(data))
+						data = open(local_path, 'rb').read( binary=True )
+						#self.set_header("Content-Length", len(data))
+						self.set_header('Content-Type', mime.lookup(path))
 						self.write( data )
 						found = True
 						break
@@ -256,17 +266,17 @@ LIBS = dict(
 
 class LibsHandler( tornado.web.RequestHandler ):
 	def get(self, path=None):
-		print('path', path)
-		module, name = path.split('/')
-		assert module in LIBS
-		assert name in LIBS[ module ]
+		print 'LibsHandler'
+
+		module, name = list(path.split('/'))
+
 		if os.path.isfile( LIBS[module][name] ):
 			data = open( LIBS[module][name], 'rb').read()
 		else:
 			raise tornado.web.HTTPError(404)
 
 		self.set_header("Content-Type", "text/javascript; charset=utf-8")
-		self.set_header("Content-Length", len(data))
+		#self.set_header("Content-Length", len(data))
 		self.write( data )
 
 
@@ -275,35 +285,36 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 		print( 'new websocket connection' )
 
 	def on_message(self, msg, flags=None):
-		if hasattr(self.ws_connection, 'previous_command') and self.ws_connection.previous_command and self.ws_connection.previous_command.get('binary', False):
-			if self.ws_connection.previous_command['command'] == 'upload':
-				path = os.path.join(
-					UploadDirectory, 
-					self.ws_connection.previous_command['file_name']
-				)
-				f = open( path, 'wb' )
-				f.write( msg )
-				f.close()
+		client = self.ws_connection
+		with javascript:
+			if client.previous_command and client.previous_command.binary:
+				if client.previous_command['command'] == 'upload':
+					file_name = client.previous_command['file_name']
+					with python:
+						path = os.path.join(
+							UploadDirectory, 
+							file_name
+						)
+						f = open( path, 'wb' )
+						f.write( msg, binary=True )
+						f.close()
 
-			self.ws_connection.previous_command = None
+				client.previous_command = None
 
-		else:
-			print('on json message', msg)
+			else:
+				print('on json message', msg)
 
-			ob = json.loads( msg )
-			if isinstance(ob, dict):
+				ob = json.loads( msg )
 				if 'command' in ob:
 					if ob['command'] == 'compile':
 						js = python_to_javascript( ob['code'] )
-						self.write_message( {'eval':js})
+						self.write_message( {'eval':js} )
 					elif ob['command'] == 'upload':
 						print('ready for upload...')
 						print( ob['file_name'] )
 
-					self.ws_connection.previous_command = ob
+					client.previous_command = ob
 
-			else:
-				self.write_message('"hello client"')
 
 	def on_close(self):
 		print('websocket closed')
