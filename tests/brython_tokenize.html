@@ -1,0 +1,42 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script>
+__BRYTHON__ = {
+	scope : {}
+}
+// from py_utils.js
+function $last(item){
+    if(typeof item=="string"){return item.charAt(item.length-1)}
+    else if(typeof item=="object"){return item[item.length-1]}
+}
+
+</script>
+<script src="libs/brython/py2js.js"></script>
+
+<script type="text/python">
+
+def tokenize(src):
+	module = 'test'
+	return JS('$tokenize(src, module)')
+
+source = """
+def xxx(a,b):
+	return a+b
+
+print( xxx(1, 2) )
+
+"""
+
+def test():
+	global a
+	a = tokenize( source )
+	print a
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

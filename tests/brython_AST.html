@@ -1,0 +1,95 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script>
+__BRYTHON__ = {
+	scope : {}
+}
+// from py_utils.js
+function $last(item){
+    if(typeof item=="string"){return item.charAt(item.length-1)}
+    else if(typeof item=="object"){return item[item.length-1]}
+}
+
+</script>
+<script src="libs/brython/py2js.js"></script>
+
+<script type="text/python">
+
+class Name:
+	def __init__(self, ctx):
+		print 'Name:', ctx.name
+		self.id = ctx.name
+
+class _arguments:
+	def __init__(self, ctx):
+		self.args = []
+		self.vararg = None  # string
+		self.kwarg = None	# string
+		self.defaults = []
+		self.kw_defaults = []
+
+		if ctx.type != 'func_args':
+			raise TypeError
+		for c in ctx.tree:
+			if c.type != 'func_arg_id':
+				raise TypeError
+			self.args.append( Name(c) )
+
+
+
+class FunctionDef:
+	def __init__(self, ctx):
+		self.name = ctx.name
+		self.args = _arguments( ctx.tree[0] )
+		self.body = []
+		self.decorator_list = []
+		self.returns = None ## python3 returns annotation
+
+def tokenize(src):
+	module = 'test'
+	return JS('$tokenize(src, module)')
+
+def walk_tree( ctx ):
+	anode = None
+	print 'ctx.type:', ctx.type
+	if ctx.type == 'def':
+		print '  def ', ctx.name
+		anode = FunctionDef( ctx )
+
+	if anode:
+		return anode
+	else:
+		for c in ctx.tree:
+			walk_tree( c )
+
+def convert_to_ast( node ):
+	print 'node.type:', node.type
+	ctx = node.get_ctx()
+	if ctx:
+		walk_tree( ctx )
+
+	for child in node.children:
+		convert_to_ast( child )
+
+source = """
+def xxx(a,b):
+	return a+b
+
+print( xxx(1, 2) )
+
+"""
+
+def test():
+	global a
+	a = tokenize( source )
+	print a
+	convert_to_ast( a )
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
