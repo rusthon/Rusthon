@@ -1,0 +1,53 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script>
+__BRYTHON__ = {
+	scope : {}
+}
+// from py_utils.js
+function $last(item){
+    if(typeof item=="string"){return item.charAt(item.length-1)}
+    else if(typeof item=="object"){return item[item.length-1]}
+}
+
+</script>
+<script src="libs/brython/py2js.js"></script>
+
+<script src="bindings/ast.py"></script>
+
+<script type="text/python">
+from ast import *
+
+source = """
+def func(a,b):
+	c = a+b
+	return c
+
+func(100, 200, 'hi')
+
+class A(X,Y):
+	def method1(self, x,y,z):
+		w = x+y
+		return w
+	def method2(self, XXX):
+		#self.xxx = XXX
+		return XXX
+
+
+"""
+
+def test():
+	global module
+	module = parse( source )
+
+
+
+test()
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
