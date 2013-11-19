@@ -20,27 +20,75 @@ function $last(item){
 from ast import *
 
 source = """
-def func(a,b):
+def func(a,b, mykey=1, *S, **K):
 	c = a+b
 	return c
 
-func(100, 200, 'hi')
+func(100, 200, 'hi', mykey=1)
 
 class A(X,Y):
 	def method1(self, x,y,z):
 		w = x+y
 		return w
 	def method2(self, XXX):
-		#self.xxx = XXX
+		self.xxx = XXX
 		return XXX
 
 
 """
 
+
 def test():
 	global module
 	module = parse( source )
+	print '........AST..........'
+	DebugVisitor( module )
 
+class DebugVisitor( NodeVisitor ):
+
+	def visit_Assign(self, node):
+		a = self.visit( node.targets[0] )
+		b = self.visit( node.value )
+		return a + '=' + b
+
+
+	def visit_BinOp(self, node):
+		return self.visit( node.left ) + node.op + self.visit( node.right )
+
+	def visit_FunctionDef(self, node):
+		args = []
+		for a in node.args.args:
+			args.append( self.visit(a) )
+		if node.args.vararg:
+			args.append( '*'+node.args.vararg )
+		if node.args.kwarg:
+			args.append( '**'+node.args.kwarg )
+		args = ','.join( args )
+
+		print 'def ', node.name + '('+args+'):'
+		for n in node.body:
+			print '   ', self.visit(n)
+
+	def visit_Return(self, node):
+		return 'return ' + self.visit(node.value)
+
+	def visit_Call(self, node):
+		print self.visit(node.func) + '('
+		for a in node.args:
+			print '   ', self.visit(a)
+		for k in node.keywords:
+			print '   ', k.arg, '=', self.visit(k.value)
+		print ')'
+
+	def visit_ClassDef(self, node):
+		print 'class '+node.name + ':'
+		for n in node.body:
+			a = self.visit(n)
+			if a: print '->', a
+
+	def visit_Attribute(self, node):
+		a = self.visit(node.value)
+		return a + '.' + node.attr
 
 
 test()

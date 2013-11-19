@@ -12,12 +12,10 @@ class Assign:
 
 class Num:
 	def __init__(self, ctx, node):
-		print 'Num:', ctx.value
 		self.n = ctx.value
 
 class Str:
 	def __init__(self, ctx, node):
-		print 'Str:', ctx.value
 		self.s = ctx.value
 
 class Name:
@@ -30,11 +28,23 @@ class Name:
 			print ctx
 			raise TypeError
 
-		print 'Name:', self.id
+
+
+
+class BinOp:
+	def __init__(self, ctx, node):
+		print 'BinOp', ctx
+		if len(ctx.tree) != 2:
+			raise TypeError
+		self.left = to_ast_node( ctx.tree[0] )
+		self.right = to_ast_node( ctx.tree[1] )
+		self.op = ctx.op  ## should be: +,-,*, etc...
+
+
 
 class _arguments:
 	def __init__(self, ctx):
-		self.args = []
+		self.args = []  ## in Python2 these are Name nodes, in Py3 they are "arg" objects with: `arg`=raw-string and `annotation`=astnode
 		self.vararg = None  # string
 		self.kwarg = None	# string
 		self.defaults = []
@@ -45,6 +55,9 @@ class _arguments:
 		for c in ctx.tree:
 			if c.type == 'func_arg_id':
 				self.args.append( Name(name=c.name) )
+				if len(c.tree):
+					self.defaults.append( to_ast_node(c.tree[0]) )
+
 			elif c.type == 'func_star_arg' and c.op=='*':
 				self.vararg = c.name
 			elif c.type == 'func_star_arg' and c.op=='**':
@@ -52,35 +65,33 @@ class _arguments:
 			else:
 				raise TypeError
 
-
-
-class BinOp:
+class FunctionDef:
 	def __init__(self, ctx, node):
-		print 'BinOp', ctx
-		self.left = to_ast_node( ctx.tree[0] )
-		self.right = to_ast_node( ctx.tree[1] )
-		self.op = ctx.op  ## should be: +,-,*, etc...
+		self.name = ctx.name  ## raw string
+		self.args = _arguments( ctx.tree[0] )
+		self.body = []
+		self.decorator_list = []
+		self.returns = None ## python3 returns annotation
+		print 'FunctionDef::', ctx
+		for child in node.children:
+			anode = to_ast_node( child.get_ctx() )
+			if anode is None: raise TypeError
+			self.body.append( anode )
+
 
 class Return:
 	def __init__(self, ctx, node):
 		self.value = to_ast_node( ctx.tree[0] )
 
-class FunctionDef:
-	def __init__(self, ctx, node):
-		self.name = ctx.name
-		self.args = _arguments( ctx.tree[0] )
-		self.body = []
-		self.decorator_list = []
-		self.returns = None ## python3 returns annotation
-		print 'FunctionDef::', node
-		for child in node.children:
-			anode = to_ast_node( child.get_ctx() )
-			self.body.append( anode )
 
+class _keyword:
+	def __init__(self, arg, value):
+		self.arg = arg  ## raw string
+		self.value = value  ## astnode
 
 class Call:
 	def __init__(self, ctx, node):
-		self.func = None
+		self.func = to_ast_node( ctx.func )
 		self.args = []
 		self.keywords = []
 		self.starargs = None
@@ -88,7 +99,18 @@ class Call:
 
 		for c in ctx.tree:
 			if c.type == 'call_arg':
-				self.args.append( to_ast_node(c.tree[0]) )
+				sub = c.tree[0]
+				if sub.type == 'kwarg':
+					k = _keyword(
+						sub.tree[0].value,
+						to_ast_node(sub.tree[1])
+					)
+					self.keywords.append( k )
+				else:
+					self.args.append( to_ast_node(c.tree[0]) )
+
+			else:
+				raise TypeError
 
 class Expr:
 	def __init__(self, ctx, node):
@@ -96,9 +118,6 @@ class Expr:
 
 class ClassDef:
 	def __init__(self, ctx, node):
-		print 'CLAss', 
-		print ctx
-		print node
 		self.name = ctx.name
 		self.bases = []
 		self.body = []
@@ -119,6 +138,12 @@ class ClassDef:
 				self.body.append( anode )
 
 
+class Attribute:
+	def __init__(self, ctx, node):
+		self.value = to_ast_node(ctx.value)
+		self.attr = ctx.name
+		self._func = ctx.func  ## brython-extra: getattr/setattr
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -130,22 +155,18 @@ __MAP = {
 	'id'		: Name,
 	'class'		: ClassDef,
 	'op'		: BinOp,
+	'attribute' : Attribute,
 }
 
 def to_ast_node( ctx, node=None ):
 	print 'to-ast-node', ctx
-	print 'NODE::', node
 
 	if ctx.type == 'node':
-
+		print 'NODE::', ctx.node
 		return to_ast_node( ctx.tree[0], node=ctx.node )
-
-	elif ctx.type == 'expr' and ctx.name == 'operand':
-		return BinOp( ctx.tree[0] )
 
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
-
 
 	else:
 		print '-------------------------'
@@ -155,7 +176,6 @@ def to_ast_node( ctx, node=None ):
 
 def walk_nodes( node, module ):
 	print 'node.type:', node.type
-	print node
 
 	if node.type == 'expression':
 		if node.get_ctx():
@@ -174,3 +194,28 @@ def parse(source):
 	module = list()
 	walk_nodes( a, module )
 	return module
+
+
+class NodeVisitor:
+	def __init__(self, module):
+		for node in module:
+			self.visit( node )
+
+	def visit(self, node):
+		f = getattr(
+			self, 
+			'visit_'+type(node).__name__, 
+		)
+		return f( node )
+
+	def visit_Expr(self, node):
+		return self.visit(node.value)
+
+	def visit_Str(self, node):
+		return node.s
+
+	def visit_Num(self, node):
+		return node.n
+
+	def visit_Name(self, node):
+		return node.id
