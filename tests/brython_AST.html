@@ -16,10 +16,31 @@ function $last(item){
 
 <script type="text/python">
 
-class Name:
+def tokenize(src):
+	module = 'test'
+	return JS('$tokenize(src, module)')  ## Brython tokenizer
+
+
+class Assign:
 	def __init__(self, ctx):
-		print 'Name:', ctx.name
-		self.id = ctx.name
+		self.targets = []
+		self.targets.append( to_ast_node(ctx.tree[0]) ) ## should be: expr.name==id
+		self.value = to_ast_node( ctx.tree[1] )  ## should be an: expr.name==operand
+
+class Num:
+	def __init__(self, ctx):
+		self.n = ctx.value
+
+class Name:
+	def __init__(self, ctx=None, name=None):
+		if name:
+			self.id = name
+		elif ctx.type == 'id':
+			self.id = ctx.value
+		else:
+			raise TypeError
+
+		print 'Name:', self.id
 
 class _arguments:
 	def __init__(self, ctx):
@@ -32,59 +53,105 @@ class _arguments:
 		if ctx.type != 'func_args':
 			raise TypeError
 		for c in ctx.tree:
-			if c.type != 'func_arg_id':
+			if c.type == 'func_arg_id':
+				self.args.append( Name(name=c.name) )
+			elif c.type == 'func_star_arg' and c.op=='*':
+				self.vararg = c.name
+			elif c.type == 'func_star_arg' and c.op=='**':
+				self.kwarg = c.name
+			else:
 				raise TypeError
-			self.args.append( Name(c) )
 
 
+
+class BinOp:
+	def __init__(self, ctx):
+		self.left = to_ast_node( ctx.tree[0] )
+		self.right = to_ast_node( ctx.tree[1] )
+		self.op = ctx.op  ## should be: +,-,*, etc...
+
+class Return:
+	def __init__(self, ctx):
+		self.value = to_ast_node( ctx.tree[0] )
 
 class FunctionDef:
-	def __init__(self, ctx):
+	def __init__(self, ctx, node):
 		self.name = ctx.name
 		self.args = _arguments( ctx.tree[0] )
 		self.body = []
 		self.decorator_list = []
 		self.returns = None ## python3 returns annotation
+		for child in node.children:
+			anode = to_ast_node( child.get_ctx() )
+			self.body.append( anode )
 
-def tokenize(src):
-	module = 'test'
-	return JS('$tokenize(src, module)')
 
-def walk_tree( ctx ):
-	anode = None
-	print 'ctx.type:', ctx.type
-	if ctx.type == 'def':
-		print '  def ', ctx.name
-		anode = FunctionDef( ctx )
+class Call:
+	def __init__(self, ctx, node):
+		self.func = None
+		self.args = []
+		self.keywords = []
+		self.starargs = None
+		self.kwargs = None
 
-	if anode:
-		return anode
-	else:
 		for c in ctx.tree:
-			walk_tree( c )
+			if c.type == 'call_arg':
+				self.args.append( to_ast_node(c.tree[0]) )
 
-def convert_to_ast( node ):
+
+def to_ast_node( ctx, node=None ):
+	print 'to-ast-node', ctx
+	if ctx.type == 'def':
+		return FunctionDef( ctx, node )
+	elif ctx.type == 'assign':
+		return Assign(ctx)
+	elif ctx.type == 'return':
+		return Return(ctx)
+	elif ctx.type == 'node':
+		return to_ast_node( ctx.tree[0], node=node )
+	elif ctx.type == 'expr' and ctx.name == 'id':
+		if ctx.tree[0].type == 'call':
+			return Call( ctx.tree[0], node)
+		else:
+			return Name( ctx.tree[0] )
+	elif ctx.type == 'expr' and ctx.name == 'operand':
+		return BinOp( ctx.tree[0] )
+
+	elif ctx.type == 'expr' and ctx.name == 'int':
+		return Num( ctx.tree[0] )
+
+	else:
+		print ctx
+		raise TypeError
+
+
+def walk_nodes( node, module ):
 	print 'node.type:', node.type
-	ctx = node.get_ctx()
-	if ctx:
-		walk_tree( ctx )
 
-	for child in node.children:
-		convert_to_ast( child )
+	if node.type == 'expression':
+		anode = to_ast_node( node.get_ctx(), node=node )
+		module.append( anode )
+
+	else:
+		for child in node.children:
+			walk_nodes( child, module )
+
 
 source = """
-def xxx(a,b):
-	return a+b
+def func(a,b):
+	c = a+b
+	return c
 
-print( xxx(1, 2) )
-
+func(100, 200)
 """
 
 def test():
-	global a
+	global a, module
 	a = tokenize( source )
 	print a
-	convert_to_ast( a )
+	module = list()
+	walk_nodes( a, module )
+
 
 </script>
 
