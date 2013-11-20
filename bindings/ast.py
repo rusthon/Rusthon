@@ -1,3 +1,6 @@
+# Brython AST to Python AST Bridge
+# by Brett Hartshorn - copyright 2013
+# License: "New BSD"
 
 def brython_tokenize(src):
 	module = 'test'
@@ -5,9 +8,18 @@ def brython_tokenize(src):
 
 
 class Assign:
+	def _collect_targets(self, ctx):
+		if ctx.type == 'expr' and ctx.name == 'id':
+			self.targets.append( Name(ctx.tree[0]) )
+		elif ctx.type == 'assign':
+			self._collect_targets( ctx.tree[0] )
+			self._collect_targets( ctx.tree[1] )
+		else:
+			raise TypeError
+
 	def __init__(self, ctx, node):
 		self.targets = []
-		self.targets.append( to_ast_node(ctx.tree[0]) ) ## should be: expr.name==id
+		self._collect_targets( ctx.tree[0] )
 		self.value = to_ast_node( ctx.tree[1] )  ## should be an: expr.name==operand
 
 class Num:
@@ -27,7 +39,6 @@ class Name:
 		else:
 			print ctx
 			raise TypeError
-
 
 
 
@@ -144,6 +155,15 @@ class Attribute:
 		self.attr = ctx.name
 		self._func = ctx.func  ## brython-extra: getattr/setattr
 
+
+class IfExp:
+	def __init__(self, ctx, node):
+		self.test = to_ast_node( ctx.tree[0] )
+		self.body = []
+		self.orelse = None
+		for child in node.children:
+			self.body.append( to_ast_node(child.get_ctx()) )
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -168,8 +188,12 @@ def to_ast_node( ctx, node=None ):
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
 
+	elif ctx.type == 'condition' and ctx.token == 'if':
+		return IfExp( ctx, node )
+
 	else:
 		print '-------------------------'
+		print node
 		print ctx
 		raise TypeError
 
