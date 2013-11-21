@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 21 01:20:27 2013
+// PythonScript Runtime - regenerated on: Thu Nov 21 06:07:26 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -328,20 +328,52 @@ __object_keys__.NAME = "__object_keys__";
 __object_keys__.args_signature = ["ob"];
 __object_keys__.kwargs_signature = {};
 __object_keys__.types_signature = {};
-__generate_getter__ = function(o, n) {
-  return (function () {return o.__class__.__properties__[ n ][ "get" ]( [o],{  } )});
+__bind_property_descriptors__ = function(o, klass) {
+  var prop, desc;
+    var iter = klass.__properties__;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var name=0; name < iter.length; name++) {
+    var backup = name; name = iter[name];
+    desc = { enumerable:true };
+    prop = klass.__properties__[ name ];
+    if (prop["get"]) {
+      desc[ "get" ] = __generate_getter__( klass,o,name );
+    }
+    if (prop["set"]) {
+      desc[ "set" ] = __generate_setter__( klass,o,name );
+    }
+    Object.defineProperty( o,name,desc );
+    name = backup;
+  }
+    var iter = klass.__bases__;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var base=0; base < iter.length; base++) {
+    var backup = base; base = iter[base];
+    __bind_property_descriptors__( o,base );
+    base = backup;
+  }
+}
+
+__bind_property_descriptors__.NAME = "__bind_property_descriptors__";
+__bind_property_descriptors__.args_signature = ["o","klass"];
+__bind_property_descriptors__.kwargs_signature = {};
+__bind_property_descriptors__.types_signature = {};
+__generate_getter__ = function(klass, o, n) {
+  return (function () {return klass.__properties__[ n ][ "get" ]( [o],{  } )});
 }
 
 __generate_getter__.NAME = "__generate_getter__";
-__generate_getter__.args_signature = ["o","n"];
+__generate_getter__.args_signature = ["klass","o","n"];
 __generate_getter__.kwargs_signature = {};
 __generate_getter__.types_signature = {};
-__generate_setter__ = function(o, n) {
-  return (function (v) {return o.__class__.__properties__[ n ][ "set" ]( [o, v],{  } )});
+__generate_setter__ = function(klass, o, n) {
+  return (function (v) {return klass.__properties__[ n ][ "set" ]( [o, v],{  } )});
 }
 
 __generate_setter__.NAME = "__generate_setter__";
-__generate_setter__.args_signature = ["o","n"];
+__generate_setter__.args_signature = ["klass","o","n"];
 __generate_setter__.kwargs_signature = {};
 __generate_setter__.types_signature = {};
 __sprintf = function(fmt, args) {
@@ -376,7 +408,7 @@ create_class = function(class_name, parents, attrs, props) {
     key = backup;
   }
     var __call__ = function() {
-    var init, object, prop, desc;
+    var init, object;
     "Create a PythonJS object";
     object = Object.create( null );
     object.__class__=klass;
@@ -390,23 +422,7 @@ create_class = function(class_name, parents, attrs, props) {
       }
       name = backup;
     }
-        var iter = klass.__properties__;
-
-    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
-    for (var name=0; name < iter.length; name++) {
-      var backup = name; name = iter[name];
-      console.log("create-instance property:", name);
-      desc = { enumerable:true };
-      prop = klass.__properties__[ name ];
-      if (prop["get"]) {
-        desc[ "get" ] = __generate_getter__( object,name );
-      }
-      if (prop["set"]) {
-        desc[ "set" ] = __generate_setter__( object,name );
-      }
-      Object.defineProperty( object,name,desc );
-      name = backup;
-    }
+    __bind_property_descriptors__( object,klass );
     init = get_attribute( object,"__init__" );
     if (init) {
       init.apply( undefined,arguments );

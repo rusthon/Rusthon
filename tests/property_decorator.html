@@ -14,6 +14,7 @@ class A:
 
 	@property
 	def x(self):
+		print '--calling x getter--'
 		return self._x
 	@x.setter
 	def x(self,value):
@@ -22,16 +23,20 @@ class A:
 
 	@property
 	def y(self):
+		print '--calling y getter--'
 		return self._y
 	@y.setter
 	def y(self,value):
+		print '--calling y setter: ', value
 		self._y = value
 
 	@property
 	def z(self):
+		print '--calling z getter--'
 		return self._z
 	@z.setter
 	def z(self,value):
+		print '--calling z setter: ', value
 		self._z = value
 
 class B( A ):
@@ -69,16 +74,9 @@ def test():
 	print( c.z )
 	print 'unknown get_attribute is OK'
 	
-	c.x = 101	## TODO fix setters on unknown types
-	print( c.x )  ## this prints 101 but the setter was not called
-	with javascript:
-		print c.__dict__._x
+	c.x = 101
+	print( c.x )  ## if this prints 101 then the setter was not called
 
-	print 'testing setattr(c,"x", property=True)'
-	setattr( c, 'x', 10, property=True )
-	with javascript:
-		print c.__dict__._x
-	print getattr( c, 'x', property=True )
 
 </script>
 </head>

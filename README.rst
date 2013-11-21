@@ -1,4 +1,4 @@
-PythonJS 0.8.5
+PythonJS 0.8.6
 ############
 
 .. image:: http://1.bp.blogspot.com/-yG3zuA_sEM4/Uogurz5xBnI/AAAAAAAAAgk/57_Zv2iSfgo/s400/pythonjs-0.8.5.png
@@ -139,7 +139,7 @@ HTML DOM Example::
 	</body>
 	</html>
 
-Numbers and strings can be passed directly to JavaScript functions.  Simple callbacks that do not take any arguments can also be passed as an argument to a JavaScript function, like window.setInterval.  PythonJS allows you to call any JavaScript function directly by wrapping it at runtime.  Attributes of JavaScript objects are also returned directly, like document.body.  This allows you to use the HTML DOM API just as you would in normal JavaScript.
+PythonJS allows you to call any JavaScript function directly by wrapping it at runtime.  Attributes of JavaScript objects are also returned directly, like document.body.  This allows you to use the HTML DOM API just as you would in normal JavaScript.
 
 ---------------
 
@@ -157,7 +157,7 @@ JS Example::
 		JS("arr.push('hello world')")
 		JS("arr.push( ob )")
 
-In the example above we create a new JavaScript Array.  The if statement is still Python syntax, but its condition is allowed to be inlined JavaScript.  As the compiler becomes smarter and the PythonJS low-level API develops, there will be less need to write inline JavaScript in the above style.  Lets take a look at two alternative ways this can be rewritten.
+In the example above we create a new JavaScript Array.  Notice that the if-statement above has a condition that is inlined JavaScript.  Lets take a look at two alternative ways this can be rewritten.
 
 1. JSArray, JSObject, and instanceof::
 
@@ -230,7 +230,7 @@ Example::
 Passing PythonJS Instances to JavaScript
 ------------------------------
 
-If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callable from JavaScript, you can do this now simply by passing the instance.  This only works for normal methods, not with property getter/setters.
+If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callable from JavaScript, you can do this now simply by passing the instance.  This only works with property getter/setters.
 
 Example::
 
