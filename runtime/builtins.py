@@ -18,6 +18,11 @@ with javascript:
 		JS('for (key in ob) { arr.push(key) }')
 		return arr
 
+	def __generate_getter__(o, n):
+		return lambda : o.__class__.__properties__[ n ]['get']([o],{})
+	def __generate_setter__(o, n):
+		return lambda v: o.__class__.__properties__[ n ]['set']([o,v],{})
+
 
 	def __sprintf(fmt, args):
 		i = 0
@@ -49,6 +54,23 @@ with javascript:
 			for name in klass.__attributes__:
 				if typeof( klass.__attributes__[name] ) == 'function':
 					get_attribute( object, name )
+
+			for name in klass.__properties__:
+				print 'create-instance property:', name
+				desc = {enumerable:True}
+				prop = klass.__properties__[ name ]
+				if prop['get']:
+					## TODO is scope correct that we can not generate the lambda here inside the for loop?
+					#lambda : object.__class__.__properties__[ name ]['get']([object],{})
+					desc['get'] = __generate_getter__(object, name)
+				if prop['set']:
+					desc['set'] = __generate_setter__(object, name)
+
+				Object.defineProperty(
+					object,
+					name,
+					desc
+				)
 
 			init = get_attribute(object, '__init__')
 			if init:

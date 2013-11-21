@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Nov 20 19:02:53 2013
+// PythonScript Runtime - regenerated on: Thu Nov 21 01:20:27 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -328,6 +328,22 @@ __object_keys__.NAME = "__object_keys__";
 __object_keys__.args_signature = ["ob"];
 __object_keys__.kwargs_signature = {};
 __object_keys__.types_signature = {};
+__generate_getter__ = function(o, n) {
+  return (function () {return o.__class__.__properties__[ n ][ "get" ]( [o],{  } )});
+}
+
+__generate_getter__.NAME = "__generate_getter__";
+__generate_getter__.args_signature = ["o","n"];
+__generate_getter__.kwargs_signature = {};
+__generate_getter__.types_signature = {};
+__generate_setter__ = function(o, n) {
+  return (function (v) {return o.__class__.__properties__[ n ][ "set" ]( [o, v],{  } )});
+}
+
+__generate_setter__.NAME = "__generate_setter__";
+__generate_setter__.args_signature = ["o","n"];
+__generate_setter__.kwargs_signature = {};
+__generate_setter__.types_signature = {};
 __sprintf = function(fmt, args) {
   var i;
   i = 0;
@@ -360,7 +376,7 @@ create_class = function(class_name, parents, attrs, props) {
     key = backup;
   }
     var __call__ = function() {
-    var init, object;
+    var init, object, prop, desc;
     "Create a PythonJS object";
     object = Object.create( null );
     object.__class__=klass;
@@ -372,6 +388,23 @@ create_class = function(class_name, parents, attrs, props) {
       if (typeof(klass.__attributes__[name]) == "function") {
         get_attribute( object,name );
       }
+      name = backup;
+    }
+        var iter = klass.__properties__;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var name=0; name < iter.length; name++) {
+      var backup = name; name = iter[name];
+      console.log("create-instance property:", name);
+      desc = { enumerable:true };
+      prop = klass.__properties__[ name ];
+      if (prop["get"]) {
+        desc[ "get" ] = __generate_getter__( object,name );
+      }
+      if (prop["set"]) {
+        desc[ "set" ] = __generate_setter__( object,name );
+      }
+      Object.defineProperty( object,name,desc );
       name = backup;
     }
     init = get_attribute( object,"__init__" );
