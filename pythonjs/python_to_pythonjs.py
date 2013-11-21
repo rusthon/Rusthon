@@ -754,10 +754,10 @@ class PythonToPythonJS(NodeVisitor):
 				## but we need it for inplace assignment operators, this is safe only when
 				## other parent classes have not defined the same class attribute.
 				## This is also not safe when node_value is "self".
-				return "%s['__class__']['__dict__']['%s']" %(node_value, node.attr)
+				return "%s['__class__']['%s']" %(node_value, node.attr)
 
 			elif node.attr in typedef.attributes:
-				return "%s['__dict__']['%s']" %(node_value, node.attr)
+				return "%s['%s']" %(node_value, node.attr)
 
 			elif '__getattr__' in typedef.methods:
 				func = typedef.get_pythonjs_function_name( '__getattr__' )
@@ -774,7 +774,7 @@ class PythonToPythonJS(NodeVisitor):
 				#return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## get_attribute is broken with grandparent class attributes
 				if node.attr in typedef.class_attributes:
 					## this might not be always correct
-					return "%s['__class__']['__dict__']['%s']" %(node_value, node.attr)
+					return "%s['__class__']['%s']" %(node_value, node.attr)
 				else:
 					parent = typedef.check_for_parent_with( class_attribute=node.attr )
 					return "__%s_attrs['%s']" %(parent.name, node.attr)  ## TODO, get from class.__dict__
@@ -864,9 +864,9 @@ class PythonToPythonJS(NodeVisitor):
 				setter = typedef.properties[ target.attr ]['set']
 				writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
 			elif typedef and target.attr in typedef.class_attributes:
-				writer.write( '''%s['__class__']['__dict__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
+				writer.write( '''%s['__class__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
 			elif typedef and target.attr in typedef.attributes:
-				writer.write( '''%s['__dict__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
+				writer.write( '''%s['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
 
 			elif typedef and typedef.parents:
 				parent_prop = typedef.check_for_parent_with( property=target.attr )
@@ -1153,7 +1153,7 @@ class PythonToPythonJS(NodeVisitor):
 				n = node.name + '__getprop__'
 				self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
 				node.name = n
-				if decorator.id == 'cached_property':
+				if decorator.id == 'cached_property':  ## TODO DEPRECATE
 					self._cached_property = node.original_name
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
@@ -1344,14 +1344,14 @@ class PythonToPythonJS(NodeVisitor):
 		if setter and 'set' in self._injector:  ## inject extra code
 			value_name = node.args.args[1].id
 			inject = [
-				'if self.__dict__.property_callbacks["%s"]:' %prop_name,
-				'self.__dict__.property_callbacks["%s"](["%s", %s, self], JSObject())' %(prop_name, prop_name, value_name)
+				'if self.property_callbacks["%s"]:' %prop_name,
+				'self.property_callbacks["%s"](["%s", %s, self], JSObject())' %(prop_name, prop_name, value_name)
 			]
 			writer.write( ' '.join(inject) )
 
 		elif self._injector and node.original_name == '__init__':
 			if 'set' in self._injector:
-				writer.write( 'self["__dict__"]["property_callbacks"] = JSObject()' )
+				writer.write( 'self.property_callbacks = JSObject()' )
 			if 'init' in self._injector:
 				writer.write('if self.__class__.init_callbacks.length:')
 				writer.push()
@@ -1464,7 +1464,7 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					writer.write('var(__next__)')
 					writer.write('__next__ = get_attribute(__iterator__, "next_fast")')
-					writer.write('while __iterator__.__dict__.index < __iterator__.__dict__.length:')
+					writer.write('while __iterator__.index < __iterator__.length:')
 					writer.push()
 					writer.write('%s = __next__()' % node.target.id)
 					map(self.visit, node.body)

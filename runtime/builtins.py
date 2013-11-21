@@ -5,7 +5,19 @@
 
 _PythonJS_UID = 0
 
+
 with javascript:
+
+	def __object_keys__(ob):
+		'''
+		notes:
+			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`
+			. this is different from Object.keys because it traverses the prototype chain.
+		'''
+		arr = []
+		JS('for (key in ob) { arr.push(key) }')
+		return arr
+
 
 	def __sprintf(fmt, args):
 		i = 0
@@ -18,22 +30,24 @@ with javascript:
 			attrs.__metaclass__ = None
 			return metaclass([class_name, parents, attrs])
 
-		klass = {}
+		klass = Object.create(null)
 		klass.__bases__ = parents
 		klass.__name__ = class_name
-		klass.__dict__ = attrs
+		#klass.__dict__ = attrs
 		klass.__properties__ = props
+		klass.__attributes__ = attrs
+		for key in attrs:
+			klass[key] = attrs[key]
 
 		def __call__():
 			"""Create a PythonJS object"""
-			JS('var object')
-			object = {}
+			object = Object.create(null)
 			object.__class__ = klass
-			object.__dict__ = {}
+			#object.__dict__ = {}
 
 			## cache all methods on object ##
-			for name in klass.__dict__:
-				if typeof( klass.__dict__[name] ) == 'function':
+			for name in klass.__attributes__:
+				if typeof( klass.__attributes__[name] ) == 'function':
 					get_attribute( object, name )
 
 			init = get_attribute(object, '__init__')
@@ -58,12 +72,12 @@ def type(ob_or_class_name, bases=None, class_dict=None):
 
 def hasattr(ob, attr, method=False):
 	with javascript:
-		if method:
-			return Object.hasOwnProperty.call(ob, attr)
-		elif Object.hasOwnProperty(ob, '__dict__'):
-			return Object.hasOwnProperty.call(ob.__dict__, attr)
-		else:
-			return Object.hasOwnProperty.call(ob, attr)
+		#if method:
+		#	return Object.hasOwnProperty.call(ob, attr)
+		#elif Object.hasOwnProperty(ob, '__dict__'):
+		#	return Object.hasOwnProperty.call(ob.__dict__, attr)
+		#else:
+		return Object.hasOwnProperty.call(ob, attr)
 
 def getattr(ob, attr, property=False):
 	with javascript:
@@ -348,9 +362,9 @@ class Iterator:
 
 	def next_fast(self):
 		with javascript:
-			index = self.__dict__.index
-			self.__dict__.index += 1
-			return self.__dict__.obj_get( [index], {} )
+			index = self.index
+			self.index += 1
+			return self.obj_get( [index], {} )
 
 
 class tuple:

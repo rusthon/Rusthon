@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 15 21:50:42 2013
+// PythonScript Runtime - regenerated on: Wed Nov 20 19:02:53 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -26,7 +26,7 @@ create_array = function() {
   array = [];
     var iter = jsrange(arguments.length);
 
-  if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var i=0; i < iter.length; i++) {
     var backup = i; i = iter[i];
     array.push(arguments[i]);
@@ -111,22 +111,18 @@ get_attribute = function(object, attribute) {
       return attr;
     }
   }
-  var __class__, __dict__, bases;
-  __dict__ = object.__dict__;
-  if (__dict__) {
-    attr = __dict__[attribute];
-    if (attr != undefined) {
-      return attr;
-    }
+  var __class__, bases;
+  attr = object[attribute];
+  if (attr != undefined) {
+    return attr;
   }
   __class__ = object.__class__;
   if (__class__) {
     if (attribute  in  __class__.__properties__) {
       return __class__.__properties__[attribute]["get"]([object], Object());
     }
-    __dict__ = __class__.__dict__;
-    attr = __dict__[attribute];
-    if (attribute  in  __dict__) {
+    attr = __class__[attribute];
+    if (attribute  in  __class__) {
       if ({}.toString.call(attr) === '[object Function]') {
                 var method = function() {
           var args;
@@ -150,7 +146,7 @@ get_attribute = function(object, attribute) {
     bases = __class__.__bases__;
         var iter = bases;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var base=0; base < iter.length; base++) {
       var backup = base; base = iter[base];
       attr = _get_upstream_attribute(base, attribute);
@@ -179,7 +175,7 @@ get_attribute = function(object, attribute) {
     }
         var iter = bases;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var base=0; base < iter.length; base++) {
       var backup = base; base = iter[base];
       var prop;
@@ -189,12 +185,12 @@ get_attribute = function(object, attribute) {
       }
       base = backup;
     }
-    if ("__getattr__"  in  __dict__) {
-      return __dict__["__getattr__"]([object, attribute], Object());
+    if ("__getattr__"  in  __class__) {
+      return __class__["__getattr__"]([object, attribute], Object());
     }
         var iter = bases;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var base=0; base < iter.length; base++) {
       var backup = base; base = iter[base];
       var f;
@@ -246,12 +242,12 @@ get_attribute = function(object, attribute) {
 }
 
 _get_upstream_attribute = function(base, attr) {
-  if (attr  in  base.__dict__) {
-    return base.__dict__[attr];
+  if (attr  in  base) {
+    return base[attr];
   }
     var iter = base.__bases__;
 
-  if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var parent=0; parent < iter.length; parent++) {
     var backup = parent; parent = iter[parent];
     return _get_upstream_attribute(parent, attr);
@@ -265,7 +261,7 @@ _get_upstream_property = function(base, attr) {
   }
     var iter = base.__bases__;
 
-  if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var parent=0; parent < iter.length; parent++) {
     var backup = parent; parent = iter[parent];
     return _get_upstream_property(parent, attr);
@@ -274,15 +270,7 @@ _get_upstream_property = function(base, attr) {
 }
 
 set_attribute = function(object, attribute, value) {
-  "Set an attribute on an object by updating its __dict__ property";
-  var __dict__, __class__;
-  __class__ = object.__class__;
-  __dict__ = object.__dict__;
-  if (__dict__) {
-    __dict__[attribute] = value;
-  } else {
-    object[attribute] = value;
-  }
+  object[attribute] = value;
 }
 
 get_arguments = function(signature, args, kwargs) {
@@ -328,6 +316,18 @@ get_arguments = function(signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
+__object_keys__ = function(ob) {
+  var arr;
+  "\n		notes:\n			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`\n			. this is different from Object.keys because it traverses the prototype chain.\n		";
+  arr = [];
+  for (key in ob) { arr.push(key) };
+  return arr;
+}
+
+__object_keys__.NAME = "__object_keys__";
+__object_keys__.args_signature = ["ob"];
+__object_keys__.kwargs_signature = {};
+__object_keys__.types_signature = {};
 __sprintf = function(fmt, args) {
   var i;
   i = 0;
@@ -346,24 +346,30 @@ create_class = function(class_name, parents, attrs, props) {
     attrs.__metaclass__=undefined;
     return metaclass( [class_name, parents, attrs] );
   }
-  klass = {  };
+  klass = Object.create( null );
   klass.__bases__=parents;
   klass.__name__=class_name;
-  klass.__dict__=attrs;
   klass.__properties__=props;
+  klass.__attributes__=attrs;
+    var iter = attrs;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var key=0; key < iter.length; key++) {
+    var backup = key; key = iter[key];
+    klass[ key ] = attrs[ key ];
+    key = backup;
+  }
     var __call__ = function() {
     var init, object;
     "Create a PythonJS object";
-    var object;
-    object = {  };
+    object = Object.create( null );
     object.__class__=klass;
-    object.__dict__={  };
-        var iter = klass.__dict__;
+        var iter = klass.__attributes__;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var name=0; name < iter.length; name++) {
       var backup = name; name = iter[name];
-      if (typeof(klass.__dict__[name]) == "function") {
+      if (typeof(klass.__attributes__[name]) == "function") {
         get_attribute( object,name );
       }
       name = backup;
@@ -429,15 +435,7 @@ hasattr = function(args, kwargs) {
   var ob = arguments['ob'];
   var attr = arguments['attr'];
   var method = arguments['method'];
-  if (method) {
-    return Object.hasOwnProperty.call( ob,attr );
-  } else {
-    if (Object.hasOwnProperty(ob, "__dict__")) {
-      return Object.hasOwnProperty.call( ob.__dict__,attr );
-    } else {
-      return Object.hasOwnProperty.call( ob,attr );
-    }
-  }
+  return Object.hasOwnProperty.call( ob,attr );
 }
 
 hasattr.NAME = "hasattr";
@@ -792,7 +790,7 @@ _setup_str_prototype = function(args, kwargs) {
     i = 0;
         var iter = arr;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var value=0; value < iter.length; value++) {
       var backup = value; value = iter[value];
       out += value;
@@ -842,7 +840,7 @@ _setup_str_prototype = function(args, kwargs) {
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
         var iter = this;
 
-    if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var char=0; char < iter.length; char++) {
       var backup = char; char = iter[char];
       if (char  in  digits || Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char)) {
@@ -1064,7 +1062,7 @@ min = function(args, kwargs) {
   __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
   var __next__;
   __next__ = get_attribute(__iterator__, "next_fast");
-  while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+  while(__iterator__.index < __iterator__.length) {
     value = __next__();
     if (a === undefined) {
       a = value;
@@ -1100,7 +1098,7 @@ max = function(args, kwargs) {
   __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
   var __next__;
   __next__ = get_attribute(__iterator__, "next_fast");
-  while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+  while(__iterator__.index < __iterator__.length) {
     value = __next__();
     if (a === undefined) {
       a = value;
@@ -1196,10 +1194,10 @@ __Iterator___init__ = function(args, kwargs) {
   var self = arguments['self'];
   var obj = arguments['obj'];
   var index = arguments['index'];
-  self["__dict__"]["obj"] = obj;
-  self["__dict__"]["index"] = index;
-  self["__dict__"]["length"] = len([obj], __NULL_OBJECT__);
-  self["__dict__"]["obj_get"] = get_attribute(obj, "get");
+  self["obj"] = obj;
+  self["index"] = index;
+  self["length"] = len([obj], __NULL_OBJECT__);
+  self["obj_get"] = get_attribute(obj, "get");
 }
 
 __Iterator___init__.NAME = "__Iterator___init__";
@@ -1221,13 +1219,13 @@ __Iterator_next = function(args, kwargs) {
   signature["function_name"] = "__Iterator_next";
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  index = self["__dict__"]["index"];
-  length = len([self["__dict__"]["obj"]], __NULL_OBJECT__);
+  index = self["index"];
+  length = len([self["obj"]], __NULL_OBJECT__);
   if (index == length) {
     throw StopIteration;
   }
-  item = get_attribute(get_attribute(self["__dict__"]["obj"], "get"), "__call__")([self["__dict__"]["index"]], __NULL_OBJECT__);
-  self["__dict__"]["index"] = self["__dict__"]["index"] + 1;
+  item = get_attribute(get_attribute(self["obj"], "get"), "__call__")([self["index"]], __NULL_OBJECT__);
+  self["index"] = self["index"] + 1;
   return item;
 }
 
@@ -1250,9 +1248,9 @@ __Iterator_next_fast = function(args, kwargs) {
   signature["function_name"] = "__Iterator_next_fast";
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  index = self.__dict__.index;
-  self.__dict__.index += 1;
-  return self.__dict__.obj_get( [index],{  } );
+  index = self.index;
+  self.index += 1;
+  return self.obj_get( [index],{  } );
 }
 
 __Iterator_next_fast.NAME = "__Iterator_next_fast";
@@ -1287,7 +1285,7 @@ __tuple___init__ = function(args, kwargs) {
     __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
     var __next__;
     __next__ = get_attribute(__iterator__, "next_fast");
-    while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+    while(__iterator__.index < __iterator__.length) {
       item = __next__();
       get_attribute(get_attribute(arr, "push"), "__call__")([item], __NULL_OBJECT__);
     }
@@ -1298,7 +1296,7 @@ __tuple___init__ = function(args, kwargs) {
         __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
         var __next__;
         __next__ = get_attribute(__iterator__, "next_fast");
-        while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+        while(__iterator__.index < __iterator__.length) {
           v = __next__();
           get_attribute(get_attribute(arr, "push"), "__call__")([v], __NULL_OBJECT__);
         }
@@ -1423,7 +1421,7 @@ __tuple_count = function(args, kwargs) {
   a = 0;
     var iter = self["$wrapped"];
 
-  if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var item=0; item < iter.length; item++) {
     var backup = item; item = iter[item];
     if (item == obj) {
@@ -1514,7 +1512,7 @@ __list___init__ = function(args, kwargs) {
     __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
     var __next__;
     __next__ = get_attribute(__iterator__, "next_fast");
-    while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+    while(__iterator__.index < __iterator__.length) {
       item = __next__();
       get_attribute(get_attribute(arr, "push"), "__call__")([item], __NULL_OBJECT__);
     }
@@ -1525,7 +1523,7 @@ __list___init__ = function(args, kwargs) {
         __iterator__ = get_attribute(get_attribute(js_object, "__iter__"), "__call__")(create_array(), Object());
         var __next__;
         __next__ = get_attribute(__iterator__, "next_fast");
-        while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+        while(__iterator__.index < __iterator__.length) {
           v = __next__();
           get_attribute(get_attribute(arr, "push"), "__call__")([v], __NULL_OBJECT__);
         }
@@ -1630,7 +1628,7 @@ __list_extend = function(args, kwargs) {
   __iterator__ = get_attribute(get_attribute(other, "__iter__"), "__call__")(create_array(), Object());
   var __next__;
   __next__ = get_attribute(__iterator__, "next_fast");
-  while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+  while(__iterator__.index < __iterator__.length) {
     obj = __next__();
     get_attribute(get_attribute(self, "append"), "__call__")([obj], __NULL_OBJECT__);
   }
@@ -1749,7 +1747,7 @@ __list_count = function(args, kwargs) {
   a = 0;
     var iter = self["$wrapped"];
 
-  if (! (iter instanceof Array) ) { iter = Object.keys(iter) }
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var item=0; item < iter.length; item++) {
     var backup = item; item = iter[item];
     if (item == obj) {
@@ -2345,31 +2343,31 @@ __array___init__ = function(args, kwargs) {
   var typecode = arguments['typecode'];
   var initializer = arguments['initializer'];
   var little_endian = arguments['little_endian'];
-  self["__dict__"]["typecode"] = typecode;
-  self["__dict__"]["itemsize"] = get_attribute(get_attribute(self, "typecodes"), "__getitem__")([typecode], Object());
-  self["__dict__"]["little_endian"] = little_endian;
+  self["typecode"] = typecode;
+  self["itemsize"] = get_attribute(get_attribute(self, "typecodes"), "__getitem__")([typecode], Object());
+  self["little_endian"] = little_endian;
   if (initializer) {
-    self["__dict__"]["length"] = len([initializer], __NULL_OBJECT__);
-    self["__dict__"]["bytes"] = self["__dict__"]["length"] * self["__dict__"]["itemsize"];
-    if (self["__dict__"]["typecode"] == "float8") {
-      self["__dict__"]["_scale"] = max([get_attribute(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
-      self["__dict__"]["_norm_get"] = self["__dict__"]["_scale"] / 127;
-      self["__dict__"]["_norm_set"] = 1.0 / self["__dict__"]["_norm_get"];
+    self["length"] = len([initializer], __NULL_OBJECT__);
+    self["bytes"] = self["length"] * self["itemsize"];
+    if (self["typecode"] == "float8") {
+      self["_scale"] = max([get_attribute(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
+      self["_norm_get"] = self["_scale"] / 127;
+      self["_norm_set"] = 1.0 / self["_norm_get"];
     } else {
-      if (self["__dict__"]["typecode"] == "float16") {
-        self["__dict__"]["_scale"] = max([get_attribute(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
-        self["__dict__"]["_norm_get"] = self["__dict__"]["_scale"] / 32767;
-        self["__dict__"]["_norm_set"] = 1.0 / self["__dict__"]["_norm_get"];
+      if (self["typecode"] == "float16") {
+        self["_scale"] = max([get_attribute(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
+        self["_norm_get"] = self["_scale"] / 32767;
+        self["_norm_set"] = 1.0 / self["_norm_get"];
       }
     }
   } else {
-    self["__dict__"]["length"] = 0;
-    self["__dict__"]["bytes"] = 0;
+    self["length"] = 0;
+    self["bytes"] = 0;
   }
-  size = self["__dict__"]["bytes"];
+  size = self["bytes"];
   buff = new ArrayBuffer(size);
-  self["__dict__"]["dataview"] = new DataView(buff);
-  self["__dict__"]["buffer"] = buff;
+  self["dataview"] = new DataView(buff);
+  self["buffer"] = buff;
   get_attribute(get_attribute(self, "fromlist"), "__call__")([initializer], __NULL_OBJECT__);
 }
 
@@ -2391,7 +2389,7 @@ __array___len__ = function(args, kwargs) {
   signature["function_name"] = "__array___len__";
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  return self["__dict__"]["length"];
+  return self["length"];
 }
 
 __array___len__.NAME = "__array___len__";
@@ -2442,18 +2440,18 @@ __array___getitem__ = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var index = arguments['index'];
-  step = self["__dict__"]["itemsize"];
+  step = self["itemsize"];
   offset = step * index;
-  dataview = self["__dict__"]["dataview"];
-  func_name = "get" + get_attribute(get_attribute(self, "typecode_names"), "__getitem__")([self["__dict__"]["typecode"]], Object());
+  dataview = self["dataview"];
+  func_name = "get" + get_attribute(get_attribute(self, "typecode_names"), "__getitem__")([self["typecode"]], Object());
   func = dataview[func_name].bind(dataview);
-  if (offset < self["__dict__"]["bytes"]) {
+  if (offset < self["bytes"]) {
     value = func(offset);
-    if (self["__dict__"]["typecode"] == "float8") {
-      value = value * self["__dict__"]["_norm_get"];
+    if (self["typecode"] == "float8") {
+      value = value * self["_norm_get"];
     } else {
-      if (self["__dict__"]["typecode"] == "float16") {
-        value = value * self["__dict__"]["_norm_get"];
+      if (self["typecode"] == "float16") {
+        value = value * self["_norm_get"];
       }
     }
     return value;
@@ -2483,20 +2481,20 @@ __array___setitem__ = function(args, kwargs) {
   var self = arguments['self'];
   var index = arguments['index'];
   var value = arguments['value'];
-  step = self["__dict__"]["itemsize"];
+  step = self["itemsize"];
   if (index < 0) {
-    index = self["__dict__"]["length"] + index - 1;
+    index = self["length"] + index - 1;
   }
   offset = step * index;
-  dataview = self["__dict__"]["dataview"];
-  func_name = "set" + get_attribute(get_attribute(self, "typecode_names"), "__getitem__")([self["__dict__"]["typecode"]], Object());
+  dataview = self["dataview"];
+  func_name = "set" + get_attribute(get_attribute(self, "typecode_names"), "__getitem__")([self["typecode"]], Object());
   func = dataview[func_name].bind(dataview);
-  if (offset < self["__dict__"]["bytes"]) {
-    if (self["__dict__"]["typecode"] == "float8") {
-      value = value * self["__dict__"]["_norm_set"];
+  if (offset < self["bytes"]) {
+    if (self["typecode"] == "float8") {
+      value = value * self["_norm_set"];
     } else {
-      if (self["__dict__"]["typecode"] == "float16") {
-        value = value * self["__dict__"]["_norm_set"];
+      if (self["typecode"] == "float16") {
+        value = value * self["_norm_set"];
       }
     }
     func(offset, value);
@@ -2570,22 +2568,22 @@ __array_fromlist = function(args, kwargs) {
   var self = arguments['self'];
   var lst = arguments['lst'];
   length = len([lst], __NULL_OBJECT__);
-  step = self["__dict__"]["itemsize"];
-  typecode = self["__dict__"]["typecode"];
+  step = self["itemsize"];
+  typecode = self["typecode"];
   size = length * step;
-  dataview = self["__dict__"]["dataview"];
+  dataview = self["dataview"];
   func_name = "set" + get_attribute(get_attribute(self, "typecode_names"), "__getitem__")([typecode], Object());
   func = dataview[func_name].bind(dataview);
-  if (size <= self["__dict__"]["bytes"]) {
+  if (size <= self["bytes"]) {
     i = 0;
     offset = 0;
     while(i < length) {
       item = get_attribute(lst, "__getitem__")([i], Object());
       if (typecode == "float8") {
-        item *= self["__dict__"]["_norm_set"]
+        item *= self["_norm_set"]
       } else {
         if (typecode == "float16") {
-          item *= self["__dict__"]["_norm_set"]
+          item *= self["_norm_set"]
         }
       }
       func(offset,item);
@@ -2617,16 +2615,16 @@ __array_resize = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var length = arguments['length'];
-  buff = self["__dict__"]["buffer"];
+  buff = self["buffer"];
   source = new Uint8Array(buff);
-  new_size = length * self["__dict__"]["itemsize"];
+  new_size = length * self["itemsize"];
   new_buff = new ArrayBuffer(new_size);
   target = new Uint8Array(new_buff);
   target.set(source);
-  self["__dict__"]["length"] = length;
-  self["__dict__"]["bytes"] = new_size;
-  self["__dict__"]["buffer"] = new_buff;
-  self["__dict__"]["dataview"] = new DataView(new_buff);
+  self["length"] = length;
+  self["bytes"] = new_size;
+  self["buffer"] = new_buff;
+  self["dataview"] = new DataView(new_buff);
 }
 
 __array_resize.NAME = "__array_resize";
@@ -2649,8 +2647,8 @@ __array_append = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var value = arguments['value'];
-  length = self["__dict__"]["length"];
-  get_attribute(get_attribute(self, "resize"), "__call__")([self["__dict__"]["length"] + 1], __NULL_OBJECT__);
+  length = self["length"];
+  get_attribute(get_attribute(self, "resize"), "__call__")([self["length"] + 1], __NULL_OBJECT__);
   get_attribute(get_attribute(self, "__setitem__"), "__call__")([length, value], Object());
 }
 
@@ -2677,7 +2675,7 @@ __array_extend = function(args, kwargs) {
   __iterator__ = get_attribute(get_attribute(lst, "__iter__"), "__call__")(create_array(), Object());
   var __next__;
   __next__ = get_attribute(__iterator__, "next_fast");
-  while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+  while(__iterator__.index < __iterator__.length) {
     value = __next__();
     get_attribute(get_attribute(self, "append"), "__call__")([value], __NULL_OBJECT__);
   }
@@ -2704,7 +2702,7 @@ __array_to_array = function(args, kwargs) {
   var self = arguments['self'];
   arr = create_array();
   i = 0;
-  while(i < self["__dict__"]["length"]) {
+  while(i < self["length"]) {
     item = __array___getitem__([self, i], Object());
     arr.push( item );
     i += 1
@@ -2810,7 +2808,7 @@ _to_pythonjs = function(args, kwargs) {
     __iterator__ = get_attribute(get_attribute(raw, "__iter__"), "__call__")(create_array(), Object());
     var __next__;
     __next__ = get_attribute(__iterator__, "next_fast");
-    while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+    while(__iterator__.index < __iterator__.length) {
       item = __next__();
       get_attribute(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], __NULL_OBJECT__);
     }
@@ -2827,7 +2825,7 @@ _to_pythonjs = function(args, kwargs) {
   __iterator__ = get_attribute(get_attribute(keys, "__iter__"), "__call__")(create_array(), Object());
   var __next__;
   __next__ = get_attribute(__iterator__, "next_fast");
-  while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+  while(__iterator__.index < __iterator__.length) {
     key = __next__();
     get_attribute(set, "__call__")([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
   }
@@ -2878,7 +2876,7 @@ _to_json = function(args, kwargs) {
     __iterator__ = get_attribute(get_attribute(pythonjs, "__iter__"), "__call__")(create_array(), Object());
     var __next__;
     __next__ = get_attribute(__iterator__, "next_fast");
-    while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+    while(__iterator__.index < __iterator__.length) {
       i = __next__();
       get_attribute(get_attribute(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
     }
@@ -2890,7 +2888,7 @@ _to_json = function(args, kwargs) {
       __iterator__ = get_attribute(get_attribute(get_attribute(get_attribute(pythonjs, "keys"), "__call__")(), "__iter__"), "__call__")(create_array(), Object());
       var __next__;
       __next__ = get_attribute(__iterator__, "next_fast");
-      while(__iterator__.__dict__.index < __iterator__.__dict__.length) {
+      while(__iterator__.index < __iterator__.length) {
         key = __next__();
         value = _to_json([get_attribute(get_attribute(pythonjs, "get"), "__call__")([key], __NULL_OBJECT__)], __NULL_OBJECT__);
         key = _to_json([key], __NULL_OBJECT__);

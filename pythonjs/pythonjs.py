@@ -396,8 +396,13 @@ class JSGenerator(NodeVisitor):
 
 		out = []
 		out.append( self.indent() + 'var iter = %s;\n' % iter )
+
 		## support "for key in JSObject" ##
-		out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
+		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
+		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
+		out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }' )
+
+
 		out.append( self.indent() + 'for (var %s=0; %s < iter.length; %s++) {' % (target, target, target) )
 		self.push()
 

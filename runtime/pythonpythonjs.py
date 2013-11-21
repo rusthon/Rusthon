@@ -111,14 +111,17 @@ def get_attribute(object, attribute):
 		else:
 			return attr
 
-	var(__class__, __dict__, bases)
+	var(__class__, bases)
 
 	# next check object.__dict__ for attr, note that object could be a class, and classes have a __dict__
-	__dict__ = object.__dict__
-	if __dict__:
-		attr = __dict__[attribute]
-		if attr != None:
-			return attr
+	#__dict__ = object.__dict__
+	#if __dict__:
+	#	attr = __dict__[attribute]
+	#	if attr != None:
+	#		return attr
+	attr = object[ attribute ]
+	if attr != None:
+		return attr
 
 
 	# next check for object.__class__
@@ -128,10 +131,11 @@ def get_attribute(object, attribute):
 		if attribute in __class__.__properties__:  ## @property decorators
 			return __class__.__properties__[ attribute ]['get']( [object], JSObject() )
 
-		__dict__ = __class__.__dict__
-		attr = __dict__[attribute]
+		#__dict__ = __class__.__dict__
+		#attr = __dict__[attribute]
+		attr = __class__[ attribute ]
 
-		if attribute in __dict__:
+		if attribute in __class__:
 			if JS("{}.toString.call(attr) === '[object Function]'"):
 				def method():
 					var(args)
@@ -184,8 +188,8 @@ def get_attribute(object, attribute):
 			if prop:
 				return prop['get']( [object], JSObject() )
 
-		if '__getattr__' in __dict__:
-			return __dict__['__getattr__']( [object, attribute], JSObject() )
+		if '__getattr__' in __class__:
+			return __class__['__getattr__']( [object, attribute], JSObject() )
 
 		for base in bases:
 			var( f )
@@ -217,8 +221,8 @@ def get_attribute(object, attribute):
 	return None
 
 def _get_upstream_attribute(base, attr):
-	if attr in base.__dict__:
-		return base.__dict__[ attr ]
+	if attr in base:
+		return base[ attr ]
 	for parent in base.__bases__:
 		return _get_upstream_attribute(parent, attr)
 
@@ -229,15 +233,16 @@ def _get_upstream_property(base, attr):
 		return _get_upstream_property(parent, attr)
 
 def set_attribute(object, attribute, value):
-	"""Set an attribute on an object by updating its __dict__ property"""
-	var(__dict__, __class__)
-	__class__ = object.__class__
+	#"""Set an attribute on an object by updating its __dict__ property"""
+	#var(__dict__, __class__)
+	#__class__ = object.__class__
 	#if __class__:  ## TODO property setter
-	__dict__ = object.__dict__
-	if __dict__:
-		__dict__[attribute] = value
-	else:
-		object[attribute] = value
+	#__dict__ = object.__dict__
+	#if __dict__:
+	#	__dict__[attribute] = value
+	#else:
+	#	object[attribute] = value
+	object[attribute] = value
 
 
 
