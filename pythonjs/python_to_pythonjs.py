@@ -93,7 +93,8 @@ writer = Writer()
 
 MINI_STDLIB = {
 	'time': {
-		'time': 'function time() { return new Date().getTime() / 1000.0; }'
+		'time': 'function time() { return new Date().getTime() / 1000.0; }',
+		'clock': 'function clock() { return new Date().getTime() / 1000.0; }'
 	},
 	'random': {
 		'random': 'var random = Math.random'
@@ -990,7 +991,7 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
 
 	def visit_Str(self, node):
-		s = node.s.replace('\n', '\\n')
+		s = node.s.replace('\n', '\\n').replace('\0', '\\0')
 		if self._with_js:
 			return '"%s"' %s
 		else:
@@ -1259,12 +1260,12 @@ class PythonToPythonJS(NodeVisitor):
 
 		elif self._with_fastdef or fastdef:
 			for i, arg in enumerate(node.args.args):
-				dindex = i - len(node.args.defaults)
-				if dindex >= 0 and node.args.defaults:
-					default_value = self.visit( node.args.defaults[dindex] )
-					writer.write("""JS("var %s = kwargs[ '%s' ]  || %s ")""" % (arg.id, arg.id, default_value))
-				else:
-					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
+				#dindex = i - len(node.args.defaults)  ## TODO - fixme
+				#if dindex >= 0 and node.args.defaults:
+				#	default_value = self.visit( node.args.defaults[dindex] )
+				#	writer.write("""JS("var %s = kwargs[ '%s' ]  || %s ")""" % (arg.id, arg.id, default_value))
+				#else:
+				writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
 			# First check the arguments are well formed 
@@ -1452,18 +1453,25 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('var(__iterator__, %s)' % node.target.id)
 	
 			is_range = False
+			iter_start = '0'
+			iter_end = None
 			if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
 				is_range = True
+				if len(node.iter.args) == 2:
+					iter_start = self.visit(node.iter.args[0])
+					iter_end = self.visit(node.iter.args[1])
+				else:
+					iter_end = self.visit(node.iter.args[0])
 			else:
 				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
 
 			if self.FAST_FOR:
 				if is_range:
 					iter_name = node.target.id
-					range_num = self.visit( node.iter.args[0] )
+					#range_num = self.visit( node.iter.args[0] )
 					writer.write('var(%s)' %iter_name)
-					writer.write('%s = 0' %iter_name)
-					writer.write('while %s < %s:' %(iter_name, range_num))
+					writer.write('%s = %s' %(iter_name, iter_start))
+					writer.write('while %s < %s:' %(iter_name, iter_end))
 					writer.push()
 					map(self.visit, node.body)
 					writer.write('%s += 1' %iter_name )

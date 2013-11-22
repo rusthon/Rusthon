@@ -356,14 +356,19 @@ _setup_array_prototype()
 
 
 
-def range(num):
+def range(num, stop):
 	"""Emulates Python's range function"""
-	i = 0
-	r = list()
-	while i < num:
-		r.append(i)
-		i += 1
-	return r
+	if stop is not None:
+		i = num
+		num = stop
+	else:
+		i = 0
+	with javascript:
+		arr = []
+		while i < num:
+			arr.push(i)
+			i += 1
+	return list( pointer=arr )
 
 
 class StopIteration:
@@ -398,9 +403,11 @@ def max( lst ):
 def abs( num ):
 	return JS('Math.abs(num)')
 
+@fastdef
 def ord( char ):
 	return JS('char.charCodeAt(0)')
 
+@fastdef
 def chr( num ):
 	return JS('String.fromCharCode(num)')
 
@@ -514,13 +521,14 @@ class list:
 				else:
 					raise TypeError
 
-
+	@fastdef
 	def __getitem__(self, index):
 		if index < 0:
 			index = self[...].length + index
 		with javascript:
 			return self[...][index]
 
+	@fastdef
 	def __setitem__(self, index, value):
 		with javascript:
 			self[...][ index ] = value
