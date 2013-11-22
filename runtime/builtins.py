@@ -492,22 +492,27 @@ class tuple:
 
 class list:
 
-	def __init__(self, js_object=None):
-		with javascript:
-			arr = []
-			self[...] = arr
+	def __init__(self, js_object=None, pointer=None):
 
-		if instanceof( js_object, Array ):
-			for item in js_object:
-				arr.push( item )
+		if pointer:
+			self[...] = pointer  ## should be an Array
 
-		elif js_object:
+		else:
+			with javascript:
+				arr = []
+				self[...] = arr
 
-			if isinstance( js_object, array) or isinstance( js_object, tuple) or isinstance( js_object, list):
-				for v in js_object:
-					arr.push( v )
-			else:
-				raise TypeError
+			if instanceof( js_object, Array ):
+				for item in js_object:
+					arr.push( item )
+
+			elif js_object:
+
+				if isinstance( js_object, array) or isinstance( js_object, tuple) or isinstance( js_object, list):
+					for v in js_object:
+						arr.push( v )
+				else:
+					raise TypeError
 
 
 	def __getitem__(self, index):
@@ -519,6 +524,10 @@ class list:
 	def __setitem__(self, index, value):
 		with javascript:
 			self[...][ index ] = value
+
+	def __getslice__(self, start, stop, step=None):
+		with javascript: arr = self[...].__getslice__(start, stop)
+		return list( pointer=arr )
 
 	def append(self, obj):
 		with javascript:

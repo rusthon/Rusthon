@@ -628,6 +628,12 @@ class PythonToPythonJS(NodeVisitor):
 		elif op == '%' and isinstance(node.left, ast.Str):
 			return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
 
+		elif op == '*' and isinstance(node.left, ast.List) and isinstance(node.right,ast.Num):
+			elts = [ self.visit(e) for e in node.left.elts ]
+			expanded = []
+			for i in range( node.right.n ): expanded.extend( elts )
+			return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
 			if typedef and op in typedef.operators:
@@ -804,7 +810,15 @@ class PythonToPythonJS(NodeVisitor):
 			return '%s["$wrapped"]' %name
 
 		elif self._with_js:
+			if isinstance(node.slice, ast.Slice):
+				raise SyntaxError
 			return '%s[ %s ]' %(name, self.visit(node.slice))
+
+		elif isinstance(node.slice, ast.Slice):
+			return '__get__(%s, "__getslice__")([%s], JSObject())' % (
+				self.visit(node.value),
+				self.visit(node.slice),
+			)
 
 		elif name in self._instances:  ## support x[y] operator overloading
 			klass = self._instances[ name ]
@@ -815,12 +829,6 @@ class PythonToPythonJS(NodeVisitor):
 					self.visit(node.value),
 					self.visit(node.slice),
 				)
-		elif isinstance(node.slice, ast.Slice):
-			return '__get__(%s, "__getslice__")([%s], JSObject())' % (
-				self.visit(node.value),
-				self.visit(node.slice),
-			)
-
 		else:
 			return '__get__(%s, "__getitem__")([%s], JSObject())' % (
 				self.visit(node.value),

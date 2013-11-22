@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 21 21:38:28 2013
+// PythonScript Runtime - regenerated on: Fri Nov 22 00:25:31 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -1629,44 +1629,49 @@ __list___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var signature, arguments;
-  signature = {"kwargs": {"js_object": undefined}, "args": __create_array__("self", "js_object")};
+  signature = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
   signature["function_name"] = "__list___init__";
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var js_object = arguments['js_object'];
-  arr = [];
-  self["$wrapped"] = arr;
-  if (js_object instanceof Array) {
-    var __iterator__, item;
-    __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-    var __next__;
-    __next__ = __get__(__iterator__, "next_fast");
-    while(__iterator__.index < __iterator__.length) {
-      item = __next__();
-      __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
-    }
+  var pointer = arguments['pointer'];
+  if (pointer) {
+    self["$wrapped"] = pointer;
   } else {
-    if (js_object) {
-      if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
-        var __iterator__, v;
-        __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-        var __next__;
-        __next__ = __get__(__iterator__, "next_fast");
-        while(__iterator__.index < __iterator__.length) {
-          v = __next__();
-          __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+    arr = [];
+    self["$wrapped"] = arr;
+    if (js_object instanceof Array) {
+      var __iterator__, item;
+      __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+      var __next__;
+      __next__ = __get__(__iterator__, "next_fast");
+      while(__iterator__.index < __iterator__.length) {
+        item = __next__();
+        __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+      }
+    } else {
+      if (js_object) {
+        if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
+          var __iterator__, v;
+          __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+          var __next__;
+          __next__ = __get__(__iterator__, "next_fast");
+          while(__iterator__.index < __iterator__.length) {
+            v = __next__();
+            __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+          }
+        } else {
+          throw TypeError;
         }
-      } else {
-        throw TypeError;
       }
     }
   }
 }
 
 __list___init__.NAME = "__list___init__";
-__list___init__.args_signature = ["self", "js_object"];
-__list___init__.kwargs_signature = { js_object:undefined };
-__list___init__.types_signature = { js_object:"None" };
+__list___init__.args_signature = ["self", "js_object", "pointer"];
+__list___init__.kwargs_signature = { js_object:undefined,pointer:undefined };
+__list___init__.types_signature = { js_object:"None",pointer:"None" };
 __list___init__.pythonscript_function = true;
 __list_attrs["__init__"] = __list___init__;
 __list___getitem__ = function(args, kwargs) {
@@ -1718,6 +1723,36 @@ __list___setitem__.kwargs_signature = {  };
 __list___setitem__.types_signature = {  };
 __list___setitem__.pythonscript_function = true;
 __list_attrs["__setitem__"] = __list___setitem__;
+__list___getslice__ = function(args, kwargs) {
+  var arr;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": {"step": undefined}, "args": __create_array__("self", "start", "stop", "step")};
+  signature["function_name"] = "__list___getslice__";
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  var start = arguments['start'];
+  var stop = arguments['stop'];
+  var step = arguments['step'];
+  arr = self["$wrapped"].__getslice__( start,stop );
+  var __args_1, __kwargs_1;
+  __args_1 = [];
+  __kwargs_1 = {"pointer": arr};
+  return __get__(list, "__call__")([], __kwargs_1);
+}
+
+__list___getslice__.NAME = "__list___getslice__";
+__list___getslice__.args_signature = ["self", "start", "stop", "step"];
+__list___getslice__.kwargs_signature = { step:undefined };
+__list___getslice__.types_signature = { step:"None" };
+__list___getslice__.return_type = "list";
+__list___getslice__.pythonscript_function = true;
+__list_attrs["__getslice__"] = __list___getslice__;
 __list_append = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && arguments.length == 2) {
     /*pass*/
@@ -2318,10 +2353,10 @@ __dict_keys = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   arr = Object.keys( self["$wrapped"] );
-  var __args_1, __kwargs_1;
-  __args_1 = [];
-  __kwargs_1 = {"js_object": arr};
-  return __get__(list, "__call__")([], __kwargs_1);
+  var __args_2, __kwargs_2;
+  __args_2 = [];
+  __kwargs_2 = {"js_object": arr};
+  return __get__(list, "__call__")([], __kwargs_2);
 }
 
 __dict_keys.NAME = "__dict_keys";
@@ -2857,10 +2892,10 @@ __array_to_list = function(args, kwargs) {
   signature["function_name"] = "__array_to_list";
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  var __args_2, __kwargs_2;
-  __args_2 = [];
-  __kwargs_2 = {"js_object": __get__(__get__(self, "to_array"), "__call__")()};
-  return __get__(list, "__call__")([], __kwargs_2);
+  var __args_3, __kwargs_3;
+  __args_3 = [];
+  __kwargs_3 = {"js_object": __get__(__get__(self, "to_array"), "__call__")()};
+  return __get__(list, "__call__")([], __kwargs_3);
 }
 
 __array_to_list.NAME = "__array_to_list";
@@ -2927,10 +2962,10 @@ _to_pythonjs = function(args, kwargs) {
   }
   if (Object.prototype.toString.call(json) === '[object Array]') {
     output = __get__(list, "__call__")();
-    var __args_3, __kwargs_3;
-    __args_3 = [];
-    __kwargs_3 = {"js_object": json};
-    raw = __get__(list, "__call__")([], __kwargs_3);
+    var __args_4, __kwargs_4;
+    __args_4 = [];
+    __kwargs_4 = {"js_object": json};
+    raw = __get__(list, "__call__")([], __kwargs_4);
     var append;
     append = __get__(output, "append");
     var __iterator__, item;
@@ -2946,10 +2981,10 @@ _to_pythonjs = function(args, kwargs) {
   output = __get__(dict, "__call__")();
   var set;
   set = __get__(output, "set");
-  var __args_4, __kwargs_4;
-  __args_4 = [];
-  __kwargs_4 = {"js_object": Object.keys(json)};
-  keys = __get__(list, "__call__")([], __kwargs_4);
+  var __args_5, __kwargs_5;
+  __args_5 = [];
+  __kwargs_5 = {"js_object": Object.keys(json)};
+  keys = __get__(list, "__call__")([], __kwargs_5);
   var __iterator__, key;
   __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
   var __next__;
