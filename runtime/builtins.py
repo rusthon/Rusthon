@@ -55,11 +55,13 @@ with javascript:
 		klass.__name__ = class_name
 		#klass.__dict__ = attrs
 		klass.__unbound_methods__ = Object.create(null)
+		klass.__all_method_names__ = []
 		klass.__properties__ = props
 		klass.__attributes__ = attrs
 		for key in attrs:
 			if typeof( attrs[key] ) == 'function':
 				klass.__unbound_methods__[key] = attrs[key]
+				klass.__all_method_names__.push( key )
 
 			if key == '__getattribute__': continue
 			klass[key] = attrs[key]
@@ -73,8 +75,9 @@ with javascript:
 			if prop['set']:
 				klass.__setters__.push( name )
 		for base in klass.__bases__:
-			klass.__getters__.concat( base.__getters__ )
-			klass.__setters__.concat( base.__setters__ )
+			Array.prototype.push.apply( klass.__getters__, base.__getters__ )
+			Array.prototype.push.apply( klass.__setters__, base.__setters__ )
+			Array.prototype.push.apply( klass.__all_method_names__, base.__all_method_names__ )
 
 
 		def __call__():
@@ -89,21 +92,32 @@ with javascript:
 			)
 
 
-			## pre-cache all methods on object so they are callable from JavaScript ##
-			#for name in klass.__attributes__:
-			#	if typeof( klass.__attributes__[name] ) == 'function':
-			#		get_attribute( object, name )
-			for name in klass.__unbound_methods__:
-				wrapper = get_attribute(object, name)
-				if not wrapper.is_wrapper:
-					print 'ERROR: failed to get wrapper for:',name
+			has_getattribute = False
+			has_getattr = False
+			for name in klass.__all_method_names__:
+				if name == '__getattribute__':
+					has_getattribute = True
+				elif name == '__getattr__':
+					has_getattr = True
+				else:
+					wrapper = get_attribute(object, name)
+					if not wrapper.is_wrapper:
+						print 'RUNTIME ERROR: failed to get wrapper for:',name
+
+			## to be safe the getters come after other methods are cached ##
+			if has_getattr:
+				get_attribute(object, '__getattr__')
+
+			if has_getattribute:
+				get_attribute(object, '__getattribute__')
 
 			__bind_property_descriptors__(object, klass)
 
-			init = object.__init__
-			if init:
-				init.apply(None, arguments)
+			if object.__init__:
+				object.__init__.apply(this, arguments)
+
 			return object
+
 		__call__.pythonscript_function = True
 		klass.__call__ = __call__
 		return klass

@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 21 18:05:10 2013
+// PythonScript Runtime - regenerated on: Thu Nov 21 20:42:18 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -135,7 +135,7 @@ get_attribute = function(object, attribute) {
           args = [args, Object()];
         }
         args[0].splice(0, 0, object);
-        return attr.apply(undefined, args);
+        return attr.apply(this, args);
       }
 
       method.is_wrapper = true;
@@ -154,7 +154,7 @@ get_attribute = function(object, attribute) {
             args = [args, Object()];
           }
           args[0].splice(0, 0, object);
-          return attr.apply(undefined, args);
+          return attr.apply(this, args);
         }
 
         method.is_wrapper = true;
@@ -182,7 +182,7 @@ get_attribute = function(object, attribute) {
               args = [args, Object()];
             }
             args[0].splice(0, 0, object);
-            return attr.apply(undefined, args);
+            return attr.apply(this, args);
           }
 
           method.is_wrapper = true;
@@ -428,6 +428,7 @@ create_class = function(class_name, parents, attrs, props) {
   klass.__bases__=parents;
   klass.__name__=class_name;
   klass.__unbound_methods__=Object.create( null );
+  klass.__all_method_names__=[];
   klass.__properties__=props;
   klass.__attributes__=attrs;
     var iter = attrs;
@@ -437,6 +438,7 @@ create_class = function(class_name, parents, attrs, props) {
     var backup = key; key = iter[key];
     if (typeof(attrs[key]) == "function") {
       klass.__unbound_methods__[ key ] = attrs[ key ];
+      klass.__all_method_names__.push( key );
     }
     if (key == "__getattribute__") {
       continue;
@@ -463,31 +465,47 @@ create_class = function(class_name, parents, attrs, props) {
   if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var base=0; base < iter.length; base++) {
     var backup = base; base = iter[base];
-    klass.__getters__.concat( base.__getters__ );
-    klass.__setters__.concat( base.__setters__ );
+    Array.prototype.push.apply( klass.__getters__,base.__getters__ );
+    Array.prototype.push.apply( klass.__setters__,base.__setters__ );
+    Array.prototype.push.apply( klass.__all_method_names__,base.__all_method_names__ );
     base = backup;
   }
     var __call__ = function() {
-    var init, object, wrapper;
+    var has_getattr, wrapper, object, has_getattribute;
     "Create a PythonJS object";
     object = Object.create( null );
     object.__class__=klass;
     Object.defineProperty( object,"__dict__",{ enumerable:false,value:object,writeable:false,configurable:false } );
-        var iter = klass.__unbound_methods__;
+    has_getattribute = false;
+    has_getattr = false;
+        var iter = klass.__all_method_names__;
 
     if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var name=0; name < iter.length; name++) {
       var backup = name; name = iter[name];
-      wrapper = get_attribute( object,name );
-      if (!wrapper.is_wrapper) {
-        console.log("ERROR: failed to get wrapper for:", name);
+      if (name == "__getattribute__") {
+        has_getattribute = true;
+      } else {
+        if (name == "__getattr__") {
+          has_getattr = true;
+        } else {
+          wrapper = get_attribute( object,name );
+          if (!wrapper.is_wrapper) {
+            console.log("RUNTIME ERROR: failed to get wrapper for:", name);
+          }
+        }
       }
       name = backup;
     }
+    if (has_getattr) {
+      get_attribute( object,"__getattr__" );
+    }
+    if (has_getattribute) {
+      get_attribute( object,"__getattribute__" );
+    }
     __bind_property_descriptors__( object,klass );
-    init = object.__init__;
-    if (init) {
-      init.apply( undefined,arguments );
+    if (object.__init__) {
+      object.__init__.apply( this,arguments );
     }
     return object;
   }

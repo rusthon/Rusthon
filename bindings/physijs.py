@@ -11,7 +11,6 @@ def Physijs_initialize( worker='/libs/physijs/physijs_worker.js', ammo='/libs/am
 
 
 def PhysijsMaterial( material, friction=0.8, restitution=0.2):  ## TODO should this be wrapped in its own class?
-	print 'converting material to physijs material', material
 	with javascript:
 		return Physijs.createMaterial( material[...], friction, restitution )
 

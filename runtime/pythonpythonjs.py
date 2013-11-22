@@ -70,8 +70,8 @@ def get_attribute(object, attribute):
 				JS("var cached = object.cached_wrapper")
 				if cached:
 					return cached
-				else:
-					def wrapper(args,kwargs): return object.apply(None, args)
+				else:  ## TODO - double check if this still happens
+					def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
 					wrapper.is_wrapper = True
 					object.cached_wrapper = wrapper
 					return wrapper
@@ -144,7 +144,8 @@ def get_attribute(object, attribute):
 				else:
 					args = [args, JSObject()]
 				args[0].splice(0, 0, object)
-				return attr.apply(None, args)  ## should we bind `this` here so callback can use this?
+				return attr.apply(this, args)  ## this is bound so that callback methods can use `this` from the caller
+
 			method.is_wrapper = True
 			object[attribute] = method  ## cache method - we assume that methods do not change
 			return method
@@ -164,7 +165,7 @@ def get_attribute(object, attribute):
 						# put the arguments in order to be processed by PythonJS
 						args = [args, JSObject()]
 					args[0].splice(0, 0, object)
-					return attr.apply(None, args)  ## should we bind `this` here so callback can use this?
+					return attr.apply(this, args)
 				method.is_wrapper = True
 
 				object[attribute] = method  ## cache method - we assume that methods do not change
@@ -190,7 +191,7 @@ def get_attribute(object, attribute):
 							args = [args, JSObject()]
 
 						args[0].splice(0, 0, object)
-						return attr.apply(None, args)
+						return attr.apply(this, args)
 					method.is_wrapper = True
 
 					object[attribute] = method  ## cache method - we assume that methods do not change

@@ -1,0 +1,76 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/javascript">
+
+function MyClass( callback ) {
+	this.callback = callback;
+	this.foo = 'hello';
+	this.bar = 'world';
+	this.call_callback = function() {
+		return this.callback();
+	}
+}
+
+</script>
+
+<script type="text/python">
+
+
+def func():
+	print 'in callback', this
+	print this.foo
+	print this.bar
+
+def func2(xxx='mydefault'):
+	print xxx
+	print 'in callback', this
+	print this.foo
+	print this.bar
+
+
+class A:
+	def method(self):
+		print self
+		print this
+		print this.foo, this.bar
+
+def test():
+	global a
+	with javascript:
+		ob = new( MyClass(func) )
+		print 'testing calling - with javascript'
+		ob.call_callback()
+
+	print 'testing normal call'
+	ob.call_callback()
+
+
+	with javascript:
+		c = new( MyClass(func2) )
+		print 'testing calling - with javascript'
+		c.call_callback()
+
+	print 'testing normal call'
+	c.call_callback()
+
+
+	a = A()
+	with javascript:
+		ob2 = new( MyClass(a.method) )
+		print 'testing method call - with javascript'
+		ob2.call_callback()
+
+	print 'testing normal method call'
+	ob2.call_callback()
+
+
+
+</script>
+
+</head>
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
