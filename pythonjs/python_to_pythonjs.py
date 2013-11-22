@@ -328,7 +328,7 @@ class PythonToPythonJS(NodeVisitor):
 		#values = map(self.visit, node.values)
 		#a = [ '%s=%s'%x for x in zip(keys, values) ]
 		#b = 'JSObject(%s)' %', '.join(a)
-		#return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
+		#return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
 		a = []
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
@@ -342,12 +342,12 @@ class PythonToPythonJS(NodeVisitor):
 			return '{ %s }' %b
 		else:
 			b = '[%s]' %', '.join(a)
-			return 'get_attribute(dict, "__call__")([], JSObject(js_object=%s))' %b
+			return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
 
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		return 'get_attribute(tuple, "__call__")([], JSObject(js_object=%s))' %a
+		return '__get__(tuple, "__call__")([], JSObject(js_object=%s))' %a
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
@@ -355,7 +355,7 @@ class PythonToPythonJS(NodeVisitor):
 		if self._with_js:
 			return a
 		else:
-			return 'get_attribute(list, "__call__")([], JSObject(js_object=%s))' %a
+			return '__get__(list, "__call__")([], JSObject(js_object=%s))' %a
 
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
@@ -373,7 +373,7 @@ class PythonToPythonJS(NodeVisitor):
 		generators = list( node.generators )
 		self._gen_comp( generators, node )
 
-		return 'get_attribute(list, "__call__")([], JSObject(js_object=__comprehension__))'
+		return '__get__(list, "__call__")([], JSObject(js_object=__comprehension__))'
 
 
 	def _gen_comp(self, generators, node):
@@ -383,8 +383,8 @@ class PythonToPythonJS(NodeVisitor):
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
 		writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
-		writer.write('get%s = get_attribute(iter%s, "__getitem__")'%(id,id) )
-		writer.write('while idx%s < get_attribute(len, "__call__")([iter%s], JSObject()):' %(id,id) )
+		writer.write('get%s = __get__(iter%s, "__getitem__")'%(id,id) )
+		writer.write('while idx%s < __get__(len, "__call__")([iter%s], JSObject()):' %(id,id) )
 		writer.push()
 
 		writer.write('var(%s)'%gen.target.id)
@@ -531,7 +531,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._injector = []
 
 		for dec in class_decorators:
-			writer.write('%s = get_attribute(%s,"__call__")( [%s], JSObject() )' % (name, self.visit(dec), name))
+			writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (name, self.visit(dec), name))
 
 	def visit_And(self, node):
 		return ' and '
@@ -705,7 +705,7 @@ class PythonToPythonJS(NodeVisitor):
 					comp.append( 'Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
 					comp.append( "%s['__contains__'](%s)" %a )
 				else:
-					comp.append( "get_attribute(get_attribute(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
 
 				if isinstance(node.ops[i], ast.NotIn):
 					comp.append( ' )')  ## it is not required to enclose NotIn
@@ -750,7 +750,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s( [%s], JSObject() )' %(getter, node_value)
 
 			if '__getattribute__' in typedef.methods or typedef.check_for_parent_with( method='__getattribute__' ):
-				return 'get_attribute(%s, "%s")' % (node_value, node.attr)
+				return '__get__(%s, "%s")' % (node_value, node.attr)
 
 
 			elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
@@ -775,7 +775,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s( [%s], JSObject() )' %(getter, node_value)
 
 			elif typedef.check_for_parent_with( class_attribute=node.attr ):
-				#return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## get_attribute is broken with grandparent class attributes
+				#return '__get__(%s, "%s")' % (node_value, node.attr)  ## __get__ is broken with grandparent class attributes - TODO double check and fix this
 				if node.attr in typedef.class_attributes:
 					## this might not be always correct
 					return "%s['__class__']['%s']" %(node_value, node.attr)
@@ -789,9 +789,9 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
 			else:
-				return 'get_attribute(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
+				return '__get__(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
 		else:
-			return 'get_attribute(%s, "%s")' % (node_value, node.attr)      ## TODO - double check this
+			return '__get__(%s, "%s")' % (node_value, node.attr)      ## TODO - double check this
 
 
 	def visit_Index(self, node):
@@ -811,18 +811,18 @@ class PythonToPythonJS(NodeVisitor):
 			if '__getitem__' in self._classes[ klass ]:
 				return '__%s___getitem__([%s, %s], JSObject())' % (klass, name, self.visit(node.slice))
 			else:
-				return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
+				return '__get__(%s, "__getitem__")([%s], JSObject())' % (
 					self.visit(node.value),
 					self.visit(node.slice),
 				)
 		elif isinstance(node.slice, ast.Slice):
-			return 'get_attribute(%s, "__getslice__")([%s], JSObject())' % (
+			return '__get__(%s, "__getslice__")([%s], JSObject())' % (
 				self.visit(node.value),
 				self.visit(node.slice),
 			)
 
 		else:
-			return 'get_attribute(%s, "__getitem__")([%s], JSObject())' % (
+			return '__get__(%s, "__getitem__")([%s], JSObject())' % (
 				self.visit(node.value),
 				self.visit(node.slice),
 			)
@@ -847,7 +847,7 @@ class PythonToPythonJS(NodeVisitor):
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 			else:
-				code = "get_attribute(get_attribute(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
+				code = "__get__(__get__(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
 			writer.write(code)
@@ -892,7 +892,7 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
 
 				else:
-					code = 'set_attribute(%s, "%s", %s)' % (
+					code = '__set__(%s, "%s", %s)' % (
 						target_value,
 						target.attr,
 						self.visit(node.value)
@@ -906,7 +906,7 @@ class PythonToPythonJS(NodeVisitor):
 
 
 			else:
-				code = 'set_attribute(%s, "%s", %s)' % (
+				code = '__set__(%s, "%s", %s)' % (
 					target_value,
 					target.attr,
 					self.visit(node.value)
@@ -968,7 +968,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('%s = %s' % (r, self.visit(node.value)))
 			for i, target in enumerate(target.elts):
 				if isinstance(target, Attribute):
-					code = 'set_attribute(%s, "%s", %s[%s])' % (
+					code = '__set__(%s, "%s", %s[%s])' % (
 						self.visit(target.value),
 						target.attr,
 						r,
@@ -976,7 +976,7 @@ class PythonToPythonJS(NodeVisitor):
 					)
 					writer.write(code)
 				else:
-					writer.write("%s = get_attribute(get_attribute(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (target.id, r, i))
+					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (target.id, r, i))
 
 	def visit_Print(self, node):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
@@ -1078,34 +1078,34 @@ class PythonToPythonJS(NodeVisitor):
 				if name in self._global_functions:
 					return '%s( [%s], __NULL_OBJECT__ )' %(name,args)
 				else:
-					return 'get_attribute(%s, "__call__")([%s], __NULL_OBJECT__)' % (name, args)
+					return '__get__(%s, "__call__")([%s], __NULL_OBJECT__)' % (name, args)
 
 			elif call_has_args_kwargs_only:
 				if name in self._global_functions:
 					return '%s( [%s], {%s} )' %(name,args, kwargs)
 				else:
-					return 'get_attribute(%s, "__call__")([%s], {%s} )' % (name, args, kwargs)
+					return '__get__(%s, "__call__")([%s], {%s} )' % (name, args, kwargs)
 
 
 			elif call_has_args:
 				if name == 'dict':
-					return 'get_attribute(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
+					return '__get__(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
 				elif name in ('list', 'tuple'):
 					if len(node.args):
-						return 'get_attribute(%s, "__call__")([], JSObject(js_object=%s))' % (name, args_name)
+						return '__get__(%s, "__call__")([], JSObject(js_object=%s))' % (name, args_name)
 					else:
-						return 'get_attribute(%s, "__call__")([], %s)' % (name, kwargs_name)
+						return '__get__(%s, "__call__")([], %s)' % (name, kwargs_name)
 				else:
-					return 'get_attribute(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
+					return '__get__(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 
 			elif name in self._classes:
-				return 'get_attribute(%s, "__call__")( )' %name
+				return '__get__(%s, "__call__")( )' %name
 
 			elif name in self._builtin_classes:
-				return 'get_attribute(%s, "__call__")( )' %name
+				return '__get__(%s, "__call__")( )' %name
 
 			elif name in self._global_functions:
-				#return 'get_attribute(%s, "__call__")( JSArray(), JSObject() )' %name  ## SLOW ##
+				#return '__get__(%s, "__call__")( JSArray(), JSObject() )' %name  ## SLOW ##
 				return '%s( )' %name  ## this is much FASTER ##
 
 			else:
@@ -1118,8 +1118,8 @@ class PythonToPythonJS(NodeVisitor):
 				## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
 				## TODO - remove this optimization, or provide the user with a better error message.
 
-				## So to be safe we still wrap with get_attribute and "__call__"
-				return 'get_attribute(%s, "__call__")( )' %name
+				## So to be safe we still wrap with __get__ and "__call__"
+				return '__get__(%s, "__call__")( )' %name
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
@@ -1317,12 +1317,12 @@ class PythonToPythonJS(NodeVisitor):
 			if node.args.vararg:
 				writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
 				# turn it into a list
-				expr = '%s = get_attribute(list, "__call__")(create_array(%s), {});'
+				expr = '%s = __get__(list, "__call__")(__create_array__(%s), {});'
 				expr = expr % (node.args.vararg, node.args.vararg)
 				writer.write(expr)
 			if node.args.kwarg:
 				writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
-				expr = '%s = get_attribute(dict, "__call__")(create_array(%s), {});'
+				expr = '%s = __get__(dict, "__call__")(__create_array__(%s), {});'
 				expr = expr % (node.args.kwarg, node.args.kwarg)
 				writer.write(expr)
 		else:
@@ -1395,16 +1395,11 @@ class PythonToPythonJS(NodeVisitor):
 					## these with-js functions are assigned to a some objects prototype,
 					## here we assume that they depend on the special "this" variable,
 					## therefore this function can not be marked as f.pythonscript_function,
-					## because we need get_attribute(f,'__call__') to dynamically bind "this"
+					## because we need __get__(f,'__call__') to dynamically bind "this"
 					writer.write( '%s=%s'%(dec,node.name) )
 				else:  ## TODO fix with-javascript decorators
-					writer.write( '%s = get_attribute(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
+					writer.write( '%s = __get__(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
 
-		## Gotcha, this broke calling a "with javascript:" defined function from pythonjs, 
-		## because get_attribute thought it was dealing with a pythonjs function and was
-		## calling the function in the normal pythonjs way, ie. func( [args], {} )
-		#elif self._with_js:  ## this is just an optimization so we can avoid making wrappers at runtime
-		#    writer.write('%s.pythonscript_function=true'%node.name)
 
 		if not self._with_js and not javascript:
 			writer.write('%s.pythonscript_function=True'%node.name)
@@ -1412,7 +1407,7 @@ class PythonToPythonJS(NodeVisitor):
 		# apply decorators
 		for decorator in decorators:
 			assert not self._with_js
-			writer.write('%s = get_attribute(%s,"__call__")( [%s], JSObject() )' % (node.name, self.visit(decorator), node.name))
+			writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, self.visit(decorator), node.name))
 
 	#################### loops ###################
 	## the old-style for loop that puts a while loop inside a try/except and catches StopIteration,
@@ -1426,7 +1421,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('continue')
 		else:
 			if not self.FAST_FOR:
-				writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
+				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
 			writer.write('continue')
 		return ''
 
@@ -1452,7 +1447,7 @@ class PythonToPythonJS(NodeVisitor):
 			if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
 				is_range = True
 			else:
-				writer.write('__iterator__ = get_attribute(get_attribute(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
+				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
 
 			if self.FAST_FOR:
 				if is_range:
@@ -1467,7 +1462,7 @@ class PythonToPythonJS(NodeVisitor):
 					writer.pull()
 				else:
 					writer.write('var(__next__)')
-					writer.write('__next__ = get_attribute(__iterator__, "next_fast")')
+					writer.write('__next__ = __get__(__iterator__, "next_fast")')
 					writer.write('while __iterator__.index < __iterator__.length:')
 					writer.push()
 					writer.write('%s = __next__()' % node.target.id)
@@ -1477,11 +1472,11 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				writer.write('try:')
 				writer.push()
-				writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
 				writer.write('while True:')
 				writer.push()
 				map(self.visit, node.body)
-				writer.write('%s = get_attribute(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
 				writer.pull()
 				writer.pull()
 				writer.write('except StopIteration:')
@@ -1528,7 +1523,7 @@ class PythonToPythonJS(NodeVisitor):
 			#for n in node.body:
 			#    if isinstance(n, ast.Expr) and isinstance(n.value, Name):
 			#        attr_name = n.value.id
-			#        writer.write('%s.%s = get_attribute(%s, "%s")'%(instance_name, attr_name, instance_name, attr_name))
+			#        writer.write('%s.%s = __get__(%s, "%s")'%(instance_name, attr_name, instance_name, attr_name))
 			#    else:
 			#        raise SyntaxError('invalid statement inside of "with x as jsobject:" block')
 			raise SyntaxError('"with x as jsobject:" is DEPRECATED - methods on instances are now callable by default from JavaScript')

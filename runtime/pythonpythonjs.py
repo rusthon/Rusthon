@@ -26,7 +26,7 @@ def jsrange(num):
 	return r
 
 
-def create_array():
+def __create_array__():
 	"""Used to fix a bug/feature of Javascript where new Array(number)
 	created a array with number of undefined elements which is not
 	what we want"""
@@ -44,7 +44,7 @@ def adapt_arguments(handler):
 
 
 
-def get_attribute(object, attribute):
+def __get__(object, attribute):
 	"""Retrieve an attribute, method, property, or wrapper function.
 
 	method are actually functions which are converted to methods by
@@ -250,7 +250,7 @@ def _get_upstream_property(base, attr):  ## no longer required
 	for parent in base.__bases__:
 		return _get_upstream_property(parent, attr)
 
-def set_attribute(object, attribute, value):
+def __set__(object, attribute, value):
 	'''
 	__setattr__ is always called when an attribute is set,
 	unlike __getattr__ that only triggers when an attribute is not found,

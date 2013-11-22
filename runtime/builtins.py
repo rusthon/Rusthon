@@ -100,16 +100,16 @@ with javascript:
 				elif name == '__getattr__':
 					has_getattr = True
 				else:
-					wrapper = get_attribute(object, name)
+					wrapper = __get__(object, name)
 					if not wrapper.is_wrapper:
 						print 'RUNTIME ERROR: failed to get wrapper for:',name
 
 			## to be safe the getters come after other methods are cached ##
 			if has_getattr:
-				get_attribute(object, '__getattr__')
+				__get__(object, '__getattr__')
 
 			if has_getattribute:
-				get_attribute(object, '__getattribute__')
+				__get__(object, '__getattribute__')
 
 			__bind_property_descriptors__(object, klass)
 
@@ -152,7 +152,7 @@ def getattr(ob, attr, property=False):
 			else:
 				print "ERROR: getattr property error", prop
 		else:
-			return get_attribute(ob, attr)  ## TODO rename to _pyjs_get_attribute
+			return __get__(ob, attr)  ## TODO rename to _pyjs_get_attribute
 
 def setattr(ob, attr, value, property=False):
 	with javascript:
