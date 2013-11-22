@@ -14,11 +14,11 @@ class A:
 
 	@property
 	def z(self):
-		print 'using z getter'
+		print 'calling z getter'
 		return self._z
 
-	def __getattr__(self, name):
-		print 'using __getattr__'
+	def __getattribute__(self, name):
+		print 'calling __getattribute__', name
 		if name == 'hello':
 			return 100
 		elif name == 'world':
@@ -36,7 +36,7 @@ def test():
 	print( a.x )
 	print( a.y )
 	print( a.z )
-	print('--testing __getattr__')
+	print('--testing __getattribute__')
 	print( a.hello )
 	print( a.world )
 	print( a.XXX )

@@ -54,25 +54,53 @@ with javascript:
 		klass.__bases__ = parents
 		klass.__name__ = class_name
 		#klass.__dict__ = attrs
+		klass.__unbound_methods__ = Object.create(null)
 		klass.__properties__ = props
 		klass.__attributes__ = attrs
 		for key in attrs:
+			if typeof( attrs[key] ) == 'function':
+				klass.__unbound_methods__[key] = attrs[key]
+
+			if key == '__getattribute__': continue
 			klass[key] = attrs[key]
+
+		## this is needed for fast lookup of property names in set_attribute ##
+		klass.__setters__ = []
+		klass.__getters__ = []
+		for name in klass.__properties__:
+			prop = klass.__properties__[name]
+			klass.__getters__.push( name )
+			if prop['set']:
+				klass.__setters__.push( name )
+		for base in klass.__bases__:
+			klass.__getters__.concat( base.__getters__ )
+			klass.__setters__.concat( base.__setters__ )
+
 
 		def __call__():
 			"""Create a PythonJS object"""
 			object = Object.create(null)
 			object.__class__ = klass
-			#object.__dict__ = {}
+			## we need __dict__ so that __setattr__ can still set attributes using `old-style`: self.__dict__[n]=x
+			Object.defineProperty(
+				object, 
+				'__dict__', 
+				{enumerable:False, value:object, writeable:False, configurable:False}
+			)
 
-			## cache all methods on object ##
-			for name in klass.__attributes__:
-				if typeof( klass.__attributes__[name] ) == 'function':
-					get_attribute( object, name )
+
+			## pre-cache all methods on object so they are callable from JavaScript ##
+			#for name in klass.__attributes__:
+			#	if typeof( klass.__attributes__[name] ) == 'function':
+			#		get_attribute( object, name )
+			for name in klass.__unbound_methods__:
+				wrapper = get_attribute(object, name)
+				if not wrapper.is_wrapper:
+					print 'ERROR: failed to get wrapper for:',name
 
 			__bind_property_descriptors__(object, klass)
 
-			init = get_attribute(object, '__init__')
+			init = object.__init__
 			if init:
 				init.apply(None, arguments)
 			return object

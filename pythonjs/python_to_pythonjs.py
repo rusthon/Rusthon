@@ -749,6 +749,10 @@ class PythonToPythonJS(NodeVisitor):
 					node.returns_type = self._function_return_types[getter]
 				return '%s( [%s], JSObject() )' %(getter, node_value)
 
+			if '__getattribute__' in typedef.methods or typedef.check_for_parent_with( method='__getattribute__' ):
+				return 'get_attribute(%s, "%s")' % (node_value, node.attr)
+
+
 			elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
 				## This optimization breaks when a subclass redefines a class attribute,
 				## but we need it for inplace assignment operators, this is safe only when

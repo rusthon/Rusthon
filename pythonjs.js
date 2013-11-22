@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 21 06:07:26 2013
+// PythonScript Runtime - regenerated on: Thu Nov 21 18:05:10 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -70,6 +70,9 @@ get_attribute = function(object, attribute) {
       }
     }
   }
+  if (Object.hasOwnProperty.call(object, "__getattribute__")) {
+    return object.__getattribute__(attribute);
+  }
   var attr;
   attr = object[attribute];
   if (__NODEJS__ === false) {
@@ -120,6 +123,24 @@ get_attribute = function(object, attribute) {
   if (__class__) {
     if (attribute  in  __class__.__properties__) {
       return __class__.__properties__[attribute]["get"]([object], Object());
+    }
+    if (attribute  in  __class__.__unbound_methods__) {
+      attr = __class__.__unbound_methods__[attribute];
+            var method = function() {
+        var args;
+        args = Array.prototype.slice.call(arguments);
+        if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+          /*pass*/
+        } else {
+          args = [args, Object()];
+        }
+        args[0].splice(0, 0, object);
+        return attr.apply(undefined, args);
+      }
+
+      method.is_wrapper = true;
+      object[attribute] = method;
+      return method;
     }
     attr = __class__[attribute];
     if (attribute  in  __class__) {
@@ -270,7 +291,16 @@ _get_upstream_property = function(base, attr) {
 }
 
 set_attribute = function(object, attribute, value) {
-  object[attribute] = value;
+  "\n	__setattr__ is always called when an attribute is set,\n	unlike __getattr__ that only triggers when an attribute is not found,\n	this asymmetry is in fact part of the Python spec.\n	note there is no __setattribute__\n\n	In normal Python a property setter is not called before __setattr__,\n	this is bad language design because the user has been more explicit\n	in having the property setter.\n\n	In PythonJS, property setters are called instead of __setattr__.\n	";
+  if ("__class__"  in  object && object.__class__.__setters__.indexOf(attribute) != -1) {
+    object[attribute] = value;
+  } else {
+    if ("__setattr__"  in  object) {
+      object.__setattr__(attribute, value);
+    } else {
+      object[attribute] = value;
+    }
+  }
 }
 
 get_arguments = function(signature, args, kwargs) {
@@ -387,7 +417,7 @@ __sprintf.args_signature = ["fmt","args"];
 __sprintf.kwargs_signature = {};
 __sprintf.types_signature = {};
 create_class = function(class_name, parents, attrs, props) {
-  var metaclass, klass;
+  var metaclass, klass, prop;
   "Create a PythonScript class";
   if (attrs.__metaclass__) {
     metaclass = attrs.__metaclass__;
@@ -397,6 +427,7 @@ create_class = function(class_name, parents, attrs, props) {
   klass = Object.create( null );
   klass.__bases__=parents;
   klass.__name__=class_name;
+  klass.__unbound_methods__=Object.create( null );
   klass.__properties__=props;
   klass.__attributes__=attrs;
     var iter = attrs;
@@ -404,26 +435,57 @@ create_class = function(class_name, parents, attrs, props) {
   if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
   for (var key=0; key < iter.length; key++) {
     var backup = key; key = iter[key];
+    if (typeof(attrs[key]) == "function") {
+      klass.__unbound_methods__[ key ] = attrs[ key ];
+    }
+    if (key == "__getattribute__") {
+      continue;
+    }
     klass[ key ] = attrs[ key ];
     key = backup;
   }
+  klass.__setters__=[];
+  klass.__getters__=[];
+    var iter = klass.__properties__;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var name=0; name < iter.length; name++) {
+    var backup = name; name = iter[name];
+    prop = klass.__properties__[ name ];
+    klass.__getters__.push( name );
+    if (prop["set"]) {
+      klass.__setters__.push( name );
+    }
+    name = backup;
+  }
+    var iter = klass.__bases__;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var base=0; base < iter.length; base++) {
+    var backup = base; base = iter[base];
+    klass.__getters__.concat( base.__getters__ );
+    klass.__setters__.concat( base.__setters__ );
+    base = backup;
+  }
     var __call__ = function() {
-    var init, object;
+    var init, object, wrapper;
     "Create a PythonJS object";
     object = Object.create( null );
     object.__class__=klass;
-        var iter = klass.__attributes__;
+    Object.defineProperty( object,"__dict__",{ enumerable:false,value:object,writeable:false,configurable:false } );
+        var iter = klass.__unbound_methods__;
 
     if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var name=0; name < iter.length; name++) {
       var backup = name; name = iter[name];
-      if (typeof(klass.__attributes__[name]) == "function") {
-        get_attribute( object,name );
+      wrapper = get_attribute( object,name );
+      if (!wrapper.is_wrapper) {
+        console.log("ERROR: failed to get wrapper for:", name);
       }
       name = backup;
     }
     __bind_property_descriptors__( object,klass );
-    init = get_attribute( object,"__init__" );
+    init = object.__init__;
     if (init) {
       init.apply( undefined,arguments );
     }

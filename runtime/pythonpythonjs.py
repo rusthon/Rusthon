@@ -76,6 +76,9 @@ def get_attribute(object, attribute):
 					object.cached_wrapper = wrapper
 					return wrapper
 
+	if Object.hasOwnProperty.call(object, '__getattribute__'):
+		return object.__getattribute__( attribute )
+
 	var(attr)
 	attr = object[attribute]  ## this could be a javascript object with cached method
 
@@ -131,8 +134,22 @@ def get_attribute(object, attribute):
 		if attribute in __class__.__properties__:  ## @property decorators
 			return __class__.__properties__[ attribute ]['get']( [object], JSObject() )
 
-		#__dict__ = __class__.__dict__
-		#attr = __dict__[attribute]
+		if attribute in __class__.__unbound_methods__:
+			attr = __class__.__unbound_methods__[ attribute ]
+			def method():
+				var(args)
+				args =  Array.prototype.slice.call(arguments)
+				if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+					pass
+				else:
+					args = [args, JSObject()]
+				args[0].splice(0, 0, object)
+				return attr.apply(None, args)  ## should we bind `this` here so callback can use this?
+			method.is_wrapper = True
+			object[attribute] = method  ## cache method - we assume that methods do not change
+			return method
+
+
 		attr = __class__[ attribute ]
 
 		if attribute in __class__:
@@ -226,23 +243,32 @@ def _get_upstream_attribute(base, attr):
 	for parent in base.__bases__:
 		return _get_upstream_attribute(parent, attr)
 
-def _get_upstream_property(base, attr):
+def _get_upstream_property(base, attr):  ## no longer required
 	if attr in base.__properties__:
 		return base.__properties__[ attr ]
 	for parent in base.__bases__:
 		return _get_upstream_property(parent, attr)
 
 def set_attribute(object, attribute, value):
-	#"""Set an attribute on an object by updating its __dict__ property"""
-	#var(__dict__, __class__)
-	#__class__ = object.__class__
-	#if __class__:  ## TODO property setter
-	#__dict__ = object.__dict__
-	#if __dict__:
-	#	__dict__[attribute] = value
-	#else:
-	#	object[attribute] = value
-	object[attribute] = value
+	'''
+	__setattr__ is always called when an attribute is set,
+	unlike __getattr__ that only triggers when an attribute is not found,
+	this asymmetry is in fact part of the Python spec.
+	note there is no __setattribute__
+
+	In normal Python a property setter is not called before __setattr__,
+	this is bad language design because the user has been more explicit
+	in having the property setter.
+
+	In PythonJS, property setters are called instead of __setattr__.
+	'''
+
+	if '__class__' in object and object.__class__.__setters__.indexOf(attribute) != -1:
+		object[attribute] = value
+	elif '__setattr__' in object:
+		object.__setattr__( attribute, value )
+	else:
+		object[attribute] = value
 
 
 
