@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Fri Nov 22 01:47:08 2013
+// PythonScript Runtime - regenerated on: Fri Nov 22 16:33:44 2013
 __NULL_OBJECT__ = Object.create(null);
 if ("window"  in  this && "document"  in  this) {
   __NODEJS__ = false;
@@ -47,25 +47,20 @@ adapt_arguments = function(handler) {
 __get__ = function(object, attribute) {
   "Retrieve an attribute, method, property, or wrapper function.\n\n	method are actually functions which are converted to methods by\n	prepending their arguments with the current object. Properties are\n	not functions!\n\n	DOM support:\n		http://stackoverflow.com/questions/14202699/document-createelement-not-working\n		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n	Direct JavaScript Calls:\n		if an external javascript function is found, and it was not a wrapper that was generated here,\n		check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n		wrapper, cache it on the function, and return the wrapper.\n	";
   if (attribute == "__call__") {
-    if ({}.toString.call(object) === '[object Function]') {
-      if (object.pythonscript_function === true) {
-        return object;
+    if (object.pythonscript_function || object.is_wrapper) {
+      return object;
+    } else {
+      if (object.cached_wrapper) {
+        return object.cached_wrapper;
       } else {
-        if (object.is_wrapper !== undefined) {
-          return object;
-        } else {
-          var cached = object.cached_wrapper;
-          if (cached) {
-            return cached;
-          } else {
-                        var wrapper = function(args, kwargs) {
-              return object.apply(undefined, args);
-            }
-
-            wrapper.is_wrapper = true;
-            object.cached_wrapper = wrapper;
-            return wrapper;
+        if ({}.toString.call(object) === '[object Function]') {
+                    var wrapper = function(args, kwargs) {
+            return object.apply(undefined, args);
           }
+
+          wrapper.is_wrapper = true;
+          object.cached_wrapper = wrapper;
+          return wrapper;
         }
       }
     }
@@ -126,25 +121,17 @@ __get__ = function(object, attribute) {
     }
     if (attribute  in  __class__.__unbound_methods__) {
       attr = __class__.__unbound_methods__[attribute];
-            var method = function() {
-        var args;
-        args = Array.prototype.slice.call(arguments);
-        if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
-          /*pass*/
-        } else {
-          args = [args, Object()];
+      if (attr.fastdef) {
+                var method = function(args, kwargs) {
+          if (arguments && arguments[0]) {
+            arguments[0].splice(0, 0, object);
+            return attr.apply(this, arguments);
+          } else {
+            return attr([object], {  });
+          }
         }
-        args[0].splice(0, 0, object);
-        return attr.apply(this, args);
-      }
 
-      method.is_wrapper = true;
-      object[attribute] = method;
-      return method;
-    }
-    attr = __class__[attribute];
-    if (attribute  in  __class__) {
-      if ({}.toString.call(attr) === '[object Function]') {
+      } else {
                 var method = function() {
           var args;
           args = Array.prototype.slice.call(arguments);
@@ -157,6 +144,38 @@ __get__ = function(object, attribute) {
           return attr.apply(this, args);
         }
 
+      }
+      method.is_wrapper = true;
+      object[attribute] = method;
+      return method;
+    }
+    attr = __class__[attribute];
+    if (attribute  in  __class__) {
+      if ({}.toString.call(attr) === '[object Function]') {
+        if (attr.fastdef) {
+                    var method = function(args, kwargs) {
+            if (arguments && arguments[0]) {
+              arguments[0].splice(0, 0, object);
+              return attr.apply(this, arguments);
+            } else {
+              return attr([object], {  });
+            }
+          }
+
+        } else {
+                    var method = function() {
+            var args;
+            args = Array.prototype.slice.call(arguments);
+            if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+              /*pass*/
+            } else {
+              args = [args, Object()];
+            }
+            args[0].splice(0, 0, object);
+            return attr.apply(this, args);
+          }
+
+        }
         method.is_wrapper = true;
         object[attribute] = method;
         return method;
@@ -173,18 +192,30 @@ __get__ = function(object, attribute) {
       attr = _get_upstream_attribute(base, attribute);
       if (attr) {
         if ({}.toString.call(attr) === '[object Function]') {
-                    var method = function() {
-            var args;
-            args = Array.prototype.slice.call(arguments);
-            if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
-              /*pass*/
-            } else {
-              args = [args, Object()];
+          if (attr.fastdef) {
+                        var method = function(args, kwargs) {
+              if (arguments && arguments[0]) {
+                arguments[0].splice(0, 0, object);
+                return attr.apply(this, arguments);
+              } else {
+                return attr([object], {  });
+              }
             }
-            args[0].splice(0, 0, object);
-            return attr.apply(this, args);
-          }
 
+          } else {
+                        var method = function() {
+              var args;
+              args = Array.prototype.slice.call(arguments);
+              if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && args.length == 2) {
+                /*pass*/
+              } else {
+                args = [args, Object()];
+              }
+              args[0].splice(0, 0, object);
+              return attr.apply(this, args);
+            }
+
+          }
           method.is_wrapper = true;
           object[attribute] = method;
           return method;
@@ -1283,6 +1314,7 @@ ord = function(args, kwargs) {
 ord.NAME = "ord";
 ord.args_signature = ["char"];
 ord.kwargs_signature = {  };
+ord.fastdef = true;
 ord.types_signature = {  };
 ord.pythonscript_function = true;
 chr = function(args, kwargs) {
@@ -1293,6 +1325,7 @@ chr = function(args, kwargs) {
 chr.NAME = "chr";
 chr.args_signature = ["num"];
 chr.kwargs_signature = {  };
+chr.fastdef = true;
 chr.types_signature = {  };
 chr.pythonscript_function = true;
 var Iterator, __Iterator_attrs, __Iterator_parents;
@@ -1677,6 +1710,7 @@ __list___getitem__ = function(args, kwargs) {
 __list___getitem__.NAME = "__list___getitem__";
 __list___getitem__.args_signature = ["self", "index"];
 __list___getitem__.kwargs_signature = {  };
+__list___getitem__.fastdef = true;
 __list___getitem__.types_signature = {  };
 __list___getitem__.pythonscript_function = true;
 __list_attrs["__getitem__"] = __list___getitem__;
@@ -1690,6 +1724,7 @@ __list___setitem__ = function(args, kwargs) {
 __list___setitem__.NAME = "__list___setitem__";
 __list___setitem__.args_signature = ["self", "index", "value"];
 __list___setitem__.kwargs_signature = {  };
+__list___setitem__.fastdef = true;
 __list___setitem__.types_signature = {  };
 __list___setitem__.pythonscript_function = true;
 __list_attrs["__setitem__"] = __list___setitem__;

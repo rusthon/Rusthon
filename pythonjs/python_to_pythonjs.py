@@ -141,8 +141,6 @@ class Typedef(object):
 		return '__%s_%s' %(self.name, name) ## class name
 
 	def check_for_parent_with(self, method=None, property=None, operator=None, class_attribute=None):
-		log('check_for_parent_with: %s'%locals())
-		log('self.parents: %s'%self.parents)
 
 		for parent_name in self.parents:
 			if not self.compiler.is_known_class_name( parent_name ):
@@ -925,6 +923,10 @@ class PythonToPythonJS(NodeVisitor):
 		elif isinstance(target, Name):
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
+			if writer.is_at_global_level():
+				log('GLOBAL: %s : %s'%(target.id, node_value))
+				self._globals[ target.id ] = None
+
 			if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
 				self._instances[ target.id ] = node.value.func.id  ## keep track of instances
 			elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
@@ -948,12 +950,19 @@ class PythonToPythonJS(NodeVisitor):
 			elif hasattr(node.value, 'returns_type'):
 				self._instances[ target.id ] = node.value.returns_type
 			elif target.id in self._instances:
-				self._instances.pop( target.id )
+				if target.id in self._globals:
+					pass
+				else:
+					log('--forget: %s'%target.id)
+					type = self._instances.pop( target.id )
+					log('----%s'%type)
 
 			if target.id in self._instances:
 				type = self._instances[ target.id ]
+				log('typed assignment: %s is-type %s' %(target.id,type))
 				if writer.is_at_global_level():
 					self._globals[ target.id ] = type
+					log('known global:%s - %s'%(target.id,type))
 
 					if self._with_static_type:
 						if type == 'list':
@@ -965,6 +974,11 @@ class PythonToPythonJS(NodeVisitor):
 
 					writer.write('%s = %s' % (target.id, node_value))
 				else:
+					if target.id in self._globals and self._globals[target.id] is None:
+						self._globals[target.id] = type
+						self._instances[ target.id ] = type
+						log('set global type: %s'%type)
+
 					writer.write('%s = %s' % (target.id, node_value))
 			else:
 				writer.write('%s = %s' % (target.id, node_value))
@@ -1382,6 +1396,8 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
 		defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
 		writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
+		if self._with_fastdef or fastdef:
+			writer.write('%s.fastdef = True' %node.name)
 
 		#types = ['%s:%s'%(self.visit(x[0]), '"%s"'%type(self.visit(x[1])).__name__ ) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
 		types = []

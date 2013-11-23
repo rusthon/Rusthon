@@ -61,20 +61,31 @@ def __get__(object, attribute):
 		wrapper, cache it on the function, and return the wrapper.
 	"""
 	if attribute == '__call__':
-		if JS("{}.toString.call(object) === '[object Function]'"):
-			if JS("object.pythonscript_function === true"):
-				return object
-			elif JS("object.is_wrapper !== undefined"):
-				return object
-			else:
-				JS("var cached = object.cached_wrapper")
-				if cached:
-					return cached
-				else:  ## TODO - double check if this still happens
-					def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
-					wrapper.is_wrapper = True
-					object.cached_wrapper = wrapper
-					return wrapper
+		if object.pythonscript_function or object.is_wrapper:  ## common case
+			return object
+		elif object.cached_wrapper:  ## rare case
+			return object.cached_wrapper
+
+		elif JS("{}.toString.call(object) === '[object Function]'"):
+			#if JS("object.pythonscript_function === true"):
+			#	return object
+			#elif JS("object.is_wrapper !== undefined"):
+			#	return object
+			#else:
+			#	JS("var cached = object.cached_wrapper")
+			#	if cached:
+			#		return cached
+			#	else:  ## TODO - double check if this still happens
+			#		def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
+			#		wrapper.is_wrapper = True
+			#		object.cached_wrapper = wrapper
+			#		return wrapper
+
+			def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
+			wrapper.is_wrapper = True
+			object.cached_wrapper = wrapper
+			return wrapper
+
 
 	if Object.hasOwnProperty.call(object, '__getattribute__'):
 		return object.__getattribute__( attribute )
@@ -136,15 +147,23 @@ def __get__(object, attribute):
 
 		if attribute in __class__.__unbound_methods__:
 			attr = __class__.__unbound_methods__[ attribute ]
-			def method():
-				var(args)
-				args =  Array.prototype.slice.call(arguments)
-				if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
-					pass
-				else:
-					args = [args, JSObject()]
-				args[0].splice(0, 0, object)
-				return attr.apply(this, args)  ## this is bound so that callback methods can use `this` from the caller
+			if attr.fastdef:
+				def method(args,kwargs):
+					if arguments and arguments[0]:
+						arguments[0].splice(0,0,object)
+						return attr.apply(this, arguments)
+					else:
+						return attr( [object], {} )
+			else:
+				def method():
+					var(args)
+					args =  Array.prototype.slice.call(arguments)
+					if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+						pass
+					else:
+						args = [args, JSObject()]
+					args[0].splice(0, 0, object)
+					return attr.apply(this, args)  ## this is bound so that callback methods can use `this` from the caller
 
 			method.is_wrapper = True
 			object[attribute] = method  ## cache method - we assume that methods do not change
@@ -155,21 +174,28 @@ def __get__(object, attribute):
 
 		if attribute in __class__:
 			if JS("{}.toString.call(attr) === '[object Function]'"):
-				def method():
-					var(args)
-					args =  Array.prototype.slice.call(arguments)
-					if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
-						pass
-					else:
-						# in the case where the method was submitted to javascript code
-						# put the arguments in order to be processed by PythonJS
-						args = [args, JSObject()]
-					args[0].splice(0, 0, object)
-					return attr.apply(this, args)
+				if attr.fastdef:
+					def method(args,kwargs):
+						if arguments and arguments[0]:
+							arguments[0].splice(0,0,object)
+							return attr.apply(this, arguments)
+						else:
+							return attr( [object], {} )
+				else:
+					def method():
+						var(args)
+						args =  Array.prototype.slice.call(arguments)
+						if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+							pass
+						else:
+							# in the case where the method was submitted to javascript code
+							# put the arguments in order to be processed by PythonJS
+							args = [args, JSObject()]
+						args[0].splice(0, 0, object)
+						return attr.apply(this, args)
+
 				method.is_wrapper = True
-
 				object[attribute] = method  ## cache method - we assume that methods do not change
-
 				return method
 			else:
 				return attr
@@ -180,22 +206,30 @@ def __get__(object, attribute):
 			attr = _get_upstream_attribute(base, attribute)
 			if attr:
 				if JS("{}.toString.call(attr) === '[object Function]'"):
-					def method():
-						var(args)
-						args =  Array.prototype.slice.call(arguments)
-						if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
-							pass
-						else:
-							# in the case where the method was submitted to javascript code
-							# put the arguments in order to be processed by PythonJS
-							args = [args, JSObject()]
 
-						args[0].splice(0, 0, object)
-						return attr.apply(this, args)
+					if attr.fastdef:
+						def method(args,kwargs):
+							if arguments and arguments[0]:
+								arguments[0].splice(0,0,object)
+								return attr.apply(this, arguments)
+							else:
+								return attr( [object], {} )
+					else:
+						def method():
+							var(args)
+							args =  Array.prototype.slice.call(arguments)
+							if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+								pass
+							else:
+								# in the case where the method was submitted to javascript code
+								# put the arguments in order to be processed by PythonJS
+								args = [args, JSObject()]
+
+							args[0].splice(0, 0, object)
+							return attr.apply(this, args)
+
 					method.is_wrapper = True
-
 					object[attribute] = method  ## cache method - we assume that methods do not change
-
 					return method
 				else:
 					return attr

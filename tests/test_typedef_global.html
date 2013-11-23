@@ -1,0 +1,40 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+
+class A:
+	def __init__(self, x,y,z):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def copy(self):
+		return A(self.x, self.y, self.z)
+
+
+MyGlobal = None
+
+def test():
+	global MyGlobal
+	MyGlobal = A(1,2,3)
+	func()
+
+
+def func():
+	a = MyGlobal.copy()
+	a.x = 2
+	a.y = 3
+	a.z = 4
+	return a
+
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>
