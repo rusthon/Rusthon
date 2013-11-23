@@ -135,7 +135,7 @@ class JSGenerator(NodeVisitor):
 			name = self.visit(node.value)
 			return '%s["$wrapped"]' %name
 		else:
-			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice.value))
+			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
 	def visit_arguments(self, node):
 		out = []
