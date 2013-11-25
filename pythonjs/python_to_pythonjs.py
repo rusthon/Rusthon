@@ -699,7 +699,10 @@ class PythonToPythonJS(NodeVisitor):
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
 			for i in range( node.right.n ): expanded.extend( elts )
-			return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+			if self._with_js:
+				return '[%s]' %','.join(expanded)
+			else:
+				return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
 
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
@@ -877,9 +880,10 @@ class PythonToPythonJS(NodeVisitor):
 			return '%s["$wrapped"]' %name
 
 		elif self._with_js:
-			if isinstance(node.slice, ast.Slice):
-				raise SyntaxError
-			return '%s[ %s ]' %(name, self.visit(node.slice))
+			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
+				return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
+			else:
+				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 		elif isinstance(node.slice, ast.Slice):
 			return '__get__(%s, "__getslice__")([%s], JSObject())' % (
@@ -906,7 +910,10 @@ class PythonToPythonJS(NodeVisitor):
 			)
 
 	def visit_Slice(self, node):
-		lower = upper = step = None
+		if self._with_js:
+			lower = upper = step = 'undefined'
+		else:
+			lower = upper = step = None
 		if node.lower:
 			lower = self.visit(node.lower)
 		if node.upper:
@@ -1368,6 +1375,7 @@ class PythonToPythonJS(NodeVisitor):
 		return_type = None
 		fastdef = False
 		javascript = False
+		inline = False
 		self._cached_property = None
 		self._func_typedefs = {}
 
@@ -1376,7 +1384,11 @@ class PythonToPythonJS(NodeVisitor):
 
 		for decorator in reversed(node.decorator_list):
 			log('@decorator: %s' %decorator)
-			if self._with_js:  ## decorators are special in with-js mode
+			if isinstance(decorator, Name) and decorator.id == 'inline':
+				inline = True
+				self._with_inline = True
+
+			elif self._with_js:  ## decorators are special in with-js mode
 				with_js_decorators.append( self.visit( decorator ) )
 
 			elif isinstance(decorator, Name) and decorator.id == 'fastdef':
@@ -1581,6 +1593,9 @@ class PythonToPythonJS(NodeVisitor):
 				writer.pull()
 
 		writer.pull()
+
+		if inline:
+			self._with_inline = False
 
 		if self._in_js_class:
 			return

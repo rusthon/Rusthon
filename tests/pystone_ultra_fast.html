@@ -3,29 +3,25 @@
 <script src="pythonscript.js"></script>
 
 <script type="text/python" closure="false">
-
-
-LOOPS = 50000
-
 from time import clock
 
+pythonjs.configure( javascript=True )
+
+LOOPS = 50000
 __version__ = "1.1"
 
 [Ident1, Ident2, Ident3, Ident4, Ident5] = range(1, 6)
 
 class Record:
-	@fastdef
-	def __init__(self, PtrComp = None, Discr = 0, EnumComp = 0,
-					   IntComp = 0, StringComp = 0):
+	def __init__(self, PtrComp = None, Discr = 0, EnumComp = 0, IntComp = 0, StringComp = 0):
 		self.PtrComp = PtrComp
 		self.Discr = Discr
 		self.EnumComp = EnumComp
 		self.IntComp = IntComp
 		self.StringComp = StringComp
-	@fastdef
+
 	def copy(self):
-		return Record(self.PtrComp, self.Discr, self.EnumComp,
-					  self.IntComp, self.StringComp)
+		return Record(self.PtrComp, self.Discr, self.EnumComp, self.IntComp, self.StringComp)
 
 TRUE = 1
 FALSE = 0
@@ -44,11 +40,13 @@ BoolGlob = FALSE
 Char1Glob = '\0'
 Char2Glob = '\0'
 Array1Glob = [0]*51
-Array2Glob = [ Array1Glob[:] for i in range(51) ]
+Array2Glob = []
+for i in range(51): Array2Glob.append( Array1Glob[:] )
+
 PtrGlb = None
 PtrGlbNext = None
 
-@fastdef
+
 def Proc0(loops=LOOPS):
 	global IntGlob
 	global BoolGlob
@@ -107,7 +105,7 @@ def Proc0(loops=LOOPS):
 		loopsPerBenchtime = (loops / benchtime)
 	return benchtime, loopsPerBenchtime
 
-@fastdef
+
 def Proc1(PtrParIn):
 	NextRecord = PtrGlb.copy()
 	PtrParIn.PtrComp = NextRecord
@@ -125,7 +123,6 @@ def Proc1(PtrParIn):
 	NextRecord.PtrComp = None
 	return PtrParIn
 
-@fastdef
 def Proc2(IntParIO):
 	IntLoc = IntParIO + 10
 	while 1:
@@ -137,7 +134,6 @@ def Proc2(IntParIO):
 			break
 	return IntParIO
 
-@fastdef
 def Proc3(PtrParOut):
 	global IntGlob
 
@@ -148,7 +144,6 @@ def Proc3(PtrParOut):
 	PtrGlb.IntComp = Proc7(10, IntGlob)
 	return PtrParOut
 
-@fastdef
 def Proc4():
 	global Char2Glob
 
@@ -156,7 +151,6 @@ def Proc4():
 	BoolLoc = BoolLoc or BoolGlob
 	Char2Glob = 'B'
 
-@fastdef
 def Proc5():
 	global Char1Glob
 	global BoolGlob
@@ -164,7 +158,6 @@ def Proc5():
 	Char1Glob = 'A'
 	BoolGlob = FALSE
 
-@fastdef
 def Proc6(EnumParIn):
 	EnumParOut = EnumParIn
 	if not Func3(EnumParIn):
@@ -184,14 +177,11 @@ def Proc6(EnumParIn):
 		EnumParOut = Ident3
 	return EnumParOut
 
-@fastdef
 def Proc7(IntParI1, IntParI2):
 	IntLoc = IntParI1 + 2
 	IntParOut = IntParI2 + IntLoc
 	return IntParOut
 
-@typedef( Array1Par=list, Array2Par=list )
-@fastdef
 def Proc8(Array1Par, Array2Par, IntParI1, IntParI2):
 	global IntGlob
 
@@ -205,7 +195,6 @@ def Proc8(Array1Par, Array2Par, IntParI1, IntParI2):
 	Array2Par[IntLoc+20][IntLoc] = Array1Par[IntLoc]
 	IntGlob = 5
 
-@fastdef
 def Func1(CharPar1, CharPar2):
 	CharLoc1 = CharPar1
 	CharLoc2 = CharLoc1
@@ -214,7 +203,6 @@ def Func1(CharPar1, CharPar2):
 	else:
 		return Ident2
 
-@fastdef
 def Func2(StrParI1, StrParI2):
 	IntLoc = 1
 	while IntLoc <= 1:
@@ -232,16 +220,14 @@ def Func2(StrParI1, StrParI2):
 		else:
 			return FALSE
 
-@fastdef
 def Func3(EnumParIn):
 	EnumLoc = EnumParIn
 	if EnumLoc == Ident3: return TRUE
 	return FALSE
 
-
+@inline
 def test():
 	main( LOOPS )
-
 
 </script>
 </head>

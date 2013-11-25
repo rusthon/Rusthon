@@ -208,8 +208,15 @@ class JSGenerator(NodeVisitor):
 				return '[]'
 
 		elif name == 'JS':
-			s = node.args[0].s.replace('\n', '\\n')
+			s = node.args[0].s.replace('\n', '\\n').replace('\0', '\\0')
 			if s.strip().startswith('#'): s = '/*%s*/'%s
+			if '"' in s or "'" in s:  ## can not trust direct-replace hacks
+				pass
+			else:
+				if ' or ' in s:
+					s = s.replace(' or ', ' || ')
+				if ' not ' in s:
+					s = s.replace(' not ', ' ! ')
 			return s
 
 		else:
