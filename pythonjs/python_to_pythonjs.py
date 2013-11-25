@@ -192,7 +192,12 @@ class PythonToPythonJS(NodeVisitor):
 		self._global_typed_lists = dict()  ## global name : set  (if len(set)==1 then we know it is a typed list)
 		self._global_typed_dicts = dict()
 		self._global_typed_tuples = dict()
-		self._global_functions = set()
+		self._global_functions = dict()
+		self._with_inline = False
+		self._inline = []
+		self._inline_ids = 0
+		self._js_classes = dict()
+		self._in_js_class = False
 
 		self._custom_operators = {}
 		self._injector = []  ## advanced meta-programming hacks
@@ -226,6 +231,10 @@ class PythonToPythonJS(NodeVisitor):
 		self._classes['list'] = set(['__getitem__', '__setitem__'])
 		self._classes['tuple'] = set(['__getitem__', '__setitem__'])
 		self._builtin_classes = set(['dict', 'list', 'tuple'])
+		self._builtin_functions = {
+			'ord':'char.charCodeAt(0)', 
+			'chr':'String.fromCharCode(%s)',
+		}
 
 	def is_known_class_name(self, name):
 		return name in self._classes
@@ -292,6 +301,7 @@ class PythonToPythonJS(NodeVisitor):
 			for n in node.names:
 				if n.name in MINI_STDLIB[ node.module ]:
 					writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] )
+					self._builtin_functions[ n.name ] = n.name + '()'
 
 		elif self._check_for_module( node.module ):
 			if node.names[0].name == '*':
@@ -421,8 +431,45 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Yield(self, node):
 		return 'yield %s' % self.visit(node.value)
 
+	def _visit_js_classdef(self, node):
+		name = node.name
+		log('JavaScript-ClassDef: %s'%name)
+		self._js_classes[ name ] = node
+		self._in_js_class = True
+
+		methods = {}
+		for item in node.body:
+			if isinstance(item, FunctionDef):
+				methods[ item.name ] = item
+
+				item.args.args = item.args.args[1:]  ## remove self
+				finfo = inspect_function( item )
+				for n in finfo['name_nodes']:
+					if n.id == 'self':
+						n.id = 'this'
+
+		init = methods.pop('__init__')
+		args = [self.visit(arg) for arg in init.args.args]
+
+		writer.write('def %s(%s):' %(name,','.join(args)))
+		writer.push()
+		for b in init.body:
+			line = self.visit(b)
+			if line:
+				writer.write( line )
+		for method in methods.values():
+			line = self.visit(method)
+			if line:
+				writer.write( line )
+
+		writer.pull()
+		self._in_js_class = False
 
 	def visit_ClassDef(self, node):
+		if self._with_js:
+			self._visit_js_classdef(node)
+			return
+
 		name = node.name
 		log('ClassDef: %s'%name)
 		self._in_class = name
@@ -602,10 +649,18 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
 				writer.write('return self["__dict__"]["%s"]' %self._cached_property)
 			else:
-				writer.write('return %s' % self.visit(node.value))
+				if self._inline:
+					writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
+					writer.write('break')
+				else:
+					writer.write('return %s' % self.visit(node.value))
 
 		else:
-			writer.write('return')  ## empty return
+			if self._inline:
+				writer.write('break')
+				pass  ## TODO put inline inside a while loop that iterates once? and use `break` here to exit early?
+			else:
+				writer.write('return')  ## empty return
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
@@ -766,7 +821,7 @@ class PythonToPythonJS(NodeVisitor):
 				return "%s['__class__']['%s']" %(node_value, node.attr)
 
 			elif node.attr in typedef.attributes:
-				return "%s['%s']" %(node_value, node.attr)
+				return "%s.%s" %(node_value, node.attr)
 
 			elif '__getattr__' in typedef.methods:
 				func = typedef.get_pythonjs_function_name( '__getattr__' )
@@ -794,7 +849,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
 			else:
-				return '__get__(%s, "%s")' % (node_value, node.attr)  ## TODO - double check this
+				return '__get__(%s, "%s")' % (node_value, node.attr)  ## TODO - this could be a builtin class like: list, dict, etc.
 		else:
 			return '__get__(%s, "%s")' % (node_value, node.attr)      ## TODO - double check this
 
@@ -818,6 +873,9 @@ class PythonToPythonJS(NodeVisitor):
 				self.visit(node.value),
 				self.visit(node.slice),
 			)
+
+		elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
+			return '%s[...][%s]'%(name, self.visit(node.slice))
 
 		elif name in self._instances:  ## support x[y] operator overloading
 			klass = self._instances[ name ]
@@ -848,11 +906,18 @@ class PythonToPythonJS(NodeVisitor):
 		# XXX: support only one target for subscripts
 		target = node.targets[0]
 		if isinstance(target, Subscript):
+			name = self.visit(target.value)  ## target.value may have "returns_type" after being visited
+
 			if isinstance(target.slice, ast.Ellipsis):
 				code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
+
 			elif self._with_js:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
+
+			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
+				code = '%s[...][%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
+
 			else:
 				code = "__get__(__get__(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
@@ -877,7 +942,7 @@ class PythonToPythonJS(NodeVisitor):
 			elif typedef and target.attr in typedef.class_attributes:
 				writer.write( '''%s['__class__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
 			elif typedef and target.attr in typedef.attributes:
-				writer.write( '''%s['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
+				writer.write( '%s.%s = %s' %(target_value, target.attr, self.visit(node.value)))
 
 			elif typedef and typedef.parents:
 				parent_prop = typedef.check_for_parent_with( property=target.attr )
@@ -1020,7 +1085,24 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write(self.visit(node.value))
 
 	def visit_Call(self, node):
-		if self._with_js:
+		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'enable':
+			for kw in node.keywords:
+				if kw.arg == 'javascript':
+					if kw.value.id == 'True':
+						self._with_js = True
+					elif kw.value.id == 'False':
+						self._with_js = False
+
+				elif kw.arg == 'inline':
+					if kw.value.id == 'True':
+						self._with_inline = True
+					elif kw.value.id == 'False':
+						self._with_inline = False
+
+				else:
+					raise SyntaxError
+
+		elif self._with_js:
 			args = list( map(self.visit, node.args) )
 			if isinstance(node.func, Name) and node.func.id == 'new':
 				assert len(args) == 1
@@ -1029,11 +1111,15 @@ class PythonToPythonJS(NodeVisitor):
 			elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
 				assert len(args) == 1
 				return node.args[0].s  ## string literal
+
+			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
+				a = ','.join(args)
+				return ' new %s(%s)' %( self.visit(node.func), a )
 			else:
 				a = ','.join(args)
-				return '%s( %s )' %( self.visit(node.func), a )
+				return '%s(%s)' %( self.visit(node.func), a )
 
-		if isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
+		elif isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
 			args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
 			if node.func.id == 'var':
 				for k in node.keywords:
@@ -1063,6 +1149,8 @@ class PythonToPythonJS(NodeVisitor):
 			call_has_args_kwargs_only = len(node.args) and len(node.keywords) and not (node.starargs or node.kwargs)
 			call_has_args = len(node.args) or len(node.keywords) or node.starargs or node.kwargs
 			name = self.visit(node.func)
+			args = None
+			kwargs = None
 
 			if call_has_args_only:  ## lambda only supports simple args for now.
 				args = ', '.join(map(self.visit, node.args))
@@ -1097,7 +1185,88 @@ class PythonToPythonJS(NodeVisitor):
 					code = "JS('for (var name in %s) { %s[name] = %s[...][name]; }')" % (kwargs, kwargs_name, kwargs)
 					writer.append(code)
 
-			if call_has_args_only:
+			#######################################
+
+			#if name in self._func_typedefs:
+			#	if args and kwargs:
+			#		return '%s(%s, %s)' %(args_name, kwargs_name)
+			#	elif args:
+			#		return '%s(%s, {})' %args_name
+			#	elif kwargs:
+			#		return '%s([], %s)' %kwargs_name
+			#	else:
+			#		return '%s()' %name
+
+			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
+				type = self._func_typedefs[ node.func.value.id ]
+				if type == 'list' and node.func.attr == 'append':
+					return '%s[...].push(%s)' %(node.func.value.id, self.visit(node.args[0]))
+				else:
+					raise RuntimeError
+
+			elif name in self._builtin_functions and self._builtin_functions[name]:  ## inlined js
+				if args:
+					return self._builtin_functions[name] % args
+				else:
+					return self._builtin_functions[name]
+
+			elif hasattr(node,'constant') or name in self._builtin_functions:
+				if args and kwargs:
+					return '%s([%s], {%s})' %(args, kwargs)
+				elif args:
+					return '%s([%s], __NULL_OBJECT__)' %(name,args)
+				elif kwargs:
+					return '%s([], {%s})' %(name,kwargs)
+				else:
+					return '%s()' %name
+
+			elif name in self._global_functions:
+				writer.write('##inlined->%s'%name)
+				fnode = self._global_functions[ name ]
+				finfo = inspect_function( fnode )
+				remap = {}
+				for n in finfo['name_nodes']:
+					if n.id not in finfo['locals']: continue
+					if n.id not in remap:
+						new_name = n.id + '_%s'%self._inline_ids
+						remap[ n.id ] = new_name
+						self._inline_ids += 1
+					n.id = remap[ n.id ]
+
+				if remap:
+					writer.write( "JS('var %s')" %','.join(remap.values()) )
+					for n in remap:
+						if n in finfo['typedefs']:
+							self._func_typedefs[ remap[n] ] = finfo['typedefs'][n]
+
+				for i,a in enumerate(node.args):
+					b = self.visit( fnode.args.args[i] )
+					b = remap[ b ]
+					writer.write( "%s = %s" %(b, self.visit(a)) )
+
+				self._inline.append( name )
+
+				writer.write("JS('var __returns__%s = null')"%name)
+				writer.write('while True:')
+				writer.push()
+				for b in fnode.body:
+					self.visit(b)
+				if len( finfo['return_nodes'] ) == 0:
+					writer.write('break')
+				writer.pull()
+
+				if self._inline.pop() != name:
+					raise RuntimeError
+
+				for n in remap:
+					gname = remap[n]
+					for n in finfo['name_nodes']:
+						if n.id == gname:
+							n.id = n
+
+				return '__returns__%s' %name
+
+			elif call_has_args_only:
 				if name in self._global_functions:
 					return '%s( [%s], __NULL_OBJECT__ )' %(name,args)
 				else:
@@ -1160,9 +1329,10 @@ class PythonToPythonJS(NodeVisitor):
 		fastdef = False
 		javascript = False
 		self._cached_property = None
+		self._func_typedefs = {}
 
 		if writer.is_at_global_level():
-			self._global_functions.add( node.name )
+			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
 			log('@decorator: %s' %decorator)
@@ -1211,6 +1381,15 @@ class PythonToPythonJS(NodeVisitor):
 				assert isinstance( decorator.args[0], Name)
 				return_type = decorator.args[0].id
 
+			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
+				c = decorator
+				assert len(c.args) == 0 and len(c.keywords)
+				for kw in c.keywords:
+					assert isinstance( kw.value, Name)
+					self._instances[ kw.arg ] = kw.value.id
+					self._func_typedefs[ kw.arg ] = kw.value.id
+					log('@typedef - %s : %s'%(kw.arg, kw.value.id))
+
 			else:
 				decorators.append( decorator )
 
@@ -1232,32 +1411,6 @@ class PythonToPythonJS(NodeVisitor):
 		## this is kept here as an option to be sure we are compatible with the
 		## old-style code in runtime/pythonpythonjs.py and runtime/builtins.py
 		if not GLOBAL_VARIABLE_SCOPE:
-			def retrieve_vars(body):
-				local_vars = set()
-				global_vars = set()
-				for n in body:
-					if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local - TODO support `a=b=c`
-						local_vars.add( n.targets[0].id )
-					elif isinstance(n, Assign) and isinstance(n.targets[0], ast.Tuple):
-						for c in n.targets[0].elts:
-							local_vars.add( c.id )
-					elif isinstance(n, Global):
-						global_vars.update( n.names )
-					elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
-						for c in n.body:
-							if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
-								local_vars.add( c.targets[0].id )
-					elif hasattr(n, 'body') and not isinstance(n, FunctionDef):
-						# do a recursive search inside new block except function def
-						l, g = retrieve_vars(n.body)
-						local_vars.update(l)
-						global_vars.update(g)
-						if hasattr(n, 'orelse'):
-							l, g = retrieve_vars(n.orelse)
-							local_vars.update(l)
-							global_vars.update(g) 
-				return local_vars, global_vars
-
 			local_vars, global_vars = retrieve_vars(node.body)
 			if local_vars-global_vars:
 				a = ','.join( local_vars-global_vars )
@@ -1332,7 +1485,6 @@ class PythonToPythonJS(NodeVisitor):
 			# create a JS Object to store the value of each parameter
 			signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
 			writer.write('signature = JSObject(%s)' % signature)
-			writer.write('signature["function_name"] = "%s"' %node.name)
 			writer.write('arguments = get_arguments(signature, args, kwargs)')
 			# # then for each argument assign its value
 			for arg in node.args.args:
@@ -1389,6 +1541,11 @@ class PythonToPythonJS(NodeVisitor):
 				writer.pull()
 
 		writer.pull()
+
+		if self._in_js_class:
+			writer.write('this.%s = %s' %(node.name, node.name))
+			return
+
 		## note, in javascript function.name is a non-standard readonly attribute,
 		## the compiler creates anonymous functions with name set to an empty string.
 		writer.write('%s.NAME = "%s"' %(node.name,node.name))
@@ -1454,11 +1611,45 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('break')
 
 	def visit_For(self, node):
+		log('for loop:')
+		for n in node.body:
+			calls = collect_calls(n)
+			for c in calls:
+				log('--call: %s' %c)
+				log('------: %s' %c.func)
+				if self._inline and False:
+					if isinstance(c.func, ast.Name):  ## these are constant for sure
+						i = self._call_ids
+						writer.write( '''JS('var __call__%s = __get__(%s,"__call__")')''' %(i,self.visit(c.func)) )
+						c.func.id = '__call__%s'%i
+						c.constant = True
+						self._call_ids += 1
+
+
 		if self._with_js:
-			writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))
-			writer.push()
-			map(self.visit, node.body)
-			writer.pull()
+			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
+				iter_start = '0'
+				if len(node.iter.args) == 2:
+					iter_start = self.visit(node.iter.args[0])
+					iter_end = self.visit(node.iter.args[1])
+				else:
+					iter_end = self.visit(node.iter.args[0])
+
+				iter_name = node.target.id
+				writer.write('var(%s)' %iter_name)
+				writer.write('%s = %s' %(iter_name, iter_start))
+				writer.write('while %s < %s:' %(iter_name, iter_end))
+				writer.push()
+				map(self.visit, node.body)
+				writer.write('%s += 1' %iter_name )
+				writer.pull()
+
+
+			else:
+				writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))
+				writer.push()
+				map(self.visit, node.body)
+				writer.pull()
 		else:
 
 			## TODO else remove node.target.id from self._instances
@@ -1518,7 +1709,23 @@ class PythonToPythonJS(NodeVisitor):
 	
 			return ''
 
+	_call_ids = 0
 	def visit_While(self, node):
+		log('while loop:')
+		for n in node.body:
+			continue
+			calls = collect_calls(n)
+			for c in calls:
+				log('--call: %s' %c)
+				log('------: %s' %c.func)
+				if isinstance(c.func, ast.Name):  ## these are constant for sure
+					i = self._call_ids
+					writer.write( '__call__%s = __get__(%s,"__call__")' %(i,self.visit(c.func)) )
+					c.func.id = '__call__%s'%i
+					c.constant = True
+					self._call_ids += 1
+
+
 		writer.write('while %s:' % self.visit(node.test))
 		writer.push()
 		map(self.visit, node.body)
@@ -1562,6 +1769,95 @@ class PythonToPythonJS(NodeVisitor):
 
 		else:
 			raise SyntaxError('improper use of "with" statement')
+
+
+class CollectCalls(NodeVisitor):
+	_calls_ = []
+	def visit_Call(self, node):
+		self._calls_.append( node )
+
+def collect_calls(node):
+	CollectCalls._calls_ = calls = []
+	CollectCalls().visit( node )
+	return calls
+
+class CollectNames(NodeVisitor):
+	_names_ = []
+	def visit_Name(self, node):
+		self._names_.append( node )
+
+def collect_names(node):
+	CollectNames._names_ = names = []
+	CollectNames().visit( node )
+	return names
+
+class CollectReturns(NodeVisitor):
+	_returns_ = []
+	def visit_Return(self, node):
+		self._returns_.append( node )
+
+def collect_returns(node):
+	CollectReturns._returns_ = returns = []
+	CollectReturns().visit( node )
+	return returns
+
+def retrieve_vars(body):
+	local_vars = set()
+	global_vars = set()
+	for n in body:
+		if isinstance(n, Assign) and isinstance(n.targets[0], Name):  ## assignment to local - TODO support `a=b=c`
+			local_vars.add( n.targets[0].id )
+		elif isinstance(n, Assign) and isinstance(n.targets[0], ast.Tuple):
+			for c in n.targets[0].elts:
+				local_vars.add( c.id )
+		elif isinstance(n, Global):
+			global_vars.update( n.names )
+		elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
+			for c in n.body:
+				if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
+					local_vars.add( c.targets[0].id )
+		elif hasattr(n, 'body') and not isinstance(n, FunctionDef):
+			# do a recursive search inside new block except function def
+			l, g = retrieve_vars(n.body)
+			local_vars.update(l)
+			global_vars.update(g)
+			if hasattr(n, 'orelse'):
+				l, g = retrieve_vars(n.orelse)
+				local_vars.update(l)
+				global_vars.update(g) 
+
+	return local_vars, global_vars
+
+def inspect_function( node ):
+	local_vars, global_vars = retrieve_vars(node.body)
+	local_vars = local_vars - global_vars
+	for arg in node.args.args:
+		local_vars.add( arg.id )
+	names = []
+	returns = []
+	for n in node.body:
+		names.extend( collect_names(n) )
+		returns.extend( collect_returns(n) )
+
+	typedefs = {}
+	for decorator in node.decorator_list:
+		if isinstance(decorator, Call) and decorator.func.id == 'typedef':
+			c = decorator
+			assert len(c.args) == 0 and len(c.keywords)
+			for kw in c.keywords:
+				assert isinstance( kw.value, Name)
+				typedefs[ kw.arg ] = kw.value.id
+
+	info = {
+		'locals':local_vars, 
+		'globals':global_vars, 
+		'name_nodes':names, 
+		'return_nodes':returns,
+		'typedefs': typedefs
+	}
+	return info
+
+
 
 def main(script):
 	input = parse(script)

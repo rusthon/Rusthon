@@ -18,6 +18,8 @@ from ast import NodeVisitor
 
 class JSGenerator(NodeVisitor):
 	_indent = 0
+	_global_funcions = {}
+
 	@classmethod
 	def push(cls):
 		cls._indent += 1
@@ -125,7 +127,7 @@ class JSGenerator(NodeVisitor):
 
 		if node.name == self._function_stack[0]:  ## could do something special here with global function
 			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
-			pass
+			self._global_funcions[ node.name ] = buffer
 
 		assert node.name == self._function_stack.pop()
 		return buffer
