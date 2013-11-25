@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+with javascript:
+	class A:
+		def __init__(self):
+			self.x = 1
+			self.y = 2
+			self.z = 3
+
+
+
+def test():
+	print 'testing with javascript class'
+
+	with javascript:
+		for i in range(10):
+			a = A()
+			print a
+
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

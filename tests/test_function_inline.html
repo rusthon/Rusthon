@@ -1,0 +1,40 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python" closure="false">
+
+myglobal = 100
+
+def f():
+	return 'xxx'
+
+@typedef(a=list, b=list)
+def func( a, b ):
+	i = 'hello'
+	a.append( i )
+	b.append( 'world' )
+	a[0] = 'xxx'
+	print myglobal
+	return f()
+
+
+def test():
+	print 'testing typedef args'
+	x = []
+	y = []
+	i = 0
+	while i < 10:
+		print func( x, y )
+		i += 1
+	print x[...]
+	print y[...]
+
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

@@ -351,6 +351,10 @@ def _setup_array_prototype():
 				stop = this.length + stop
 			return this.slice(start, stop)
 
+		@Array.prototype.append
+		def func(item):
+			this.push( item )
+
 
 _setup_array_prototype()
 
@@ -403,11 +407,9 @@ def max( lst ):
 def abs( num ):
 	return JS('Math.abs(num)')
 
-@fastdef
 def ord( char ):
 	return JS('char.charCodeAt(0)')
 
-@fastdef
 def chr( num ):
 	return JS('String.fromCharCode(num)')
 

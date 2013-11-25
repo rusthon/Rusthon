@@ -208,7 +208,9 @@ class JSGenerator(NodeVisitor):
 				return '[]'
 
 		elif name == 'JS':
-			return node.args[0].s.replace('\n', '\\n')
+			s = node.args[0].s.replace('\n', '\\n')
+			if s.strip().startswith('#'): s = '/*%s*/'%s
+			return s
 
 		else:
 			if node.args:
