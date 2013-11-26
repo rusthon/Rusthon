@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Nov 26 02:12:03 2013
+// PythonScript Runtime - regenerated on: Tue Nov 26 14:31:15 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -1473,7 +1473,6 @@ __tuple_attrs = Object();
 __tuple_parents = [];
 __tuple_properties = Object();
 __tuple___init__ = function(args, kwargs) {
-  var arr;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -1481,12 +1480,17 @@ __tuple___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var signature, arguments;
-  signature = {"kwargs": {"js_object": undefined}, "args": __create_array__("self", "js_object")};
+  signature = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var js_object = arguments['js_object'];
-  arr = [];
-  self["$wrapped"] = arr;
+  var pointer = arguments['pointer'];
+  if (pointer) {
+    self["$wrapped"] = pointer;
+  } else {
+    arr = [];
+    self["$wrapped"] = arr;
+  }
   if (js_object instanceof Array) {
     var __iterator__, item;
     __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
@@ -1515,9 +1519,9 @@ __tuple___init__ = function(args, kwargs) {
 }
 
 __tuple___init__.NAME = "__tuple___init__";
-__tuple___init__.args_signature = ["self", "js_object"];
-__tuple___init__.kwargs_signature = { js_object:undefined };
-__tuple___init__.types_signature = { js_object:"None" };
+__tuple___init__.args_signature = ["self", "js_object", "pointer"];
+__tuple___init__.kwargs_signature = { js_object:undefined,pointer:undefined };
+__tuple___init__.types_signature = { js_object:"None",pointer:"None" };
 __tuple___init__.pythonscript_function = true;
 __tuple_attrs["__init__"] = __tuple___init__;
 __tuple___getitem__ = function(args, kwargs) {
@@ -2174,7 +2178,20 @@ __dict___init__ = function(args, kwargs) {
         i += 1
       }
     } else {
-      self["$wrapped"] = js_object;
+      if (isinstance([js_object, list], __NULL_OBJECT__)) {
+                var iter = js_object["$wrapped"];
+
+        if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+        for (var item=0; item < iter.length; item++) {
+          var backup = item; item = iter[item];
+          key = item["$wrapped"][ 0 ];
+          value = item["$wrapped"][ 1 ];
+          self["$wrapped"][ key ] = value;
+          item = backup;
+        }
+      } else {
+        self["$wrapped"] = js_object;
+      }
     }
   }
 }
@@ -2538,12 +2555,12 @@ __array___init__ = function(args, kwargs) {
     self.length = len([initializer], __NULL_OBJECT__);
     self.bytes = self.length * self.itemsize;
     if (( self.typecode ) == "float8") {
-      self._scale = max([__get__(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
+      self._scale = max([__get__(list, "__call__")([], { pointer:[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)] })], __NULL_OBJECT__);
       self._norm_get = self._scale / 127;
       self._norm_set = 1.0 / self._norm_get;
     } else {
       if (( self.typecode ) == "float16") {
-        self._scale = max([__get__(list, "__call__")([], {"js_object": [abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]})], __NULL_OBJECT__);
+        self._scale = max([__get__(list, "__call__")([], { pointer:[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)] })], __NULL_OBJECT__);
         self._norm_get = self._scale / 32767;
         self._norm_set = 1.0 / self._norm_get;
       }

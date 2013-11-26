@@ -366,7 +366,7 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		return '__get__(tuple, "__call__")([], {js_object:%s})' %a
+		return '__get__(tuple, "__call__")([], {pointer:%s})' %a
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
@@ -374,7 +374,7 @@ class PythonToPythonJS(NodeVisitor):
 		if self._with_js:
 			return a
 		else:
-			return '__get__(list, "__call__")([], JSObject(js_object=%s))' %a
+			return '__get__(list, "__call__")([], {pointer:%s})' %a
 
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
@@ -392,30 +392,77 @@ class PythonToPythonJS(NodeVisitor):
 		generators = list( node.generators )
 		self._gen_comp( generators, node )
 
-		return '__get__(list, "__call__")([], JSObject(js_object=__comprehension__))'
+		return '__get__(list, "__call__")([], {pointer:__comprehension__})'
 
 
 	def _gen_comp(self, generators, node):
 		gen = generators.pop()
-		if len(gen.ifs): raise NotImplementedError  ## TODO
+		#if len(gen.ifs): raise NotImplementedError  ## TODO
 		id = len(generators)
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
-		writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
-		writer.write('get%s = __get__(iter%s, "__getitem__")'%(id,id) )
-		writer.write('while idx%s < __get__(len, "__call__")([iter%s], JSObject()):' %(id,id) )
-		writer.push()
 
-		writer.write('var(%s)'%gen.target.id)
-		writer.write('%s=get%s( [idx%s], JSObject() )' %(gen.target.id, id,id) )
+		is_range = False
+		if isinstance(gen.iter, ast.Call) and isinstance(gen.iter.func, ast.Name) and gen.iter.func.id in ('range', 'xrange'):
+			is_range = True
+
+			#writer.write('iter%s = __get__(len, "__call__")([%s], JSObject())' %(id, self.visit(gen.iter.args[0])) )
+			writer.write('iter%s = %s' %(id, self.visit(gen.iter.args[0])) )
+			writer.write('while idx%s < iter%s:' %(id,id) )
+			writer.push()
+
+			writer.write('var(%s)'%gen.target.id)
+			writer.write('%s=idx%s' %(gen.target.id, id) )
+
+		else:
+			writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
+			writer.write('get%s = __get__(iter%s, "__getitem__")'%(id,id) )
+
+
+			writer.write('while idx%s < __get__(len, "__call__")([iter%s], JSObject()):' %(id,id) )  ## TODO optimize
+			writer.push()
+
+			writer.write('var(%s)'%gen.target.id)
+			writer.write('%s=get%s( [idx%s], JSObject() )' %(gen.target.id, id,id) )
 
 		if generators:
 			self._gen_comp( generators, node )
 		else:
-			writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
+			if len(gen.ifs):
+				test = []
+				for compare in gen.ifs:
+					test.append( self.visit(compare) )
+
+				writer.write('if %s:' %' and '.join(test))
+
+				writer.push()
+				writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
+				writer.pull()
+			else:
+
+				writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
 
 		writer.write('idx%s+=1' %id )
 		writer.pull()
+
+	def visit_GeneratorExp(self, node):
+		node.returns_type = 'list'
+		writer.write('var(__comprehension__)')
+		writer.write('__comprehension__ = JSArray()')
+
+		length = len( node.generators )
+		a = ['idx%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['iter%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['get%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+
+		generators = list( node.generators )
+		self._gen_comp( generators, node )
+
+		return '__get__(list, "__call__")([], {pointer:__comprehension__})'
+
 
 	def visit_In(self, node):
 		return ' in '
@@ -1977,10 +2024,10 @@ def inspect_function( node ):
 
 
 
-#def main(script):
-#	input = parse(script)
-#	PythonToPythonJS().visit(input)
-#	return writer.getvalue()
+def main(script):
+	input = parse(script)
+	PythonToPythonJS( source=script ).visit(input)
+	return writer.getvalue()
 
 
 def command():

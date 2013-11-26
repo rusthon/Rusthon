@@ -14,7 +14,7 @@ class Key2:
 
 
 def test():
-	global d, k1, k2
+	global d, k1, k2, g
 
 	k1 = Key1()
 	k2 = Key2()
@@ -41,6 +41,13 @@ def test():
 
 	print d.keys()
 	print d.values()
+
+	a = ['h', 'e', 'l', 'l', 'o']
+
+	print 'testing dict init from gen'
+	g = dict( (a[i], i) for i in xrange(len(a)) )
+	print g.keys()[...]
+	print g.values()[...]
 
 </script>
 </head>

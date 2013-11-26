@@ -458,10 +458,13 @@ class Iterator:
 
 
 class tuple:
-	def __init__(self, js_object=None):
+	def __init__(self, js_object=None, pointer=None):
 		with javascript:
-			arr = []
-			self[...] = arr
+			if pointer:
+				self[...] = pointer
+			else:
+				arr = []
+				self[...] = arr
 
 		if instanceof( js_object, Array ):
 			for item in js_object:
@@ -640,7 +643,14 @@ class dict:
 					JS('var value = js_object[i]["value"]')
 					self.set(key, value)
 					i += 1
-			else:
+
+			elif isinstance(js_object, list):
+				with javascript:
+					for item in js_object[...]:
+						key = item[...][0]
+						value = item[...][1]
+						self[...][ key ] = value
+			else:  ## TODO - deprecate
 				self[...] = js_object
 
 
