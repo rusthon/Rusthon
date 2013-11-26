@@ -457,20 +457,21 @@ class PythonToPythonJS(NodeVisitor):
 					if n.id == 'self':
 						n.id = 'this'
 
-		init = methods.pop('__init__')
-		args = [self.visit(arg) for arg in init.args.args]
+		#init = methods.pop('__init__')
+		init = methods.get( '__init__', None)
+		if init:
+			args = [self.visit(arg) for arg in init.args.args]
+		else:
+			args = []
 
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
-		for b in init.body:
-			line = self.visit(b)
-			if line: writer.write( line )
-
-		#for mname in methods:
-		#	method = methods[mname]
-		#	line = self.visit(method)
-		#	if line: writer.write( line )
-		#	writer.write('this.%s = %s'%(mname,mname))
+		if init:
+			for b in init.body:
+				line = self.visit(b)
+				if line: writer.write( line )
+		else:
+			writer.write('pass')
 
 		writer.pull()
 
@@ -479,6 +480,20 @@ class PythonToPythonJS(NodeVisitor):
 			line = self.visit(method)
 			if line: writer.write( line )
 			writer.write('%s.prototype.%s = %s'%(name,mname,mname))
+			f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
+			writer.write('%s.%s = %s'%(name,mname,f))
+
+		for base in node.bases:
+			base = self.visit(base)
+			if base == 'object': continue
+			a = [
+				'for (var n in %s.prototype) {'%base,
+				'  if (!(n in %s.prototype)) {'%name,
+				'    %s.prototype[n] = %s.prototype[n]'%(name,base),
+				'  }',
+				'}'
+			]
+			writer.write( ''.join(a) )
 
 		self._in_js_class = False
 
