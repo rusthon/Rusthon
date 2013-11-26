@@ -355,9 +355,26 @@ def _setup_array_prototype():
 		def func(item):
 			this.push( item )
 
+		@Array.prototype.bisect
+		def func(x, low, high):
+			if low is None: low = 0
+			if high is None: high = this.length
+			while low < high:
+				a = low+high
+				mid = Math.floor(a/2)
+				if x < this[mid]:
+					high = mid
+				else:
+					low = mid + 1
+			return low
 
 _setup_array_prototype()
 
+def bisect(a, x, low=None, high=None):
+	if isinstance(a, list):
+		return a[...].bisect(x, low, high)
+	else:
+		return a.bisect(x, low, high)
 
 
 def range(num, stop):

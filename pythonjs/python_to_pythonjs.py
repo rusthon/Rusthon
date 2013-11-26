@@ -99,6 +99,9 @@ MINI_STDLIB = {
 	},
 	'random': {
 		'random': 'var random = Math.random'
+	},
+	'bisect' : {
+		'bisect' : '/*bisect from fake bisect module*/'  ## bisect is a builtin
 	}
 }
 
@@ -170,8 +173,9 @@ class PythonToPythonJS(NodeVisitor):
 
 	identifier = 0
 
-	def __init__(self, module=None, module_path=None):
+	def __init__(self, source=None, module=None, module_path=None):
 		super(PythonToPythonJS, self).__init__()
+		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
 		self._class_parents = dict()  ## class name : parents
 		self._instance_attributes = dict()  ## class name : [attribute names]
@@ -1141,6 +1145,10 @@ class PythonToPythonJS(NodeVisitor):
 				return '"""%s"""' %s
 
 	def visit_Expr(self, node):
+		log('line: %s' %node.lineno )
+		src = self._source[ node.lineno ]
+		log( src )
+
 		line = self.visit(node.value)
 		if line:
 			writer.write(line)
@@ -1407,6 +1415,9 @@ class PythonToPythonJS(NodeVisitor):
 			return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
 
 	def visit_FunctionDef(self, node):
+		log('-----------------')
+		log('function: %s'%node.name)
+
 		property_decorator = None
 		decorators = []
 		with_js_decorators = []
@@ -1484,7 +1495,6 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				decorators.append( decorator )
 
-		log('function: %s'%node.name)
 		if self._with_js or javascript:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
@@ -1695,8 +1705,6 @@ class PythonToPythonJS(NodeVisitor):
 		if self._with_js:
 			writer.write('continue')
 		else:
-			if not self.FAST_FOR:
-				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % self._for_iterator_target)
 			writer.write('continue')
 		return ''
 
@@ -1718,86 +1726,98 @@ class PythonToPythonJS(NodeVisitor):
 						c.constant = True
 						self._call_ids += 1
 
+		target = node.target
+		enumtar = None
+		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'enumerate':
+			iter = node.iter.args[0]
+			if isinstance(target, ast.Tuple):
+				enumtar = target.elts[0]
+				target = target.elts[1]
+		else:
+			iter = node.iter
+
+		if enumtar:
+			writer.write('var(%s)'%enumtar.id)
+			writer.write('%s = 0' %enumtar.id)
+
 
 		if self._with_js:
-			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id in ('range','xrange'):
+			if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
 				iter_start = '0'
-				if len(node.iter.args) == 2:
-					iter_start = self.visit(node.iter.args[0])
-					iter_end = self.visit(node.iter.args[1])
+				if len(iter.args) == 2:
+					iter_start = self.visit(iter.args[0])
+					iter_end = self.visit(iter.args[1])
 				else:
-					iter_end = self.visit(node.iter.args[0])
+					iter_end = self.visit(iter.args[0])
 
-				iter_name = node.target.id
+				iter_name = target.id
 				writer.write('var(%s)' %iter_name)
 				writer.write('%s = %s' %(iter_name, iter_start))
 				writer.write('while %s < %s:' %(iter_name, iter_end))
 				writer.push()
 				map(self.visit, node.body)
 				writer.write('%s += 1' %iter_name )
+
+				if enumtar:
+					writer.write('%s += 1'%enumtar.id)
+
 				writer.pull()
 
-
 			else:
-				writer.write('for %s in %s:' %(self.visit(node.target),self.visit(node.iter)))
+				writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
 				writer.push()
 				map(self.visit, node.body)
+
+				if enumtar:
+					writer.write('%s += 1'%enumtar.id)
+
 				writer.pull()
 		else:
 
 			## TODO else remove node.target.id from self._instances
-			if isinstance(node.iter, Name) and node.iter.id in self._global_typed_lists:
-				self._instances[ node.target.id ] = list( self._global_typed_lists[ node.iter.id ] )[0]
+			if isinstance(iter, Name) and iter.id in self._global_typed_lists:
+				self._instances[ target.id ] = list( self._global_typed_lists[ iter.id ] )[0]
 
-			self._for_iterator_target = node.target.id  ## this could break with nested for loops
-			writer.write('var(__iterator__, %s)' % node.target.id)
-	
+			writer.write('var(__iterator__, %s)' % target.id)
+
 			is_range = False
 			iter_start = '0'
 			iter_end = None
-			if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id in ('range','xrange'):
+			if self.FAST_FOR and isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
 				is_range = True
-				if len(node.iter.args) == 2:
-					iter_start = self.visit(node.iter.args[0])
-					iter_end = self.visit(node.iter.args[1])
+				if len(iter.args) == 2:
+					iter_start = self.visit(iter.args[0])
+					iter_end = self.visit(iter.args[1])
 				else:
-					iter_end = self.visit(node.iter.args[0])
+					iter_end = self.visit(iter.args[0])
 			else:
-				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(node.iter))
+				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(iter))
 
-			if self.FAST_FOR:
-				if is_range:
-					iter_name = node.target.id
-					#range_num = self.visit( node.iter.args[0] )
-					writer.write('var(%s)' %iter_name)
-					writer.write('%s = %s' %(iter_name, iter_start))
-					writer.write('while %s < %s:' %(iter_name, iter_end))
-					writer.push()
-					map(self.visit, node.body)
-					writer.write('%s += 1' %iter_name )
-					writer.pull()
-				else:
-					writer.write('var(__next__)')
-					writer.write('__next__ = __get__(__iterator__, "next_fast")')
-					writer.write('while __iterator__.index < __iterator__.length:')
-					writer.push()
-					writer.write('%s = __next__()' % node.target.id)
-					map(self.visit, node.body)
-					writer.pull()
-
-			else:
-				writer.write('try:')
-				writer.push()
-				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
-				writer.write('while True:')
+			if is_range:
+				iter_name = target.id
+				writer.write('var(%s)' %iter_name)
+				writer.write('%s = %s' %(iter_name, iter_start))
+				writer.write('while %s < %s:' %(iter_name, iter_end))
 				writer.push()
 				map(self.visit, node.body)
-				writer.write('%s = __get__(__iterator__, "next")(JSArray(), JSObject())' % node.target.id)
+				writer.write('%s += 1' %iter_name )
+
+				if enumtar:
+					writer.write('%s += 1'%enumtar.id)
+
 				writer.pull()
-				writer.pull()
-				writer.write('except StopIteration:')
+			else:
+				writer.write('var(__next__)')
+				writer.write('__next__ = __get__(__iterator__, "next_fast")')
+				writer.write('while __iterator__.index < __iterator__.length:')
+
 				writer.push()
-				writer.write('pass')
+				writer.write('%s = __next__()' % target.id)
+				map(self.visit, node.body)
+
+				if enumtar:
+					writer.write('%s += 1'%enumtar.id)
+
 				writer.pull()
 	
 			return ''
@@ -1957,10 +1977,10 @@ def inspect_function( node ):
 
 
 
-def main(script):
-	input = parse(script)
-	PythonToPythonJS().visit(input)
-	return writer.getvalue()
+#def main(script):
+#	input = parse(script)
+#	PythonToPythonJS().visit(input)
+#	return writer.getvalue()
 
 
 def command():
@@ -1986,7 +2006,7 @@ def command():
 		data = sys.stdin.read()
 
 
-	compiler = PythonToPythonJS( module=module, module_path=module_path )
+	compiler = PythonToPythonJS( source=data, module=module, module_path=module_path )
 
 	data = compiler.preprocess_custom_operators( data )
 	compiler.visit( parse(data) )

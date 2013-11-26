@@ -139,6 +139,12 @@ class JSGenerator(NodeVisitor):
 		else:
 			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
+	def visit_Index(self, node):
+		return self.visit(node.value)
+
+	def visit_Slice(self, node):
+		raise SyntaxError  ## slicing not allowed here at js level
+
 	def visit_arguments(self, node):
 		out = []
 		for name in [self.visit(arg) for arg in node.args]:
