@@ -189,6 +189,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._typedefs = dict()  ## class name : typedef  (not pickled)
 
 		self._globals = dict()
+		self._global_nodes = dict()
 		self._with_static_type = None
 		self._global_typed_lists = dict()  ## global name : set  (if len(set)==1 then we know it is a typed list)
 		self._global_typed_dicts = dict()
@@ -428,6 +429,9 @@ class PythonToPythonJS(NodeVisitor):
 			func = typedef.operators[ op ]
 			a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
 			writer.write( a )
+		elif op == '//=':
+			a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
+			writer.write(a)
 		else:
 			## TODO extra checks to make sure the operator type is valid in this context
 			a = '%s %s %s' %(target, op, self.visit(node.value))
@@ -520,9 +524,10 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('__%s_properties = JSObject()' % name)
 
 		for base in node.bases:
-			code = '__%s_parents.push(%s)' % (name, self.visit(base))
-			writer.write(code)
-			self._class_parents[ name ].add( self.visit(base) )
+			base = self.visit(base)
+			if base == 'object': continue
+			writer.write('__%s_parents.push(%s)' % (name, base))
+			self._class_parents[ name ].add( base )
 
 		for item in node.body:
 			if isinstance(item, FunctionDef):
@@ -695,14 +700,27 @@ class PythonToPythonJS(NodeVisitor):
 		elif op == '%' and isinstance(node.left, ast.Str):
 			return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
 
-		elif op == '*' and isinstance(node.left, ast.List) and isinstance(node.right,ast.Num):
+		elif op == '*' and isinstance(node.left, ast.List):
+			if isinstance(node.right,ast.Num):
+				n = node.right.n
+			elif isinstance(node.right, Name):
+				if node.right.id in self._global_nodes:
+					n = self._global_nodes[ node.right.id ].n
+				else:
+					raise SyntaxError
+			else:
+				raise SyntaxError
+
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
-			for i in range( node.right.n ): expanded.extend( elts )
+			for i in range( n ): expanded.extend( elts )
 			if self._with_js:
 				return '[%s]' %','.join(expanded)
 			else:
 				return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+
+		elif op == '//':
+			return 'Math.floor(%s/%s)' %(left, right)
 
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
@@ -732,6 +750,8 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Sub(self, node):
 		return '-'
 
+	def visit_FloorDiv(self, node):
+		return '//'
 	def visit_Div(self, node):
 		return '/'
 	def visit_Mod(self, node):
@@ -1011,6 +1031,7 @@ class PythonToPythonJS(NodeVisitor):
 			if writer.is_at_global_level():
 				log('GLOBAL: %s : %s'%(target.id, node_value))
 				self._globals[ target.id ] = None
+				self._global_nodes[ target.id ] = node.value
 
 			if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
 				self._instances[ target.id ] = node.value.func.id  ## keep track of instances
@@ -1681,7 +1702,7 @@ class PythonToPythonJS(NodeVisitor):
 
 
 		if self._with_js:
-			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
+			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id in ('range','xrange'):
 				iter_start = '0'
 				if len(node.iter.args) == 2:
 					iter_start = self.visit(node.iter.args[0])
@@ -1716,7 +1737,7 @@ class PythonToPythonJS(NodeVisitor):
 			is_range = False
 			iter_start = '0'
 			iter_end = None
-			if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'range':
+			if self.FAST_FOR and isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id in ('range','xrange'):
 				is_range = True
 				if len(node.iter.args) == 2:
 					iter_start = self.visit(node.iter.args[0])

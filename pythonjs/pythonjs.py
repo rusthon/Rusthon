@@ -328,7 +328,9 @@ class JSGenerator(NodeVisitor):
 		return '==='
 
 	def visit_Compare(self, node):
-		comp = [ self.visit(node.left) ]
+		comp = [ '(']
+		comp.append( self.visit(node.left) )
+		comp.append( ')' )
 		for i in range( len(node.ops) ):
 			comp.append( self.visit(node.ops[i]) )
 			comp.append( self.visit(node.comparators[i]) )

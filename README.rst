@@ -7,7 +7,11 @@ PythonJS 0.8.6
 Introduction
 ======
 
-PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn. It converts a subset of Python into a subset of Javascript.  It features: list comprehensions, classes, multiple inheritance, first-class functions, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.
+PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn, currently maintained and developed by Brett. It features: list comprehensions, classes, multiple inheritance, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.
+
+Speed
+---------------
+PythonJS allows you to select which features you need for each section of your code, where you need performance you can disable multiple inheritance, operator overloading, and other slow operations.  Features can be switched off and on for blocks of code using `pythonjs.configure()` or the special `with` statements and decorators described below.
 
 NodeJS
 ---------------
