@@ -641,7 +641,10 @@ class PythonToPythonJS(NodeVisitor):
 		map(self.visit, node.handlers)
 
 	def visit_Raise(self, node):
-		writer.write('raise %s' % self.visit(node.type))
+		if self._with_js:
+			writer.write('throw Error')
+		else:
+			writer.write('raise %s' % self.visit(node.type))
 
 	def visit_ExceptHandler(self, node):
 		if node.type and node.name:

@@ -217,6 +217,8 @@ class JSGenerator(NodeVisitor):
 					s = s.replace(' or ', ' || ')
 				if ' not ' in s:
 					s = s.replace(' not ', ' ! ')
+				if ' and ' in s:
+					s = s.replace(' and ', ' && ')
 			return s
 
 		else:

@@ -11,7 +11,7 @@ PythonJS is a Python to Javascript translator written in Python, created by Amir
 
 Speed
 ---------------
-PythonJS allows you to select which features you need for each section of your code, where you need performance you can disable multiple inheritance, operator overloading, and other slow operations.  Features can be switched off and on for blocks of code using `pythonjs.configure()` or the special `with` statements and decorators described below.
+PythonJS allows you to select which features you need for each section of your code, where you need performance you can disable operator overloading, and other slow operations.  Features can be switched off and on for blocks of code using `pythonjs.configure()` or the special `with` statements and decorators described below.  When PythonJS is run in fast mode (javascript with inline functions) it beats PyPy in both the Richards and Pystone benchmarks.
 
 NodeJS
 ---------------
