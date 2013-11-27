@@ -251,9 +251,12 @@ def _setup_str_prototype():
 
 		@String.prototype.__getslice__
 		def func(start, stop, step):
-			if stop < 0:
-				stop = this.length + stop
-			return this.substring(start, stop)
+			if start is None and stop is None and step == -1:
+				return this.split('').reverse().join('')
+			else:
+				if stop < 0:
+					stop = this.length + stop
+				return this.substring(start, stop)
 
 		@String.prototype.splitlines
 		def func():
@@ -391,6 +394,8 @@ def range(num, stop):
 			i += 1
 	return list( pointer=arr )
 
+def xrange(num, stop):
+	return range(num, stop)
 
 class StopIteration:
 	pass
@@ -774,6 +779,28 @@ class dict:
 		return Iterator(self.keys(), 0)
 
 
+def set(a):
+	with javascript:
+		arr = []
+		h = Object.create(null)
+		if isinstance(a, list):
+			for item in a[...]:
+				if item in h:
+					continue
+				else:
+					h[item] = True
+					arr.push( item )
+		else:
+			for item in a:
+				if item in h:
+					continue
+				else:
+					h[item] = True
+					arr.push( item )
+	return arr
+
+def frozenset(a):
+	return set(a)
 
 
 class array:

@@ -207,6 +207,7 @@ class PythonToPythonJS(NodeVisitor):
 
 		self._cache_for_body_calls = False
 		self._cache_while_body_calls = False
+		self._comprehensions = []
 
 		self._custom_operators = {}
 		self._injector = []  ## advanced meta-programming hacks
@@ -376,10 +377,23 @@ class PythonToPythonJS(NodeVisitor):
 		else:
 			return '__get__(list, "__call__")([], {pointer:%s})' %a
 
+	def visit_GeneratorExp(self, node):
+		return self.visit_ListComp(node)
+
+
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
-		writer.write('var(__comprehension__)')
-		writer.write('__comprehension__ = JSArray()')
+
+		if len(self._comprehensions) == 0:
+			comps = collect_comprehensions( node )
+			for i,cnode in enumerate(comps):
+				cname = '__comprehension%s' % i
+				cnode._comp_name = cname
+				self._comprehensions.append( cnode )
+
+		cname = node._comp_name
+		writer.write('var(%s)'%cname)
+		writer.write('%s = JSArray()'%cname)
 
 		length = len( node.generators )
 		a = ['idx%s'%i for i in range(length)]
@@ -392,13 +406,14 @@ class PythonToPythonJS(NodeVisitor):
 		generators = list( node.generators )
 		self._gen_comp( generators, node )
 
-		return '__get__(list, "__call__")([], {pointer:__comprehension__})'
+		self._comprehensions.remove( node )
+		return '__get__(list, "__call__")([], {pointer:%s})' %cname
 
 
 	def _gen_comp(self, generators, node):
 		gen = generators.pop()
 		#if len(gen.ifs): raise NotImplementedError  ## TODO
-		id = len(generators)
+		id = len(generators) + self._comprehensions.index( node )
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
 
@@ -428,6 +443,7 @@ class PythonToPythonJS(NodeVisitor):
 		if generators:
 			self._gen_comp( generators, node )
 		else:
+			cname = node._comp_name #self._comprehensions[-1]
 			if len(gen.ifs):
 				test = []
 				for compare in gen.ifs:
@@ -436,32 +452,15 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('if %s:' %' and '.join(test))
 
 				writer.push()
-				writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
+				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 				writer.pull()
 			else:
 
-				writer.write('__comprehension__.push( %s )' %self.visit(node.elt) )
+				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 
 		writer.write('idx%s+=1' %id )
 		writer.pull()
 
-	def visit_GeneratorExp(self, node):
-		node.returns_type = 'list'
-		writer.write('var(__comprehension__)')
-		writer.write('__comprehension__ = JSArray()')
-
-		length = len( node.generators )
-		a = ['idx%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
-		a = ['iter%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
-		a = ['get%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
-
-		generators = list( node.generators )
-		self._gen_comp( generators, node )
-
-		return '__get__(list, "__call__")([], {pointer:__comprehension__})'
 
 
 	def visit_In(self, node):
@@ -1965,6 +1964,28 @@ def collect_returns(node):
 	CollectReturns._returns_ = returns = []
 	CollectReturns().visit( node )
 	return returns
+
+class CollectComprehensions(NodeVisitor):
+	_comps_ = []
+	def visit_GeneratorExp(self,node):
+		self._comps_.append( node )		
+		self.visit( node.elt )
+		for gen in node.generators:
+			self.visit( gen.iter )
+			self.visit( gen.target )
+	def visit_ListComp(self, node):
+		self._comps_.append( node )
+		self.visit( node.elt )
+		for gen in node.generators:
+			self.visit( gen.iter )
+			self.visit( gen.target )
+
+def collect_comprehensions(node):
+	CollectComprehensions._comps_ = comps = []
+	CollectComprehensions().visit( node )
+	assert comps
+	return comps
+
 
 def retrieve_vars(body):
 	local_vars = set()

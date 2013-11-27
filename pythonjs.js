@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Nov 26 14:31:15 2013
+// PythonScript Runtime - regenerated on: Tue Nov 26 17:16:46 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -874,10 +874,14 @@ _setup_str_prototype = function(args, kwargs) {
   String.prototype.__len__=func;
     var func = function(start, stop, step) {
     var stop;
-    if (( stop ) < 0) {
-      stop = this.length + stop;
+    if (( start ) === undefined && ( stop ) === undefined && ( step ) == -1) {
+      return this.split("").reverse().join("");
+    } else {
+      if (( stop ) < 0) {
+        stop = this.length + stop;
+      }
+      return this.substring(start,stop);
     }
-    return this.substring(start,stop);
   }
 
   func.NAME = "func";
@@ -1193,6 +1197,26 @@ range.kwargs_signature = {  };
 range.types_signature = {  };
 range.return_type = "list";
 range.pythonscript_function = true;
+xrange = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("num", "stop")};
+  arguments = get_arguments(signature, args, kwargs);
+  var num = arguments['num'];
+  var stop = arguments['stop'];
+  return range([num, stop], __NULL_OBJECT__);
+}
+
+xrange.NAME = "xrange";
+xrange.args_signature = ["num", "stop"];
+xrange.kwargs_signature = {  };
+xrange.types_signature = {  };
+xrange.pythonscript_function = true;
 var StopIteration, __StopIteration_attrs, __StopIteration_parents;
 __StopIteration_attrs = Object();
 __StopIteration_parents = [];
@@ -2525,6 +2549,76 @@ __dict___iter__.return_type = "Iterator";
 __dict___iter__.pythonscript_function = true;
 __dict_attrs["__iter__"] = __dict___iter__;
 dict = create_class("dict", __dict_parents, __dict_attrs, __dict_properties);
+set = function(args, kwargs) {
+  var h, arr;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("a")};
+  arguments = get_arguments(signature, args, kwargs);
+  var a = arguments['a'];
+  arr = [];
+  h = Object.create(null);
+  if (isinstance(a, list)) {
+        var iter = a["$wrapped"];
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var item=0; item < iter.length; item++) {
+      var backup = item; item = iter[item];
+      if (( item )  in  h || Object.hasOwnProperty.call(h, "__contains__") && h["__contains__"](item)) {
+        continue;
+      } else {
+        h[ item ] = true;
+        arr.push(item);
+      }
+      item = backup;
+    }
+  } else {
+        var iter = a;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var item=0; item < iter.length; item++) {
+      var backup = item; item = iter[item];
+      if (( item )  in  h || Object.hasOwnProperty.call(h, "__contains__") && h["__contains__"](item)) {
+        continue;
+      } else {
+        h[ item ] = true;
+        arr.push(item);
+      }
+      item = backup;
+    }
+  }
+  return arr;
+}
+
+set.NAME = "set";
+set.args_signature = ["a"];
+set.kwargs_signature = {  };
+set.types_signature = {  };
+set.pythonscript_function = true;
+frozenset = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("a")};
+  arguments = get_arguments(signature, args, kwargs);
+  var a = arguments['a'];
+  return set([a], __NULL_OBJECT__);
+}
+
+frozenset.NAME = "frozenset";
+frozenset.args_signature = ["a"];
+frozenset.kwargs_signature = {  };
+frozenset.types_signature = {  };
+frozenset.pythonscript_function = true;
 var array, __array_attrs, __array_parents;
 __array_attrs = Object();
 __array_parents = [];
@@ -3018,7 +3112,7 @@ _to_pythonjs = function(args, kwargs) {
   __next__ = __get__(__iterator__, "next_fast");
   while(( __iterator__.index ) < __iterator__.length) {
     key = __next__();
-    __get__(set, "__call__")([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
+    set([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
   }
   return output;
 }

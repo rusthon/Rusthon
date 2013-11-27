@@ -6,7 +6,7 @@
 
 
 def test():
-	global lst, a, b
+	global lst, a, b, x,y,z
 
 	print 'testing list of chars...'
 	lst = ['h', 'e', 'l', 'l', 'o']
@@ -30,6 +30,21 @@ def test():
 	x = [ ord(c) for c in lst if c=='l']
 	for v in x:
 		print chr(v)
+
+	print 'testing nested1'  ## TODO fix nested comprehensions
+	y = [ [['hello', 'world'] for p in xrange(3)] for ci in xrange(4)]
+	print len(y[0])  ## this should be 3
+
+
+	print 'testing nested2'  ## TODO fix nested comprehensions
+	nested = [
+		[1,2,3],
+		[4,5,6]
+	]
+	z = [ [p*p for p in n] for n in nested]
+	print len(z)
+	print len(z[0])
+
 
 	print 'test complete'
 
