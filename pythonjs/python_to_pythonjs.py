@@ -404,6 +404,7 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('var( %s )' %','.join(a) )
 
 		generators = list( node.generators )
+		generators.reverse()
 		self._gen_comp( generators, node )
 
 		self._comprehensions.remove( node )
@@ -1983,7 +1984,6 @@ class CollectComprehensions(NodeVisitor):
 def collect_comprehensions(node):
 	CollectComprehensions._comps_ = comps = []
 	CollectComprehensions().visit( node )
-	assert comps
 	return comps
 
 

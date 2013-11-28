@@ -22,7 +22,7 @@ def test():
 	## note: 'string'.split is javascript function, and returns an array not a list!
 	print 'testing for char in word for word in words...'
 	words = 'hello world foo bar'.split(' ')
-	x = [ ord(c) for c in word for word in words ]
+	x = [ ord(c) for word in words for c in word ]
 	for v in x:
 		print chr(v)
 
@@ -45,6 +45,13 @@ def test():
 	print len(z)
 	print len(z[0])
 
+	print 'testing nested3'
+	w = 5
+	h = 10
+	u = [x+y for y in range(h) for x in range(w)]
+	print u
+	if u[5] != 1:
+		print 'ERROR - u[5] is not 1', u[5]
 
 	print 'test complete'
 

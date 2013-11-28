@@ -358,6 +358,11 @@ def _setup_array_prototype():
 		def func(item):
 			this.push( item )
 
+		@Array.prototype.remove
+		def func(item):
+			index = this.indexOf( item )
+			this.splice(index, 1)
+
 		@Array.prototype.bisect
 		def func(x, low, high):
 			if low is None: low = 0
@@ -370,6 +375,23 @@ def _setup_array_prototype():
 				else:
 					low = mid + 1
 			return low
+
+		## set-like features ##
+		## `-` operator
+		@Array.prototype.difference
+		def func(other):
+			return this.filter( lambda i: other.indexOf(i)==-1)
+		## `&` operator
+		@Array.prototype.intersection
+		def func(other):
+			return this.filter( lambda i: other.indexOf(i)!=-1)
+		## `<=` operator
+		@Array.prototype.issubset
+		def func(other):
+			for item in this:
+				if other.indexOf(item) == -1:
+					return False
+			return True
 
 _setup_array_prototype()
 
@@ -499,6 +521,11 @@ class tuple:
 		with javascript:
 			return self[...].length
 
+	@property
+	def length(self):
+		with javascript:
+			return self[...].length
+
 	def index(self, obj):
 		with javascript:
 			return self[...].indexOf(obj)
@@ -621,6 +648,11 @@ class list:
 			self[...][index] = value
 
 	def __len__(self):
+		with javascript:
+			return self[...].length
+
+	@property
+	def length(self):
 		with javascript:
 			return self[...].length
 
@@ -780,24 +812,20 @@ class dict:
 
 
 def set(a):
+	'''
+	Python docs say that set are unordered, yet when created from a list, 
+	it always moves the last item to the second element.
+	'''
 	with javascript:
-		arr = []
-		h = Object.create(null)
-		if isinstance(a, list):
-			for item in a[...]:
-				if item in h:
-					continue
-				else:
-					h[item] = True
-					arr.push( item )
-		else:
-			for item in a:
-				if item in h:
-					continue
-				else:
-					h[item] = True
-					arr.push( item )
-	return arr
+		s = []
+		if isinstance(a, list): b = a[...].slice()
+		else: b = a.slice()
+		b.splice(1, 0, b[b.length-1])
+		for item in b:
+			if s.indexOf(item) == -1:
+				s.push( item )
+	return s
+
 
 def frozenset(a):
 	return set(a)

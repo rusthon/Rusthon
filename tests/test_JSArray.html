@@ -36,6 +36,18 @@ def test():
 	print 'checking JSObject'
 	print jsob
 
+	print 'testing difference'
+	with javascript:
+		a = [1,2,3,4]
+		b = [1,2, 55]
+		c = a.difference( b )
+		print c
+
+		print 'testing intersection'
+		d = a.intersection( b )
+		print d
+		print len(d)
+
 </script>
 
 </head>

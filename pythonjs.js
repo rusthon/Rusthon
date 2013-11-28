@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Tue Nov 26 17:16:46 2013
+// PythonScript Runtime - regenerated on: Wed Nov 27 17:19:14 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -1101,6 +1101,17 @@ _setup_array_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   Array.prototype.append=func;
+    var func = function(item) {
+    var index;
+    index = this.indexOf(item);
+    this.splice(index,1);
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["item"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  Array.prototype.remove=func;
     var func = function(x, low, high) {
     var high, a, low, mid;
     if (( low ) === undefined) {
@@ -1126,6 +1137,43 @@ _setup_array_prototype = function(args, kwargs) {
   func.kwargs_signature = {};
   func.types_signature = {};
   Array.prototype.bisect=func;
+    var func = function(other) {
+    return this.filter((function (i) {return other.indexOf(i) == -1}));
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["other"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  Array.prototype.difference=func;
+    var func = function(other) {
+    return this.filter((function (i) {return other.indexOf(i) != -1}));
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["other"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  Array.prototype.intersection=func;
+    var func = function(other) {
+        var iter = this;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var item=0; item < iter.length; item++) {
+      var backup = item; item = iter[item];
+      if (( other.indexOf(item) ) == -1) {
+        return false;
+      }
+      item = backup;
+    }
+    return true;
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["other"];
+  func.kwargs_signature = {};
+  func.types_signature = {};
+  Array.prototype.issubset=func;
 }
 
 _setup_array_prototype.NAME = "_setup_array_prototype";
@@ -1614,6 +1662,25 @@ __tuple___len__.kwargs_signature = {  };
 __tuple___len__.types_signature = {  };
 __tuple___len__.pythonscript_function = true;
 __tuple_attrs["__len__"] = __tuple___len__;
+__tuple_length__getprop__ = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  return self["$wrapped"].length;
+}
+
+__tuple_length__getprop__.NAME = "__tuple_length__getprop__";
+__tuple_length__getprop__.args_signature = ["self"];
+__tuple_length__getprop__.kwargs_signature = {  };
+__tuple_length__getprop__.types_signature = {  };
+__tuple_length__getprop__.pythonscript_function = true;
 __tuple_index = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -1714,6 +1781,8 @@ __tuple___contains__.kwargs_signature = {  };
 __tuple___contains__.types_signature = {  };
 __tuple___contains__.pythonscript_function = true;
 __tuple_attrs["__contains__"] = __tuple___contains__;
+__tuple_properties["length"] = Object();
+__tuple_properties["length"]["get"] = __tuple_length__getprop__;
 tuple = create_class("tuple", __tuple_parents, __tuple_attrs, __tuple_properties);
 var list, __list_attrs, __list_parents;
 __list_attrs = Object();
@@ -2146,6 +2215,25 @@ __list___len__.kwargs_signature = {  };
 __list___len__.types_signature = {  };
 __list___len__.pythonscript_function = true;
 __list_attrs["__len__"] = __list___len__;
+__list_length__getprop__ = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  return self["$wrapped"].length;
+}
+
+__list_length__getprop__.NAME = "__list_length__getprop__";
+__list_length__getprop__.args_signature = ["self"];
+__list_length__getprop__.kwargs_signature = {  };
+__list_length__getprop__.types_signature = {  };
+__list_length__getprop__.pythonscript_function = true;
 __list___contains__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -2171,6 +2259,8 @@ __list___contains__.kwargs_signature = {  };
 __list___contains__.types_signature = {  };
 __list___contains__.pythonscript_function = true;
 __list_attrs["__contains__"] = __list___contains__;
+__list_properties["length"] = Object();
+__list_properties["length"]["get"] = __list_length__getprop__;
 list = create_class("list", __list_parents, __list_attrs, __list_properties);
 var dict, __dict_attrs, __dict_parents;
 __dict_attrs = Object();
@@ -2550,7 +2640,7 @@ __dict___iter__.pythonscript_function = true;
 __dict_attrs["__iter__"] = __dict___iter__;
 dict = create_class("dict", __dict_parents, __dict_attrs, __dict_properties);
 set = function(args, kwargs) {
-  var h, arr;
+  var s;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2561,38 +2651,25 @@ set = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("a")};
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
-  arr = [];
-  h = Object.create(null);
+  "\n	Python docs say that set are unordered, yet when created from a list, \n	it always moves the last item to the second element.\n	";
+  s = [];
   if (isinstance(a, list)) {
-        var iter = a["$wrapped"];
-
-    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
-    for (var item=0; item < iter.length; item++) {
-      var backup = item; item = iter[item];
-      if (( item )  in  h || Object.hasOwnProperty.call(h, "__contains__") && h["__contains__"](item)) {
-        continue;
-      } else {
-        h[ item ] = true;
-        arr.push(item);
-      }
-      item = backup;
-    }
+    b = a["$wrapped"].slice();
   } else {
-        var iter = a;
-
-    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
-    for (var item=0; item < iter.length; item++) {
-      var backup = item; item = iter[item];
-      if (( item )  in  h || Object.hasOwnProperty.call(h, "__contains__") && h["__contains__"](item)) {
-        continue;
-      } else {
-        h[ item ] = true;
-        arr.push(item);
-      }
-      item = backup;
-    }
+    b = a.slice();
   }
-  return arr;
+  b.splice(1,0,b[ b.length - 1 ]);
+    var iter = b;
+
+  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+  for (var item=0; item < iter.length; item++) {
+    var backup = item; item = iter[item];
+    if (( s.indexOf(item) ) == -1) {
+      s.push(item);
+    }
+    item = backup;
+  }
+  return s;
 }
 
 set.NAME = "set";
