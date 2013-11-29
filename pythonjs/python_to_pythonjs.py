@@ -102,6 +102,11 @@ MINI_STDLIB = {
 	},
 	'bisect' : {
 		'bisect' : '/*bisect from fake bisect module*/'  ## bisect is a builtin
+	},
+	'math' : {
+		'sin' : 'var sin = Math.sin',
+		'cos' : 'var cos = Math.cos',
+		'sqrt': 'var sqrt = Math.sqrt'
 	}
 }
 
@@ -244,7 +249,10 @@ class PythonToPythonJS(NodeVisitor):
 		self._builtin_functions = {
 			'ord':'%s.charCodeAt(0)', 
 			'chr':'String.fromCharCode(%s)',
-			'abs':'Math.abs(%s)'
+			'abs':'Math.abs(%s)',
+			'cos':'Math.cos(%s)',
+			'sin':'Math.sin(%s)',
+			'sqrt':'Math.sqrt(%s)'
 		}
 
 	def is_known_class_name(self, name):
@@ -312,7 +320,8 @@ class PythonToPythonJS(NodeVisitor):
 			for n in node.names:
 				if n.name in MINI_STDLIB[ node.module ]:
 					writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] )
-					self._builtin_functions[ n.name ] = n.name + '()'
+					if n.name not in self._builtin_functions:
+						self._builtin_functions[ n.name ] = n.name + '()'
 
 		elif self._check_for_module( node.module ):
 			if node.names[0].name == '*':
@@ -367,7 +376,10 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		return '__get__(tuple, "__call__")([], {pointer:%s})' %a
+		if self._with_js:
+			return a
+		else:
+			return '__get__(tuple, "__call__")([], {pointer:%s})' %a
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
@@ -483,6 +495,25 @@ class PythonToPythonJS(NodeVisitor):
 		elif op == '//=':
 			a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
 			writer.write(a)
+
+		elif self._with_js:
+			a = '%s %s %s' %(target, op, self.visit(node.value))
+			writer.write(a)
+
+		elif isinstance(node.target, ast.Attribute):
+			raise NotImplementedError
+
+		elif isinstance(node.target, ast.Subscript):
+			name = self.visit(node.target.value)
+			slice = self.visit(node.target.slice)
+			#if self._with_js:
+			#	a = '%s[ %s ] %s %s'
+			#	writer.write(a %(name, slice, op, self.visit(node.value)))
+			#else:
+			op = self.visit(node.op)
+			a = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'
+			writer.write(a %(name, slice, name, slice, op, self.visit(node.value)))
+
 		else:
 			## TODO extra checks to make sure the operator type is valid in this context
 			a = '%s %s %s' %(target, op, self.visit(node.value))
@@ -770,7 +801,12 @@ class PythonToPythonJS(NodeVisitor):
 			return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
-			if isinstance(node.right,ast.Num):
+			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
+				if self._with_js:
+					return 'new Array(%s)' %self.visit(node.right)
+				else:
+					return 'JS("new Array(%s)")' %self.visit(node.right)
+			elif isinstance(node.right,ast.Num):
 				n = node.right.n
 			elif isinstance(node.right, Name):
 				if node.right.id in self._global_nodes:
@@ -791,6 +827,9 @@ class PythonToPythonJS(NodeVisitor):
 		elif op == '//':
 			return 'Math.floor(%s/%s)' %(left, right)
 
+		elif op == '**':
+			return 'Math.pow(%s,%s)' %(left, right)
+
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
 			if typedef and op in typedef.operators:
@@ -799,7 +838,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s( [%s, %s], JSObject() )' %(func, left, right)
 
 
-		return '%s %s %s' % (left, op, right)
+		return '(%s %s %s)' % (left, op, right)
 
 	def visit_Eq(self, node):
 		return '=='
@@ -809,6 +848,9 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Is(self, node):
 		return 'is'
+
+	def visit_Pow(self, node):
+		return '**'
 
 	def visit_Mult(self, node):
 		return '*'
@@ -1012,8 +1054,11 @@ class PythonToPythonJS(NodeVisitor):
 		return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
-		# XXX: support only one target for subscripts
-		target = node.targets[0]
+		for target in node.targets:
+			self._visit_assign_helper( node, target )
+			node = ast.Expr( value=target )
+
+	def _visit_assign_helper(self, node, target):
 		if isinstance(target, Subscript):
 			name = self.visit(target.value)  ## target.value may have "returns_type" after being visited
 
@@ -1173,6 +1218,8 @@ class PythonToPythonJS(NodeVisitor):
 						i
 					)
 					writer.write(code)
+				elif self._with_js:
+					writer.write("%s = %s[%s]" % (target.id, r, i))
 				else:
 					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (target.id, r, i))
 

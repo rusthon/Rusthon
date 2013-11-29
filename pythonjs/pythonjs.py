@@ -254,7 +254,7 @@ class JSGenerator(NodeVisitor):
 		left = self.visit(node.left)
 		op = self.visit(node.op)
 		right = self.visit(node.right)
-		return '%s %s %s' % (left, op, right)
+		return '(%s %s %s)' % (left, op, right)
 
 	def visit_Mult(self, node):
 		return '*'

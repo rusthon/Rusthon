@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Thu Nov 28 19:10:55 2013
+// PythonScript Runtime - regenerated on: Thu Nov 28 22:43:36 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -15,7 +15,7 @@ jsrange = function(num) {
   r = [];
   while(( i ) < num) {
     r.push(i);
-    i = i + 1;
+    i = (i + 1);
   }
   return r;
 }
@@ -786,14 +786,14 @@ round = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
   var places = arguments['places'];
-  b = "" + a;
+  b = ("" + a);
   if (( b.indexOf(".") ) == -1) {
     return a;
   } else {
     c = b.split(".");
     x = c[ 0 ];
     y = c[ 1 ].substring(0,places);
-    return parseFloat(x + "." + y);
+    return parseFloat(((x + ".") + y));
   }
 }
 
@@ -813,7 +813,7 @@ str = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("s")};
   arguments = get_arguments(signature, args, kwargs);
   var s = arguments['s'];
-  return "" + s;
+  return ("" + s);
 }
 
 str.NAME = "str";
@@ -878,7 +878,7 @@ _setup_str_prototype = function(args, kwargs) {
       return this.split("").reverse().join("");
     } else {
       if (( stop ) < 0) {
-        stop = this.length + stop;
+        stop = (this.length + stop);
       }
       return this.substring(start,stop);
     }
@@ -921,7 +921,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.types_signature = {};
   String.prototype.startswith=func;
     var func = function(a) {
-    if (( this.substring(this.length - a.length, this.length) ) == a) {
+    if (( this.substring((this.length - a.length), this.length) ) == a) {
       return true;
     } else {
       return false;
@@ -1082,7 +1082,7 @@ _setup_array_prototype = function(args, kwargs) {
     var func = function(start, stop, step) {
     var stop;
     if (( stop ) < 0) {
-      stop = this.length + stop;
+      stop = (this.length + stop);
     }
     return this.slice(start,stop);
   }
@@ -1121,12 +1121,12 @@ _setup_array_prototype = function(args, kwargs) {
       high = this.length;
     }
     while(( low ) < high) {
-      a = low + high;
-      mid = Math.floor(a / 2);
+      a = (low + high);
+      mid = Math.floor((a / 2));
       if (( x ) < this[mid]) {
         high = mid;
       } else {
-        low = mid + 1;
+        low = (mid + 1);
       }
     }
     return low;
@@ -1309,6 +1309,7 @@ next.kwargs_signature = {  };
 next.types_signature = {  };
 next.pythonscript_function = true;
 map = function(args, kwargs) {
+  var arr, v;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -1320,9 +1321,19 @@ map = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var func = arguments['func'];
   var objs = arguments['objs'];
+  arr = [];
+  var __iterator__, ob;
+  __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
+  var __next__;
+  __next__ = __get__(__iterator__, "next_fast");
+  while(( __iterator__.index ) < __iterator__.length) {
+    ob = __next__();
+    v = __get__(func, "__call__")([ob], __NULL_OBJECT__);
+    arr.push(v);
+  }
   var __args_1, __kwargs_1;
   __args_1 = [];
-  __kwargs_1 = {"js_object": map([func, objs["$wrapped"]], __NULL_OBJECT__)};
+  __kwargs_1 = {"pointer": arr};
   return __get__(list, "__call__")([], __kwargs_1);
 }
 
@@ -1332,6 +1343,42 @@ map.kwargs_signature = {  };
 map.types_signature = {  };
 map.return_type = "list";
 map.pythonscript_function = true;
+filter = function(args, kwargs) {
+  var arr;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("func", "objs")};
+  arguments = get_arguments(signature, args, kwargs);
+  var func = arguments['func'];
+  var objs = arguments['objs'];
+  arr = [];
+  var __iterator__, ob;
+  __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
+  var __next__;
+  __next__ = __get__(__iterator__, "next_fast");
+  while(( __iterator__.index ) < __iterator__.length) {
+    ob = __next__();
+    if (__get__(func, "__call__")([ob], __NULL_OBJECT__)) {
+      arr.push(ob);
+    }
+  }
+  var __args_2, __kwargs_2;
+  __args_2 = [];
+  __kwargs_2 = {"pointer": arr};
+  return __get__(list, "__call__")([], __kwargs_2);
+}
+
+filter.NAME = "filter";
+filter.args_signature = ["func", "objs"];
+filter.kwargs_signature = {  };
+filter.types_signature = {  };
+filter.return_type = "list";
+filter.pythonscript_function = true;
 min = function(args, kwargs) {
   var a;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
@@ -1506,7 +1553,7 @@ __Iterator_next = function(args, kwargs) {
     throw StopIteration;
   }
   item = __get__(__get__(self.obj, "get"), "__call__")([self.index], __NULL_OBJECT__);
-  self.index = self.index + 1;
+  self.index = (self.index + 1);
   return item;
 }
 
@@ -1610,7 +1657,7 @@ __tuple___getitem__ = function(args, kwargs) {
   var self = arguments['self'];
   var index = arguments['index'];
   if (( index ) < 0) {
-    index = __get__(self["$wrapped"], "length") + index;
+    index = (__get__(self["$wrapped"], "length") + index);
   }
   return self["$wrapped"][ index ];
 }
@@ -1846,7 +1893,7 @@ __list___getitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   if (( index ) < 0) {
-    index = __get__(self["$wrapped"], "length") + index;
+    index = (__get__(self["$wrapped"], "length") + index);
   }
   return self["$wrapped"][ index ];
 }
@@ -1888,10 +1935,10 @@ __list___getslice__ = function(args, kwargs) {
   var stop = arguments['stop'];
   var step = arguments['step'];
   arr = self["$wrapped"].__getslice__(start,stop);
-  var __args_2, __kwargs_2;
-  __args_2 = [];
-  __kwargs_2 = {"pointer": arr};
-  return __get__(list, "__call__")([], __kwargs_2);
+  var __args_3, __kwargs_3;
+  __args_3 = [];
+  __kwargs_3 = {"pointer": arr};
+  return __get__(list, "__call__")([], __kwargs_3);
 }
 
 __list___getslice__.NAME = "__list___getslice__";
@@ -2513,10 +2560,10 @@ __dict_keys = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   arr = Object.keys(self["$wrapped"]);
-  var __args_3, __kwargs_3;
-  __args_3 = [];
-  __kwargs_3 = {"js_object": arr};
-  return __get__(list, "__call__")([], __kwargs_3);
+  var __args_4, __kwargs_4;
+  __args_4 = [];
+  __kwargs_4 = {"js_object": arr};
+  return __get__(list, "__call__")([], __kwargs_4);
 }
 
 __dict_keys.NAME = "__dict_keys";
@@ -2600,9 +2647,9 @@ __dict___contains__ = function(args, kwargs) {
   var value = arguments['value'];
   keys = Object.keys(self["$wrapped"]);
   if (( typeof(value) ) == "object") {
-    key = "@" + value.uid;
+    key = ("@" + value.uid);
   } else {
-    key = "" + value;
+    key = ("" + value);
   }
   if (( keys.indexOf(key) ) == -1) {
     return false;
@@ -2684,8 +2731,8 @@ set = function(args, kwargs) {
     if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
     for (var b=0; b < iter.length; b++) {
       var backup = b; b = iter[b];
-      if (typeof(b, "number") && ( b ) === ( b | 0 )) {
-        key = b & mask;
+      if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
+        key = (b & mask);
         hashtable[ key ] = b;
         keys.push(key);
       } else {
@@ -2775,16 +2822,16 @@ __array___init__ = function(args, kwargs) {
   self.little_endian = little_endian;
   if (initializer) {
     self.length = len([initializer], __NULL_OBJECT__);
-    self.bytes = self.length * self.itemsize;
+    self.bytes = (self.length * self.itemsize);
     if (( self.typecode ) == "float8") {
       self._scale = max([__get__(list, "__call__")([], { pointer:[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)] })], __NULL_OBJECT__);
-      self._norm_get = self._scale / 127;
-      self._norm_set = 1.0 / self._norm_get;
+      self._norm_get = (self._scale / 127);
+      self._norm_set = (1.0 / self._norm_get);
     } else {
       if (( self.typecode ) == "float16") {
         self._scale = max([__get__(list, "__call__")([], { pointer:[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)] })], __NULL_OBJECT__);
-        self._norm_get = self._scale / 32767;
-        self._norm_set = 1.0 / self._norm_get;
+        self._norm_get = (self._scale / 32767);
+        self._norm_set = (1.0 / self._norm_get);
       }
     }
   } else {
@@ -2865,17 +2912,17 @@ __array___getitem__ = function(args, kwargs) {
   var self = arguments['self'];
   var index = arguments['index'];
   step = self.itemsize;
-  offset = step * index;
+  offset = (step * index);
   dataview = self.dataview;
-  func_name = "get" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object());
+  func_name = ("get" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     value = func(offset);
     if (( self.typecode ) == "float8") {
-      value = value * self._norm_get;
+      value = (value * self._norm_get);
     } else {
       if (( self.typecode ) == "float16") {
-        value = value * self._norm_get;
+        value = (value * self._norm_get);
       }
     }
     return value;
@@ -2906,18 +2953,18 @@ __array___setitem__ = function(args, kwargs) {
   var value = arguments['value'];
   step = self.itemsize;
   if (( index ) < 0) {
-    index = self.length + index - 1;
+    index = ((self.length + index) - 1);
   }
-  offset = step * index;
+  offset = (step * index);
   dataview = self.dataview;
-  func_name = "set" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object());
+  func_name = ("set" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     if (( self.typecode ) == "float8") {
-      value = value * self._norm_set;
+      value = (value * self._norm_set);
     } else {
       if (( self.typecode ) == "float16") {
-        value = value * self._norm_set;
+        value = (value * self._norm_set);
       }
     }
     func(offset, value);
@@ -2990,9 +3037,9 @@ __array_fromlist = function(args, kwargs) {
   length = len([lst], __NULL_OBJECT__);
   step = self.itemsize;
   typecode = self.typecode;
-  size = length * step;
+  size = (length * step);
   dataview = self.dataview;
-  func_name = "set" + __get__(__get__(self, "typecode_names"), "__getitem__")([typecode], Object());
+  func_name = ("set" + __get__(__get__(self, "typecode_names"), "__getitem__")([typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( size ) <= self.bytes) {
     i = 0;
@@ -3036,7 +3083,7 @@ __array_resize = function(args, kwargs) {
   var length = arguments['length'];
   buff = self.buffer;
   source = new Uint8Array(buff);
-  new_size = length * self.itemsize;
+  new_size = (length * self.itemsize);
   new_buff = new ArrayBuffer(new_size);
   target = new Uint8Array(new_buff);
   target.set(source);
@@ -3066,7 +3113,7 @@ __array_append = function(args, kwargs) {
   var self = arguments['self'];
   var value = arguments['value'];
   length = self.length;
-  __get__(__get__(self, "resize"), "__call__")([self.length + 1], __NULL_OBJECT__);
+  __get__(__get__(self, "resize"), "__call__")([(self.length + 1)], __NULL_OBJECT__);
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], Object());
 }
 
@@ -3143,10 +3190,10 @@ __array_to_list = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("self")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  var __args_4, __kwargs_4;
-  __args_4 = [];
-  __kwargs_4 = {"js_object": __get__(__get__(self, "to_array"), "__call__")()};
-  return __get__(list, "__call__")([], __kwargs_4);
+  var __args_5, __kwargs_5;
+  __args_5 = [];
+  __kwargs_5 = {"js_object": __get__(__get__(self, "to_array"), "__call__")()};
+  return __get__(list, "__call__")([], __kwargs_5);
 }
 
 __array_to_list.NAME = "__array_to_list";
@@ -3211,10 +3258,10 @@ _to_pythonjs = function(args, kwargs) {
   }
   if (Object.prototype.toString.call(json) === '[object Array]') {
     output = __get__(list, "__call__")();
-    var __args_5, __kwargs_5;
-    __args_5 = [];
-    __kwargs_5 = {"js_object": json};
-    raw = __get__(list, "__call__")([], __kwargs_5);
+    var __args_6, __kwargs_6;
+    __args_6 = [];
+    __kwargs_6 = {"js_object": json};
+    raw = __get__(list, "__call__")([], __kwargs_6);
     var append;
     append = __get__(output, "append");
     var __iterator__, item;
@@ -3230,10 +3277,10 @@ _to_pythonjs = function(args, kwargs) {
   output = __get__(dict, "__call__")();
   var set;
   set = __get__(output, "set");
-  var __args_6, __kwargs_6;
-  __args_6 = [];
-  __kwargs_6 = {"js_object": Object.keys(json)};
-  keys = __get__(list, "__call__")([], __kwargs_6);
+  var __args_7, __kwargs_7;
+  __args_7 = [];
+  __kwargs_7 = {"js_object": Object.keys(json)};
+  keys = __get__(list, "__call__")([], __kwargs_7);
   var __iterator__, key;
   __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
   var __next__;

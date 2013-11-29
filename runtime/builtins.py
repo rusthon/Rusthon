@@ -432,7 +432,21 @@ def next(obj):
 
 
 def map(func, objs):
-	return list( js_object = map(func, objs[...]) )
+	with javascript: arr = []
+	for ob in objs:
+		v = func(ob)
+		with javascript:
+			arr.push( v )
+	return list( pointer=arr )
+
+def filter(func, objs):
+	with javascript: arr = []
+	for ob in objs:
+		if func( ob ):
+			with javascript:
+				arr.push( ob )
+	return list( pointer=arr )
+
 
 def min( lst ):
 	a = None
