@@ -811,24 +811,78 @@ class dict:
 		return Iterator(self.keys(), 0)
 
 
+
 def set(a):
 	'''
-	Python docs say that set are unordered, yet when created from a list, 
-	it always moves the last item to the second element.
+	This returns an array that is a minimal implementation of set.
+	Often sets are used simply to remove duplicate entries from a list, 
+	and then it get converted back to a list, it is safe to use fastset for this.
+
+	The array prototype is overloaded with basic set functions:
+		difference
+		intersection
+		issubset
+
+	Note: sets in Python are not subscriptable, but can be iterated over.
+
+	Python docs say that set are unordered, some programs may rely on this disorder
+	for randomness, for sets of integers we emulate the unorder only uppon initalization 
+	of the set, by masking the value by bits-1. Python implements sets starting with an 
+	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates 
+	a new array of length 32 and mask of 31.  This is only emulated for arrays of 
+	integers up to an array length of 1536.
+
 	'''
 	with javascript:
+		if isinstance(a, list): a = a[...]
+		hashtable = null
+		if a.length <= 1536:
+			hashtable = {}
+			keys = []
+			if a.length < 6:  ## hash array length 8
+				mask = 7
+			elif a.length < 22: ## 32
+				mask = 31
+			elif a.length < 86: ## 128
+				mask = 127
+			elif a.length < 342: ## 512
+				mask = 511
+			else: 				## 2048
+				mask = 2047
+
+		fallback = False
+		if hashtable:
+			for b in a:
+				if typeof(b,'number') and b is (b|0):  ## set if integer
+					key = b & mask
+					hashtable[ key ] = b
+					keys.push( key )
+				else:
+					fallback = True
+					break
+
+		else:
+			fallback = True
+
 		s = []
-		if isinstance(a, list): b = a[...].slice()
-		else: b = a.slice()
-		b.splice(1, 0, b[b.length-1])
-		for item in b:
-			if s.indexOf(item) == -1:
-				s.push( item )
+
+		if fallback:
+			for item in a:
+				if s.indexOf(item) == -1:
+					s.push( item )
+		else:
+			keys.sort()
+			for key in keys:
+				s.push( hashtable[key] )
+
 	return s
 
 
 def frozenset(a):
 	return set(a)
+
+
+
 
 
 class array:

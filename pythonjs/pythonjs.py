@@ -341,7 +341,13 @@ class JSGenerator(NodeVisitor):
 		comp.append( ')' )
 		for i in range( len(node.ops) ):
 			comp.append( self.visit(node.ops[i]) )
-			comp.append( self.visit(node.comparators[i]) )
+			if isinstance(node.comparators[i], ast.BinOp):
+				comp.append('(')
+				comp.append( self.visit(node.comparators[i]) )
+				comp.append(')')
+			else:
+				comp.append( self.visit(node.comparators[i]) )
+
 		return ' '.join( comp )
 
 	def visit_Not(self, node):

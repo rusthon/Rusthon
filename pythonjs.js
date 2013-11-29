@@ -1,4 +1,4 @@
-// PythonScript Runtime - regenerated on: Wed Nov 27 17:19:14 2013
+// PythonScript Runtime - regenerated on: Thu Nov 28 19:10:55 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -2640,7 +2640,7 @@ __dict___iter__.pythonscript_function = true;
 __dict_attrs["__iter__"] = __dict___iter__;
 dict = create_class("dict", __dict_parents, __dict_attrs, __dict_properties);
 set = function(args, kwargs) {
-  var s;
+  var s, fallback, hashtable;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2651,23 +2651,74 @@ set = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("a")};
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
-  "\n	Python docs say that set are unordered, yet when created from a list, \n	it always moves the last item to the second element.\n	";
-  s = [];
+  "\n	This returns an array that is a minimal implementation of set.\n	Often sets are used simply to remove duplicate entries from a list, \n	and then it get converted back to a list, it is safe to use fastset for this.\n\n	The array prototype is overloaded with basic set functions:\n		difference\n		intersection\n		issubset\n\n	Note: sets in Python are not subscriptable, but can be iterated over.\n\n	Python docs say that set are unordered, some programs may rely on this disorder\n	for randomness, for sets of integers we emulate the unorder only uppon initalization \n	of the set, by masking the value by bits-1. Python implements sets starting with an \n	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates \n	a new array of length 32 and mask of 31.  This is only emulated for arrays of \n	integers up to an array length of 1536.\n\n	";
   if (isinstance(a, list)) {
-    b = a["$wrapped"].slice();
-  } else {
-    b = a.slice();
+    a = a["$wrapped"];
   }
-  b.splice(1,0,b[ b.length - 1 ]);
-    var iter = b;
-
-  if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
-  for (var item=0; item < iter.length; item++) {
-    var backup = item; item = iter[item];
-    if (( s.indexOf(item) ) == -1) {
-      s.push(item);
+  hashtable = null;
+  if (( a.length ) <= 1536) {
+    hashtable = {  };
+    keys = [];
+    if (( a.length ) < 6) {
+      mask = 7;
+    } else {
+      if (( a.length ) < 22) {
+        mask = 31;
+      } else {
+        if (( a.length ) < 86) {
+          mask = 127;
+        } else {
+          if (( a.length ) < 342) {
+            mask = 511;
+          } else {
+            mask = 2047;
+          }
+        }
+      }
     }
-    item = backup;
+  }
+  fallback = false;
+  if (hashtable) {
+        var iter = a;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var b=0; b < iter.length; b++) {
+      var backup = b; b = iter[b];
+      if (typeof(b, "number") && ( b ) === ( b | 0 )) {
+        key = b & mask;
+        hashtable[ key ] = b;
+        keys.push(key);
+      } else {
+        fallback = true;
+        break;
+      }
+      b = backup;
+    }
+  } else {
+    fallback = true;
+  }
+  s = [];
+  if (fallback) {
+        var iter = a;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var item=0; item < iter.length; item++) {
+      var backup = item; item = iter[item];
+      if (( s.indexOf(item) ) == -1) {
+        s.push(item);
+      }
+      item = backup;
+    }
+  } else {
+    keys.sort();
+        var iter = keys;
+
+    if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }
+    for (var key=0; key < iter.length; key++) {
+      var backup = key; key = iter[key];
+      s.push(hashtable[ key ]);
+      key = backup;
+    }
   }
   return s;
 }
