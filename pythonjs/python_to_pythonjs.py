@@ -4,6 +4,7 @@
 # License: "New BSD"
 
 import os, sys, pickle, copy
+from tempfile import gettempdir
 from types import GeneratorType
 
 import ast
@@ -31,7 +32,7 @@ else:
 	from cStringIO import StringIO as StringIO
 
 try:
-	_log_file = open('/tmp/python_to_pythonjs.log', 'wb')
+	_log_file = open(gettempdir() + '/python_to_pythonjs.log', 'wb')
 except:
 	_log_file = None
 def log(txt):
@@ -2100,7 +2101,7 @@ def main(script):
 
 def command():
 	module = None
-	module_path = '/tmp'
+	module_path = gettempdir()
 	scripts = []
 	if len(sys.argv) > 1:
 		argv = sys.argv[1:]
