@@ -313,7 +313,8 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Import(self, node):
 		for alias in node.names:
 			writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
-			raise NotImplementedError  ## TODO namespaces: import x as y
+                        ## TODO namespaces: import x as y
+			raise NotImplementedError('import, line %s' % node.lineno)
 
 	def visit_ImportFrom(self, node):
 		if node.module in MINI_STDLIB:
