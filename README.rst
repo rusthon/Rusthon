@@ -35,6 +35,22 @@ simpler because we have written a compatibility layer that
 emulates the Tornado API and hides the NodeJS internal
 modules.
 
+How does it work
+----------------
+Translation to JavaScript is done in two steps.
+
+    +------------+    +-----------------+    +------------+
+    ¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
+    +------------+    +-----------------+    +------------+
+
+First, the script walks the AST tree of Python source and
+translates it into the subset of Python called `pythonjs`.
+This renames Python functions to JavaScript equivalents,
+adds code to converte native JavaScript object when needed,
+and annotates function definitions with to feed the logic
+in the next step. Next step translates annotated code into
+final JavaScript form.
+
 
 Getting Started
 ===============
