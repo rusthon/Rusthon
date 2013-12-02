@@ -1,0 +1,26 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+def fib(n):
+	a, b = 0, 1
+	for x in range(n):
+		yield a
+		a,b = b, a+b
+
+def test():
+	global g
+	n = 10
+	g = fib(n)
+	for i in range(n):
+		print g.next()
+
+
+</script>
+
+</head>
+<body>
+<button id="mybutton" onclick="test()">click me</button>
+</body>
+</html>

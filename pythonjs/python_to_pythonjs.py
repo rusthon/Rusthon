@@ -213,12 +213,19 @@ class PythonToPythonJS(NodeVisitor):
 		self._cache_for_body_calls = False
 		self._cache_while_body_calls = False
 		self._comprehensions = []
+		self._generator_functions = set()
 
 		self._custom_operators = {}
 		self._injector = []  ## advanced meta-programming hacks
 		self._in_class = None
 		self._with_fastdef = False
 		self.setup_builtins()
+
+		source = self.preprocess_custom_operators( source )
+		tree = parse( source )
+		self._generator_function_nodes = collect_generator_functions( tree )
+		self.visit( tree )
+
 
 	def preprocess_custom_operators(self, data):
 		'''
@@ -1192,16 +1199,16 @@ class PythonToPythonJS(NodeVisitor):
 						elif type == 'dict':
 							self._global_typed_dicts[ target.id ] = set()
 
-					writer.write('%s = %s' % (target.id, node_value))
+					writer.write('%s = %s' % (self.visit(target), node_value))
 				else:
 					if target.id in self._globals and self._globals[target.id] is None:
 						self._globals[target.id] = type
 						self._instances[ target.id ] = type
 						log('set global type: %s'%type)
 
-					writer.write('%s = %s' % (target.id, node_value))
+					writer.write('%s = %s' % (self.visit(target), node_value))
 			else:
-				writer.write('%s = %s' % (target.id, node_value))
+				writer.write('%s = %s' % (self.visit(target), node_value))
 
 		else:  # it's a Tuple
 			id = self.identifier
@@ -1219,9 +1226,9 @@ class PythonToPythonJS(NodeVisitor):
 					)
 					writer.write(code)
 				elif self._with_js:
-					writer.write("%s = %s[%s]" % (target.id, r, i))
+					writer.write("%s = %s[%s]" % (self.visit(target), r, i))
 				else:
-					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (target.id, r, i))
+					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (self.visit(target), r, i))
 
 	def visit_Print(self, node):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
@@ -1331,7 +1338,10 @@ class PythonToPythonJS(NodeVisitor):
 			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 
-			if name in self._builtin_functions and self._builtin_functions[name]:  ## inlined js
+			if name in self._generator_functions:
+				return ' new %s(%s)' %(name, ','.join(args))
+
+			elif name in self._builtin_functions and self._builtin_functions[name]:  ## inlined js
 				if args:
 					return self._builtin_functions[name] % ','.join(args)
 				else:
@@ -1355,6 +1365,13 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				a = ','.join(args)
 				return '%s(%s)' %( self.visit(node.func), a )
+
+		elif isinstance(node.func, Name) and node.func.id in self._generator_functions:
+			name = self.visit(node.func)
+			args = list( map(self.visit, node.args) )
+			if name in self._generator_functions:
+				return 'JS("new %s(%s)")' %(name, ','.join(args))
+
 
 		elif isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
 			args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list
@@ -1510,6 +1527,11 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_FunctionDef(self, node):
 		log('-----------------')
+		if node in self._generator_function_nodes:
+			log('generator function: %s'%node.name)
+			GeneratorFunctionTransformer( self ).visit(node)
+			self._generator_functions.add( node.name )
+			return
 		log('function: %s'%node.name)
 
 		property_decorator = None
@@ -1983,6 +2005,69 @@ class PythonToPythonJS(NodeVisitor):
 			raise SyntaxError('improper use of "with" statement')
 
 
+class GeneratorFunctionTransformer( PythonToPythonJS ):
+	def __init__(self, compiler):
+		self._with_js = True
+		self._builtin_functions = compiler._builtin_functions
+		self._js_classes = compiler._js_classes
+		self._global_functions = compiler._global_functions
+		self._with_inline = False
+		self._cache_for_body_calls = False
+		self._source = compiler._source
+		self._instances = dict()
+
+	def visit_Yield(self, node):
+		writer.write('__yield_return__ = %s'%self.visit(node.value))
+
+	def visit_Name(self, node):
+		return 'this.%s' %node.id
+
+	def visit_FunctionDef(self, node):
+		args = [a.id for a in node.args.args]
+		writer.write('def %s(%s):' %(node.name, ','.join(args)))
+		writer.push()
+		for arg in args:
+			writer.write('this.%s = %s'%(arg,arg))
+
+		loop_node = None
+		for b in node.body:
+			if isinstance(b, ast.For):
+				iter_start = '0'
+				iter = b.iter
+				if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
+					if len(iter.args) == 2:
+						iter_start = self.visit(iter.args[0])
+						iter_end = self.visit(iter.args[1])
+					else:
+						iter_end = self.visit(iter.args[0])
+				else:
+					iter_end = self.visit(iter)
+
+				writer.write('this.__iter_start = %s'%iter_start)
+				writer.write('this.__iter_index = %s'%iter_start)
+				writer.write('this.__iter_end = %s'%iter_end)
+
+				loop_node = b
+				break
+
+			else:
+				self.visit(b)
+		writer.pull()
+
+		writer.write('@%s.prototype'%node.name)
+		writer.write('def next():')
+		writer.push()
+		writer.write('if this.__iter_index < this.__iter_end:')
+		writer.push()
+		#self.visit( loop_node )
+		for b in loop_node.body:
+			self.visit(b)
+		writer.write('this.__iter_index += 1')
+		writer.write('return __yield_return__')
+		writer.pull()
+		writer.pull()
+
+
 class CollectCalls(NodeVisitor):
 	_calls_ = []
 	def visit_Call(self, node):
@@ -2033,6 +2118,41 @@ def collect_comprehensions(node):
 	CollectComprehensions().visit( node )
 	return comps
 
+class CollectGenFuncs(NodeVisitor):
+	_funcs = []
+	_genfuncs = []
+	def visit_FunctionDef(self, node):
+		self._funcs.append( node )
+		node._yields = []
+		node._loops = []
+		for b in node.body:
+			self.visit(b)
+		self._funcs.pop()
+
+	def visit_Yield(self, node):
+		func = self._funcs[-1]
+		func._yields.append( node )
+		if func not in self._genfuncs:
+			self._genfuncs.append( func )
+
+	def visit_For(self, node):
+		if len(self._funcs):
+			self._funcs[-1]._loops.append( node )
+		for b in node.body:
+			self.visit(b)
+
+	def visit_While(self, node):
+		if len(self._funcs):
+			self._funcs[-1]._loops.append( node )
+		for b in node.body:
+			self.visit(b)
+
+
+def collect_generator_functions(node):
+	CollectGenFuncs._funcs = []
+	CollectGenFuncs._genfuncs = gfuncs = []
+	CollectGenFuncs().visit( node )
+	return gfuncs
 
 def retrieve_vars(body):
 	local_vars = set()
@@ -2093,8 +2213,7 @@ def inspect_function( node ):
 
 
 def main(script):
-	input = parse(script)
-	PythonToPythonJS( source=script ).visit(input)
+	PythonToPythonJS( source=script )
 	return writer.getvalue()
 
 
@@ -2122,10 +2241,6 @@ def command():
 
 
 	compiler = PythonToPythonJS( source=data, module=module, module_path=module_path )
-
-	data = compiler.preprocess_custom_operators( data )
-	compiler.visit( parse(data) )
-
 	compiler.save_module()
 	output = writer.getvalue()
 	print( output )  ## pipe to stdout

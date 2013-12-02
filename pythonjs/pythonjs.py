@@ -99,7 +99,11 @@ class JSGenerator(NodeVisitor):
 		self._function_stack.append( node.name )
 
 		args = self.visit(node.args)
-		if len(self._function_stack) == 1:
+		if len(node.decorator_list):
+			assert len(node.decorator_list)==1
+			dec = self.visit(node.decorator_list[0])
+			buffer = self.indent() + '%s.%s = function(%s) {\n' % (dec,node.name, ', '.join(args))
+		elif len(self._function_stack) == 1:
 			## this style will not make function global to the eval context in NodeJS ##
 			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 			## this is required for eval to be able to work in NodeJS, note there is no var keyword.
