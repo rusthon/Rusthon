@@ -1529,9 +1529,12 @@ class PythonToPythonJS(NodeVisitor):
 		log('-----------------')
 		if node in self._generator_function_nodes:
 			log('generator function: %s'%node.name)
-			GeneratorFunctionTransformer( self ).visit(node)
 			self._generator_functions.add( node.name )
-			return
+			if '--native-yield' in sys.argv:
+				raise NotImplementedError  ## TODO
+			else:
+				GeneratorFunctionTransformer( self ).visit(node)
+				return
 		log('function: %s'%node.name)
 
 		property_decorator = None
@@ -1879,6 +1882,16 @@ class PythonToPythonJS(NodeVisitor):
 
 				writer.pull()
 
+			elif isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in self._generator_functions:
+				iter_name = self.visit(target)
+				writer.write('var(%s, __generator__)' %iter_name)
+				writer.write('__generator__ = %s' %self.visit(iter))
+				writer.write('while __generator__.__done__ != 1:')
+				writer.push()
+				writer.write('%s = __generator__.next()'%iter_name)
+				map(self.visit, node.body)
+				writer.pull()
+
 			else:
 				writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
 				writer.push()
@@ -2079,6 +2092,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		for b in loop_node.body:
 			self.visit(b)
 		writer.write('this.__iter_index += 1')
+		writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')
 		writer.write('return __yield_return__')
 		writer.pull()
 		writer.write('else: this.__done__ = 1')

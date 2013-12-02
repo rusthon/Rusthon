@@ -137,6 +137,7 @@ def convert_python_html_document( data ):
 				if 'closure="true"' in line.lower(): use_closure = True
 				else: use_closure = False
 				doc.append( '<script type="text/javascript">')
+				#doc.append( '<script type="application/javascript;version=1.7">')  ## firefox needs this when using native yield
 				script = list()
 			else:
 				doc.append( line )

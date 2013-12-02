@@ -1,0 +1,31 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+from time import time
+
+def fib(n):
+	a, b = 0, 1
+	for x in range(n):
+		yield a
+		a,b = b, a+b
+
+def test():
+
+	print 'testing for over generator'
+	t = time()
+	a = None
+	for i in range(1000):
+		for n in fib(1000):
+			a = n
+	print time() - t
+	print a
+
+</script>
+
+</head>
+<body>
+<button id="mybutton" onclick="test()">click me</button>
+</body>
+</html>
