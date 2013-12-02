@@ -1897,6 +1897,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('var(__iterator__, %s)' % target.id)
 
 			is_range = False
+			is_generator = False
 			iter_start = '0'
 			iter_end = None
 			if self.FAST_FOR and isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
@@ -1906,10 +1907,24 @@ class PythonToPythonJS(NodeVisitor):
 					iter_end = self.visit(iter.args[1])
 				else:
 					iter_end = self.visit(iter.args[0])
+
+			elif isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in self._generator_functions:
+				is_generator = True
 			else:
 				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(iter))
 
-			if is_range:
+			if is_generator:
+				iter_name = self.visit(target)
+				writer.write('var(%s, __generator__)' %iter_name)
+				writer.write('__generator__ = %s' %self.visit(iter))
+				writer.write('while __generator__.__done__ != 1:')
+				writer.push()
+				writer.write('%s = __generator__.next()'%iter_name)
+				map(self.visit, node.body)
+				writer.pull()
+
+
+			elif is_range:
 				iter_name = target.id
 				writer.write('var(%s)' %iter_name)
 				writer.write('%s = %s' %(iter_name, iter_start))
@@ -2046,6 +2061,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 				writer.write('this.__iter_start = %s'%iter_start)
 				writer.write('this.__iter_index = %s'%iter_start)
 				writer.write('this.__iter_end = %s'%iter_end)
+				writer.write('this.__done__ = 0')
 
 				loop_node = b
 				break
@@ -2065,6 +2081,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		writer.write('this.__iter_index += 1')
 		writer.write('return __yield_return__')
 		writer.pull()
+		writer.write('else: this.__done__ = 1')
 		writer.pull()
 
 
