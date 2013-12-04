@@ -11,10 +11,9 @@ PythonJS is a Python to Javascript translator written in
 Python, created by Amirouche Boubekki and Brett Hartshorn,
 currently maintained and developed by Brett. It features:
 list comprehensions, classes, multiple inheritance, operator
-overloading, function and class decorators, HTML DOM, and
-easily integrates with JavaScript and external JavaScript
-libraries.  The generated code works in the Browser and in
-NodeJS.
+overloading, function and class decorators, generator functions,
+HTML DOM, and easily integrates with JavaScript and external JavaScript 
+libraries.  The generated code works in the Browser and in NodeJS.
 
 Speed
 ---------------
@@ -24,8 +23,8 @@ can disable operator overloading, and other slow operations.
 Features can be switched off and on for blocks of code using
 `pythonjs.configure()` or the special `with` statements and
 decorators described below.  When PythonJS is run in fast
-mode (javascript with inline functions) it beats PyPy in
-both the Richards and Pystone benchmarks.
+mode (javascript with inline functions) it beats PyPy in the 
+Richards, Pystone, and N-Body benchmarks.
 
 NodeJS
 ---------------
@@ -35,21 +34,19 @@ simpler because we have written a compatibility layer that
 emulates the Tornado API and hides the NodeJS internal
 modules.
 
-How does it work
+How does it work?
 ----------------
 Translation to JavaScript is done in two steps.
 
-    +------------+    +-----------------+    +------------+
-    ¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
-    +------------+    +-----------------+    +------------+
++------------+    +-----------------+    +------------+
+¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
++------------+    +-----------------+    +------------+
 
 First, the script walks the AST tree of Python source and
 translates it into the subset of Python called `pythonjs`.
-This renames Python functions to JavaScript equivalents,
-adds code to converte native JavaScript object when needed,
-and annotates function definitions with to feed the logic
-in the next step. Next step translates annotated code into
-final JavaScript form.
+This reduced subset is still valid Python code, and its
+AST gets parsed again in the second translation phase
+that converts it into final JavaScript form.
 
 
 Getting Started
