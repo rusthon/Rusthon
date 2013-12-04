@@ -36,11 +36,11 @@ modules.
 
 How does it work?
 ----------------
-Translation to JavaScript is done in two steps.
+Translation to JavaScript is done in two steps::
 
-+------------+    +-----------------+    +------------+
-¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
-+------------+    +-----------------+    +------------+
+	+------------+    +-----------------+    +------------+
+	¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
+	+------------+    +-----------------+    +------------+
 
 First, the script walks the AST tree of Python source and
 translates it into the subset of Python called `pythonjs`.
