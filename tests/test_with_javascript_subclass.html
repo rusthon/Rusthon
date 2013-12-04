@@ -1,0 +1,38 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+
+<script type="text/python">
+pythonjs.configure( javascript=True )
+
+class A:
+	def __init__(self, x,y,z):
+		self.x = x
+		self.y = y
+		self.z = z
+
+	def foo(self, w):
+		return self.x + w
+
+class B( A ):
+	def __init__(self, w):
+		A.__init__(self, 10, 20, 30)
+		self.w = w
+
+class C( B ):
+	def bar(self, value=1):
+		return self.x + self.y + self.z + value
+
+def test():
+	c = C()
+	print c.x
+	print c.foo( 100 )
+	print c.bar( 'hello world' )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

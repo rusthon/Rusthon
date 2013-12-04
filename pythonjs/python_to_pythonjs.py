@@ -81,7 +81,8 @@ class Writer(object):
 					if not code.startswith('var('):
 						if not code == 'pass':
 							if not code.startswith('JS('):
-								code = """JS('''%s''')"""%code
+								if not code.startswith('@'):
+									code = """JS('''%s''')"""%code
 		s = '%s%s\n' % (indentation, code)
 		#self.output.write(s.encode('utf-8'))
 		self.output.write(s)
@@ -531,6 +532,14 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Yield(self, node):
 		return 'yield %s' % self.visit(node.value)
 
+	def _get_js_class_base_init(self, node ):
+		for base in node.bases:
+			n = self._js_classes[ base.id ]
+			if hasattr(n, '_cached_init'):
+				return n._cached_init
+			else:
+				return self._get_js_class_base_init( n )  ## TODO fixme
+
 	def _visit_js_classdef(self, node):
 		name = node.name
 		log('JavaScript-ClassDef: %s'%name)
@@ -552,25 +561,46 @@ class PythonToPythonJS(NodeVisitor):
 		init = methods.get( '__init__', None)
 		if init:
 			args = [self.visit(arg) for arg in init.args.args]
+			node._cached_init = init
+
 		else:
 			args = []
+			init = self._get_js_class_base_init( node )
+			if init:
+				args = [self.visit(arg) for arg in init.args.args]
+				node._cached_init = init
 
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
 		if init:
-			for b in init.body:
-				line = self.visit(b)
-				if line: writer.write( line )
+			#for b in init.body:
+			#	line = self.visit(b)
+			#	if line: writer.write( line )
+
+			if hasattr(init, '_code'):  ## cached ##
+				code = init._code
+			elif args:
+				code = '%s.__init__(this, %s)'%(name, ','.join(args))
+				init._code = code
+			else:
+				code = '%s.__init__(this)'%name
+				init._code = code
+
+			writer.write(code)
+
 		else:
 			writer.write('pass')
 
 		writer.pull()
 
-		for mname in methods:
+		keys = methods.keys()
+		keys.sort()
+		for mname in keys:
 			method = methods[mname]
+			writer.write('@%s.prototype'%name)
 			line = self.visit(method)
 			if line: writer.write( line )
-			writer.write('%s.prototype.%s = %s'%(name,mname,mname))
+			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
 			f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
 			writer.write('%s.%s = %s'%(name,mname,f))
 
