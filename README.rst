@@ -162,6 +162,80 @@ overloading and optimizations.
 Writing PythonJS Scripts
 =====================
 
+Generator Functions
+-------------------
+
+Functions that use the yield keyword are generator functions.  They allow you to quickly write complex iterables.
+PythonJS supports simple generator functions that have a single for loop, and up to three yield statements.
+The first yield comes before the for loop, and the final yield comes after the for loop.
+The compiler will translate your generator function into a simple class with state-machine.  This implementation
+bypasses using the native JavaScript yield keyword, and ensures that your generator function can work in all
+web browsers.  
+
+Instances of the generator function will have a next method.  Using a for loop to iterate over a generator function will automatically call its next method.
+
+Example::
+
+	def fib(n):
+		yield 'hello'
+		a, b = 0, 1
+		for x in range(n):
+			yield a
+			a,b = b, a+b
+		yield 'world'
+
+	def test():
+		for n in fib(20):
+			print n
+
+Example Output::
+
+	fib = function(n) {
+	  this.n = n;
+	  this.__head_yield = "hello";
+	  this.__head_returned = 0;
+	  var __r_0;
+	  __r_0 = [0, 1];
+	  this.a = __r_0[0];
+	  this.b = __r_0[1];
+	  this.__iter_start = 0;
+	  this.__iter_index = 0;
+	  this.__iter_end = this.n;
+	  this.__done__ = 0;
+	}
+
+	fib.prototype.next = function() {
+	  if (( this.__head_returned ) == 0) {
+	    this.__head_returned = 1;
+	    return this.__head_yield;
+	  } else {
+	    if (( this.__iter_index ) < this.__iter_end) {
+	      __yield_return__ = this.a;
+	      var __r_1;
+	      __r_1 = [this.b, (this.a + this.b)];
+	      this.a = __r_1[0];
+	      this.b = __r_1[1];
+	      this.__iter_index += 1
+	      return __yield_return__;
+	    } else {
+	      this.__done__ = 1;
+	      __yield_return__ = "world";
+	      return __yield_return__;
+	    }
+	  }
+	}
+
+	test = function(args, kwargs) {
+	  var __iterator__, n;
+	  var n, __generator__;
+	  __generator__ = new fib(20);
+	  while(( __generator__.__done__ ) != 1) {
+	    n = __generator__.next();
+	    console.log(n);
+	  }
+	}
+
+
 Directly Calling JavaScript Functions
 ---------------
 

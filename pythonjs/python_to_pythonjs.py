@@ -1535,7 +1535,7 @@ class PythonToPythonJS(NodeVisitor):
 			if '--native-yield' in sys.argv:
 				raise NotImplementedError  ## TODO
 			else:
-				GeneratorFunctionTransformer( self ).visit(node)
+				GeneratorFunctionTransformer( node, compiler=self )
 				return
 		log('function: %s'%node.name)
 
@@ -2036,7 +2036,17 @@ class PythonToPythonJS(NodeVisitor):
 
 
 class GeneratorFunctionTransformer( PythonToPythonJS ):
-	def __init__(self, compiler):
+	'''
+	Translates a simple generator function into a class with state-machine that can be iterated over by
+	calling its next method.
+
+	A `simple generator` is one with no more than three yield statements, and a single for loop:
+		. the first yield comes before the for loop
+		. the second yield is the one inside the loop
+		. the third yield comes after the for loop
+
+	'''
+	def __init__(self, node, compiler=None):
 		self._with_js = True
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes
@@ -2045,9 +2055,16 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		self._cache_for_body_calls = False
 		self._source = compiler._source
 		self._instances = dict()
+		self._head_yield = False
+		self.visit( node )
 
 	def visit_Yield(self, node):
-		writer.write('__yield_return__ = %s'%self.visit(node.value))
+		if self._in_head:
+			writer.write('this.__head_yield = %s'%self.visit(node.value))
+			writer.write('this.__head_returned = 0')
+			self._head_yield = True
+		else:
+			writer.write('__yield_return__ = %s'%self.visit(node.value))
 
 	def visit_Name(self, node):
 		return 'this.%s' %node.id
@@ -2059,9 +2076,14 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		for arg in args:
 			writer.write('this.%s = %s'%(arg,arg))
 
+		self._in_head = True
 		loop_node = None
+		tail_yield = []
 		for b in node.body:
-			if isinstance(b, ast.For):
+			if loop_node:
+				tail_yield.append( b )
+
+			elif isinstance(b, ast.For):
 				iter_start = '0'
 				iter = b.iter
 				if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
@@ -2077,27 +2099,47 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 				writer.write('this.__iter_index = %s'%iter_start)
 				writer.write('this.__iter_end = %s'%iter_end)
 				writer.write('this.__done__ = 0')
-
 				loop_node = b
-				break
+				self._in_head = False
 
 			else:
 				self.visit(b)
+
 		writer.pull()
 
 		writer.write('@%s.prototype'%node.name)
 		writer.write('def next():')
 		writer.push()
-		writer.write('if this.__iter_index < this.__iter_end:')
+
+		if self._head_yield:
+			writer.write('if this.__head_returned == 0:')
+			writer.push()
+			writer.write('this.__head_returned = 1')
+			writer.write('return this.__head_yield')
+			writer.pull()
+			writer.write('elif this.__iter_index < this.__iter_end:')
+
+		else:
+			writer.write('if this.__iter_index < this.__iter_end:')
+
 		writer.push()
-		#self.visit( loop_node )
 		for b in loop_node.body:
 			self.visit(b)
 		writer.write('this.__iter_index += 1')
-		writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')
+
+		if not tail_yield:
+			writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')
+
 		writer.write('return __yield_return__')
 		writer.pull()
-		writer.write('else: this.__done__ = 1')
+		writer.write('else:')
+		writer.push()
+		writer.write('this.__done__ = 1')
+		if tail_yield:
+			for b in tail_yield:
+				self.visit(b)
+			writer.write('return __yield_return__')
+		writer.pull()
 		writer.pull()
 
 
