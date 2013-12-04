@@ -7,15 +7,49 @@ PythonJS 0.8.6
 Introduction
 ======
 
-PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn, currently maintained and developed by Brett. It features: list comprehensions, classes, multiple inheritance, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.
+PythonJS is a Python to Javascript translator written in
+Python, created by Amirouche Boubekki and Brett Hartshorn,
+currently maintained and developed by Brett. It features:
+list comprehensions, classes, multiple inheritance, operator
+overloading, function and class decorators, HTML DOM, and
+easily integrates with JavaScript and external JavaScript
+libraries.  The generated code works in the Browser and in
+NodeJS.
 
 Speed
 ---------------
-PythonJS allows you to select which features you need for each section of your code, where you need performance you can disable operator overloading, and other slow operations.  Features can be switched off and on for blocks of code using `pythonjs.configure()` or the special `with` statements and decorators described below.  When PythonJS is run in fast mode (javascript with inline functions) it beats PyPy in both the Richards and Pystone benchmarks.
+PythonJS allows you to select which features you need for
+each section of your code, where you need performance you
+can disable operator overloading, and other slow operations.
+Features can be switched off and on for blocks of code using
+`pythonjs.configure()` or the special `with` statements and
+decorators described below.  When PythonJS is run in fast
+mode (javascript with inline functions) it beats PyPy in
+both the Richards and Pystone benchmarks.
 
 NodeJS
 ---------------
-Using PythonJS you can quickly port your server side code to using NodeJS.  If you are using Tornado, porting is even simpler because we have written a compatibility layer that emulates the Tornado API and hides the NodeJS internal modules.
+Using PythonJS you can quickly port your server side code to
+using NodeJS.  If you are using Tornado, porting is even
+simpler because we have written a compatibility layer that
+emulates the Tornado API and hides the NodeJS internal
+modules.
+
+How does it work
+----------------
+Translation to JavaScript is done in two steps.
+
+    +------------+    +-----------------+    +------------+
+    ¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
+    +------------+    +-----------------+    +------------+
+
+First, the script walks the AST tree of Python source and
+translates it into the subset of Python called `pythonjs`.
+This renames Python functions to JavaScript equivalents,
+adds code to converte native JavaScript object when needed,
+and annotates function definitions with to feed the logic
+in the next step. Next step translates annotated code into
+final JavaScript form.
 
 
 Getting Started
@@ -30,13 +64,21 @@ Translate Your Script::
 	cd PythonJS/pythonjs
 	./translator.py myscript1.py myscript2.py > ~/myapp.js
 
-The translator.py script can take in multiple Python scripts, these are appended together, and translated into a single JavaScript.  The output is printed to stdout.  If no command line arguments is given, then translator.py takes input from stdin.
+The translator.py script can take in multiple Python
+scripts, these are appended together, and translated into a
+single JavaScript.  The output is printed to stdout.  If no
+command line arguments is given, then translator.py takes
+input from stdin.
 
 
 Test Server
 -----------
 
-PythonJS includes two test servers that run the HTML tests in PythonJS/tests.  Both of these servers are written using the Tornado API.  The NodeJS version is a port of the original test server adapted to work with the Tornado compatible binding.
+PythonJS includes two test servers that run the HTML tests
+in PythonJS/tests.  Both of these servers are written using
+the Tornado API.  The NodeJS version is a port of the
+original test server adapted to work with the Tornado
+compatible binding.
 
 
 NodeJS Tornado
@@ -72,9 +114,16 @@ Run Python Server::
 Testing
 -------
 
-After running one of the test servers above, open a web browser and go to: http://localhost:8080
+After running one of the test servers above, open a web
+browser and go to: http://localhost:8080
 
-The test server dynamically compiles Python into JavaScript, this greatly speeds up the testing and development process.  Any html file you place in the PythonJS/tests directory will become available as a new web-page.  When this web-page is requested the server will parse the html and check all the <script> tags for external or embedded Python, and dynamically convert it to JavaScript.
+The test server dynamically compiles Python into JavaScript,
+this greatly speeds up the testing and development process.
+Any html file you place in the PythonJS/tests directory will
+become available as a new web-page.  When this web-page is
+requested the server will parse the html and check all the
+<script> tags for external or embedded Python, and
+dynamically convert it to JavaScript.
 
 External Python Scripts::
 
@@ -82,7 +131,10 @@ External Python Scripts::
 	<script src="bindings/three.py"></script>
 	</head>
 
-The server knows that the above script needs to be dynamically compiled to JavaScript because the script is located in the "bindings" directory and the file name ends with ".py"
+The server knows that the above script needs to be
+dynamically compiled to JavaScript because the script is
+located in the "bindings" directory and the file name ends
+with ".py"
 
 Embedded Python Scripts::
 
@@ -95,9 +147,19 @@ Embedded Python Scripts::
 	</script>
 	</body>
 
-The server knows that above is an embedded Python script because the script tag has its type attribute set to "text/python".  The server will compile and replace the Python code with JavaScript, change the type attribute to be "text/javascript", and serve the page to the client.
+The server knows that above is an embedded Python script
+because the script tag has its type attribute set to
+"text/python".  The server will compile and replace the
+Python code with JavaScript, change the type attribute to be
+"text/javascript", and serve the page to the client.
 
-The syntax "from three import *" tells the compiler to load static type information about the previously compiled binding "three.py" into the compilers namespace, this is required because three.py uses operator overloading to wrap the THREE.js API.  PythonJS programs are explicitly and implicitly statically typed to allow for operator overloading and optimizations.
+The syntax "from three import *" tells the compiler to load
+static type information about the previously compiled
+binding "three.py" into the compilers namespace, this is
+required because three.py uses operator overloading to wrap
+the THREE.js API.  PythonJS programs are explicitly and
+implicitly statically typed to allow for operator
+overloading and optimizations.
 
 
 Writing PythonJS Scripts
@@ -143,14 +205,22 @@ HTML DOM Example::
 	</body>
 	</html>
 
-PythonJS allows you to call any JavaScript function directly by wrapping it at runtime.  Attributes of JavaScript objects are also returned directly, like document.body.  This allows you to use the HTML DOM API just as you would in normal JavaScript.
+PythonJS allows you to call any JavaScript function directly
+by wrapping it at runtime.  Attributes of JavaScript objects
+are also returned directly, like document.body.  This allows
+you to use the HTML DOM API just as you would in normal
+JavaScript.
 
 ---------------
 
 Inline JavaScript
 ---------------
 
-There are times that JavaScript needs to be directly inlined into PythonJS code, this is done with the special 'JS([str])' function that takes a string literal as its only argument.  The compiler will insert the string directly into the final output JavaScript.
+There are times that JavaScript needs to be directly inlined
+into PythonJS code, this is done with the special
+'JS([str])' function that takes a string literal as its only
+argument.  The compiler will insert the string directly into
+the final output JavaScript.
 
 JS Example::
 
@@ -161,7 +231,10 @@ JS Example::
 		JS("arr.push('hello world')")
 		JS("arr.push( ob )")
 
-In the example above we create a new JavaScript Array.  Notice that the if-statement above has a condition that is inlined JavaScript.  Lets take a look at two alternative ways this can be rewritten.
+In the example above we create a new JavaScript Array.
+Notice that the if-statement above has a condition that is
+inlined JavaScript.  Lets take a look at two alternative
+ways this can be rewritten.
 
 1. JSArray, JSObject, and instanceof::
 
@@ -171,9 +244,18 @@ In the example above we create a new JavaScript Array.  Notice that the if-state
 		arr.push('hello world')
 		arr.push( ob )
 
-The special function JSArray will create a new JavaScript Array object, and JSObject creates a new JavaScript Object.  The 'instanceof' function will be translated into using the 'instanceof' JavaScript operator.  At the end, arr.push is called without wrapping it in JS(), this is allowed because from PythonJS, we can directly call JavaScript functions by dynamically wrapping it at runtime.
+The special function JSArray will create a new JavaScript
+Array object, and JSObject creates a new JavaScript Object.
+The 'instanceof' function will be translated into using the
+'instanceof' JavaScript operator.  At the end, arr.push is
+called without wrapping it in JS(), this is allowed because
+from PythonJS, we can directly call JavaScript functions by
+dynamically wrapping it at runtime.
 
-This code is more clear than before, but the downside is that the calls to arr.push will be slower because it gets wrapped at runtime.  To have fast and clear code we need to use the final method below, 'with javascript'
+This code is more clear than before, but the downside is
+that the calls to arr.push will be slower because it gets
+wrapped at runtime.  To have fast and clear code we need to
+use the final method below, 'with javascript'
 
 2. with javascript::
 
@@ -184,14 +266,24 @@ This code is more clear than before, but the downside is that the calls to arr.p
 			arr.push('hello world')
 			arr.push( ob )
 
-The "with javascript:" statement can be used to mark a block of code as being direct JavaScript.  The compiler will basically wrap each line it can in JS() calls.  The calls to arr.push will be fast because there is no longer any runtime wrapping.  Instead of using JSArray and JSObject you just use the literal notation to create them.
+The "with javascript:" statement can be used to mark a block
+of code as being direct JavaScript.  The compiler will
+basically wrap each line it can in JS() calls.  The calls to
+arr.push will be fast because there is no longer any runtime
+wrapping.  Instead of using JSArray and JSObject you just
+use the literal notation to create them.
 
 ---------------
 
 Calling PythonJS Functions from JavaScript
 ------------------------------
 
-PythonJS functions can be used as callbacks in Javascript code, there are no special calling conventions that you need to worry about.  Simply define a function in PythonJS and call it from JavaScript.  Note that if your PythonJS function uses keyword arguments, you can use them as a normal positional arguments.
+PythonJS functions can be used as callbacks in Javascript
+code, there are no special calling conventions that you need
+to worry about.  Simply define a function in PythonJS and
+call it from JavaScript.  Note that if your PythonJS
+function uses keyword arguments, you can use them as a
+normal positional arguments.
 
 Example::
 
@@ -208,7 +300,12 @@ Example::
 Calling PythonJS Methods from JavaScript
 ------------------------------
 
-Calling PythonJS methods is also simple, you just need to create an instance of the class in PythonJS and then pass the method to a JavaScript function, or assign it to a new variable that the JavaScript code will use.  PythonJS takes care of wrapping the method for you so that "self" is bound to the method, and is callable from JavaScript.
+Calling PythonJS methods is also simple, you just need to
+create an instance of the class in PythonJS and then pass
+the method to a JavaScript function, or assign it to a new
+variable that the JavaScript code will use.  PythonJS takes
+care of wrapping the method for you so that "self" is bound
+to the method, and is callable from JavaScript.
 
 Example::
 
@@ -234,7 +331,13 @@ Example::
 Passing PythonJS Instances to JavaScript
 ------------------------------
 
-If you are doing something complex like deep integration with an external JavaScript library, the above technique of passing each method callback to JavaScript might become inefficient.  If you want to pass the PythonJS instance itself and have its methods callable from JavaScript, you can do this now simply by passing the instance.  This only works with property getter/setters.
+If you are doing something complex like deep integration
+with an external JavaScript library, the above technique of
+passing each method callback to JavaScript might become
+inefficient.  If you want to pass the PythonJS instance
+itself and have its methods callable from JavaScript, you
+can do this now simply by passing the instance.  This only
+works with property getter/setters.
 
 Example::
 
@@ -260,7 +363,10 @@ Example::
 Define JavaScript Prototypes from PythonJS
 ------------------------------
 
-If you are going beyond simple integration with an external JavaScript library, and perhaps want to change the way it works on a deeper level, you can modify JavaScript prototypes from PythonJS using some special syntax.
+If you are going beyond simple integration with an external
+JavaScript library, and perhaps want to change the way it
+works on a deeper level, you can modify JavaScript
+prototypes from PythonJS using some special syntax.
 
 Example::
 
@@ -278,7 +384,11 @@ Example::
 		def func(a):
 			return this.indexOf(a)
 
-The above example shows how we modify the String type in JavaScript to act more like a Python string type.  The functions must be defined inside a "with javascript:" block, and the decorator format is: `[class name].prototype.[function name]`
+The above example shows how we modify the String type in
+JavaScript to act more like a Python string type.  The
+functions must be defined inside a "with javascript:" block,
+and the decorator format is:
+`[class name].prototype.[function name]`
 
 
 ---------------
@@ -286,9 +396,25 @@ The above example shows how we modify the String type in JavaScript to act more 
 Making PythonJS Wrappers for JavaScript Libraries
 ------------------------------
 
-The above techniques provide all the tools you will need to interact with JavaScript code, and easily write wrapper code in PythonJS.  The last tool you will need, is a standard way of creating JavaScript objects, storing a reference to the instance, and later passing the instance to wrapped JavaScript function.  In JavaScript objects are created with the `new` keyword, in PythonJS you can use the `new()` function instead.  To store an instance created by `new()`, you should assign it to `self` like this: `self[...] = new( SomeJavaScriptClass() )`.  
+The above techniques provide all the tools you will need to
+interact with JavaScript code, and easily write wrapper code
+in PythonJS.  The last tool you will need, is a standard way
+of creating JavaScript objects, storing a reference to the
+instance, and later passing the instance to wrapped
+JavaScript function.  In JavaScript objects are created with
+the `new` keyword, in PythonJS you can use the `new()`
+function instead.  To store an instance created by `new()`,
+you should assign it to `self` like this:
+`self[...] = new( SomeJavaScriptClass() )`.
 
-If you have never seen `...` syntax in Python it is the rarely used Ellipsis syntax, we have hijacked it in PythonJS as a special case to assign something to a hidden attribute.  The builtin types: tuple, list, dict, etc, are wrappers that internally use JavaScript Arrays or Objects, to get to these internal objects you use the Ellipsis syntax.  The following example shows how the THREE.js binding wraps the Vector3 object and combines operator overloading.
+If you have never seen `...` syntax in Python it is the
+rarely used Ellipsis syntax, we have hijacked it in PythonJS
+as a special case to assign something to a hidden attribute.
+The builtin types: tuple, list, dict, etc, are wrappers that
+internally use JavaScript Arrays or Objects, to get to these
+internal objects you use the Ellipsis syntax.  The following
+example shows how the THREE.js binding wraps the Vector3
+object and combines operator overloading.
 
 Example::
 
@@ -352,7 +478,19 @@ Example::
 Optimized Function Calls
 ------------------------------
 
-By default PythonJS functions have runtime call checking that ensures you have called the function with the required number of arguments, and also checks to see if you had called the function from JavaScript - and if so adapt the arguments.  This adds some overhead each time the function is called, and will generally be about 15 times slower than normal Python.  When performance is a concern you can decorate functions that need to be fast with @fastdef, or use the `with fastdef:` with statement.  Note that functions that do not have arguments are always fast.  Using fastdef will make each call to your function 100 times faster, so if you call the same function many times in a loop, it is a good idea to decorate it with @fastdef.
+By default PythonJS functions have runtime call checking
+that ensures you have called the function with the required
+number of arguments, and also checks to see if you had
+called the function from JavaScript - and if so adapt the
+arguments.  This adds some overhead each time the function
+is called, and will generally be about 15 times slower than
+normal Python.  When performance is a concern you can
+decorate functions that need to be fast with @fastdef, or
+use the `with fastdef:` with statement.  Note that functions
+that do not have arguments are always fast.  Using fastdef
+will make each call to your function 100 times faster, so if
+you call the same function many times in a loop, it is a
+good idea to decorate it with @fastdef.
 
 Example::
 
@@ -364,14 +502,20 @@ Example::
 		def f2( a,b,c, x=1,y=2,z=3):
 			return a+b+c+x+y+z
 
-If you need to call a fastdef function from JavaScript you will need to call it with arguments packed into an array as the first argument, and keyword args packed into an Object as the second argument.
+If you need to call a fastdef function from JavaScript you
+will need to call it with arguments packed into an array as
+the first argument, and keyword args packed into an Object
+as the second argument.
 
 Example::
 
 	// javascript
 	f2( [1,2,3], {x:100, y:200, z:300} );
 
-If you need fast function that is callable from javascript without packing its arguments like above, you can use the @javascript decorator, or nest the function inside a `with javascript:` statement.
+If you need fast function that is callable from javascript
+without packing its arguments like above, you can use the
+@javascript decorator, or nest the function inside a `with
+javascript:` statement.
 
 Example::
 
@@ -389,14 +533,22 @@ Example::
 NodeJS
 ======
 
-PythonJS can also be used to write server side software using NodeJS.  You can use the nodejs.py helper script to translate your python script and run it in NodeJS.  This has been tested with NodeJS v0.10.22.
+PythonJS can also be used to write server side software
+using NodeJS.  You can use the nodejs.py helper script to
+translate your python script and run it in NodeJS.  This has
+been tested with NodeJS v0.10.22.
 
 Example::
 
 	cd PythonJS
 	./nodejs.py myscript.py
 
-The directory PythonJS/nodejs/bindings contains wrappers for using NodeJS modules.  Some of these wrappers emulate parts of Pythons standard library, like: os, sys, io, and subprocess.  The example below imports the fake io and sys libraries, and prints the contents of a file passed as the last command line argument to nodejs.py.
+The directory PythonJS/nodejs/bindings contains wrappers for
+using NodeJS modules.  Some of these wrappers emulate parts
+of Pythons standard library, like: os, sys, io, and
+subprocess.  The example below imports the fake io and sys
+libraries, and prints the contents of a file passed as the
+last command line argument to nodejs.py.
 
 Example::
 
