@@ -51,7 +51,7 @@ class Writer(object):
 
 	def __init__(self):
 		self.level = 0
-		self.buffers = list()
+		self.buffer = list()
 		self.output = StringIO()
 		self.with_javascript = False
 
@@ -65,12 +65,12 @@ class Writer(object):
 		self.level -= 1
 
 	def append(self, code):
-		self.buffers.append(code)
+		self.buffer.append(code)
 
 	def write(self, code):
-		for buffer in self.buffers:
-			self._write(buffer)
-		self.buffers = list()
+		for content in self.buffer:
+			self._write(content)
+		self.buffer = list()
 		self._write(code)
 
 	def _write(self, code):
@@ -321,7 +321,8 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Import(self, node):
 		for alias in node.names:
 			writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
-			raise NotImplementedError  ## TODO namespaces: import x as y
+                        ## TODO namespaces: import x as y
+			raise NotImplementedError('import, line %s' % node.lineno)
 
 	def visit_ImportFrom(self, node):
 		if node.module in MINI_STDLIB:
