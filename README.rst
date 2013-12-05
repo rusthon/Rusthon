@@ -76,17 +76,14 @@ Writing PythonJS Scripts
 Function Types
 ---------------
 
-PythonJS has three main types of functions: 
-	__normal__
-	__fastdef__
-	__javascript__
+PythonJS has three main types of functions: "normal", "fastdef", and "javascript".
 
-By default a function is __normal__ and fully emulates the Python standard, it allows for: arguments, keyword args with defaults, variable length arguments (*args) and variable length keyword args (**kwargs).  Functions that are __normal__ also have special logic that allows them to be called from external JavaScript like normal JavaScript functions (keyword args become normal positional arguments when called from JavaScript).  Calling __normal__ functions is slow because of this overhead, when you need faster function calls you can use __fastdef__ or __javascript__.
+By default a function is "normal" and fully emulates the Python standard, it allows for: arguments, keyword args with defaults, variable length arguments (*args) and variable length keyword args (**kwargs).  Functions that are "normal" also have special logic that allows them to be called from external JavaScript like normal JavaScript functions (keyword args become normal positional arguments when called from JavaScript).  Calling "normal" functions is slow because of this overhead, when you need faster function calls you can use "fastdef" or "javascript".
 
-Functions decorated with @fastdef, or inside a __with fastdef:__ block become __fastdef__ type functions.  This makes calling them much faster, but they do not support variable length arguments (*args) or variable length keyword args (**kwargs).
+Functions decorated with @fastdef, or inside a "with fastdef:" block become "fastdef" type functions.  This makes calling them much faster, but they do not support variable length arguments (*args) or variable length keyword args (**kwargs).
 Another limitation is that when called from external JavaScript you must pack args into an Array as the first argument, and pack keyword arguments into an Object as the second argument.
 
-Functions decorated with @javascript, or inside a __with javascript:__ block, or following the call: __pythonjs.configure(javascript=True)__ become __javascript__ type functions, these offer the highest calling speed.  They do not support *args or **kwargs.  When called from external JavaScript, keyword arguments are not given by name, they become positional arguments that default to the default value if undefined.  When called from within PythonJS code, they need to be called from inside a __with javascript:__ block, or following the call pythonjs.configure(javascript=True) that sets all following code to be in __javascript__ mode.
+Functions decorated with @javascript, or inside a "with javascript:" block, or following the call: "pythonjs.configure(javascript=True)" become "javascript" type functions, these offer the highest calling speed.  They do not support *args or **kwargs.  When called from external JavaScript, keyword arguments are not given by name, they become positional arguments that default to the default value if undefined.  When called from within PythonJS code, they need to be called from inside a "with javascript:" block, or following the call pythonjs.configure(javascript=True) that sets all following code to be in "javascript" mode.
 
 Example::
 
@@ -103,6 +100,67 @@ Example JavaScript Translation::
 	  if (c === undefined) c = 3;
 	  console.log(x, y, z, a, b, c);
 	}
+
+Class Types
+-----------
+
+PythonJS has two types of classes: "normal" and "javascript".  By default classes are "normal" and support operator overloading and properties.  Calling methods on a "javascript" class is much faster than method calls on a "normal" class, but follow the same rules as described above for "javascript" type functions.  Both class types can be used from external JavaScript, the only difference is that instances of a "normal" class can pass their methods directly as arguments to a function that will use the method as a callback - even if that external function depends on the context of "this".  Whereas instances of a "javascript" class can not directly pass their methods as arguments, because they depend on the calling context of "this" - if you are familiar with JavaScript this comes as no surprise.
+
+Example::
+
+	pythonjs.configure( javascript=True )
+	class A:
+		def __init__(self, x,y,z):
+			self.x = x
+			self.y = y
+			self.z = z
+
+		def foo(self, w):
+			return self.x + w
+
+Example JavaScript Translation::
+
+	A = function(x, y, z) {
+	  A.__init__(this, x,y,z);
+	}
+
+	A.prototype.__init__ = function(x, y, z) {
+	  this.x=x;
+	  this.y=y;
+	  this.z=z;
+	}
+	A.__init__ = function () { return A.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	A.prototype.foo = function(w) {
+	  return (this.x + w);
+	}
+	A.foo = function () { return A.prototype.foo.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+
+Method Overrides
+----------------
+In the example above, you might be wondering why in the JavaScript translation, is the class A constructor calling "A.__init__(this, x,y,z)", and why is the __init__ method assigned A.prototype and then wrapped and assigned to A.__init__.  This is done so that subclasses are able to override their parent's methods, but still have a way of calling them, an example that subclasses A will make this more clear.
+
+Example::
+
+	class B( A ):
+		def __init__(self, w):
+			A.__init__(self, 10, 20, 30)
+			self.w = w
+
+Example JavaScript Translation::
+
+	B = function(w) {
+	  B.__init__(this, w);
+	}
+
+	B.prototype.__init__ = function(w) {
+	  A.__init__(this,10,20,30);
+	  this.w=w;
+	}
+	B.__init__ = function () { return B.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
 
 
 
