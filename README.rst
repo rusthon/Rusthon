@@ -238,6 +238,14 @@ Example Output::
 	}
 
 
+Python vs JavaScript Modes
+-------------------------
+
+PythonJS has two primary modes you can write code in: "python" and "javascript".  The default mode is "python", you can mark sections of your code to use either mode with "pythonjs.configure(javascript=True/False)" or nesting blocks inside "with python:" or "with javascript:".  The "javascript" mode can be used for sections of code where performance is a major concern.  When in "javascript" mode the literal "[]" syntax will return a JavaScript Array instead of a PythonJS list, and a literal "{}" returns a JavaScript Object instead of a PythonJS dict.  In both modes you can directly call external JavaScript functions, its only faster in "javascript" mode because function calls are direct without any wrapping.
+
+If your familiar with the details of the JavaScript language you might expect JavaScript rules to apply when in "javascript" mode, however they do not, it is still Python style.  For example, in true JavaScript a for-in loop over an Array yields the indices, and a for-in loop over an Object yields the values - this is the opposite of what happens in Python and PythonJS.
+
+
 Directly Calling JavaScript Functions
 ---------------
 

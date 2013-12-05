@@ -218,7 +218,7 @@ class JSGenerator(NodeVisitor):
 				return '[]'
 
 		elif name == 'JS':
-			s = node.args[0].s.replace('\n', '\\n').replace('\0', '\\0')
+			s = node.args[0].s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
 			if s.strip().startswith('#'): s = '/*%s*/'%s
 			if '"' in s or "'" in s:  ## can not trust direct-replace hacks
 				pass

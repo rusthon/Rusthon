@@ -3,7 +3,6 @@
 <script src="pythonscript.js"></script>
 
 <script type="text/python">
-pythonjs.configure( javascript=True )
 
 class A:
 	def __init__(self, x,y,z):
@@ -20,8 +19,9 @@ class B( A ):
 		self.w = w
 
 class C( B ):
-	def bar(self, value=1):
-		return self.x + self.y + self.z + value
+	def bar(self, a=1, b=2, c=3):
+		print a,b,c
+		return self.x + self.y + self.z + a+b+c
 
 def test():
 	c = C()
