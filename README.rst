@@ -3,6 +3,14 @@ PythonJS 0.8.6
 
 .. image:: http://1.bp.blogspot.com/-yG3zuA_sEM4/Uogurz5xBnI/AAAAAAAAAgk/57_Zv2iSfgo/s400/pythonjs-0.8.5.png
 
+Community
+---------
+
+https://groups.google.com/forum/#!forum/pythonjs
+
+irc freenode::
+
+	#pythonjs
 
 Introduction
 ======
@@ -417,8 +425,7 @@ with an external JavaScript library, the above technique of
 passing each method callback to JavaScript might become
 inefficient.  If you want to pass the PythonJS instance
 itself and have its methods callable from JavaScript, you
-can do this now simply by passing the instance.  This only
-works with property getter/setters.
+can do this now simply by passing the instance.
 
 Example::
 
