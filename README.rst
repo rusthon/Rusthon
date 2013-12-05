@@ -68,99 +68,43 @@ command line arguments is given, then translator.py takes
 input from stdin.
 
 
-Test Server
------------
-
-PythonJS includes two test servers that run the HTML tests
-in PythonJS/tests.  Both of these servers are written using
-the Tornado API.  The NodeJS version is a port of the
-original test server adapted to work with the Tornado
-compatible binding.
-
-
-NodeJS Tornado
----------------
-
-Install Modules::
-
-	sudo npm install -g mime
-	sudo npm install -g ws
-
-Run NodeJS Server::
-
-	cd PythonJS
-	./nodejs.py nodejs/tests/tornado-demo-server.py
-
-
-Python Tornado
----------------
-
-Install Tornado for Python3::
-
-	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
-	tar xvf tornado-3.1.1.tar.gz
-	cd tornado-3.1.1
-	python3 setup.py build
-	sudo python3 setup.py install
-
-Run Python Server::
-
-	cd PythonJS/tests
-	./server.py
-
-Testing
--------
-
-After running one of the test servers above, open a web
-browser and go to: http://localhost:8080
-
-The test server dynamically compiles Python into JavaScript,
-this greatly speeds up the testing and development process.
-Any html file you place in the PythonJS/tests directory will
-become available as a new web-page.  When this web-page is
-requested the server will parse the html and check all the
-<script> tags for external or embedded Python, and
-dynamically convert it to JavaScript.
-
-External Python Scripts::
-
-	<head>
-	<script src="bindings/three.py"></script>
-	</head>
-
-The server knows that the above script needs to be
-dynamically compiled to JavaScript because the script is
-located in the "bindings" directory and the file name ends
-with ".py"
-
-Embedded Python Scripts::
-
-	<body>
-	<script type="text/python">
-	from three import *
-	v1 = Vector3( x=1, y=2, z=3 )
-	v2 = Vector3( x=4, y=5, z=6 )
-	v3 = v1 + v2
-	</script>
-	</body>
-
-The server knows that above is an embedded Python script
-because the script tag has its type attribute set to
-"text/python".  The server will compile and replace the
-Python code with JavaScript, change the type attribute to be
-"text/javascript", and serve the page to the client.
-
-The syntax "from three import *" tells the compiler to load
-static type information about the previously compiled
-binding "three.py" into the compilers namespace, this is
-required because three.py uses operator overloading to wrap
-the THREE.js API.  PythonJS programs are explicitly and
-implicitly statically typed to allow for operator
-overloading and optimizations.
 
 
 Writing PythonJS Scripts
 =====================
+
+Function Types
+---------------
+
+PythonJS has three main types of functions: 
+	__normal__
+	__fastdef__
+	__javascript__
+
+By default a function is __normal__ and fully emulates the Python standard, it allows for: arguments, keyword args with defaults, variable length arguments (*args) and variable length keyword args (**kwargs).  Functions that are __normal__ also have special logic that allows them to be called from external JavaScript like normal JavaScript functions (keyword args become normal positional arguments when called from JavaScript).  Calling __normal__ functions is slow because of this overhead, when you need faster function calls you can use __fastdef__ or __javascript__.
+
+Functions decorated with @fastdef, or inside a __with fastdef:__ block become __fastdef__ type functions.  This makes calling them much faster, but they do not support variable length arguments (*args) or variable length keyword args (**kwargs).
+Another limitation is that when called from external JavaScript you must pack args into an Array as the first argument, and pack keyword arguments into an Object as the second argument.
+
+Functions decorated with @javascript, or inside a __with javascript:__ block, or following the call: __pythonjs.configure(javascript=True)__ become __javascript__ type functions, these offer the highest calling speed.  They do not support *args or **kwargs.  When called from external JavaScript, keyword arguments are not given by name, they become positional arguments that default to the default value if undefined.  When called from within PythonJS code, they need to be called from inside a __with javascript:__ block, or following the call pythonjs.configure(javascript=True) that sets all following code to be in __javascript__ mode.
+
+Example::
+
+	pythonjs.configure( javascript=True )
+
+	def myfunc(x,y,z, a=1,b=2,c=3):
+		print x,y,z,a,b,c
+
+Example JavaScript Translation::
+
+	myfunc = function(x, y, z, a, b, c) {
+	  if (a === undefined) a = 1;
+	  if (b === undefined) b = 2;
+	  if (c === undefined) c = 3;
+	  console.log(x, y, z, a, b, c);
+	}
+
+
 
 Generator Functions
 -------------------
@@ -631,6 +575,97 @@ Example::
 	print f.read()
 
 ------------------------------
+
+
+Test Server
+===========
+
+PythonJS includes two test servers that run the HTML tests
+in PythonJS/tests.  Both of these servers are written using
+the Tornado API.  The NodeJS version is a port of the
+original test server adapted to work with the Tornado
+compatible binding.
+
+
+NodeJS Tornado
+---------------
+
+Install Modules::
+
+	sudo npm install -g mime
+	sudo npm install -g ws
+
+Run NodeJS Server::
+
+	cd PythonJS
+	./nodejs.py nodejs/tests/tornado-demo-server.py
+
+
+Python Tornado
+---------------
+
+Install Tornado for Python3::
+
+	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
+	tar xvf tornado-3.1.1.tar.gz
+	cd tornado-3.1.1
+	python3 setup.py build
+	sudo python3 setup.py install
+
+Run Python Server::
+
+	cd PythonJS/tests
+	./server.py
+
+Testing
+-------
+
+After running one of the test servers above, open a web
+browser and go to: http://localhost:8080
+
+The test server dynamically compiles Python into JavaScript,
+this greatly speeds up the testing and development process.
+Any html file you place in the PythonJS/tests directory will
+become available as a new web-page.  When this web-page is
+requested the server will parse the html and check all the
+<script> tags for external or embedded Python, and
+dynamically convert it to JavaScript.
+
+External Python Scripts::
+
+	<head>
+	<script src="bindings/three.py"></script>
+	</head>
+
+The server knows that the above script needs to be
+dynamically compiled to JavaScript because the script is
+located in the "bindings" directory and the file name ends
+with ".py"
+
+Embedded Python Scripts::
+
+	<body>
+	<script type="text/python">
+	from three import *
+	v1 = Vector3( x=1, y=2, z=3 )
+	v2 = Vector3( x=4, y=5, z=6 )
+	v3 = v1 + v2
+	</script>
+	</body>
+
+The server knows that above is an embedded Python script
+because the script tag has its type attribute set to
+"text/python".  The server will compile and replace the
+Python code with JavaScript, change the type attribute to be
+"text/javascript", and serve the page to the client.
+
+The syntax "from three import *" tells the compiler to load
+static type information about the previously compiled
+binding "three.py" into the compilers namespace, this is
+required because three.py uses operator overloading to wrap
+the THREE.js API.  PythonJS programs are explicitly and
+implicitly statically typed to allow for operator
+overloading and optimizations.
 
 
 .. image:: https://d2weczhvl823v0.cloudfront.net/PythonJS/pythonjs/trend.png

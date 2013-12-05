@@ -550,7 +550,6 @@ class PythonToPythonJS(NodeVisitor):
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
-
 				item.args.args = item.args.args[1:]  ## remove self
 				finfo = inspect_function( item )
 				for n in finfo['name_nodes']:
@@ -1670,21 +1669,24 @@ class PythonToPythonJS(NodeVisitor):
 
 		if self._with_js or javascript:
 			if node.args.defaults:
+				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):
-					dindex = i - len(node.args.defaults)
+					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						writer.write("""JS("var %s = %s  || %s ")""" % (arg.id, arg.id, default_value))
-
+						writer.write( '''JS("if (%s === undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
 
 		elif self._with_fastdef or fastdef:
+			offset = len(node.args.args) - len(node.args.defaults)
 			for i, arg in enumerate(node.args.args):
-				#dindex = i - len(node.args.defaults)  ## TODO - fixme
-				#if dindex >= 0 and node.args.defaults:
-				#	default_value = self.visit( node.args.defaults[dindex] )
-				#	writer.write("""JS("var %s = kwargs[ '%s' ]  || %s ")""" % (arg.id, arg.id, default_value))
-				#else:
-				writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
+				dindex = i - offset
+				if dindex >= 0 and node.args.defaults:
+					default_value = self.visit( node.args.defaults[dindex] )
+					writer.write('''JS("var %s = kwargs[ '%s' ]")''' % (arg.id, arg.id))
+					writer.write( '''JS("if (%s === undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
+
+				else:
+					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
 			# First check the arguments are well formed 
