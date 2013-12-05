@@ -109,6 +109,9 @@ MINI_STDLIB = {
 		'sin' : 'var sin = Math.sin',
 		'cos' : 'var cos = Math.cos',
 		'sqrt': 'var sqrt = Math.sqrt'
+	},
+	'os.path' : {
+		'dirname' : "function dirname(s) { return s.slice(0, s.lastIndexOf('/')+1)}; var os = {'path':{'dirname':dirname}}"
 	}
 }
 
