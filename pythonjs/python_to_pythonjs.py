@@ -548,15 +548,17 @@ class PythonToPythonJS(NodeVisitor):
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
-				item.args.args = item.args.args[1:]  ## remove self
 				finfo = inspect_method( item )
 				props.update( finfo['properties'] )
+
+				if item.name == '__init__': continue
+
+				item.args.args = item.args.args[1:]  ## remove self
 				for n in finfo['name_nodes']:
 					if n.id == 'self':
 						n.id = 'this'
 
-		init = methods.get( '__init__', None)
-
+		writer.write('@properties(%s)'%','.join(props))
 
 		bases = []
 		for base in node.bases:
@@ -567,10 +569,12 @@ class PythonToPythonJS(NodeVisitor):
 		else:
 			writer.write('class %s:' %node.name)
 
+		init = methods.get( '__init__', None)
+
 		writer.push()
 		## declare vars here
-		for attr in props:
-			writer.write('JS("var %s")'%attr)
+		#for attr in props:
+		#	writer.write('JS("var %s")'%attr)
 		## constructor
 		if init:
 			methods.pop( '__init__' )
@@ -1720,7 +1724,7 @@ class PythonToPythonJS(NodeVisitor):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						writer.write( '''JS("if (%s === undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
+						writer.write( '''JS("if (%s == undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
 
 		elif self._with_fastdef or fastdef:
 			offset = len(node.args.args) - len(node.args.defaults)
@@ -1729,7 +1733,7 @@ class PythonToPythonJS(NodeVisitor):
 				if dindex >= 0 and node.args.defaults:
 					default_value = self.visit( node.args.defaults[dindex] )
 					writer.write('''JS("var %s = kwargs[ '%s' ]")''' % (arg.id, arg.id))
-					writer.write( '''JS("if (%s === undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
+					writer.write( '''JS("if (%s == undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
 
 				else:
 					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))

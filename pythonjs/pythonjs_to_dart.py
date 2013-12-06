@@ -7,23 +7,65 @@ import ast
 import pythonjs
 
 class DartGenerator( pythonjs.JSGenerator ):
+	_classes = dict()
+	_class_props = dict()
 	def visit_ClassDef(self, node):
 		out = []
+
+		props = set()
+		self._classes[ node.name ] = node
+		self._class_props[ node.name ] = props
+		for decor in node.decorator_list:  ## class decorators
+			if isinstance(decor, ast.Call):
+				props.update( [self.visit(a) for a in decor.args] )
+
+
+
 		bases = []
+		base_classes = []
 		for base in node.bases:
-			bases.append( self.visit(base) )
+			n = self.visit(base)
+			bases.append( n )
+			props.update( self._class_props[n] )
+			base_classes.append( self._classes[n] )
 		if bases:
-			out.append('class %s extends %s {'%(node.name, ','.join(bases)))
+			#out.append('class %s extends %s {'%(node.name, ','.join(bases)))
+			out.append('class %s implements %s {'%(node.name, ','.join(bases)))
+			#out.append('class %s extends Object with %s {'%(node.name, ','.join(bases)))
+
 
 		else:
 			out.append('class %s {' %node.name)
 		self.push()
+
+		for p in props:
+			out.append(self.indent()+ 'var %s;'%p)
+
+		for bnode in base_classes:
+			for b in bnode.body:
+				if isinstance(b, ast.FunctionDef):
+					if b.name == '__init__': continue
+					out.append( self.visit(b) )
+
 		for b in node.body:
-			line = self.visit(b)
-			if line.startswith('var '):
-				out.append( self.indent()+line )
+
+			if isinstance(b, ast.FunctionDef) and b.name == node.name:
+				args = [self.visit(a) for a in b.args.args][1:]
+				args = ','.join(args)
+				#out.append( self.indent()+'static void __init__(this, %s) : this(%s);'%(args,args))
+				b._prefix = 'static void '
+				b.name = '__init__'
+				out.append( self.visit(b) )
+				out.append(
+					self.indent()+'%s(%s) {%s.__init__(this,%s);}'%(node.name, args, node.name, args)
+				)
 			else:
-				out.append( line )
+				line = self.visit(b)
+				if line.startswith('var '):
+					out.append( self.indent()+line )
+				else:
+					out.append( line )
+
 		self.pull()
 		out.append('}')
 		return '\n'.join(out)
@@ -64,7 +106,10 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def visit_FunctionDef(self, node):
 
 		args = self.visit(node.args)
-		buffer = self.indent() + '%s(%s) {\n' % (node.name, ', '.join(args))
+		buffer = self.indent()
+		if hasattr(node,'_prefix'):
+			buffer += node._prefix
+		buffer += '%s(%s) {\n' % (node.name, ', '.join(args))
 		self.push()
 		body = list()
 		for child in node.body:
@@ -78,6 +123,16 @@ class DartGenerator( pythonjs.JSGenerator ):
 		buffer += '\n%s}\n' %self.indent()
 		return buffer
 
+
+	def visit_Is(self, node):
+		return '=='
+
+	def _visit_call_helper_instanceof(self, node):
+		args = map(self.visit, node.args)
+		if len(args) == 2:
+			return '%s is %s' %tuple(args)
+		else:
+			raise SyntaxError( args )
 
 
 

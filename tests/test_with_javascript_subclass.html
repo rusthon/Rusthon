@@ -4,6 +4,8 @@
 
 <script type="text/python">
 
+pythonjs.configure(javascript=True)
+
 class A:
 	def __init__(self, x,y,z):
 		self.x = x
@@ -23,16 +25,16 @@ class C( B ):
 		print a,b,c
 		return self.x + self.y + self.z + a+b+c
 
-def test():
-	c = C()
-	print c.x
-	print c.foo( 100 )
-	print c.bar( 'hello world' )
+def main():
+	b = B( 'hello' )
+	print b.x
+	print b.foo( 100 )
+	#print c.bar( 'hello world' )
 
 </script>
 </head>
 
 <body>
-<button onclick="test()">click me</button>
+<button onclick="main()">click me</button>
 </body>
 </html>
