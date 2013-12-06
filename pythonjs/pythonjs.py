@@ -462,8 +462,7 @@ class JSGenerator(NodeVisitor):
 		return 'break'
 
 def main(script):
-	input = parse(script)
-	tree = parse(input)
+	tree = ast.parse( script )
 	return JSGenerator().visit(tree)
 
 

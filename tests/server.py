@@ -20,25 +20,21 @@ PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
 	pythonscript = os.path.abspath('../pythonjs'),
 	bindings = os.path.abspath('../bindings'),
-	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
+	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),  ## DEPRECATED
 	runtime = os.path.abspath('../pythonjs.js'),
 	module_cache = '/tmp',
 
 	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
 	runtime_builtins = os.path.abspath('../runtime/builtins.py'),
 
+	dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js'),
+
 )
 
 
-def python_to_pythonjs( src, module=None, global_variable_scope=False ):
-	#cmdheader = '#!%s' %PATHS['module_cache']
-	#if module:
-	#	assert '.' not in module
-	#	cmdheader += ';' + module
-	#cmdheader += '\n'
+def python_to_pythonjs( src, module=None ):
 
 	cmd = ['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')]
-	if global_variable_scope: cmd.append('--global-variable-scope')
 	if module:
 		cmd.append( '--module' )
 		cmd.append( module )
@@ -50,6 +46,24 @@ def python_to_pythonjs( src, module=None, global_variable_scope=False ):
 	)
 	stdout, stderr = p.communicate( src.encode('utf-8') )
 	return stdout.decode('utf-8')
+
+def pythonjs_to_dart(src):
+	p = subprocess.Popen(
+		['python2', os.path.join( PATHS['pythonscript'],'pythonjs_to_dart.py')],
+		stdin = subprocess.PIPE,
+		stdout = subprocess.PIPE
+	)
+	stdout, stderr = p.communicate( src.encode('utf-8') )
+	open( '/tmp/dart2js-input.js', 'wb').write( stdout )
+
+	cmd = [
+		PATHS['dart2js'],
+		'-c', ## insert runtime checks
+		'-o', '/tmp/dart2js-output.js',
+		'/tmp/dart2js-input.js'
+	]
+	subprocess.call( cmd )
+	return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
 
 def pythonjs_to_javascript( src, closure_compiler=False ):
 	p = subprocess.Popen(
@@ -74,16 +88,18 @@ def pythonjs_to_javascript( src, closure_compiler=False ):
 
 	return a
 
-def python_to_javascript( src, module=None, closure_compiler=False, debug=False, dump=False, global_variable_scope=False ):
-	a = python_to_pythonjs( src, module=module, global_variable_scope=global_variable_scope )
+def python_to_javascript( src, module=None, closure_compiler=False, dart=True, debug=False, dump=False ):
+	a = python_to_pythonjs( src, module=module )
 	if debug: print( a )
 	if dump:
 		if isinstance(dump, str):
 			open(dump, 'wb').write( a.encode('utf-8') )
 		else:
 			open('/tmp/pythonjs.dump', 'wb').write( a.encode('utf-8') )
-
-	return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
+	if dart:
+		return pythonjs_to_dart( a )
+	else:
+		return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
 
 
 
@@ -170,7 +186,6 @@ def regenerate_runtime():
 	c = python_to_javascript(
 		open(PATHS['runtime_builtins'],'rb').read().decode('utf-8'),
 		dump='/tmp/runtime-builtins.dump.py',
-		global_variable_scope = False ## this should be safe
 	)
 	if not c.strip():
 		raise RuntimeError

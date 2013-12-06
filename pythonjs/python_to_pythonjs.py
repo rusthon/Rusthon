@@ -31,6 +31,9 @@ if sys.version_info.major == 3:
 else:
 	from cStringIO import StringIO as StringIO
 
+
+import ministdlib
+
 try:
 	_log_file = open(gettempdir() + '/python_to_pythonjs.log', 'wb')
 except:
@@ -94,26 +97,7 @@ class Writer(object):
 
 writer = Writer()
 
-MINI_STDLIB = {
-	'time': {
-		'time': 'function time() { return new Date().getTime() / 1000.0; }',
-		'clock': 'function clock() { return new Date().getTime() / 1000.0; }'
-	},
-	'random': {
-		'random': 'var random = Math.random'
-	},
-	'bisect' : {
-		'bisect' : '/*bisect from fake bisect module*/'  ## bisect is a builtin
-	},
-	'math' : {
-		'sin' : 'var sin = Math.sin',
-		'cos' : 'var cos = Math.cos',
-		'sqrt': 'var sqrt = Math.sqrt'
-	},
-	'os.path' : {
-		'dirname' : "function dirname(s) { return s.slice(0, s.lastIndexOf('/')+1)}; var os = {'path':{'dirname':dirname}}"
-	}
-}
+
 
 class Typedef(object):
 	# http://docs.python.org/2/reference/datamodel.html#emulating-numeric-types
@@ -329,10 +313,10 @@ class PythonToPythonJS(NodeVisitor):
 			raise NotImplementedError('import, line %s' % node.lineno)
 
 	def visit_ImportFrom(self, node):
-		if node.module in MINI_STDLIB:
+		if node.module in ministdlib.LIB:
 			for n in node.names:
-				if n.name in MINI_STDLIB[ node.module ]:
-					writer.write( 'JS("%s")' %MINI_STDLIB[node.module][n.name] )
+				if n.name in ministdlib.LIB[ node.module ]:
+					writer.write( 'JS("%s")' %ministdlib.LIB[node.module][n.name] )
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 
@@ -1281,8 +1265,9 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Expr(self, node):
 		log('line: %s' %node.lineno )
-		src = self._source[ node.lineno ]
-		log( src )
+		if node.lineno < len(self._source):
+			src = self._source[ node.lineno ]
+			log( src )
 
 		line = self.visit(node.value)
 		if line:
@@ -1805,17 +1790,7 @@ class PythonToPythonJS(NodeVisitor):
 		if self._in_js_class:
 			return
 
-		## note, in javascript function.name is a non-standard readonly attribute,
-		## the compiler creates anonymous functions with name set to an empty string.
-		writer.write('%s.NAME = "%s"' %(node.name,node.name))
 
-		writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
-		defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
-		writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
-		if self._with_fastdef or fastdef:
-			writer.write('%s.fastdef = True' %node.name)
-
-		#types = ['%s:%s'%(self.visit(x[0]), '"%s"'%type(self.visit(x[1])).__name__ ) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
 		types = []
 		for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults):
 			key = x[0]
@@ -1826,9 +1801,26 @@ class PythonToPythonJS(NodeVisitor):
 				value = type(value).__name__.lower()
 			types.append( '%s : "%s"' %(self.visit(key), value) )
 
-		writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
-		if return_type:
-			writer.write('%s.return_type = "%s"'%(node.name, return_type))
+
+		if False:  ## not dart compatible?
+			## note, in javascript function.name is a non-standard readonly attribute,
+			## the compiler creates anonymous functions with name set to an empty string.
+			writer.write('%s.NAME = "%s"' %(node.name,node.name))
+
+			writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
+			defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
+			writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
+			if self._with_fastdef or fastdef:
+				writer.write('%s.fastdef = True' %node.name)
+
+			writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
+
+			if return_type:
+				writer.write('%s.return_type = "%s"'%(node.name, return_type))
+
+			if not self._with_js and not javascript:
+				writer.write('%s.pythonscript_function=True'%node.name)
+
 
 		if self._with_js and with_js_decorators:
 			for dec in with_js_decorators:
@@ -1842,8 +1834,6 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write( '%s = __get__(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
 
 
-		if not self._with_js and not javascript:
-			writer.write('%s.pythonscript_function=True'%node.name)
 
 		# apply decorators
 		for decorator in decorators:
