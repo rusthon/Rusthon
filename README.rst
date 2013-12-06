@@ -34,6 +34,10 @@ decorators described below.  When PythonJS is run in fast
 mode (javascript with inline functions) it beats PyPy in the 
 Richards, Pystone, and N-Body benchmarks.
 
+.. image:: http://1.bp.blogspot.com/-Pn7jNLT-Suo/UphWdu48WiI/AAAAAAAAAis/n5HgVFJwgH8/s400/nbody.png
+
+N-Body benchmark, PythonJS in javascript mode with inlined functions is 10x faster than PyPy2.2
+
 NodeJS
 ---------------
 Using PythonJS you can quickly port your server side code to
@@ -342,6 +346,10 @@ Python vs JavaScript Modes
 -------------------------
 
 PythonJS has two primary modes you can write code in: "python" and "javascript".  The default mode is "python", you can mark sections of your code to use either mode with "pythonjs.configure(javascript=True/False)" or nesting blocks inside "with python:" or "with javascript:".  The "javascript" mode can be used for sections of code where performance is a major concern.  When in "javascript" mode the literal "[]" syntax will return a JavaScript Array instead of a PythonJS list, and a literal "{}" returns a JavaScript Object instead of a PythonJS dict.  In both modes you can directly call external JavaScript functions, its only faster in "javascript" mode because function calls are direct without any wrapping.
+
+.. image:: http://3.bp.blogspot.com/-Bl9I6tGEEMU/UqHIEK90bsI/AAAAAAAAAjk/0zn77pKXURU/s400/pystoned-modes.png
+
+The Pystone benchmark is 800 times faster in "javascript" mode with inlined functions than normal "python" mode.
 
 If your familiar with the details of the JavaScript language you might expect JavaScript rules to apply when in "javascript" mode, however they do not, it is still Python style.  For example, in true JavaScript a for-in loop over an Array yields the indices, and a for-in loop over an Object yields the values - this is the opposite of what happens in Python and PythonJS.
 
