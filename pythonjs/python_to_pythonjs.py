@@ -538,6 +538,50 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				return self._get_js_class_base_init( n )  ## TODO fixme
 
+	def _visit_dart_classdef(self, node):
+		name = node.name
+		log('Dart-ClassDef: %s'%name)
+		self._js_classes[ name ] = node
+
+		methods = {}
+		props = set()
+		for item in node.body:
+			if isinstance(item, FunctionDef):
+				methods[ item.name ] = item
+				item.args.args = item.args.args[1:]  ## remove self
+				finfo = inspect_method( item )
+				props.update( finfo['properties'] )
+				for n in finfo['name_nodes']:
+					if n.id == 'self':
+						n.id = 'this'
+
+		init = methods.get( '__init__', None)
+
+
+		bases = []
+		for base in node.bases:
+			bases.append( self.visit(base) )
+		if bases:
+			writer.write('class %s( %s ):'%(node.name, ','.join(bases)))
+
+		else:
+			writer.write('class %s:' %node.name)
+
+		writer.push()
+		## declare vars here
+		for attr in props:
+			writer.write('JS("var %s")'%attr)
+		## constructor
+		if init:
+			methods.pop( '__init__' )
+			init.name = node.name
+			self.visit(init)
+		## methods
+		for method in methods.values():
+			self.visit(method)
+
+		writer.pull()
+
 	def _visit_js_classdef(self, node):
 		name = node.name
 		log('JavaScript-ClassDef: %s'%name)
@@ -616,7 +660,10 @@ class PythonToPythonJS(NodeVisitor):
 		self._in_js_class = False
 
 	def visit_ClassDef(self, node):
-		if self._with_js:
+		if self._with_dart:
+			self._visit_dart_classdef(node)
+			return
+		elif self._with_js:
 			self._visit_js_classdef(node)
 			return
 
@@ -2276,10 +2323,6 @@ def retrieve_vars(body):
 				local_vars.add( c.id )
 		elif isinstance(n, Global):
 			global_vars.update( n.names )
-		elif isinstance(n, With) and isinstance( n.context_expr, Name ) and n.context_expr.id == 'javascript':
-			for c in n.body:
-				if isinstance(c, Assign) and isinstance(c.targets[0], Name):  ## assignment to local
-					local_vars.add( c.targets[0].id )
 		elif hasattr(n, 'body') and not isinstance(n, FunctionDef):
 			# do a recursive search inside new block except function def
 			l, g = retrieve_vars(n.body)
@@ -2292,6 +2335,15 @@ def retrieve_vars(body):
 
 	return local_vars, global_vars
 
+def retrieve_properties(body):
+	props = set()
+	for n in body:
+		if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Attribute) and isinstance(n.targets[0].value, ast.Name) and n.targets[0].value.id == 'self':
+			props.add( n.targets[0].attr )
+		elif hasattr(n, 'body') and not isinstance(n, FunctionDef):
+			props.update( retrieve_properties(n.body) )
+	return props
+	
 def inspect_function( node ):
 	local_vars, global_vars = retrieve_vars(node.body)
 	local_vars = local_vars - global_vars
@@ -2321,7 +2373,10 @@ def inspect_function( node ):
 	}
 	return info
 
-
+def inspect_method( node ):
+	info = inspect_function( node )
+	info['properties'] = retrieve_properties( node.body )
+	return info
 
 def main(script):
 	PythonToPythonJS( source=script, dart='--dart' in sys.argv )

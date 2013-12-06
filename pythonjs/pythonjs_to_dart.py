@@ -7,6 +7,27 @@ import ast
 import pythonjs
 
 class DartGenerator( pythonjs.JSGenerator ):
+	def visit_ClassDef(self, node):
+		out = []
+		bases = []
+		for base in node.bases:
+			bases.append( self.visit(base) )
+		if bases:
+			out.append('class %s extends %s {'%(node.name, ','.join(bases)))
+
+		else:
+			out.append('class %s {' %node.name)
+		self.push()
+		for b in node.body:
+			line = self.visit(b)
+			if line.startswith('var '):
+				out.append( self.indent()+line )
+			else:
+				out.append( line )
+		self.pull()
+		out.append('}')
+		return '\n'.join(out)
+
 	def _visit_for_prep_iter_helper(self, node, out):
 		pass
 

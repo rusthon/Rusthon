@@ -50,6 +50,8 @@ def python_to_pythonjs( src, module=None, dart=False ):
 	return stdout.decode('utf-8')
 
 def pythonjs_to_dart(src):
+	if os.path.isfile('/tmp/dart2js-output.js'):
+		os.unlink('/tmp/dart2js-output.js')
 	p = subprocess.Popen(
 		['python2', os.path.join( PATHS['pythonjs'],'pythonjs_to_dart.py')],
 		stdin = subprocess.PIPE,

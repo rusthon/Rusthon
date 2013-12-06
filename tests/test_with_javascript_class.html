@@ -13,19 +13,22 @@ with javascript:
 
 
 
-def test():
+def main():
 	print 'testing with javascript class'
 
 	with javascript:
 		for i in range(10):
 			a = A()
 			print a
+			print a.x
+			print a.y
+			print a.z
 
 
 </script>
 </head>
 
 <body>
-<button onclick="test()">click me</button>
+<button onclick="main()">click me</button>
 </body>
 </html>
