@@ -408,6 +408,13 @@ class JSGenerator(NodeVisitor):
 		return '{ %s }' %b
 
 
+	def _visit_for_prep_iter_helper(self, node, out):
+		## support "for key in JSObject" ##
+		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
+		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
+		out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }' )
+
+
 	def visit_For(self, node):
 		'''
 		for loops inside a `with javascript:` block will produce this faster for loop.
@@ -428,11 +435,7 @@ class JSGenerator(NodeVisitor):
 		out = []
 		out.append( self.indent() + 'var iter = %s;\n' % iter )
 
-		## support "for key in JSObject" ##
-		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
-		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
-		out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }' )
-
+		self._visit_for_prep_iter_helper(node, out)
 
 		out.append( self.indent() + 'for (var %s=0; %s < iter.length; %s++) {' % (target, target, target) )
 		self.push()

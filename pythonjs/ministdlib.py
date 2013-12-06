@@ -2,7 +2,13 @@
 # by Brett Hartshorn - copyright 2013
 # You may destribute this file using the "New BSD" or MIT license
 
-LIB = {
+DART = {
+	'time': {
+		'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
+	}
+}
+
+JS = {
 	'time': {
 		'time': 'function time() { return new Date().getTime() / 1000.0; }',
 		'clock': 'function clock() { return new Date().getTime() / 1000.0; }'

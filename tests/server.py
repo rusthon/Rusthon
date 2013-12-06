@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Test Server for PythonScript
+# Test Server for PythonJS
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 # Requires: Python3 and Tornado
@@ -18,9 +18,8 @@ import os, sys, subprocess, datetime, json
 
 PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
-	pythonscript = os.path.abspath('../pythonjs'),
+	pythonjs = os.path.abspath('../pythonjs'),
 	bindings = os.path.abspath('../bindings'),
-	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),  ## DEPRECATED
 	runtime = os.path.abspath('../pythonjs.js'),
 	module_cache = '/tmp',
 
@@ -31,10 +30,13 @@ PATHS = dict(
 
 )
 
+DART = '--dart' in sys.argv  ## force dart mode
 
-def python_to_pythonjs( src, module=None ):
+def python_to_pythonjs( src, module=None, dart=False ):
 
-	cmd = ['python2', os.path.join( PATHS['pythonscript'], 'python_to_pythonjs.py')]
+	cmd = ['python2', os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py')]
+	if dart:
+		cmd.append( '--dart' )
 	if module:
 		cmd.append( '--module' )
 		cmd.append( module )
@@ -49,7 +51,7 @@ def python_to_pythonjs( src, module=None ):
 
 def pythonjs_to_dart(src):
 	p = subprocess.Popen(
-		['python2', os.path.join( PATHS['pythonscript'],'pythonjs_to_dart.py')],
+		['python2', os.path.join( PATHS['pythonjs'],'pythonjs_to_dart.py')],
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
@@ -58,38 +60,25 @@ def pythonjs_to_dart(src):
 
 	cmd = [
 		PATHS['dart2js'],
-		'-c', ## insert runtime checks
+		#'-c', ## insert runtime checks
 		'-o', '/tmp/dart2js-output.js',
 		'/tmp/dart2js-input.js'
 	]
 	subprocess.call( cmd )
 	return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
 
-def pythonjs_to_javascript( src, closure_compiler=False ):
+def pythonjs_to_javascript( src ):
 	p = subprocess.Popen(
-		['python2', os.path.join( PATHS['pythonscript'],'pythonjs.py')],
+		['python2', os.path.join( PATHS['pythonjs'],'pythonjs.py')],
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
 	stdout, stderr = p.communicate( src.encode('utf-8') )
 	a = stdout.decode('utf-8')
-
-	if closure_compiler and os.path.isfile( PATHS['closure'] ):
-		x = '/tmp/input.js'; y = '/tmp/output.js';
-		f = open(x, 'wb'); f.write( a.encode('utf-8') ); f.close()
-		subprocess.call([
-			'java', '-jar', PATHS['closure'], 
-			'--compilation_level', 'ADVANCED_OPTIMIZATIONS', 
-			'--js', x, '--js_output_file', y,
-			'--formatting', 'PRETTY_PRINT',
-			#'--create_name_map_files', 
-		])
-		f = open(y, 'rb'); a = f.read().decode('utf-8'); f.close()
-
 	return a
 
-def python_to_javascript( src, module=None, closure_compiler=False, dart=True, debug=False, dump=False ):
-	a = python_to_pythonjs( src, module=module )
+def python_to_javascript( src, module=None, dart=False, debug=False, dump=False ):
+	a = python_to_pythonjs( src, module=module, dart=dart )
 	if debug: print( a )
 	if dump:
 		if isinstance(dump, str):
@@ -99,7 +88,7 @@ def python_to_javascript( src, module=None, closure_compiler=False, dart=True, d
 	if dart:
 		return pythonjs_to_dart( a )
 	else:
-		return pythonjs_to_javascript( a, closure_compiler=closure_compiler )
+		return pythonjs_to_javascript( a )
 
 
 
@@ -124,7 +113,7 @@ def convert_python_html_document( data ):
 	'''
 	rewrites html document, converts python scripts into javascript.
 	example:
-		<script type="text/python" closure="true">
+		<script type="text/python" dart="true">
 		print("hello world")
 		</script>
 
@@ -135,7 +124,7 @@ def convert_python_html_document( data ):
 	'''
 	doc = list()
 	script = None
-	use_closure = False
+	use_dart = DART
 	for line in data.splitlines():
 		if line.strip().startswith('<script'):
 			if 'src="bindings/' in line:
@@ -150,7 +139,7 @@ def convert_python_html_document( data ):
 					print('_'*80)
 
 			elif 'type="text/python"' in line:
-				if 'closure="true"' in line.lower(): use_closure = True
+				if 'dart="true"' in line.lower(): use_dart = True
 				else: use_closure = False
 				doc.append( '<script type="text/javascript">')
 				#doc.append( '<script type="application/javascript;version=1.7">')  ## firefox needs this when using native yield
@@ -161,7 +150,7 @@ def convert_python_html_document( data ):
 		elif line.strip() == '</script>':
 			if script:
 				src = '\n'.join( script )
-				js = python_to_javascript( src, closure_compiler=use_closure, debug=True )
+				js = python_to_javascript( src, debug=True, dart=use_dart )
 				doc.append( js )
 			doc.append( line )
 			script = None
@@ -176,8 +165,8 @@ def convert_python_html_document( data ):
 
 
 def regenerate_runtime():
-	print('regenerating pythonscript runtime...')
-	a = '// PythonScript Runtime - regenerated on: %s' %datetime.datetime.now().ctime()
+	print('regenerating pythonjs runtime...')
+	a = '// PythonJS Runtime - regenerated on: %s' %datetime.datetime.now().ctime()
 	b = pythonjs_to_javascript(
 		open(PATHS['runtime_pythonjs'],'rb').read().decode('utf-8'),
 	)
@@ -224,7 +213,7 @@ class MainHandler( tornado.web.RequestHandler ):
 			if path.endswith('.py'):
 				print('converting python binding to javascript', name)
 				module = name.split('.')[0]
-				data = python_to_javascript( data.decode('utf-8'), closure_compiler=False, module=module )
+				data = python_to_javascript( data.decode('utf-8'), module=module )
 				if '--dump-js' in sys.argv:
 					f = open( os.path.join('/tmp',name+'.js'), 'wb' )
 					f.write(data.encode('utf-8'))
@@ -254,7 +243,7 @@ class MainHandler( tornado.web.RequestHandler ):
 					data = convert_python_html_document( data.decode('utf-8') )
 					self.set_header("Content-Type", "text/html; charset=utf-8")
 				elif path.endswith('.py'):
-					data = python_to_javascript( data.decode('utf-8'), closure_compiler=True )
+					data = python_to_javascript( data.decode('utf-8') )
 					self.set_header("Content-Type", "text/html; charset=utf-8")
 
 				self.set_header("Content-Length", len(data))
@@ -385,7 +374,7 @@ Handlers = [
 
 if __name__ == '__main__':
 	assert os.path.isfile( PATHS['runtime'] )
-	assert os.path.isdir( PATHS['pythonscript'] )
+	assert os.path.isdir( PATHS['pythonjs'] )
 	assert os.path.isdir( PATHS['bindings'] )
 
 	if '--regenerate-runtime' in sys.argv:

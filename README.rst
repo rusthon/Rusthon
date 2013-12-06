@@ -170,7 +170,99 @@ Example JavaScript Translation::
 
 	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
 
+Multiple Inheritance
+--------------------
 
+Multiple inheritance is fully supported.
+
+Example::
+
+	pythonjs.configure(javascript=True)
+	class Root:
+		def method(self):
+			print 'method on root'
+
+	class A( Root ):
+		def __init__(self,x,y,z):
+			print 'A.init', x,y,z
+			self.x = x
+			self.y = y
+			self.z = z
+
+		def foo(self):
+			print 'foo'
+
+
+	class MixIn:
+		def mixed(self, x):
+			print 'mixin:', x
+
+	class B( A, MixIn ):
+		def __init__(self):
+			print 'B.init'
+			A.__init__(self, 1,2,3)
+			print self.x, self.y, self.z
+
+		def bar(self):
+			print 'bar'
+
+Example JavaScript Translation::
+
+	Root = function() {
+	  /*pass*/
+	}
+
+	Root.prototype.method = function() {
+	  console.log("method on root");
+	}
+
+	Root.method = function () { return Root.prototype.method.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+	A = function(x, y, z) {
+	  A.__init__(this, x,y,z);
+	}
+
+	A.prototype.__init__ = function(x, y, z) {
+	  console.log("A.init", x, y, z);
+	  this.x=x;
+	  this.y=y;
+	  this.z=z;
+	}
+	A.__init__ = function () { return A.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	A.prototype.foo = function() {
+	  console.log("foo");
+	}
+	A.foo = function () { return A.prototype.foo.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+	for (var n in Root.prototype) {  if (!(n in A.prototype)) {    A.prototype[n] = Root.prototype[n]  }};
+
+	MixIn = function() {
+	  /*pass*/
+	}
+
+	MixIn.prototype.mixed = function(x) {
+	  console.log("mixin:", x);
+	}
+	MixIn.mixed = function () { return MixIn.prototype.mixed.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	B = function() {
+	  B.__init__(this);
+	}
+
+	B.prototype.__init__ = function() {
+	  console.log("B.init");
+	  A.__init__(this,1,2,3);
+	  console.log(this.x, this.y, this.z);
+	}
+	B.__init__ = function () { return B.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	B.prototype.bar = function() {
+	  console.log("bar");
+	}
+	B.bar = function () { return B.prototype.bar.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
+
+	for (var n in MixIn.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = MixIn.prototype[n]  }};
 
 Generator Functions
 -------------------

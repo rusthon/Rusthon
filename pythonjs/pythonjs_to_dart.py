@@ -7,6 +7,19 @@ import ast
 import pythonjs
 
 class DartGenerator( pythonjs.JSGenerator ):
+	def _visit_for_prep_iter_helper(self, node, out):
+		pass
+
+
+	def visit_Expr(self, node):
+		# XXX: this is UGLY
+		s = self.visit(node.value)
+		if not s.endswith(';'):
+			s += ';'
+		return s
+
+
+
 	def visit_Print(self, node):
 		args = [self.visit(e) for e in node.values]
 		s = 'print(%s);' % ', '.join(args)

@@ -167,8 +167,10 @@ class PythonToPythonJS(NodeVisitor):
 
 	identifier = 0
 
-	def __init__(self, source=None, module=None, module_path=None):
+	def __init__(self, source=None, module=None, module_path=None, dart=False):
 		super(PythonToPythonJS, self).__init__()
+
+		self._with_dart = dart
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
 		self._class_parents = dict()  ## class name : parents
@@ -313,10 +315,16 @@ class PythonToPythonJS(NodeVisitor):
 			raise NotImplementedError('import, line %s' % node.lineno)
 
 	def visit_ImportFrom(self, node):
-		if node.module in ministdlib.LIB:
+		if self._with_dart:
+			lib = ministdlib.DART
+		else:
+			lib = ministdlib.JS
+
+
+		if node.module in lib:
 			for n in node.names:
-				if n.name in ministdlib.LIB[ node.module ]:
-					writer.write( 'JS("%s")' %ministdlib.LIB[node.module][n.name] )
+				if n.name in lib[ node.module ]:
+					writer.write( 'JS("%s")' %lib[node.module][n.name] )
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 
@@ -360,7 +368,10 @@ class PythonToPythonJS(NodeVisitor):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
 			if self._with_js:
-				a.append( '%s:%s'%(k,v) )
+				if isinstance(node.keys[i], ast.Str):
+					a.append( '%s:%s'%(k,v) )
+				else:
+					a.append( '"%s":%s'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
 		if self._with_js:
@@ -1802,7 +1813,7 @@ class PythonToPythonJS(NodeVisitor):
 			types.append( '%s : "%s"' %(self.visit(key), value) )
 
 
-		if False:  ## not dart compatible?
+		if not self._with_dart:  ## Dart functions can not have extra attributes?
 			## note, in javascript function.name is a non-standard readonly attribute,
 			## the compiler creates anonymous functions with name set to an empty string.
 			writer.write('%s.NAME = "%s"' %(node.name,node.name))
@@ -2313,7 +2324,7 @@ def inspect_function( node ):
 
 
 def main(script):
-	PythonToPythonJS( source=script )
+	PythonToPythonJS( source=script, dart='--dart' in sys.argv )
 	return writer.getvalue()
 
 
@@ -2340,7 +2351,12 @@ def command():
 		data = sys.stdin.read()
 
 
-	compiler = PythonToPythonJS( source=data, module=module, module_path=module_path )
+	compiler = PythonToPythonJS(
+		source=data, 
+		module=module, 
+		module_path=module_path,
+		dart='--dart' in sys.argv
+	)
 	compiler.save_module()
 	output = writer.getvalue()
 	print( output )  ## pipe to stdout
