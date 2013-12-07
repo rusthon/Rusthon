@@ -78,7 +78,7 @@ class Writer(object):
 
 	def _write(self, code):
 		indentation = self.level * 4 * ' '
-		if self.with_javascript:
+		if self.with_javascript and False: ## deprecated
 			if not code.endswith(':'):  ## will this rule always catch: while, and if/else blocks?
 				if not code.startswith('print '):
 					if not code.startswith('var('):
@@ -837,7 +837,10 @@ class PythonToPythonJS(NodeVisitor):
 			elif node.id == 'False':
 				return 'false'
 			elif node.id == 'None':
-				return 'undefined'
+				if self._with_dart:
+					return 'null'
+				else:
+					return 'undefined'
 
 		return node.id
 
@@ -1288,6 +1291,9 @@ class PythonToPythonJS(NodeVisitor):
 						log('set global type: %s'%type)
 
 					writer.write('%s = %s' % (self.visit(target), node_value))
+
+			elif self._with_dart and writer.is_at_global_level():
+				writer.write('var %s = %s' % (self.visit(target), node_value))
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
@@ -1431,7 +1437,7 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif isinstance(node.func, Name) and node.func.id == 'new':
 				assert len(args) == 1
-				return ' new %s' %args[0]
+				return 'new(%s)' %args[0]
 
 			elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
 				assert len(args) == 1
@@ -1439,7 +1445,7 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
 				a = ','.join(args)
-				return ' new %s(%s)' %( self.visit(node.func), a )
+				return 'new( %s(%s) )' %( self.visit(node.func), a )
 
 			elif name in self._global_functions and self._with_inline:
 				return self.inline_function( node )

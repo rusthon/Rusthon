@@ -6,13 +6,27 @@ import os, sys
 import ast
 import pythonjs
 
+class TransformSuperCalls( ast.NodeVisitor ):
+	def __init__(self, node, class_names):
+		self._class_names = class_names
+		self.visit(node)
+
+	def visit_Call(self, node):
+		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._class_names:
+			node.func.attr = '__' + node.func.attr
+
+
+
 class DartGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 	def visit_ClassDef(self, node):
+		node._parents = set()
 		out = []
 		extends = False ## Dart has no support for multiple inheritance!
 		props = set()
+		bases = set()
+		base_classes = set()
 
 		self._classes[ node.name ] = node
 		self._class_props[ node.name ] = props
@@ -20,15 +34,19 @@ class DartGenerator( pythonjs.JSGenerator ):
 			if isinstance(decor, ast.Call):
 				props.update( [self.visit(a) for a in decor.args] )
 
-
-
-		bases = []
-		base_classes = []
 		for base in node.bases:
 			n = self.visit(base)
-			bases.append( n )
+			node._parents.add( n )
+
+			bases.add( n )
 			props.update( self._class_props[n] )
-			base_classes.append( self._classes[n] )
+			base_classes.add( self._classes[n] )
+
+			for p in self._classes[ n ]._parents:
+				bases.add( p )
+				props.update( self._class_props[p] )
+				base_classes.add( self._classes[p] )
+
 		if bases:
 			if extends:
 				assert len(bases) == 1
@@ -44,7 +62,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 		for p in props:
 			out.append(self.indent()+ 'var %s;'%p)
 
-
+		method_names = set()
 		for b in node.body:
 
 			if isinstance(b, ast.FunctionDef) and b.name == node.name:
@@ -63,6 +81,9 @@ class DartGenerator( pythonjs.JSGenerator ):
 					)
 
 			elif isinstance(b, ast.FunctionDef):
+				method_names.add( b.name )
+				TransformSuperCalls( b, bases )
+
 				args = [self.visit(a) for a in b.args.args][1:]
 				args = ','.join(args)
 				if args:
@@ -88,7 +109,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
 						if b.name == '__init__': continue
-						#out.append( self.visit(b) )
+						if b.name in method_names: continue
+
 						args = [self.visit(a) for a in b.args.args][1:]
 						args = ','.join(args)
 						if args:

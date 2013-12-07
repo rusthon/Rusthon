@@ -192,12 +192,13 @@ class JSGenerator(NodeVisitor):
 		name = self.visit(node.func)
 		if name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
-		#elif name == 'new':
-		#    args = map(self.visit, node.args)
-		#    if len(args) == 1:
-		#        return ' new %s' %args[0]
-		#    else:
-		#        raise SyntaxError( args )
+
+		elif name == 'new':
+		    args = map(self.visit, node.args)
+		    if len(args) == 1:
+		        return ' new %s' %args[0]
+		    else:
+		        raise SyntaxError( args )
 
 		elif name == 'JSObject':
 			if node.keywords:

@@ -15,13 +15,14 @@ irc freenode::
 Introduction
 ======
 
-PythonJS is a Python to Javascript translator written in
+PythonJS is a Python to Javascript and Dart translator written in
 Python, created by Amirouche Boubekki and Brett Hartshorn,
 currently maintained and developed by Brett. It features:
 list comprehensions, classes, multiple inheritance, operator
 overloading, function and class decorators, generator functions,
 HTML DOM, and easily integrates with JavaScript and external JavaScript 
 libraries.  The generated code works in the Browser and in NodeJS.
+Note: the Dart backend is still very experimental.
 
 Speed
 ---------------
@@ -200,96 +201,63 @@ Above the method "foo" calls the static class method A.__foo.  Note that the sta
 Multiple Inheritance
 --------------------
 
-Multiple inheritance is fully supported.
+Multiple inheritance is fully supported for both JavaScript and Dart backends.  When using the Dart backend it will generate stub-methods that call static class methods that are prefixed with "__".
+Methods that the subclass extends can call: ParentClassName.some_method(self) and this will be translated into: ParentClassName.__some_method(this)
 
 Example::
 
-	pythonjs.configure(javascript=True)
-	class Root:
-		def method(self):
-			print 'method on root'
-
-	class A( Root ):
-		def __init__(self,x,y,z):
-			print 'A.init', x,y,z
-			self.x = x
-			self.y = y
-			self.z = z
-
+	class A:
 		def foo(self):
 			print 'foo'
 
-
-	class MixIn:
-		def mixed(self, x):
-			print 'mixin:', x
-
-	class B( A, MixIn ):
-		def __init__(self):
-			print 'B.init'
-			A.__init__(self, 1,2,3)
-			print self.x, self.y, self.z
-
+	class B:
 		def bar(self):
 			print 'bar'
 
-Example JavaScript Translation::
+	class C( A, B ):
+		def call_foo_bar(self):
+			print 'call_foo_bar in subclass C'
+			self.foo()
+			self.bar()
 
-	Root = function() {
-	  /*pass*/
+		## extend foo ##
+		def foo(self):
+			A.foo(self)
+			print 'foo extended'
+
+Example Dart Translation::
+
+	class A {
+	  foo() { return A.__foo(this); }
+	  static __foo(self) {
+	    print("foo");
+	  }
+
+	}
+	class B {
+	  bar() { return B.__bar(this); }
+	  static __bar(self) {
+	    print("bar");
+	  }
+
+	}
+	class C implements A, B {
+	  call_foo_bar() { return C.__call_foo_bar(this); }
+	  static __call_foo_bar(self) {
+	    print("call_foo_bar in subclass C");
+	    self.foo();
+	    self.bar();
+	  }
+
+	  foo() { return C.__foo(this); }
+	  static __foo(self) {
+	    A.__foo(self);
+	    print("foo extended");
+	  }
+
+	  bar() { return B.__bar(this); }
 	}
 
-	Root.prototype.method = function() {
-	  console.log("method on root");
-	}
-
-	Root.method = function () { return Root.prototype.method.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-	A = function(x, y, z) {
-	  A.__init__(this, x,y,z);
-	}
-
-	A.prototype.__init__ = function(x, y, z) {
-	  console.log("A.init", x, y, z);
-	  this.x=x;
-	  this.y=y;
-	  this.z=z;
-	}
-	A.__init__ = function () { return A.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	A.prototype.foo = function() {
-	  console.log("foo");
-	}
-	A.foo = function () { return A.prototype.foo.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-	for (var n in Root.prototype) {  if (!(n in A.prototype)) {    A.prototype[n] = Root.prototype[n]  }};
-
-	MixIn = function() {
-	  /*pass*/
-	}
-
-	MixIn.prototype.mixed = function(x) {
-	  console.log("mixin:", x);
-	}
-	MixIn.mixed = function () { return MixIn.prototype.mixed.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	B = function() {
-	  B.__init__(this);
-	}
-
-	B.prototype.__init__ = function() {
-	  console.log("B.init");
-	  A.__init__(this,1,2,3);
-	  console.log(this.x, this.y, this.z);
-	}
-	B.__init__ = function () { return B.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	B.prototype.bar = function() {
-	  console.log("bar");
-	}
-	B.bar = function () { return B.prototype.bar.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
-
-	for (var n in MixIn.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = MixIn.prototype[n]  }};
 
 Generator Functions
 -------------------
@@ -812,6 +780,13 @@ Run Python Server::
 
 	cd PythonJS/tests
 	./server.py
+
+Run Python Server in Dart Mode::
+
+	./server.py --dart
+
+In Dart mode any test page you visit will be translated to Dart, and then converted back to JavaScript using "dart2js".  You need to download the Dart SDK and make sure "dart2js" is located in:
+~/dart/dart-sdk/bin/
 
 Testing
 -------
