@@ -174,6 +174,29 @@ Example JavaScript Translation::
 
 	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
 
+
+The above output Javascript shows how the constructor for B calls B.__init__ which then calls B.prototype.__init__.
+B.prototype.__init__ calls A.__init__ passing "this" as the first argument.  This emulates in JavaScript how unbound methods work in Python.  When using the Dart backend, the output is different but the concept is the same - static "class methods" are created that implement the method body, the instance methods are just short stubs that call the static "class methods".
+
+Example Dart Translation::
+
+	class B implements A {
+	  var y;
+	  var x;
+	  var z;
+	  var w;
+	  B(w) {B.__init__(this,w);}
+	  static void __init__(self, w) {
+	    A.__init__(self,10,20,30);
+	    self.w=w;
+	  }
+
+	  foo(w) { return A.__foo(this,w); }
+	}
+
+Above the method "foo" calls the static class method A.__foo.  Note that the static class methods are automatically prefixed with "__".
+
+
 Multiple Inheritance
 --------------------
 

@@ -551,7 +551,8 @@ class PythonToPythonJS(NodeVisitor):
 				finfo = inspect_method( item )
 				props.update( finfo['properties'] )
 
-				if item.name == '__init__': continue
+				#if item.name == '__init__': continue
+				continue
 
 				item.args.args = item.args.args[1:]  ## remove self
 				for n in finfo['name_nodes']:

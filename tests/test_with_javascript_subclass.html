@@ -26,6 +26,11 @@ class C( B ):
 		return self.x + self.y + self.z + a+b+c
 
 def main():
+	print 'testing super class A'
+	a = A('xxx', 'yyy', 'zzz')
+	print a.foo('www')
+
+	print 'testing subclass B'
 	b = B( 'hello' )
 	print b.x
 	print b.foo( 100 )
