@@ -1005,7 +1005,7 @@ class PythonToPythonJS(NodeVisitor):
 
 				if self._with_dart:
 					## indexOf works with lists and strings in Dart
-					comp.append( '%s.indexOf(%s) != -1' %(a[0], a[1]) )
+					comp.append( '%s.contains(%s)' %(a[0], a[1]) )
 
 				elif self._with_js:
 					## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects

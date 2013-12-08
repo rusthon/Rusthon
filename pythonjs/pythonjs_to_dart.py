@@ -38,12 +38,20 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def visit_List(self, node):
 		return 'new list([%s])' % ', '.join(map(self.visit, node.elts))
 
+	def visit_Dict(self, node):
+		a = []
+		for i in range( len(node.keys) ):
+			k = self.visit( node.keys[ i ] )
+			v = self.visit( node.values[i] )
+			a.append( '%s:%s'%(k,v) )
+		b = ','.join( a )
+		return 'new dict( {%s} )' %b
 
 	def visit_ClassDef(self, node):
 		node._parents = set()
 		out = []
 		extends = False ## Dart has no support for multiple inheritance!
-		props = set()
+		props = set(['$wrapped'])
 		bases = set()
 		base_classes = set()
 
@@ -97,7 +105,15 @@ class DartGenerator( pythonjs.JSGenerator ):
 		method_names = set()
 		for b in node.body:
 
-			if extends:
+			if isinstance(b, ast.FunctionDef) and len(b.decorator_list):  ##getter/setters
+				for name_node in collect_names( b ):
+					if name_node.id == 'self':
+						name_node.id = 'this'
+
+				b.args.args = b.args.args[1:]
+				out.append( self.visit(b) )
+
+			elif extends:
 				if isinstance(b, ast.FunctionDef):
 					b.args.args = b.args.args[1:]
 					if b.name == node.name:
@@ -113,6 +129,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 					elif b.name == '__setitem__':
 						b.name = ''
 						b._prefix = 'void operator []='
+
 
 				line = self.visit(b)
 				out.append( line )
@@ -136,9 +153,21 @@ class DartGenerator( pythonjs.JSGenerator ):
 				method_names.add( b.name )
 				TransformSuperCalls( b, bases )
 
+				operator = False
+				if b.name == '__getitem__':
+					operator = 'operator []'
+				elif b.name == '__setitem__':
+					operator = 'operator []='
+
 				args = [self.visit(a) for a in b.args.args][1:]
 				args = ','.join(args)
-				if args:
+				if operator and args:
+					out.append(self.indent()+ '%s(%s) { return %s.__%s(this,%s); }'%(operator, args, node.name, b.name, args) )
+
+				elif operator:
+					out.append(self.indent()+ '%s() { return %s.__%s(this); }'%(operator, node.name, b.name) )
+
+				elif args:
 					out.append(self.indent()+ '%s(%s) { return %s.__%s(this,%s); }'%(b.name, args, node.name, b.name, args) )
 				else:
 					out.append(self.indent()+ '%s() { return %s.__%s(this); }'%(b.name, node.name, b.name) )
@@ -176,7 +205,9 @@ class DartGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(out)
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
-		pass
+		out.append(
+			self.indent() + 'if (%s is dict) { %s = %s.keys(); }' %(iter_name, iter_name, iter_name)
+		)
 
 
 	def visit_Expr(self, node):

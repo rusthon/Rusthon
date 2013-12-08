@@ -38,6 +38,37 @@ class list( ListBase ):
 		return self[...].indexOf(obj)
 
 
+#@dart.extends
+class dict( HashMap ):
+	'''
+	HashMap can not be extended anymore:
+		https://groups.google.com/a/dartlang.org/forum/#!msg/announce/Sj3guf3es24/YsPCdT_vb2gJ
+	'''
+	def __init__(self, map):
+		#self[...] = new( Map() )
+		#self[...].addAll( items )
+		self[...] = map
+
+	@property
+	def length(self):
+		return self[...].length
+
+	def __getitem__(self, key):
+		return self[...][key]
+
+	def __setitem__(self, key, value):
+		self[...][key] = value
+
+	def contains(self, key):
+		return self[...].containsKey(key)
+
+	def keys(self):
+		return self[...].keys.toList()
+
+	def values(self):
+		return self[...].values
+
+
 def range(n):
 	r = []
 	i = 0
