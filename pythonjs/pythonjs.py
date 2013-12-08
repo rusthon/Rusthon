@@ -17,29 +17,30 @@ from ast import NodeVisitor
 
 
 class JSGenerator(NodeVisitor):
-	_indent = 0
-	_global_funcions = {}
+	def __init__(self):
+		self._indent = 0
+		self._global_funcions = {}
+		self._function_stack = []
 
-	@classmethod
-	def push(cls):
-		cls._indent += 1
-	@classmethod
-	def pull(cls):
-		if cls._indent > 0:
-			cls._indent -= 1
-	@classmethod
-	def indent(cls):
-		return '  ' * cls._indent
+	def indent(self): return '  ' * self._indent
+	def push(self): self._indent += 1
+	def pull(self):
+		if self._indent > 0: self._indent -= 1
 
 	def visit_In(self, node):
 		return ' in '
 
 	def visit_AugAssign(self, node):
-		a = '%s %s= %s' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
+		a = '%s %s= %s;' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
 		return a
 
 	def visit_Module(self, node):
-		return '\n'.join(map(self.visit, node.body))
+		lines = []
+		for b in node.body:
+			line = self.visit(b)
+			if line: lines.append( line )
+			else:raise b
+		return '\n'.join(lines)
 
 	def visit_Tuple(self, node):
 		return '[%s]' % ', '.join(map(self.visit, node.elts))
@@ -92,12 +93,20 @@ class JSGenerator(NodeVisitor):
 		return '(function (%s) {return %s})' %(','.join(args), self.visit(node.body))
 
 
+
 	def visit_FunctionDef(self, node):
-		if not hasattr(self, '_function_stack'):  ## track nested functions ##
-			self._function_stack = []
+		self._function_stack.append( node )
+		node._local_vars = set()
+		buffer = self._visit_function( node )
 
-		self._function_stack.append( node.name )
+		if node == self._function_stack[0]:  ## could do something special here with global function
+			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
+			self._global_funcions[ node.name ] = buffer
 
+		self._function_stack.pop()
+		return buffer
+
+	def _visit_function(self, node):
 		args = self.visit(node.args)
 		if len(node.decorator_list):
 			assert len(node.decorator_list)==1
@@ -113,33 +122,28 @@ class JSGenerator(NodeVisitor):
 		self.push()
 		body = list()
 		for child in node.body:
-			# simple test to drop triple quote comments
-			#if hasattr(child, 'value'):
-			#    if isinstance(child.value, Str):
-			#        continue
 			if isinstance(child, Str):
 				continue
 
-			if isinstance(child, GeneratorType):
+			if isinstance(child, GeneratorType):  ## not tested
 				for sub in child:
 					body.append( self.indent()+self.visit(sub))
 			else:
 				body.append( self.indent()+self.visit(child))
+
 		buffer += '\n'.join(body)
 		self.pull()
 		buffer += '\n%s}\n' %self.indent()
-
-		if node.name == self._function_stack[0]:  ## could do something special here with global function
-			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
-			self._global_funcions[ node.name ] = buffer
-
-		assert node.name == self._function_stack.pop()
 		return buffer
+
+	def _visit_subscript_ellipsis(self, node):
+		name = self.visit(node.value)
+		return '%s["$wrapped"]' %name
+
 
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
-			name = self.visit(node.value)
-			return '%s["$wrapped"]' %name
+			return self._visit_subscript_ellipsis( node )
 		else:
 			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
@@ -208,10 +212,26 @@ class JSGenerator(NodeVisitor):
 				return '{%s}' % out
 			else:
 				return 'Object()'
+
 		elif name == 'var':
-			args = map(self.visit, node.args)
-			out = ', '.join(args)
-			return 'var %s' % out
+			args = [ self.visit(a) for a in node.args ]
+			if self._function_stack:
+				fnode = self._function_stack[-1]
+				rem = []
+				for arg in args:
+					if arg in fnode._local_vars:
+						rem.append( arg )
+					else:
+						fnode._local_vars.add( arg )
+				for arg in rem:
+					args.remove( arg )
+
+			if args:
+				out = ', '.join(args)
+				return 'var %s' % out
+			else:
+				return ''
+
 		elif name == 'JSArray':
 			if node.args:
 				args = map(self.visit, node.args)
@@ -233,6 +253,9 @@ class JSGenerator(NodeVisitor):
 				if ' and ' in s:
 					s = s.replace(' and ', ' && ')
 			return s
+
+		elif name == 'dart_import':
+			return 'import "%s";' %node.args[0].s
 
 		else:
 			if node.args:
@@ -411,13 +434,16 @@ class JSGenerator(NodeVisitor):
 		return '{ %s }' %b
 
 
-	def _visit_for_prep_iter_helper(self, node, out):
+	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		## support "for key in JSObject" ##
 		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
 		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
-		out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = __object_keys__(iter) }' )
+		out.append(
+			self.indent() + 'if (! (%s instanceof Array) ) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name)
+		)
 
 
+	_iter_id = 0
 	def visit_For(self, node):
 		'''
 		for loops inside a `with javascript:` block will produce this faster for loop.
@@ -432,28 +458,33 @@ class JSGenerator(NodeVisitor):
 		above works because [...] returns the internal Array of mylist
 
 		'''
+		self._iter_id += 1
+		iname = '__iter%s' %self._iter_id
+		index = '__idx%s' %self._iter_id
+
 		target = node.target.id
 		iter = self.visit(node.iter) # iter is the python iterator
 
 		out = []
-		out.append( self.indent() + 'var iter = %s;\n' % iter )
+		out.append( self.indent() + 'var %s = %s;' % (iname, iter) )
+		out.append( self.indent() + 'var %s = 0;' % index )
 
-		self._visit_for_prep_iter_helper(node, out)
+		self._visit_for_prep_iter_helper(node, out, iname)
 
-		out.append( self.indent() + 'for (var %s=0; %s < iter.length; %s++) {' % (target, target, target) )
+		out.append( self.indent() + 'for (var %s=0; %s < %s.length; %s++) {' % (index, index, iname, index) )
 		self.push()
 
 		body = []
 		# backup iterator and affect value of the next element to the target
-		pre = 'var backup = %s; %s = iter[%s];' % (target, target, target)
-		body.append( self.indent() + pre )
+		#pre = 'var backup = %s; %s = iter[%s];' % (target, target, target)
+		body.append( self.indent() + 'var %s = %s[ %s ];' %(target, iname, index) )
 
 		for line in list(map(self.visit, node.body)):
 			body.append( self.indent() + line )
 
 		# replace the replace target with the javascript iterator
-		post = '%s = backup;' % target
-		body.append( self.indent() + post )
+		#post = '%s = backup;' % target
+		#body.append( self.indent() + post )
 
 		self.pull()
 		out.extend( body )
@@ -465,7 +496,7 @@ class JSGenerator(NodeVisitor):
 		return 'continue'
 
 	def visit_Break(self, node):
-		return 'break'
+		return 'break;'
 
 def main(script):
 	tree = ast.parse( script )

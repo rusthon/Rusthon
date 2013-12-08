@@ -15,11 +15,30 @@ class TransformSuperCalls( ast.NodeVisitor ):
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._class_names:
 			node.func.attr = '__' + node.func.attr
 
+class CollectNames(ast.NodeVisitor):
+	def __init__(self):
+		self._names = []
+	def visit_Name(self, node):
+		self._names.append( node )
+
+def collect_names(node):
+	a = CollectNames()
+	a.visit( node )
+	return a._names
 
 
 class DartGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
+
+	def _visit_subscript_ellipsis(self, node):
+		name = self.visit(node.value)
+		return '%s.$wrapped' %name
+
+	def visit_List(self, node):
+		return 'new list([%s])' % ', '.join(map(self.visit, node.elts))
+
+
 	def visit_ClassDef(self, node):
 		node._parents = set()
 		out = []
@@ -33,14 +52,27 @@ class DartGenerator( pythonjs.JSGenerator ):
 		for decor in node.decorator_list:  ## class decorators
 			if isinstance(decor, ast.Call):
 				props.update( [self.visit(a) for a in decor.args] )
+			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.value.id == 'dart':
+				if decor.attr == 'extends':
+					extends = True
+					props.add('$wrapped')
+					for name_node in collect_names( node ):
+						if name_node.id == 'self':
+							name_node.id = 'this'
+			else:
+				raise SyntaxError
+
 
 		for base in node.bases:
 			n = self.visit(base)
 			node._parents.add( n )
 
 			bases.add( n )
-			props.update( self._class_props[n] )
-			base_classes.add( self._classes[n] )
+			if n in self._class_props:
+				props.update( self._class_props[n] )
+				base_classes.add( self._classes[n] )
+			else:  ## special case - subclassing a builtin like `list`
+				continue
 
 			for p in self._classes[ n ]._parents:
 				bases.add( p )
@@ -65,7 +97,27 @@ class DartGenerator( pythonjs.JSGenerator ):
 		method_names = set()
 		for b in node.body:
 
-			if isinstance(b, ast.FunctionDef) and b.name == node.name:
+			if extends:
+				if isinstance(b, ast.FunctionDef):
+					b.args.args = b.args.args[1:]
+					if b.name == node.name:
+						args = [self.visit(a) for a in b.args.args]
+						args = ','.join(args)
+						out.append(
+							self.indent()+'%s(%s) : super() { this.__init__(%s); }'%(node.name, args, args)
+						)
+						b.name = '__init__'
+					elif b.name == '__getitem__':
+						b.name = ''
+						b._prefix = 'operator []'
+					elif b.name == '__setitem__':
+						b.name = ''
+						b._prefix = 'void operator []='
+
+				line = self.visit(b)
+				out.append( line )
+
+			elif isinstance(b, ast.FunctionDef) and b.name == node.name:
 				args = [self.visit(a) for a in b.args.args][1:]
 				args = ','.join(args)
 				b._prefix = 'static void'
@@ -123,7 +175,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 		out.append('}')
 		return '\n'.join(out)
 
-	def _visit_for_prep_iter_helper(self, node, out):
+	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		pass
 
 
@@ -159,13 +211,27 @@ class DartGenerator( pythonjs.JSGenerator ):
 				code = 'var %s = %s;' % (target, value)
 			return code
 
-	def visit_FunctionDef(self, node):
+	def _visit_function(self, node):
+		getter = False
+		setter = False
+		for decor in node.decorator_list:
+			if isinstance(decor, ast.Name) and decor.id == 'property':
+				getter = True
+			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
+				setter = True
+			else:
+				raise SyntaxError
 
 		args = self.visit(node.args)
 		buffer = self.indent()
-		if hasattr(node,'_prefix'):
-			buffer += node._prefix + ' '
-		buffer += '%s(%s) {\n' % (node.name, ', '.join(args))
+		if hasattr(node,'_prefix'): buffer += node._prefix + ' '
+
+		if getter:
+			buffer += 'get %s {\n' % node.name
+		elif setter:
+			buffer += 'set %s(%s) {\n' % (node.name, ', '.join(args))
+		else:
+			buffer += '%s(%s) {\n' % (node.name, ', '.join(args))
 		self.push()
 		body = list()
 		for child in node.body:

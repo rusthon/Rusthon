@@ -25,6 +25,7 @@ PATHS = dict(
 
 	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
 	runtime_builtins = os.path.abspath('../runtime/builtins.py'),
+	runtime_dart = os.path.abspath('../runtime/dart_builtins.py'),
 
 	dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js'),
 
@@ -37,6 +38,10 @@ def python_to_pythonjs( src, module=None, dart=False ):
 	cmd = ['python2', os.path.join( PATHS['pythonjs'], 'python_to_pythonjs.py')]
 	if dart:
 		cmd.append( '--dart' )
+
+		header = open( PATHS['runtime_dart'], 'rb' ).read().decode('utf-8')
+		src = header + '\n' + src
+
 	if module:
 		cmd.append( '--module' )
 		cmd.append( module )

@@ -171,6 +171,8 @@ class PythonToPythonJS(NodeVisitor):
 		super(PythonToPythonJS, self).__init__()
 
 		self._with_dart = dart
+		self._with_js = False
+
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
 		self._class_parents = dict()  ## class name : parents
@@ -185,7 +187,6 @@ class PythonToPythonJS(NodeVisitor):
 		self._return_type = None
 		self._module = module
 		self._module_path = module_path
-		self._with_js = False
 		self._typedefs = dict()  ## class name : typedef  (not pickled)
 
 		self._globals = dict()
@@ -367,14 +368,14 @@ class PythonToPythonJS(NodeVisitor):
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
-			if self._with_js:
+			if self._with_js or self._with_dart:
 				if isinstance(node.keys[i], ast.Str):
 					a.append( '%s:%s'%(k,v) )
 				else:
 					a.append( '"%s":%s'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			b = ','.join( a )
 			return '{ %s }' %b
 		else:
@@ -384,7 +385,7 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			return a
 		else:
 			return '__get__(tuple, "__call__")([], {pointer:%s})' %a
@@ -392,7 +393,7 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_List(self, node):
 		node.returns_type = 'list'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			return a
 		else:
 			return '__get__(list, "__call__")([], {pointer:%s})' %a
@@ -504,7 +505,7 @@ class PythonToPythonJS(NodeVisitor):
 			a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
 			writer.write(a)
 
-		elif self._with_js:
+		elif self._with_js or self._with_dart:
 			a = '%s %s %s' %(target, op, self.visit(node.value))
 			writer.write(a)
 
@@ -544,12 +545,16 @@ class PythonToPythonJS(NodeVisitor):
 		self._js_classes[ name ] = node
 
 		methods = {}
+		method_list = []  ## getter/setters can have the same name
 		props = set()
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
 				finfo = inspect_method( item )
 				props.update( finfo['properties'] )
+
+				if item.name != '__init__':
+					method_list.append( item )
 
 				#if item.name == '__init__': continue
 				continue
@@ -560,6 +565,8 @@ class PythonToPythonJS(NodeVisitor):
 						n.id = 'this'
 
 		writer.write('@properties(%s)'%','.join(props))
+		for dec in node.decorator_list:
+			writer.write('@%s'%self.visit(dec))
 
 		bases = []
 		for base in node.bases:
@@ -582,7 +589,7 @@ class PythonToPythonJS(NodeVisitor):
 			init.name = node.name
 			self.visit(init)
 		## methods
-		for method in methods.values():
+		for method in method_list:
 			self.visit(method)
 
 		writer.pull()
@@ -811,7 +818,7 @@ class PythonToPythonJS(NodeVisitor):
 		map(self.visit, node.handlers)
 
 	def visit_Raise(self, node):
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			writer.write('throw Error')
 		else:
 			writer.write('raise %s' % self.visit(node.type))
@@ -831,7 +838,7 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('pass')
 
 	def visit_Name(self, node):
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			if node.id == 'True':
 				return 'true'
 			elif node.id == 'False':
@@ -910,7 +917,7 @@ class PythonToPythonJS(NodeVisitor):
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
 			for i in range( n ): expanded.extend( elts )
-			if self._with_js:
+			if self._with_js or self._with_dart:
 				return '[%s]' %','.join(expanded)
 			else:
 				return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
@@ -995,7 +1002,12 @@ class PythonToPythonJS(NodeVisitor):
 					comp.append( ' not (')
 
 				a = ( self.visit(node.comparators[i]), left )
-				if self._with_js:
+
+				if self._with_dart:
+					## indexOf works with lists and strings in Dart
+					comp.append( '%s.indexOf(%s) != -1' %(a[0], a[1]) )
+
+				elif self._with_js:
 					## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
 					## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
 					## TODO double check this code
@@ -1032,7 +1044,7 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Attribute(self, node):
 		node_value = self.visit(node.value)
 
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			return '%s.%s' %(node_value, node.attr)
 		typedef = None
 		if isinstance(node.value, Name):
@@ -1099,9 +1111,10 @@ class PythonToPythonJS(NodeVisitor):
 		name = self.visit(node.value)
 
 		if isinstance(node.slice, ast.Ellipsis):
-			return '%s["$wrapped"]' %name
+			#return '%s["$wrapped"]' %name
+			return '%s[...]' %name
 
-		elif self._with_js:
+		elif self._with_js or self._with_dart:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
 				return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
 			else:
@@ -1154,9 +1167,10 @@ class PythonToPythonJS(NodeVisitor):
 			name = self.visit(target.value)  ## target.value may have "returns_type" after being visited
 
 			if isinstance(target.slice, ast.Ellipsis):
-				code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
+				#code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
+				code = '%s[...] = %s' %(self.visit(target.value), self.visit(node.value))
 
-			elif self._with_js:
+			elif self._with_js or self._with_dart:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
@@ -1179,7 +1193,7 @@ class PythonToPythonJS(NodeVisitor):
 			elif hasattr(target.value, 'returns_type'):
 				typedef = self.get_typedef( class_name=target.value.returns_type )
 
-			if self._with_js:
+			if self._with_js or self._with_dart:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 			elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
 				setter = typedef.properties[ target.attr ]['set']
@@ -1312,7 +1326,7 @@ class PythonToPythonJS(NodeVisitor):
 						i
 					)
 					writer.write(code)
-				elif self._with_js:
+				elif self._with_js or self._with_dart:
 					writer.write("%s = %s[%s]" % (self.visit(target), r, i))
 				else:
 					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (self.visit(target), r, i))
@@ -1322,7 +1336,7 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Str(self, node):
 		s = node.s.replace('\n', '\\n').replace('\0', '\\0')
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			return '"%s"' %s
 		else:
 			if len(s) == 0:
@@ -1422,7 +1436,7 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					raise SyntaxError
 
-		elif self._with_js:
+		elif self._with_js or self._with_dart:
 			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 
@@ -1628,6 +1642,7 @@ class PythonToPythonJS(NodeVisitor):
 		property_decorator = None
 		decorators = []
 		with_js_decorators = []
+		with_dart_decorators = []
 		setter = False
 		return_type = None
 		fastdef = False
@@ -1644,6 +1659,9 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(decorator, Name) and decorator.id == 'inline':
 				inline = True
 				self._with_inline = True
+
+			elif self._with_dart:
+				with_dart_decorators.append( self.visit(decorator) )
 
 			elif self._with_js:  ## decorators are special in with-js mode
 				with_js_decorators.append( self.visit( decorator ) )
@@ -1702,12 +1720,15 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				decorators.append( decorator )
 
-		if self._with_js or javascript:
+		if self._with_js or javascript or self._with_dart:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 			elif node.args.kwarg:
 				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
 
+			if self._with_dart:
+				for dec in with_dart_decorators:
+					writer.write('@%s'%dec)
 			args = [ a.id for a in node.args.args ]
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
@@ -1724,7 +1745,7 @@ class PythonToPythonJS(NodeVisitor):
 				a = ','.join( local_vars-global_vars )
 				writer.write('var(%s)' %a)
 
-		if self._with_js or javascript:
+		if self._with_js or javascript or self._with_dart:
 			if node.args.defaults:
 				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):
@@ -1956,7 +1977,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('%s = 0' %enumtar.id)
 
 
-		if self._with_js:
+		if self._with_js or self._with_dart:
 			if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
 				iter_start = '0'
 				if len(iter.args) == 2:
