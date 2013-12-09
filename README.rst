@@ -1,7 +1,7 @@
 PythonJS 0.8.6
 ############
 
-.. image:: http://1.bp.blogspot.com/-yG3zuA_sEM4/Uogurz5xBnI/AAAAAAAAAgk/57_Zv2iSfgo/s400/pythonjs-0.8.5.png
+.. image:: http://3.bp.blogspot.com/-BfPFXT-DF3A/UqKugvWVs7I/AAAAAAAAAj0/0Kon76_VDys/s400/pythonjs-0.8.6.png
 
 Community
 ---------

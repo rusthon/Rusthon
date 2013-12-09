@@ -510,7 +510,10 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write(a)
 
 		elif isinstance(node.target, ast.Attribute):
-			raise NotImplementedError
+			name = self.visit(node.target.value)
+			attr = node.target.attr
+			a = '%s.%s %s %s' %(name, attr, op, self.visit(node.value))
+			writer.write(a)
 
 		elif isinstance(node.target, ast.Subscript):
 			name = self.visit(node.target.value)
