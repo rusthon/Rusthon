@@ -28,6 +28,7 @@ PATHS = dict(
 	runtime_dart = os.path.abspath('../runtime/dart_builtins.py'),
 
 	dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js'),
+	dartanalyzer = os.path.expanduser( '~/dart/dart-sdk/bin/dartanalyzer'),
 
 )
 
@@ -62,14 +63,18 @@ def pythonjs_to_dart(src):
 		stdin = subprocess.PIPE,
 		stdout = subprocess.PIPE
 	)
+	dart_input = '/tmp/dart2js-input.dart'
 	stdout, stderr = p.communicate( src.encode('utf-8') )
-	open( '/tmp/dart2js-input.js', 'wb').write( stdout )
+	open( dart_input, 'wb').write( stdout )
+	ecode = subprocess.call( [PATHS['dartanalyzer'], dart_input] )
+	if ecode == 2:
+		raise SyntaxError
 
 	cmd = [
 		PATHS['dart2js'],
 		#'-c', ## insert runtime checks
 		'-o', '/tmp/dart2js-output.js',
-		'/tmp/dart2js-input.js'
+		dart_input
 	]
 	subprocess.call( cmd )
 	return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')

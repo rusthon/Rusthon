@@ -1148,7 +1148,9 @@ class PythonToPythonJS(NodeVisitor):
 			)
 
 	def visit_Slice(self, node):
-		if self._with_js:
+		if self._with_dart:
+			lower = upper = step = 'null'
+		elif self._with_js:
 			lower = upper = step = 'undefined'
 		else:
 			lower = upper = step = None
@@ -1310,7 +1312,7 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write('%s = %s' % (self.visit(target), node_value))
 
 			elif self._with_dart and writer.is_at_global_level():
-				writer.write('var %s = %s' % (self.visit(target), node_value))
+				writer.write('JS("var %s = %s")' % (self.visit(target), node_value))
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
@@ -1723,15 +1725,34 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				decorators.append( decorator )
 
-		if self._with_js or javascript or self._with_dart:
+		if self._with_dart:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 			elif node.args.kwarg:
 				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
 
-			if self._with_dart:
-				for dec in with_dart_decorators:
-					writer.write('@%s'%dec)
+			for dec in with_dart_decorators: writer.write('@%s'%dec)
+
+			args = []
+			offset = len(node.args.args) - len(node.args.defaults)
+			for i, arg in enumerate(node.args.args):
+				a = arg.id
+				dindex = i - offset
+				if dindex >= 0 and node.args.defaults:
+					default_value = self.visit( node.args.defaults[dindex] )
+					args.append( '%s=%s' %(a, default_value) )
+				else:
+					args.append( a )
+
+			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
+
+
+		elif self._with_js or javascript:
+			if node.args.vararg:
+				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
+			elif node.args.kwarg:
+				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
+
 			args = [ a.id for a in node.args.args ]
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
@@ -1748,7 +1769,11 @@ class PythonToPythonJS(NodeVisitor):
 				a = ','.join( local_vars-global_vars )
 				writer.write('var(%s)' %a)
 
-		if self._with_js or javascript or self._with_dart:
+		#####################################################################
+		if self._with_dart:
+			pass
+
+		elif self._with_js or javascript:
 			if node.args.defaults:
 				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):

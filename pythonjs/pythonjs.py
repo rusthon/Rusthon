@@ -255,7 +255,13 @@ class JSGenerator(NodeVisitor):
 			return s
 
 		elif name == 'dart_import':
-			return 'import "%s";' %node.args[0].s
+			if len(node.args) == 1:
+				return 'import "%s";' %node.args[0].s
+			elif len(node.args) == 2:
+				return 'import "%s" as %s;' %(node.args[0].s, node.args[1].s)
+			else:
+				raise SyntaxError
+
 
 		else:
 			if node.args:
@@ -467,7 +473,7 @@ class JSGenerator(NodeVisitor):
 
 		out = []
 		out.append( self.indent() + 'var %s = %s;' % (iname, iter) )
-		out.append( self.indent() + 'var %s = 0;' % index )
+		#out.append( self.indent() + 'var %s = 0;' % index )
 
 		self._visit_for_prep_iter_helper(node, out, iname)
 

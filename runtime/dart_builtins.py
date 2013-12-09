@@ -3,6 +3,7 @@
 # License: "New BSD"
 
 dart_import('dart:collection')
+dart_import('dart:math', 'Math')
 
 @dart.extends
 class list( ListBase ):
@@ -31,6 +32,13 @@ class list( ListBase ):
 	def __setitem__(self, index, value):
 		self[...][index] = value
 
+	def __getslice__(self, start, stop, step):
+		if stop == null and step == null:
+			return self[...].sublist( start )
+		elif stop < 0:
+			stop = self[...].length + stop
+			return self[...].sublist(start, stop)
+
 	def append(self, item):
 		self[...].add( item )
 
@@ -39,7 +47,7 @@ class list( ListBase ):
 
 
 #@dart.extends
-class dict( HashMap ):
+class dict: #( HashMap ):
 	'''
 	HashMap can not be extended anymore:
 		https://groups.google.com/a/dartlang.org/forum/#!msg/announce/Sj3guf3es24/YsPCdT_vb2gJ
@@ -77,3 +85,5 @@ def range(n):
 		i += 1
 	return r
 
+def len(a):
+	return a.length

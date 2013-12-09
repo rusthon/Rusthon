@@ -62,15 +62,10 @@ BODIES = {
 				 5.15138902046611451e-05 * SOLAR_MASS) }
 
 
-SYSTEM = []
-for key in BODIES:
-	print key
-	SYSTEM.append( BODIES[key] )
-
-PAIRS = combinations(SYSTEM)
 
 
-def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
+
+def advance(dt, n, bodies, pairs):
 	for i in xrange(n):
 		for pair in pairs:
 			p1,p2 = pair
@@ -99,7 +94,7 @@ def advance(dt, n, bodies=SYSTEM, pairs=PAIRS):
 			r[2] += dt * v[2]
 
 
-def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
+def report_energy(bodies, pairs, e=0.0):
 	for pair in pairs:
 		p1,p2 = pair
 		vec1, v1, m1 = p1
@@ -119,7 +114,7 @@ def report_energy(bodies=SYSTEM, pairs=PAIRS, e=0.0):
 	return e
 
 
-def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
+def offset_momentum(ref, bodies, px=0.0, py=0.0, pz=0.0):
 	for w in bodies:
 		r, v, m = w
 		vx, vy, vz = v
@@ -134,24 +129,28 @@ def offset_momentum(ref, bodies=SYSTEM, px=0.0, py=0.0, pz=0.0):
 
 
 def test_nbody(iterations):
+	SYSTEM = []
+	for key in BODIES: SYSTEM.append( BODIES[key] )
+	PAIRS = combinations(SYSTEM)
+
 	# Warm-up runs.
-	report_energy()
-	advance(0.01, 20000)
-	report_energy()
+	report_energy( SYSTEM, PAIRS )
+	advance(0.01, 20000,  SYSTEM, PAIRS )
+	report_energy( SYSTEM, PAIRS )
 
 	times = []
 	for _ in xrange(iterations):
 		t0 = time()
-		report_energy()
-		advance(0.01, 20000)
-		report_energy()
+		report_energy( SYSTEM, PAIRS )
+		advance(0.01, 20000, SYSTEM, PAIRS)
+		report_energy( SYSTEM, PAIRS )
 		t1 = time()
 		times.append(t1 - t0)
 	return times
 
 
 
-def test():
+def main():
 	times = test_nbody( 3 )
 	for t in times:
 		print 'time', t
@@ -161,6 +160,6 @@ def test():
 
 </head>
 <body>
-<button id="mybutton" onclick="test()">click me</button>
+<button id="mybutton" onclick="main()">click me</button>
 </body>
 </html>

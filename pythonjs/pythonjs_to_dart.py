@@ -206,14 +206,19 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		out.append(
-			self.indent() + 'if (%s is dict) { %s = %s.keys(); }' %(iter_name, iter_name, iter_name)
+			#self.indent() + 'if (%s is dict) { %s = %s.keys(); }' %(iter_name, iter_name, iter_name)
+			self.indent() + 'if (%s is dict) %s = %s.keys();' %(iter_name, iter_name, iter_name)
 		)
 
 
 	def visit_Expr(self, node):
-		# XXX: this is UGLY
 		s = self.visit(node.value)
-		if not s.endswith(';'):
+		if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id == 'JS':
+			if s.endswith('}') and 'return' in s.split(' '):
+				pass
+			elif not s.endswith(';'):
+				s += ';'
+		elif not s.endswith(';'):
 			s += ';'
 		return s
 
@@ -253,7 +258,21 @@ class DartGenerator( pythonjs.JSGenerator ):
 			else:
 				raise SyntaxError
 
-		args = self.visit(node.args)
+		args = []  #self.visit(node.args)
+		oargs = []
+		offset = len(node.args.args) - len(node.args.defaults)
+		for i, arg in enumerate(node.args.args):
+			a = arg.id
+			dindex = i - offset
+			if dindex >= 0 and node.args.defaults:
+				default_value = self.visit( node.args.defaults[dindex] )
+				oargs.append( '%s=%s' %(a, default_value) )
+			else:
+				args.append( a )
+
+		if oargs:
+			args.append( '[%s]' % ','.join(oargs) )
+
 		buffer = self.indent()
 		if hasattr(node,'_prefix'): buffer += node._prefix + ' '
 
