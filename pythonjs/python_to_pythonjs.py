@@ -199,6 +199,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._with_inline = False
 		self._inline = []
 		self._inline_ids = 0
+		self._inline_breakout = False
 		self._js_classes = dict()
 		self._in_js_class = False
 
@@ -658,7 +659,7 @@ class PythonToPythonJS(NodeVisitor):
 			if line: writer.write( line )
 			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
 			f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-			writer.write('%s.%s = %s'%(name,mname,f))
+			writer.write('%s.%s = JS("%s")'%(name,mname,f))
 
 		for base in node.bases:
 			base = self.visit(base)
@@ -870,14 +871,15 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				if self._inline:
 					writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
-					writer.write('break')
+					if self._inline_breakout:
+						writer.write('break')
 				else:
 					writer.write('return %s' % self.visit(node.value))
 
 		else:
 			if self._inline:
-				writer.write('break')
-				pass  ## TODO put inline inside a while loop that iterates once? and use `break` here to exit early?
+				if self._inline_breakout:
+					writer.write('break')
 			else:
 				writer.write('return')  ## empty return
 
@@ -899,7 +901,10 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s( [%s, %s], JSObject() )' %(op, left_operand, right_operand)
 
 		elif op == '%' and isinstance(node.left, ast.Str):
-			return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
+			if self._with_js:
+				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
+			else:
+				return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
 			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
@@ -1390,23 +1395,40 @@ class PythonToPythonJS(NodeVisitor):
 				if n in finfo['typedefs']:
 					self._func_typedefs[ remap[n] ] = finfo['typedefs'][n]
 
-		for i,a in enumerate(node.args):
-			b = self.visit( fnode.args.args[i] )
-			b = remap[ b ]
-			writer.write( "%s = %s" %(b, self.visit(a)) )
+		offset = len(fnode.args.args) - len(fnode.args.defaults)
+		for i,ad in enumerate(fnode.args.args):
+			if i < len(node.args):
+				ac = self.visit( node.args[i] )
+			else:
+				assert fnode.args.defaults
+				dindex = i - offset
+				ac = self.visit( fnode.args.defaults[dindex] )
 
-		self._inline.append( name )
+			ad = remap[ self.visit(ad) ]
+			writer.write( "%s = %s" %(ad, ac) )
 
-		writer.write("JS('var __returns__%s = null')"%name)
-		writer.write('while True:')
-		writer.push()
-		for b in fnode.body:
-			self.visit(b)
-		if len( finfo['return_nodes'] ) == 0:
-			writer.write('break')
-		writer.pull()
 
-		if self._inline.pop() != name:
+		return_id = name + str(self._inline_ids)
+		self._inline.append( return_id )
+
+		writer.write("JS('var __returns__%s = null')"%return_id)
+		#if len( finfo['return_nodes'] ) > 1:  ## TODO fix me
+		if True:
+			self._inline_breakout = True
+			writer.write('while True:')
+			writer.push()
+			for b in fnode.body:
+				self.visit(b)
+
+			if not len( finfo['return_nodes'] ):
+				writer.write('break')
+			writer.pull()
+			#self._inline_breakout = False
+		else:
+			for b in fnode.body:
+				self.visit(b)
+
+		if self._inline.pop() != return_id:
 			raise RuntimeError
 
 		for n in remap:
@@ -1415,7 +1437,7 @@ class PythonToPythonJS(NodeVisitor):
 				if n.id == gname:
 					n.id = n
 		log('###########inlined %s###########'%name)
-		return '__returns__%s' %name
+		return '__returns__%s' %return_id
 
 	def visit_Call(self, node):
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':

@@ -30,6 +30,8 @@ PATHS = dict(
 	dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js'),
 	dartanalyzer = os.path.expanduser( '~/dart/dart-sdk/bin/dartanalyzer'),
 
+	closure = os.path.expanduser( '~/closure-compiler/compiler.jar'),
+
 )
 
 DART = '--dart' in sys.argv  ## force dart mode
@@ -87,6 +89,19 @@ def pythonjs_to_javascript( src ):
 	)
 	stdout, stderr = p.communicate( src.encode('utf-8') )
 	a = stdout.decode('utf-8')
+
+
+	if False and os.path.isfile( PATHS['closure'] ):
+		x = '/tmp/closure-input.js'; y = '/tmp/closure-output.js';
+		f = open(x, 'wb'); f.write( a.encode('utf-8') ); f.close()
+		subprocess.call([
+			'java', '-jar', PATHS['closure'], 
+			#'--compilation_level', 'ADVANCED_OPTIMIZATIONS', 
+			'--js', x, '--js_output_file', y,
+			'--formatting', 'PRETTY_PRINT',
+		])
+		f = open(y, 'rb'); a = f.read().decode('utf-8'); f.close()
+
 	return a
 
 def python_to_javascript( src, module=None, dart=False, debug=False, dump=False ):
