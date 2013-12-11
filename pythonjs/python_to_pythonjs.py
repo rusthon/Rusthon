@@ -506,7 +506,36 @@ class PythonToPythonJS(NodeVisitor):
 			a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
 			writer.write(a)
 
-		elif self._with_js or self._with_dart:
+		elif self._with_dart:
+			if op == '+=':
+				a = '%s.__iadd__(%s)' %(target, self.visit(node.value))
+			elif op == '-=':
+				a = '%s.__isub__(%s)' %(target, self.visit(node.value))
+			elif op == '*=':
+				a = '%s.__imul__(%s)' %(target, self.visit(node.value))
+			elif op == '/=':
+				a = '%s.__idiv__(%s)' %(target, self.visit(node.value))
+			elif op == '%=':
+				a = '%s.__imod__(%s)' %(target, self.visit(node.value))
+			elif op == '&=':
+				a = '%s.__iand__(%s)' %(target, self.visit(node.value))
+			elif op == '|=':
+				a = '%s.__ior__(%s)' %(target, self.visit(node.value))
+			elif op == '^=':
+				a = '%s.__ixor__(%s)' %(target, self.visit(node.value))
+			elif op == '<<=':
+				a = '%s.__ilshift__(%s)' %(target, self.visit(node.value))
+			elif op == '>>=':
+				a = '%s.__irshift__(%s)' %(target, self.visit(node.value))
+			else:
+				raise NotImplementedError
+
+			b = '%s %s %s' %(target, op, self.visit(node.value))
+			## dart2js is smart enough to optimize this if/else away ##
+			writer.write('if instanceof(%s, Number) or instanceof(%s, String): %s' %(target,target,b) )
+			writer.write('else: %s' %a)
+
+		elif self._with_js:  ## no operator overloading in with-js mode
 			a = '%s %s %s' %(target, op, self.visit(node.value))
 			writer.write(a)
 

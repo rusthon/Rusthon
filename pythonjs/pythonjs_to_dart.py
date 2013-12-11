@@ -129,6 +129,29 @@ class DartGenerator( pythonjs.JSGenerator ):
 					elif b.name == '__setitem__':
 						b.name = ''
 						b._prefix = 'void operator []='
+					elif b.name == '__add__':
+						b.name = ''
+						b._prefix = 'operator +'
+					elif b.name == '__iadd__':
+						b.name = ''
+						b._prefix = 'void operator +='
+					elif b.name == '__sub__':
+						b.name = ''
+						b._prefix = 'operator -'
+					elif b.name == '__mul__':
+						b.name = ''
+						b._prefix = 'operator *'
+					elif b.name == '__div__':
+						b.name = ''
+						b._prefix = 'operator /'
+
+					elif b.name == '__or__':
+						b.name = ''
+						b._prefix = 'operator |'
+					elif b.name == '__xor__':
+						b.name = ''
+						b._prefix = 'operator ^'
+
 
 
 				line = self.visit(b)
@@ -158,6 +181,24 @@ class DartGenerator( pythonjs.JSGenerator ):
 					operator = 'operator []'
 				elif b.name == '__setitem__':
 					operator = 'operator []='
+				elif b.name == '__add__':
+					operator = 'operator +'
+				elif b.name == '__sub__':
+					operator = 'operator -'
+				elif b.name == '__mul__':
+					operator = 'operator *'
+				elif b.name == '__div__':
+					operator = 'operator /'
+				elif b.name == '__and__':
+					operator = 'operator &'
+				elif b.name == '__or__':
+					operator = 'operator |'
+				elif b.name == '__xor__':
+					operator = 'operator ^'
+				elif b.name == '__lshift__':
+					operator = 'operator <<'
+				elif b.name == '__rshift__':
+					operator = 'operator >>'
 
 				args = [self.visit(a) for a in b.args.args][1:]
 				args = ','.join(args)
@@ -302,6 +343,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def _visit_call_helper_instanceof(self, node):
 		args = map(self.visit, node.args)
 		if len(args) == 2:
+			if args[1] == 'Number':
+				args[1] = 'num'
 			return '%s is %s' %tuple(args)
 		else:
 			raise SyntaxError( args )
