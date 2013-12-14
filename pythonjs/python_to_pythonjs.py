@@ -1509,9 +1509,9 @@ class PythonToPythonJS(NodeVisitor):
 				assert len(args) == 1
 				return 'new(%s)' %args[0]
 
-			elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
-				assert len(args) == 1
-				return node.args[0].s  ## string literal
+			#elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
+			#	assert len(args) == 1
+			#	return node.args[0].s  ## string literal
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
 				a = ','.join(args)
@@ -1678,8 +1678,8 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
-		if self._with_js:
-			return '(function (%s) {return %s})' %(','.join(args), self.visit(node.body))
+		if self._with_js:  ## TODO is it better to return a normal lambda
+			return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
 		else:
 			return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
 

@@ -1,0 +1,30 @@
+<html>
+<head>
+<script src="pythonjs.js"></script>
+<script type="text/javascript">
+
+function js_function( a,b,c, options ) {
+	console.log('abc', a,b,c);
+	console.log('options', options);
+	console.log( c[0] );
+	console.log( c[1] );
+
+	return options.x + options.y + options.z;
+}
+
+</script>
+<script type="text/python">
+
+
+def test():
+	global c
+	c = ['hello', 'world']  ## automatically converted to Array when passed to js_function
+	print js_function( 'A','B',c, x=1, y=2, z=3 )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

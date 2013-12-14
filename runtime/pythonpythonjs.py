@@ -67,21 +67,25 @@ def __get__(object, attribute):
 			return object.cached_wrapper
 
 		elif JS("{}.toString.call(object) === '[object Function]'"):
-			#if JS("object.pythonscript_function === true"):
-			#	return object
-			#elif JS("object.is_wrapper !== undefined"):
-			#	return object
-			#else:
-			#	JS("var cached = object.cached_wrapper")
-			#	if cached:
-			#		return cached
-			#	else:  ## TODO - double check if this still happens
-			#		def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
-			#		wrapper.is_wrapper = True
-			#		object.cached_wrapper = wrapper
-			#		return wrapper
 
-			def wrapper(args,kwargs): return object.apply(None, args)  ## TODO, bind this?
+			def wrapper(args,kwargs):
+				var(i, arg)
+				i = 0
+				while i < args.length:
+					arg = args[i]
+					#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
+					if typeof(arg) == 'object':
+						if arg.__class__:
+							if arg.__class__.__name__ == 'list' or arg.__class__.__name__ == 'tuple':
+								args[i] = arg[...]
+							elif arg.__class__.__name__ == 'dict':
+								args[i] = arg[...]
+					i += 1
+
+				if Object.keys(kwargs).length != 0:
+					args.push( kwargs )
+				return object.apply(None, args)
+
 			wrapper.is_wrapper = True
 			object.cached_wrapper = wrapper
 			return wrapper

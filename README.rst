@@ -384,6 +384,33 @@ are also returned directly, like document.body.  This allows
 you to use the HTML DOM API just as you would in normal
 JavaScript.
 
+If the JavaScript function you are calling takes a JavaScript
+Object as the last argument you can call the function using
+keyword arguments and they will be automatically converted 
+to a JavaScript Object.  Any dictionaries or lists you pass
+to a JavaScript function will be converted to: Array or Object.
+
+Example::
+
+	<script type="text/javascript">
+
+	function js_function( a,b,c, options ) {
+		console.log('abc', a,b,c);
+		console.log( c[0] );  // mylist was automatically converted to an Array
+		console.log( c[1] );
+		return options.x + options.y + options.z;
+	}
+
+	</script>
+
+	<script type="text/python">
+
+	def test():
+		mylist = ['hello', 'world']
+		print js_function( 'A','B', mylist, x=1, y=2, z=3 )
+
+	</script>
+
 ---------------
 
 Inline JavaScript
