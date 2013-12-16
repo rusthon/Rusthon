@@ -11,7 +11,7 @@ class A:
 
 	def __contains__(self, name):
 		with javascript:
-			if name in self:
+			if name in Object.keys(self):
 				return True
 
 class B:

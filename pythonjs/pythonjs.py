@@ -375,8 +375,10 @@ class JSGenerator(NodeVisitor):
 		comp = [ '(']
 		comp.append( self.visit(node.left) )
 		comp.append( ')' )
+
 		for i in range( len(node.ops) ):
 			comp.append( self.visit(node.ops[i]) )
+
 			if isinstance(node.comparators[i], ast.BinOp):
 				comp.append('(')
 				comp.append( self.visit(node.comparators[i]) )
@@ -393,7 +395,8 @@ class JSGenerator(NodeVisitor):
 		return '!=='
 
 	def visit_UnaryOp(self, node):
-		return self.visit(node.op) + self.visit(node.operand)
+		#return self.visit(node.op) + self.visit(node.operand)
+		return '%s (%s)' %(self.visit(node.op),self.visit(node.operand))
 
 	def visit_USub(self, node):
 		return '-'

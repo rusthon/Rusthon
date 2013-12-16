@@ -18,7 +18,9 @@ def show(x):
 def test():
 	global a, b
 	print('--testing literal style--')
-	a = [1,2,3]  ## literal style
+	a = [ 1,2,3 ]  ## literal style
+	a.append( {'xxx':'mydict'} )
+	print a
 	print 'testing append'
 	a.append( 4 )
 	show( a )
@@ -44,22 +46,27 @@ def test():
 	t = tuple( a )
 	print t[-1]
 
-	print 'testing count'
+	print 'testing count - should be 1'
 	print a.count(4)
+	print 'testing count - should be 2'
 	a.append(4)
 	print a.count(4)
+
 	a.append( 'A' )
 	a.append( 'A' )
 	a.append( 'A' )
 	print 'should print 3'
 	print a.count('A')
 
-	print 'testing slice'
+	print 'testing slice[:]'
 	sliced = a[:]
-	print sliced[...]
-
+	print sliced
+	print 'testing [0,1]*10'
 	xxx = [0,1]*10
-	print xxx[...]
+	print xxx
+	print 'testing list from string'
+	s = list( 'abc' )
+	print s
 
 </script>
 </head>

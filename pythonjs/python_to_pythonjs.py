@@ -243,8 +243,8 @@ class PythonToPythonJS(NodeVisitor):
 
 	def setup_builtins(self):
 		self._classes['dict'] = set(['__getitem__', '__setitem__'])
-		self._classes['list'] = set(['__getitem__', '__setitem__'])
-		self._classes['tuple'] = set(['__getitem__', '__setitem__'])
+		self._classes['list'] = set() #['__getitem__', '__setitem__'])
+		self._classes['tuple'] = set() #['__getitem__', '__setitem__'])
 		self._builtin_classes = set(['dict', 'list', 'tuple'])
 		self._builtin_functions = {
 			'ord':'%s.charCodeAt(0)', 
@@ -386,18 +386,20 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		if self._with_js or self._with_dart:
-			return a
-		else:
-			return '__get__(tuple, "__call__")([], {pointer:%s})' %a
+		return a
+		#if self._with_js or self._with_dart:
+		#	return a
+		#else:
+		#	return '__get__(tuple, "__call__")([], {pointer:%s})' %a
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		if self._with_js or self._with_dart:
-			return a
-		else:
-			return '__get__(list, "__call__")([], {pointer:%s})' %a
+		return a
+		#if self._with_js or self._with_dart:
+		#	return a
+		#else:
+		#	return '__get__(list, "__call__")([], {pointer:%s})' %a
 
 	def visit_GeneratorExp(self, node):
 		return self.visit_ListComp(node)
@@ -430,7 +432,8 @@ class PythonToPythonJS(NodeVisitor):
 		self._gen_comp( generators, node )
 
 		self._comprehensions.remove( node )
-		return '__get__(list, "__call__")([], {pointer:%s})' %cname
+		#return '__get__(list, "__call__")([], {pointer:%s})' %cname
+		return cname
 
 
 	def _gen_comp(self, generators, node):
@@ -851,10 +854,10 @@ class PythonToPythonJS(NodeVisitor):
 		map(self.visit, node.handlers)
 
 	def visit_Raise(self, node):
-		if self._with_js or self._with_dart:
-			writer.write('throw Error')
-		else:
-			writer.write('raise %s' % self.visit(node.type))
+		#if self._with_js or self._with_dart:
+		#	writer.write('throw Error')
+		#else:
+		writer.write('raise %s' % self.visit(node.type))
 
 	def visit_ExceptHandler(self, node):
 		if node.type and node.name:
@@ -954,10 +957,11 @@ class PythonToPythonJS(NodeVisitor):
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
 			for i in range( n ): expanded.extend( elts )
-			if self._with_js or self._with_dart:
-				return '[%s]' %','.join(expanded)
-			else:
-				return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+			#if self._with_js or self._with_dart:
+			#	return '[%s]' %','.join(expanded)
+			#else:
+			#	return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+			return '[%s]' %','.join(expanded)
 
 		elif op == '//':
 			return 'Math.floor(%s/%s)' %(left, right)
@@ -1048,9 +1052,11 @@ class PythonToPythonJS(NodeVisitor):
 					## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
 					## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
 					## TODO double check this code
-					comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
-					comp.append( 'Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
-					comp.append( "%s['__contains__'](%s)" %a )
+					#comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
+					comp.append( '( Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
+					comp.append( "%s['__contains__'](%s) )" %a )
+					#comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
+					comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
 				else:
 					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
 
@@ -1164,7 +1170,8 @@ class PythonToPythonJS(NodeVisitor):
 			)
 
 		elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
-			return '%s[...][%s]'%(name, self.visit(node.slice))
+			#return '%s[...][%s]'%(name, self.visit(node.slice))
+			return '%s[%s]'%(name, self.visit(node.slice))
 
 		elif name in self._instances:  ## support x[y] operator overloading
 			klass = self._instances[ name ]
@@ -1214,7 +1221,8 @@ class PythonToPythonJS(NodeVisitor):
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
 			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
-				code = '%s[...][%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
+				#code = '%s[...][%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
+				code = '%s[%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
 
 			else:
 				code = "__get__(__get__(%s, '__setitem__'), '__call__')([%s, %s], JSObject())"
@@ -1580,13 +1588,14 @@ class PythonToPythonJS(NodeVisitor):
 				writer.append('var(%s, %s)' % (args_name, kwargs_name))
 				self.identifier += 1
 
-				if name in ('list', 'tuple'):
-					if args:
-						writer.append( '%s = %s[...]' % (args_name, args))  ## test this
-					else:
-						writer.append( '%s = []' %args_name )
-				else:
-					writer.append('%s = JSArray(%s)' % (args_name, args))
+				#if name in ('list', 'tuple'):
+				#	if args:
+				#		writer.append( '%s = %s[...]' % (args_name, args))  ## test this
+				#	else:
+				#		writer.append( '%s = []' %args_name )
+				#else:
+				#	writer.append('%s = JSArray(%s)' % (args_name, args))
+				writer.append('%s = JSArray(%s)' % (args_name, args))
 
 				if node.starargs:
 					writer.append('%s.push.apply(%s, %s[...])' % (args_name, args_name, self.visit(node.starargs)))
@@ -1612,7 +1621,8 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]
 				if type == 'list' and node.func.attr == 'append':
-					return '%s[...].push(%s)' %(node.func.value.id, self.visit(node.args[0]))
+					#return '%s[...].push(%s)' %(node.func.value.id, self.visit(node.args[0]))
+					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))
 				else:
 					raise RuntimeError
 
@@ -1645,11 +1655,11 @@ class PythonToPythonJS(NodeVisitor):
 			elif call_has_args:
 				if name == 'dict':
 					return '__get__(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
-				elif name in ('list', 'tuple'):
-					if len(node.args):
-						return '__get__(%s, "__call__")([], {js_object:%s})' % (name, args_name)
-					else:
-						return '__get__(%s, "__call__")([], %s)' % (name, kwargs_name)
+				#elif name in ('list', 'tuple'):
+				#	if len(node.args):
+				#		return '__get__(%s, "__call__")([], {js_object:%s})' % (name, args_name)
+				#	else:
+				#		return '__get__(%s, "__call__")([], %s)' % (name, kwargs_name)
 				else:
 					return '__get__(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 

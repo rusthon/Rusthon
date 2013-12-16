@@ -343,8 +343,18 @@ def _setup_array_prototype():
 		def func(index):
 			return this[ index ]
 
+		@Array.prototype.__getitem__
+		def __getitem__(index):
+			if index < 0: index = this.length + index
+			return this[index]
+
+		@Array.prototype.__setitem__
+		def __setitem__(index, value):
+			if index < 0: index = this.length + index
+			this[ index ] = value
+
 		@Array.prototype.__iter__
-		def func(self):
+		def func():
 			with python:
 				return Iterator(this, 0)
 
@@ -358,10 +368,40 @@ def _setup_array_prototype():
 		def func(item):
 			this.push( item )
 
+		@Array.prototype.extend
+		def extend(self, other):
+			for obj in other:
+				this.push(obj)
+
 		@Array.prototype.remove
 		def func(item):
 			index = this.indexOf( item )
 			this.splice(index, 1)
+
+		@Array.prototype.insert
+		def insert(index, obj):
+			if index < 0: index = this.length + index
+			this.splice(index, 0, obj)
+
+		@Array.prototype.remove
+		def remove(obj):
+			index = this.indexOf(obj)
+			this.splice(index, 1)
+
+		@Array.prototype.index
+		def index(obj):
+			return this.indexOf(obj)
+
+		@Array.prototype.count
+		def count(obj):
+			a = 0
+			for item in this:
+				if item is obj:  ## note that `==` will not work here, `===` is required for objects
+					a += 1
+			return a
+
+
+		## set-like features ##
 
 		@Array.prototype.bisect
 		def func(x, low, high):
@@ -376,7 +416,6 @@ def _setup_array_prototype():
 					low = mid + 1
 			return low
 
-		## set-like features ##
 		## `-` operator
 		@Array.prototype.difference
 		def func(other):
@@ -414,7 +453,7 @@ def range(num, stop):
 		while i < num:
 			arr.push(i)
 			i += 1
-	return list( pointer=arr )
+	return arr
 
 def xrange(num, stop):
 	return range(num, stop)
@@ -437,7 +476,7 @@ def map(func, objs):
 		v = func(ob)
 		with javascript:
 			arr.push( v )
-	return list( pointer=arr )
+	return arr
 
 def filter(func, objs):
 	with javascript: arr = []
@@ -445,7 +484,7 @@ def filter(func, objs):
 		if func( ob ):
 			with javascript:
 				arr.push( ob )
-	return list( pointer=arr )
+	return arr
 
 
 def min( lst ):
@@ -564,8 +603,20 @@ class tuple:
 			else:
 				return True
 
+def list(a):
+	with javascript:
+		if Object.keys(arguments).length == 0: #arguments.length == 0:
+			return []
+		elif instanceof(a, Array):
+			return a.slice()
+		elif typeof(a) == 'string':
+			return a.split('')
+		else:
+			print a
+			print arguments
+			raise TypeError
 
-class list:
+class pylist:  ## DEPRECATED
 
 	def __init__(self, js_object=None, pointer=None):
 
@@ -677,7 +728,10 @@ class list:
 			else:
 				return True
 
-class dict:
+class jsifyable:
+	def jsify(self): return self[...]
+
+class dict( jsifyable ):
 	# http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
 	# using a function as a key is allowed, but would waste memory because it gets converted to a string
 	# http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
@@ -703,7 +757,6 @@ class dict:
 						self[...][ key ] = value
 			else:  ## TODO - deprecate
 				self[...] = js_object
-
 
 	def get(self, key, _default=None):
 		__dict = self[...]
@@ -779,14 +832,8 @@ class dict:
 			JS('__dict[key] = value')
 
 	def keys(self):
-		#__dict = self.js_object
-		#__keys = JS('Object.keys(__dict)')  ## the problem with this is that keys are coerced into strings
-		#out = list( js_object=__keys )  ## some bug in the translator prevents this
-		#out.js_object = __keys  ## this style is deprecated
-		#return out
 		with javascript:
-			arr = Object.keys( self[...] )
-		return list( js_object=arr )
+			return Object.keys( self[...] )
 
 	def pop(self, key, d=None):
 		v = self.get(key, None)
@@ -799,14 +846,13 @@ class dict:
 		
 
 	def values(self):
-		__dict = self[...]
-		__keys = JS('Object.keys(__dict)')
-		out = list()
-		i = 0
-		while i < __keys.length:
-			out.append( JS('__dict[ __keys[i] ]') )
-			i += 1
-		return out
+		with javascript:
+			keys = Object.keys( self[...] )
+			out = []
+			for key in keys:
+				out.push( self[...][key] )
+			return out
+
 
 	def __contains__(self, value):
 		with javascript:
@@ -1093,7 +1139,7 @@ class array:
 		return arr
 
 	def to_list(self):
-		return list( js_object=self.to_array() )
+		return self.to_array()
 
 	def to_ascii(self):
 		string = ''
@@ -1115,6 +1161,7 @@ with javascript:
 		'dumps': lambda o: JSON.stringify(o)
 	}
 
+## TODO fix this - deprecate?
 def _to_pythonjs(json):
 	var(jstype, item, output)
 	jstype = JS('typeof json')

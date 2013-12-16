@@ -75,11 +75,13 @@ def __get__(object, attribute):
 					arg = args[i]
 					#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
 					if typeof(arg) == 'object':
-						if arg.__class__:
-							if arg.__class__.__name__ == 'list' or arg.__class__.__name__ == 'tuple':
-								args[i] = arg[...]
-							elif arg.__class__.__name__ == 'dict':
-								args[i] = arg[...]
+						#if arg.__class__:
+						#	if arg.__class__.__name__ == 'list' or arg.__class__.__name__ == 'tuple':
+						#		args[i] = arg[...]
+						#	elif arg.__class__.__name__ == 'dict':
+						#		args[i] = arg[...]
+						if arg.jsify:
+							args[i] = arg.jsify()
 					i += 1
 
 				if Object.keys(kwargs).length != 0:
@@ -94,8 +96,20 @@ def __get__(object, attribute):
 	if Object.hasOwnProperty.call(object, '__getattribute__'):
 		return object.__getattribute__( attribute )
 
+
+	#if JS('object instanceof Array'):
+	#	if attribute == '__getitem__':
+	#		def wrapper(args,kwargs): return object.__getitem__( args[0] )
+	#		wrapper.is_wrapper = True
+	#		return wrapper
+	#	elif attribute == '__setitem__':
+	#		def wrapper(args,kwargs): object.__setitem__( args[0], args[1] )
+	#		wrapper.is_wrapper = True
+	#		return wrapper
+
 	var(attr)
 	attr = object[attribute]  ## this could be a javascript object with cached method
+
 
 	if __NODEJS__ is False:
 		if JS("object instanceof HTMLDocument"):
@@ -254,17 +268,8 @@ def __get__(object, attribute):
 				return f( [object, attribute], JSObject() )
 
 
-	if JS('object instanceof Array'):
-		if attribute == '__getitem__':
-			def wrapper(args,kwargs): return object[ args[0] ]
-			wrapper.is_wrapper = True
-			return wrapper
-		elif attribute == '__setitem__':
-			def wrapper(args,kwargs): object[ args[0] ] = args[1]
-			wrapper.is_wrapper = True
-			return wrapper
-
-	elif attribute == '__getitem__':  ## this should be a JSObject - or anything else - is this always safe?
+	## getting/setting from a normal JavaScript Object ##
+	if attribute == '__getitem__':
 		def wrapper(args,kwargs): return object[ args[0] ]
 		wrapper.is_wrapper = True
 		return wrapper
