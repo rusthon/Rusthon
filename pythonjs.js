@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Mon Dec 16 20:15:19 2013
+// PythonJS Runtime - regenerated on: Mon Dec 16 20:24:12 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -53,7 +53,7 @@ __get__ = function(object, attribute) {
       } else {
         if ({}.toString.call(object) === '[object Function]') {
                     var wrapper = function(args, kwargs) {
-            var i, arg;
+            var i, arg, keys;
             i = 0;
             while(( i ) < args.length) {
               arg = args[i];
@@ -64,8 +64,19 @@ __get__ = function(object, attribute) {
               }
               i += 1;
             }
-            if (( Object.keys(kwargs).length ) != 0) {
+            keys = Object.keys(kwargs);
+            if (( keys.length ) != 0) {
               args.push(kwargs);
+              i = 0;
+              while(( i ) < keys.length) {
+                arg = kwargs[keys[i]];
+                if (( typeof(arg) ) == "object") {
+                  if (arg.jsify) {
+                    kwargs[keys[i]] = arg.jsify();
+                  }
+                }
+                i += 1;
+              }
             }
             return object.apply(undefined, args);
           }

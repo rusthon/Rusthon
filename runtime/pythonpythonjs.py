@@ -69,23 +69,27 @@ def __get__(object, attribute):
 		elif JS("{}.toString.call(object) === '[object Function]'"):
 
 			def wrapper(args,kwargs):
-				var(i, arg)
+				var(i, arg, keys)
 				i = 0
 				while i < args.length:
 					arg = args[i]
 					#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
 					if typeof(arg) == 'object':
-						#if arg.__class__:
-						#	if arg.__class__.__name__ == 'list' or arg.__class__.__name__ == 'tuple':
-						#		args[i] = arg[...]
-						#	elif arg.__class__.__name__ == 'dict':
-						#		args[i] = arg[...]
 						if arg.jsify:
 							args[i] = arg.jsify()
 					i += 1
 
-				if Object.keys(kwargs).length != 0:
+				keys = Object.keys(kwargs)
+				if keys.length != 0:
 					args.push( kwargs )
+					i = 0
+					while i < keys.length:
+						arg = kwargs[ keys[i] ]
+						if typeof(arg) == 'object':
+							if arg.jsify:
+								kwargs[ keys[i] ] = arg.jsify()
+						i += 1
+
 				return object.apply(None, args)
 
 			wrapper.is_wrapper = True

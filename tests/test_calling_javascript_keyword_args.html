@@ -8,7 +8,7 @@ function js_function( a,b,c, options ) {
 	console.log('options', options);
 	console.log( c[0] );
 	console.log( c[1] );
-
+	console.log( 'ob', options.ob );
 	return options.x + options.y + options.z;
 }
 
@@ -19,7 +19,7 @@ function js_function( a,b,c, options ) {
 def test():
 	global c
 	c = ['hello', 'world', {'xxx':99}, {'yyy':[1.1, {'sub':'AAA'}]}]
-	print js_function( 'A','B',c, x=1, y=2, z=3 )
+	print js_function( 'A','B',c, x=1, y=2, z=3, ob={'zzz':420} )
 
 </script>
 </head>
