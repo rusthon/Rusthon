@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sun Dec 15 19:06:10 2013
+// PythonJS Runtime - regenerated on: Mon Dec 16 20:15:19 2013
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -1007,6 +1007,26 @@ _setup_str_prototype.types_signature = {  };
 _setup_str_prototype.pythonscript_function = true;
 _setup_str_prototype();
 _setup_array_prototype = function(args, kwargs) {
+    var func = function() {
+    var i, item;
+    i = 0;
+    while(( i ) < this.length) {
+      item = this[i];
+      if (( typeof(item) ) == "object") {
+        if (item.jsify) {
+          this[i] = item.jsify();
+        }
+      }
+      i += 1;
+    }
+    return this;
+  }
+
+  func.NAME = "func";
+  func.args_signature = [];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  Array.prototype.jsify = func;
     var func = function(a) {
     if (( this.indexOf(a) ) == -1) {
       return false;
@@ -2414,7 +2434,6 @@ var dict, __dict_attrs, __dict_parents;
 __dict_attrs = Object();
 __dict_parents = [];
 __dict_properties = Object();
-__dict_parents.push(jsifyable);
 __dict_UID = 0;
 __dict_attrs["UID"] = __dict_UID;
 __dict___init__ = function(args, kwargs) {
@@ -2463,6 +2482,41 @@ __dict___init__.kwargs_signature = { js_object:undefined };
 __dict___init__.types_signature = { js_object:"None" };
 __dict___init__.pythonscript_function = true;
 __dict_attrs["__init__"] = __dict___init__;
+__dict_jsify = function(args, kwargs) {
+  var keys, value;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  keys = __get__(__get__(Object, "keys"), "__call__")([self["$wrapped"]], __NULL_OBJECT__);
+  var __iterator__, key;
+  __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
+  var __next__;
+  __next__ = __get__(__iterator__, "next_fast");
+  while(( __iterator__.index ) < __iterator__.length) {
+    key = __next__();
+    value = __get__(self["$wrapped"], "__getitem__")([key], Object());
+    if (( typeof(value) ) == "object") {
+      if (__get__(value, "jsify")) {
+        __get__(__get__(self["$wrapped"], "__setitem__"), "__call__")([key, __get__(__get__(value, "jsify"), "__call__")()], Object());
+      }
+    }
+  }
+  return self["$wrapped"];
+}
+
+__dict_jsify.NAME = "__dict_jsify";
+__dict_jsify.args_signature = ["self"];
+__dict_jsify.kwargs_signature = {  };
+__dict_jsify.types_signature = {  };
+__dict_jsify.pythonscript_function = true;
+__dict_attrs["jsify"] = __dict_jsify;
 __dict_get = function(args, kwargs) {
   var __dict;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {

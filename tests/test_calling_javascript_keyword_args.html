@@ -18,7 +18,7 @@ function js_function( a,b,c, options ) {
 
 def test():
 	global c
-	c = ['hello', 'world']  ## automatically converted to Array when passed to js_function
+	c = ['hello', 'world', {'xxx':99}, {'yyy':[1.1, {'sub':'AAA'}]}]
 	print js_function( 'A','B',c, x=1, y=2, z=3 )
 
 </script>

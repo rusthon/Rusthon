@@ -329,6 +329,16 @@ _setup_str_prototype()
 def _setup_array_prototype():
 
 	with javascript:
+		@Array.prototype.jsify
+		def func():
+			i = 0
+			while i < this.length:
+				item = this[ i ]
+				if typeof(item) == 'object':
+					if item.jsify:
+						this[ i ] = item.jsify()
+				i += 1
+			return this
 
 		@Array.prototype.__contains__
 		def func(a):
@@ -731,7 +741,7 @@ class pylist:  ## DEPRECATED
 class jsifyable:
 	def jsify(self): return self[...]
 
-class dict( jsifyable ):
+class dict:
 	# http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
 	# using a function as a key is allowed, but would waste memory because it gets converted to a string
 	# http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
@@ -757,6 +767,15 @@ class dict( jsifyable ):
 						self[...][ key ] = value
 			else:  ## TODO - deprecate
 				self[...] = js_object
+
+	def jsify(self):
+		keys = Object.keys( self[...] )
+		for key in keys:
+			value = self[...][key]
+			if typeof(value) == 'object':
+				if value.jsify:
+					self[...][key] = value.jsify()
+		return self[...]
 
 	def get(self, key, _default=None):
 		__dict = self[...]
