@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Mon Dec 16 20:24:12 2013
+// PythonJS Runtime - regenerated on: Thu Jan  2 11:33:21 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -711,6 +711,7 @@ isinstance.kwargs_signature = {  };
 isinstance.types_signature = {  };
 isinstance.pythonscript_function = true;
 int = function(args, kwargs) {
+  var a;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -721,11 +722,11 @@ int = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("a")};
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
-  if (a instanceof String) {
-    return window.parseInt(a);
-  } else {
-    return Math.round(a);
+  a = Math.round(a);
+  if (isNaN(a)) {
+    throw EvalError;
   }
+  return a;
 }
 
 int.NAME = "int";
@@ -734,6 +735,7 @@ int.kwargs_signature = {  };
 int.types_signature = {  };
 int.pythonscript_function = true;
 float = function(args, kwargs) {
+  var a;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -744,11 +746,11 @@ float = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("a")};
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
-  if (a instanceof String) {
-    return window.parseFloat(a);
-  } else {
-    return a;
+  a = Number(a);
+  if (isNaN(a)) {
+    throw EvalError;
   }
+  return a;
 }
 
 float.NAME = "float";

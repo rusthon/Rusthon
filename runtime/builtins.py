@@ -192,17 +192,17 @@ def isinstance( ob, klass):
 
 def int(a):
 	with javascript:
-		if instanceof(a, String):
-			return window.parseInt(a)
-		else:
-			return Math.round(a)
+		a = Math.round(a)
+		if isNaN(a):
+			raise EvalError
+		return a
 
 def float(a):
 	with javascript:
-		if instanceof(a, String):
-			return window.parseFloat(a)
-		else:
-			return a
+		a = Number(a)
+		if isNaN(a):
+			raise EvalError
+		return a
 
 def round(a, places):
 	with javascript:
