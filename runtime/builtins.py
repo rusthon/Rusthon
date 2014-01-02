@@ -305,6 +305,13 @@ def _setup_str_prototype():
 
 		@String.prototype.index
 		def func(a):
+			a = this.indexOf(a)
+			if a == -1:
+				raise EvalError
+			return a
+
+		@String.prototype.find
+		def func(a):
 			return this.indexOf(a)
 
 		@String.prototype.isdigit

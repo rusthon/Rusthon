@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Jan  2 11:33:21 2014
+// PythonJS Runtime - regenerated on: Thu Jan  2 19:08:07 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -964,7 +964,12 @@ _setup_str_prototype = function(args, kwargs) {
   func.types_signature = {  };
   String.prototype.lower = func;
     var func = function(a) {
-    return this.indexOf(a);
+    var a;
+    a = this.indexOf(a);
+    if (( a ) == -1) {
+      throw EvalError;
+    }
+    return a;
   }
 
   func.NAME = "func";
@@ -972,6 +977,15 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {  };
   func.types_signature = {  };
   String.prototype.index = func;
+    var func = function(a) {
+    return this.indexOf(a);
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["a"];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  String.prototype.find = func;
     var func = function() {
     var digits;
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
