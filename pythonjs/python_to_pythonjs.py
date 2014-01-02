@@ -166,6 +166,7 @@ class Typedef(object):
 class PythonToPythonJS(NodeVisitor):
 
 	identifier = 0
+	_func_typedefs = ()
 
 	def __init__(self, source=None, module=None, module_path=None, dart=False):
 		super(PythonToPythonJS, self).__init__()
