@@ -752,7 +752,6 @@ class dict:
 	# http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
 	# using a function as a key is allowed, but would waste memory because it gets converted to a string
 	# http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
-	UID = 0
 	def __init__(self, js_object=None):
 		with javascript:
 			self[...] = {}
@@ -785,75 +784,40 @@ class dict:
 		return self[...]
 
 	def get(self, key, _default=None):
-		__dict = self[...]
-		if JS("typeof(key) === 'object'"):
-			JS('var uid = "@"+key.uid') ## gotcha - what if "@undefined" was in __dict ?
-			if JS('uid in __dict'):
-				return JS('__dict[uid]')
-		elif JS("typeof(key) === 'function'"):
-			JS('var uid = "@"+key.uid')
-			if JS('uid in __dict'):
-				return JS('__dict[uid]')
-		else:
-			if JS('key in __dict'):
-				return JS('__dict[key]')
-
-		return _default
+		try:
+			return self[key]
+		except:
+			return _default
 
 	def set(self, key, value):
-		global _PythonJS_UID
-
-		__dict = self[...]
-		if JS("typeof(key) === 'object'"):
-			if JS("key.uid === undefined"):
-				uid = _PythonJS_UID
-				JS("key.uid = uid")
-				_PythonJS_UID += 1
-			JS('var uid = key.uid')
-			JS('__dict["@"+uid] = value')
-		elif JS("typeof(key) === 'function'"):
-			if JS("key.uid === undefined"):
-				uid = _PythonJS_UID
-				JS("key.uid = uid")
-				_PythonJS_UID += 1
-			JS('var uid = key.uid')
-			JS('__dict["@"+uid] = value')
-		else:
-			JS('__dict[key] = value')
+		self.__setitem__(key, value)
 
 	def __len__(self):
 		__dict = self[...]
 		return JS('Object.keys(__dict).length')
 
 	def __getitem__(self, key):
+		# XXX: '4' and 4 are the same key
 		__dict = self[...]
-		if JS("typeof(key) === 'object'"):
-			JS('var uid = key.uid')
-			return JS('__dict["@"+uid]')  ## "@" is needed so that integers can also be used as keys
-		elif JS("typeof(key) === 'function'"):
-			JS('var uid = key.uid')
-			return JS('__dict["@"+uid]')  ## "@" is needed so that integers can also be used as keys
-		else:
+		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+			# Test undefined because it can be in the dict
+			if JS("key.__uid__ && key.__uid__ in __dict"):
+				return JS('__dict[key.__uid__]')
+			raise IndexError
+		# Tested after in order to not convert functions to strings.
+		# The slow down is negligible
+		if JS("key in __dict"):
 			return JS('__dict[key]')
+		raise IndexError
 
 	def __setitem__(self, key, value):
-		global _PythonJS_UID
-
 		__dict = self[...]
-		if JS("typeof(key) === 'object'"):
-			if JS("key.uid === undefined"):
-				uid = _PythonJS_UID
-				JS("key.uid = uid")
-				_PythonJS_UID += 1
-			JS('var uid = key.uid')
-			JS('__dict["@"+uid] = value')
-		elif JS("typeof(key) === 'function'"):
-			if JS("key.uid === undefined"):
-				uid = _PythonJS_UID
-				JS("key.uid = uid")
-				_PythonJS_UID += 1
-			JS('var uid = key.uid')
-			JS('__dict["@"+uid] = value')
+		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+			if JS("key.__uid__ === undefined"):
+				# "￼" is needed so that integers can also be
+				# used as keys
+				JS("key.__uid__ = '￼' + _PythonJS_UID++")
+			JS('__dict[key.__uid__] = value')
 		else:
 			JS('__dict[key] = value')
 
@@ -869,7 +833,6 @@ class dict:
 			js_object = self[...]
 			JS("delete js_object[key]")
 			return v
-		
 
 	def values(self):
 		with javascript:
@@ -879,19 +842,12 @@ class dict:
 				out.push( self[...][key] )
 			return out
 
-
 	def __contains__(self, value):
-		with javascript:
-			keys = Object.keys(self[...])  ## the problem with this is that keys are coerced into strings
-			if typeof(value) == 'object':
-				key = '@'+value.uid
-			else:
-				key = ''+value  ## convert to string
-
-			if keys.indexOf( key ) == -1:
-				return False
-			else:
-				return True
+		try:
+			self[value]
+			return True
+		except:
+			return False
 
 	def __iter__(self):
 		return Iterator(self.keys(), 0)

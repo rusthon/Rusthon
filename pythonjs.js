@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Jan  2 19:08:07 2014
+// PythonJS Runtime - regenerated on: Sat Jan  4 10:29:13 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -2461,8 +2461,6 @@ var dict, __dict_attrs, __dict_parents;
 __dict_attrs = Object();
 __dict_parents = [];
 __dict_properties = Object();
-__dict_UID = 0;
-__dict_attrs["UID"] = __dict_UID;
 __dict___init__ = function(args, kwargs) {
   var i, value, key;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
@@ -2545,7 +2543,6 @@ __dict_jsify.types_signature = {  };
 __dict_jsify.pythonscript_function = true;
 __dict_attrs["jsify"] = __dict_jsify;
 __dict_get = function(args, kwargs) {
-  var __dict;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2558,25 +2555,12 @@ __dict_get = function(args, kwargs) {
   var self = arguments['self'];
   var key = arguments['key'];
   var _default = arguments['_default'];
-  __dict = self["$wrapped"];
-  if (typeof(key) === 'object') {
-    var uid = "@"+key.uid;
-    if (uid in __dict) {
-      return __dict[uid];
-    }
-  } else {
-    if (typeof(key) === 'function') {
-      var uid = "@"+key.uid;
-      if (uid in __dict) {
-        return __dict[uid];
-      }
-    } else {
-      if (key in __dict) {
-        return __dict[key];
-      }
-    }
-  }
-  return _default;
+    try {
+return __get__(self, "__getitem__")([key], Object());
+  } catch(__exception__) {
+return _default;
+
+}
 }
 
 __dict_get.NAME = "__dict_get";
@@ -2586,7 +2570,6 @@ __dict_get.types_signature = { _default:"None" };
 __dict_get.pythonscript_function = true;
 __dict_attrs["get"] = __dict_get;
 __dict_set = function(args, kwargs) {
-  var __dict, uid;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2599,28 +2582,7 @@ __dict_set = function(args, kwargs) {
   var self = arguments['self'];
   var key = arguments['key'];
   var value = arguments['value'];
-  __dict = self["$wrapped"];
-  if (typeof(key) === 'object') {
-    if (key.uid === undefined) {
-      uid = _PythonJS_UID;
-      key.uid = uid;
-      _PythonJS_UID += 1;
-    }
-    var uid = key.uid;
-    __dict["@"+uid] = value;
-  } else {
-    if (typeof(key) === 'function') {
-      if (key.uid === undefined) {
-        uid = _PythonJS_UID;
-        key.uid = uid;
-        _PythonJS_UID += 1;
-      }
-      var uid = key.uid;
-      __dict["@"+uid] = value;
-    } else {
-      __dict[key] = value;
-    }
-  }
+  __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
 }
 
 __dict_set.NAME = "__dict_set";
@@ -2665,17 +2627,16 @@ __dict___getitem__ = function(args, kwargs) {
   var self = arguments['self'];
   var key = arguments['key'];
   __dict = self["$wrapped"];
-  if (typeof(key) === 'object') {
-    var uid = key.uid;
-    return __dict["@"+uid];
-  } else {
-    if (typeof(key) === 'function') {
-      var uid = key.uid;
-      return __dict["@"+uid];
-    } else {
-      return __dict[key];
+  if (typeof(key) === 'object' || typeof(key) === 'function') {
+    if (key.__uid__ && key.__uid__ in __dict) {
+      return __dict[key.__uid__];
     }
+    throw IndexError;
   }
+  if (key in __dict) {
+    return __dict[key];
+  }
+  throw IndexError;
 }
 
 __dict___getitem__.NAME = "__dict___getitem__";
@@ -2685,7 +2646,7 @@ __dict___getitem__.types_signature = {  };
 __dict___getitem__.pythonscript_function = true;
 __dict_attrs["__getitem__"] = __dict___getitem__;
 __dict___setitem__ = function(args, kwargs) {
-  var __dict, uid;
+  var __dict;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2699,26 +2660,13 @@ __dict___setitem__ = function(args, kwargs) {
   var key = arguments['key'];
   var value = arguments['value'];
   __dict = self["$wrapped"];
-  if (typeof(key) === 'object') {
-    if (key.uid === undefined) {
-      uid = _PythonJS_UID;
-      key.uid = uid;
-      _PythonJS_UID += 1;
+  if (typeof(key) === 'object' || typeof(key) === 'function') {
+    if (key.__uid__ === undefined) {
+      key.__uid__ = '￼'+_PythonJS_UID++;
     }
-    var uid = key.uid;
-    __dict["@"+uid] = value;
+    __dict[key.__uid__] = value;
   } else {
-    if (typeof(key) === 'function') {
-      if (key.uid === undefined) {
-        uid = _PythonJS_UID;
-        key.uid = uid;
-        _PythonJS_UID += 1;
-      }
-      var uid = key.uid;
-      __dict["@"+uid] = value;
-    } else {
-      __dict[key] = value;
-    }
+    __dict[key] = value;
   }
 }
 
@@ -2808,7 +2756,6 @@ __dict_values.types_signature = {  };
 __dict_values.pythonscript_function = true;
 __dict_attrs["values"] = __dict_values;
 __dict___contains__ = function(args, kwargs) {
-  var keys, key;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2820,17 +2767,13 @@ __dict___contains__ = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var value = arguments['value'];
-  keys = Object.keys(self["$wrapped"]);
-  if (( typeof(value) ) == "object") {
-    key = ("@" + value.uid);
-  } else {
-    key = ("" + value);
-  }
-  if (( keys.indexOf(key) ) == -1) {
-    return false;
-  } else {
-    return true;
-  }
+    try {
+__dict___getitem__([self, value], Object());
+return true;
+  } catch(__exception__) {
+return false;
+
+}
 }
 
 __dict___contains__.NAME = "__dict___contains__";
