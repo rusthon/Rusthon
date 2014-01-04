@@ -5,6 +5,9 @@
 
 _PythonJS_UID = 0
 
+JS("var IndexError = new RangeError()")
+JS("var KeyError = new RangeError()")
+JS("var ValueError = new RangeError()")
 
 with javascript:
 
@@ -194,14 +197,14 @@ def int(a):
 	with javascript:
 		a = Math.round(a)
 		if isNaN(a):
-			raise EvalError
+			raise ValueError
 		return a
 
 def float(a):
 	with javascript:
 		a = Number(a)
 		if isNaN(a):
-			raise EvalError
+			raise ValueError
 		return a
 
 def round(a, places):
@@ -307,7 +310,7 @@ def _setup_str_prototype():
 		def func(a):
 			a = this.indexOf(a)
 			if a == -1:
-				raise EvalError
+				raise ValueError
 			return a
 
 		@String.prototype.find
@@ -803,12 +806,12 @@ class dict:
 			# Test undefined because it can be in the dict
 			if JS("key.__uid__ && key.__uid__ in __dict"):
 				return JS('__dict[key.__uid__]')
-			raise IndexError
+			raise KeyError
 		# Tested after in order to not convert functions to strings.
 		# The slow down is negligible
 		if JS("key in __dict"):
 			return JS('__dict[key]')
-		raise IndexError
+		raise KeyError
 
 	def __setitem__(self, key, value):
 		__dict = self[...]

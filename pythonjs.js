@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Jan  4 10:29:13 2014
+// PythonJS Runtime - regenerated on: Sat Jan  4 11:01:10 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -370,6 +370,9 @@ get_arguments = function(signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
+var IndexError = new RangeError();
+var KeyError = new RangeError();
+var ValueError = new RangeError();
 __object_keys__ = function(ob) {
   var arr;
   "\n		notes:\n			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`\n			. this is different from Object.keys because it traverses the prototype chain.\n		";
@@ -724,7 +727,7 @@ int = function(args, kwargs) {
   var a = arguments['a'];
   a = Math.round(a);
   if (isNaN(a)) {
-    throw EvalError;
+    throw ValueError;
   }
   return a;
 }
@@ -748,7 +751,7 @@ float = function(args, kwargs) {
   var a = arguments['a'];
   a = Number(a);
   if (isNaN(a)) {
-    throw EvalError;
+    throw ValueError;
   }
   return a;
 }
@@ -967,7 +970,7 @@ _setup_str_prototype = function(args, kwargs) {
     var a;
     a = this.indexOf(a);
     if (( a ) == -1) {
-      throw EvalError;
+      throw ValueError;
     }
     return a;
   }
@@ -2631,12 +2634,12 @@ __dict___getitem__ = function(args, kwargs) {
     if (key.__uid__ && key.__uid__ in __dict) {
       return __dict[key.__uid__];
     }
-    throw IndexError;
+    throw KeyError;
   }
   if (key in __dict) {
     return __dict[key];
   }
-  throw IndexError;
+  throw KeyError;
 }
 
 __dict___getitem__.NAME = "__dict___getitem__";
@@ -2662,7 +2665,7 @@ __dict___setitem__ = function(args, kwargs) {
   __dict = self["$wrapped"];
   if (typeof(key) === 'object' || typeof(key) === 'function') {
     if (key.__uid__ === undefined) {
-      key.__uid__ = '￼'+_PythonJS_UID++;
+      key.__uid__ = '￼' + _PythonJS_UID++;
     }
     __dict[key.__uid__] = value;
   } else {
