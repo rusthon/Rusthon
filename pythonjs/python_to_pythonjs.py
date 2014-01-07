@@ -1058,6 +1058,9 @@ class PythonToPythonJS(NodeVisitor):
 					comp.append( "%s['__contains__'](%s) )" %a )
 					#comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
 					comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
+					## fixes 'o' in 'helloworld' in javascript mode ##
+					comp.append( ' or typeof(%s)=="string" and %s.__contains__(%s)' %(a[0],a[0],a[1]))
+
 				else:
 					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
 
