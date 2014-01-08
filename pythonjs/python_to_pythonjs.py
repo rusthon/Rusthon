@@ -1521,6 +1521,17 @@ class PythonToPythonJS(NodeVisitor):
 				assert len(args) == 1
 				return 'new(%s)' %args[0]
 
+			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
+				anode = node.func
+				if anode.attr == 'get':
+					if args:
+						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+					else:
+						return '__jsdict_get(%s)' %self.visit(anode.value)
+				else:
+					a = ','.join(args)
+					return '%s(%s)' %( self.visit(node.func), a )
+
 			#elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
 			#	assert len(args) == 1
 			#	return node.args[0].s  ## string literal
@@ -1622,10 +1633,11 @@ class PythonToPythonJS(NodeVisitor):
 			#	else:
 			#		return '%s()' %name
 
+			#if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'get': ## get method call
+
 			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]
 				if type == 'list' and node.func.attr == 'append':
-					#return '%s[...].push(%s)' %(node.func.value.id, self.visit(node.args[0]))
 					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))
 				else:
 					raise RuntimeError

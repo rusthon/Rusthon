@@ -36,6 +36,13 @@ def test():
 	for v in d.keys():
 		print 'v in keys', v
 
+	print d.get('NOTKEY', '.get my default works')
+
+	with javascript:
+		j = {a:1, b:2, get:'not-a-method'}
+		xx = j.get('c', '.get in javascript mode works')
+		print xx
+
 </script>
 </head>
 

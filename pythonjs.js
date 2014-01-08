@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Jan  4 11:01:10 2014
+// PythonJS Runtime - regenerated on: Tue Jan  7 20:07:13 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -373,6 +373,22 @@ _PythonJS_UID = 0;
 var IndexError = new RangeError();
 var KeyError = new RangeError();
 var ValueError = new RangeError();
+__jsdict_get = function(ob, key, default_value) {
+  if (default_value == undefined) default_value = undefined;
+  if (ob instanceof Object) {
+    if (key in ob) {
+      return ob[key];
+    }
+    return default_value;
+  } else {
+    return ob.get(key, default_value);
+  }
+}
+
+__jsdict_get.NAME = "__jsdict_get";
+__jsdict_get.args_signature = ["ob", "key", "default_value"];
+__jsdict_get.kwargs_signature = { default_value:undefined };
+__jsdict_get.types_signature = { default_value:"None" };
 __object_keys__ = function(ob) {
   var arr;
   "\n		notes:\n			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`\n			. this is different from Object.keys because it traverses the prototype chain.\n		";
@@ -492,7 +508,7 @@ create_class = function(class_name, parents, attrs, props) {
     "Create a PythonJS object";
     object = Object.create(null);
     object.__class__ = klass;
-    Object.defineProperty(object, "__dict__", { "enumerable":false,"value":object,"writeable":false,"configurable":false });
+    object.__dict__ = object;
     has_getattribute = false;
     has_getattr = false;
         var __iter6 = klass.__all_method_names__;
@@ -996,7 +1012,7 @@ _setup_str_prototype = function(args, kwargs) {
     if (! (__iter8 instanceof Array) ) { __iter8 = __object_keys__(__iter8) }
     for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
       var char = __iter8[ __idx8 ];
-      if (Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char) || Object.hasOwnProperty.call(digits, char)) {
+      if (Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char) || Object.hasOwnProperty.call(digits, char) || ( typeof(digits) ) == "string" && digits.__contains__(char)) {
         /*pass*/
       } else {
         return false;

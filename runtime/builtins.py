@@ -9,7 +9,30 @@ JS("var IndexError = new RangeError()")
 JS("var KeyError = new RangeError()")
 JS("var ValueError = new RangeError()")
 
+#def _setup_object_prototype(): ## NOT USED - see below
+#	with javascript:
+#		#@Object.prototype.get
+#		def func(key, default_value=None):
+#			if JS("key in this"): return this[key]
+#			return default_value
+#
+#		Object.defineProperty(
+#			Object, 
+#			'get', 
+#			{enumerable:False, value:func, writeable:False, configurable:False}
+#		)
+#_setup_object_prototype()
+## this is better solved by making these method names special cases in the translation phase,
+## when translated methods named: "get" become __jsdict_get(ob,key,default)
+
 with javascript:
+	def __jsdict_get(ob, key, default_value=None):
+		if instanceof(ob, Object):
+			if JS("key in ob"): return ob[key]
+			return default_value
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.get(key, default_value)")
 
 	def __object_keys__(ob):
 		'''
@@ -87,12 +110,13 @@ with javascript:
 			"""Create a PythonJS object"""
 			object = Object.create(null)
 			object.__class__ = klass
+			object.__dict__ = object
 			## we need __dict__ so that __setattr__ can still set attributes using `old-style`: self.__dict__[n]=x
-			Object.defineProperty(
-				object, 
-				'__dict__', 
-				{enumerable:False, value:object, writeable:False, configurable:False}
-			)
+			#Object.defineProperty(
+			#	object, 
+			#	'__dict__', 
+			#	{enumerable:False, value:object, writeable:False, configurable:False}
+			#)
 
 
 			has_getattribute = False
