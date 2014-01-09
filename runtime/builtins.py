@@ -34,6 +34,33 @@ with javascript:
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.get(key, default_value)")
 
+	def __jsdict_set(ob, key, value):
+		if instanceof(ob, Object):
+			ob[ key ] = value
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			JS("ob.set(key,value)")
+
+	def __jsdict_keys(ob):
+		if instanceof(ob, Object):
+			return JS("Object.keys( ob )")
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.keys()")
+
+	def __jsdict_values(ob):
+		if instanceof(ob, Object):
+			arr = []
+			for key in ob:
+				if ob.hasOwnProperty(key):
+					value = ob[key]
+					arr.push( value )
+			return arr
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.values()")
+
+
 	def __object_keys__(ob):
 		'''
 		notes:

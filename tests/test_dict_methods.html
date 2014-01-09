@@ -42,6 +42,10 @@ def test():
 		j = {a:1, b:2, get:'not-a-method'}
 		xx = j.get('c', '.get in javascript mode works')
 		print xx
+		jkeys = j.keys()
+		print 'keys in javascript mode', jkeys
+		j.set('ZZZ', 'my value')
+		print j.values()
 
 	xxx = j.get('c', '.get on jsob works from python mode')
 	print xxx
@@ -49,6 +53,7 @@ def test():
 	print j['get']
 	j['get'] = 'XXX'
 	print j['get']
+	print j['ZZZ']
 
 </script>
 </head>

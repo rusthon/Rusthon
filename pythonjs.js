@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Jan  9 07:35:49 2014
+// PythonJS Runtime - regenerated on: Thu Jan  9 11:07:13 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -389,6 +389,53 @@ __jsdict_get.NAME = "__jsdict_get";
 __jsdict_get.args_signature = ["ob", "key", "default_value"];
 __jsdict_get.kwargs_signature = { default_value:undefined };
 __jsdict_get.types_signature = { default_value:"None" };
+__jsdict_set = function(ob, key, value) {
+  if (ob instanceof Object) {
+    ob[key] = value;
+  } else {
+    ob.set(key,value);
+  }
+}
+
+__jsdict_set.NAME = "__jsdict_set";
+__jsdict_set.args_signature = ["ob", "key", "value"];
+__jsdict_set.kwargs_signature = {  };
+__jsdict_set.types_signature = {  };
+__jsdict_keys = function(ob) {
+  if (ob instanceof Object) {
+    return Object.keys( ob );
+  } else {
+    return ob.keys();
+  }
+}
+
+__jsdict_keys.NAME = "__jsdict_keys";
+__jsdict_keys.args_signature = ["ob"];
+__jsdict_keys.kwargs_signature = {  };
+__jsdict_keys.types_signature = {  };
+__jsdict_values = function(ob) {
+  var arr, value;
+  if (ob instanceof Object) {
+    arr = [];
+        var __iter1 = ob;
+    if (! (__iter1 instanceof Array) ) { __iter1 = __object_keys__(__iter1) }
+    for (var __idx1=0; __idx1 < __iter1.length; __idx1++) {
+      var key = __iter1[ __idx1 ];
+      if (ob.hasOwnProperty(key)) {
+        value = ob[key];
+        arr.push(value);
+      }
+    }
+    return arr;
+  } else {
+    return ob.values();
+  }
+}
+
+__jsdict_values.NAME = "__jsdict_values";
+__jsdict_values.args_signature = ["ob"];
+__jsdict_values.kwargs_signature = {  };
+__jsdict_values.types_signature = {  };
 __object_keys__ = function(ob) {
   var arr;
   "\n		notes:\n			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`\n			. this is different from Object.keys because it traverses the prototype chain.\n		";
@@ -403,10 +450,10 @@ __object_keys__.kwargs_signature = {  };
 __object_keys__.types_signature = {  };
 __bind_property_descriptors__ = function(o, klass) {
   var prop, desc;
-    var __iter1 = klass.__properties__;
-  if (! (__iter1 instanceof Array) ) { __iter1 = __object_keys__(__iter1) }
-  for (var __idx1=0; __idx1 < __iter1.length; __idx1++) {
-    var name = __iter1[ __idx1 ];
+    var __iter2 = klass.__properties__;
+  if (! (__iter2 instanceof Array) ) { __iter2 = __object_keys__(__iter2) }
+  for (var __idx2=0; __idx2 < __iter2.length; __idx2++) {
+    var name = __iter2[ __idx2 ];
     desc = { "enumerable":true };
     prop = klass.__properties__[name];
     if (prop["get"]) {
@@ -417,10 +464,10 @@ __bind_property_descriptors__ = function(o, klass) {
     }
     Object.defineProperty(o, name, desc);
   }
-    var __iter2 = klass.__bases__;
-  if (! (__iter2 instanceof Array) ) { __iter2 = __object_keys__(__iter2) }
-  for (var __idx2=0; __idx2 < __iter2.length; __idx2++) {
-    var base = __iter2[ __idx2 ];
+    var __iter3 = klass.__bases__;
+  if (! (__iter3 instanceof Array) ) { __iter3 = __object_keys__(__iter3) }
+  for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
+    var base = __iter3[ __idx3 ];
     __bind_property_descriptors__(o, base);
   }
 }
@@ -470,10 +517,10 @@ create_class = function(class_name, parents, attrs, props) {
   klass.__all_method_names__ = [];
   klass.__properties__ = props;
   klass.__attributes__ = attrs;
-    var __iter3 = attrs;
-  if (! (__iter3 instanceof Array) ) { __iter3 = __object_keys__(__iter3) }
-  for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
-    var key = __iter3[ __idx3 ];
+    var __iter4 = attrs;
+  if (! (__iter4 instanceof Array) ) { __iter4 = __object_keys__(__iter4) }
+  for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
+    var key = __iter4[ __idx4 ];
     if (( typeof(attrs[key]) ) == "function") {
       klass.__unbound_methods__[key] = attrs[key];
       klass.__all_method_names__.push(key);
@@ -485,20 +532,20 @@ create_class = function(class_name, parents, attrs, props) {
   }
   klass.__setters__ = [];
   klass.__getters__ = [];
-    var __iter4 = klass.__properties__;
-  if (! (__iter4 instanceof Array) ) { __iter4 = __object_keys__(__iter4) }
-  for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
-    var name = __iter4[ __idx4 ];
+    var __iter5 = klass.__properties__;
+  if (! (__iter5 instanceof Array) ) { __iter5 = __object_keys__(__iter5) }
+  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
+    var name = __iter5[ __idx5 ];
     prop = klass.__properties__[name];
     klass.__getters__.push(name);
     if (prop["set"]) {
       klass.__setters__.push(name);
     }
   }
-    var __iter5 = klass.__bases__;
-  if (! (__iter5 instanceof Array) ) { __iter5 = __object_keys__(__iter5) }
-  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
-    var base = __iter5[ __idx5 ];
+    var __iter6 = klass.__bases__;
+  if (! (__iter6 instanceof Array) ) { __iter6 = __object_keys__(__iter6) }
+  for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
+    var base = __iter6[ __idx6 ];
     Array.prototype.push.apply(klass.__getters__, base.__getters__);
     Array.prototype.push.apply(klass.__setters__, base.__setters__);
     Array.prototype.push.apply(klass.__all_method_names__, base.__all_method_names__);
@@ -511,10 +558,10 @@ create_class = function(class_name, parents, attrs, props) {
     object.__dict__ = object;
     has_getattribute = false;
     has_getattr = false;
-        var __iter6 = klass.__all_method_names__;
-    if (! (__iter6 instanceof Array) ) { __iter6 = __object_keys__(__iter6) }
-    for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
-      var name = __iter6[ __idx6 ];
+        var __iter7 = klass.__all_method_names__;
+    if (! (__iter7 instanceof Array) ) { __iter7 = __object_keys__(__iter7) }
+    for (var __idx7=0; __idx7 < __iter7.length; __idx7++) {
+      var name = __iter7[ __idx7 ];
       if (( name ) == "__getattribute__") {
         has_getattribute = true;
       } else {
@@ -946,10 +993,10 @@ _setup_str_prototype = function(args, kwargs) {
       arr = a["$wrapped"];
     }
     i = 0;
-        var __iter7 = arr;
-    if (! (__iter7 instanceof Array) ) { __iter7 = __object_keys__(__iter7) }
-    for (var __idx7=0; __idx7 < __iter7.length; __idx7++) {
-      var value = __iter7[ __idx7 ];
+        var __iter8 = arr;
+    if (! (__iter8 instanceof Array) ) { __iter8 = __object_keys__(__iter8) }
+    for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
+      var value = __iter8[ __idx8 ];
       out += value;
       i += 1;
       if (( i ) < arr.length) {
@@ -1008,10 +1055,10 @@ _setup_str_prototype = function(args, kwargs) {
     var func = function() {
     var digits;
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
-        var __iter8 = this;
-    if (! (__iter8 instanceof Array) ) { __iter8 = __object_keys__(__iter8) }
-    for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
-      var char = __iter8[ __idx8 ];
+        var __iter9 = this;
+    if (! (__iter9 instanceof Array) ) { __iter9 = __object_keys__(__iter9) }
+    for (var __idx9=0; __idx9 < __iter9.length; __idx9++) {
+      var char = __iter9[ __idx9 ];
       if (Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char) || Object.hasOwnProperty.call(digits, char) || ( typeof(digits) ) == "string" && digits.__contains__(char)) {
         /*pass*/
       } else {
@@ -1162,10 +1209,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.append = func;
     var extend = function(self, other) {
-        var __iter9 = other;
-    if (! (__iter9 instanceof Array) ) { __iter9 = __object_keys__(__iter9) }
-    for (var __idx9=0; __idx9 < __iter9.length; __idx9++) {
-      var obj = __iter9[ __idx9 ];
+        var __iter10 = other;
+    if (! (__iter10 instanceof Array) ) { __iter10 = __object_keys__(__iter10) }
+    for (var __idx10=0; __idx10 < __iter10.length; __idx10++) {
+      var obj = __iter10[ __idx10 ];
       this.push(obj);
     }
   }
@@ -1222,10 +1269,10 @@ _setup_array_prototype = function(args, kwargs) {
     var count = function(obj) {
     var a;
     a = 0;
-        var __iter10 = this;
-    if (! (__iter10 instanceof Array) ) { __iter10 = __object_keys__(__iter10) }
-    for (var __idx10=0; __idx10 < __iter10.length; __idx10++) {
-      var item = __iter10[ __idx10 ];
+        var __iter11 = this;
+    if (! (__iter11 instanceof Array) ) { __iter11 = __object_keys__(__iter11) }
+    for (var __idx11=0; __idx11 < __iter11.length; __idx11++) {
+      var item = __iter11[ __idx11 ];
       if (( item ) === obj) {
         a += 1;
       }
@@ -1282,10 +1329,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.intersection = func;
     var func = function(other) {
-        var __iter11 = this;
-    if (! (__iter11 instanceof Array) ) { __iter11 = __object_keys__(__iter11) }
-    for (var __idx11=0; __idx11 < __iter11.length; __idx11++) {
-      var item = __iter11[ __idx11 ];
+        var __iter12 = this;
+    if (! (__iter12 instanceof Array) ) { __iter12 = __object_keys__(__iter12) }
+    for (var __idx12=0; __idx12 < __iter12.length; __idx12++) {
+      var item = __iter12[ __idx12 ];
       if (( other.indexOf(item) ) == -1) {
         return false;
       }
@@ -1876,10 +1923,10 @@ __tuple_count = function(args, kwargs) {
   var self = arguments['self'];
   var obj = arguments['obj'];
   a = 0;
-    var __iter12 = self["$wrapped"];
-  if (! (__iter12 instanceof Array) ) { __iter12 = __object_keys__(__iter12) }
-  for (var __idx12=0; __idx12 < __iter12.length; __idx12++) {
-    var item = __iter12[ __idx12 ];
+    var __iter13 = self["$wrapped"];
+  if (! (__iter13 instanceof Array) ) { __iter13 = __object_keys__(__iter13) }
+  for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
+    var item = __iter13[ __idx13 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -2241,10 +2288,10 @@ __pylist_count = function(args, kwargs) {
   var self = arguments['self'];
   var obj = arguments['obj'];
   a = 0;
-    var __iter13 = self["$wrapped"];
-  if (! (__iter13 instanceof Array) ) { __iter13 = __object_keys__(__iter13) }
-  for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
-    var item = __iter13[ __idx13 ];
+    var __iter14 = self["$wrapped"];
+  if (! (__iter14 instanceof Array) ) { __iter14 = __object_keys__(__iter14) }
+  for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
+    var item = __iter14[ __idx14 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -2505,10 +2552,10 @@ __dict___init__ = function(args, kwargs) {
       }
     } else {
       if (isinstance([js_object, list], __NULL_OBJECT__)) {
-                var __iter14 = js_object["$wrapped"];
-        if (! (__iter14 instanceof Array) ) { __iter14 = __object_keys__(__iter14) }
-        for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
-          var item = __iter14[ __idx14 ];
+                var __iter15 = js_object["$wrapped"];
+        if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
+        for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
+          var item = __iter15[ __idx15 ];
           key = item["$wrapped"][0];
           value = item["$wrapped"][1];
           self["$wrapped"][key] = value;
@@ -2764,10 +2811,10 @@ __dict_values = function(args, kwargs) {
   var self = arguments['self'];
   keys = Object.keys(self["$wrapped"]);
   out = [];
-    var __iter15 = keys;
-  if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
-  for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
-    var key = __iter15[ __idx15 ];
+    var __iter16 = keys;
+  if (! (__iter16 instanceof Array) ) { __iter16 = __object_keys__(__iter16) }
+  for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
+    var key = __iter16[ __idx16 ];
     out.push(self["$wrapped"][key]);
   }
   return out;
@@ -2868,10 +2915,10 @@ set = function(args, kwargs) {
   }
   fallback = false;
   if (hashtable) {
-        var __iter16 = a;
-    if (! (__iter16 instanceof Array) ) { __iter16 = __object_keys__(__iter16) }
-    for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
-      var b = __iter16[ __idx16 ];
+        var __iter17 = a;
+    if (! (__iter17 instanceof Array) ) { __iter17 = __object_keys__(__iter17) }
+    for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
+      var b = __iter17[ __idx17 ];
       if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
         key = (b & mask);
         hashtable[key] = b;
@@ -2886,20 +2933,20 @@ set = function(args, kwargs) {
   }
   s = [];
   if (fallback) {
-        var __iter17 = a;
-    if (! (__iter17 instanceof Array) ) { __iter17 = __object_keys__(__iter17) }
-    for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
-      var item = __iter17[ __idx17 ];
+        var __iter18 = a;
+    if (! (__iter18 instanceof Array) ) { __iter18 = __object_keys__(__iter18) }
+    for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
+      var item = __iter18[ __idx18 ];
       if (( s.indexOf(item) ) == -1) {
         s.push(item);
       }
     }
   } else {
     keys.sort();
-        var __iter18 = keys;
-    if (! (__iter18 instanceof Array) ) { __iter18 = __object_keys__(__iter18) }
-    for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
-      var key = __iter18[ __idx18 ];
+        var __iter19 = keys;
+    if (! (__iter19 instanceof Array) ) { __iter19 = __object_keys__(__iter19) }
+    for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
+      var key = __iter19[ __idx19 ];
       s.push(hashtable[key]);
     }
   }
