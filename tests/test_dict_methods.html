@@ -43,6 +43,13 @@ def test():
 		xx = j.get('c', '.get in javascript mode works')
 		print xx
 
+	xxx = j.get('c', '.get on jsob works from python mode')
+	print xxx
+	print j.get('get')
+	print j['get']
+	j['get'] = 'XXX'
+	print j['get']
+
 </script>
 </head>
 

@@ -1633,9 +1633,18 @@ class PythonToPythonJS(NodeVisitor):
 			#	else:
 			#		return '%s()' %name
 
-			#if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'get': ## get method call
+			if isinstance(node.func, ast.Attribute) and node.func.attr == 'get':  ## special method calls
+				anode = node.func
+				if anode.attr == 'get':
+					if args:
+						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
+					else:
+						return '__jsdict_get(%s)' %self.visit(anode.value)
+				else:
+					a = ','.join(args)
+					return '%s(%s)' %( self.visit(node.func), a )
 
-			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
+			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]
 				if type == 'list' and node.func.attr == 'append':
 					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))

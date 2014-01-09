@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Tue Jan  7 20:07:13 2014
+// PythonJS Runtime - regenerated on: Thu Jan  9 07:35:49 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -1664,7 +1664,7 @@ __Iterator_next = function(args, kwargs) {
   if (( index ) == length) {
     throw StopIteration;
   }
-  item = __get__(__get__(self.obj, "get"), "__call__")([self.index], __NULL_OBJECT__);
+  item = __jsdict_get(self.obj, self.index);
   self.index = (self.index + 1);
   return item;
 }
@@ -2645,6 +2645,7 @@ __dict___getitem__ = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var key = arguments['key'];
+  "\n		notes:\n			. '4' and 4 are the same key\n			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,\n			  that is why below we return the key in self if __dict is undefined.\n		";
   __dict = self["$wrapped"];
   if (typeof(key) === 'object' || typeof(key) === 'function') {
     if (key.__uid__ && key.__uid__ in __dict) {
@@ -2652,8 +2653,12 @@ __dict___getitem__ = function(args, kwargs) {
     }
     throw KeyError;
   }
-  if (key in __dict) {
+  if (__dict && key in __dict) {
     return __dict[key];
+  } else {
+    if (( __dict ) === undefined && key in self) {
+      return self[key];
+    }
   }
   throw KeyError;
 }
@@ -2729,7 +2734,7 @@ __dict_pop = function(args, kwargs) {
   var self = arguments['self'];
   var key = arguments['key'];
   var d = arguments['d'];
-  v = __get__(__get__(self, "get"), "__call__")([key, undefined], __NULL_OBJECT__);
+  v = __jsdict_get(self, key, undefined);
   if (( v ) === undefined) {
     return d;
   } else {
@@ -3475,7 +3480,7 @@ _to_json = function(args, kwargs) {
       __next__ = __get__(__iterator__, "next_fast");
       while(( __iterator__.index ) < __iterator__.length) {
         key = __next__();
-        value = _to_json([__get__(__get__(pythonjs, "get"), "__call__")([key], __NULL_OBJECT__)], __NULL_OBJECT__);
+        value = _to_json([__jsdict_get(pythonjs, key)], __NULL_OBJECT__);
         key = _to_json([key], __NULL_OBJECT__);
         r[key] = value;
       }

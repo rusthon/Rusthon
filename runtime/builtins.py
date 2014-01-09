@@ -816,6 +816,7 @@ class dict:
 		except:
 			return _default
 
+
 	def set(self, key, value):
 		self.__setitem__(key, value)
 
@@ -824,7 +825,12 @@ class dict:
 		return JS('Object.keys(__dict).length')
 
 	def __getitem__(self, key):
-		# XXX: '4' and 4 are the same key
+		'''
+		notes:
+			. '4' and 4 are the same key
+			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,
+			  that is why below we return the key in self if __dict is undefined.
+		'''
 		__dict = self[...]
 		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
@@ -833,8 +839,10 @@ class dict:
 			raise KeyError
 		# Tested after in order to not convert functions to strings.
 		# The slow down is negligible
-		if JS("key in __dict"):
+		if __dict and JS("key in __dict"):
 			return JS('__dict[key]')
+		elif __dict is None and JS("key in self"):  ## js-object
+			return JS("self[key]")
 		raise KeyError
 
 	def __setitem__(self, key, value):
