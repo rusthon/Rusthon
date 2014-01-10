@@ -1643,13 +1643,21 @@ class PythonToPythonJS(NodeVisitor):
 			#	else:
 			#		return '%s()' %name
 
-			if isinstance(node.func, ast.Attribute) and node.func.attr == 'get':  ## special method calls
+			## special method calls ##
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values'):
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
 						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
 					else:
 						return '__jsdict_get(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'keys' and not args:
+					return '__jsdict_keys(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'values' and not args:
+					return '__jsdict_values(%s)' %self.visit(anode.value)
+
 				else:
 					a = ','.join(args)
 					return '%s(%s)' %( self.visit(node.func), a )
