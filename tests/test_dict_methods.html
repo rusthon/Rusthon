@@ -46,6 +46,8 @@ def test():
 		print 'keys in javascript mode', jkeys
 		j.set('ZZZ', 'my value')
 		print j.values()
+		print "1==pop('a')", j.pop( 'a' )
+		print "len(j)", len(j)
 
 	xxx = j.get('c', '.get on jsob works from python mode')
 	print xxx
@@ -54,6 +56,7 @@ def test():
 	j['get'] = 'XXX'
 	print j['get']
 	print j['ZZZ']
+	print '2==pop("b")', j.pop( 'b' )
 	print j.values()
 	print j.keys()
 

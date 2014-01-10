@@ -60,6 +60,19 @@ with javascript:
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.values()")
 
+	def __jsdict_pop(ob, key, _default=None):
+		if instanceof(ob, Object):
+			if JS("key in ob"):
+				v = ob[key]
+				JS("delete ob[key]")
+				return v
+			elif _default is None:
+				raise KeyError
+			else:
+				return _default
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.pop(key, _default)")
 
 	def __object_keys__(ob):
 		'''
@@ -533,8 +546,15 @@ class StopIteration:
 	pass
 
 
-def len(obj):
-	return obj.__len__()
+def len(ob):
+	if instanceof(ob, Array):
+		with javascript:
+			return ob.length
+	elif instanceof(ob, Object):
+		with javascript:
+			return Object.keys(ob).length
+	else:
+		return ob.__len__()
 
 
 def next(obj):

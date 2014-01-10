@@ -1538,6 +1538,12 @@ class PythonToPythonJS(NodeVisitor):
 				elif anode.attr == 'values' and not args:
 					return '__jsdict_values(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'pop':
+					if args:
+						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+					else:
+						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
 				else:
 					a = ','.join(args)
 					return '%s(%s)' %( self.visit(node.func), a )
@@ -1644,7 +1650,7 @@ class PythonToPythonJS(NodeVisitor):
 			#		return '%s()' %name
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values'):
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop'):
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
@@ -1658,9 +1664,14 @@ class PythonToPythonJS(NodeVisitor):
 				elif anode.attr == 'values' and not args:
 					return '__jsdict_values(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'pop':
+					if args:
+						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), args )
+					else:
+						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
 				else:
-					a = ','.join(args)
-					return '%s(%s)' %( self.visit(node.func), a )
+					return '%s(%s)' %( self.visit(node.func), args )
 
 			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]

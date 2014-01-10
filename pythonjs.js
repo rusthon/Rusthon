@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Jan  9 11:07:13 2014
+// PythonJS Runtime - regenerated on: Fri Jan 10 02:49:27 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -436,6 +436,30 @@ __jsdict_values.NAME = "__jsdict_values";
 __jsdict_values.args_signature = ["ob"];
 __jsdict_values.kwargs_signature = {  };
 __jsdict_values.types_signature = {  };
+__jsdict_pop = function(ob, key, _default) {
+  var v;
+  if (_default == undefined) _default = undefined;
+  if (ob instanceof Object) {
+    if (key in ob) {
+      v = ob[key];
+      delete ob[key];
+      return v;
+    } else {
+      if (( _default ) === undefined) {
+        throw KeyError;
+      } else {
+        return _default;
+      }
+    }
+  } else {
+    return ob.pop(key, _default);
+  }
+}
+
+__jsdict_pop.NAME = "__jsdict_pop";
+__jsdict_pop.args_signature = ["ob", "key", "_default"];
+__jsdict_pop.kwargs_signature = { _default:undefined };
+__jsdict_pop.types_signature = { _default:"None" };
 __object_keys__ = function(ob) {
   var arr;
   "\n		notes:\n			. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`\n			. this is different from Object.keys because it traverses the prototype chain.\n		";
@@ -1445,14 +1469,22 @@ len = function(args, kwargs) {
     kwargs = Object();
   }
   var signature, arguments;
-  signature = {"kwargs": Object(), "args": __create_array__("obj")};
+  signature = {"kwargs": Object(), "args": __create_array__("ob")};
   arguments = get_arguments(signature, args, kwargs);
-  var obj = arguments['obj'];
-  return __get__(__get__(obj, "__len__"), "__call__")();
+  var ob = arguments['ob'];
+  if (ob instanceof Array) {
+    return ob.length;
+  } else {
+    if (ob instanceof Object) {
+      return Object.keys(ob).length;
+    } else {
+      return __get__(__get__(ob, "__len__"), "__call__")();
+    }
+  }
 }
 
 len.NAME = "len";
-len.args_signature = ["obj"];
+len.args_signature = ["ob"];
 len.kwargs_signature = {  };
 len.types_signature = {  };
 len.pythonscript_function = true;
@@ -2244,7 +2276,7 @@ __pylist_pop = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("self")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  return self["$wrapped"].pop();
+  return __jsdict_pop(self["$wrapped"]);
 }
 
 __pylist_pop.NAME = "__pylist_pop";
@@ -2585,7 +2617,7 @@ __dict_jsify = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("self")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  keys = __get__(__get__(Object, "keys"), "__call__")([self["$wrapped"]], __NULL_OBJECT__);
+  keys = __get__(Object, "keys")(self["$wrapped"]);
   var __iterator__, key;
   __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
   var __next__;
@@ -2864,7 +2896,7 @@ __dict___iter__ = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("self")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
-  return __get__(Iterator, "__call__")([__get__(__get__(self, "keys"), "__call__")(), 0], __NULL_OBJECT__);
+  return __get__(Iterator, "__call__")([__jsdict_keys(self), 0], __NULL_OBJECT__);
 }
 
 __dict___iter__.NAME = "__dict___iter__";
@@ -3522,7 +3554,7 @@ _to_json = function(args, kwargs) {
       ;
       r = Object();
       ;
-      __iterator__ = __get__(__get__(__get__(__get__(pythonjs, "keys"), "__call__")(), "__iter__"), "__call__")([], Object());
+      __iterator__ = __get__(__get__(__jsdict_keys(pythonjs), "__iter__"), "__call__")([], Object());
       ;
       __next__ = __get__(__iterator__, "next_fast");
       while(( __iterator__.index ) < __iterator__.length) {
