@@ -28,10 +28,10 @@ func(100, 200, 'hi', mykey=1)
 
 class A(X,Y):
 	def method1(self, x,y,z):
-		w = x+y#+z
+		w = x+y+z
 		return w
 	def method2(self, XXX):
-		#self.xxx = XXX  ## TODO fixme
+		self.xxx = XXX  ## TODO fixme
 
 		a = b = c = x = y = z = 1
 		if 1:
@@ -53,7 +53,7 @@ def test():
 class DebugVisitor( NodeVisitor ):
 
 	def visit_IfExp(self, node):
-		print 'if ', self.visit(node.test)
+		print 'if ', self.visit(node.test), ':'
 		for a in node.body:
 			self.visit(a)
 
