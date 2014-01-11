@@ -1058,6 +1058,9 @@ class PythonToPythonJS(NodeVisitor):
 					comp.append( "%s['__contains__'](%s) )" %a )
 					#comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
 					comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
+					## fixes 'o' in 'helloworld' in javascript mode ##
+					comp.append( ' or typeof(%s)=="string" and %s.__contains__(%s)' %(a[0],a[0],a[1]))
+
 				else:
 					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
 
@@ -1518,6 +1521,33 @@ class PythonToPythonJS(NodeVisitor):
 				assert len(args) == 1
 				return 'new(%s)' %args[0]
 
+			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
+				anode = node.func
+				if anode.attr == 'get':
+					if args:
+						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+					else:
+						return '__jsdict_get(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'set' and len(args)==2:
+					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))
+
+				elif anode.attr == 'keys' and not args:
+					return '__jsdict_keys(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'values' and not args:
+					return '__jsdict_values(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'pop':
+					if args:
+						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+					else:
+						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
+				else:
+					a = ','.join(args)
+					return '%s(%s)' %( self.visit(node.func), a )
+
 			#elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
 			#	assert len(args) == 1
 			#	return node.args[0].s  ## string literal
@@ -1619,10 +1649,33 @@ class PythonToPythonJS(NodeVisitor):
 			#	else:
 			#		return '%s()' %name
 
-			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
+			## special method calls ##
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop'):
+				anode = node.func
+				if anode.attr == 'get':
+					if args:
+						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
+					else:
+						return '__jsdict_get(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'keys' and not args:
+					return '__jsdict_keys(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'values' and not args:
+					return '__jsdict_values(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'pop':
+					if args:
+						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), args )
+					else:
+						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
+				else:
+					return '%s(%s)' %( self.visit(node.func), args )
+
+			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]
 				if type == 'list' and node.func.attr == 'append':
-					#return '%s[...].push(%s)' %(node.func.value.id, self.visit(node.args[0]))
 					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))
 				else:
 					raise RuntimeError

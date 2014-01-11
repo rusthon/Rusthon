@@ -9,7 +9,70 @@ JS("var IndexError = new RangeError()")
 JS("var KeyError = new RangeError()")
 JS("var ValueError = new RangeError()")
 
+#def _setup_object_prototype(): ## NOT USED - see below
+#	with javascript:
+#		#@Object.prototype.get
+#		def func(key, default_value=None):
+#			if JS("key in this"): return this[key]
+#			return default_value
+#
+#		Object.defineProperty(
+#			Object, 
+#			'get', 
+#			{enumerable:False, value:func, writeable:False, configurable:False}
+#		)
+#_setup_object_prototype()
+## this is better solved by making these method names special cases in the translation phase,
+## when translated methods named: "get" become __jsdict_get(ob,key,default)
+
 with javascript:
+	def __jsdict_get(ob, key, default_value=None):
+		if instanceof(ob, Object):
+			if JS("key in ob"): return ob[key]
+			return default_value
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.get(key, default_value)")
+
+	def __jsdict_set(ob, key, value):
+		if instanceof(ob, Object):
+			ob[ key ] = value
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			JS("ob.set(key,value)")
+
+	def __jsdict_keys(ob):
+		if instanceof(ob, Object):
+			return JS("Object.keys( ob )")
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.keys()")
+
+	def __jsdict_values(ob):
+		if instanceof(ob, Object):
+			arr = []
+			for key in ob:
+				if ob.hasOwnProperty(key):
+					value = ob[key]
+					arr.push( value )
+			return arr
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.values()")
+
+	def __jsdict_pop(ob, key, _default=None):
+		if instanceof(ob, Object):
+			if JS("key in ob"):
+				v = ob[key]
+				JS("delete ob[key]")
+				return v
+			elif _default is None:
+				raise KeyError
+			else:
+				return _default
+		else:  ## PythonJS object instance ##
+			## this works because instances from PythonJS are created using Object.create(null) ##
+			return JS("ob.pop(key, _default)")
 
 	def __object_keys__(ob):
 		'''
@@ -87,12 +150,13 @@ with javascript:
 			"""Create a PythonJS object"""
 			object = Object.create(null)
 			object.__class__ = klass
+			object.__dict__ = object
 			## we need __dict__ so that __setattr__ can still set attributes using `old-style`: self.__dict__[n]=x
-			Object.defineProperty(
-				object, 
-				'__dict__', 
-				{enumerable:False, value:object, writeable:False, configurable:False}
-			)
+			#Object.defineProperty(
+			#	object, 
+			#	'__dict__', 
+			#	{enumerable:False, value:object, writeable:False, configurable:False}
+			#)
 
 
 			has_getattribute = False
@@ -482,8 +546,15 @@ class StopIteration:
 	pass
 
 
-def len(obj):
-	return obj.__len__()
+def len(ob):
+	if instanceof(ob, Array):
+		with javascript:
+			return ob.length
+	elif instanceof(ob, Object):
+		with javascript:
+			return Object.keys(ob).length
+	else:
+		return ob.__len__()
 
 
 def next(obj):
@@ -760,22 +831,19 @@ class dict:
 			self[...] = {}
 
 		if js_object:
-			if JS("js_object instanceof Array"):
-				i = 0
-				while i < js_object.length:
-					JS('var key = js_object[i]["key"]')
-					JS('var value = js_object[i]["value"]')
-					self.set(key, value)
-					i += 1
-
-			elif isinstance(js_object, list):
-				with javascript:
-					for item in js_object[...]:
-						key = item[...][0]
-						value = item[...][1]
-						self[...][ key ] = value
-			else:  ## TODO - deprecate
-				self[...] = js_object
+			ob = js_object
+			if instanceof(ob, Array):
+				for o in ob:
+					if instanceof(o, Array):
+						self.__setitem__( o[0], o[1] )
+					else:
+						self.__setitem__( o['key'], o['value'] )
+			elif isinstance(ob, dict):
+				for key in ob.keys():
+					value = ob[ key ]
+					self.__setitem__( key, value )
+			else:
+				print('TODO init dict from:', js_object)
 
 	def jsify(self):
 		keys = Object.keys( self[...] )
@@ -785,6 +853,34 @@ class dict:
 				if value.jsify:
 					self[...][key] = value.jsify()
 		return self[...]
+
+	def copy(self):
+		return dict( self )
+
+	def clear(self):
+		with javascript:
+			self[...] = {}
+
+	def has_key(self, key):
+		__dict = self[...]
+		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+			# Test undefined because it can be in the dict
+			key = key.__uid__
+
+		if JS("key in __dict"):
+			return True
+		else:
+			return False
+
+	def update(self, other):
+		for key in other:
+			self.__setitem__( key, other[key] )
+
+	def items(self):
+		arr = []
+		for key in self.keys():
+			arr.append( [key, self[key]] )
+		return arr
 
 	def get(self, key, _default=None):
 		try:
@@ -800,7 +896,12 @@ class dict:
 		return JS('Object.keys(__dict).length')
 
 	def __getitem__(self, key):
-		# XXX: '4' and 4 are the same key
+		'''
+		notes:
+			. '4' and 4 are the same key
+			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,
+			  that is why below we return the key in self if __dict is undefined.
+		'''
 		__dict = self[...]
 		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
@@ -809,8 +910,10 @@ class dict:
 			raise KeyError
 		# Tested after in order to not convert functions to strings.
 		# The slow down is negligible
-		if JS("key in __dict"):
+		if __dict and JS("key in __dict"):
 			return JS('__dict[key]')
+		elif __dict is None and JS("key in self"):  ## js-object
+			return JS("self[key]")
 		raise KeyError
 
 	def __setitem__(self, key, value):
