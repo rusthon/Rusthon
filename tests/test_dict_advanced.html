@@ -14,11 +14,11 @@ class Key2:
 
 
 def test():
-	global d, k1, k2, g
+	global a, d, k1, k2, g
 
 	k1 = Key1()
 	k2 = Key2()
-
+	print('testing objects as dict keys')
 	d = {
 		k1:'k1 instance', 
 		k2:'k2 instance',
@@ -26,11 +26,13 @@ def test():
 		Key2: 'K2 class',
 		Key1(): 'lost instance!'
 	}
+	print('dict created')
 	print d[k1]
 	print d[k2]
 	print d[Key1]
 	print d[Key2]
-	print d['@4']  ## this is cheating!
+	print d['￼4']  ## this is cheating!
+	print( 'dict with object keys OK')
 
 	print d.get('get default', 'My Default')
 	print 'this should be undefined:', d.get('get undefined')
@@ -46,8 +48,8 @@ def test():
 
 	print 'testing dict init from gen'
 	g = dict( (a[i], i) for i in xrange(len(a)) )
-	print g.keys()[...]
-	print g.values()[...]
+	print g.keys()
+	print g.values()
 
 </script>
 </head>

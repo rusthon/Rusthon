@@ -831,22 +831,33 @@ class dict:
 			self[...] = {}
 
 		if js_object:
-			if JS("js_object instanceof Array"):
-				i = 0
-				while i < js_object.length:
-					JS('var key = js_object[i]["key"]')
-					JS('var value = js_object[i]["value"]')
-					self.set(key, value)
-					i += 1
+			#if JS("js_object instanceof Array"):
+			#	i = 0
+			#	while i < js_object.length:
+			#		JS('var key = js_object[i]["key"]')
+			#		JS('var value = js_object[i]["value"]')
+			#		self.set(key, value)
+			#		i += 1
 
-			elif isinstance(js_object, list):
-				with javascript:
-					for item in js_object[...]:
-						key = item[...][0]
-						value = item[...][1]
-						self[...][ key ] = value
-			else:  ## TODO - deprecate
-				self[...] = js_object
+			#elif isinstance(js_object, list):
+			#	with javascript:
+			#		for item in js_object[...]:
+			#			key = item[...][0]
+			#			value = item[...][1]
+			#			self[...][ key ] = value
+			#else:  ## TODO - deprecate
+			#	self[...] = js_object
+			ob = js_object
+			with javascript:
+				if instanceof(ob, Array):
+					for o in ob:
+						if instanceof(o, Array):
+							self.__setitem__( o[0], o[1] )
+						else:
+							self.__setitem__( o['key'], o['value'] )
+
+				else:
+					print('TODO init dict from:', js_object)
 
 	def jsify(self):
 		keys = Object.keys( self[...] )

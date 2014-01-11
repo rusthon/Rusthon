@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Jan 10 02:49:27 2014
+// PythonJS Runtime - regenerated on: Fri Jan 10 17:49:00 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -2560,7 +2560,7 @@ __dict_attrs = Object();
 __dict_parents = [];
 __dict_properties = Object();
 __dict___init__ = function(args, kwargs) {
-  var i, value, key;
+  var ob;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2574,27 +2574,20 @@ __dict___init__ = function(args, kwargs) {
   var js_object = arguments['js_object'];
   self["$wrapped"] = {  };
   if (js_object) {
-    if (js_object instanceof Array) {
-      i = 0;
-      while(( i ) < __get__(js_object, "length")) {
-        var key = js_object[i]["key"];
-        var value = js_object[i]["value"];
-        __get__(__get__(self, "set"), "__call__")([key, value], __NULL_OBJECT__);
-        i += 1;
+    ob = js_object;
+    if (ob instanceof Array) {
+            var __iter15 = ob;
+      if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
+      for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
+        var o = __iter15[ __idx15 ];
+        if (o instanceof Array) {
+          self.__setitem__(o[0], o[1]);
+        } else {
+          self.__setitem__(o["key"], o["value"]);
+        }
       }
     } else {
-      if (isinstance([js_object, list], __NULL_OBJECT__)) {
-                var __iter15 = js_object["$wrapped"];
-        if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
-        for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
-          var item = __iter15[ __idx15 ];
-          key = item["$wrapped"][0];
-          value = item["$wrapped"][1];
-          self["$wrapped"][key] = value;
-        }
-      } else {
-        self["$wrapped"] = js_object;
-      }
+      console.log(["TODO init dict from:", js_object]);
     }
   }
 }
