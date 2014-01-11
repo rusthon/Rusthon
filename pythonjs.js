@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Jan 10 17:49:00 2014
+// PythonJS Runtime - regenerated on: Fri Jan 10 18:27:49 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -2560,7 +2560,7 @@ __dict_attrs = Object();
 __dict_parents = [];
 __dict_properties = Object();
 __dict___init__ = function(args, kwargs) {
-  var ob;
+  var ob, value;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2576,18 +2576,32 @@ __dict___init__ = function(args, kwargs) {
   if (js_object) {
     ob = js_object;
     if (ob instanceof Array) {
-            var __iter15 = ob;
-      if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
-      for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
-        var o = __iter15[ __idx15 ];
+      var __iterator__, o;
+      __iterator__ = __get__(__get__(ob, "__iter__"), "__call__")([], Object());
+      var __next__;
+      __next__ = __get__(__iterator__, "next_fast");
+      while(( __iterator__.index ) < __iterator__.length) {
+        o = __next__();
         if (o instanceof Array) {
-          self.__setitem__(o[0], o[1]);
+          __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
         } else {
-          self.__setitem__(o["key"], o["value"]);
+          __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
         }
       }
     } else {
-      console.log(["TODO init dict from:", js_object]);
+      if (isinstance([ob, dict], __NULL_OBJECT__)) {
+        var key;
+        __iterator__ = __get__(__get__(__jsdict_keys(ob), "__iter__"), "__call__")([], Object());
+        ;
+        __next__ = __get__(__iterator__, "next_fast");
+        while(( __iterator__.index ) < __iterator__.length) {
+          key = __next__();
+          value = __get__(ob, "__getitem__")([key], Object());
+          __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+        }
+      } else {
+        console.log(["TODO init dict from:", js_object]);
+      }
     }
   }
 }
@@ -2633,6 +2647,135 @@ __dict_jsify.kwargs_signature = {  };
 __dict_jsify.types_signature = {  };
 __dict_jsify.pythonscript_function = true;
 __dict_attrs["jsify"] = __dict_jsify;
+__dict_copy = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  return __get__(dict, "__call__")([self], __NULL_OBJECT__);
+}
+
+__dict_copy.NAME = "__dict_copy";
+__dict_copy.args_signature = ["self"];
+__dict_copy.kwargs_signature = {  };
+__dict_copy.types_signature = {  };
+__dict_copy.return_type = "dict";
+__dict_copy.pythonscript_function = true;
+__dict_attrs["copy"] = __dict_copy;
+__dict_clear = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  self["$wrapped"] = {  };
+}
+
+__dict_clear.NAME = "__dict_clear";
+__dict_clear.args_signature = ["self"];
+__dict_clear.kwargs_signature = {  };
+__dict_clear.types_signature = {  };
+__dict_clear.pythonscript_function = true;
+__dict_attrs["clear"] = __dict_clear;
+__dict_has_key = function(args, kwargs) {
+  var __dict, key;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self", "key")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  var key = arguments['key'];
+  __dict = self["$wrapped"];
+  if (typeof(key) === 'object' || typeof(key) === 'function') {
+    key = __get__(key, "__uid__");
+  }
+  if (key in __dict) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+__dict_has_key.NAME = "__dict_has_key";
+__dict_has_key.args_signature = ["self", "key"];
+__dict_has_key.kwargs_signature = {  };
+__dict_has_key.types_signature = {  };
+__dict_has_key.pythonscript_function = true;
+__dict_attrs["has_key"] = __dict_has_key;
+__dict_update = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self", "other")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  var other = arguments['other'];
+  var __iterator__, key;
+  __iterator__ = __get__(__get__(other, "__iter__"), "__call__")([], Object());
+  var __next__;
+  __next__ = __get__(__iterator__, "next_fast");
+  while(( __iterator__.index ) < __iterator__.length) {
+    key = __next__();
+    __get__(__get__(self, "__setitem__"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
+  }
+}
+
+__dict_update.NAME = "__dict_update";
+__dict_update.args_signature = ["self", "other"];
+__dict_update.kwargs_signature = {  };
+__dict_update.types_signature = {  };
+__dict_update.pythonscript_function = true;
+__dict_attrs["update"] = __dict_update;
+__dict_items = function(args, kwargs) {
+  var arr;
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("self")};
+  arguments = get_arguments(signature, args, kwargs);
+  var self = arguments['self'];
+  arr = [];
+  var __iterator__, key;
+  __iterator__ = __get__(__get__(__jsdict_keys(self), "__iter__"), "__call__")([], Object());
+  var __next__;
+  __next__ = __get__(__iterator__, "next_fast");
+  while(( __iterator__.index ) < __iterator__.length) {
+    key = __next__();
+    __get__(__get__(arr, "append"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
+  }
+  return arr;
+}
+
+__dict_items.NAME = "__dict_items";
+__dict_items.args_signature = ["self"];
+__dict_items.kwargs_signature = {  };
+__dict_items.types_signature = {  };
+__dict_items.pythonscript_function = true;
+__dict_attrs["items"] = __dict_items;
 __dict_get = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -2836,10 +2979,10 @@ __dict_values = function(args, kwargs) {
   var self = arguments['self'];
   keys = Object.keys(self["$wrapped"]);
   out = [];
-    var __iter16 = keys;
-  if (! (__iter16 instanceof Array) ) { __iter16 = __object_keys__(__iter16) }
-  for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
-    var key = __iter16[ __idx16 ];
+    var __iter15 = keys;
+  if (! (__iter15 instanceof Array) ) { __iter15 = __object_keys__(__iter15) }
+  for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
+    var key = __iter15[ __idx15 ];
     out.push(self["$wrapped"][key]);
   }
   return out;
@@ -2940,10 +3083,10 @@ set = function(args, kwargs) {
   }
   fallback = false;
   if (hashtable) {
-        var __iter17 = a;
-    if (! (__iter17 instanceof Array) ) { __iter17 = __object_keys__(__iter17) }
-    for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
-      var b = __iter17[ __idx17 ];
+        var __iter16 = a;
+    if (! (__iter16 instanceof Array) ) { __iter16 = __object_keys__(__iter16) }
+    for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
+      var b = __iter16[ __idx16 ];
       if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
         key = (b & mask);
         hashtable[key] = b;
@@ -2958,20 +3101,20 @@ set = function(args, kwargs) {
   }
   s = [];
   if (fallback) {
-        var __iter18 = a;
-    if (! (__iter18 instanceof Array) ) { __iter18 = __object_keys__(__iter18) }
-    for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
-      var item = __iter18[ __idx18 ];
+        var __iter17 = a;
+    if (! (__iter17 instanceof Array) ) { __iter17 = __object_keys__(__iter17) }
+    for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
+      var item = __iter17[ __idx17 ];
       if (( s.indexOf(item) ) == -1) {
         s.push(item);
       }
     }
   } else {
     keys.sort();
-        var __iter19 = keys;
-    if (! (__iter19 instanceof Array) ) { __iter19 = __object_keys__(__iter19) }
-    for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
-      var key = __iter19[ __idx19 ];
+        var __iter18 = keys;
+    if (! (__iter18 instanceof Array) ) { __iter18 = __object_keys__(__iter18) }
+    for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
+      var key = __iter18[ __idx18 ];
       s.push(hashtable[key]);
     }
   }

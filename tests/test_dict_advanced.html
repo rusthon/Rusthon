@@ -51,6 +51,31 @@ def test():
 	print g.keys()
 	print g.values()
 
+	print 'testing init dict from dict'
+	g2 = dict( g )
+	print g2.keys()
+	print g2.values()
+
+	print 'testing dict copy'
+	g3 = g2.copy()
+	print g3.keys()
+	print g3.values()
+
+	print 'testing has_key'
+	print g3.has_key('h')
+
+	print 'testing update from other dict'
+	g3.update( d )
+	print g3.keys()
+	print g3.values()
+
+	print 'testing dict items'
+	print g3.items()
+
+	print g3[ Key1 ]
+	print g3[ Key2 ]
+	print g3.has_key( Key1 )
+
 </script>
 </head>
 
