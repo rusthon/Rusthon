@@ -10,7 +10,14 @@ def brython_tokenize(src):
 class Assign:
 	def _collect_targets(self, ctx):
 		if ctx.type == 'expr' and ctx.name == 'id':
-			self.targets.append( Name(ctx.tree[0]) )
+			a = ctx.tree[0]
+			if a.type == 'id':
+				self.targets.append( Name(ctx.tree[0]) )
+			elif a.type == 'attribute' and a.func == 'getattr' and a.value.type == 'id':
+				self.targets.append( Attribute(a,None) )
+			else:
+				raise TypeError
+
 		elif ctx.type == 'assign':
 			self._collect_targets( ctx.tree[0] )
 			self._collect_targets( ctx.tree[1] )
