@@ -1386,7 +1386,7 @@ class PythonToPythonJS(NodeVisitor):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
 
 	def visit_Str(self, node):
-		s = node.s.replace('\n', '\\n').replace('\0', '\\0')
+		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\0', '\\0')
 		if self._with_js or self._with_dart:
 			return '"%s"' %s
 		else:
