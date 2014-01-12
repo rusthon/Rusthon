@@ -31,6 +31,16 @@ argv = [os.path.abspath(name)
         if os.path.exists(name)
         ]
 
+def runnable(command):
+    """Returns True is the standard oupt of the command display something"""
+    f = os.popen(command, "r")
+    output = f.read()
+    f.close()
+    return output != ''
+
+rhino_runnable = runnable("rhino -help")
+node_runnable = runnable("node --help")
+
 if show_details:
     display_errors = ""
 else:
@@ -123,30 +133,37 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def run_pythonjs_test(filename):
-    """run tests"""
+def translate_js(filename, javascript):
+    output_name = "%s.py" % tmpname
+    write(output_name,
+          (javascript and 'pythonjs.configure(javascript=True)\n' or '')
+          + patch_python(filename))
     stdout, stderr = run_command(os.path.join("..", "pythonjs",
                                               "translator.py")
-                                 + ' ' + filename,
+                                 + ' ' + output_name,
                                  returns_stdout_stderr=True)
     if stderr:
-        return {'Translation error':1}
+        return ''
     else:
-        return run_js(stdout)
+        return stdout
 
-def run_pythonjs_test_on(filename):
+def run_if_no_error(function):
+    """Run the function if the JS code is not empty"""
+    global js
+    if js:
+        return function(js)
+    else:
+        return {'Translation error':1}
+
+def run_pythonjs_test_on(dummy_filename):
     """JS PythonJS tests"""
-    write("%s.py" % tmpname, patch_python(filename))
-    return run_pythonjs_test("%s.py" % tmpname)
+    return run_if_no_error(run_js_rhino)
 
 def run_pythonjsjs_test_on(filename):
     """JSJS PythonJS with javascript tests"""
-    write("%s.py" % tmpname,
-          'pythonjs.configure(javascript=True)\n'
-          + patch_python(filename))
-    return run_pythonjs_test("%s.py" % tmpname)
+    return run_pythonjs_test_on(filename)
 
-def run_js(content):
+def run_js_rhino(content):
     """Run Javascript using Rhino"""
     builtins = read(os.path.join("..", "pythonjs.js"))
     # Patch in order to run Rhino
@@ -163,8 +180,25 @@ process = { title:"", version:"" } ;
     write("%s.js" % tmpname, content)
     return run_command("rhino -O -1 %s.js" % tmpname)
 
-table_header = "%-20.20s %-30.30s"
-table_cell   = '%-8.8s'
+def run_pythonjs_test_on_node(dummy_filename):
+    """JSJS PythonJS tests on Node"""
+    return run_if_no_error(run_js_node)
+
+def run_pythonjsjs_test_on_node(filename):
+    """JSJS PythonJS with javascript tests on Node"""
+    return run_pythonjs_test_on_node(filename)
+
+def run_js_node(content):
+    """Run Javascript using Node"""
+    builtins = read(os.path.join("..", "pythonjs.js"))
+    write("%s.js" % tmpname,
+          builtins.replace('console.log(process.title);','')
+          .replace('console.log(process.version);','')
+          + content)
+    return run_command("node %s.js" % tmpname)
+
+table_header = "%-12.12s %-28.28s"
+table_cell   = '%-6.6s'
 
 def run_test_on(filename):
     """run one test and returns the number of errors"""
@@ -187,14 +221,24 @@ def run_test_on(filename):
         else:
             if not show_details:
                 print(table_cell % 'OK', end='')
+        sys.stdout.flush()
 
         for k, v in errors.items():
             sum_errors[k] = sum_errors.get(k, 0) + v
         
     display(run_python_test_on)
     display(run_python3_test_on)
-    display(run_pythonjs_test_on)
-    display(run_pythonjsjs_test_on)
+    global js
+    js = translate_js(filename, False)
+    if rhino_runnable:
+        display(run_pythonjs_test_on)
+    if node_runnable:
+        display(run_pythonjs_test_on_node)
+    js = translate_js(filename, True)
+    if rhino_runnable:
+        display(run_pythonjsjs_test_on)
+    if node_runnable:
+        display(run_pythonjsjs_test_on_node)
     print()
     return sum_errors
 
@@ -202,9 +246,23 @@ def run():
     """Run all the tests or the selected ones"""
 
     if not show_details:
+        headers =  ["Py-\nthon", "Py-\nthon3"]
+        if rhino_runnable:
+            headers.append("JS\nRhino")
+        if node_runnable:
+            headers.append("JS\nNode")
+        if rhino_runnable:
+            headers.append("JSJS\nRhino")
+        if node_runnable:
+            headers.append("JSJS\nNode")
+        
         print(table_header % ("", "Regtest run on")
-              + ''.join(table_cell % i
-                        for i in ("Python", "Python3", "PyJS", "PyJSJS")
+              + ''.join(table_cell % i.split('\n')[0]
+                        for i in headers)
+              )
+        print(table_header % ("", "")
+              + ''.join(table_cell % i.split('\n')[1]
+                        for i in headers
                         )
               )
     errors = []
