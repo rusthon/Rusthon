@@ -6,6 +6,13 @@ def brython_tokenize(src):
 	module = 'test'
 	return JS('$tokenize(src, module)')  ## Brython tokenizer
 
+_decorators = []
+def push_decorator(ctx):
+	_decorators.append( ctx )
+def pop_decorators():
+	arr = list( _decorators )
+	_decorators.length = 0  ## javascript style
+	return arr
 
 class Assign:
 	def _collect_targets(self, ctx):
@@ -88,7 +95,7 @@ class FunctionDef:
 		self.name = ctx.name  ## raw string
 		self.args = _arguments( ctx.tree[0] )
 		self.body = []
-		self.decorator_list = []
+		self.decorator_list = pop_decorators()
 		self.returns = None ## python3 returns annotation
 		print 'FunctionDef::', ctx
 		for child in node.children:
@@ -139,6 +146,7 @@ class ClassDef:
 		self.name = ctx.name
 		self.bases = []
 		self.body = []
+		self.decorator_list = pop_decorators()
 
 		if len(ctx.tree) == 1:
 			e = ctx.tree[0]
@@ -198,6 +206,9 @@ def to_ast_node( ctx, node=None ):
 	elif ctx.type == 'condition' and ctx.token == 'if':
 		return IfExp( ctx, node )
 
+	elif ctx.type == 'decorator':
+		push_decorator( to_ast_node(ctx.tree[0]) )
+
 	else:
 		print '-------------------------'
 		print node
@@ -211,10 +222,12 @@ def walk_nodes( node, module ):
 	if node.type == 'expression':
 		if node.get_ctx():
 			anode = to_ast_node( node.get_ctx(), node=node )
-			module.append( anode )
+			if anode:  ## decorators do not return
+				module.append( anode )
 	elif node.get_ctx():
 		anode = to_ast_node( node.get_ctx(), node=node )
-		module.append( anode )		
+		if anode:
+			module.append( anode )
 	else:
 		for child in node.children:
 			walk_nodes( child, module )

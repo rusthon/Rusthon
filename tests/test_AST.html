@@ -20,12 +20,15 @@ function $last(item){
 from ast import *
 
 source = """
+@mydecorator1
+@mydecorator2
 def func(a,b, mykey=1, *S, **K):
 	c = a+b
 	return c
 
 func(100, 200, 'hi', mykey=1)
 
+@myclassdecorator
 class A(X,Y):
 	def method1(self, x,y,z):
 		w = x+y+z
@@ -68,6 +71,9 @@ class DebugVisitor( NodeVisitor ):
 		return self.visit( node.left ) + node.op + self.visit( node.right )
 
 	def visit_FunctionDef(self, node):
+		for dec in node.decorator_list:
+			print '@', self.visit(dec)
+
 		args = []
 		for a in node.args.args:
 			args.append( self.visit(a) )
@@ -93,6 +99,9 @@ class DebugVisitor( NodeVisitor ):
 		print ')'
 
 	def visit_ClassDef(self, node):
+		for dec in node.decorator_list:
+			print '@', self.visit(dec)
+
 		print 'class '+node.name + ':'
 		for n in node.body:
 			a = self.visit(n)
