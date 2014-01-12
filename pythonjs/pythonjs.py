@@ -448,7 +448,7 @@ class JSGenerator(NodeVisitor):
 		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
 		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
 		out.append(
-			self.indent() + 'if (! (%s instanceof Array) ) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name)
+			self.indent() + 'if (! (%s instanceof Array || typeof %s == "string") ) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name)
 		)
 
 

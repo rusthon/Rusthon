@@ -937,7 +937,7 @@ class PythonToPythonJS(NodeVisitor):
 			if self._with_js:
 				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 			else:
-				return '__sprintf( %s, %s[...] )' %(left, right)  ## assumes that right is a tuple, or list.
+				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
 			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
