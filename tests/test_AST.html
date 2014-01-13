@@ -37,15 +37,38 @@ class A(X,Y):
 		self.xxx = XXX  ## TODO fixme
 
 		a = b = c = x = y = z = 1
-		if 1:
+		if 1 and True or False:
 			print('hi')
 			print('world')
+		elif True:
+			pass
+		else:
+			pass
 
 		return XXX
 
 
 """
 
+source_test_elif = """
+if False:
+	pass
+elif True:
+	print( 'hi elif' )
+else:
+	a = 1 + 1
+	print('hi else')
+
+if False:
+	a = 2+2
+elif True:
+	print( 'hi elif2' )
+else:
+	a = 3 + 3
+	print('hi else3')
+
+
+"""
 
 def test():
 	global module
@@ -58,7 +81,14 @@ class DebugVisitor( NodeVisitor ):
 	def visit_IfExp(self, node):
 		print 'if ', self.visit(node.test), ':'
 		for a in node.body:
-			self.visit(a)
+			r = self.visit(a)
+			if r: print '  ', r
+
+		if len(node.orelse):
+			print 'else:'
+			for a in node.orelse:
+				r = self.visit( a )
+				if r: print '  ', r
 
 	def visit_Assign(self, node):
 		a = [ self.visit( t ) for t in node.targets ]

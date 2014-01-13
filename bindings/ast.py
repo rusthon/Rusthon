@@ -14,6 +14,10 @@ def pop_decorators():
 	_decorators.length = 0  ## javascript style
 	return arr
 
+class Pass:
+	def __init__(self, ctx, node):
+		pass
+
 class Assign:
 	def _collect_targets(self, ctx):
 		if ctx.type == 'expr' and ctx.name == 'id':
@@ -99,9 +103,9 @@ class FunctionDef:
 		self.returns = None ## python3 returns annotation
 		print 'FunctionDef::', ctx
 		for child in node.children:
-			anode = to_ast_node( child.get_ctx() )
-			if anode is None: raise TypeError
-			self.body.append( anode )
+			anode = to_ast_node( child.get_ctx(), node=child )
+			if anode:  ## ctx of type: 'single_kw' and token elif/else do not return an ast node
+				self.body.append( anode )
 
 
 class Return:
@@ -172,10 +176,18 @@ class Attribute:
 
 
 class IfExp:
+	'''
+	if/elif/else could be translated to javascript switch/case more easily if we track elif statements,
+	but the python standard simply treats elif statements as nested if statements in .orelse.
+	In the future we can bend this rule when PythonJS becomes fully self-hosted.
+	'''
+	_previous = None
 	def __init__(self, ctx, node):
+		if ctx.token == 'if':  ## can also be "elif" and "else"
+			IfExp._previous = self
 		self.test = to_ast_node( ctx.tree[0] )
 		self.body = []
-		self.orelse = None
+		self.orelse = []
 		for child in node.children:
 			self.body.append( to_ast_node(child.get_ctx()) )
 
@@ -191,6 +203,7 @@ __MAP = {
 	'class'		: ClassDef,
 	'op'		: BinOp,
 	'attribute' : Attribute,
+	'pass'		: Pass,
 }
 
 def to_ast_node( ctx, node=None ):
@@ -203,14 +216,29 @@ def to_ast_node( ctx, node=None ):
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
 
-	elif ctx.type == 'condition' and ctx.token == 'if':
-		return IfExp( ctx, node )
-
 	elif ctx.type == 'decorator':
 		push_decorator( to_ast_node(ctx.tree[0]) )
 
+	elif ctx.type == 'condition' and ctx.token == 'if':
+		return IfExp( ctx, node )
+	elif ctx.type == 'condition' and ctx.token == 'elif':
+		a = IfExp( ctx, node )
+		IfExp._previous.orelse.append( a )
+		IfExp._previous = a
+
+	elif ctx.type == 'single_kw':
+		if ctx.token == 'else' or ctx.token == 'elif':
+			orelse = IfExp._previous.orelse
+			for child in node.children:
+				walk_nodes( child, orelse )
+
+		else:
+			print 'unknown token for single_kw'
+			print ctx
+			raise TypeError
+
 	else:
-		print '-------------------------'
+		print '---------error----------'
 		print node
 		print ctx
 		raise TypeError
@@ -228,6 +256,10 @@ def walk_nodes( node, module ):
 		anode = to_ast_node( node.get_ctx(), node=node )
 		if anode:
 			module.append( anode )
+		#else:
+		#	for child in node.children:
+		#		walk_nodes( child, module )
+
 	else:
 		for child in node.children:
 			walk_nodes( child, module )
@@ -263,3 +295,6 @@ class NodeVisitor:
 
 	def visit_Name(self, node):
 		return node.id
+
+	def visit_Pass(self, node):
+		return 'pass'
