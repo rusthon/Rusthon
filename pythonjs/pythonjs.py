@@ -198,11 +198,18 @@ class JSGenerator(NodeVisitor):
 			return self._visit_call_helper_instanceof( node )
 
 		elif name == 'new':
-		    args = map(self.visit, node.args)
-		    if len(args) == 1:
-		        return ' new %s' %args[0]
-		    else:
-		        raise SyntaxError( args )
+			args = map(self.visit, node.args)
+			if len(args) == 1:
+				return ' new %s' %args[0]
+			else:
+				raise SyntaxError( args )
+
+		elif name == '__ternary_operator__':
+			args = map(self.visit, node.args)
+			if len(args) == 2:
+				return ' (%s) ? %s : %s' %(args[0], args[0], args[1])
+			else:
+				raise SyntaxError( args )
 
 		elif name == 'JSObject':
 			if node.keywords:

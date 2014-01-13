@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# _*_ coding: utf-8 _*_
 # Python to PythonJS Translator
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
@@ -361,25 +362,21 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Dict(self, node):
 		node.returns_type = 'dict'
-		#keys = [x.s for x in node.keys]
-		#values = map(self.visit, node.values)
-		#a = [ '%s=%s'%x for x in zip(keys, values) ]
-		#b = 'JSObject(%s)' %', '.join(a)
-		#return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
 		a = []
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
 			if self._with_js or self._with_dart:
-				if isinstance(node.keys[i], ast.Str):
-					a.append( '%s:%s'%(k,v) )
-				else:
-					a.append( '"%s":%s'%(k,v) )
+				#if isinstance(node.keys[i], ast.Str):
+				#	a.append( '%s:%s'%(k,v) )
+				#else:
+				#	a.append( '"%s":%s'%(k,v) )
+				a.append( '[%s,%s]'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
 		if self._with_js or self._with_dart:
 			b = ','.join( a )
-			return '{ %s }' %b
+			return '__jsdict( [%s] )' %b
 		else:
 			b = '[%s]' %', '.join(a)
 			return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
@@ -570,6 +567,8 @@ class PythonToPythonJS(NodeVisitor):
 
 	def _get_js_class_base_init(self, node ):
 		for base in node.bases:
+			if base.id == 'object':
+				continue
 			n = self._js_classes[ base.id ]
 			if hasattr(n, '_cached_init'):
 				return n._cached_init
@@ -681,7 +680,14 @@ class PythonToPythonJS(NodeVisitor):
 		else:
 			writer.write('pass')
 
+		## instance UID ##
+		writer.write('this.__uid__ = "￼" + _PythonJS_UID')
+		writer.write('_PythonJS_UID += 1')
+
 		writer.pull()
+		## class UID ##
+		writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
+		writer.write('_PythonJS_UID += 1')
 
 		keys = methods.keys()
 		keys.sort()
@@ -704,7 +710,8 @@ class PythonToPythonJS(NodeVisitor):
 				'  }',
 				'}'
 			]
-			writer.write( ''.join(a) )
+			a = ''.join(a)
+			writer.write( "JS('%s')" %a )
 
 		self._in_js_class = False
 
@@ -941,10 +948,10 @@ class PythonToPythonJS(NodeVisitor):
 
 		elif op == '*' and isinstance(node.left, ast.List):
 			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
-				if self._with_js:
-					return 'new Array(%s)' %self.visit(node.right)
-				else:
-					return 'JS("new Array(%s)")' %self.visit(node.right)
+				#if self._with_js:
+				#	return 'new Array(%s)' %self.visit(node.right)
+				#else:
+				return 'JS("new Array(%s)")' %self.visit(node.right)
 			elif isinstance(node.right,ast.Num):
 				n = node.right.n
 			elif isinstance(node.right, Name):
@@ -1164,8 +1171,14 @@ class PythonToPythonJS(NodeVisitor):
 		elif self._with_js or self._with_dart:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
 				return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
-			else:
+			elif self._with_dart:
 				return '%s[ %s ]' %(name, self.visit(node.slice))
+
+			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num):
+				return '%s[ %s ]' %(name, self.visit(node.slice))
+			else:
+				s = self.visit(node.slice)
+				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
 
 		elif isinstance(node.slice, ast.Slice):
 			return '__get__(%s, "__getslice__")([%s], JSObject())' % (
@@ -1742,10 +1755,10 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
-		if self._with_js:  ## TODO is it better to return a normal lambda
-			return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
-		else:
-			return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
+		#if self._with_js:  ## TODO is it better to return a normal lambda
+		#	return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
+		#else:
+		return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
 
 	def visit_FunctionDef(self, node):
 		log('-----------------')

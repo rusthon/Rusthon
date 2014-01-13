@@ -26,6 +26,15 @@ JS("var ValueError = new RangeError()")
 ## when translated methods named: "get" become __jsdict_get(ob,key,default)
 
 with javascript:
+	def __jsdict( items ):
+		d = JS("{}")
+		for item in items:
+			key = item[0]
+			if key.__uid__:
+				key = key.__uid__
+			d[ key ] = item[1]
+		return d
+
 	def __jsdict_get(ob, key, default_value=None):
 		if instanceof(ob, Object):
 			if JS("key in ob"): return ob[key]
@@ -86,7 +95,7 @@ with javascript:
 
 	def __bind_property_descriptors__(o, klass):
 		for name in klass.__properties__:
-			desc = {enumerable:True}
+			desc = {"enumerable":True}
 			prop = klass.__properties__[ name ]
 			if prop['get']:
 				desc['get'] = __generate_getter__(klass, o, name)
