@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sun Jan 12 20:04:43 2014
+// PythonJS Runtime - regenerated on: Sun Jan 12 20:28:10 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -384,7 +384,7 @@ __jsdict = function(items) {
     if (key.__uid__) {
       key = key.__uid__;
     }
-    d[key] = item[1];
+    d[ (key.__uid__) ? key.__uid__ : key] = item[1];
   }
   return d;
 }
@@ -411,7 +411,7 @@ __jsdict_get.kwargs_signature = { default_value:undefined };
 __jsdict_get.types_signature = { default_value:"None" };
 __jsdict_set = function(ob, key, value) {
   if (ob instanceof Object) {
-    ob[key] = value;
+    ob[ (key.__uid__) ? key.__uid__ : key] = value;
   } else {
     ob.set(key,value);
   }
@@ -501,10 +501,10 @@ __bind_property_descriptors__ = function(o, klass) {
     desc = __jsdict([["enumerable", true]]);
     prop = klass.__properties__[ (name.__uid__) ? name.__uid__ : name];
     if (prop[ ("get".__uid__) ? "get".__uid__ : "get"]) {
-      desc["get"] = __generate_getter__(klass, o, name);
+      desc[ ("get".__uid__) ? "get".__uid__ : "get"] = __generate_getter__(klass, o, name);
     }
     if (prop[ ("set".__uid__) ? "set".__uid__ : "set"]) {
-      desc["set"] = __generate_setter__(klass, o, name);
+      desc[ ("set".__uid__) ? "set".__uid__ : "set"] = __generate_setter__(klass, o, name);
     }
     Object.defineProperty(o, name, desc);
   }
@@ -566,13 +566,13 @@ create_class = function(class_name, parents, attrs, props) {
   for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
     var key = __iter5[ __idx5 ];
     if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
-      klass.__unbound_methods__[key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+      klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
       klass.__all_method_names__.push(key);
     }
     if (( key ) == "__getattribute__") {
       continue
     }
-    klass[key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+    klass[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
   }
   klass.__setters__ = [];
   klass.__getters__ = [];
@@ -1151,7 +1151,7 @@ _setup_array_prototype = function(args, kwargs) {
       item = this[ (i.__uid__) ? i.__uid__ : i];
       if (( typeof(item) ) == "object") {
         if (item.jsify) {
-          this[i] = item.jsify();
+          this[ (i.__uid__) ? i.__uid__ : i] = item.jsify();
         }
       }
       i += 1;
@@ -1213,7 +1213,7 @@ _setup_array_prototype = function(args, kwargs) {
     if (( index ) < 0) {
       index = (this.length + index);
     }
-    this[index] = value;
+    this[ (index.__uid__) ? index.__uid__ : index] = value;
   }
 
   __setitem__.NAME = "__setitem__";
@@ -2152,7 +2152,7 @@ __pylist___setitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   var value = args[ 2 ];
-  self["$wrapped"][index] = value;
+  self["$wrapped"][ (index.__uid__) ? index.__uid__ : index] = value;
 }
 
 __pylist___setitem__.NAME = "__pylist___setitem__";
@@ -2474,7 +2474,7 @@ __pylist_set = function(args, kwargs) {
   var self = arguments['self'];
   var index = arguments['index'];
   var value = arguments['value'];
-  self["$wrapped"][index] = value;
+  self["$wrapped"][ (index.__uid__) ? index.__uid__ : index] = value;
 }
 
 __pylist_set.NAME = "__pylist_set";
@@ -3109,7 +3109,7 @@ set = function(args, kwargs) {
       var b = __iter17[ __idx17 ];
       if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
         key = (b & mask);
-        hashtable[key] = b;
+        hashtable[ (key.__uid__) ? key.__uid__ : key] = b;
         keys.push(key);
       } else {
         fallback = true;
@@ -3717,7 +3717,7 @@ _to_json = function(args, kwargs) {
         key = __next__();
         value = _to_json([__jsdict_get(pythonjs, key)], __NULL_OBJECT__);
         key = _to_json([key], __NULL_OBJECT__);
-        r[key] = value;
+        r[ (key.__uid__) ? key.__uid__ : key] = value;
       }
     } else {
       r = pythonjs;

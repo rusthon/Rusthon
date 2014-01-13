@@ -1233,9 +1233,16 @@ class PythonToPythonJS(NodeVisitor):
 				#code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
 				code = '%s[...] = %s' %(self.visit(target.value), self.visit(node.value))
 
-			elif self._with_js or self._with_dart:
+			elif self._with_dart:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
+
+			elif self._with_js:
+				s = self.visit(target.slice.value)
+				if isinstance(target.slice.value, ast.Num):
+					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
+				else:
+					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' % (self.visit(target.value), s, s, self.visit(node.value))
 
 			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
 				#code = '%s[...][%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
