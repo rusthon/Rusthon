@@ -191,6 +191,22 @@ class IfExp:
 		for child in node.children:
 			self.body.append( to_ast_node(child.get_ctx()) )
 
+class For:
+	def __init__(self, ctx, node):
+		targets = ctx.tree[0]
+		if targets.type != 'target_list':
+			raise TypeError
+		if len(targets.tree) == 1:
+			self.target = to_ast_node( targets.tree[0] )
+		else:  ## pack into a ast.Tuple
+			print('TODO pack for-loop targets into ast.Tuple')
+			raise TypeError
+
+		self.iter = to_ast_node( ctx.tree[1] )
+		self.body = []
+		for child in node.children:
+			self.body.append( to_ast_node(child.get_ctx()) )
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -204,6 +220,7 @@ __MAP = {
 	'op'		: BinOp,
 	'attribute' : Attribute,
 	'pass'		: Pass,
+	'for'		: For,
 }
 
 def to_ast_node( ctx, node=None ):

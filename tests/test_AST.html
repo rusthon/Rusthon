@@ -67,6 +67,11 @@ else:
 	a = 3 + 3
 	print('hi else3')
 
+"""
+
+source = """
+for i in range(10):
+	a = i * i
 
 """
 
@@ -77,6 +82,14 @@ def test():
 	DebugVisitor( module )
 
 class DebugVisitor( NodeVisitor ):
+
+	def visit_For(self, node):
+		print 'for', self.visit(node.target), 'in'
+		self.visit(node.iter)
+		print ': ## for body'
+		for a in node.body:
+			r = self.visit(a)
+			if r: print '  ', r
 
 	def visit_IfExp(self, node):
 		print 'if ', self.visit(node.test), ':'
