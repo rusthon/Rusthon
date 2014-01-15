@@ -4044,6 +4044,7 @@ function $tokenize(src,module,parent){
     return root
 
 }
+__BRYTHON__.$tokenize = $tokenize;
 
 __BRYTHON__.py2js = function(src,module,parent){
     // src = Python source (string)

@@ -4,7 +4,7 @@
 
 def brython_tokenize(src):
 	module = 'test'
-	return JS('$tokenize(src, module)')  ## Brython tokenizer
+	return JS('__BRYTHON__.$tokenize(src, module)')
 
 _decorators = []
 def push_decorator(ctx):
@@ -33,12 +33,24 @@ class Assign:
 			self._collect_targets( ctx.tree[0] )
 			self._collect_targets( ctx.tree[1] )
 		else:
+			print('_collect_targets ERROR')
+			print( ctx )
 			raise TypeError
 
 	def __init__(self, ctx, node):
+		print('assign node.........')
+		print(ctx)
 		self.targets = []
 		self._collect_targets( ctx.tree[0] )
 		self.value = to_ast_node( ctx.tree[1] )  ## should be an: expr.name==operand
+
+class AugAssign:
+	_previous = None
+	def __init__(self, ctx, node):
+		AugAssign._previous = self
+		self.target = None
+		self.op = None
+		self.value = to_ast_node(ctx.tree[1])
 
 class Num:
 	def __init__(self, ctx, node):
@@ -207,6 +219,16 @@ class For:
 		for child in node.children:
 			self.body.append( to_ast_node(child.get_ctx()) )
 
+class While:
+	def __init__(self, ctx, node):
+		self.test = to_ast_node( ctx.tree[0] )
+		self.body = []
+		for child in node.children:
+			anode = to_ast_node(child.get_ctx())
+			if anode:
+				self.body.append( anode )
+
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -230,11 +252,17 @@ def to_ast_node( ctx, node=None ):
 		print 'NODE::', ctx.node
 		return to_ast_node( ctx.tree[0], node=ctx.node )
 
+	elif ctx.type == 'assign' and ctx.tree[0].type == 'id' and ctx.tree[0].value == '$temp':
+		return AugAssign(ctx, node)
+
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
 
 	elif ctx.type == 'decorator':
 		push_decorator( to_ast_node(ctx.tree[0]) )
+
+	elif ctx.type == 'condition' and ctx.token == 'while':
+		return While( ctx, node )
 
 	elif ctx.type == 'condition' and ctx.token == 'if':
 		return IfExp( ctx, node )
@@ -254,6 +282,25 @@ def to_ast_node( ctx, node=None ):
 			print ctx
 			raise TypeError
 
+	elif ctx.type == 'node_js':
+		## special brython inline javascript ##
+		if len(ctx.tree) == 1 and '__iadd__' in ctx.tree[0]:
+			AugAssign._previous.op = '+'
+		elif len(ctx.tree) == 1 and ctx.tree[0].startswith("if($temp.$fast_augm"):
+			a,b = ctx.tree[0].split('$globals')
+			c = b.split('"')
+			if len(c) == 3:
+				AugAssign._previous.target = Name( name=c[1] )
+			else:
+				print(c)
+				raise TypeError
+
+		elif len(ctx.tree) == 1 and ctx.tree[0] == 'else':
+			pass
+		else:
+			print '--------special node_js error-------'
+			print(ctx)
+			raise TypeError
 	else:
 		print '---------error----------'
 		print node
@@ -295,6 +342,8 @@ class NodeVisitor:
 			self.visit( node )
 
 	def visit(self, node):
+		if node is None:
+			raise TypeError
 		f = getattr(
 			self, 
 			'visit_'+type(node).__name__, 

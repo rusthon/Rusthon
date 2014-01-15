@@ -330,7 +330,7 @@ LIBS = dict(
 		'pixi.js' : os.path.expanduser( '~/pixi.js/bin/pixi.js'),	
 	},
 	brython = {
-		'py2js.js' : os.path.expanduser( '~/brython/src/py2js.js'),	
+		'py2js.js' : os.path.expanduser( '../brython/py2js.js'),	
 	}
 
 )

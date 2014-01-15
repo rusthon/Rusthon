@@ -69,9 +69,16 @@ else:
 
 """
 
-source = """
+source_for = """
 for i in range(10):
 	a = i * i
+
+"""
+
+source = """
+i = 0
+while i < 10:
+	i += 1
 
 """
 
@@ -82,6 +89,12 @@ def test():
 	DebugVisitor( module )
 
 class DebugVisitor( NodeVisitor ):
+
+	def visit_While(self, node):
+		print 'while', self.visit(node.test), ':'
+		for a in node.body:
+			r = self.visit(a)
+			if r: print '  ', r
 
 	def visit_For(self, node):
 		print 'for', self.visit(node.target), 'in'
@@ -109,6 +122,8 @@ class DebugVisitor( NodeVisitor ):
 		b = self.visit( node.value )
 		return a + '=' + b
 
+	def visit_AugAssign(self, node):
+		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
 
 	def visit_BinOp(self, node):
 		return self.visit( node.left ) + node.op + self.visit( node.right )
