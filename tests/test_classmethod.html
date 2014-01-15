@@ -10,10 +10,18 @@ class A:
 		print 'class', cls
 		print a,b,c
 
+	@staticmethod
+	def mystatic(x,y,z):
+		print 'my staticmethod'
+		print x,y,z
+
 def test():
 	A.mymethod( 1,2,3 )
 	a = A()
 	a.mymethod( 4,5,6 )
+
+	A.mystatic( 1,2,3 )
+	a.mystatic( 4,5,6 )
 
 </script>
 </head>

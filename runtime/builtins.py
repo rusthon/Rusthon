@@ -136,7 +136,7 @@ with javascript:
 		for key in attrs:
 			if typeof( attrs[key] ) == 'function':
 				klass.__all_method_names__.push( key )
-				if attrs[key].is_classmethod:
+				if attrs[key].is_classmethod or attrs[key].is_staticmethod:
 					pass
 				else:
 					klass.__unbound_methods__[key] = attrs[key]

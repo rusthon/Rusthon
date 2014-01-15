@@ -2094,6 +2094,9 @@ class PythonToPythonJS(NodeVisitor):
 			dec = self.visit(decorator)
 			if dec == 'classmethod':
 				writer.write( '%s.is_classmethod = True' %node.name)
+			elif dec == 'staticmethod':
+				writer.write( '%s.is_staticmethod = True' %node.name)
+				writer.write( '%s.is_wrapper = True' %node.name)
 			else:
 				writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, dec, node.name))
 

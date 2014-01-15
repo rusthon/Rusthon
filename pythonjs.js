@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed Jan 15 08:31:55 2014
+// PythonJS Runtime - regenerated on: Wed Jan 15 08:46:01 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -593,7 +593,7 @@ create_class = function(class_name, parents, attrs, props) {
     var key = __iter5[ __idx5 ];
     if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
       klass.__all_method_names__.push(key);
-      if (attrs[ (key.__uid__) ? key.__uid__ : key].is_classmethod) {
+      if (attrs[ (key.__uid__) ? key.__uid__ : key].is_classmethod || attrs[ (key.__uid__) ? key.__uid__ : key].is_staticmethod) {
         /*pass*/
       } else {
         klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
