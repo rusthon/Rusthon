@@ -135,8 +135,11 @@ with javascript:
 		klass.__attributes__ = attrs
 		for key in attrs:
 			if typeof( attrs[key] ) == 'function':
-				klass.__unbound_methods__[key] = attrs[key]
 				klass.__all_method_names__.push( key )
+				if attrs[key].is_classmethod:
+					pass
+				else:
+					klass.__unbound_methods__[key] = attrs[key]
 
 			if key == '__getattribute__': continue
 			klass[key] = attrs[key]

@@ -135,29 +135,48 @@ def __get__(object, attribute):
 		
 	#if attribute in object:  ## in test not allowed with javascript-string
 	if attr is not None:  ## what about cases where attr is None?
-		if JS("typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
-			## to avoid problems with other generated wrapper funcs not marked with:
-			## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
-			## bases, __name__, __dict__, __call__
-			#print 'wrapping something external', object, attribute
+		if JS("typeof(attr) === 'function'"):
+			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
+				## to avoid problems with other generated wrapper funcs not marked with:
+				## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
+				## bases, __name__, __dict__, __call__
+				#print 'wrapping something external', object, attribute
 
-			def wrapper(args,kwargs): return attr.apply(object, args)
-			wrapper.is_wrapper = True
-			return wrapper
+				def wrapper(args,kwargs): return attr.apply(object, args)
+				wrapper.is_wrapper = True
+				return wrapper
+
+			elif attr.is_classmethod:
+
+				def method():
+					var(args)
+					args =  Array.prototype.slice.call(arguments)
+					if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+						pass
+					else:
+						args = [args, JSObject()]
+					if object.__class__:  ## if classmethod is called from an instance, force class as first argument
+						args[0].splice(0, 0, object.__class__)
+					else:
+						args[0].splice(0, 0, object)
+					return attr.apply(this, args)  ## this is bound so that callback methods can use `this` from the caller
+
+				method.is_wrapper = True
+				object[attribute] = method  ## cache method - we assume that class methods do not change
+				return method
+
+			else:
+				return attr
+
 		else:
 			return attr
 
 	var(__class__, bases)
 
-	# next check object.__dict__ for attr, note that object could be a class, and classes have a __dict__
-	#__dict__ = object.__dict__
-	#if __dict__:
-	#	attr = __dict__[attribute]
-	#	if attr != None:
-	#		return attr
-	attr = object[ attribute ]
-	if attr != None:
-		return attr
+
+	#attr = object[ attribute ]
+	#if attr != None:
+	#	return attr
 
 
 	# next check for object.__class__
@@ -196,7 +215,9 @@ def __get__(object, attribute):
 
 		if attribute in __class__:
 			if JS("{}.toString.call(attr) === '[object Function]'"):
-				if attr.fastdef:
+				if attr.is_wrapper:
+					return attr
+				elif attr.fastdef:
 					def method(args,kwargs):
 						if arguments and arguments[0]:
 							arguments[0].splice(0,0,object)

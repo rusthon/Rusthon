@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sun Jan 12 20:28:10 2014
+// PythonJS Runtime - regenerated on: Wed Jan 15 08:31:55 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -121,22 +121,44 @@ __get__ = function(object, attribute) {
     }
   }
   if (( attr ) !== undefined) {
-    if (typeof(attr) === 'function' && attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
-            var wrapper = function(args, kwargs) {
-        return attr.apply(object, args);
-      }
+    if (typeof(attr) === 'function') {
+      if (attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
+                var wrapper = function(args, kwargs) {
+          return attr.apply(object, args);
+        }
 
-      wrapper.is_wrapper = true;
-      return wrapper;
+        wrapper.is_wrapper = true;
+        return wrapper;
+      } else {
+        if (attr.is_classmethod) {
+                    var method = function() {
+            var args;
+            args = Array.prototype.slice.call(arguments);
+            if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && ( args.length ) == 2) {
+              /*pass*/
+            } else {
+              args = [args, Object()];
+            }
+            if (object.__class__) {
+              args[0].splice(0, 0, object.__class__);
+            } else {
+              args[0].splice(0, 0, object);
+            }
+            return attr.apply(this, args);
+          }
+
+          method.is_wrapper = true;
+          object[attribute] = method;
+          return method;
+        } else {
+          return attr;
+        }
+      }
     } else {
       return attr;
     }
   }
   var __class__, bases;
-  attr = object[attribute];
-  if (( attr ) != undefined) {
-    return attr;
-  }
   __class__ = object.__class__;
   if (__class__) {
     if (( attribute )  in  __class__.__properties__) {
@@ -175,29 +197,33 @@ __get__ = function(object, attribute) {
     attr = __class__[attribute];
     if (( attribute )  in  __class__) {
       if ({}.toString.call(attr) === '[object Function]') {
-        if (attr.fastdef) {
-                    var method = function(args, kwargs) {
-            if (arguments && arguments[0]) {
-              arguments[0].splice(0, 0, object);
-              return attr.apply(this, arguments);
-            } else {
-              return attr([object], {  });
-            }
-          }
-
+        if (attr.is_wrapper) {
+          return attr;
         } else {
-                    var method = function() {
-            var args;
-            args = Array.prototype.slice.call(arguments);
-            if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && ( args.length ) == 2) {
-              /*pass*/
-            } else {
-              args = [args, Object()];
+          if (attr.fastdef) {
+                        var method = function(args, kwargs) {
+              if (arguments && arguments[0]) {
+                arguments[0].splice(0, 0, object);
+                return attr.apply(this, arguments);
+              } else {
+                return attr([object], {  });
+              }
             }
-            args[0].splice(0, 0, object);
-            return attr.apply(this, args);
-          }
 
+          } else {
+                        var method = function() {
+              var args;
+              args = Array.prototype.slice.call(arguments);
+              if (args[0] instanceof Array && {}.toString.call(args[1]) === '[object Object]' && ( args.length ) == 2) {
+                /*pass*/
+              } else {
+                args = [args, Object()];
+              }
+              args[0].splice(0, 0, object);
+              return attr.apply(this, args);
+            }
+
+          }
         }
         method.is_wrapper = true;
         object[attribute] = method;
@@ -566,8 +592,12 @@ create_class = function(class_name, parents, attrs, props) {
   for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
     var key = __iter5[ __idx5 ];
     if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
-      klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
       klass.__all_method_names__.push(key);
+      if (attrs[ (key.__uid__) ? key.__uid__ : key].is_classmethod) {
+        /*pass*/
+      } else {
+        klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+      }
     }
     if (( key ) == "__getattribute__") {
       continue

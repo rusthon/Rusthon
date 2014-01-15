@@ -2091,7 +2091,11 @@ class PythonToPythonJS(NodeVisitor):
 		# apply decorators
 		for decorator in decorators:
 			assert not self._with_js
-			writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, self.visit(decorator), node.name))
+			dec = self.visit(decorator)
+			if dec == 'classmethod':
+				writer.write( '%s.is_classmethod = True' %node.name)
+			else:
+				writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, dec, node.name))
 
 	#################### loops ###################
 	## the old-style for loop that puts a while loop inside a try/except and catches StopIteration,
