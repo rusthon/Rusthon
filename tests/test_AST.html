@@ -80,8 +80,10 @@ while i < 10:
 """
 
 source = """
-if True:
-	b = -a
+if 1 <= 2:
+	b = not a
+	x = [1,2]
+	y = (3,4)
 """
 
 def test():
@@ -126,6 +128,22 @@ class DebugVisitor( NodeVisitor ):
 
 	def visit_AugAssign(self, node):
 		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
+
+
+	def visit_List(self, node):
+		s = []
+		for e in node.elts:
+			s.append( self.visit(e) )
+		return '[' + ','.join(s) + ']'
+
+	def visit_Tuple(self, node):
+		s = []
+		for e in node.elts:
+			s.append( self.visit(e) )
+		return '(' + ','.join(s) + ')'
+
+	def visit_Not(self, node):
+		return ' not ' + self.visit(node.value)
 
 	def visit_UnaryOp(self, node):
 		return node.op + self.visit(node.operand)

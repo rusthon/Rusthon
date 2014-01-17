@@ -18,6 +18,25 @@ class Pass:
 	def __init__(self, ctx, node):
 		pass
 
+class Not:
+	def __init__(self, ctx, node):
+		self.value = to_ast_node(ctx.tree[0])  ## not standard python
+
+class List:
+	def __init__(self, ctx, node):
+		self.elts = []
+		#self.ctx = 'Load' # 'Store' is (x,y,z) = w
+		for a in ctx.tree:
+			self.elts.append( to_ast_node(a) )
+
+class Tuple:
+	def __init__(self, ctx, node):
+		self.elts = []
+		#self.ctx = 'Load' # 'Store' is (x,y,z) = w
+		for a in ctx.tree:
+			self.elts.append( to_ast_node(a) )
+
+
 class Assign:
 	def _collect_targets(self, ctx):
 		if ctx.type == 'expr' and ctx.name == 'id':
@@ -249,6 +268,7 @@ __MAP = {
 	'attribute' : Attribute,
 	'pass'		: Pass,
 	'for'		: For,
+	'not'		: Not,
 }
 
 def to_ast_node( ctx, node=None ):
@@ -263,6 +283,14 @@ def to_ast_node( ctx, node=None ):
 
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
+
+	elif ctx.type == 'list_or_tuple':
+		if ctx.real == 'list':
+			return List(ctx, node)
+		elif ctx.real == 'tuple':
+			return Tuple(ctx, node)
+		else:
+			raise TypeError
 
 	elif ctx.type == 'decorator':
 		push_decorator( to_ast_node(ctx.tree[0]) )
