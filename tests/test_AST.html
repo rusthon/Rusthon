@@ -73,13 +73,15 @@ source_for = """
 for i in range(10):
 	a = i * i
 
-"""
-
-source = """
 i = 0
 while i < 10:
 	i += 1
 
+"""
+
+source = """
+if True:
+	b = -a
 """
 
 def test():
@@ -124,6 +126,9 @@ class DebugVisitor( NodeVisitor ):
 
 	def visit_AugAssign(self, node):
 		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
+
+	def visit_UnaryOp(self, node):
+		return node.op + self.visit(node.operand)
 
 	def visit_BinOp(self, node):
 		return self.visit( node.left ) + node.op + self.visit( node.right )

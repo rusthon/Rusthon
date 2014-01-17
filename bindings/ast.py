@@ -70,7 +70,13 @@ class Name:
 			print ctx
 			raise TypeError
 
-
+class UnaryOp:
+	'''
+	note: this is constructed directly from an abstract_expr
+	'''
+	def __init__(self, op=None, operand=None):
+		self.op = op
+		self.operand = operand
 
 class BinOp:
 	def __init__(self, ctx, node):
@@ -301,6 +307,26 @@ def to_ast_node( ctx, node=None ):
 			print '--------special node_js error-------'
 			print(ctx)
 			raise TypeError
+
+	elif ctx.type == 'abstract_expr':
+		if len(ctx.tree)==1 and ctx.tree[0].type=='expr' and ctx.tree[0].name=='call' and len(ctx.tree[0].tree)==1:
+			call = ctx.tree[0].tree[0]
+			assert call.type=='call'
+			func = call.func
+			if func.type=='attribute' and func.func=='getattr':
+				if func.name=='__neg__':
+					return UnaryOp(op='-', operand=to_ast_node(func.value))
+				else:
+					raise TypeError
+			else:
+				print '---------abstract_expr error----------'
+				print ctx
+				raise TypeError
+		else:
+			print '---------abstract_expr error----------'
+			print ctx
+			raise TypeError
+
 	else:
 		print '---------error----------'
 		print node
