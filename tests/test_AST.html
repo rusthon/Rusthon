@@ -85,6 +85,9 @@ if 1 <= 2:
 	x = [1,2]
 	y = (3,4)
 	z = {'k1':'val1', 'k2':'val2'}
+	v = z[ 'k1' ]
+	v = x[0]
+
 """
 
 def test():
@@ -129,6 +132,12 @@ class DebugVisitor( NodeVisitor ):
 
 	def visit_AugAssign(self, node):
 		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
+
+	def visit_Subscript(self, node):
+		return '%s[%s]' %(self.visit(node.value), self.visit(node.slice))
+
+	def visit_Index(self, node):
+		return self.visit(node.value)
 
 	def visit_Dict(self, node):
 		s = []

@@ -49,6 +49,16 @@ class Dict:
 			self.values.append( to_ast_node(val) )
 			i += 2
 
+class Subscript:
+	def __init__(self, ctx, node):
+		self.value = to_ast_node(ctx.value)
+		self.slice = Index(value=to_ast_node(ctx.tree[0]))
+		#self.ctx = 'Load', 'Store', 'Del'
+
+class Index:
+	def __init__(self, value=None):
+		self.value = value
+
 class Assign:
 	def _collect_targets(self, ctx):
 		if ctx.type == 'expr' and ctx.name == 'id':
@@ -285,6 +295,7 @@ __MAP = {
 	'pass'		: Pass,
 	'for'		: For,
 	'not'		: Not,
+	'sub'		: Subscript,
 }
 
 def to_ast_node( ctx, node=None ):
