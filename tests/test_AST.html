@@ -79,7 +79,7 @@ while i < 10:
 
 """
 
-source = """
+source_list_tuple_dict = """
 if 1 <= 2:
 	b = not a
 	x = [1,2]
@@ -87,6 +87,13 @@ if 1 <= 2:
 	z = {'k1':'val1', 'k2':'val2'}
 	v = z[ 'k1' ]
 	v = x[0]
+
+"""
+
+source = """
+if True:
+	a = []
+	b = a[1:2]
 
 """
 
@@ -138,6 +145,9 @@ class DebugVisitor( NodeVisitor ):
 
 	def visit_Index(self, node):
 		return self.visit(node.value)
+
+	def visit_Slice(self, node):
+		return self.visit(node.lower) + ':' + self.visit(node.upper)
 
 	def visit_Dict(self, node):
 		s = []

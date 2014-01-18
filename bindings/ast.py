@@ -52,12 +52,26 @@ class Dict:
 class Subscript:
 	def __init__(self, ctx, node):
 		self.value = to_ast_node(ctx.value)
-		self.slice = Index(value=to_ast_node(ctx.tree[0]))
+		if len(ctx.tree) == 1:
+			self.slice = Index(value=to_ast_node(ctx.tree[0]))
+		elif len(ctx.tree) == 2:
+			self.slice = Slice(
+				lower=to_ast_node(ctx.tree[0]),
+				upper=to_ast_node(ctx.tree[1])
+			)
+		else:
+			raise TypeError
 		#self.ctx = 'Load', 'Store', 'Del'
 
 class Index:
 	def __init__(self, value=None):
 		self.value = value
+
+class Slice:
+	def __init__(self, lower=None, upper=None, step=None):
+		self.lower = lower
+		self.upper = upper
+		self.step = step
 
 class Assign:
 	def _collect_targets(self, ctx):
