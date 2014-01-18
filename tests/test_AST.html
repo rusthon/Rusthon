@@ -84,6 +84,7 @@ if 1 <= 2:
 	b = not a
 	x = [1,2]
 	y = (3,4)
+	z = {'k1':'val1', 'k2':'val2'}
 """
 
 def test():
@@ -129,6 +130,14 @@ class DebugVisitor( NodeVisitor ):
 	def visit_AugAssign(self, node):
 		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
 
+	def visit_Dict(self, node):
+		s = []
+		for i in range( len(node.keys) ):
+			k = self.visit( node.keys[i] )
+			v = self.visit( node.values[i] )
+			#s.append( '%s:%s'%(k,v) )
+			s.append( k+':'+v )
+		return '{' + ','.join(s) + '}'
 
 	def visit_List(self, node):
 		s = []

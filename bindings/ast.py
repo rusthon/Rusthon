@@ -36,6 +36,18 @@ class Tuple:
 		for a in ctx.tree:
 			self.elts.append( to_ast_node(a) )
 
+class Dict:
+	def __init__(self, ctx, node):
+		self.keys = []
+		self.values = []
+		#for i in range(0, len(ctx.items), 2):  ## TODO fix me
+		i = 0
+		while i < len(ctx.items):
+			key = ctx.items[i]
+			val = ctx.items[i+1]
+			self.keys.append( to_ast_node(key) )
+			self.values.append( to_ast_node(val) )
+			i += 2
 
 class Assign:
 	def _collect_targets(self, ctx):
@@ -77,7 +89,11 @@ class Num:
 
 class Str:
 	def __init__(self, ctx, node):
-		self.s = ctx.value
+		#self.s = ctx.value  ## old brython
+		if len(ctx.tree) == 1:
+			self.s = ctx.tree[0]
+		else:
+			raise TypeError
 
 class Name:
 	def __init__(self, ctx=None, name=None):
@@ -291,6 +307,10 @@ def to_ast_node( ctx, node=None ):
 			return Tuple(ctx, node)
 		else:
 			raise TypeError
+
+	elif ctx.type == 'dict_or_set':
+		if ctx.real == 'dict':
+			return Dict(ctx, node)
 
 	elif ctx.type == 'decorator':
 		push_decorator( to_ast_node(ctx.tree[0]) )
