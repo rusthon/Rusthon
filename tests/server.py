@@ -153,6 +153,9 @@ def convert_python_html_document( data ):
 	script = None
 	use_dart = DART
 	for line in data.splitlines():
+		if line == 'source = $PYTHONJS':
+			line = open('../pythonjs/python_to_pythonjs.py', 'rb').read().decode('utf-8')
+
 		if line.strip().startswith('<script'):
 			if 'src="bindings/' in line:
 				doc.append( line )

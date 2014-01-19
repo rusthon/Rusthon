@@ -160,6 +160,19 @@ class BitXor:
 	pass
 class BitAnd:
 	pass
+
+class Eq:
+	pass
+class NotEq:
+	pass
+class Lt:
+	pass
+class LtE:
+	pass
+class Gt:
+	pass
+class GtE:
+	pass
 class Is:
 	pass
 class IsNot:
@@ -177,6 +190,12 @@ _operators = {
 	'|' : BitOr,
 	'^' : BitXor,
 	'&' : BitAnd,
+	'==': Eq,
+	'!=': NotEq,
+	'<' : Lt,
+	'<=': LtE,
+	'>' : Gt,
+	'>=': GtE,
 	'is': Is,
 	'is_not': IsNot,
 
@@ -366,6 +385,24 @@ class While:
 			if anode:
 				self.body.append( anode )
 
+class alias:
+	def __init__(self, name=None, asname=None):
+		self.name = name
+		self.asname = asname
+
+class Import:
+	def __init__(self, ctx, node):
+		self.names = []
+		for c in ctx.tree:
+			self.names.append( alias(name=c.name,asname=c.alias) )
+
+class ImportFrom:
+	def __init__(self, ctx, node):
+		self.module = ctx.module
+		self.names = []
+		self.level = 0
+		for name in ctx.names:
+			self.names.append( alias(name=name) )
 
 __MAP = {
 	'def'		: FunctionDef,
@@ -383,6 +420,8 @@ __MAP = {
 	'for'		: For,
 	'not'		: Not,
 	'sub'		: Subscript,
+	'import'	: Import,
+	'from'		: ImportFrom
 }
 
 def to_ast_node( ctx, node=None ):
@@ -521,6 +560,14 @@ class NodeVisitor:
 			'visit_'+type(node).__name__, 
 		)
 		return f( node )
+
+	def visit_Import(self, node):
+		a = [ alias.name for alias in node.names ]
+		print 'import', ','.join(a)
+
+	def visit_ImportFrom(self, node):
+		a = [ alias.name for alias in node.names ]
+		print 'from', node.module, 'import', ','.join(a)
 
 	def visit_Expr(self, node):
 		return self.visit(node.value)

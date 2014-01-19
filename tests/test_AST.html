@@ -16,6 +16,10 @@ function $last(item){
 
 <script src="bindings/ast.py"></script>
 
+<pre id="pythonjs_source">
+source = $PYTHONJS
+</pre>
+
 <script type="text/python">
 from ast import *
 
@@ -98,7 +102,7 @@ if True:
 
 """
 
-source = """
+source_ops = """
 if True:
 	a = 1 / 2
 	b = 2 // 2
@@ -109,6 +113,13 @@ if True:
 	g = not e
 
 """
+
+source_import = """
+import a,b,c
+from x import y
+"""
+
+source = document.getElementById('pythonjs_source').firstChild.nodeValue
 
 
 def test():
