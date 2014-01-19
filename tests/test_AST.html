@@ -90,13 +90,26 @@ if 1 <= 2:
 
 """
 
-source = """
+source_slice = """
 if True:
 	a = []
 	b = a[1:2]
 	c = a[1:2:3]
 
 """
+
+source = """
+if True:
+	a = 1 / 2
+	b = 2 // 2
+	c = a is b
+	d = a is not b
+	e = a**2
+	g = -e
+	g = not e
+
+"""
+
 
 def test():
 	global module
@@ -174,14 +187,11 @@ class DebugVisitor( NodeVisitor ):
 			s.append( self.visit(e) )
 		return '(' + ','.join(s) + ')'
 
-	def visit_Not(self, node):
-		return ' not ' + self.visit(node.value)
-
 	def visit_UnaryOp(self, node):
-		return node.op + self.visit(node.operand)
+		return self.visit(node.op) + self.visit(node.operand)
 
 	def visit_BinOp(self, node):
-		return self.visit( node.left ) + node.op + self.visit( node.right )
+		return self.visit( node.left ) + self.visit(node.op) + self.visit( node.right )
 
 	def visit_FunctionDef(self, node):
 		for dec in node.decorator_list:

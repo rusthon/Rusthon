@@ -19,8 +19,11 @@ class Pass:
 		pass
 
 class Not:
-	def __init__(self, ctx, node):
-		self.value = to_ast_node(ctx.tree[0])  ## not standard python
+	def __init__(self, ctx=None, node=None):
+		if ctx:
+			self.value = to_ast_node(ctx.tree[0])  ## not standard python
+		else:
+			self.value = None
 
 class List:
 	def __init__(self, ctx, node):
@@ -135,13 +138,71 @@ class Name:
 			print ctx
 			raise TypeError
 
+class Add:
+	pass
+class Sub:
+	pass
+class Div:
+	pass
+class FloorDiv:
+	pass
+class Mod:
+	pass
+class Pow:
+	pass
+class LShift:
+	pass
+class RShift:
+	pass
+class BitOr:
+	pass
+class BitXor:
+	pass
+class BitAnd:
+	pass
+class Is:
+	pass
+class IsNot:
+	pass
+
+_operators = {
+	'+' : Add,
+	'-' : Sub,
+	'/' : Div,
+	'//': FloorDiv,
+	'%' : Mod,
+	'**': Pow,
+	'<<': LShift,
+	'>>': RShift,
+	'|' : BitOr,
+	'^' : BitXor,
+	'&' : BitAnd,
+	'is': Is,
+	'is_not': IsNot,
+
+}
+
+class USub:
+	pass
+class UAdd:
+	pass
+class Invert:
+	pass
+
 class UnaryOp:
 	'''
 	note: this is constructed directly from an abstract_expr
 	'''
 	def __init__(self, op=None, operand=None):
-		self.op = op
 		self.operand = operand
+		if op == '-':
+			self.op = USub()
+		elif op == '+':
+			self.op = UAdd()
+		elif op == '~':
+			self.op = Invert()
+		elif op == 'not':
+			self.op = Not()
 
 class BinOp:
 	def __init__(self, ctx, node):
@@ -150,7 +211,13 @@ class BinOp:
 			raise TypeError
 		self.left = to_ast_node( ctx.tree[0] )
 		self.right = to_ast_node( ctx.tree[1] )
-		self.op = ctx.op  ## should be: +,-,*, etc...
+		if ctx.op in _operators:
+			klass = _operators[ctx.op]
+			self.op = klass()
+		else:
+			print('ERROR: unknown operator type')
+			print(ctx)
+			raise TypeError
 
 
 
@@ -469,3 +536,66 @@ class NodeVisitor:
 
 	def visit_Pass(self, node):
 		return 'pass'
+
+	def visit_Not(self, node):
+		## note: node.value is non-standard for the `Not` node
+		if node.value:
+			return ' not ' + self.visit(node.value)
+		else:
+			return ' not '
+
+	def visit_IsNot(self, node):
+		return ' is not '
+
+	def visit_Eq(self, node):
+		return '=='
+
+	def visit_NotEq(self, node):
+		return '!='
+
+	def visit_Is(self, node):
+		return ' is '
+
+	def visit_Pow(self, node):
+		return '**'
+
+	def visit_Mult(self, node):
+		return '*'
+
+	def visit_UAdd(self, node):
+		return '+'
+	def visit_USub(self, node):
+		return '-'
+	def visit_Add(self, node):
+		return '+'
+	def visit_Sub(self, node):
+		return '-'
+
+	def visit_FloorDiv(self, node):
+		return '//'
+	def visit_Div(self, node):
+		return '/'
+	def visit_Mod(self, node):
+		return '%'
+	def visit_LShift(self, node):
+		return '<<'
+	def visit_RShift(self, node):
+		return '>>'
+	def visit_BitXor(self, node):
+		return '^'
+	def visit_BitOr(self, node):
+		return '|'
+	def visit_BitAnd(self, node):
+		return '&'
+
+	def visit_Lt(self, node):
+		return '<'
+
+	def visit_Gt(self, node):
+		return '>'
+
+	def visit_GtE(self, node):
+		return '>='
+
+	def visit_LtE(self, node):
+		return '<='
