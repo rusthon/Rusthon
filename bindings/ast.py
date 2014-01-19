@@ -404,6 +404,28 @@ class ImportFrom:
 		for name in ctx.names:
 			self.names.append( alias(name=name) )
 
+class TryExcept:
+	_stack = []
+	def __init__(self, ctx, node):
+		TryExcept._stack.append( self )
+		self.body = []
+		self.handlers = []
+		self.orelse = []
+		for child in node.children:
+			self.body.append( to_ast_node(child.get_ctx()) )
+
+class ExceptHandler:
+	def __init__(self, ctx, node):
+		TryExcept._stack[-1].handlers.append(self)
+		self.type = None
+		self.name = None
+		self.body = []
+		if len(ctx.tree):
+			self.type = to_ast_node(ctx.tree[0])
+		for child in node.children:
+			self.body.append( to_ast_node(child.get_ctx()) )
+		#TryExcept._stack.pop()
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -421,7 +443,8 @@ __MAP = {
 	'not'		: Not,
 	'sub'		: Subscript,
 	'import'	: Import,
-	'from'		: ImportFrom
+	'from'		: ImportFrom,
+	'try'		: TryExcept, ## note: there is also TryFinally
 }
 
 def to_ast_node( ctx, node=None ):
@@ -433,6 +456,9 @@ def to_ast_node( ctx, node=None ):
 
 	elif ctx.type == 'assign' and ctx.tree[0].type == 'id' and ctx.tree[0].value == '$temp':
 		return AugAssign(ctx, node)
+
+	elif ctx.type == 'except':
+		ExceptHandler(ctx, node)  ## do not return, inserts self into TryExcept node
 
 	elif ctx.type in __MAP:
 		return __MAP[ ctx.type ]( ctx, node )
@@ -568,6 +594,20 @@ class NodeVisitor:
 	def visit_ImportFrom(self, node):
 		a = [ alias.name for alias in node.names ]
 		print 'from', node.module, 'import', ','.join(a)
+
+	def visit_TryExcept(self, node):
+		print 'try:'
+		for n in node.body:
+			a = self.visit(n)
+			if a: print '  ', a
+		for h in node.handlers:
+			if h.type:
+				print 'except ', self.visit(h.type), ':'
+			else:
+				print 'except:'
+			for n in h.body:
+				a = self.visit(n)
+				if a: print '  ', a
 
 	def visit_Expr(self, node):
 		return self.visit(node.value)

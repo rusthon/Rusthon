@@ -119,7 +119,15 @@ import a,b,c
 from x import y
 """
 
-source = document.getElementById('pythonjs_source').firstChild.nodeValue
+source = """
+try:
+	a = 1+1
+except SomeError:
+	pass
+
+"""
+
+#source = document.getElementById('pythonjs_source').firstChild.nodeValue
 
 
 def test():
