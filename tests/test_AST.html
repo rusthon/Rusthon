@@ -94,6 +94,7 @@ source = """
 if True:
 	a = []
 	b = a[1:2]
+	c = a[1:2:3]
 
 """
 
@@ -147,7 +148,10 @@ class DebugVisitor( NodeVisitor ):
 		return self.visit(node.value)
 
 	def visit_Slice(self, node):
-		return self.visit(node.lower) + ':' + self.visit(node.upper)
+		if node.step:
+			return self.visit(node.lower) + ':' + self.visit(node.upper) + ':' + self.visit(node.step)
+		else:
+			return self.visit(node.lower) + ':' + self.visit(node.upper)
 
 	def visit_Dict(self, node):
 		s = []

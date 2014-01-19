@@ -59,6 +59,12 @@ class Subscript:
 				lower=to_ast_node(ctx.tree[0]),
 				upper=to_ast_node(ctx.tree[1])
 			)
+		elif len(ctx.tree) == 3:
+			self.slice = Slice(
+				lower=to_ast_node(ctx.tree[0]),
+				upper=to_ast_node(ctx.tree[1]),
+				step=to_ast_node(ctx.tree[2])
+			)
 		else:
 			raise TypeError
 		#self.ctx = 'Load', 'Store', 'Del'
