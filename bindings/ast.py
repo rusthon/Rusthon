@@ -32,6 +32,32 @@ class List:
 		for a in ctx.tree:
 			self.elts.append( to_ast_node(a) )
 
+class comprehension:
+	def __init__(self, ctx):
+		if ctx.type != 'comp_for': raise TypeError
+		target = ctx.tree[0]
+		iter = ctx.tree[1]
+		if target.type != 'target_list': raise TypeError
+		if iter.type != 'comp_iterable': raise TypeError
+
+		self.target = to_ast_node( target.tree[0] ) ## TODO support mutiple targets
+		self.iter = to_ast_node( iter.tree[0] )
+		self.ifs = []
+
+class ListComp:
+	def __init__(self, ctx, node):
+		self.elt = to_ast_node(ctx.expression[0])  ## TODO support mutiple
+		self.generators = []
+		self._vars = ctx.vars ## brython catches all names
+		for c in ctx.tree:
+			if c.type == 'comprehension':
+				if len(c.tree) == 1:
+					self.generators.append( comprehension(c.tree[0]) )
+				else:
+					raise TypeError
+			else:
+				raise TypeError
+
 class Tuple:
 	def __init__(self, ctx, node):
 		self.elts = []
@@ -90,12 +116,19 @@ class Assign:
 				self.targets.append( Name(ctx.tree[0]) )
 			elif a.type == 'attribute' and a.func == 'getattr' and a.value.type == 'id':
 				self.targets.append( Attribute(a,None) )
+			elif a.type == 'sub' and a.func == 'getitem':
+				self.targets.append( to_ast_node(a) )
 			else:
+				print('_collect_targets ERROR!')
+				print(ctx)
 				raise TypeError
 
 		elif ctx.type == 'assign':
 			self._collect_targets( ctx.tree[0] )
 			self._collect_targets( ctx.tree[1] )
+
+		elif ctx.type == 'list_or_tuple':
+			self.targets.append( to_ast_node(ctx) )
 		else:
 			print('_collect_targets ERROR')
 			print( ctx )
@@ -146,6 +179,8 @@ class Div:
 	pass
 class FloorDiv:
 	pass
+class Mul:
+	pass
 class Mod:
 	pass
 class Pow:
@@ -173,9 +208,17 @@ class Gt:
 	pass
 class GtE:
 	pass
+class In:
+	pass
+class NotIn:
+	pass
 class Is:
 	pass
 class IsNot:
+	pass
+class And:
+	pass
+class Or:
 	pass
 
 _operators = {
@@ -183,6 +226,7 @@ _operators = {
 	'-' : Sub,
 	'/' : Div,
 	'//': FloorDiv,
+	'*' : Mul,
 	'%' : Mod,
 	'**': Pow,
 	'<<': LShift,
@@ -196,9 +240,12 @@ _operators = {
 	'<=': LtE,
 	'>' : Gt,
 	'>=': GtE,
+	'in': In,
+	'not_in' : NotIn,
 	'is': Is,
 	'is_not': IsNot,
-
+	'and' : And,
+	'or'  : Or,
 }
 
 class USub:
@@ -426,6 +473,28 @@ class ExceptHandler:
 			self.body.append( to_ast_node(child.get_ctx()) )
 		#TryExcept._stack.pop()
 
+class Assert:
+	def __init__(self, ctx, node):
+		self.test = to_ast_node(ctx.tree[0])
+		self.msg = None
+
+class Raise:
+	'''
+	Python2 and Python3 style
+	'''
+	def __init__(self, ctx, node):
+		# Py3 style
+		self.exc = to_ast_node(ctx.tree[0])
+		if len(ctx.tree) > 1:
+			self.cause = to_ast_node(ctx.tree[1])
+		else:
+			self.cause = None
+		# Py2 style
+		self.type = self.exc
+		self.inst = self.cause
+		self.tback = None
+
+
 __MAP = {
 	'def'		: FunctionDef,
 	'assign'	: Assign,
@@ -445,6 +514,8 @@ __MAP = {
 	'import'	: Import,
 	'from'		: ImportFrom,
 	'try'		: TryExcept, ## note: there is also TryFinally
+	'assert'	: Assert,
+	'raise'		: Raise,
 }
 
 def to_ast_node( ctx, node=None ):
@@ -468,6 +539,8 @@ def to_ast_node( ctx, node=None ):
 			return List(ctx, node)
 		elif ctx.real == 'tuple':
 			return Tuple(ctx, node)
+		elif ctx.real == 'list_comp':
+			return ListComp(ctx, node)
 		else:
 			raise TypeError
 
@@ -503,6 +576,8 @@ def to_ast_node( ctx, node=None ):
 		## special brython inline javascript ##
 		if len(ctx.tree) == 1 and '__iadd__' in ctx.tree[0]:
 			AugAssign._previous.op = '+'
+		elif len(ctx.tree) == 1 and '__isub__' in ctx.tree[0]:
+			AugAssign._previous.op = '-'
 		elif len(ctx.tree) == 1 and ctx.tree[0].startswith("if($temp.$fast_augm"):
 			a,b = ctx.tree[0].split('$globals')
 			c = b.split('"')
@@ -587,6 +662,10 @@ class NodeVisitor:
 		)
 		return f( node )
 
+	def visit_ListComp(self, node):
+		gen = node.generators[0]
+		return '[' + self.visit(node.elt) + ' for ' + self.visit(gen.target) + ' in ' +  self.visit(gen.iter) + ']'
+
 	def visit_Import(self, node):
 		a = [ alias.name for alias in node.names ]
 		print 'import', ','.join(a)
@@ -608,6 +687,12 @@ class NodeVisitor:
 			for n in h.body:
 				a = self.visit(n)
 				if a: print '  ', a
+
+	def visit_Assert(self, node):
+		print 'assert', self.visit(node.test)
+
+	def visit_Raise(self, node):
+		print 'raise', self.visit(node.type)
 
 	def visit_Expr(self, node):
 		return self.visit(node.value)
@@ -639,6 +724,9 @@ class NodeVisitor:
 
 	def visit_NotEq(self, node):
 		return '!='
+
+	def visit_In(self, node):
+		return ' in '
 
 	def visit_Is(self, node):
 		return ' is '
@@ -686,3 +774,12 @@ class NodeVisitor:
 
 	def visit_LtE(self, node):
 		return '<='
+
+	def visit_And(self, node):
+		return ' and '
+
+	def visit_Or(self, node):
+		return ' or '
+
+	def visit_NotIn(self, node):
+		return ' not in '

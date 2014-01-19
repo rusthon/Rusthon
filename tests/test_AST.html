@@ -119,12 +119,27 @@ import a,b,c
 from x import y
 """
 
-source = """
+source_try = """
 try:
 	a = 1+1
 except SomeError:
 	pass
 
+"""
+
+source_in = """
+if True:
+	x in a
+	x not in a
+"""
+
+source_raise = """
+raise RuntimeError
+"""
+
+source = """
+if True:
+	a = [x for x in 'abc']
 """
 
 #source = document.getElementById('pythonjs_source').firstChild.nodeValue
