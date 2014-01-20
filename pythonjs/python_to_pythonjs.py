@@ -79,14 +79,14 @@ class Writer(object):
 
 	def _write(self, code):
 		indentation = self.level * 4 * ' '
-		if self.with_javascript and False: ## deprecated
-			if not code.endswith(':'):  ## will this rule always catch: while, and if/else blocks?
-				if not code.startswith('print '):
-					if not code.startswith('var('):
-						if not code == 'pass':
-							if not code.startswith('JS('):
-								if not code.startswith('@'):
-									code = """JS('''%s''')"""%code
+		#if self.with_javascript and False: ## deprecated
+		#	if not code.endswith(':'):  ## will this rule always catch: while, and if/else blocks?
+		#		if not code.startswith('print '):
+		#			if not code.startswith('var('):
+		#				if not code == 'pass':
+		#					if not code.startswith('JS('):
+		#						if not code.startswith('@'):
+		#							code = """JS('''%s''')"""%code
 		s = '%s%s\n' % (indentation, code)
 		#self.output.write(s.encode('utf-8'))
 		self.output.write(s)

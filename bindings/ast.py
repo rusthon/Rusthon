@@ -180,7 +180,7 @@ class Div:
 	pass
 class FloorDiv:
 	pass
-class Mul:
+class Mult:
 	pass
 class Mod:
 	pass
@@ -227,7 +227,7 @@ _operators = {
 	'-' : Sub,
 	'/' : Div,
 	'//': FloorDiv,
-	'*' : Mul,
+	'*' : Mult,
 	'%' : Mod,
 	'**': Pow,
 	'<<': LShift,
@@ -449,7 +449,9 @@ class For:
 		self.iter = to_ast_node( ctx.tree[1] )
 		self.body = []
 		for child in node.children:
-			self.body.append( to_ast_node(child.get_ctx()) )
+			anode = to_ast_node(child.get_ctx())
+			if anode:
+				self.body.append( anode )
 
 class While:
 	def __init__(self, ctx, node):
@@ -696,6 +698,7 @@ class NodeVisitor:
 		if node is None:
 			print('ERROR: trying to visit None')
 			raise TypeError
+		#print('visit.name', node)
 		f = getattr(
 			self, 
 			'visit_'+type(node).__name__, 
