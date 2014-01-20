@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed Jan 15 08:46:01 2014
+// PythonJS Runtime - regenerated on: Mon Jan 20 02:34:56 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __NODEJS__ = false;
@@ -485,20 +485,28 @@ __jsdict_values.types_signature = {  };
 __jsdict_pop = function(ob, key, _default) {
   var v;
   if (_default == undefined) _default = undefined;
-  if (ob instanceof Object) {
-    if (key in ob) {
-      v = ob[ (key.__uid__) ? key.__uid__ : key];
-      delete ob[key];
-      return v;
+  if (ob instanceof Array) {
+    if (ob.length) {
+      return ob.pop(key);
     } else {
-      if (( _default ) === undefined) {
-        throw KeyError;
-      } else {
-        return _default;
-      }
+      throw IndexError;
     }
   } else {
-    return ob.pop(key, _default);
+    if (ob instanceof Object) {
+      if (key in ob) {
+        v = ob[ (key.__uid__) ? key.__uid__ : key];
+        delete ob[key];
+        return v;
+      } else {
+        if (( _default ) === undefined) {
+          throw KeyError;
+        } else {
+          return _default;
+        }
+      }
+    } else {
+      return ob.pop(key, _default);
+    }
   }
 }
 

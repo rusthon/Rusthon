@@ -70,7 +70,12 @@ with javascript:
 			return JS("ob.values()")
 
 	def __jsdict_pop(ob, key, _default=None):
-		if instanceof(ob, Object):
+		if instanceof(ob, Array):
+			if ob.length:
+				return JS("ob.pop(key)")
+			else:
+				raise IndexError
+		elif instanceof(ob, Object):
 			if JS("key in ob"):
 				v = ob[key]
 				JS("delete ob[key]")
