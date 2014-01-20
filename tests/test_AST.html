@@ -137,9 +137,44 @@ source_raise = """
 raise RuntimeError
 """
 
-source = """
+source_list_comp = """
 if True:
 	a = [x for x in 'abc']
+"""
+
+source_tuple_for = """
+for i,c in enumerate('abc'):
+	print( i )
+
+"""
+source_null_slice = """
+if True:
+	a = []
+	b = a[1:]
+"""
+
+source_null_return = """
+def func():
+	return
+
+"""
+
+source_lambda = """
+if True:
+	f = lambda x,y,z: x+y+z
+
+"""
+
+source = """
+if True:
+	a = 100
+	a += 1
+	b += 2
+
+class XXX(object):
+	def some_method(self):
+		self.level += 1
+
 """
 
 #source = document.getElementById('pythonjs_source').firstChild.nodeValue
@@ -186,7 +221,7 @@ class DebugVisitor( NodeVisitor ):
 		return a + '=' + b
 
 	def visit_AugAssign(self, node):
-		return self.visit(node.target) + node.op + '=' + self.visit(node.value)
+		return self.visit(node.target) + node.op + self.visit(node.value)
 
 	def visit_Subscript(self, node):
 		return '%s[%s]' %(self.visit(node.value), self.visit(node.slice))
@@ -195,10 +230,17 @@ class DebugVisitor( NodeVisitor ):
 		return self.visit(node.value)
 
 	def visit_Slice(self, node):
+		lower = ''
+		upper = ''
+		step = ''
+		if node.lower: lower = self.visit(node.lower)
+		if node.upper: upper = self.visit(node.upper)
+		if node.step: step = self.visit(node.step)
+
 		if node.step:
-			return self.visit(node.lower) + ':' + self.visit(node.upper) + ':' + self.visit(node.step)
+			return lower + ':' + upper + ':' + step
 		else:
-			return self.visit(node.lower) + ':' + self.visit(node.upper)
+			return lower + ':' + upper
 
 	def visit_Dict(self, node):
 		s = []
@@ -245,7 +287,10 @@ class DebugVisitor( NodeVisitor ):
 			print '   ', self.visit(n)
 
 	def visit_Return(self, node):
-		return 'return ' + self.visit(node.value)
+		if node.value:
+			return 'return ' + self.visit(node.value)
+		else:
+			return 'return'
 
 	def visit_Call(self, node):
 		print self.visit(node.func) + '('

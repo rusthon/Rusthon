@@ -2496,6 +2496,13 @@ function $add_line_num(node,rank){
 }
 
 function $augmented_assign(context,op){
+    context.augm_assign = {op:op};
+    context.name = 'augm_assign';
+    //return context; // can not return this directly because the right-term will not be traversed
+    return new $AbstractExprCtx(context); // return control to right term of "target = ?"
+}
+
+function $augmented_assign_deprecated(context,op){
     // in "foo += bar" context = foo, op = +
     // replace foo += bar by :
     // $temp = bar

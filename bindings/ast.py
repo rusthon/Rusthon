@@ -114,7 +114,7 @@ class Assign:
 			a = ctx.tree[0]
 			if a.type == 'id':
 				self.targets.append( Name(ctx.tree[0]) )
-			elif a.type == 'attribute' and a.func == 'getattr' and a.value.type == 'id':
+			elif a.type == 'attribute' and a.func == 'getattr': #and a.value.type == 'id':
 				self.targets.append( Attribute(a,None) )
 			elif a.type == 'sub' and a.func == 'getitem':
 				self.targets.append( to_ast_node(a) )
@@ -135,22 +135,23 @@ class Assign:
 			raise TypeError
 
 	def __init__(self, ctx, node):
-		print('assign node.........')
-		print(ctx)
 		self.targets = []
 		self._collect_targets( ctx.tree[0] )
 		self.value = to_ast_node( ctx.tree[1] )  ## should be an: expr.name==operand
 
 class AugAssign:
-	_previous = None
+	#_previous = None  ## DEPRECATED
 	def __init__(self, ctx, node):
-		AugAssign._previous = self
-		self.target = None
-		self.op = None
-		self.value = to_ast_node(ctx.tree[1])
+		#AugAssign._previous = self
+		ctx.name = ''  ## need to set name to nothing so that to_ast_node will not recurse back here
+		self.target = to_ast_node(ctx)
+		self.op = ctx.augm_assign['op']
+		self.value = to_ast_node( ctx.tree[1] )
 
 class Num:
 	def __init__(self, ctx, node):
+		if ctx.value is None:
+			raise TypeError
 		self.n = ctx.value
 
 class Str:
@@ -296,6 +297,7 @@ class _arguments:
 		self.kw_defaults = []
 
 		if ctx.type != 'func_args':
+			print('_arguments class expects ctx.type of func_args')
 			raise TypeError
 		for c in ctx.tree:
 			if c.type == 'func_arg_id':
@@ -319,14 +321,37 @@ class FunctionDef:
 		self.returns = None ## python3 returns annotation
 		print 'FunctionDef::', ctx
 		for child in node.children:
-			anode = to_ast_node( child.get_ctx(), node=child )
-			if anode:  ## ctx of type: 'single_kw' and token elif/else do not return an ast node
-				self.body.append( anode )
+			child_ctx = child.get_ctx()
+			if child_ctx:
+				anode = to_ast_node( child_ctx, node=child )
+				if anode:  ## ctx of type: 'single_kw' and token elif/else do not return an ast node
+					self.body.append( anode )
 
+class _lambda_arguments:
+	def __init__(self, ctx):
+		self.args = []
+		self.vararg = None  # string
+		self.kwarg = None	# string
+		self.defaults = []
+		self.kw_defaults = []
+		for c in ctx.tree:
+			if c.type != 'call_arg': raise TypeError
+			name = c.vars[0]
+			self.args.append( Name(name=name) )
+
+class Lambda:
+	def __init__(self, ctx, node):
+		self.args = _lambda_arguments( ctx.args[0] )
+		self.body = to_ast_node( ctx.tree[0] )
+		self._locals = ctx.locals
+		self._vars = ctx.vars
 
 class Return:
 	def __init__(self, ctx, node):
-		self.value = to_ast_node( ctx.tree[0] )
+		if ctx.tree[0].type == 'abstract_expr' and len(ctx.tree[0].tree)==0:
+			self.value = None
+		else:
+			self.value = to_ast_node( ctx.tree[0] )
 
 
 class _keyword:
@@ -380,8 +405,8 @@ class ClassDef:
 		for child in node.children:
 			if child.get_ctx():
 				anode = to_ast_node( child.get_ctx() )
-				print 'class body:', anode
-				self.body.append( anode )
+				if anode:
+					self.body.append( anode )
 
 
 class Attribute:
@@ -405,7 +430,9 @@ class IfExp:
 		self.body = []
 		self.orelse = []
 		for child in node.children:
-			self.body.append( to_ast_node(child.get_ctx()) )
+			anode = to_ast_node(child.get_ctx())
+			if anode:
+				self.body.append( anode )
 
 class For:
 	def __init__(self, ctx, node):
@@ -415,8 +442,9 @@ class For:
 		if len(targets.tree) == 1:
 			self.target = to_ast_node( targets.tree[0] )
 		else:  ## pack into a ast.Tuple
-			print('TODO pack for-loop targets into ast.Tuple')
-			raise TypeError
+			#print('TODO pack for-loop targets into ast.Tuple')
+			#raise TypeError
+			self.target = Tuple( targets )
 
 		self.iter = to_ast_node( ctx.tree[1] )
 		self.body = []
@@ -497,6 +525,7 @@ class Raise:
 
 __MAP = {
 	'def'		: FunctionDef,
+	'lambda'	: Lambda,
 	'assign'	: Assign,
 	'return'	: Return,
 	'expr'		: Expr,
@@ -519,13 +548,17 @@ __MAP = {
 }
 
 def to_ast_node( ctx, node=None ):
-	print 'to-ast-node', ctx
+	#print 'to-ast-node', ctx
 
 	if ctx.type == 'node':
 		print 'NODE::', ctx.node
 		return to_ast_node( ctx.tree[0], node=ctx.node )
 
 	elif ctx.type == 'assign' and ctx.tree[0].type == 'id' and ctx.tree[0].value == '$temp':
+		print('DEPRECATED')
+		raise TypeError
+		return AugAssign(ctx, node)
+	elif ctx.type == 'expr' and ctx.name == 'augm_assign':
 		return AugAssign(ctx, node)
 
 	elif ctx.type == 'except':
@@ -573,14 +606,15 @@ def to_ast_node( ctx, node=None ):
 			raise TypeError
 
 	elif ctx.type == 'node_js':
+		print(ctx.tree[0])
 		## special brython inline javascript ##
 		if len(ctx.tree) == 1 and '__iadd__' in ctx.tree[0]:
 			AugAssign._previous.op = '+'
 		elif len(ctx.tree) == 1 and '__isub__' in ctx.tree[0]:
 			AugAssign._previous.op = '-'
 		elif len(ctx.tree) == 1 and ctx.tree[0].startswith("if($temp.$fast_augm"):
-			a,b = ctx.tree[0].split('$globals')
-			c = b.split('"')
+			print(ctx.tree[0])
+			c = ctx.tree[0].split('"')
 			if len(c) == 3:
 				AugAssign._previous.target = Name( name=c[1] )
 			else:
@@ -608,6 +642,9 @@ def to_ast_node( ctx, node=None ):
 				print '---------abstract_expr error----------'
 				print ctx
 				raise TypeError
+		elif ctx.parent.type=='sub' and len(ctx.tree)==0:
+			## this is a null part of the slice: "a[1:]"
+			return None
 		else:
 			print '---------abstract_expr error----------'
 			print ctx
@@ -650,17 +687,32 @@ def parse(source):
 
 class NodeVisitor:
 	def __init__(self, module):
+		#print('module:')
+		#print(module)
 		for node in module:
 			self.visit( node )
 
 	def visit(self, node):
 		if node is None:
+			print('ERROR: trying to visit None')
 			raise TypeError
 		f = getattr(
 			self, 
 			'visit_'+type(node).__name__, 
 		)
 		return f( node )
+
+	def visit_Lambda(self, node):
+		args = []
+		for a in node.args.args:
+			args.append( self.visit(a) )
+		if node.args.vararg:
+			args.append( '*'+node.args.vararg )
+		if node.args.kwarg:
+			args.append( '**'+node.args.kwarg )
+		args = ','.join( args )
+		body = self.visit(node.body)
+		return 'lambda %s: %s' %(args, body)
 
 	def visit_ListComp(self, node):
 		gen = node.generators[0]
