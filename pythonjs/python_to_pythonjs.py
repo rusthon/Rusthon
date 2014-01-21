@@ -1589,6 +1589,13 @@ class PythonToPythonJS(NodeVisitor):
 			if name in self._generator_functions:
 				return 'JS("new %s(%s)")' %(name, ','.join(args))
 
+		elif isinstance(node.func, Name) and node.func.id == 'new':
+			tmp = self._with_js
+			self._with_js = True
+			args = list( map(self.visit, node.args) )
+			self._with_js = tmp
+			assert len(args) == 1
+			return 'new(%s)' %args[0]
 
 		elif isinstance(node.func, Name) and node.func.id in ('JS', 'toString', 'JSObject', 'JSArray', 'var', 'instanceof', 'typeof'):
 			args = list( map(self.visit, node.args) ) ## map in py3 returns an iterator not a list

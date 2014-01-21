@@ -1,0 +1,44 @@
+<html>
+<head>
+<script src="pythonjs.js"></script>
+
+<script type="text/python">
+
+def worker_func():
+	def pong(evt):
+		console.log('parent:'+evt.data)
+		#postMessage( {'key':'hello world'} )
+		postMessage( "pong" )
+	this.onmessage = pong
+
+worker = None
+limit = 0
+def ping(evt):
+	global limit
+	print 'got from worker', evt.data
+	if limit < 100:
+		worker.postMessage( 'ping' )
+	limit += 1
+
+def test():
+	global worker
+	code = worker_func.toString()
+	print code
+	arr = [
+		'importScripts("http://localhost:8080/pythonjs.js");',
+		'(',code,')()'
+	]
+	blob = new( Blob(arr, {'type':'text/javascript'}) )
+	url = URL.createObjectURL(blob)
+	print url
+	worker = new( Worker(url) )
+	worker.onmessage = ping
+	worker.postMessage( "from parent" )
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+</body>
+</html>

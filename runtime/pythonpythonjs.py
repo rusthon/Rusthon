@@ -5,14 +5,19 @@
 
 __NULL_OBJECT__ = Object.create( null )
 if 'window' in this and 'document' in this:
+	__WEBWORKER__ = False
 	__NODEJS__ = False
 	pythonjs = {}
-else:
-	## note, we can not test for: '"process" in this' or '"process" in global'
+elif 'process' in this:
+	## note, we can not test for '"process" in global'
 	## make sure we are really inside NodeJS by letting this fail, and halting the program.
-	__NODEJS__ = True
 	print process.title
 	print process.version
+	__WEBWORKER__ = False
+	__NODEJS__ = True
+else:
+	__NODEJS__ = False
+	__WEBWORKER__ = True
 
 
 def jsrange(num):
@@ -115,7 +120,7 @@ def __get__(object, attribute):
 	attr = object[attribute]  ## this could be a javascript object with cached method
 
 
-	if __NODEJS__ is False:
+	if __NODEJS__ is False and __WEBWORKER__ is False:
 		if JS("object instanceof HTMLDocument"):
 			#print 'DYNAMIC wrapping HTMLDocument'
 			if JS("typeof(attr) === 'function'"):

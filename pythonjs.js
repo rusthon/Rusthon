@@ -1,12 +1,19 @@
-// PythonJS Runtime - regenerated on: Mon Jan 20 02:34:56 2014
+// PythonJS Runtime - regenerated on: Mon Jan 20 20:31:45 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
+  __WEBWORKER__ = false;
   __NODEJS__ = false;
   pythonjs = {  };
 } else {
-  __NODEJS__ = true;
-  console.log(process.title);
-  console.log(process.version);
+  if (( "process" )  in  this) {
+    console.log(process.title);
+    console.log(process.version);
+    __WEBWORKER__ = false;
+    __NODEJS__ = true;
+  } else {
+    __NODEJS__ = false;
+    __WEBWORKER__ = true;
+  }
 }
 jsrange = function(num) {
   "Emulates Python's range function";
@@ -93,7 +100,7 @@ __get__ = function(object, attribute) {
   }
   var attr;
   attr = object[attribute];
-  if (( __NODEJS__ ) === false) {
+  if (( __NODEJS__ ) === false && ( __WEBWORKER__ ) === false) {
     if (object instanceof HTMLDocument) {
       if (typeof(attr) === 'function') {
                 var wrapper = function(args, kwargs) {
