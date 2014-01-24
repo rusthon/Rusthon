@@ -1191,7 +1191,10 @@ class PythonToPythonJS(NodeVisitor):
 				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num):
-				return '%s[ %s ]' %(name, self.visit(node.slice))
+				if node.slice.value.n < 0:
+					return '%s[ %s.length+%s ]' %(name, name, self.visit(node.slice))
+				else:
+					return '%s[ %s ]' %(name, self.visit(node.slice))
 			else:
 				s = self.visit(node.slice)
 				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
