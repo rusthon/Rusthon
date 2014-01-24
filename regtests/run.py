@@ -41,6 +41,7 @@ def runnable(command):
 ## rhino has problems: like maximum callstack errors simply freeze up rhino
 rhino_runnable = runnable("rhino -help") and '--rhino' in sys.argv
 node_runnable = runnable("node --help")
+dart2js_runnable = runnable( os.path.expanduser( '~/dart/dart-sdk/bin/dart2js') )  ## TODO - dart tests
 assert rhino_runnable or node_runnable
 
 if show_details:

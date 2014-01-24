@@ -1532,6 +1532,14 @@ class PythonToPythonJS(NodeVisitor):
 					else:
 						raise SyntaxError
 
+				elif kw.arg == 'dart':
+					if kw.value.id == 'True':
+						self._with_dart = True
+					elif kw.value.id == 'False':
+						self._with_dart = False
+					else:
+						raise SyntaxError
+
 				elif kw.arg == 'inline':
 					if kw.value.id == 'True':
 						self._with_inline = True
