@@ -38,8 +38,10 @@ def runnable(command):
     f.close()
     return output != ''
 
-rhino_runnable = runnable("rhino -help")
+## rhino has problems: like maximum callstack errors simply freeze up rhino
+rhino_runnable = runnable("rhino -help") and '--rhino' in sys.argv
 node_runnable = runnable("node --help")
+assert rhino_runnable or node_runnable
 
 if show_details:
     display_errors = ""

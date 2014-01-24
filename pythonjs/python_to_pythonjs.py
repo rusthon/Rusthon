@@ -990,6 +990,9 @@ class PythonToPythonJS(NodeVisitor):
 		elif op == '**':
 			return 'Math.pow(%s,%s)' %(left, right)
 
+		elif op == '+' and not self._with_dart:
+			return '__add_op(%s, %s)'%(left, right)
+
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
 			if typedef and op in typedef.operators:

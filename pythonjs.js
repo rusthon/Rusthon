@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Jan 24 00:56:54 2014
+// PythonJS Runtime - regenerated on: Fri Jan 24 03:52:27 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -426,6 +426,31 @@ __test_if_true__.NAME = "__test_if_true__";
 __test_if_true__.args_signature = ["ob"];
 __test_if_true__.kwargs_signature = {  };
 __test_if_true__.types_signature = {  };
+__add_op = function(a, b) {
+  var c, t;
+  t = typeof(a);
+  if (( t ) == "number" || ( t ) == "string") {
+    return a+b;
+  } else {
+    if (a instanceof Array) {
+      c = [];
+      c.extend(a);
+      c.extend(b);
+      return c;
+    } else {
+      if (a.__add__) {
+        return a.__add__(b);
+      } else {
+        throw TypeError;
+      }
+    }
+  }
+}
+
+__add_op.NAME = "__add_op";
+__add_op.args_signature = ["a", "b"];
+__add_op.kwargs_signature = {  };
+__add_op.types_signature = {  };
 __jsdict = function(items) {
   var d, key;
   d = {};
@@ -639,7 +664,7 @@ __sprintf = function(fmt, args) {
       arr.append(item);
     } else {
       if (( typeof(item) ) == "number") {
-        arr.append(("" + item));
+        arr.append(__add_op("", item));
       } else {
         arr.append(Object.prototype.toString.call(item));
       }
@@ -992,14 +1017,14 @@ round = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var a = arguments['a'];
   var places = arguments['places'];
-  b = ("" + a);
+  b = __add_op("", a);
   if (( b.indexOf(".") ) == -1) {
     return a;
   } else {
     c = b.split(".");
     x = c[0];
     y = c[1].substring(0, places);
-    return parseFloat(((x + ".") + y));
+    return parseFloat(__add_op(__add_op(x, "."), y));
   }
 }
 
@@ -1019,7 +1044,7 @@ str = function(args, kwargs) {
   signature = {"kwargs": Object(), "args": __create_array__("s")};
   arguments = get_arguments(signature, args, kwargs);
   var s = arguments['s'];
-  return ("" + s);
+  return __add_op("", s);
 }
 
 str.NAME = "str";
@@ -1084,7 +1109,7 @@ _setup_str_prototype = function(args, kwargs) {
       return this.split("").reverse().join("");
     } else {
       if (( stop ) < 0) {
-        stop = (this.length + stop);
+        stop = __add_op(this.length, stop);
       }
       return this.substring(start, stop);
     }
@@ -1309,7 +1334,7 @@ _setup_array_prototype = function(args, kwargs) {
     var __getitem__ = function(index) {
     var index;
     if (( index ) < 0) {
-      index = (this.length + index);
+      index = __add_op(this.length, index);
     }
     return this[ (index.__uid__) ? index.__uid__ : index];
   }
@@ -1322,7 +1347,7 @@ _setup_array_prototype = function(args, kwargs) {
     var __setitem__ = function(index, value) {
     var index;
     if (( index ) < 0) {
-      index = (this.length + index);
+      index = __add_op(this.length, index);
     }
     this[ (index.__uid__) ? index.__uid__ : index] = value;
   }
@@ -1344,7 +1369,7 @@ _setup_array_prototype = function(args, kwargs) {
     var func = function(start, stop, step) {
     var stop;
     if (( stop ) < 0) {
-      stop = (this.length + stop);
+      stop = __add_op(this.length, stop);
     }
     return this.slice(start, stop);
   }
@@ -1363,7 +1388,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.kwargs_signature = {  };
   func.types_signature = {  };
   Array.prototype.append = func;
-    var extend = function(self, other) {
+    var extend = function(other) {
         var __iter13 = other;
     if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
     for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
@@ -1373,7 +1398,7 @@ _setup_array_prototype = function(args, kwargs) {
   }
 
   extend.NAME = "extend";
-  extend.args_signature = ["self", "other"];
+  extend.args_signature = ["other"];
   extend.kwargs_signature = {  };
   extend.types_signature = {  };
   Array.prototype.extend = extend;
@@ -1391,7 +1416,7 @@ _setup_array_prototype = function(args, kwargs) {
     var insert = function(index, obj) {
     var index;
     if (( index ) < 0) {
-      index = (this.length + index);
+      index = __add_op(this.length, index);
     }
     this.splice(index, 0, obj);
   }
@@ -1449,12 +1474,12 @@ _setup_array_prototype = function(args, kwargs) {
       high = this.length;
     }
     while(( low ) < high) {
-      a = (low + high);
+      a = __add_op(low, high);
       mid = Math.floor((a / 2));
       if (( x ) < this[ (mid.__uid__) ? mid.__uid__ : mid]) {
         high = mid;
       } else {
-        low = (mid + 1);
+        low = __add_op(mid, 1);
       }
     }
     return low;
@@ -1875,7 +1900,7 @@ __Iterator_next = function(args, kwargs) {
     throw StopIteration;
   }
   item = __jsdict_get(self.obj, self.index);
-  self.index = (self.index + 1);
+  self.index = __add_op(self.index, 1);
   return item;
 }
 
@@ -1909,11 +1934,44 @@ __Iterator_next_fast.types_signature = {  };
 __Iterator_next_fast.pythonscript_function = true;
 __Iterator_attrs["next_fast"] = __Iterator_next_fast;
 Iterator = create_class("Iterator", __Iterator_parents, __Iterator_attrs, __Iterator_properties);
-var tuple, __tuple_attrs, __tuple_parents;
-__tuple_attrs = Object();
-__tuple_parents = [];
-__tuple_properties = Object();
-__tuple___init__ = function(args, kwargs) {
+tuple = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var signature, arguments;
+  signature = {"kwargs": Object(), "args": __create_array__("a")};
+  arguments = get_arguments(signature, args, kwargs);
+  var a = arguments['a'];
+  if (( Object.keys(arguments).length ) == 0) {
+    return [];
+  } else {
+    if (a instanceof Array) {
+      return a.slice();
+    } else {
+      if (( typeof(a) ) == "string") {
+        return a.split("");
+      } else {
+        console.log(a);
+        console.log(arguments);
+        throw TypeError;
+      }
+    }
+  }
+}
+
+tuple.NAME = "tuple";
+tuple.args_signature = ["a"];
+tuple.kwargs_signature = {  };
+tuple.types_signature = {  };
+tuple.pythonscript_function = true;
+var pytuple, __pytuple_attrs, __pytuple_parents;
+__pytuple_attrs = Object();
+__pytuple_parents = [];
+__pytuple_properties = Object();
+__pytuple___init__ = function(args, kwargs) {
   var arr;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -1960,13 +2018,13 @@ __tuple___init__ = function(args, kwargs) {
   }
 }
 
-__tuple___init__.NAME = "__tuple___init__";
-__tuple___init__.args_signature = ["self", "js_object", "pointer"];
-__tuple___init__.kwargs_signature = { js_object:undefined,pointer:undefined };
-__tuple___init__.types_signature = { js_object:"None",pointer:"None" };
-__tuple___init__.pythonscript_function = true;
-__tuple_attrs["__init__"] = __tuple___init__;
-__tuple___getitem__ = function(args, kwargs) {
+__pytuple___init__.NAME = "__pytuple___init__";
+__pytuple___init__.args_signature = ["self", "js_object", "pointer"];
+__pytuple___init__.kwargs_signature = { js_object:undefined,pointer:undefined };
+__pytuple___init__.types_signature = { js_object:"None",pointer:"None" };
+__pytuple___init__.pythonscript_function = true;
+__pytuple_attrs["__init__"] = __pytuple___init__;
+__pytuple___getitem__ = function(args, kwargs) {
   var index;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -1980,18 +2038,18 @@ __tuple___getitem__ = function(args, kwargs) {
   var self = arguments['self'];
   var index = arguments['index'];
   if (( index ) < 0) {
-    index = (__get__(self["$wrapped"], "length") + index);
+    index = __add_op(__get__(self["$wrapped"], "length"), index);
   }
   return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
 }
 
-__tuple___getitem__.NAME = "__tuple___getitem__";
-__tuple___getitem__.args_signature = ["self", "index"];
-__tuple___getitem__.kwargs_signature = {  };
-__tuple___getitem__.types_signature = {  };
-__tuple___getitem__.pythonscript_function = true;
-__tuple_attrs["__getitem__"] = __tuple___getitem__;
-__tuple___iter__ = function(args, kwargs) {
+__pytuple___getitem__.NAME = "__pytuple___getitem__";
+__pytuple___getitem__.args_signature = ["self", "index"];
+__pytuple___getitem__.kwargs_signature = {  };
+__pytuple___getitem__.types_signature = {  };
+__pytuple___getitem__.pythonscript_function = true;
+__pytuple_attrs["__getitem__"] = __pytuple___getitem__;
+__pytuple___iter__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2005,14 +2063,14 @@ __tuple___iter__ = function(args, kwargs) {
   return __get__(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
 }
 
-__tuple___iter__.NAME = "__tuple___iter__";
-__tuple___iter__.args_signature = ["self"];
-__tuple___iter__.kwargs_signature = {  };
-__tuple___iter__.types_signature = {  };
-__tuple___iter__.return_type = "Iterator";
-__tuple___iter__.pythonscript_function = true;
-__tuple_attrs["__iter__"] = __tuple___iter__;
-__tuple___len__ = function(args, kwargs) {
+__pytuple___iter__.NAME = "__pytuple___iter__";
+__pytuple___iter__.args_signature = ["self"];
+__pytuple___iter__.kwargs_signature = {  };
+__pytuple___iter__.types_signature = {  };
+__pytuple___iter__.return_type = "Iterator";
+__pytuple___iter__.pythonscript_function = true;
+__pytuple_attrs["__iter__"] = __pytuple___iter__;
+__pytuple___len__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2026,13 +2084,13 @@ __tuple___len__ = function(args, kwargs) {
   return self["$wrapped"].length;
 }
 
-__tuple___len__.NAME = "__tuple___len__";
-__tuple___len__.args_signature = ["self"];
-__tuple___len__.kwargs_signature = {  };
-__tuple___len__.types_signature = {  };
-__tuple___len__.pythonscript_function = true;
-__tuple_attrs["__len__"] = __tuple___len__;
-__tuple_length__getprop__ = function(args, kwargs) {
+__pytuple___len__.NAME = "__pytuple___len__";
+__pytuple___len__.args_signature = ["self"];
+__pytuple___len__.kwargs_signature = {  };
+__pytuple___len__.types_signature = {  };
+__pytuple___len__.pythonscript_function = true;
+__pytuple_attrs["__len__"] = __pytuple___len__;
+__pytuple_length__getprop__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2046,12 +2104,12 @@ __tuple_length__getprop__ = function(args, kwargs) {
   return self["$wrapped"].length;
 }
 
-__tuple_length__getprop__.NAME = "__tuple_length__getprop__";
-__tuple_length__getprop__.args_signature = ["self"];
-__tuple_length__getprop__.kwargs_signature = {  };
-__tuple_length__getprop__.types_signature = {  };
-__tuple_length__getprop__.pythonscript_function = true;
-__tuple_index = function(args, kwargs) {
+__pytuple_length__getprop__.NAME = "__pytuple_length__getprop__";
+__pytuple_length__getprop__.args_signature = ["self"];
+__pytuple_length__getprop__.kwargs_signature = {  };
+__pytuple_length__getprop__.types_signature = {  };
+__pytuple_length__getprop__.pythonscript_function = true;
+__pytuple_index = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2066,13 +2124,13 @@ __tuple_index = function(args, kwargs) {
   return self["$wrapped"].indexOf(obj);
 }
 
-__tuple_index.NAME = "__tuple_index";
-__tuple_index.args_signature = ["self", "obj"];
-__tuple_index.kwargs_signature = {  };
-__tuple_index.types_signature = {  };
-__tuple_index.pythonscript_function = true;
-__tuple_attrs["index"] = __tuple_index;
-__tuple_count = function(args, kwargs) {
+__pytuple_index.NAME = "__pytuple_index";
+__pytuple_index.args_signature = ["self", "obj"];
+__pytuple_index.kwargs_signature = {  };
+__pytuple_index.types_signature = {  };
+__pytuple_index.pythonscript_function = true;
+__pytuple_attrs["index"] = __pytuple_index;
+__pytuple_count = function(args, kwargs) {
   var a;
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -2097,13 +2155,13 @@ __tuple_count = function(args, kwargs) {
   return a;
 }
 
-__tuple_count.NAME = "__tuple_count";
-__tuple_count.args_signature = ["self", "obj"];
-__tuple_count.kwargs_signature = {  };
-__tuple_count.types_signature = {  };
-__tuple_count.pythonscript_function = true;
-__tuple_attrs["count"] = __tuple_count;
-__tuple_get = function(args, kwargs) {
+__pytuple_count.NAME = "__pytuple_count";
+__pytuple_count.args_signature = ["self", "obj"];
+__pytuple_count.kwargs_signature = {  };
+__pytuple_count.types_signature = {  };
+__pytuple_count.pythonscript_function = true;
+__pytuple_attrs["count"] = __pytuple_count;
+__pytuple_get = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2118,13 +2176,13 @@ __tuple_get = function(args, kwargs) {
   return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
 }
 
-__tuple_get.NAME = "__tuple_get";
-__tuple_get.args_signature = ["self", "index"];
-__tuple_get.kwargs_signature = {  };
-__tuple_get.types_signature = {  };
-__tuple_get.pythonscript_function = true;
-__tuple_attrs["get"] = __tuple_get;
-__tuple___contains__ = function(args, kwargs) {
+__pytuple_get.NAME = "__pytuple_get";
+__pytuple_get.args_signature = ["self", "index"];
+__pytuple_get.kwargs_signature = {  };
+__pytuple_get.types_signature = {  };
+__pytuple_get.pythonscript_function = true;
+__pytuple_attrs["get"] = __pytuple_get;
+__pytuple___contains__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
   } else {
@@ -2143,15 +2201,15 @@ __tuple___contains__ = function(args, kwargs) {
   }
 }
 
-__tuple___contains__.NAME = "__tuple___contains__";
-__tuple___contains__.args_signature = ["self", "value"];
-__tuple___contains__.kwargs_signature = {  };
-__tuple___contains__.types_signature = {  };
-__tuple___contains__.pythonscript_function = true;
-__tuple_attrs["__contains__"] = __tuple___contains__;
-__tuple_properties["length"] = Object();
-__tuple_properties["length"]["get"] = __tuple_length__getprop__;
-tuple = create_class("tuple", __tuple_parents, __tuple_attrs, __tuple_properties);
+__pytuple___contains__.NAME = "__pytuple___contains__";
+__pytuple___contains__.args_signature = ["self", "value"];
+__pytuple___contains__.kwargs_signature = {  };
+__pytuple___contains__.types_signature = {  };
+__pytuple___contains__.pythonscript_function = true;
+__pytuple_attrs["__contains__"] = __pytuple___contains__;
+__pytuple_properties["length"] = Object();
+__pytuple_properties["length"]["get"] = __pytuple_length__getprop__;
+pytuple = create_class("pytuple", __pytuple_parents, __pytuple_attrs, __pytuple_properties);
 list = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -2247,7 +2305,7 @@ __pylist___getitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   if (( index ) < 0) {
-    index = (__get__(self["$wrapped"], "length") + index);
+    index = __add_op(__get__(self["$wrapped"], "length"), index);
   }
   return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
 }
@@ -3402,7 +3460,7 @@ __array___getitem__ = function(args, kwargs) {
   step = self.itemsize;
   offset = (step * index);
   dataview = self.dataview;
-  func_name = ("get" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
+  func_name = __add_op("get", __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     value = func(offset);
@@ -3441,11 +3499,11 @@ __array___setitem__ = function(args, kwargs) {
   var value = arguments['value'];
   step = self.itemsize;
   if (( index ) < 0) {
-    index = ((self.length + index) - 1);
+    index = (__add_op(self.length, index) - 1);
   }
   offset = (step * index);
   dataview = self.dataview;
-  func_name = ("set" + __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
+  func_name = __add_op("set", __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     if (( self.typecode ) == "float8") {
@@ -3527,7 +3585,7 @@ __array_fromlist = function(args, kwargs) {
   typecode = self.typecode;
   size = (length * step);
   dataview = self.dataview;
-  func_name = ("set" + __get__(__get__(self, "typecode_names"), "__getitem__")([typecode], Object()));
+  func_name = __add_op("set", __get__(__get__(self, "typecode_names"), "__getitem__")([typecode], Object()));
   func = dataview[func_name].bind(dataview);
   if (( size ) <= self.bytes) {
     i = 0;
@@ -3601,7 +3659,7 @@ __array_append = function(args, kwargs) {
   var self = arguments['self'];
   var value = arguments['value'];
   length = self.length;
-  __get__(__get__(self, "resize"), "__call__")([(self.length + 1)], __NULL_OBJECT__);
+  __get__(__get__(self, "resize"), "__call__")([__add_op(self.length, 1)], __NULL_OBJECT__);
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], Object());
 }
 

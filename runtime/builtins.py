@@ -36,6 +36,20 @@ with javascript:
 		else:
 			return True
 
+	def __add_op(a, b):
+		t = typeof(a)
+		if t == 'number' or t == 'string':
+			return JS("a+b")
+		elif instanceof(a, Array):
+			c = []
+			c.extend(a)
+			c.extend(b)
+			return c
+		elif a.__add__:
+			return a.__add__(b)
+		else:
+			raise TypeError
+
 	def __jsdict( items ):
 		d = JS("{}")
 		for item in items:
@@ -507,7 +521,7 @@ def _setup_array_prototype():
 			this.push( item )
 
 		@Array.prototype.extend
-		def extend(self, other):
+		def extend(other):
 			for obj in other:
 				this.push(obj)
 
@@ -682,7 +696,22 @@ class Iterator:
 			return self.obj_get( [index], {} )
 
 
-class tuple:
+def tuple(a):
+	## TODO tuple needs a solution for dict keys
+	with javascript:
+		if Object.keys(arguments).length == 0: #arguments.length == 0:
+			return []
+		elif instanceof(a, Array):
+			return a.slice()
+		elif typeof(a) == 'string':
+			return a.split('')
+		else:
+			print a
+			print arguments
+			raise TypeError
+
+
+class pytuple:  ## tuple is deprecated
 	def __init__(self, js_object=None, pointer=None):
 		with javascript:
 			if pointer:
