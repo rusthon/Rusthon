@@ -2153,6 +2153,22 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write('var(%s)'%enumtar.id)
 			writer.write('%s = 0' %enumtar.id)
 
+		vars = []
+		multi_target = []
+
+		if isinstance(target, ast.Tuple):
+			vars.append( '__mtarget__')
+			for elt in target.elts:
+				if isinstance(elt, ast.Name):
+					multi_target.append( elt.id )
+					vars.append( elt.id )
+				else:
+					raise NotImplementedError('unknown iterator sub-target type: %s'%target)
+		elif isinstance(target, ast.Name):
+			vars.append( target.id )
+		else:
+			raise NotImplementedError('unknown iterator target type: %s'%target)
+
 
 		if self._with_js or self._with_dart:
 			if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
@@ -2187,8 +2203,18 @@ class PythonToPythonJS(NodeVisitor):
 				writer.pull()
 
 			else:
-				writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
-				writer.push()
+				if multi_target:
+					writer.write('var(%s)' % ','.join(vars))
+					writer.write('for %s in %s:' %('__mtarget__',self.visit(iter)))
+					writer.push()
+					for i,elt in enumerate(multi_target):
+						writer.write('%s = __mtarget__[%s]' %(elt,i))
+					
+				else:
+					writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
+					writer.push()
+
+
 				map(self.visit, node.body)
 
 				if enumtar:
@@ -2201,7 +2227,9 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(iter, Name) and iter.id in self._global_typed_lists:
 				self._instances[ target.id ] = list( self._global_typed_lists[ iter.id ] )[0]
 
-			writer.write('var(__iterator__, %s)' % target.id)
+			vars.append('__iterator__')  ## TODO - test nested for loops - this should be __iterator__N
+			writer.write('var(%s)' % ','.join(vars))
+
 
 			is_range = False
 			is_generator = False
@@ -2250,7 +2278,14 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('while __iterator__.index < __iterator__.length:')
 
 				writer.push()
-				writer.write('%s = __next__()' % target.id)
+
+				if multi_target:
+					writer.write('__mtarget__ = __next__()')
+					for i,elt in enumerate(multi_target):
+						writer.write('%s = __mtarget__[%s]' %(elt,i))
+				else:
+					writer.write('%s = __next__()' % target.id)
+
 				map(self.visit, node.body)
 
 				if enumtar:
