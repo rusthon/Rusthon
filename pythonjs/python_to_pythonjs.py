@@ -845,7 +845,15 @@ class PythonToPythonJS(NodeVisitor):
 		return op.join( [self.visit(v) for v in node.values] )
 
 	def visit_If(self, node):
-		writer.write('if %s:' % self.visit(node.test))
+		if isinstance(node.test, ast.Dict):
+			if self._with_js:
+				writer.write('if Object.keys(%s).length:' % self.visit(node.test))
+			else:
+				writer.write('if %s.keys().length:' % self.visit(node.test))
+		elif isinstance(node.test, ast.Name):
+			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
+		else:
+			writer.write('if %s:' % self.visit(node.test))
 		writer.push()
 		map(self.visit, node.body)
 		writer.pull()

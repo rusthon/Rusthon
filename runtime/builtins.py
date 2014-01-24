@@ -26,6 +26,16 @@ JS("var ValueError = new RangeError()")
 ## when translated methods named: "get" become __jsdict_get(ob,key,default)
 
 with javascript:
+	def __test_if_true__( ob ):
+		if instanceof(ob, Array):
+			return ob.length != 0
+		elif isinstance(ob, dict):
+			return Object.keys( ob[...] ).length != 0
+		elif instanceof(ob, Object):
+			return Object.keys(ob).length != 0
+		else:
+			return True
+
 	def __jsdict( items ):
 		d = JS("{}")
 		for item in items:

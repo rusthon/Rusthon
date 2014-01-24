@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Jan 23 22:33:59 2014
+// PythonJS Runtime - regenerated on: Fri Jan 24 00:56:54 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -406,6 +406,26 @@ _PythonJS_UID = 0;
 var IndexError = new RangeError();
 var KeyError = new RangeError();
 var ValueError = new RangeError();
+__test_if_true__ = function(ob) {
+  if (ob instanceof Array) {
+    return ( ob.length ) != 0;
+  } else {
+    if (isinstance(ob, dict)) {
+      return ( Object.keys(ob["$wrapped"]).length ) != 0;
+    } else {
+      if (ob instanceof Object) {
+        return ( Object.keys(ob).length ) != 0;
+      } else {
+        return true;
+      }
+    }
+  }
+}
+
+__test_if_true__.NAME = "__test_if_true__";
+__test_if_true__.args_signature = ["ob"];
+__test_if_true__.kwargs_signature = {  };
+__test_if_true__.types_signature = {  };
 __jsdict = function(items) {
   var d, key;
   d = {};
@@ -710,10 +730,10 @@ create_class = function(class_name, parents, attrs, props) {
         }
       }
     }
-    if (has_getattr) {
+    if (__test_if_true__(has_getattr)) {
       __get__(object, "__getattr__");
     }
-    if (has_getattribute) {
+    if (__test_if_true__(has_getattribute)) {
       __get__(object, "__getattribute__");
     }
     __bind_property_descriptors__(object, klass);
@@ -797,7 +817,7 @@ getattr = function(args, kwargs) {
   var ob = arguments['ob'];
   var attr = arguments['attr'];
   var property = arguments['property'];
-  if (property) {
+  if (__test_if_true__(property)) {
     prop = _get_upstream_property(ob.__class__, attr);
     if (prop && prop[ ("get".__uid__) ? "get".__uid__ : "get"]) {
       return prop[ ("get".__uid__) ? "get".__uid__ : "get"]([ob], __jsdict([]));
@@ -829,7 +849,7 @@ setattr = function(args, kwargs) {
   var attr = arguments['attr'];
   var value = arguments['value'];
   var property = arguments['property'];
-  if (property) {
+  if (__test_if_true__(property)) {
     prop = _get_upstream_property(ob.__class__, attr);
     if (prop && prop[ ("set".__uid__) ? "set".__uid__ : "set"]) {
       prop[ ("set".__uid__) ? "set".__uid__ : "set"]([ob, value], __jsdict([]));
@@ -1907,7 +1927,7 @@ __tuple___init__ = function(args, kwargs) {
   var self = arguments['self'];
   var js_object = arguments['js_object'];
   var pointer = arguments['pointer'];
-  if (pointer) {
+  if (__test_if_true__(pointer)) {
     self["$wrapped"] = pointer;
   } else {
     arr = [];
@@ -1923,7 +1943,7 @@ __tuple___init__ = function(args, kwargs) {
       __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
     }
   } else {
-    if (js_object) {
+    if (__test_if_true__(js_object)) {
       if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
         var v;
         __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
@@ -2183,7 +2203,7 @@ __pylist___init__ = function(args, kwargs) {
   var self = arguments['self'];
   var js_object = arguments['js_object'];
   var pointer = arguments['pointer'];
-  if (pointer) {
+  if (__test_if_true__(pointer)) {
     self["$wrapped"] = pointer;
   } else {
     arr = [];
@@ -2198,7 +2218,7 @@ __pylist___init__ = function(args, kwargs) {
         __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
       }
     } else {
-      if (js_object) {
+      if (__test_if_true__(js_object)) {
         if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
           var v;
           __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
@@ -2688,7 +2708,7 @@ __dict___init__ = function(args, kwargs) {
   if (( pointer ) !== undefined) {
     self["$wrapped"] = pointer;
   } else {
-    if (js_object) {
+    if (__test_if_true__(js_object)) {
       ob = js_object;
       if (ob instanceof Array) {
         var o, __iterator__;
@@ -3199,7 +3219,7 @@ set = function(args, kwargs) {
     }
   }
   fallback = false;
-  if (hashtable) {
+  if (__test_if_true__(hashtable)) {
         var __iter19 = a;
     if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
     for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
@@ -3217,7 +3237,7 @@ set = function(args, kwargs) {
     fallback = true;
   }
   s = [];
-  if (fallback) {
+  if (__test_if_true__(fallback)) {
         var __iter20 = a;
     if (! (__iter20 instanceof Array || typeof __iter20 == "string") ) { __iter20 = __object_keys__(__iter20) }
     for (var __idx20=0; __idx20 < __iter20.length; __idx20++) {
@@ -3288,7 +3308,7 @@ __array___init__ = function(args, kwargs) {
   self.typecode = typecode;
   self.itemsize = __get__(__get__(self, "typecodes"), "__getitem__")([typecode], Object());
   self.little_endian = little_endian;
-  if (initializer) {
+  if (__test_if_true__(initializer)) {
     self.length = len([initializer], __NULL_OBJECT__);
     self.bytes = (self.length * self.itemsize);
     if (( self.typecode ) == "float8") {
