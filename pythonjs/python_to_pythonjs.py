@@ -379,7 +379,8 @@ class PythonToPythonJS(NodeVisitor):
 			return '__jsdict( [%s] )' %b
 		else:
 			b = '[%s]' %', '.join(a)
-			return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
+			#return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
+			return '__get__(dict, "__call__")([%s], JSObject())' %b
 
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
@@ -1656,12 +1657,17 @@ class PythonToPythonJS(NodeVisitor):
 				writer.append('%s = JSArray(%s)' % (args_name, args))
 
 				if node.starargs:
-					writer.append('%s.push.apply(%s, %s[...])' % (args_name, args_name, self.visit(node.starargs)))
+					writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
+
 				writer.append('%s = JSObject(%s)' % (kwargs_name, kwargs))
 
 				if node.kwargs:
 					kwargs = self.visit(node.kwargs)
-					code = "JS('for (var name in %s) { %s[name] = %s[...][name]; }')" % (kwargs, kwargs_name, kwargs)
+					writer.write('var(__kwargs_temp)')
+					writer.write('__kwargs_temp = %s[...]' %kwargs)
+					#code = "JS('for (var name in %s) { %s[name] = %s[...][name]; }')" % (kwargs, kwargs_name, kwargs)
+					#code = "for __name in %s: %s[__name] = %s[__name]" % (kwargs, kwargs_name, kwargs)
+					code = "JS('for (var name in __kwargs_temp) { %s[name] = __kwargs_temp[name]; }')" %kwargs_name
 					writer.append(code)
 
 			#######################################
@@ -1677,7 +1683,7 @@ class PythonToPythonJS(NodeVisitor):
 			#		return '%s()' %name
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop'):
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items'):
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
@@ -1690,6 +1696,9 @@ class PythonToPythonJS(NodeVisitor):
 
 				elif anode.attr == 'values' and not args:
 					return '__jsdict_values(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'items' and not args:
+					return '__jsdict_items(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'pop':
 					if args:
@@ -1735,12 +1744,7 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif call_has_args:
 				if name == 'dict':
-					return '__get__(%s, "__call__")(%s, JSObject(js_object=%s))' % (name, args_name, kwargs_name)
-				#elif name in ('list', 'tuple'):
-				#	if len(node.args):
-				#		return '__get__(%s, "__call__")([], {js_object:%s})' % (name, args_name)
-				#	else:
-				#		return '__get__(%s, "__call__")([], %s)' % (name, kwargs_name)
+					return '__get__(%s, "__call__")(%s, JSObject(pointer=%s))' % (name, args_name, kwargs_name)
 				else:
 					return '__get__(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
 
@@ -1993,15 +1997,19 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write("""JS("var %s = arguments['%s']")""" % (arg.id, arg.id))
 			if node.args.vararg:
 				writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
+
+				## DEPRECATED
 				# turn it into a list
-				expr = '%s = __get__(list, "__call__")(__create_array__(%s), {});'
-				expr = expr % (node.args.vararg, node.args.vararg)
-				writer.write(expr)
+				#expr = '%s = __get__(list, "__call__")(__create_array__(%s), {});'
+				#expr = expr % (node.args.vararg, node.args.vararg)
+				#writer.write(expr)
 			if node.args.kwarg:
 				writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
-				expr = '%s = __get__(dict, "__call__")(__create_array__(%s), {});'
-				expr = expr % (node.args.kwarg, node.args.kwarg)
-				writer.write(expr)
+
+				## DEPRECATED
+				#expr = '%s = __get__(dict, "__call__")(__create_array__(%s), {});'
+				#expr = expr % (node.args.kwarg, node.args.kwarg)
+				#writer.write(expr)
 		else:
 			log('(function has no arguments)')
 
@@ -2209,7 +2217,7 @@ class PythonToPythonJS(NodeVisitor):
 					writer.push()
 					for i,elt in enumerate(multi_target):
 						writer.write('%s = __mtarget__[%s]' %(elt,i))
-					
+
 				else:
 					writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
 					writer.push()

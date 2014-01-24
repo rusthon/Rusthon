@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Mon Jan 20 20:31:45 2014
+// PythonJS Runtime - regenerated on: Thu Jan 23 22:33:59 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -489,6 +489,29 @@ __jsdict_values.NAME = "__jsdict_values";
 __jsdict_values.args_signature = ["ob"];
 __jsdict_values.kwargs_signature = {  };
 __jsdict_values.types_signature = {  };
+__jsdict_items = function(ob) {
+  var arr, value;
+  if (ob instanceof Object || ( ob.items ) === undefined) {
+    arr = [];
+        var __iter3 = ob;
+    if (! (__iter3 instanceof Array || typeof __iter3 == "string") ) { __iter3 = __object_keys__(__iter3) }
+    for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
+      var key = __iter3[ __idx3 ];
+      if (Object.hasOwnProperty.call(ob, key)) {
+        value = ob[ (key.__uid__) ? key.__uid__ : key];
+        arr.push([key, value]);
+      }
+    }
+    return arr;
+  } else {
+    return ob.items();
+  }
+}
+
+__jsdict_items.NAME = "__jsdict_items";
+__jsdict_items.args_signature = ["ob"];
+__jsdict_items.kwargs_signature = {  };
+__jsdict_items.types_signature = {  };
 __jsdict_pop = function(ob, key, _default) {
   var v;
   if (_default == undefined) _default = undefined;
@@ -535,10 +558,10 @@ __object_keys__.kwargs_signature = {  };
 __object_keys__.types_signature = {  };
 __bind_property_descriptors__ = function(o, klass) {
   var prop, desc;
-    var __iter3 = klass.__properties__;
-  if (! (__iter3 instanceof Array || typeof __iter3 == "string") ) { __iter3 = __object_keys__(__iter3) }
-  for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
-    var name = __iter3[ __idx3 ];
+    var __iter4 = klass.__properties__;
+  if (! (__iter4 instanceof Array || typeof __iter4 == "string") ) { __iter4 = __object_keys__(__iter4) }
+  for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
+    var name = __iter4[ __idx4 ];
     desc = __jsdict([["enumerable", true]]);
     prop = klass.__properties__[ (name.__uid__) ? name.__uid__ : name];
     if (prop[ ("get".__uid__) ? "get".__uid__ : "get"]) {
@@ -549,10 +572,10 @@ __bind_property_descriptors__ = function(o, klass) {
     }
     Object.defineProperty(o, name, desc);
   }
-    var __iter4 = klass.__bases__;
-  if (! (__iter4 instanceof Array || typeof __iter4 == "string") ) { __iter4 = __object_keys__(__iter4) }
-  for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
-    var base = __iter4[ __idx4 ];
+    var __iter5 = klass.__bases__;
+  if (! (__iter5 instanceof Array || typeof __iter5 == "string") ) { __iter5 = __object_keys__(__iter5) }
+  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
+    var base = __iter5[ __idx5 ];
     __bind_property_descriptors__(o, base);
   }
 }
@@ -578,9 +601,32 @@ __generate_setter__.args_signature = ["klass", "o", "n"];
 __generate_setter__.kwargs_signature = {  };
 __generate_setter__.types_signature = {  };
 __sprintf = function(fmt, args) {
+  var chunks, item, arr;
+  chunks = fmt.split("%s");
+  arr = [];
   var i;
   i = 0;
-  return fmt.replace(/%((%)|s)/g, function (m) { return m[2] || args[i++] });
+    var __iter6 = chunks;
+  if (! (__iter6 instanceof Array || typeof __iter6 == "string") ) { __iter6 = __object_keys__(__iter6) }
+  for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
+    var txt = __iter6[ __idx6 ];
+    arr.append(txt);
+    if (( i ) >= args.length) {
+      break;
+    }
+    item = args[ (i.__uid__) ? i.__uid__ : i];
+    if (( typeof(item) ) == "string") {
+      arr.append(item);
+    } else {
+      if (( typeof(item) ) == "number") {
+        arr.append(("" + item));
+      } else {
+        arr.append(Object.prototype.toString.call(item));
+      }
+    }
+    i += 1;
+  }
+  return "".join(arr);
 }
 
 __sprintf.NAME = "__sprintf";
@@ -602,10 +648,10 @@ create_class = function(class_name, parents, attrs, props) {
   klass.__all_method_names__ = [];
   klass.__properties__ = props;
   klass.__attributes__ = attrs;
-    var __iter5 = attrs;
-  if (! (__iter5 instanceof Array || typeof __iter5 == "string") ) { __iter5 = __object_keys__(__iter5) }
-  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
-    var key = __iter5[ __idx5 ];
+    var __iter7 = attrs;
+  if (! (__iter7 instanceof Array || typeof __iter7 == "string") ) { __iter7 = __object_keys__(__iter7) }
+  for (var __idx7=0; __idx7 < __iter7.length; __idx7++) {
+    var key = __iter7[ __idx7 ];
     if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
       klass.__all_method_names__.push(key);
       if (attrs[ (key.__uid__) ? key.__uid__ : key].is_classmethod || attrs[ (key.__uid__) ? key.__uid__ : key].is_staticmethod) {
@@ -621,20 +667,20 @@ create_class = function(class_name, parents, attrs, props) {
   }
   klass.__setters__ = [];
   klass.__getters__ = [];
-    var __iter6 = klass.__properties__;
-  if (! (__iter6 instanceof Array || typeof __iter6 == "string") ) { __iter6 = __object_keys__(__iter6) }
-  for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
-    var name = __iter6[ __idx6 ];
+    var __iter8 = klass.__properties__;
+  if (! (__iter8 instanceof Array || typeof __iter8 == "string") ) { __iter8 = __object_keys__(__iter8) }
+  for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
+    var name = __iter8[ __idx8 ];
     prop = klass.__properties__[ (name.__uid__) ? name.__uid__ : name];
     klass.__getters__.push(name);
     if (prop[ ("set".__uid__) ? "set".__uid__ : "set"]) {
       klass.__setters__.push(name);
     }
   }
-    var __iter7 = klass.__bases__;
-  if (! (__iter7 instanceof Array || typeof __iter7 == "string") ) { __iter7 = __object_keys__(__iter7) }
-  for (var __idx7=0; __idx7 < __iter7.length; __idx7++) {
-    var base = __iter7[ __idx7 ];
+    var __iter9 = klass.__bases__;
+  if (! (__iter9 instanceof Array || typeof __iter9 == "string") ) { __iter9 = __object_keys__(__iter9) }
+  for (var __idx9=0; __idx9 < __iter9.length; __idx9++) {
+    var base = __iter9[ __idx9 ];
     Array.prototype.push.apply(klass.__getters__, base.__getters__);
     Array.prototype.push.apply(klass.__setters__, base.__setters__);
     Array.prototype.push.apply(klass.__all_method_names__, base.__all_method_names__);
@@ -647,10 +693,10 @@ create_class = function(class_name, parents, attrs, props) {
     object.__dict__ = object;
     has_getattribute = false;
     has_getattr = false;
-        var __iter8 = klass.__all_method_names__;
-    if (! (__iter8 instanceof Array || typeof __iter8 == "string") ) { __iter8 = __object_keys__(__iter8) }
-    for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
-      var name = __iter8[ __idx8 ];
+        var __iter10 = klass.__all_method_names__;
+    if (! (__iter10 instanceof Array || typeof __iter10 == "string") ) { __iter10 = __object_keys__(__iter10) }
+    for (var __idx10=0; __idx10 < __iter10.length; __idx10++) {
+      var name = __iter10[ __idx10 ];
       if (( name ) == "__getattribute__") {
         has_getattribute = true;
       } else {
@@ -791,7 +837,7 @@ setattr = function(args, kwargs) {
       console.log("ERROR: setattr property error", prop);
     }
   } else {
-    set_attribute(ob, attr, value);
+    __set__(ob, attr, value);
   }
 }
 
@@ -1082,10 +1128,10 @@ _setup_str_prototype = function(args, kwargs) {
       arr = a["$wrapped"];
     }
     i = 0;
-        var __iter9 = arr;
-    if (! (__iter9 instanceof Array || typeof __iter9 == "string") ) { __iter9 = __object_keys__(__iter9) }
-    for (var __idx9=0; __idx9 < __iter9.length; __idx9++) {
-      var value = __iter9[ __idx9 ];
+        var __iter11 = arr;
+    if (! (__iter11 instanceof Array || typeof __iter11 == "string") ) { __iter11 = __object_keys__(__iter11) }
+    for (var __idx11=0; __idx11 < __iter11.length; __idx11++) {
+      var value = __iter11[ __idx11 ];
       out += value;
       i += 1;
       if (( i ) < arr.length) {
@@ -1144,10 +1190,10 @@ _setup_str_prototype = function(args, kwargs) {
     var func = function() {
     var digits;
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
-        var __iter10 = this;
-    if (! (__iter10 instanceof Array || typeof __iter10 == "string") ) { __iter10 = __object_keys__(__iter10) }
-    for (var __idx10=0; __idx10 < __iter10.length; __idx10++) {
-      var char = __iter10[ __idx10 ];
+        var __iter12 = this;
+    if (! (__iter12 instanceof Array || typeof __iter12 == "string") ) { __iter12 = __object_keys__(__iter12) }
+    for (var __idx12=0; __idx12 < __iter12.length; __idx12++) {
+      var char = __iter12[ __idx12 ];
       if (Object.hasOwnProperty.call(digits, "__contains__") && digits["__contains__"](char) || Object.hasOwnProperty.call(digits, char) || ( typeof(digits) ) == "string" && digits.__contains__(char)) {
         /*pass*/
       } else {
@@ -1298,10 +1344,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.append = func;
     var extend = function(self, other) {
-        var __iter11 = other;
-    if (! (__iter11 instanceof Array || typeof __iter11 == "string") ) { __iter11 = __object_keys__(__iter11) }
-    for (var __idx11=0; __idx11 < __iter11.length; __idx11++) {
-      var obj = __iter11[ __idx11 ];
+        var __iter13 = other;
+    if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
+    for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
+      var obj = __iter13[ __idx13 ];
       this.push(obj);
     }
   }
@@ -1358,10 +1404,10 @@ _setup_array_prototype = function(args, kwargs) {
     var count = function(obj) {
     var a;
     a = 0;
-        var __iter12 = this;
-    if (! (__iter12 instanceof Array || typeof __iter12 == "string") ) { __iter12 = __object_keys__(__iter12) }
-    for (var __idx12=0; __idx12 < __iter12.length; __idx12++) {
-      var item = __iter12[ __idx12 ];
+        var __iter14 = this;
+    if (! (__iter14 instanceof Array || typeof __iter14 == "string") ) { __iter14 = __object_keys__(__iter14) }
+    for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
+      var item = __iter14[ __idx14 ];
       if (( item ) === obj) {
         a += 1;
       }
@@ -1418,10 +1464,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.intersection = func;
     var func = function(other) {
-        var __iter13 = this;
-    if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
-    for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
-      var item = __iter13[ __idx13 ];
+        var __iter15 = this;
+    if (! (__iter15 instanceof Array || typeof __iter15 == "string") ) { __iter15 = __object_keys__(__iter15) }
+    for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
+      var item = __iter15[ __idx15 ];
       if (( other.indexOf(item) ) == -1) {
         return false;
       }
@@ -1586,7 +1632,7 @@ map = function(args, kwargs) {
   var func = arguments['func'];
   var objs = arguments['objs'];
   arr = [];
-  var __iterator__, ob;
+  var ob, __iterator__;
   __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -1617,7 +1663,7 @@ filter = function(args, kwargs) {
   var func = arguments['func'];
   var objs = arguments['objs'];
   arr = [];
-  var __iterator__, ob;
+  var ob, __iterator__;
   __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -1648,7 +1694,7 @@ min = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var lst = arguments['lst'];
   a = undefined;
-  var __iterator__, value;
+  var value, __iterator__;
   __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -1683,7 +1729,7 @@ max = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var lst = arguments['lst'];
   a = undefined;
-  var __iterator__, value;
+  var value, __iterator__;
   __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -1868,7 +1914,7 @@ __tuple___init__ = function(args, kwargs) {
     self["$wrapped"] = arr;
   }
   if (js_object instanceof Array) {
-    var __iterator__, item;
+    var item, __iterator__;
     __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
     var __next__;
     __next__ = __get__(__iterator__, "next_fast");
@@ -2020,10 +2066,10 @@ __tuple_count = function(args, kwargs) {
   var self = arguments['self'];
   var obj = arguments['obj'];
   a = 0;
-    var __iter14 = self["$wrapped"];
-  if (! (__iter14 instanceof Array || typeof __iter14 == "string") ) { __iter14 = __object_keys__(__iter14) }
-  for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
-    var item = __iter14[ __idx14 ];
+    var __iter16 = self["$wrapped"];
+  if (! (__iter16 instanceof Array || typeof __iter16 == "string") ) { __iter16 = __object_keys__(__iter16) }
+  for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
+    var item = __iter16[ __idx16 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -2143,7 +2189,7 @@ __pylist___init__ = function(args, kwargs) {
     arr = [];
     self["$wrapped"] = arr;
     if (js_object instanceof Array) {
-      var __iterator__, item;
+      var item, __iterator__;
       __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
       var __next__;
       __next__ = __get__(__iterator__, "next_fast");
@@ -2269,7 +2315,7 @@ __pylist_extend = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var other = arguments['other'];
-  var __iterator__, obj;
+  var obj, __iterator__;
   __iterator__ = __get__(__get__(other, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -2385,10 +2431,10 @@ __pylist_count = function(args, kwargs) {
   var self = arguments['self'];
   var obj = arguments['obj'];
   a = 0;
-    var __iter15 = self["$wrapped"];
-  if (! (__iter15 instanceof Array || typeof __iter15 == "string") ) { __iter15 = __object_keys__(__iter15) }
-  for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
-    var item = __iter15[ __idx15 ];
+    var __iter17 = self["$wrapped"];
+  if (! (__iter17 instanceof Array || typeof __iter17 == "string") ) { __iter17 = __object_keys__(__iter17) }
+  for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
+    var item = __iter17[ __idx17 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -2633,48 +2679,54 @@ __dict___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var signature, arguments;
-  signature = {"kwargs": {"js_object": undefined}, "args": __create_array__("self", "js_object")};
+  signature = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var js_object = arguments['js_object'];
+  var pointer = arguments['pointer'];
   self["$wrapped"] = __jsdict([]);
-  if (js_object) {
-    ob = js_object;
-    if (ob instanceof Array) {
-      var __iterator__, o;
-      __iterator__ = __get__(__get__(ob, "__iter__"), "__call__")([], Object());
-      var __next__;
-      __next__ = __get__(__iterator__, "next_fast");
-      while(( __iterator__.index ) < __iterator__.length) {
-        o = __next__();
-        if (o instanceof Array) {
-          __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
-        } else {
-          __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
-        }
-      }
-    } else {
-      if (isinstance([ob, dict], __NULL_OBJECT__)) {
-        var key;
-        __iterator__ = __get__(__get__(__jsdict_keys(ob), "__iter__"), "__call__")([], Object());
-        ;
+  if (( pointer ) !== undefined) {
+    self["$wrapped"] = pointer;
+  } else {
+    if (js_object) {
+      ob = js_object;
+      if (ob instanceof Array) {
+        var o, __iterator__;
+        __iterator__ = __get__(__get__(ob, "__iter__"), "__call__")([], Object());
+        var __next__;
         __next__ = __get__(__iterator__, "next_fast");
         while(( __iterator__.index ) < __iterator__.length) {
-          key = __next__();
-          value = __get__(ob, "__getitem__")([key], Object());
-          __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+          o = __next__();
+          if (o instanceof Array) {
+            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
+          } else {
+            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
+          }
         }
       } else {
-        console.log(["TODO init dict from:", js_object]);
+        if (isinstance([ob, dict], __NULL_OBJECT__)) {
+          var key;
+          __iterator__ = __get__(__get__(__jsdict_keys(ob), "__iter__"), "__call__")([], Object());
+          ;
+          __next__ = __get__(__iterator__, "next_fast");
+          while(( __iterator__.index ) < __iterator__.length) {
+            key = __next__();
+            value = __get__(ob, "__getitem__")([key], Object());
+            __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+          }
+        } else {
+          console.log("ERROR init dict from:", js_object);
+          throw TypeError;
+        }
       }
     }
   }
 }
 
 __dict___init__.NAME = "__dict___init__";
-__dict___init__.args_signature = ["self", "js_object"];
-__dict___init__.kwargs_signature = { js_object:undefined };
-__dict___init__.types_signature = { js_object:"None" };
+__dict___init__.args_signature = ["self", "js_object", "pointer"];
+__dict___init__.kwargs_signature = { js_object:undefined,pointer:undefined };
+__dict___init__.types_signature = { js_object:"None",pointer:"None" };
 __dict___init__.pythonscript_function = true;
 __dict_attrs["__init__"] = __dict___init__;
 __dict_jsify = function(args, kwargs) {
@@ -2690,7 +2742,7 @@ __dict_jsify = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   keys = __get__(Object, "keys")(self["$wrapped"]);
-  var __iterator__, key;
+  var key, __iterator__;
   __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -2795,7 +2847,7 @@ __dict_update = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var other = arguments['other'];
-  var __iterator__, key;
+  var key, __iterator__;
   __iterator__ = __get__(__get__(other, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -2824,7 +2876,7 @@ __dict_items = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   arr = [];
-  var __iterator__, key;
+  var key, __iterator__;
   __iterator__ = __get__(__get__(__jsdict_keys(self), "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -3044,10 +3096,10 @@ __dict_values = function(args, kwargs) {
   var self = arguments['self'];
   keys = Object.keys(self["$wrapped"]);
   out = [];
-    var __iter16 = keys;
-  if (! (__iter16 instanceof Array || typeof __iter16 == "string") ) { __iter16 = __object_keys__(__iter16) }
-  for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
-    var key = __iter16[ __idx16 ];
+    var __iter18 = keys;
+  if (! (__iter18 instanceof Array || typeof __iter18 == "string") ) { __iter18 = __object_keys__(__iter18) }
+  for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
+    var key = __iter18[ __idx18 ];
     out.push(self["$wrapped"][ (key.__uid__) ? key.__uid__ : key]);
   }
   return out;
@@ -3148,10 +3200,10 @@ set = function(args, kwargs) {
   }
   fallback = false;
   if (hashtable) {
-        var __iter17 = a;
-    if (! (__iter17 instanceof Array || typeof __iter17 == "string") ) { __iter17 = __object_keys__(__iter17) }
-    for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
-      var b = __iter17[ __idx17 ];
+        var __iter19 = a;
+    if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
+    for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
+      var b = __iter19[ __idx19 ];
       if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
         key = (b & mask);
         hashtable[ (key.__uid__) ? key.__uid__ : key] = b;
@@ -3166,20 +3218,20 @@ set = function(args, kwargs) {
   }
   s = [];
   if (fallback) {
-        var __iter18 = a;
-    if (! (__iter18 instanceof Array || typeof __iter18 == "string") ) { __iter18 = __object_keys__(__iter18) }
-    for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
-      var item = __iter18[ __idx18 ];
+        var __iter20 = a;
+    if (! (__iter20 instanceof Array || typeof __iter20 == "string") ) { __iter20 = __object_keys__(__iter20) }
+    for (var __idx20=0; __idx20 < __iter20.length; __idx20++) {
+      var item = __iter20[ __idx20 ];
       if (( s.indexOf(item) ) == -1) {
         s.push(item);
       }
     }
   } else {
     keys.sort();
-        var __iter19 = keys;
-    if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
-    for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
-      var key = __iter19[ __idx19 ];
+        var __iter21 = keys;
+    if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
+    for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
+      var key = __iter21[ __idx21 ];
       s.push(hashtable[ (key.__uid__) ? key.__uid__ : key]);
     }
   }
@@ -3551,7 +3603,7 @@ __array_extend = function(args, kwargs) {
   arguments = get_arguments(signature, args, kwargs);
   var self = arguments['self'];
   var lst = arguments['lst'];
-  var __iterator__, value;
+  var value, __iterator__;
   __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
   var __next__;
   __next__ = __get__(__iterator__, "next_fast");
@@ -3742,7 +3794,7 @@ _to_json = function(args, kwargs) {
   var pythonjs = arguments['pythonjs'];
   if (isinstance([pythonjs, list], __NULL_OBJECT__)) {
     r = [];
-    var __iterator__, i;
+    var i, __iterator__;
     __iterator__ = __get__(__get__(pythonjs, "__iter__"), "__call__")([], Object());
     var __next__;
     __next__ = __get__(__iterator__, "next_fast");

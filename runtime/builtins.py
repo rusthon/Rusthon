@@ -69,6 +69,19 @@ with javascript:
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.values()")
 
+	def __jsdict_items(ob):
+		## `ob.items is None` is for: "self.__dict__.items()" because self.__dict__ is not actually a dict
+		if instanceof(ob, Object) or ob.items is None:
+			arr = []
+			for key in ob:
+				#if ob.hasOwnProperty(key):
+				if Object.hasOwnProperty.call(ob, key):
+					value = ob[key]
+					arr.push( [key,value] )
+			return arr
+		else:  ## PythonJS object instance ##
+			return JS("ob.items()")
+
 	def __jsdict_pop(ob, key, _default=None):
 		if instanceof(ob, Array):
 			if ob.length:
@@ -120,8 +133,22 @@ with javascript:
 
 
 	def __sprintf(fmt, args):
-		i = 0
-		return JS("fmt.replace(/%((%)|s)/g, function (m) { return m[2] || args[i++] })")
+		## note: '%sXXX%s'.split().length != args.length
+		## because `%s` at the start or end will split to empty chunks ##
+		chunks = fmt.split('%s')
+		arr = []
+		for i,txt in enumerate(chunks):
+			arr.append( txt )
+			if i >= args.length:
+				break
+			item = args[i]
+			if typeof(item) == 'string':
+				arr.append( item )
+			elif typeof(item) == 'number':
+				arr.append( ''+item )
+			else:
+				arr.append( Object.prototype.toString.call(item) )
+		return ''.join(arr)
 
 	def create_class(class_name, parents, attrs, props):
 		"""Create a PythonScript class"""
@@ -149,7 +176,7 @@ with javascript:
 			if key == '__getattribute__': continue
 			klass[key] = attrs[key]
 
-		## this is needed for fast lookup of property names in set_attribute ##
+		## this is needed for fast lookup of property names in __set__ ##
 		klass.__setters__ = []
 		klass.__getters__ = []
 		for name in klass.__properties__:
@@ -247,7 +274,7 @@ def setattr(ob, attr, value, property=False):
 			else:
 				print "ERROR: setattr property error", prop
 		else:
-			set_attribute(ob, attr, value)
+			__set__(ob, attr, value)
 
 def issubclass(C, B):
 	if C is B:
@@ -843,11 +870,14 @@ class dict:
 	# http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
 	# using a function as a key is allowed, but would waste memory because it gets converted to a string
 	# http://stackoverflow.com/questions/10858632/are-functions-valid-keys-for-javascript-object-properties
-	def __init__(self, js_object=None):
+	def __init__(self, js_object=None, pointer=None):
 		with javascript:
 			self[...] = {}
 
-		if js_object:
+		if pointer is not None:
+			self[...] = pointer
+
+		elif js_object:
 			ob = js_object
 			if instanceof(ob, Array):
 				for o in ob:
@@ -860,7 +890,8 @@ class dict:
 					value = ob[ key ]
 					self.__setitem__( key, value )
 			else:
-				print('TODO init dict from:', js_object)
+				print 'ERROR init dict from:', js_object
+				raise TypeError
 
 	def jsify(self):
 		keys = Object.keys( self[...] )
