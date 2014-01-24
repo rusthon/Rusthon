@@ -850,6 +850,10 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('if Object.keys(%s).length:' % self.visit(node.test))
 			else:
 				writer.write('if %s.keys().length:' % self.visit(node.test))
+
+		elif isinstance(node.test, ast.List):
+			writer.write('if %s.length:' % self.visit(node.test))
+
 		elif isinstance(node.test, ast.Name):
 			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
 		else:
