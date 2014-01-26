@@ -311,10 +311,17 @@ class DartGenerator( pythonjs.JSGenerator ):
 		args = []  #self.visit(node.args)
 		oargs = []
 		offset = len(node.args.args) - len(node.args.defaults)
+		varargs = False
+		varargs_name = None
 		for i, arg in enumerate(node.args.args):
 			a = arg.id
 			dindex = i - offset
-			if dindex >= 0 and node.args.defaults:
+			if a.startswith('__variable_args__'):
+				varargs_name = a.split('__')[-1]
+				varargs = ['_vararg_%s'%n for n in range(16) ]
+				args.append( '[%s]'%','.join(varargs) )
+
+			elif dindex >= 0 and node.args.defaults:
 				default_value = self.visit( node.args.defaults[dindex] )
 				oargs.append( '%s:%s' %(a, default_value) )
 			else:
@@ -334,6 +341,12 @@ class DartGenerator( pythonjs.JSGenerator ):
 		else:
 			buffer += '%s(%s) {\n' % (node.name, ', '.join(args))
 		self.push()
+
+		if varargs:
+			buffer += 'var %s = new list([]);\n' %varargs_name
+			for i,n in enumerate(varargs):
+				buffer += 'if (%s != null) %s.append(%s);\n' %(n, varargs_name, n)
+
 		body = list()
 		for child in node.body:
 			if isinstance(child, ast.Str):

@@ -1943,10 +1943,10 @@ class PythonToPythonJS(NodeVisitor):
 				decorators.append( decorator )
 
 		if self._with_dart:
-			if node.args.vararg:
-				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
-			elif node.args.kwarg:
-				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
+			## dart supports optional positional params [x=1, y=2], or optional named {x:1, y:2}
+			## but not both at the same time.
+			if node.args.kwarg:
+				raise SyntaxError( 'dart functions can not take variable keyword arguments (**kwargs)' )
 
 			for dec in with_dart_decorators: writer.write('@%s'%dec)
 
@@ -1960,6 +1960,13 @@ class PythonToPythonJS(NodeVisitor):
 					args.append( '%s=%s' %(a, default_value) )
 				else:
 					args.append( a )
+
+			if node.args.vararg:
+				if node.args.defaults:
+					raise SyntaxError( 'dart functions can not use variable arguments (*args) and have keyword arguments' )
+
+				args.append('__variable_args__%s' %node.args.vararg)
+
 
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
