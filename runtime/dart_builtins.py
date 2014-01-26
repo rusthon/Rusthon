@@ -46,6 +46,8 @@ class list( ListBase ):
 		return self[...].indexOf(obj)
 
 
+tuple = list
+
 #@dart.extends
 class dict: #( HashMap ):
 	'''
@@ -87,3 +89,7 @@ def range(n):
 
 def len(a):
 	return a.length
+
+def str(a):
+	## TODO conversions to string
+	return a

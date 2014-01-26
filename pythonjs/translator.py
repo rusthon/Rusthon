@@ -3,11 +3,15 @@ import sys
 
 from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
+from pythonjs_to_dart import main as pythonjs_to_dart
 
 
 def main(script):
     a = python_to_pythonjs(script)
-    return pythonjs_to_javascript( a )
+    if '--dart' in sys.argv:
+        return pythonjs_to_dart( a )
+    else:
+        return pythonjs_to_javascript( a )
 
 
 def command():

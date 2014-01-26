@@ -13,10 +13,7 @@ About the tests:
 
 """
 
-import os
-import re
-import sys
-import tempfile
+import os, sys, re, tempfile, subprocess
 
 tmpname = os.path.join(tempfile.gettempdir(), "xxx_regtest")
 
@@ -41,7 +38,8 @@ def runnable(command):
 ## rhino has problems: like maximum callstack errors simply freeze up rhino
 rhino_runnable = runnable("rhino -help") and '--rhino' in sys.argv
 node_runnable = runnable("node --help")
-dart2js_runnable = runnable( os.path.expanduser( '~/dart/dart-sdk/bin/dart2js') )  ## TODO - dart tests
+dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
+dart2js_runnable = runnable( dart2js )  ## TODO - dart tests
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -108,23 +106,45 @@ def patch_assert(filename):
     """Patch the regression tests to add information into asserts"""
     out = []
     for i, line in enumerate(read(filename).split('\n')):
-        out.append(re.sub("(Error|Warning)\((.*)\)",
+        out.append(re.sub("(TestError|TestWarning)\((.*)\)",
                           r'\1("%s",%d,\2,"\2")' % (filename, i),
                           line)
                    )
     return '\n'.join(out)
         
-def patch_python(filename):
-    """Rewrite the Python code"""
-    return ("""# -*- coding: utf-8 -*-
-def Error(file, line, result, test):
-    if not result:
+
+_patch_header = """# -*- coding: utf-8 -*-
+def TestError(file, line, result, test):
+    if result == False:
         print(file + ":" + str(line) + " Error fail " + test)
-def Warning(file, line, result, test):
-    if not result:
+def TestWarning(file, line, result, test):
+    if result == False:
         print(file + ":" + str(line) + " Warning fail " + test)
 """
-            +  patch_assert(filename))
+
+def patch_python(filename, dart=False):
+    """Rewrite the Python code"""
+    code = patch_assert(filename)
+
+    ## a main function can not be simply injected like this for dart,
+    ## because dart has special rules about what can be created outside
+    ## of the main function at the module level.
+    #if dart:
+    #    out = []
+    #    main_inserted = False
+    #    for line in code.splitlines():
+    #        if line.startswith('TestError') or line.startswith('TestWarning'):
+    #            if not main_inserted:
+    #                out.append('def main():')
+    #                main_inserted = True
+    #            out.append( '\t'+line )
+    #        else:
+    #            out.append( line )
+    #    code = '\n'.join( out )
+    if dart:
+        return '\n'.join( [_patch_header, code] )
+    else:
+        return '\n'.join( [_patch_header, code, 'main()'] )
 
 def run_python_test_on(filename):
     """Python tests"""
@@ -136,19 +156,54 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def translate_js(filename, javascript):
+def translate_js(filename, javascript=False, dart=False):
     output_name = "%s.py" % tmpname
-    write(output_name,
-          (javascript and 'pythonjs.configure(javascript=True)\n' or '')
-          + patch_python(filename))
-    stdout, stderr = run_command(os.path.join("..", "pythonjs",
-                                              "translator.py")
-                                 + ' ' + output_name,
-                                 returns_stdout_stderr=True)
+    if javascript:
+        content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename)
+    elif dart:
+        source = [
+            'pythonjs.configure(dart=True)',
+            open('../runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
+            patch_python(filename, dart=True)
+        ]
+        content = '\n'.join( source )
+    else:
+        content = patch_python(filename)
+
+    write(output_name, content)
+    cmd = [
+        os.path.join("..", "pythonjs", "translator.py"),
+        output_name
+    ]
+    if dart:
+        cmd.append( '--dart' )
+    stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
         return ''
     else:
-        return stdout
+        if dart:
+
+            if os.path.isfile('/tmp/dart2js-output.js'):
+                os.unlink('/tmp/dart2js-output.js')
+
+            dart_input = '/tmp/dart2js-input.dart'
+            open( dart_input, 'wb').write( stdout.encode('utf-8') )
+
+            cmd = [
+                dart2js,
+                '-o', '/tmp/dart2js-output.js',
+                dart_input
+            ]
+            #subprocess.call( cmd )  ## this shows dart2js errors in red ##
+            sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
+
+            if os.path.isfile('/tmp/dart2js-output.js'):
+                return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
+            else:
+                return ''
+
+        else:
+            return stdout
 
 def run_if_no_error(function):
     """Run the function if the JS code is not empty"""
@@ -200,6 +255,16 @@ def run_js_node(content):
           + content)
     return run_command("node %s.js" % tmpname)
 
+def run_pythonjs_dart_test_on_node(dummy_filename):
+    """Dart2js PythonJS tests on Node"""
+    return run_if_no_error(run_dart2js_node)
+
+def run_dart2js_node(content):
+    """Run Dart2js using Node"""
+    write("%s.js" % tmpname, content)
+    return run_command("node %s.js" % tmpname)
+
+
 table_header = "%-12.12s %-28.28s"
 table_cell   = '%-6.6s'
 
@@ -232,16 +297,22 @@ def run_test_on(filename):
     display(run_python_test_on)
     display(run_python3_test_on)
     global js
-    js = translate_js(filename, False)
+    js = translate_js(filename, javascript=False)
     if rhino_runnable:
         display(run_pythonjs_test_on)
     if node_runnable:
         display(run_pythonjs_test_on_node)
-    js = translate_js(filename, True)
+
+    js = translate_js(filename, javascript=True)
     if rhino_runnable:
         display(run_pythonjsjs_test_on)
     if node_runnable:
         display(run_pythonjsjs_test_on_node)
+
+    if dart2js_runnable and node_runnable:
+        js = translate_js(filename, javascript=False, dart=True)
+        display(run_pythonjs_dart_test_on_node)
+
     print()
     return sum_errors
 
@@ -258,6 +329,8 @@ def run():
             headers.append("JSJS\nRhino")
         if node_runnable:
             headers.append("JSJS\nNode")
+            if dart2js_runnable:
+                headers.append("Dart2js\nNode")
         
         print(table_header % ("", "Regtest run on")
               + ''.join(table_cell % i.split('\n')[0]

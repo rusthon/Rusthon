@@ -219,7 +219,13 @@ class PythonToPythonJS(NodeVisitor):
 		source = self.preprocess_custom_operators( source )
 		tree = parse( source )
 		self._generator_function_nodes = collect_generator_functions( tree )
-		self.visit( tree )
+
+		for node in tree.body:
+			## skip module level doc strings ##
+			if isinstance(node, ast.Expr) and isinstance(node.value, ast.Str):
+				pass
+			else:
+				self.visit(node)
 
 
 	def preprocess_custom_operators(self, data):
@@ -1396,8 +1402,8 @@ class PythonToPythonJS(NodeVisitor):
 
 					writer.write('%s = %s' % (self.visit(target), node_value))
 
-			elif self._with_dart and writer.is_at_global_level():
-				writer.write('JS("var %s = %s")' % (self.visit(target), node_value))
+			#elif self._with_dart and writer.is_at_global_level():
+			#	writer.write('JS("var %s = %s")' % (self.visit(target), node_value))
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 

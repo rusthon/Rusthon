@@ -92,7 +92,10 @@ class DartGenerator( pythonjs.JSGenerator ):
 				assert len(bases) == 1
 				out.append('class %s extends %s {'%(node.name, ','.join(bases)))
 			else:
-				out.append('class %s implements %s {'%(node.name, ', '.join(bases)))
+				if bases[0] == 'object':
+					out.append('class %s {' %node.name)
+				else:
+					out.append('class %s implements %s {'%(node.name, ', '.join(bases)))
 
 
 		else:
