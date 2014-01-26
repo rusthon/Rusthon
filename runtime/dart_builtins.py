@@ -46,6 +46,10 @@ class list( ListBase ):
 			stop = self[...].length + stop
 			return self[...].sublist(start, stop)
 
+	def __add__(self, other):
+		self[...].addAll( other[...] )
+		return self
+
 	def append(self, item):
 		self[...].add( item )
 
