@@ -73,6 +73,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 		for base in node.bases:
 			n = self.visit(base)
+			if n == 'object':
+				continue
 			node._parents.add( n )
 
 			bases.add( n )
@@ -92,10 +94,10 @@ class DartGenerator( pythonjs.JSGenerator ):
 				assert len(bases) == 1
 				out.append('class %s extends %s {'%(node.name, ','.join(bases)))
 			else:
-				if bases[0] == 'object':
-					out.append('class %s {' %node.name)
-				else:
-					out.append('class %s implements %s {'%(node.name, ', '.join(bases)))
+				#if bases[0] == 'object':
+				#	out.append('class %s {' %node.name)
+				#else:
+				out.append('class %s implements %s {'%(node.name, ', '.join(bases)))
 
 
 		else:

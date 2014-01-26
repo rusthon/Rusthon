@@ -3,7 +3,7 @@ def f():
     pass
 class G(object):
     def __init__(self):
-        """XXX: Without __init__ the translation with javascript fail"""
+        #"""XXX: Without __init__ the translation with javascript fail"""
         pass
 
 def main():

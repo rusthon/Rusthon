@@ -379,10 +379,11 @@ class PythonToPythonJS(NodeVisitor):
 			if self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
 			elif self._with_dart:
-				if isinstance(node.keys[i], ast.Str):
-					a.append( '%s:%s'%(k,v) )
-				else:
-					a.append( '"%s":%s'%(k,v) )
+				a.append( '%s:%s'%(k,v) )
+				#if isinstance(node.keys[i], ast.Str):
+				#	a.append( '%s:%s'%(k,v) )
+				#else:
+				#	a.append( '"%s":%s'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
 
