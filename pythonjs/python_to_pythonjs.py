@@ -1197,18 +1197,19 @@ class PythonToPythonJS(NodeVisitor):
 		elif self._with_js or self._with_dart:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
 				if self._with_dart:
+					## this is required because we need to support slices on String ##
 					return '__getslice__(%s, %s)'%(name, self.visit(node.slice))
 				else:
 					return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
+
+			elif self._with_dart:
+				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num):
 				if node.slice.value.n < 0:
 					return '%s[ %s.length+%s ]' %(name, name, self.visit(node.slice))
 				else:
 					return '%s[ %s ]' %(name, self.visit(node.slice))
-
-			elif self._with_dart:
-				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 			else:
 				s = self.visit(node.slice)
@@ -1958,7 +1959,14 @@ class PythonToPythonJS(NodeVisitor):
 		if not GLOBAL_VARIABLE_SCOPE:
 			local_vars, global_vars = retrieve_vars(node.body)
 			if local_vars-global_vars:
-				a = ','.join( local_vars-global_vars )
+				vars = []
+				args = [ a.id for a in node.args.args ]
+
+				for v in local_vars-global_vars:
+					if v in args: pass
+					else: vars.append( v )
+
+				a = ','.join( vars )
 				writer.write('var(%s)' %a)
 
 		#####################################################################

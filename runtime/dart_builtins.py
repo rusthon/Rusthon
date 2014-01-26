@@ -30,9 +30,13 @@ class list( ListBase ):
 		self[...].length = n
 
 	def __getitem__(self, index):
+		if index < 0:
+			index = self.length + index
 		return self[...][index]
 
 	def __setitem__(self, index, value):
+		if index < 0:
+			index = self.length + index
 		self[...][index] = value
 
 	def __getslice__(self, start, stop, step):
@@ -96,6 +100,7 @@ def len(a):
 def str(a):
 	## TODO conversions to string
 	return a
+
 
 def __getslice__(a, start, stop, step):
 	if instanceof(a, String):
