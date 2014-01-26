@@ -117,3 +117,15 @@ def __reverse__(a):
 			buff.write( a[n] )
 			n -= 1
 		return buff.toString()
+
+def __test_if_true__( ob ):
+	if instanceof(ob, String):
+		return ob.length != 0
+	elif instanceof(ob, Number):
+		return ob != 0
+	elif instanceof(ob, list):
+		return ob.length != 0
+	elif instanceof(ob, dict):
+		return ob.length != 0
+	elif ob != null:
+		return True

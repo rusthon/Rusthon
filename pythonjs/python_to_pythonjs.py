@@ -376,17 +376,22 @@ class PythonToPythonJS(NodeVisitor):
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
-			if self._with_js or self._with_dart:
-				#if isinstance(node.keys[i], ast.Str):
-				#	a.append( '%s:%s'%(k,v) )
-				#else:
-				#	a.append( '"%s":%s'%(k,v) )
+			if self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
+			elif self._with_dart:
+				if isinstance(node.keys[i], ast.Str):
+					a.append( '%s:%s'%(k,v) )
+				else:
+					a.append( '"%s":%s'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
-		if self._with_js or self._with_dart:
+
+		if self._with_js:
 			b = ','.join( a )
 			return '__jsdict( [%s] )' %b
+		elif self._with_dart:
+			b = ','.join( a )
+			return '{%s}' %b
 		else:
 			b = '[%s]' %', '.join(a)
 			#return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
@@ -395,20 +400,15 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		return a
-		#if self._with_js or self._with_dart:
-		#	return a
-		#else:
-		#	return '__get__(tuple, "__call__")([], {pointer:%s})' %a
+		if self._with_dart:
+			return 'tuple(%s)' %a
+		else:
+			return a
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
 		return a
-		#if self._with_js or self._with_dart:
-		#	return a
-		#else:
-		#	return '__get__(list, "__call__")([], {pointer:%s})' %a
 
 	def visit_GeneratorExp(self, node):
 		return self.visit_ListComp(node)
