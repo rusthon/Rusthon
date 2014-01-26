@@ -30,6 +30,7 @@ def collect_names(node):
 class DartGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
+	_raw_dict = False
 
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
@@ -45,7 +46,10 @@ class DartGenerator( pythonjs.JSGenerator ):
 			v = self.visit( node.values[i] )
 			a.append( '%s:%s'%(k,v) )
 		b = ','.join( a )
-		return 'new dict( {%s} )' %b
+		if self._raw_dict:
+			return '{%s}' %b
+		else:
+			return 'new dict( {%s} )' %b
 
 	def visit_ClassDef(self, node):
 		node._parents = set()
@@ -312,12 +316,13 @@ class DartGenerator( pythonjs.JSGenerator ):
 			dindex = i - offset
 			if dindex >= 0 and node.args.defaults:
 				default_value = self.visit( node.args.defaults[dindex] )
-				oargs.append( '%s=%s' %(a, default_value) )
+				oargs.append( '%s:%s' %(a, default_value) )
 			else:
 				args.append( a )
 
 		if oargs:
-			args.append( '[%s]' % ','.join(oargs) )
+			#args.append( '[%s]' % ','.join(oargs) )
+			args.append( '{%s}' % ','.join(oargs) )
 
 		buffer = self.indent()
 		if hasattr(node,'_prefix'): buffer += node._prefix + ' '

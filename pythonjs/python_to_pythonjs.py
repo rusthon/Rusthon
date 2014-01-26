@@ -1574,7 +1574,8 @@ class PythonToPythonJS(NodeVisitor):
 
 			if name in self._generator_functions:
 				return ' new %s(%s)' %(name, ','.join(args))
-			if self._with_dart and name in self._builtin_functions_dart:
+
+			elif self._with_dart and name in self._builtin_functions_dart:
 				if args:
 					return self._builtin_functions_dart[name] % ','.join(args)
 				else:
@@ -1615,11 +1616,13 @@ class PythonToPythonJS(NodeVisitor):
 
 				else:
 					a = ','.join(args)
-					return '%s(%s)' %( self.visit(node.func), a )
+					if node.keywords:
+						args.extend( [self.visit(x.value) for x in node.keywords] )
+						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
-			#elif isinstance(node.func, Name) and node.func.id == 'JS':  ## avoids nested JS
-			#	assert len(args) == 1
-			#	return node.args[0].s  ## string literal
+					else:
+						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
 				a = ','.join(args)
@@ -1628,9 +1631,29 @@ class PythonToPythonJS(NodeVisitor):
 			elif name in self._global_functions and self._with_inline:
 				return self.inline_function( node )
 
-			else:
-				a = ','.join(args)
-				return '%s(%s)' %( self.visit(node.func), a )
+			elif self._with_dart:  ## DART
+				args
+				if node.keywords:
+					kwargs = ','.join( ['%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords] )
+					if args:
+						return '%s(%s, JS("%s"))' %( self.visit(node.func), ','.join(args), kwargs )
+					else:
+						return '%s( JS("%s"))' %( self.visit(node.func), kwargs )
+
+				else:
+					a = ','.join(args)
+					return '%s(%s)' %( self.visit(node.func), a )
+
+			else:  ## javascript mode
+				if node.keywords:
+					args.extend( [self.visit(x.value) for x in node.keywords] )
+					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+
+				else:
+					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+
+				#a = ','.join(args)
+				#return '%s(%s)' %( self.visit(node.func), a )
 
 		elif isinstance(node.func, Name) and node.func.id in self._generator_functions:
 			name = self.visit(node.func)
