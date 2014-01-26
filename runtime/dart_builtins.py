@@ -93,3 +93,24 @@ def len(a):
 def str(a):
 	## TODO conversions to string
 	return a
+
+def __getslice__(a, start, stop, step):
+	if instanceof(a, String):
+		if start != null and stop != null:
+			b = a.substring( start, stop )
+		elif start != null:
+			b = a.substring( start )
+		else:
+			b = a
+		if step != null:
+			b = __reverse__(b)
+		return b
+
+def __reverse__(a):
+	if instanceof(a, String):
+		buff = new( StringBuffer() )
+		n = a.length - 1
+		while n >= 0:
+			buff.write( a[n] )
+			n -= 1
+		return buff.toString()
