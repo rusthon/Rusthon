@@ -262,6 +262,10 @@ class PythonToPythonJS(NodeVisitor):
 			'sin':'Math.sin(%s)',
 			'sqrt':'Math.sqrt(%s)'
 		}
+		self._builtin_functions_dart = {
+			'ord':'%s.codeUnitAt(0)', 
+			'chr':'new( String.fromCharCodes([%s]) )',
+		}
 
 	def is_known_class_name(self, name):
 		return name in self._classes
@@ -1563,6 +1567,11 @@ class PythonToPythonJS(NodeVisitor):
 
 			if name in self._generator_functions:
 				return ' new %s(%s)' %(name, ','.join(args))
+			if self._with_dart and name in self._builtin_functions_dart:
+				if args:
+					return self._builtin_functions_dart[name] % ','.join(args)
+				else:
+					return self._builtin_functions_dart[name]
 
 			elif name in self._builtin_functions and self._builtin_functions[name]:  ## inlined js
 				if args:
