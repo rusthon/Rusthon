@@ -17,7 +17,10 @@ class list( ListBase ):
 	'''
 	def __init__(self, items):
 		self[...] = new( List() )
-		self[...].addAll( items )
+		if instanceof(items, String):
+			self[...].addAll( items.split("") )
+		else:
+			self[...].addAll( items )
 
 	@property
 	def length(self):
