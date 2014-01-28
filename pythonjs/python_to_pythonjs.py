@@ -169,9 +169,10 @@ class PythonToPythonJS(NodeVisitor):
 	identifier = 0
 	_func_typedefs = ()
 
-	def __init__(self, source=None, module=None, module_path=None, dart=False):
+	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False):
 		super(PythonToPythonJS, self).__init__()
 
+		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_js = False
 
@@ -1557,6 +1558,14 @@ class PythonToPythonJS(NodeVisitor):
 					else:
 						raise SyntaxError
 
+				elif kw.arg == 'coffee':
+					if kw.value.id == 'True':
+						self._with_coffee = True
+					elif kw.value.id == 'False':
+						self._with_coffee = False
+					else:
+						raise SyntaxError
+
 				elif kw.arg == 'inline':
 					if kw.value.id == 'True':
 						self._with_inline = True
@@ -1971,7 +1980,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript:
+		elif self._with_js or javascript or self._with_coffee:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 			elif node.args.kwarg:
@@ -1987,7 +1996,7 @@ class PythonToPythonJS(NodeVisitor):
 		## the user will almost always want to use Python-style variable scope,
 		## this is kept here as an option to be sure we are compatible with the
 		## old-style code in runtime/pythonpythonjs.py and runtime/builtins.py
-		if not GLOBAL_VARIABLE_SCOPE:
+		if not GLOBAL_VARIABLE_SCOPE and not self._with_coffee:
 			local_vars, global_vars = retrieve_vars(node.body)
 			if local_vars-global_vars:
 				vars = []
@@ -2002,6 +2011,8 @@ class PythonToPythonJS(NodeVisitor):
 
 		#####################################################################
 		if self._with_dart:
+			pass
+		elif self._with_coffee:
 			pass
 
 		elif self._with_js or javascript:

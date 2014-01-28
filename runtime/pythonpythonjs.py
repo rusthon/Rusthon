@@ -11,8 +11,6 @@ if 'window' in this and 'document' in this:
 elif 'process' in this:
 	## note, we can not test for '"process" in global'
 	## make sure we are really inside NodeJS by letting this fail, and halting the program.
-	print process.title
-	print process.version
 	__WEBWORKER__ = False
 	__NODEJS__ = True
 else:

@@ -4,12 +4,15 @@ import sys
 from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
 from pythonjs_to_dart import main as pythonjs_to_dart
+from pythonjs_to_coffee import main as pythonjs_to_coffee
 
 
 def main(script):
     a = python_to_pythonjs(script)
     if '--dart' in sys.argv:
         return pythonjs_to_dart( a )
+    elif '--coffee' in sys.argv:
+        return pythonjs_to_coffee( a )
     else:
         return pythonjs_to_javascript( a )
 

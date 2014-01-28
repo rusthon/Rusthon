@@ -39,7 +39,8 @@ def runnable(command):
 rhino_runnable = runnable("rhino -help") and '--rhino' in sys.argv
 node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
-dart2js_runnable = runnable( dart2js )  ## TODO - dart tests
+dart2js_runnable = runnable( dart2js )
+coffee_runnable = runnable( "coffee -v" )
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -156,7 +157,7 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def translate_js(filename, javascript=False, dart=False):
+def translate_js(filename, javascript=False, dart=False, coffee=False):
     output_name = "%s.py" % tmpname
     if javascript:
         content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename)
@@ -165,6 +166,13 @@ def translate_js(filename, javascript=False, dart=False):
             'pythonjs.configure(dart=True)',
             open('../runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
             patch_python(filename, dart=True)
+        ]
+        content = '\n'.join( source )
+    elif coffee:
+        source = [
+            'pythonjs.configure(coffee=True)',
+            #open('../runtime/coffee_builtins.py', 'rb').read().decode('utf-8'),
+            patch_python(filename)
         ]
         content = '\n'.join( source )
     else:
@@ -177,6 +185,9 @@ def translate_js(filename, javascript=False, dart=False):
     ]
     if dart:
         cmd.append( '--dart' )
+    elif coffee:
+        cmd.append( '--coffee')
+
     stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
         return ''
@@ -194,11 +205,31 @@ def translate_js(filename, javascript=False, dart=False):
                 '-o', '/tmp/dart2js-output.js',
                 dart_input
             ]
-            #subprocess.call( cmd )  ## this shows dart2js errors in red ##
-            sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
+            subprocess.call( cmd )  ## this shows dart2js errors in red ##
+            #sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
 
             if os.path.isfile('/tmp/dart2js-output.js'):
                 return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
+            else:
+                return ''
+
+        elif coffee:
+
+            coffee_input = '/tmp/coffee-input.coffee'
+            open( coffee_input, 'wb').write( stdout.encode('utf-8') )
+
+            cmd = [
+                'coffee',
+                '--print', # print js to stdout
+                coffee_input
+            ]
+            #subprocess.call( cmd )
+            sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
+            if serr:
+                return ''
+            elif sout:
+                open('/tmp/coffee-output.js', 'wb').write( sout.encode('utf-8') )
+                return sout
             else:
                 return ''
 
@@ -250,7 +281,7 @@ def run_js_node(content):
     """Run Javascript using Node"""
     builtins = read(os.path.join("..", "pythonjs.js"))
     write("%s.js" % tmpname,
-          builtins.replace('console.log(process.title);','')
+          builtins.replace('console.log(process.title);','')  ## no longer required
           .replace('console.log(process.version);','')
           + content)
     return run_command("node %s.js" % tmpname)
@@ -262,6 +293,16 @@ def run_pythonjs_dart_test_on_node(dummy_filename):
 def run_dart2js_node(content):
     """Run Dart2js using Node"""
     write("%s.js" % tmpname, content)
+    return run_command("node %s.js" % tmpname)
+
+def run_pythonjs_coffee_test_on_node(dummy_filename):
+    """Coffee PythonJS tests on Node"""
+    return run_if_no_error(run_coffee_node)
+
+def run_coffee_node(content):
+    """Run CoffeeScript using Node"""
+    builtins = read(os.path.join("..", "pythonjs.js"))
+    write("%s.js" % tmpname, builtins + '\n' + content)
     return run_command("node %s.js" % tmpname)
 
 
@@ -313,6 +354,11 @@ def run_test_on(filename):
         js = translate_js(filename, javascript=False, dart=True)
         display(run_pythonjs_dart_test_on_node)
 
+    if coffee_runnable and node_runnable:
+        js = translate_js(filename, javascript=False, dart=False, coffee=True)
+        display(run_pythonjs_coffee_test_on_node)
+
+
     print()
     return sum_errors
 
@@ -330,7 +376,9 @@ def run():
         if node_runnable:
             headers.append("JSJS\nNode")
             if dart2js_runnable:
-                headers.append("Dart2js\nNode")
+                headers.append("Dart\nNode")
+            if coffee_runnable:
+                headers.append("Coffee\nNode")
         
         print(table_header % ("", "Regtest run on")
               + ''.join(table_cell % i.split('\n')[0]
