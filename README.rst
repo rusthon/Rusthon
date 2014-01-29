@@ -15,14 +15,14 @@ irc freenode::
 Introduction
 ======
 
-PythonJS is a Python to Javascript and Dart translator written in
+PythonJS is a Python to Javascript translator written in
 Python, created by Amirouche Boubekki and Brett Hartshorn,
 currently maintained and developed by Brett. It features:
 list comprehensions, classes, multiple inheritance, operator
 overloading, function and class decorators, generator functions,
 HTML DOM, and easily integrates with JavaScript and external JavaScript 
 libraries.  The generated code works in the Browser and in NodeJS.
-Note: the Dart backend is still very experimental.
+Note: the Dart and CoffeeScript backends are still very experimental.
 
 Speed
 ---------------
@@ -335,7 +335,7 @@ Example Output::
 Python vs JavaScript Modes
 -------------------------
 
-PythonJS has two primary modes you can write code in: "python" and "javascript".  The default mode is "python", you can mark sections of your code to use either mode with "pythonjs.configure(javascript=True/False)" or nesting blocks inside "with python:" or "with javascript:".  The "javascript" mode can be used for sections of code where performance is a major concern.  When in "javascript" mode the literal "[]" syntax will return a JavaScript Array instead of a PythonJS list, and a literal "{}" returns a JavaScript Object instead of a PythonJS dict.  In both modes you can directly call external JavaScript functions, its only faster in "javascript" mode because function calls are direct without any wrapping.
+PythonJS has two primary modes you can write code in: "python" and "javascript".  The default mode is "python", you can mark sections of your code to use either mode with "pythonjs.configure(javascript=True/False)" or nesting blocks inside "with python:" or "with javascript:".  The "javascript" mode can be used for sections of code where performance is a major concern.  When in "javascript" mode Python dictionaries become JavaScript Objects.  In both modes you can directly call external JavaScript functions, its only faster in "javascript" mode because function calls are direct without any wrapping.
 
 
 Directly Calling JavaScript Functions
@@ -759,7 +759,18 @@ Example::
 	print f.read()
 
 ------------------------------
+Regression Tests
+================
 
+The best way to see what features are currently supported with each of the backends
+is to run the automated regression tests in PythonJS/regtests.  To test all the backends
+you need to install NodeJS, CoffeeScript, and Dart2JS.  You should download the Dart SDK,
+and make sure that the executeable "dart2js" is in "~/dart/dart-sdk/bin/"
+
+Run Regression Tests::
+
+	cd PythonJS/regtests
+	./run.py
 
 Test Server
 ===========

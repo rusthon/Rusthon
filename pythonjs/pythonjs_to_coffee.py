@@ -32,6 +32,20 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 	_class_props = dict()
 	_raw_dict = False
 
+	def _inline_code_helper(self, s):
+		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
+		if s.strip().startswith('#'): s = '/*%s*/'%s
+		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
+			pass
+		else:
+			if ' or ' in s:
+				s = s.replace(' or ', ' || ')
+			if ' not ' in s:
+				s = s.replace(' not ', ' ! ')
+			if ' and ' in s:
+				s = s.replace(' and ', ' && ')
+		return '`' + s + '`'  ## enclose with backticks to inline javascript in coffeescript
+
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
 		return '%s.$wrapped' %name
@@ -288,11 +302,7 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 
 	def visit_Print(self, node):
 		args = [self.visit(e) for e in node.values]
-		if len(args) > 1:
-			s = 'print([%s]);' % ', '.join(args)
-		else:
-			s = 'print(%s);' % ', '.join(args)
-		return s
+		return 'console.log(%s)' % ', '.join(args)
 
 
 	def visit_Assign(self, node):

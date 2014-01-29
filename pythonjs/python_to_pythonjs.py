@@ -1577,7 +1577,7 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					raise SyntaxError
 
-		elif self._with_js or self._with_dart:
+		elif self._with_js or self._with_dart:# or self._with_coffee:
 			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 
@@ -1980,7 +1980,7 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript or self._with_coffee:
+		elif self._with_js or javascript:# or self._with_coffee:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 			elif node.args.kwarg:
@@ -2012,8 +2012,8 @@ class PythonToPythonJS(NodeVisitor):
 		#####################################################################
 		if self._with_dart:
 			pass
-		elif self._with_coffee:
-			pass
+		#elif self._with_coffee:
+		#	pass
 
 		elif self._with_js or javascript:
 			if node.args.defaults:
@@ -2057,7 +2057,8 @@ class PythonToPythonJS(NodeVisitor):
 			# new pythonjs' python function arguments handling
 			# create the structure representing the functions arguments
 			# first create the defaultkwargs JSObject
-			writer.write('var(signature, arguments)')
+			if not self._with_coffee:
+				writer.write('var(__sig__, __args__)')
 
 			L = len(node.args.defaults)
 			kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
@@ -2086,26 +2087,15 @@ class PythonToPythonJS(NodeVisitor):
 
 			# create a JS Object to store the value of each parameter
 			signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
-			writer.write('signature = JSObject(%s)' % signature)
-			writer.write('arguments = get_arguments(signature, args, kwargs)')
+			writer.write('__sig__ = JSObject(%s)' % signature)
+			writer.write('__args__ = get_arguments(__sig__, args, kwargs)')
 			# # then for each argument assign its value
 			for arg in node.args.args:
-				writer.write("""JS("var %s = arguments['%s']")""" % (arg.id, arg.id))
+				writer.write("""JS("var %s = __args__['%s']")""" % (arg.id, arg.id))
 			if node.args.vararg:
-				writer.write("""JS("var %s = arguments['%s']")""" % (node.args.vararg, node.args.vararg))
-
-				## DEPRECATED
-				# turn it into a list
-				#expr = '%s = __get__(list, "__call__")(__create_array__(%s), {});'
-				#expr = expr % (node.args.vararg, node.args.vararg)
-				#writer.write(expr)
+				writer.write("""JS("var %s = __args__['%s']")""" % (node.args.vararg, node.args.vararg))
 			if node.args.kwarg:
-				writer.write("""JS('var %s = arguments["%s"]')""" % (node.args.kwarg, node.args.kwarg))
-
-				## DEPRECATED
-				#expr = '%s = __get__(dict, "__call__")(__create_array__(%s), {});'
-				#expr = expr % (node.args.kwarg, node.args.kwarg)
-				#writer.write(expr)
+				writer.write("""JS('var %s = __args__["%s"]')""" % (node.args.kwarg, node.args.kwarg))
 		else:
 			log('(function has no arguments)')
 

@@ -250,18 +250,8 @@ class JSGenerator(NodeVisitor):
 				return '[]'
 
 		elif name == 'JS':
-			s = node.args[0].s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
-			if s.strip().startswith('#'): s = '/*%s*/'%s
-			if '"' in s or "'" in s:  ## can not trust direct-replace hacks
-				pass
-			else:
-				if ' or ' in s:
-					s = s.replace(' or ', ' || ')
-				if ' not ' in s:
-					s = s.replace(' not ', ' ! ')
-				if ' and ' in s:
-					s = s.replace(' and ', ' && ')
-			return s
+			assert len(node.args)==1 and isinstance(node.args[0], ast.Str)
+			return self._inline_code_helper( node.args[0].s )
 
 		elif name == 'dart_import':
 			if len(node.args) == 1:
@@ -279,6 +269,20 @@ class JSGenerator(NodeVisitor):
 			else:
 				args = ''
 			return '%s(%s)' % (name, args)
+
+	def _inline_code_helper(self, s):
+		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
+		if s.strip().startswith('#'): s = '/*%s*/'%s
+		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
+			pass
+		else:
+			if ' or ' in s:
+				s = s.replace(' or ', ' || ')
+			if ' not ' in s:
+				s = s.replace(' not ', ' ! ')
+			if ' and ' in s:
+				s = s.replace(' and ', ' && ')
+		return s
 
 	def visit_While(self, node):
 		body = [ 'while(%s) {' %self.visit(node.test)]
