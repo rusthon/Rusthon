@@ -46,6 +46,14 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 				s = s.replace(' and ', ' && ')
 		return '`' + s + '`'  ## enclose with backticks to inline javascript in coffeescript
 
+	def visit_While(self, node):
+		body = [ 'while %s' %self.visit(node.test)]
+		self.push()
+		for line in list( map(self.visit, node.body) ):
+			body.append( self.indent()+line )
+		self.pull()
+		return '\n'.join( body )
+
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
 		return '%s.$wrapped' %name
@@ -367,6 +375,9 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 				continue
 			else:
 				body.append( self.indent() + self.visit(child) )
+
+		if not isinstance(node.body[-1], ast.Return):
+			body.append( self.indent() + '0' )
 
 		buffer += '\n'.join(body)
 		self.pull()

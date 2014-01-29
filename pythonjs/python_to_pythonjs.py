@@ -766,8 +766,8 @@ class PythonToPythonJS(NodeVisitor):
 		self._catch_attributes = set()
 		self._instance_attributes[ name ] = self._catch_attributes
 
-
-		writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
+		if not self._with_coffee:
+			writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
 		writer.write('__%s_attrs = JSObject()' % name)
 		writer.write('__%s_parents = JSArray()' % name)
 		writer.write('__%s_properties = JSObject()' % name)
@@ -2322,7 +2322,8 @@ class PythonToPythonJS(NodeVisitor):
 				self._instances[ target.id ] = list( self._global_typed_lists[ iter.id ] )[0]
 
 			vars.append('__iterator__')  ## TODO - test nested for loops - this should be __iterator__N
-			writer.write('var(%s)' % ','.join(vars))
+			if not self._with_coffee:
+				writer.write('var(%s)' % ','.join(vars))
 
 
 			is_range = False
@@ -2344,7 +2345,8 @@ class PythonToPythonJS(NodeVisitor):
 
 			if is_generator:
 				iter_name = self.visit(target)
-				writer.write('var(%s, __generator__)' %iter_name)
+				if not self._with_coffee:
+					writer.write('var(%s, __generator__)' %iter_name)
 				writer.write('__generator__ = %s' %self.visit(iter))
 				writer.write('while __generator__.__done__ != 1:')
 				writer.push()
@@ -2355,7 +2357,8 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif is_range:
 				iter_name = target.id
-				writer.write('var(%s)' %iter_name)
+				if not self._with_coffee:
+					writer.write('var(%s)' %iter_name)
 				writer.write('%s = %s' %(iter_name, iter_start))
 				writer.write('while %s < %s:' %(iter_name, iter_end))
 				writer.push()
@@ -2367,7 +2370,8 @@ class PythonToPythonJS(NodeVisitor):
 
 				writer.pull()
 			else:
-				writer.write('var(__next__)')
+				if not self._with_coffee:
+					writer.write('var(__next__)')
 				writer.write('__next__ = __get__(__iterator__, "next_fast")')
 				writer.write('while __iterator__.index < __iterator__.length:')
 

@@ -228,7 +228,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False):
             if serr:
                 return ''
             elif sout:
-                open('/tmp/coffee-output.js', 'wb').write( sout.encode('utf-8') )
+                builtins = read(os.path.join("..", "pythonjs.js"))
+                open('/tmp/coffee-output.js', 'wb').write( (builtins+'\n'+sout).encode('utf-8') )
                 return sout
             else:
                 return ''
