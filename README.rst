@@ -38,6 +38,19 @@ mode (javascript mode) it beats PyPy in the Richards, and N-Body benchmarks.
 
 N-Body benchmark, PythonJS in javascript mode has similar performance to Dart.
 
+translator.py
+------------
+To convert your python script into javascript use translator.py located in the "pythonjs" directory.  You can give it a list of python files to translate at once.  It will output the translation to stdout.  The default output type is JavaScript.
+
+Usage::
+
+	translator.py [--dart|--coffee] file.py
+
+Example::
+
+	cd PythonJS
+	pythonjs/translator.py --coffee myscript.py > myscript.coffee
+
 NodeJS
 ---------------
 Using PythonJS you can quickly port your server side code to
@@ -59,26 +72,6 @@ translates it into the subset of Python called `pythonjs`.
 This reduced subset is still valid Python code, and its
 AST gets parsed again in the second translation phase
 that converts it into final JavaScript form.
-
-
-Getting Started
-===============
-
-Get Source Code::
-
-	git clone https://github.com/PythonJS/PythonJS.git
-
-Translate Your Script::
-
-	cd PythonJS/pythonjs
-	./translator.py myscript1.py myscript2.py > ~/myapp.js
-
-The translator.py script can take in multiple Python
-scripts, these are appended together, and translated into a
-single JavaScript.  The output is printed to stdout.  If no
-command line arguments is given, then translator.py takes
-input from stdin.
-
 
 
 
@@ -759,6 +752,7 @@ Example::
 	print f.read()
 
 ------------------------------
+
 Regression Tests
 ================
 
