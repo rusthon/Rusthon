@@ -782,9 +782,6 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(item, FunctionDef):
 				log('  method: %s'%item.name)
 
-				#if item.name == '__contains__':  ## this is required because we added Object.prototype.__contains__ - DEPRECATED!
-				#    item.name = item.name.upper()
-
 				self._classes[ name ].append( item.name )
 				item_name = item.name
 				item.original_name = item.name
@@ -1089,13 +1086,13 @@ class PythonToPythonJS(NodeVisitor):
 					## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
 					## TODO double check this code
 					#comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
-					comp.append( '( Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
-					comp.append( "%s['__contains__'](%s) )" %a )
-					#comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
-					comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
+					#comp.append( '( Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
+					#comp.append( "%s['__contains__'](%s) )" %a )
+					##comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
+					#comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
 					## fixes 'o' in 'helloworld' in javascript mode ##
-					comp.append( ' or typeof(%s)=="string" and %s.__contains__(%s)' %(a[0],a[0],a[1]))
-
+					#comp.append( ' or typeof(%s)=="string" and %s.__contains__(%s)' %(a[0],a[0],a[1]))
+					comp.append( '__contains__(%s, %s)' %(a[0],a[1]))
 				else:
 					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
 

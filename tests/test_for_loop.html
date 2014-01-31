@@ -67,9 +67,22 @@ def main():
 	for x,y in d.items():
 		print(x,y)
 
+	keys = []
+	values = []
 	with javascript:
 		for x,y in d.items():
 			print(x,y)
+			keys.append( x )
+			values.append( y )
+
+		print 'a' in keys
+		print 'B' in values
+		print keys
+		print values
+
+	print 'a' in keys
+	print 'B' in values
+
 
 </script>
 </head>

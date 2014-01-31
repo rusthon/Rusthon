@@ -26,6 +26,18 @@ JS("var ValueError = new RangeError()")
 ## when translated methods named: "get" become __jsdict_get(ob,key,default)
 
 with javascript:
+	def __contains__( ob, a ):
+		t = typeof(ob)
+		if t == 'string':
+			if ob.indexOf(a) == -1: return False
+			else: return True
+		elif t == 'number':
+			raise TypeError
+		elif ob.__contains__:
+			return ob.__contains__(a)
+		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
+			return True
+
 	def __test_if_true__( ob ):
 		if instanceof(ob, Array):
 			return ob.length != 0

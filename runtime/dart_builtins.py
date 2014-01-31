@@ -89,6 +89,12 @@ class dict: #( HashMap ):
 	def values(self):
 		return self[...].values
 
+	def items(self):
+		r = []
+		for key in self.keys():
+			value = self[ key ]
+			r.append( [key,value] )
+		return r
 
 def range(n):
 	r = []
