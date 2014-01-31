@@ -39,7 +39,7 @@ def main():
 		k += key
 		v += ob[key]
 	TestError(k=='ab' or k=='ba')
-	TestError(v=='AB' or k=='BA')
+	TestError(v=='AB' or v=='BA')
 
 	keys = []
 	values = []

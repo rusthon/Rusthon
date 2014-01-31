@@ -1614,6 +1614,9 @@ class PythonToPythonJS(NodeVisitor):
 				elif anode.attr == 'values' and not args:
 					return '__jsdict_values(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'items' and not args:
+					return '__jsdict_items(%s)' %self.visit(anode.value)
+
 				elif anode.attr == 'pop':
 					if args:
 						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
