@@ -2477,7 +2477,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		self._with_coffee = False
 		if compiler._with_dart:  ## TODO
 			self._with_dart = True
-		elif compiler._with_coffee: ## TODO
+		elif compiler._with_coffee:
 			self._with_coffee = True
 		else:
 			self._with_js = True

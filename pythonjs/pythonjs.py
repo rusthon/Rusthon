@@ -223,23 +223,7 @@ class JSGenerator(NodeVisitor):
 				return 'Object()'
 
 		elif name == 'var':
-			args = [ self.visit(a) for a in node.args ]
-			if self._function_stack:
-				fnode = self._function_stack[-1]
-				rem = []
-				for arg in args:
-					if arg in fnode._local_vars:
-						rem.append( arg )
-					else:
-						fnode._local_vars.add( arg )
-				for arg in rem:
-					args.remove( arg )
-
-			if args:
-				out = ', '.join(args)
-				return 'var %s' % out
-			else:
-				return ''
+			return self._visit_call_helper_var( node )
 
 		elif name == 'JSArray':
 			if node.args:
@@ -269,6 +253,26 @@ class JSGenerator(NodeVisitor):
 			else:
 				args = ''
 			return '%s(%s)' % (name, args)
+
+	def _visit_call_helper_var(self, node):
+		args = [ self.visit(a) for a in node.args ]
+		if self._function_stack:
+			fnode = self._function_stack[-1]
+			rem = []
+			for arg in args:
+				if arg in fnode._local_vars:
+					rem.append( arg )
+				else:
+					fnode._local_vars.add( arg )
+			for arg in rem:
+				args.remove( arg )
+
+		if args:
+			out = ', '.join(args)
+			return 'var %s' % out
+		else:
+			return ''
+
 
 	def _inline_code_helper(self, s):
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes

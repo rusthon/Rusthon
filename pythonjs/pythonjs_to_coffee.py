@@ -30,7 +30,9 @@ def collect_names(node):
 class CoffeeGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
-	_raw_dict = False
+
+	def _visit_call_helper_var(self, node):
+		return ''
 
 	def _inline_code_helper(self, s):
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
@@ -327,13 +329,16 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 	def _visit_function(self, node):
 		getter = False
 		setter = False
+		klass = None
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == 'property':
 				getter = True
 			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
 				setter = True
+			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'prototype':
+				klass = self.visit(decor)
 			else:
-				raise SyntaxError
+				raise SyntaxError(decor)
 
 		args = []  #self.visit(node.args)
 		oargs = []
@@ -361,7 +366,10 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 		#elif setter:
 		#	buffer += 'set %s(%s) {\n' % (node.name, ', '.join(args))
 		#else:
-		buffer += '%s = (%s) ->\n' % (node.name, ', '.join(args))
+		if klass:
+			buffer += '%s.%s = (%s) ->\n' % (klass, node.name, ', '.join(args))
+		else:
+			buffer += '%s = (%s) ->\n' % (node.name, ', '.join(args))
 		self.push()
 
 		#if varargs:
