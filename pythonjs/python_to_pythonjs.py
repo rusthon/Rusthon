@@ -1579,7 +1579,7 @@ class PythonToPythonJS(NodeVisitor):
 			args = list( map(self.visit, node.args) )
 
 			if name in self._generator_functions:
-				return ' new %s(%s)' %(name, ','.join(args))
+				return ' new(%s(%s))' %(name, ','.join(args))
 
 			elif self._with_dart and name in self._builtin_functions_dart:
 				if args:
@@ -2472,7 +2472,16 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 
 	'''
 	def __init__(self, node, compiler=None):
-		self._with_js = True
+		self._with_js = False
+		self._with_dart = False
+		self._with_coffee = False
+		if compiler._with_dart:  ## TODO
+			self._with_dart = True
+		elif compiler._with_coffee: ## TODO
+			self._with_coffee = True
+		else:
+			self._with_js = True
+
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes
 		self._global_functions = compiler._global_functions
