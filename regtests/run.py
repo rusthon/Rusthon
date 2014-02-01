@@ -41,6 +41,7 @@ node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
 dart2js_runnable = runnable( dart2js )
 coffee_runnable = runnable( "coffee -v" )
+lua_runnable = runnable( "lua -v" )
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -157,7 +158,7 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def translate_js(filename, javascript=False, dart=False, coffee=False):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False):
     output_name = "%s.py" % tmpname
     if javascript:
         content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename)
@@ -175,6 +176,13 @@ def translate_js(filename, javascript=False, dart=False, coffee=False):
             patch_python(filename)
         ]
         content = '\n'.join( source )
+    elif lua:
+        source = [
+            'pythonjs.configure(lua=True)',
+            patch_python(filename)
+        ]
+        content = '\n'.join( source )
+
     else:
         content = patch_python(filename)
 
@@ -187,6 +195,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False):
         cmd.append( '--dart' )
     elif coffee:
         cmd.append( '--coffee')
+    elif lua:
+        cmd.append( '--lua')
 
     stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
@@ -205,8 +215,10 @@ def translate_js(filename, javascript=False, dart=False, coffee=False):
                 '-o', '/tmp/dart2js-output.js',
                 dart_input
             ]
-            subprocess.call( cmd )  ## this shows dart2js errors in red ##
-            #sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
+            if show_details:
+                subprocess.call( cmd )
+            else:
+                sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
 
             if os.path.isfile('/tmp/dart2js-output.js'):
                 return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
@@ -307,6 +319,17 @@ def run_coffee_node(content):
     return run_command("node %s.js" % tmpname)
 
 
+def run_pythonjs_lua_test_on_lua(dummy_filename):
+    """Lua PythonJS tests on Lua"""
+    return run_if_no_error(run_lua_lua)
+
+def run_lua_lua(content):
+    """Run Lua using Lua"""
+    builtins = ''
+    write("%s.lua" % tmpname, builtins + '\n' + content)
+    return run_command("lua %s.lua" % tmpname)
+
+
 table_header = "%-12.12s %-28.28s"
 table_cell   = '%-6.6s'
 
@@ -359,6 +382,9 @@ def run_test_on(filename):
         js = translate_js(filename, javascript=False, dart=False, coffee=True)
         display(run_pythonjs_coffee_test_on_node)
 
+    if lua_runnable:
+        js = translate_js(filename, lua=True)
+        display(run_pythonjs_lua_test_on_lua)
 
     print()
     return sum_errors
@@ -380,6 +406,8 @@ def run():
                 headers.append("Dart\nNode")
             if coffee_runnable:
                 headers.append("Coffee\nNode")
+        if lua_runnable:
+            headers.append("Lua\nLua")
         
         print(table_header % ("", "Regtest run on")
               + ''.join(table_cell % i.split('\n')[0]

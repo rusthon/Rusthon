@@ -5,6 +5,7 @@ from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
 from pythonjs_to_dart import main as pythonjs_to_dart
 from pythonjs_to_coffee import main as pythonjs_to_coffee
+from pythonjs_to_lua import main as pythonjs_to_lua
 
 
 def main(script):
@@ -13,6 +14,8 @@ def main(script):
         return pythonjs_to_dart( a )
     elif '--coffee' in sys.argv:
         return pythonjs_to_coffee( a )
+    elif '--lua' in sys.argv:
+        return pythonjs_to_lua( a )
     else:
         return pythonjs_to_javascript( a )
 

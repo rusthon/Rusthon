@@ -169,9 +169,10 @@ class PythonToPythonJS(NodeVisitor):
 	identifier = 0
 	_func_typedefs = ()
 
-	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False):
+	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
 		super(PythonToPythonJS, self).__init__()
 
+		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_js = False
@@ -1563,6 +1564,14 @@ class PythonToPythonJS(NodeVisitor):
 					else:
 						raise SyntaxError
 
+				elif kw.arg == 'lua':
+					if kw.value.id == 'True':
+						self._with_lua = True
+					elif kw.value.id == 'False':
+						self._with_lua = False
+					else:
+						raise SyntaxError
+
 				elif kw.arg == 'inline':
 					if kw.value.id == 'True':
 						self._with_inline = True
@@ -2037,28 +2046,32 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
-			# First check the arguments are well formed 
-			# ie. that this function is not a callback of javascript code
-			writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
-			# XXX: there is bug in the underlying translator preventing me to write the condition
-			# in a more readble way... something to do with brakects...
-			writer.push()
-			writer.write('pass')  # do nothing if it's not called from javascript
-			writer.pull()
-			writer.write('else:')
-			writer.push()
-			# If it's the case, move use ``arguments`` to ``args`` 
-			writer.write('args = Array.prototype.slice.call(arguments)')
-			# This means you can't pass keyword argument from javascript but we already knew that
-			writer.write('kwargs = JSObject()')
-			writer.pull()
-			# done with pythonjs function used as callback of Python code 
 
-			# new pythonjs' python function arguments handling
-			# create the structure representing the functions arguments
-			# first create the defaultkwargs JSObject
-			if not self._with_coffee:
-				writer.write('var(__sig__, __args__)')
+			if self._with_lua:
+				pass
+			else:
+				# First check the arguments are well formed 
+				# ie. that this function is not a callback of javascript code
+				writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
+				# XXX: there is bug in the underlying translator preventing me to write the condition
+				# in a more readble way... something to do with brakects...
+				writer.push()
+				writer.write('pass')  # do nothing if it's not called from javascript
+				writer.pull()
+				writer.write('else:')
+				writer.push()
+				# If it's the case, move use ``arguments`` to ``args`` 
+				writer.write('args = Array.prototype.slice.call(arguments)')
+				# This means you can't pass keyword argument from javascript but we already knew that
+				writer.write('kwargs = JSObject()')
+				writer.pull()
+				# done with pythonjs function used as callback of Python code 
+
+				# new pythonjs' python function arguments handling
+				# create the structure representing the functions arguments
+				# first create the defaultkwargs JSObject
+				if not self._with_coffee:
+					writer.write('var(__sig__, __args__)')
 
 			L = len(node.args.defaults)
 			kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
@@ -2086,8 +2099,11 @@ class PythonToPythonJS(NodeVisitor):
 				keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
 			# create a JS Object to store the value of each parameter
-			signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
-			writer.write('__sig__ = JSObject(%s)' % signature)
+			#signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
+			#writer.write('__sig__ = JSObject(%s)' % signature)
+			signature = ', '.join(map(lambda x: '%s:%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
+			writer.write('__sig__ = {%s}' % signature)
+
 			writer.write('__args__ = get_arguments(__sig__, args, kwargs)')
 			# # then for each argument assign its value
 			for arg in node.args.args:
