@@ -1143,19 +1143,19 @@ class PythonToPythonJS(NodeVisitor):
 				return '__get__(%s, "%s")' % (node_value, node.attr)
 
 
-			elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
-				## This optimization breaks when a subclass redefines a class attribute,
-				## but we need it for inplace assignment operators, this is safe only when
-				## other parent classes have not defined the same class attribute.
-				## This is also not safe when node_value is "self".
-				return "%s['__class__']['%s']" %(node_value, node.attr)
+			#elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
+			#	## This optimization breaks when a subclass redefines a class attribute,
+			#	## but we need it for inplace assignment operators, this is safe only when
+			#	## other parent classes have not defined the same class attribute.
+			#	## This is also not safe when node_value is "self".
+			#	return "%s['__class__']['%s']" %(node_value, node.attr)
 
 			elif node.attr in typedef.attributes:
 				return "%s.%s" %(node_value, node.attr)
 
-			elif '__getattr__' in typedef.methods:
-				func = typedef.get_pythonjs_function_name( '__getattr__' )
-				return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
+			#elif '__getattr__' in typedef.methods:
+			#	func = typedef.get_pythonjs_function_name( '__getattr__' )
+			#	return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
 			elif typedef.check_for_parent_with( property=node.attr ):
 				parent = typedef.check_for_parent_with( property=node.attr )
@@ -1164,19 +1164,19 @@ class PythonToPythonJS(NodeVisitor):
 					node.returns_type = self._function_return_types[getter]
 				return '%s( [%s], JSObject() )' %(getter, node_value)
 
-			elif typedef.check_for_parent_with( class_attribute=node.attr ):
-				#return '__get__(%s, "%s")' % (node_value, node.attr)  ## __get__ is broken with grandparent class attributes - TODO double check and fix this
-				if node.attr in typedef.class_attributes:
-					## this might not be always correct
-					return "%s['__class__']['%s']" %(node_value, node.attr)
-				else:
-					parent = typedef.check_for_parent_with( class_attribute=node.attr )
-					return "__%s_attrs['%s']" %(parent.name, node.attr)  ## TODO, get from class.__dict__
+			#elif typedef.check_for_parent_with( class_attribute=node.attr ):
+			#	#return '__get__(%s, "%s")' % (node_value, node.attr)  ## __get__ is broken with grandparent class attributes - TODO double check and fix this
+			#	if node.attr in typedef.class_attributes:
+			#		## this might not be always correct
+			#		return "%s['__class__']['%s']" %(node_value, node.attr)
+			#	else:
+			#		parent = typedef.check_for_parent_with( class_attribute=node.attr )
+			#		return "__%s_attrs['%s']" %(parent.name, node.attr)  ## TODO, get from class.__dict__
 
-			elif typedef.check_for_parent_with( method='__getattr__' ):
-				parent = typedef.check_for_parent_with( method='__getattr__' )
-				func = parent.get_pythonjs_function_name( '__getattr__' )
-				return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
+			#elif typedef.check_for_parent_with( method='__getattr__' ):
+			#	parent = typedef.check_for_parent_with( method='__getattr__' )
+			#	func = parent.get_pythonjs_function_name( '__getattr__' )
+			#	return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
 
 			else:
 				return '__get__(%s, "%s")' % (node_value, node.attr)  ## TODO - this could be a builtin class like: list, dict, etc.
