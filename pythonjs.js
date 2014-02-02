@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Jan 31 15:42:16 2014
+// PythonJS Runtime - regenerated on: Sun Feb  2 15:20:27 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -433,16 +433,20 @@ __contains__.args_signature = ["ob", "a"];
 __contains__.kwargs_signature = {  };
 __contains__.types_signature = {  };
 __test_if_true__ = function(ob) {
-  if (ob instanceof Array) {
-    return ( ob.length ) != 0;
+  if (! (ob)) {
+    return false;
   } else {
-    if (isinstance(ob, dict)) {
-      return ( Object.keys(ob["$wrapped"]).length ) != 0;
+    if (ob instanceof Array) {
+      return ( ob.length ) != 0;
     } else {
-      if (ob instanceof Object) {
-        return ( Object.keys(ob).length ) != 0;
+      if (isinstance(ob, dict)) {
+        return ( Object.keys(ob["$wrapped"]).length ) != 0;
       } else {
-        return true;
+        if (ob instanceof Object) {
+          return ( Object.keys(ob).length ) != 0;
+        } else {
+          return true;
+        }
       }
     }
   }
@@ -815,7 +819,7 @@ type = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"bases": undefined, "class_dict": undefined}, "args": __create_array__("ob_or_class_name", "bases", "class_dict")};
+  __sig__ = { kwargs:{"bases": undefined, "class_dict": undefined},args:__create_array__("ob_or_class_name", "bases", "class_dict") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob_or_class_name = __args__['ob_or_class_name'];
   var bases = __args__['bases'];
@@ -841,7 +845,7 @@ hasattr = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"method": false}, "args": __create_array__("ob", "attr", "method")};
+  __sig__ = { kwargs:{"method": false},args:__create_array__("ob", "attr", "method") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob = __args__['ob'];
   var attr = __args__['attr'];
@@ -863,7 +867,7 @@ getattr = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"property": false}, "args": __create_array__("ob", "attr", "property")};
+  __sig__ = { kwargs:{"property": false},args:__create_array__("ob", "attr", "property") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob = __args__['ob'];
   var attr = __args__['attr'];
@@ -894,7 +898,7 @@ setattr = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"property": false}, "args": __create_array__("ob", "attr", "value", "property")};
+  __sig__ = { kwargs:{"property": false},args:__create_array__("ob", "attr", "value", "property") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob = __args__['ob'];
   var attr = __args__['attr'];
@@ -926,7 +930,7 @@ issubclass = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("C", "B")};
+  __sig__ = { kwargs:Object(),args:__create_array__("C", "B") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var C = __args__['C'];
   var B = __args__['B'];
@@ -958,7 +962,7 @@ isinstance = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("ob", "klass")};
+  __sig__ = { kwargs:Object(),args:__create_array__("ob", "klass") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob = __args__['ob'];
   var klass = __args__['klass'];
@@ -991,7 +995,7 @@ int = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   a = Math.round(a);
@@ -1015,7 +1019,7 @@ float = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   a = Number(a);
@@ -1039,7 +1043,7 @@ round = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a", "places")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a", "places") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   var places = __args__['places'];
@@ -1067,7 +1071,7 @@ str = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("s")};
+  __sig__ = { kwargs:Object(),args:__create_array__("s") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var s = __args__['s'];
   return __add_op("", s);
@@ -1567,7 +1571,7 @@ bisect = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"low": undefined, "high": undefined}, "args": __create_array__("a", "x", "low", "high")};
+  __sig__ = { kwargs:{"low": undefined, "high": undefined},args:__create_array__("a", "x", "low", "high") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   var x = __args__['x'];
@@ -1594,7 +1598,7 @@ range = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("num", "stop")};
+  __sig__ = { kwargs:Object(),args:__create_array__("num", "stop") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var num = __args__['num'];
   var stop = __args__['stop'];
@@ -1626,7 +1630,7 @@ xrange = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("num", "stop")};
+  __sig__ = { kwargs:Object(),args:__create_array__("num", "stop") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var num = __args__['num'];
   var stop = __args__['stop'];
@@ -1651,7 +1655,7 @@ len = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("ob")};
+  __sig__ = { kwargs:Object(),args:__create_array__("ob") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var ob = __args__['ob'];
   if (ob instanceof Array) {
@@ -1678,7 +1682,7 @@ next = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var obj = __args__['obj'];
   return __get__(__get__(obj, "next"), "__call__")();
@@ -1698,7 +1702,7 @@ map = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("func", "objs")};
+  __sig__ = { kwargs:Object(),args:__create_array__("func", "objs") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var func = __args__['func'];
   var objs = __args__['objs'];
@@ -1729,7 +1733,7 @@ filter = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("func", "objs")};
+  __sig__ = { kwargs:Object(),args:__create_array__("func", "objs") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var func = __args__['func'];
   var objs = __args__['objs'];
@@ -1761,7 +1765,7 @@ min = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("lst")};
+  __sig__ = { kwargs:Object(),args:__create_array__("lst") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var lst = __args__['lst'];
   a = undefined;
@@ -1796,7 +1800,7 @@ max = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("lst")};
+  __sig__ = { kwargs:Object(),args:__create_array__("lst") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var lst = __args__['lst'];
   a = undefined;
@@ -1830,7 +1834,7 @@ abs = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("num")};
+  __sig__ = { kwargs:Object(),args:__create_array__("num") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var num = __args__['num'];
   return Math.abs(num);
@@ -1849,7 +1853,7 @@ ord = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("char")};
+  __sig__ = { kwargs:Object(),args:__create_array__("char") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var char = __args__['char'];
   return char.charCodeAt(0);
@@ -1868,7 +1872,7 @@ chr = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("num")};
+  __sig__ = { kwargs:Object(),args:__create_array__("num") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var num = __args__['num'];
   return String.fromCharCode(num);
@@ -1891,7 +1895,7 @@ __Iterator___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -1917,7 +1921,7 @@ __Iterator_next = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   index = self.index;
@@ -1945,7 +1949,7 @@ __Iterator_next_fast = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   index = self.index;
@@ -1968,7 +1972,7 @@ tuple = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   if (( Object.keys(arguments).length ) == 0) {
@@ -2006,7 +2010,7 @@ __pytuple___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
+  __sig__ = { kwargs:{"js_object": undefined, "pointer": undefined},args:__create_array__("self", "js_object", "pointer") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var js_object = __args__['js_object'];
@@ -2059,7 +2063,7 @@ __pytuple___getitem__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -2083,7 +2087,7 @@ __pytuple___iter__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
@@ -2104,7 +2108,7 @@ __pytuple___len__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"].length;
@@ -2124,7 +2128,7 @@ __pytuple_length__getprop__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"].length;
@@ -2143,7 +2147,7 @@ __pytuple_index = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2165,7 +2169,7 @@ __pytuple_count = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2195,7 +2199,7 @@ __pytuple_get = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -2216,7 +2220,7 @@ __pytuple___contains__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
@@ -2244,7 +2248,7 @@ list = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   if (( Object.keys(arguments).length ) == 0) {
@@ -2282,7 +2286,7 @@ __pylist___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
+  __sig__ = { kwargs:{"js_object": undefined, "pointer": undefined},args:__create_array__("self", "js_object", "pointer") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var js_object = __args__['js_object'];
@@ -2366,7 +2370,7 @@ __pylist___getslice__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"step": undefined}, "args": __create_array__("self", "start", "stop", "step")};
+  __sig__ = { kwargs:{"step": undefined},args:__create_array__("self", "start", "stop", "step") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var start = __args__['start'];
@@ -2394,7 +2398,7 @@ __pylist_append = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2415,7 +2419,7 @@ __pylist_extend = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "other")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "other") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var other = __args__['other'];
@@ -2443,7 +2447,7 @@ __pylist_insert = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -2466,7 +2470,7 @@ __pylist_remove = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2488,7 +2492,7 @@ __pylist_pop = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __jsdict_pop(self["$wrapped"]);
@@ -2508,7 +2512,7 @@ __pylist_index = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2530,7 +2534,7 @@ __pylist_count = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "obj")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "obj") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
@@ -2560,7 +2564,7 @@ __pylist_reverse = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   self["$wrapped"] = self["$wrapped"].reverse();
@@ -2580,7 +2584,7 @@ __pylist_shift = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"].shift();
@@ -2600,7 +2604,7 @@ __pylist_slice = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "start", "end")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "start", "end") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var start = __args__['start'];
@@ -2622,7 +2626,7 @@ __pylist___iter__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
@@ -2643,7 +2647,7 @@ __pylist_get = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -2664,7 +2668,7 @@ __pylist_set = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -2686,7 +2690,7 @@ __pylist___len__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"].length;
@@ -2706,7 +2710,7 @@ __pylist_length__getprop__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"].length;
@@ -2725,7 +2729,7 @@ __pylist___contains__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
@@ -2757,7 +2761,7 @@ __jsifyable_jsify = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self["$wrapped"];
@@ -2783,7 +2787,7 @@ __dict___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"js_object": undefined, "pointer": undefined}, "args": __create_array__("self", "js_object", "pointer")};
+  __sig__ = { kwargs:{"js_object": undefined, "pointer": undefined},args:__create_array__("self", "js_object", "pointer") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var js_object = __args__['js_object'];
@@ -2842,7 +2846,7 @@ __dict_jsify = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   keys = __get__(Object, "keys")(self["$wrapped"]);
@@ -2876,7 +2880,7 @@ __dict_copy = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(dict, "__call__")([self], __NULL_OBJECT__);
@@ -2897,7 +2901,7 @@ __dict_clear = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   self["$wrapped"] = __jsdict([]);
@@ -2918,7 +2922,7 @@ __dict_has_key = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "key")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "key") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -2947,7 +2951,7 @@ __dict_update = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "other")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "other") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var other = __args__['other'];
@@ -2976,7 +2980,7 @@ __dict_items = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   arr = [];
@@ -3005,7 +3009,7 @@ __dict_get = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"_default": undefined}, "args": __create_array__("self", "key", "_default")};
+  __sig__ = { kwargs:{"_default": undefined},args:__create_array__("self", "key", "_default") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -3032,7 +3036,7 @@ __dict_set = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "key", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "key", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -3055,7 +3059,7 @@ __dict___len__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   __dict = self["$wrapped"];
@@ -3077,7 +3081,7 @@ __dict___getitem__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "key")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "key") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -3114,7 +3118,7 @@ __dict___setitem__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "key", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "key", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -3144,7 +3148,7 @@ __dict_keys = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return Object.keys(self["$wrapped"]);
@@ -3165,7 +3169,7 @@ __dict_pop = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"d": undefined}, "args": __create_array__("self", "key", "d")};
+  __sig__ = { kwargs:{"d": undefined},args:__create_array__("self", "key", "d") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
@@ -3195,7 +3199,7 @@ __dict_values = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   keys = Object.keys(self["$wrapped"]);
@@ -3223,7 +3227,7 @@ __dict___contains__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
@@ -3250,7 +3254,7 @@ __dict___iter__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(Iterator, "__call__")([__jsdict_keys(self), 0], __NULL_OBJECT__);
@@ -3273,7 +3277,7 @@ set = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   "\n	This returns an array that is a minimal implementation of set.\n	Often sets are used simply to remove duplicate entries from a list, \n	and then it get converted back to a list, it is safe to use fastset for this.\n\n	The array prototype is overloaded with basic set functions:\n		difference\n		intersection\n		issubset\n\n	Note: sets in Python are not subscriptable, but can be iterated over.\n\n	Python docs say that set are unordered, some programs may rely on this disorder\n	for randomness, for sets of integers we emulate the unorder only uppon initalization \n	of the set, by masking the value by bits-1. Python implements sets starting with an \n	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates \n	a new array of length 32 and mask of 31.  This is only emulated for arrays of \n	integers up to an array length of 1536.\n\n	";
@@ -3355,7 +3359,7 @@ frozenset = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("a")};
+  __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var a = __args__['a'];
   return set([a], __NULL_OBJECT__);
@@ -3383,7 +3387,7 @@ __array___init__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": {"initializer": undefined, "little_endian": false}, "args": __create_array__("self", "typecode", "initializer", "little_endian")};
+  __sig__ = { kwargs:{"initializer": undefined, "little_endian": false},args:__create_array__("self", "typecode", "initializer", "little_endian") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var typecode = __args__['typecode'];
@@ -3431,7 +3435,7 @@ __array___len__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return self.length;
@@ -3452,7 +3456,7 @@ __array___contains__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
@@ -3479,7 +3483,7 @@ __array___getitem__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -3518,7 +3522,7 @@ __array___setitem__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -3559,7 +3563,7 @@ __array___iter__ = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(Iterator, "__call__")([self, 0], __NULL_OBJECT__);
@@ -3580,7 +3584,7 @@ __array_get = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "index")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "index") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
@@ -3602,7 +3606,7 @@ __array_fromlist = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "lst")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "lst") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var lst = __args__['lst'];
@@ -3649,7 +3653,7 @@ __array_resize = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "length")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "length") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var length = __args__['length'];
@@ -3680,7 +3684,7 @@ __array_append = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "value")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "value") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
@@ -3703,7 +3707,7 @@ __array_extend = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self", "lst")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self", "lst") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var lst = __args__['lst'];
@@ -3732,7 +3736,7 @@ __array_to_array = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   arr = [];
@@ -3759,7 +3763,7 @@ __array_to_list = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   return __get__(__get__(self, "to_array"), "__call__")();
@@ -3780,7 +3784,7 @@ __array_to_ascii = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("self")};
+  __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   string = "";
@@ -3813,7 +3817,7 @@ _to_pythonjs = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("json")};
+  __sig__ = { kwargs:Object(),args:__create_array__("json") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var json = __args__['json'];
   var item;
@@ -3873,7 +3877,7 @@ json_to_pythonjs = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("json")};
+  __sig__ = { kwargs:Object(),args:__create_array__("json") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var json = __args__['json'];
   return _to_pythonjs([__get__(__get__(JSON, "parse"), "__call__")([json], __NULL_OBJECT__)], __NULL_OBJECT__);
@@ -3893,7 +3897,7 @@ _to_json = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("pythonjs")};
+  __sig__ = { kwargs:Object(),args:__create_array__("pythonjs") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var pythonjs = __args__['pythonjs'];
   if (isinstance([pythonjs, list], __NULL_OBJECT__)) {
@@ -3940,7 +3944,7 @@ pythonjs_to_json = function(args, kwargs) {
     kwargs = Object();
   }
   var __sig__, __args__;
-  __sig__ = {"kwargs": Object(), "args": __create_array__("pythonjs")};
+  __sig__ = { kwargs:Object(),args:__create_array__("pythonjs") };
   __args__ = get_arguments(__sig__, args, kwargs);
   var pythonjs = __args__['pythonjs'];
   return __get__(__get__(JSON, "stringify"), "__call__")([_to_json([pythonjs], __NULL_OBJECT__)], __NULL_OBJECT__);

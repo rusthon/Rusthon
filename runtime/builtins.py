@@ -39,7 +39,9 @@ with javascript:
 			return True
 
 	def __test_if_true__( ob ):
-		if instanceof(ob, Array):
+		if not ob:
+			return False
+		elif instanceof(ob, Array):
 			return ob.length != 0
 		elif isinstance(ob, dict):
 			return Object.keys( ob[...] ).length != 0
