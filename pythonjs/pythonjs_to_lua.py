@@ -31,6 +31,24 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 
+	def visit_Name(self, node):
+		if node.id == 'None':
+			return 'nil'
+		elif node.id == 'True':
+			return 'true'
+		elif node.id == 'False':
+			return 'false'
+		elif node.id == 'null':
+			return 'nil'
+		return node.id
+
+	def visit_And(self, node):
+		return ' and '
+
+	def visit_Or(self, node):
+		return ' or '
+
+
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
 			return self._visit_subscript_ellipsis( node )

@@ -2049,36 +2049,39 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
 		elif self._with_lua:
+			writer.write( 'var(%s)' %','.join([arg.id for arg in node.args.args]))
+			offset = len(node.args.args) - len(node.args.defaults)
 			for i,arg in enumerate(node.args.args):
-				writer.write( '%s = args[ %s ]' %(arg.id, i) )
+				dindex = i - offset
+				if dindex >= 0 and node.args.defaults:
+					default_value = self.visit( node.args.defaults[dindex] )
+					writer.write("%s = kwargs.%s or %s" % (arg.id, arg.id, default_value))
+				else:
+					writer.write( "%s = args[ %s ]" %(arg.id, i) )
 
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
+			# First check the arguments are well formed 
+			# ie. that this function is not a callback of javascript code
+			writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
+			# XXX: there is bug in the underlying translator preventing me to write the condition
+			# in a more readble way... something to do with brakects...
+			writer.push()
+			writer.write('pass')  # do nothing if it's not called from javascript
+			writer.pull()
+			writer.write('else:')
+			writer.push()
+			# If it's the case, move use ``arguments`` to ``args`` 
+			writer.write('args = Array.prototype.slice.call(arguments)')
+			# This means you can't pass keyword argument from javascript but we already knew that
+			writer.write('kwargs = JSObject()')
+			writer.pull()
+			# done with pythonjs function used as callback of Python code 
 
-			if self._with_lua:
-				pass
-			else:
-				# First check the arguments are well formed 
-				# ie. that this function is not a callback of javascript code
-				writer.write("""if (JS('args instanceof Array') and JS("{}.toString.call(kwargs) === '[object Object]'") and arguments.length == 2):""")
-				# XXX: there is bug in the underlying translator preventing me to write the condition
-				# in a more readble way... something to do with brakects...
-				writer.push()
-				writer.write('pass')  # do nothing if it's not called from javascript
-				writer.pull()
-				writer.write('else:')
-				writer.push()
-				# If it's the case, move use ``arguments`` to ``args`` 
-				writer.write('args = Array.prototype.slice.call(arguments)')
-				# This means you can't pass keyword argument from javascript but we already knew that
-				writer.write('kwargs = JSObject()')
-				writer.pull()
-				# done with pythonjs function used as callback of Python code 
-
-				# new pythonjs' python function arguments handling
-				# create the structure representing the functions arguments
-				# first create the defaultkwargs JSObject
-				if not self._with_coffee:
-					writer.write('var(__sig__, __args__)')
+			# new pythonjs' python function arguments handling
+			# create the structure representing the functions arguments
+			# first create the defaultkwargs JSObject
+			if not self._with_coffee:
+				writer.write('var(__sig__, __args__)')
 
 			L = len(node.args.defaults)
 			kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
