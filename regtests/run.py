@@ -179,6 +179,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     elif lua:
         source = [
             'pythonjs.configure(lua=True)',
+            read('../runtime/lua_builtins.py'),
             patch_python(filename)
         ]
         content = '\n'.join( source )
@@ -325,7 +326,7 @@ def run_pythonjs_lua_test_on_lua(dummy_filename):
 
 def run_lua_lua(content):
     """Run Lua using Lua"""
-    builtins = ''
+    builtins = '' #read('../runtime/builtins.lua')
     write("%s.lua" % tmpname, builtins + '\n' + content)
     return run_command("lua %s.lua" % tmpname)
 

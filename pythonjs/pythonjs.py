@@ -39,7 +39,9 @@ class JSGenerator(NodeVisitor):
 		for b in node.body:
 			line = self.visit(b)
 			if line: lines.append( line )
-			else:raise b
+			else:
+				#raise b
+				pass
 		return '\n'.join(lines)
 
 	def visit_Tuple(self, node):
@@ -214,24 +216,13 @@ class JSGenerator(NodeVisitor):
 				raise SyntaxError( args )
 
 		elif name == 'JSObject':
-			if node.keywords:
-				kwargs = map(self.visit, node.keywords)
-				f = lambda x: '"%s": %s' % (x[0], x[1])
-				out = ', '.join(map(f, kwargs))
-				return '{%s}' % out
-			else:
-				return 'Object()'
+			return self._visit_call_helper_JSObject( node )
 
 		elif name == 'var':
 			return self._visit_call_helper_var( node )
 
 		elif name == 'JSArray':
-			if node.args:
-				args = map(self.visit, node.args)
-				out = ', '.join(args)
-				return '__create_array__(%s)' % out
-			else:
-				return '[]'
+			return self._visit_call_helper_JSArray( node )
 
 		elif name == 'JS':
 			assert len(node.args)==1 and isinstance(node.args[0], ast.Str)
@@ -253,6 +244,24 @@ class JSGenerator(NodeVisitor):
 			else:
 				args = ''
 			return '%s(%s)' % (name, args)
+
+	def _visit_call_helper_JSArray(self, node):
+		if node.args:
+			args = map(self.visit, node.args)
+			out = ', '.join(args)
+			return '__create_array__(%s)' % out
+		else:
+			return '[]'
+
+
+	def _visit_call_helper_JSObject(self, node):
+		if node.keywords:
+			kwargs = map(self.visit, node.keywords)
+			f = lambda x: '"%s": %s' % (x[0], x[1])
+			out = ', '.join(map(f, kwargs))
+			return '{%s}' % out
+		else:
+			return 'Object()'
 
 	def _visit_call_helper_var(self, node):
 		args = [ self.visit(a) for a in node.args ]

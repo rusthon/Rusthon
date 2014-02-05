@@ -31,6 +31,29 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 
+	def visit_Subscript(self, node):
+		if isinstance(node.slice, ast.Ellipsis):
+			return self._visit_subscript_ellipsis( node )
+		else:
+			return '%s[%s+1]' % (self.visit(node.value), self.visit(node.slice))
+
+	def _visit_call_helper_JSObject(self, node):
+		if node.keywords:
+			kwargs = map(self.visit, node.keywords)
+			f = lambda x: '%s = %s' % (x[0], x[1])
+			out = ', '.join(map(f, kwargs))
+			return '{%s}' % out
+		else:
+			return '{}'
+
+	def _visit_call_helper_JSArray(self, node):
+		if node.args:
+			args = map(self.visit, node.args)
+			out = ', '.join(args)
+			return '{%s}' % out
+		else:
+			return '{}'
+
 	def _visit_call_helper_var(self, node):
 		args = [ self.visit(a) for a in node.args ]
 		if self._function_stack:
@@ -51,7 +74,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 			return ''
 
 	def _inline_code_helper(self, s):
-		return ''
+		return s
 
 	def visit_While(self, node):
 		body = [ 'while %s do' %self.visit(node.test)]

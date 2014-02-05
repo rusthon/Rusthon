@@ -1194,6 +1194,9 @@ class PythonToPythonJS(NodeVisitor):
 			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
+		elif self._with_lua:
+			return '%s[ %s ]' %(name, self.visit(node.slice))
+
 		elif self._with_js or self._with_dart:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
 				if self._with_dart:
@@ -1743,7 +1746,7 @@ class PythonToPythonJS(NodeVisitor):
 				#		writer.append( '%s = []' %args_name )
 				#else:
 				#	writer.append('%s = JSArray(%s)' % (args_name, args))
-				writer.append('%s = JSArray(%s)' % (args_name, args))
+				writer.append('%s = [%s]' % (args_name, args))
 
 				if node.starargs:
 					writer.append('%s.push.apply(%s, %s)' % (args_name, args_name, self.visit(node.starargs)))
@@ -2045,6 +2048,10 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
+		elif self._with_lua:
+			for i,arg in enumerate(node.args.args):
+				writer.write( '%s = args[ %s ]' %(arg.id, i) )
+
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
 
 			if self._with_lua:
@@ -2172,7 +2179,7 @@ class PythonToPythonJS(NodeVisitor):
 			types.append( '%s : "%s"' %(self.visit(key), value) )
 
 
-		if not self._with_dart:  ## Dart functions can not have extra attributes?
+		if not self._with_dart and not self._with_lua:  ## Dart functions can not have extra attributes?
 			## note, in javascript function.name is a non-standard readonly attribute,
 			## the compiler creates anonymous functions with name set to an empty string.
 			writer.write('%s.NAME = "%s"' %(node.name,node.name))
