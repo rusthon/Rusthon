@@ -12,3 +12,5 @@ def main():
 
 	a.append( 'xxx' )
 	TestError( a[4]=='xxx' )
+
+	TestError( len(a)==5 )

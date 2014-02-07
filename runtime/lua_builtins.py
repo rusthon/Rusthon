@@ -32,18 +32,6 @@ __get__ = function(ob, name)
 		else
 			return ob.__call__
 		end
-	elseif name == '__iter__' then
-		local iter = {
-			index = 1,
-			length = #ob,
-			object = ob,
-			next_fast = function(self)
-				local x = self.object[ self.index ]
-				self.index = self.index + 1
-				return x
-			end
-		}
-		return iter
 	else
 		return ob[ name ]
 	end
@@ -65,7 +53,11 @@ __create_class__ = function(class_name, parents, attrs, props)
 			if type(v)=='function' then
 				object[ k ] = function(_args, _kwargs)
 					a = {object}
-					return v(__concat_tables_array(a, _args), _kwargs)
+					if _args then
+						return v(__concat_tables_array(a, _args), _kwargs)
+					else
+						return v(a, _kwargs)
+					end
 				end
 			else
 				object[ k ] = v
@@ -106,6 +98,23 @@ def int(ob):
 def float(ob):
 	return tonumber(ob)
 
+def len(ob):
+	with lowlevel:
+		return ob.length
+
+class __iterator_list:
+	def __init__(self, obj, index):
+		self.obj = obj
+		self.index = index
+		self.length = len(obj)
+
+	def next_fast(self):
+		with lowlevel:
+			index = self.index
+			self.index += 1
+			return self.obj[...][index+1]
+
+
 class list:
 	'''
 	Array length in Lua must be manually tracked, because a normal for loop will not
@@ -137,6 +146,9 @@ class list:
 		elif stop < 0:
 			stop = self[...].length + stop
 			return self[...].sublist(start, stop)
+
+	def __iter__(self):
+		return __iterator_list(self, 0)
 
 	def __add__(self, other):
 		for item in other:
