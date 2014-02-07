@@ -172,6 +172,7 @@ class PythonToPythonJS(NodeVisitor):
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
 		super(PythonToPythonJS, self).__init__()
 
+		self._with_ll = False   ## lowlevel
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
@@ -380,7 +381,7 @@ class PythonToPythonJS(NodeVisitor):
 			v = self.visit( node.values[i] )
 			if self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
-			elif self._with_dart:
+			elif self._with_dart or self._with_ll:
 				a.append( '%s:%s'%(k,v) )
 				#if isinstance(node.keys[i], ast.Str):
 				#	a.append( '%s:%s'%(k,v) )
@@ -392,7 +393,7 @@ class PythonToPythonJS(NodeVisitor):
 		if self._with_js:
 			b = ','.join( a )
 			return '__jsdict( [%s] )' %b
-		elif self._with_dart:
+		elif self._with_dart or self._with_ll:
 			b = ','.join( a )
 			return '{%s}' %b
 		else:
@@ -411,6 +412,8 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_List(self, node):
 		node.returns_type = 'list'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
+		if self._with_lua:
+			a = '__get__(list, "__call__")({}, {pointer:%s, length:%s})'%(a, len(node.elts))
 		return a
 
 	def visit_GeneratorExp(self, node):
@@ -513,7 +516,35 @@ class PythonToPythonJS(NodeVisitor):
 		op = '%s=' %self.visit( node.op )
 
 		typedef = self.get_typedef( node.target )
-		if typedef and op in typedef.operators:
+
+		if self._with_lua:
+			if op == '+=':
+				a = '__add__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '-=':
+				a = '__sub__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '*=':
+				a = '__mul__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '/=':
+				a = '__div__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '%=':
+				a = '__mod__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '&=':
+				a = '__and__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '|=':
+				a = '__or__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '^=':
+				a = '__xor__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '<<=':
+				a = '__lshift__(%s,%s)' %(target, self.visit(node.value))
+			elif op == '>>=':
+				a = '__rshift__(%s,%s)' %(target, self.visit(node.value))
+			else:
+				raise NotImplementedError
+
+			writer.write('%s=%s' %(target,a))
+
+
+		elif typedef and op in typedef.operators:
 			func = typedef.operators[ op ]
 			a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
 			writer.write( a )
@@ -793,13 +824,13 @@ class PythonToPythonJS(NodeVisitor):
 				if item_name in self._decorator_properties:
 					pass
 				else:
-					writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.name))
+					writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
 
 			elif isinstance(item, Assign) and isinstance(item.targets[0], Name):
 				item_name = item.targets[0].id
 				item.targets[0].id = '__%s_%s' % (name, item_name)
 				self.visit(item)  # this will output the code for the assign
-				writer.write('__%s_attrs["%s"] = %s' % (name, item_name, item.targets[0].id))
+				writer.write('__%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))
 				self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
 			elif isinstance(item, Pass):
 				pass
@@ -813,7 +844,7 @@ class PythonToPythonJS(NodeVisitor):
 						item_name = sub.targets[0].id
 						sub.targets[0].id = '__%s_%s' % (name, item_name)
 						self.visit(sub)  # this will output the code for the assign
-						writer.write('__%s_attrs["%s"] = %s' % (name, item_name, sub.targets[0].id))
+						writer.write('__%s_attrs.%s = %s' % (name, item_name, sub.targets[0].id))
 						self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
 					else:
 						raise NotImplementedError( sub )
@@ -836,7 +867,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._instances.pop('self')
 		self._in_class = False
 
-		writer.write('%s = create_class("%s", __%s_parents, __%s_attrs, __%s_properties)' % (name, name, name, name, name))
+		writer.write('%s = __create_class__("%s", __%s_parents, __%s_attrs, __%s_properties)' % (name, name, name, name, name))
 		if 'init' in self._injector:
 			writer.write('%s.init_callbacks = JSArray()' %name)
 		self._injector = []
@@ -1194,7 +1225,7 @@ class PythonToPythonJS(NodeVisitor):
 			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
-		elif self._with_lua:
+		elif self._with_ll:
 			return '%s[ %s ]' %(name, self.visit(node.slice))
 
 		elif self._with_js or self._with_dart:
@@ -1271,7 +1302,7 @@ class PythonToPythonJS(NodeVisitor):
 				#code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
 				code = '%s[...] = %s' %(self.visit(target.value), self.visit(node.value))
 
-			elif self._with_dart:
+			elif self._with_dart or self._with_ll:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
@@ -1320,8 +1351,8 @@ class PythonToPythonJS(NodeVisitor):
 					setter = parent_prop.properties[target.attr]['set']
 					writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
 
-				elif parent_classattr:  ## TODO fix get/set class attributes
-					writer.write( "__%s_attrs['%s'] = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+				elif parent_classattr:
+					writer.write( "__%s_attrs.%s = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
 
 				elif parent_setattr:
 					func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
@@ -2024,8 +2055,6 @@ class PythonToPythonJS(NodeVisitor):
 		#####################################################################
 		if self._with_dart:
 			pass
-		#elif self._with_coffee:
-		#	pass
 
 		elif self._with_js or javascript:
 			if node.args.defaults:
@@ -2057,7 +2086,7 @@ class PythonToPythonJS(NodeVisitor):
 					default_value = self.visit( node.args.defaults[dindex] )
 					writer.write("%s = kwargs.%s or %s" % (arg.id, arg.id, default_value))
 				else:
-					writer.write( "%s = args[ %s ]" %(arg.id, i) )
+					writer.write( "%s = args[ %s ]" %(arg.id, i+1) )
 
 		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
 			# First check the arguments are well formed 
@@ -2442,7 +2471,11 @@ class PythonToPythonJS(NodeVisitor):
 		writer.pull()
 
 	def visit_With(self, node):
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'lowlevel':
+			self._with_ll = True
+			map(self.visit, node.body)
+			self._with_ll = False
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
 			self._with_js = True
 			writer.with_javascript = True
 			map(self.visit, node.body)

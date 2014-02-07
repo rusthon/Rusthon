@@ -31,6 +31,10 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 
+	def _visit_subscript_ellipsis(self, node):
+		name = self.visit(node.value)
+		return '%s.__wrapped__' %name
+
 	def visit_Name(self, node):
 		if node.id == 'None':
 			return 'nil'
@@ -53,7 +57,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		if isinstance(node.slice, ast.Ellipsis):
 			return self._visit_subscript_ellipsis( node )
 		else:
-			return '%s[%s+1]' % (self.visit(node.value), self.visit(node.slice))
+			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
 	def _visit_call_helper_JSObject(self, node):
 		if node.keywords:
@@ -103,9 +107,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		self.pull()
 		return '\n'.join( body )
 
-	def _visit_subscript_ellipsis(self, node):
-		name = self.visit(node.value)
-		return '%s.$wrapped' %name
+
 
 	def visit_Pass(self, node):
 		return '###pass###'

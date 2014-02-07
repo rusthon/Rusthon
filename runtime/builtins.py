@@ -188,7 +188,7 @@ with javascript:
 				arr.append( Object.prototype.toString.call(item) )
 		return ''.join(arr)
 
-	def create_class(class_name, parents, attrs, props):
+	def __create_class__(class_name, parents, attrs, props):
 		"""Create a PythonScript class"""
 		if attrs.__metaclass__:
 			metaclass = attrs.__metaclass__
