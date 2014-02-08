@@ -209,6 +209,13 @@ class list:
 			else:
 				self[...] = {}
 
+	def __contains__(self, value):
+		with lowlevel:
+			for v in self[...]:
+				if v == value:
+					return True
+			return False
+
 	def __getitem__(self, index):
 		with lowlevel:
 			if index < 0:
@@ -259,6 +266,12 @@ __get__helper_string = function(s, name)
 			return string.sub(s, args[1]+1, args[1]+1)
 		end
 
+	elseif name == '__contains__' then
+		wrapper = function(args, kwargs)
+			if s:find( args[1] ) then return true
+			else return false end
+		end
+
 	elseif name == '__getslice__' then
 		wrapper = function(args, kwargs)
 			if args[1]==nil and args[2]==nil and args[3]==-1 then
@@ -297,6 +310,7 @@ __get__helper_string = function(s, name)
 end
 ''')
 
+
 class dict:
 	def __init__(self, object, pointer=None):
 		with lowlevel:
@@ -316,3 +330,25 @@ class dict:
 		with lowlevel:
 			self[...][ key ] = value
 
+	def keys(self):
+		with lowlevel:
+			ptr = []
+			i = 1
+			for k,v in pairs(self[...]):
+				ptr[ i ] = k
+				i = i + 1
+		return list( pointer=ptr, length=i-1 )
+
+	def __iter__(self):
+		return self.keys().__iter__()
+
+	def items(self):
+		with lowlevel:
+			ptr = []
+			i = 1
+			for k,v in pairs(self[...]):
+				p = [k,v]
+				item = list.__call__([], {pointer:p, length:2})
+				ptr[ i ] = item
+				i = i + 1
+		return list( pointer=ptr, length=i-1 )

@@ -14,12 +14,12 @@ def main():
 	arr = ['a', 'b', 'c']
 	for v in arr:
 		z += v
-
 	TestError( z == 'abc' )
 
 	b = False
 	if 'a' in arr:
 		b = True
+	TestError( b == True )
 
 	s = 'hello world'
 	z = ''

@@ -153,7 +153,14 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		raise NotImplementedError
 
 	def visit_For(self, node):
-		a = ['for __i,%s in pairs(%s) do' %(self.visit(node.target), self.visit(node.iter))]
+		if isinstance(node.target, ast.Name):
+			a = ['for __i,%s in pairs(%s) do' %(self.visit(node.target), self.visit(node.iter))]
+		elif isinstance(node.target, ast.List):
+			x = ','.join([self.visit(elt) for elt in node.target.elts])
+			a = ['for %s in %s do' %(x, self.visit(node.iter))]
+		else:
+			raise SyntaxError( node.target )
+
 		for n in node.body:
 			a.append( self.visit(n) )
 		a.append('end')

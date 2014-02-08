@@ -412,7 +412,9 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_List(self, node):
 		node.returns_type = 'list'
 		a = '[%s]' % ', '.join(map(self.visit, node.elts))
-		if self._with_lua:
+		if self._with_ll:
+			pass
+		elif self._with_lua:
 			a = '__get__(list, "__call__")({}, {pointer:%s, length:%s})'%(a, len(node.elts))
 		return a
 
@@ -1819,7 +1821,7 @@ class PythonToPythonJS(NodeVisitor):
 			#		return '%s()' %name
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items'):
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items') and not self._with_lua:
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
@@ -1845,7 +1847,7 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					return '%s(%s)' %( self.visit(node.func), args )
 
-			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
+			elif not self._with_lua and not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
 				type = self._func_typedefs[ node.func.value.id ]
 				if type == 'list' and node.func.attr == 'append':
 					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))
@@ -2454,7 +2456,10 @@ class PythonToPythonJS(NodeVisitor):
 				if multi_target:
 					writer.write('__mtarget__ = __next__()')
 					for i,elt in enumerate(multi_target):
-						writer.write('%s = __mtarget__[%s]' %(elt,i))
+						if self._with_lua:
+							writer.write('%s = __mtarget__[...][%s]' %(elt,i+1))
+						else:
+							writer.write('%s = __mtarget__[%s]' %(elt,i))
 				else:
 					writer.write('%s = __next__()' % target.id)
 
