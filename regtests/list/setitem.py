@@ -12,5 +12,8 @@ def main():
 
 	a.append( 'xxx' )
 	TestError( a[4]=='xxx' )
-
 	TestError( len(a)==5 )
+
+	a.append( 'yyy' )
+	TestError( a[5]=='yyy' )
+	TestError( len(a)==6 )

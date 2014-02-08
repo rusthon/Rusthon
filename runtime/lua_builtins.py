@@ -39,25 +39,45 @@ __get__ = function(ob, name)
 	end
 end
 
-__get__helper_string = function(s, name)
-	local wrapper
-	if name == '__getitem__' then
-		wrapper = function(args, kwargs)
-			return string.sub(s, args[1]+1, args[1]+1)
-		end
-	elseif name == 'upper' then
-		wrapper = function(args, kwargs)
-			return string.upper(s)
-		end
-	elseif name == 'lower' then
-		wrapper = function(args, kwargs)
-			return string.lower(s)
-		end
-	else
-		print('ERROR: NotImplemented')
+__sprintf = function(s, args)
+	return string.format(s, unpack(args))
+end
+
+function string:to_array()
+	local i = 1
+	local t = {}
+	for c in self:gmatch('.') do
+		t[ i ] = c
+		i = i + 1
+	end
+	return t
+end
+
+function string:split(sSeparator, nMax, bRegexp)
+	assert(sSeparator ~= '')
+	assert(nMax == nil or nMax >= 1)
+	if sSeparator == nil then
+		sSeparator = ' '
 	end
 
-	return wrapper
+	local aRecord = {}
+
+	if self:len() > 0 then
+		local bPlain = not bRegexp
+		nMax = nMax or -1
+
+		local nField=1 nStart=1
+		local nFirst,nLast = self:find(sSeparator, nStart, bPlain)
+		while nFirst and nMax ~= 0 do
+			aRecord[nField] = self:sub(nStart, nFirst-1)
+			nField = nField+1
+			nStart = nLast+1
+			nFirst,nLast = self:find(sSeparator, nStart, bPlain)
+			nMax = nMax-1
+		end
+		aRecord[nField] = self:sub(nStart)
+	end
+	return aRecord
 end
 
 __create_class__ = function(class_name, parents, attrs, props)
@@ -68,7 +88,7 @@ __create_class__ = function(class_name, parents, attrs, props)
 		__attributes__ = attrs
 	}
 	function class.__call__( args, kwargs )
-		object = {
+		local object = {
 			__class__ = class,
 			__dict__ = 'TODO'
 		}
@@ -87,7 +107,11 @@ __create_class__ = function(class_name, parents, attrs, props)
 			end
 		end
 		a = {object}
-		attrs.__init__( __concat_tables_array(a, args), kwargs )
+		if args then
+			attrs.__init__( __concat_tables_array(a, args), kwargs )
+		else
+			attrs.__init__( a, kwargs or {} )
+		end
 		return object
 	end
 	return class
@@ -131,6 +155,27 @@ def len(ob):
 		else:
 			return ob.length
 
+def chr(a):
+	with lowlevel:
+		return string.char(a)
+
+def ord(a):
+	with lowlevel:
+		return string.byte(a)
+
+class __iterator_string:
+	def __init__(self, obj, index):
+		with lowlevel:
+			self.obj = obj
+			self.index = index
+			self.length = string.len(obj)
+
+	def next_fast(self):
+		with lowlevel:
+			index = self.index
+			self.index += 1
+			return string.sub( self.obj, index+1, index+1 )
+
 class __iterator_list:
 	def __init__(self, obj, index):
 		self.obj = obj
@@ -152,7 +197,10 @@ class list:
 	def __init__(self, items, pointer=None, length=0):
 		with lowlevel:
 			self.length = length
-			if pointer:
+			if type(items)=='string':
+				self[...] = string.to_array( items )
+				self.length = string.len(items)
+			elif pointer:
 				self[...] = pointer
 			else:
 				self[...] = {}
@@ -190,8 +238,48 @@ class list:
 
 	def index(self, obj):
 		with lowlevel:
-			i = 1
+			i = 0
 			while i < self.length:
-				if self[...][i] == obj:
+				if self[...][i+1] == obj:
 					return i
 				i += 1
+
+## this must come after list because list.__call__ is used directly,
+## and the lua compiler can not use forward references.
+JS('''
+__get__helper_string = function(s, name)
+	local wrapper
+	if name == '__getitem__' then
+		wrapper = function(args, kwargs)
+			return string.sub(s, args[1]+1, args[1]+1)
+		end
+	elseif name == '__iter__' then
+		wrapper = function(args, kwargs)
+			return __iterator_string.__call__( {s, 0} )
+		end
+
+	elseif name == 'upper' then
+		wrapper = function(args, kwargs)
+			return string.upper(s)
+		end
+	elseif name == 'lower' then
+		wrapper = function(args, kwargs)
+			return string.lower(s)
+		end
+	elseif name == 'split' then
+		wrapper = function(args, kwargs)
+			local a
+			if args then
+				a = s:split( args[1] )
+			else
+				a = s:split()
+			end
+			return list.__call__( {}, {pointer=a, length=#a} )
+		end
+	else
+		print('ERROR: NotImplemented')
+	end
+
+	return wrapper
+end
+''')
