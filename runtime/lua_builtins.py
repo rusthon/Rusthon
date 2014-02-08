@@ -32,9 +32,32 @@ __get__ = function(ob, name)
 		else
 			return ob.__call__
 		end
+	elseif type(ob)=='string' then
+		return __get__helper_string(ob,name)
 	else
 		return ob[ name ]
 	end
+end
+
+__get__helper_string = function(s, name)
+	local wrapper
+	if name == '__getitem__' then
+		wrapper = function(args, kwargs)
+			return string.sub(s, args[1]+1, args[1]+1)
+		end
+	elseif name == 'upper' then
+		wrapper = function(args, kwargs)
+			return string.upper(s)
+		end
+	elseif name == 'lower' then
+		wrapper = function(args, kwargs)
+			return string.lower(s)
+		end
+	else
+		print('ERROR: NotImplemented')
+	end
+
+	return wrapper
 end
 
 __create_class__ = function(class_name, parents, attrs, props)
@@ -90,17 +113,23 @@ end
 """)
 
 def str(ob):
-	return tostring(ob)
+	with lowlevel:
+		return tostring(ob)
 
 def int(ob):
-	return tonumber(ob)
+	with lowlevel:
+		return tonumber(ob)
 
 def float(ob):
-	return tonumber(ob)
+	with lowlevel:
+		return tonumber(ob)
 
 def len(ob):
 	with lowlevel:
-		return ob.length
+		if type(ob) == 'string':
+			return string.len(ob)
+		else:
+			return ob.length
 
 class __iterator_list:
 	def __init__(self, obj, index):

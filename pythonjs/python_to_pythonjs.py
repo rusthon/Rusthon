@@ -1155,7 +1155,7 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Attribute(self, node):
 		node_value = self.visit(node.value)
 
-		if self._with_js or self._with_dart:
+		if self._with_js or self._with_dart or self._with_ll:
 			return '%s.%s' %(node_value, node.attr)
 		typedef = None
 		if isinstance(node.value, Name):
@@ -1617,7 +1617,17 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					raise SyntaxError
 
-		elif self._with_js or self._with_dart:# or self._with_coffee:
+		elif self._with_ll:
+			name = self.visit(node.func)
+			args = [self.visit(arg) for arg in node.args]
+			if node.keywords:
+				args.extend( [self.visit(x.value) for x in node.keywords] )
+				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+
+			else:
+				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+
+		elif self._with_js or self._with_dart:
 			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 
