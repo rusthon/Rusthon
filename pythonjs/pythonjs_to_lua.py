@@ -241,6 +241,8 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		for child in node.body:
 			if isinstance(child, ast.Str):
 				continue
+			elif isinstance(child, ast.Expr) and isinstance(child.value, ast.Str):
+				continue
 			else:
 				body.append( self.indent() + self.visit(child) )
 
@@ -264,7 +266,25 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		else:
 			raise SyntaxError( args )
 
+	def visit_TryExcept(self, node):
+		out = ['__try__ = function()']
+		self.push()
+		for n in node.body:
+			out.append( self.indent() + self.visit(n) )
+		self.pull()
+		out.append( 'end' )
 
+		out.append( self.indent() + 'if pcall(__try__) then' )
+		self.push()
+		out.append('--no errors--')
+		self.pull()
+		out.append( self.indent() + 'else' )
+		self.push()
+		for n in node.handlers:
+			out.append( self.indent() + self.visit(n) )
+		self.pull()
+		out.append( self.indent() + 'end' )
+		return '\n'.join( out )
 
 def main(script):
 	tree = ast.parse(script)

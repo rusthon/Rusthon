@@ -41,7 +41,10 @@ node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
 dart2js_runnable = runnable( dart2js )
 coffee_runnable = runnable( "coffee -v" )
-lua_runnable = runnable( "lua -v" )
+lua_runnable = luajit_runnable = runnable( "luajit -v" )
+if not luajit_runnable:
+    lua_runnable = runnable( "lua -v" )
+
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -328,7 +331,10 @@ def run_lua_lua(content):
     """Run Lua using Lua"""
     builtins = '' #read('../runtime/builtins.lua')
     write("%s.lua" % tmpname, builtins + '\n' + content)
-    return run_command("lua %s.lua" % tmpname)
+    if luajit_runnable:
+        return run_command("luajit %s.lua" % tmpname)
+    else:
+        return run_command("lua %s.lua" % tmpname)
 
 
 table_header = "%-12.12s %-28.28s"
@@ -407,7 +413,10 @@ def run():
                 headers.append("Dart\nNode")
             if coffee_runnable:
                 headers.append("Coffee\nNode")
-        if lua_runnable:
+
+        if luajit_runnable:
+            headers.append("Lua\nJIT")
+        elif lua_runnable:
             headers.append("Lua\nLua")
         
         print(table_header % ("", "Regtest run on")

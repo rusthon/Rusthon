@@ -24,6 +24,9 @@ __test_if_true__ = function( x )
 	elseif x.__class__ and x.__class__.__name__ == 'list' then
 		if x.length > 0 then return true
 		else return false end
+	elseif x.__class__ and x.__class__.__name__ == 'dict' then
+		if x.keys().length > 0 then return true
+		else return false end
 	else
 		return true
 	end

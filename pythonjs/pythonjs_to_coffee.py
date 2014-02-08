@@ -404,6 +404,18 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 		else:
 			raise SyntaxError( args )
 
+	def visit_TryExcept(self, node):
+		out = ['try']
+		self.push()
+		for n in node.body:
+			out.append( self.indent() + self.visit(n) )
+		self.pull()
+		out.append( self.indent() + 'catch error' )
+		self.push()
+		for n in node.handlers:
+			out.append( self.indent() + self.visit(n) )
+		self.pull()
+		return '\n'.join( out )
 
 
 def main(script):
