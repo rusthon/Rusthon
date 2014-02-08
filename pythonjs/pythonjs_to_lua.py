@@ -110,7 +110,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 
 
 	def visit_Pass(self, node):
-		return '###pass###'
+		return '--pass--'
 
 	def visit_If(self, node):
 		out = []
@@ -152,12 +152,12 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	def visit_ClassDef(self, node):
 		raise NotImplementedError
 
-	def _visit_for_prep_iter_helper(self, node, out, iter_name):
-		out.append(
-			#self.indent() + 'if (%s is dict) { %s = %s.keys(); }' %(iter_name, iter_name, iter_name)
-			self.indent() + 'if (%s is dict) %s = %s.keys();' %(iter_name, iter_name, iter_name)
-		)
-
+	def visit_For(self, node):
+		a = ['for __i,%s in pairs(%s) do' %(self.visit(node.target), self.visit(node.iter))]
+		for n in node.body:
+			a.append( self.visit(n) )
+		a.append('end')
+		return '\n'.join(a)
 
 	def visit_Expr(self, node):
 		return self.visit(node.value)

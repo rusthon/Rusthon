@@ -95,20 +95,20 @@ __create_class__ = function(class_name, parents, attrs, props)
 		for k,v in pairs(attrs) do
 			if type(v)=='function' then
 				object[ k ] = function(_args, _kwargs)
-					a = {object}
+					local o = {object}
 					if _args then
-						return v(__concat_tables_array(a, _args), _kwargs)
+						return v(__concat_tables_array(o, _args), _kwargs or {})
 					else
-						return v(a, _kwargs)
+						return v(o, _kwargs or {})
 					end
 				end
 			else
 				object[ k ] = v
 			end
 		end
-		a = {object}
+		local a = {object}
 		if args then
-			attrs.__init__( __concat_tables_array(a, args), kwargs )
+			attrs.__init__( __concat_tables_array(a, args), kwargs or {})
 		else
 			attrs.__init__( a, kwargs or {} )
 		end
@@ -283,3 +283,23 @@ __get__helper_string = function(s, name)
 	return wrapper
 end
 ''')
+
+class dict:
+	def __init__(self, object, pointer=None):
+		with lowlevel:
+			self[...] = {}
+			if pointer:
+				self[...] = pointer
+			elif object:
+				for d in object: ## array
+					self[...][ d.key ] = d.value
+					
+
+	def __getitem__(self, key):
+		with lowlevel:
+			return self[...][ key ]
+
+	def __setitem__(self, key, value):
+		with lowlevel:
+			self[...][ key ] = value
+

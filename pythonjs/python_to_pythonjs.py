@@ -2329,7 +2329,13 @@ class PythonToPythonJS(NodeVisitor):
 			raise NotImplementedError('unknown iterator target type: %s'%target)
 
 
-		if self._with_js or self._with_dart:
+		if self._with_ll:
+			writer.write('for %s in %s:' %(self.visit(target), self.visit(iter)))
+			writer.push()
+			map(self.visit, node.body)
+			writer.pull()
+
+		elif self._with_js or self._with_dart:
 			if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
 				iter_start = '0'
 				if len(iter.args) == 2:
