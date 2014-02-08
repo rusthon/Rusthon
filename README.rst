@@ -22,7 +22,7 @@ list comprehensions, classes, multiple inheritance, operator
 overloading, function and class decorators, generator functions,
 HTML DOM, and easily integrates with JavaScript and external JavaScript 
 libraries.  The generated code works in the Browser and in NodeJS.
-Note: the Dart and CoffeeScript backends are still very experimental.
+Note: the Dart, CoffeeScript and Lua backends are still very experimental.
 
 Speed
 ---------------

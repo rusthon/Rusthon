@@ -16,10 +16,14 @@ __concat_tables = function(t1, t2)
 end
 
 __test_if_true__ = function( x )
-	if x == 0 then
-		return false
-	elseif x == nil then
-		return false
+	if x == true then return true
+	elseif x == false then return false
+	elseif x == 0 then return false
+	elseif x == nil then return false
+	elseif x == '' then return false
+	elseif x.__class__ and x.__class__.__name__ == 'list' then
+		if x.length > 0 then return true
+		else return false end
 	else
 		return true
 	end
@@ -244,6 +248,7 @@ class list:
 					return i
 				i += 1
 
+tuple = list
 ## this must come after list because list.__call__ is used directly,
 ## and the lua compiler can not use forward references.
 JS('''
@@ -253,6 +258,14 @@ __get__helper_string = function(s, name)
 		wrapper = function(args, kwargs)
 			return string.sub(s, args[1]+1, args[1]+1)
 		end
+
+	elseif name == '__getslice__' then
+		wrapper = function(args, kwargs)
+			if args[1]==nil and args[2]==nil and args[3]==-1 then
+				return s:reverse()
+			end
+		end
+
 	elseif name == '__iter__' then
 		wrapper = function(args, kwargs)
 			return __iterator_string.__call__( {s, 0} )

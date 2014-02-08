@@ -886,7 +886,10 @@ class PythonToPythonJS(NodeVisitor):
 		return op.join( [self.visit(v) for v in node.values] )
 
 	def visit_If(self, node):
-		if isinstance(node.test, ast.Dict):
+		if self._with_lua:
+			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
+
+		elif isinstance(node.test, ast.Dict):
 			if self._with_js:
 				writer.write('if Object.keys(%s).length:' % self.visit(node.test))
 			else:
