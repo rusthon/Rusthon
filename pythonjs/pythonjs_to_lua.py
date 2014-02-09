@@ -31,6 +31,10 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 
+	def visit_Import(self, node):
+		for alias in node.names:
+			return 'require "%s"' %alias.name
+
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
 		return '%s.__wrapped__' %name
@@ -182,6 +186,13 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		args = [self.visit(e) for e in node.values]
 		return 'print(%s)' % ', '.join(args)
 
+
+	def visit_Return(self, node):
+		if isinstance(node.value, ast.Tuple):
+			return 'return %s;' % ', '.join([self.visit(e) for e in node.value.elts])
+		if node.value:
+			return 'return %s;' % self.visit(node.value)
+		return 'return nil;'
 
 	def visit_Assign(self, node):
 		assert len(node.targets) == 1

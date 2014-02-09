@@ -2,10 +2,13 @@
 # by Brett Hartshorn - copyright 2013
 # You may destribute this file using the "New BSD" or MIT license
 
+REQUIRES = 1
+
 LUA = {
-	'time': {
-		'time' : 'time = function() return os.time() end',
-		'clock' : 'clock = function() return os.time() end'
+	'time': {  ## requires socket module, install for luajit on ubuntu - `sudo-apt get install lua-socket`
+		REQUIRES : ['socket'],
+		'time' : 'time = function() return socket.gettime() end',
+		'clock' : 'clock = function() return socket.gettime() end'
 	}
 }
 

@@ -341,11 +341,18 @@ class PythonToPythonJS(NodeVisitor):
 
 
 		if node.module in lib:
+			imported = False
 			for n in node.names:
 				if n.name in lib[ node.module ]:
+					if not imported:
+						imported = True
+						if ministdlib.REQUIRES in lib[node.module]:
+							writer.write('import %s' %','.join(lib[node.module][ministdlib.REQUIRES]))
+
 					writer.write( 'JS("%s")' %lib[node.module][n.name] )
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
+
 
 		elif self._check_for_module( node.module ):
 			if node.names[0].name == '*':
@@ -1002,6 +1009,10 @@ class PythonToPythonJS(NodeVisitor):
 					writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
 					if self._inline_breakout:
 						writer.write('break')
+
+				elif isinstance(node.value, ast.Tuple):
+					writer.write( 'return %s;' % ','.join([self.visit(e) for e in node.value.elts]) )
+
 				else:
 					writer.write('return %s' % self.visit(node.value))
 

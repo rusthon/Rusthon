@@ -76,6 +76,8 @@ def write(filename, content):
 
 def run_command(command, returns_stdout_stderr=False):
     """Returns the number of problems"""
+    if os.path.isfile("%s.errors" % tmpname):
+        os.unlink("%s.errors" % tmpname)
     f = os.popen(command + " 2>%s.errors" % tmpname,  'r')
     stdout = f.read().strip()
     f.close()
@@ -90,7 +92,13 @@ def run_command(command, returns_stdout_stderr=False):
         if show_details:
             print(stdout)
 
-    errors = stdout + stderr
+    unknown = []
+    for line in stdout.splitlines():
+        if line.startswith('*'):
+            pass
+        else:
+            unknown.append(line)
+    errors = '\n'.join(unknown) + stderr
             
     d = {}
     x = errors.count("Error fail")
@@ -350,11 +358,10 @@ def run_test_on(filename):
     sum_errors = {}
     def display(function):
         if show_details:
-            print('-'*77,'\nRunning %s\n\n' % function.__doc__)
+            print('\n<%s>\n' % function.__doc__)
         errors = function(filename)
         if errors:
             if not show_details:
-                #print(table_cell % function.__doc__.split(' ')[0], end='')
                 print(table_cell % ''.join('%s%d' % (k[0], v)
                                             for k, v in errors.items()),
                       end='')
@@ -365,6 +372,10 @@ def run_test_on(filename):
 
         for k, v in errors.items():
             sum_errors[k] = sum_errors.get(k, 0) + v
+
+        if show_details:
+            print('-'*77)
+
         
     display(run_python_test_on)
     display(run_python3_test_on)
