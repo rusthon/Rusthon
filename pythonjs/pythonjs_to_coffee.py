@@ -395,6 +395,9 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 	def visit_Is(self, node):
 		return ' is '
 
+	def visit_IsNot(self, node):
+		return ' isnt '
+
 	def _visit_call_helper_instanceof(self, node):
 		args = map(self.visit, node.args)
 		if len(args) == 2:

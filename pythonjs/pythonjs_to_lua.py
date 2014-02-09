@@ -55,6 +55,11 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	def visit_Not(self, node):
 		return ' not '
 
+	def visit_IsNot(self, node):
+		return '~='
+
+	def visit_NotEq(self, node):
+		return '~='
 
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
@@ -106,8 +111,8 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
-		body.append( self.indent() + 'end' )
 		self.pull()
+		body.append( self.indent() + 'end' )
 		return '\n'.join( body )
 
 
@@ -182,7 +187,9 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		assert len(node.targets) == 1
 		target = node.targets[0]
 		if isinstance(target, ast.Tuple):
-			raise NotImplementedError
+			elts = [self.visit(e) for e in target.elts]
+			return '%s = %s' % (','.join(elts), self.visit(node.value))
+
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)

@@ -15,6 +15,14 @@ __concat_tables = function(t1, t2)
 	return t1
 end
 
+function table.shallow_copy(t)
+	local t2 = {}
+	for k,v in pairs(t) do
+		t2[k] = v
+	end
+	return t2
+end
+
 __test_if_true__ = function( x )
 	if x == true then return true
 	elseif x == false then return false
@@ -30,6 +38,10 @@ __test_if_true__ = function( x )
 	else
 		return true
 	end
+end
+
+__set__ = function(ob, name, value)
+	ob[ name ] = value
 end
 
 __get__ = function(ob, name)
@@ -51,7 +63,11 @@ __get__ = function(ob, name)
 end
 
 __sprintf = function(s, args)
-	return string.format(s, unpack(args))
+	if type(args)=='table' then
+		return string.format(s, unpack(args))
+	else
+		return string.format(s, args)
+	end
 end
 
 function string:to_array()
@@ -278,11 +294,12 @@ class list:
 			self[...][index+1] = value
 
 	def __getslice__(self, start, stop, step):
-		if stop == null and step == null:
-			return self[...].sublist( start )
-		elif stop < 0:
-			stop = self[...].length + stop
-			return self[...].sublist(start, stop)
+		if stop == None and step == None:
+			with lowlevel:
+				copy = table.shallow_copy( self[...] )
+			return list( pointer=copy, length=self.length )
+		elif stop < 0:  ## TODO
+			pass
 
 	def __iter__(self):
 		return __iterator_list(self, 0)
@@ -359,6 +376,18 @@ __get__helper_string = function(s, name)
 end
 ''')
 
+def range(num, stop):
+	"""Emulates Python's range function"""
+	if stop is not None:
+		i = num
+		num = stop
+	else:
+		i = 0
+	arr = []
+	while i < num:
+		arr.append(i)
+		i += 1
+	return arr
 
 class dict:
 	def __init__(self, object, pointer=None):

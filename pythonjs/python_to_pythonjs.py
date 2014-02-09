@@ -1033,7 +1033,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
-			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
+			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None' and not self._with_lua:
 				#if self._with_js:
 				#	return 'new Array(%s)' %self.visit(node.right)
 				#else:
@@ -1055,7 +1055,10 @@ class PythonToPythonJS(NodeVisitor):
 			#	return '[%s]' %','.join(expanded)
 			#else:
 			#	return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
-			return '[%s]' %','.join(expanded)
+			if self._with_lua:
+				return 'list.__call__([], {pointer:[%s], length:%s})' %(','.join(expanded), n)
+			else:
+				return '[%s]' %','.join(expanded)
 
 		elif op == '//':
 			return 'Math.floor(%s/%s)' %(left, right)
@@ -1482,6 +1485,10 @@ class PythonToPythonJS(NodeVisitor):
 			#	writer.write('JS("var %s = %s")' % (self.visit(target), node_value))
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
+
+		elif self._with_lua:  ## Tuple - lua supports destructured assignment
+			elts = [self.visit(e) for e in target.elts]
+			writer.write('%s = %s' % (','.join(elts), self.visit(node.value)))
 
 		else:  # it's a Tuple
 			id = self.identifier
@@ -2453,7 +2460,10 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('while %s < %s:' %(iter_name, iter_end))
 				writer.push()
 				map(self.visit, node.body)
-				writer.write('%s += 1' %iter_name )
+				if self._with_lua:
+					writer.write('%s = %s + 1' %(iter_name, iter_name) )
+				else:
+					writer.write('%s += 1' %iter_name )
 
 				if enumtar:
 					writer.write('%s += 1'%enumtar.id)
