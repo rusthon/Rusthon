@@ -2,6 +2,14 @@
 # by Brett Hartshorn - copyright 2013
 # You may destribute this file using the "New BSD" or MIT license
 
+LUA = {
+	'time': {
+		'time' : 'time = function() return os.time() end',
+		'clock' : 'clock = function() return os.time() end'
+	}
+}
+
+
 DART = {
 	'time': {
 		'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'

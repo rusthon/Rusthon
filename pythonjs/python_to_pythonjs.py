@@ -334,6 +334,8 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_ImportFrom(self, node):
 		if self._with_dart:
 			lib = ministdlib.DART
+		elif self._with_lua:
+			lib = ministdlib.LUA
 		else:
 			lib = ministdlib.JS
 
@@ -495,14 +497,29 @@ class PythonToPythonJS(NodeVisitor):
 				writer.write('if %s:' %' and '.join(test))
 
 				writer.push()
-				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
+				if self._with_dart:
+					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
+				elif self._with_lua:
+					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
+				else:
+					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 				writer.pull()
 			else:
 
-				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
-
-		writer.write('idx%s+=1' %id )
+				if self._with_dart:
+					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
+				elif self._with_lua:
+					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
+				else:
+					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
+		if self._with_lua:
+			writer.write('idx%s = idx%s + 1' %(id,id) )
+		else:
+			writer.write('idx%s+=1' %id )
 		writer.pull()
+
+		if self._with_lua:  ## convert to list
+			writer.write('%s = list.__call__({},{pointer:%s, length:idx%s})' %(cname, cname, id))
 
 
 
