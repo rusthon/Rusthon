@@ -41,6 +41,10 @@ __get__ = function(ob, name)
 		end
 	elseif type(ob)=='string' then
 		return __get__helper_string(ob,name)
+	elseif ob.__getters__ and ob.__getters__[name] then
+		return ob.__getters__[name]( ob )  --unbound method--
+	elseif ob[name]==nil and ob.__getattr__ then
+		return ob.__getattr__( {name} )
 	else
 		return ob[ name ]
 	end
@@ -110,6 +114,18 @@ __bind_methods__ = function(object, class)
 	end
 end
 
+__bind_properties__ = function(object, class)
+	for k,v in pairs( class.__properties__ ) do
+		assert( type(v.get)=='function' )
+		if object.__getters__[k] == nil then
+			object.__getters__[k] = v.get   --unbound method--
+		end
+	end
+	for k,v in pairs( class.__bases__ ) do
+		__bind_properties__( object, v )
+	end
+end
+
 
 __create_class__ = function(class_name, parents, attrs, props)
 	local class = {
@@ -121,20 +137,18 @@ __create_class__ = function(class_name, parents, attrs, props)
 	function class.__call__( args, kwargs )
 		local object = {
 			__class__ = class,
-			__dict__ = 'TODO'
+			__dict__ = 'TODO',
+			__getters__ = {}
 		}
 		__bind_methods__( object, class )
+		__bind_properties__( object, class )
+
 		for k,v in pairs( class.__attributes__ ) do
 			class[ k ] = v
 		end
 
-		if attrs.__init__ then
-			local a = {object}
-			if args then
-				attrs.__init__( __concat_tables_array(a, args), kwargs or {})
-			else
-				attrs.__init__( a, kwargs or {} )
-			end
+		if object.__init__ then
+			object.__init__( args, kwargs )
 		end
 		return object
 	end
