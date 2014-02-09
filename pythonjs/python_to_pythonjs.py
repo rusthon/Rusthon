@@ -647,9 +647,10 @@ class PythonToPythonJS(NodeVisitor):
 					if n.id == 'self':
 						n.id = 'this'
 
-		writer.write('@properties(%s)'%','.join(props))
-		for dec in node.decorator_list:
-			writer.write('@%s'%self.visit(dec))
+		if props:
+			writer.write('@properties(%s)'%','.join(props))
+			for dec in node.decorator_list:
+				writer.write('@%s'%self.visit(dec))
 
 		bases = []
 		for base in node.bases:
@@ -674,6 +675,9 @@ class PythonToPythonJS(NodeVisitor):
 		## methods
 		for method in method_list:
 			self.visit(method)
+
+		if not init and not method_list:
+			writer.write( 'pass' )
 
 		writer.pull()
 
@@ -726,6 +730,9 @@ class PythonToPythonJS(NodeVisitor):
 
 		else:
 			writer.write('pass')
+
+		## `self.__class__` pointer ##
+		writer.write('this.__class__ = %s' %name)
 
 		## instance UID ##
 		writer.write('this.__uid__ = "￼" + _PythonJS_UID')

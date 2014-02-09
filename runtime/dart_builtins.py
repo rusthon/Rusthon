@@ -111,6 +111,10 @@ def str(a):
 	## TODO conversions to string
 	return a
 
+def isinstance(a, klass):
+	## this will not work in dart, because 'is' test fails when klass is a variable
+	#return JS("a is klass")
+	return a.runtimeType.toString() == klass.toString()
 
 def __getslice__(a, start, stop, step):
 	if instanceof(a, String):

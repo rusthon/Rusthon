@@ -63,6 +63,9 @@ def __get__(object, attribute):
 		check the function for a 'cached_wrapper' attribute, if none is found then generate a new
 		wrapper, cache it on the function, and return the wrapper.
 	"""
+	if object == None:
+		return None
+
 	if attribute == '__call__':
 		if object.pythonscript_function or object.is_wrapper:  ## common case
 			return object

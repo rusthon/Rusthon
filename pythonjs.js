@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Feb  8 20:59:42 2014
+// PythonJS Runtime - regenerated on: Sun Feb  9 00:01:22 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -49,6 +49,9 @@ adapt_arguments = function(handler) {
 
 __get__ = function(object, attribute) {
   "Retrieve an attribute, method, property, or wrapper function.\n\n	method are actually functions which are converted to methods by\n	prepending their arguments with the current object. Properties are\n	not functions!\n\n	DOM support:\n		http://stackoverflow.com/questions/14202699/document-createelement-not-working\n		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n	Direct JavaScript Calls:\n		if an external javascript function is found, and it was not a wrapper that was generated here,\n		check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n		wrapper, cache it on the function, and return the wrapper.\n	";
+  if (( object ) == undefined) {
+    return undefined;
+  }
   if (( attribute ) == "__call__") {
     if (object.pythonscript_function || object.is_wrapper) {
       return object;
@@ -981,8 +984,24 @@ isinstance = function(args, kwargs) {
   if (( ob ) === undefined || ( ob ) === null) {
     return false;
   } else {
-    if (! (Object.hasOwnProperty.call(ob, "__class__"))) {
-      return false;
+    if (ob instanceof Array && ( klass ) === list) {
+      return true;
+    } else {
+      if (( klass ) === dict && ob instanceof Object) {
+        if (ob instanceof Array) {
+          return false;
+        } else {
+          if (ob.__class__) {
+            return false;
+          } else {
+            return true;
+          }
+        }
+      } else {
+        if (! (Object.hasOwnProperty.call(ob, "__class__"))) {
+          return false;
+        }
+      }
     }
   }
   ob_class = ob.__class__;

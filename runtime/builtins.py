@@ -337,8 +337,18 @@ def isinstance( ob, klass):
 	with javascript:
 		if ob is None or ob is null:
 			return False
+		elif instanceof(ob, Array) and klass is list:
+			return True
+		elif klass is dict and instanceof(ob, Object):  ## this is safe because instances created with Object.create(null) are not instances-of Object
+			if instanceof(ob, Array):
+				return False
+			elif ob.__class__:
+				return False
+			else:
+				return True
 		elif not Object.hasOwnProperty.call(ob, '__class__'):
 			return False
+
 		ob_class = ob.__class__
 	if ob_class is None:
 		return False

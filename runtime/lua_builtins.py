@@ -205,6 +205,17 @@ def getattr(ob, name):
 	with lowlevel:
 		return ob[name]  ## could be None (nil), no good way to raise AttributeError
 
+def isinstance( ob, klass ):
+	if ob == None:
+		return False
+	elif ob.__class__:
+		if ob.__class__.__name__ == klass.__name__:
+			return True
+		else:
+			return False
+	else:
+		return False
+
 class __iterator_string:
 	def __init__(self, obj, index):
 		with lowlevel:
