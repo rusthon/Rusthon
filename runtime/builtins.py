@@ -38,6 +38,14 @@ with javascript:
 		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
 			return True
 
+	def __split_method( ob ):
+		## special case because calling string.split() without args its not the same as python,
+		## and we do not want to touch the default string.split implementation.
+		if typeof(ob) == 'string':
+			return ob.split(' ')
+		else:
+			return ob.split()
+
 	def __test_if_true__( ob ):
 		if not ob:
 			return False

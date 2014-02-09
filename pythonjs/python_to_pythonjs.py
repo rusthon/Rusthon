@@ -1684,6 +1684,9 @@ class PythonToPythonJS(NodeVisitor):
 					else:
 						return '__jsdict_pop(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'split' and not args:
+					return '__split_method(%s)' %self.visit(anode.value)
+
 				else:
 					a = ','.join(args)
 					if node.keywords:
@@ -1722,8 +1725,6 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
-				#a = ','.join(args)
-				#return '%s(%s)' %( self.visit(node.func), a )
 
 		elif isinstance(node.func, Name) and node.func.id in self._generator_functions:
 			name = self.visit(node.func)
@@ -1788,13 +1789,6 @@ class PythonToPythonJS(NodeVisitor):
 				writer.append('var(%s, %s)' % (args_name, kwargs_name))
 				self.identifier += 1
 
-				#if name in ('list', 'tuple'):
-				#	if args:
-				#		writer.append( '%s = %s[...]' % (args_name, args))  ## test this
-				#	else:
-				#		writer.append( '%s = []' %args_name )
-				#else:
-				#	writer.append('%s = JSArray(%s)' % (args_name, args))
 				writer.append('%s = [%s]' % (args_name, args))
 
 				if node.starargs:
@@ -1813,18 +1807,8 @@ class PythonToPythonJS(NodeVisitor):
 
 			#######################################
 
-			#if name in self._func_typedefs:
-			#	if args and kwargs:
-			#		return '%s(%s, %s)' %(args_name, kwargs_name)
-			#	elif args:
-			#		return '%s(%s, {})' %args_name
-			#	elif kwargs:
-			#		return '%s([], %s)' %kwargs_name
-			#	else:
-			#		return '%s()' %name
-
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items') and not self._with_lua:
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split') and not self._with_lua:
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
@@ -1846,6 +1830,9 @@ class PythonToPythonJS(NodeVisitor):
 						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), args )
 					else:
 						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'split' and not args:
+					return '__split_method(%s)' %self.visit(anode.value)
 
 				else:
 					return '%s(%s)' %( self.visit(node.func), args )

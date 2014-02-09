@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Feb  6 23:40:16 2014
+// PythonJS Runtime - regenerated on: Sat Feb  8 20:59:42 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -432,6 +432,18 @@ __contains__.NAME = "__contains__";
 __contains__.args_signature = ["ob", "a"];
 __contains__.kwargs_signature = {  };
 __contains__.types_signature = {  };
+__split_method = function(ob) {
+  if (( typeof(ob) ) == "string") {
+    return ob.split(" ");
+  } else {
+    return __split_method(ob);
+  }
+}
+
+__split_method.NAME = "__split_method";
+__split_method.args_signature = ["ob"];
+__split_method.kwargs_signature = {  };
+__split_method.types_signature = {  };
 __test_if_true__ = function(ob) {
   if (! (ob)) {
     return false;

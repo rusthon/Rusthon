@@ -201,6 +201,10 @@ def ord(a):
 	with lowlevel:
 		return string.byte(a)
 
+def getattr(ob, name):
+	with lowlevel:
+		return ob[name]  ## could be None (nil), no good way to raise AttributeError
+
 class __iterator_string:
 	def __init__(self, obj, index):
 		with lowlevel:

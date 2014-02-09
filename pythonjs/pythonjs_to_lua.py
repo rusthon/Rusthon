@@ -52,6 +52,9 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	def visit_Or(self, node):
 		return ' or '
 
+	def visit_Not(self, node):
+		return ' not '
+
 
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
@@ -282,9 +285,13 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		self.push()
 		for n in node.handlers:
 			out.append( self.indent() + self.visit(n) )
-		self.pull()
 		out.append( self.indent() + 'end' )
+		self.pull()
 		return '\n'.join( out )
+
+	def visit_ExceptHandler(self, node):
+		## TODO check exception
+		return '--exception: %s' %self.visit(node.type)
 
 def main(script):
 	tree = ast.parse(script)
