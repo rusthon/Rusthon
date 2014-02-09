@@ -87,6 +87,30 @@ function string:split(sSeparator, nMax, bRegexp)
 	return aRecord
 end
 
+__bind_methods__ = function(object, class)
+	for k,v in pairs( class.__attributes__ ) do
+		if object[k] == nil then
+			if type(v)=='function' then
+				object[ k ] = function(_args, _kwargs)
+					local o = {object}
+					if _args then
+						return v(__concat_tables_array(o, _args), _kwargs or {})
+					else
+						return v(o, _kwargs or {})
+					end
+				end
+			else
+				-- TODO class attribute should have dynamic look up.
+				object[ k ] = v
+			end
+		end
+	end
+	for k,v in pairs( class.__bases__ ) do
+		__bind_methods__( object, v )
+	end
+end
+
+
 __create_class__ = function(class_name, parents, attrs, props)
 	local class = {
 		__bases__ = parents,
@@ -99,25 +123,18 @@ __create_class__ = function(class_name, parents, attrs, props)
 			__class__ = class,
 			__dict__ = 'TODO'
 		}
-		for k,v in pairs(attrs) do
-			if type(v)=='function' then
-				object[ k ] = function(_args, _kwargs)
-					local o = {object}
-					if _args then
-						return v(__concat_tables_array(o, _args), _kwargs or {})
-					else
-						return v(o, _kwargs or {})
-					end
-				end
-			else
-				object[ k ] = v
-			end
+		__bind_methods__( object, class )
+		for k,v in pairs( class.__attributes__ ) do
+			class[ k ] = v
 		end
-		local a = {object}
-		if args then
-			attrs.__init__( __concat_tables_array(a, args), kwargs or {})
-		else
-			attrs.__init__( a, kwargs or {} )
+
+		if attrs.__init__ then
+			local a = {object}
+			if args then
+				attrs.__init__( __concat_tables_array(a, args), kwargs or {})
+			else
+				attrs.__init__( a, kwargs or {} )
+			end
 		end
 		return object
 	end

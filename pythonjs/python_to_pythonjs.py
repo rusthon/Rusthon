@@ -809,8 +809,11 @@ class PythonToPythonJS(NodeVisitor):
 		for base in node.bases:
 			base = self.visit(base)
 			if base == 'object': continue
-			writer.write('__%s_parents.push(%s)' % (name, base))
 			self._class_parents[ name ].add( base )
+			if self._with_lua:
+				writer.write('table.insert( __%s_parents, %s)' % (name, base))
+			else:
+				writer.write('__%s_parents.push(%s)' % (name, base))
 
 		for item in node.body:
 			if isinstance(item, FunctionDef):
