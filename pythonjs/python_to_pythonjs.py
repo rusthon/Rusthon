@@ -423,28 +423,31 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_GeneratorExp(self, node):
 		return self.visit_ListComp(node)
 
-
+	_comp_id = 0
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
 
 		if len(self._comprehensions) == 0:
 			comps = collect_comprehensions( node )
 			for i,cnode in enumerate(comps):
-				cname = '__comprehension%s' % i
+				cname = '__comp__%s' % self._comp_id
+				self._comp_id += 1
 				cnode._comp_name = cname
 				self._comprehensions.append( cnode )
 
 		cname = node._comp_name
-		writer.write('var(%s)'%cname)
-		writer.write('%s = JSArray()'%cname)
+		if not self._with_dart:
+			writer.write('var(%s)'%cname)
 
-		length = len( node.generators )
-		a = ['idx%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
-		a = ['iter%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
-		a = ['get%s'%i for i in range(length)]
-		writer.write('var( %s )' %','.join(a) )
+			length = len( node.generators )
+			a = ['idx%s'%i for i in range(length)]
+			writer.write('var( %s )' %','.join(a) )
+			a = ['iter%s'%i for i in range(length)]
+			writer.write('var( %s )' %','.join(a) )
+			a = ['get%s'%i for i in range(length)]
+			writer.write('var( %s )' %','.join(a) )
+
+		writer.write('%s = JSArray()'%cname)
 
 		generators = list( node.generators )
 		generators.reverse()
@@ -1486,7 +1489,7 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
-		elif self._with_lua:  ## Tuple - lua supports destructured assignment
+		elif self._with_lua or self._with_dart:  ## Tuple - lua and dart supports destructured assignment
 			elts = [self.visit(e) for e in target.elts]
 			writer.write('%s = %s' % (','.join(elts), self.visit(node.value)))
 
@@ -2579,13 +2582,17 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 
 	'''
 	def __init__(self, node, compiler=None):
+		self._with_ll = False
 		self._with_js = False
 		self._with_dart = False
 		self._with_coffee = False
+		self._with_lua = False
 		if compiler._with_dart:  ## TODO
 			self._with_dart = True
 		elif compiler._with_coffee:
 			self._with_coffee = True
+		elif compiler._with_lua:
+			self._with_lua = True
 		else:
 			self._with_js = True
 
@@ -2666,7 +2673,11 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		writer.push()
 		for b in loop_node.body:
 			self.visit(b)
-		writer.write('this.__iter_index += 1')
+
+		if self._with_lua:
+			writer.write('this.__iter_index = this.__iter_index + 1')
+		else:
+			writer.write('this.__iter_index += 1')
 
 		if not tail_yield:
 			writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')

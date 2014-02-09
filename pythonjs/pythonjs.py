@@ -298,7 +298,7 @@ class JSGenerator(NodeVisitor):
 		return s
 
 	def visit_While(self, node):
-		body = [ 'while(%s) {' %self.visit(node.test)]
+		body = [ 'while (%s) {' %self.visit(node.test)]
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )

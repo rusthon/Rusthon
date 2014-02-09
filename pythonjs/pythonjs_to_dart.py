@@ -287,7 +287,13 @@ class DartGenerator( pythonjs.JSGenerator ):
 		assert len(node.targets) == 1
 		target = node.targets[0]
 		if isinstance(target, ast.Tuple):
-			raise NotImplementedError
+			#raise NotImplementedError
+			elts = [self.visit(e) for e in target.elts]
+			if self.indent():
+				return '%s = %s' % (','.join(elts), self.visit(node.value))
+			else:
+				return 'var %s = %s' % (','.join(elts), self.visit(node.value))
+
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
