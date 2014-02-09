@@ -372,6 +372,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 		else:
 			raise SyntaxError( args )
 
+	def visit_ExceptHandler(self, node):
+		return '\n'.join( [self.visit(n) for n in node.body] )
 
 
 def main(script):

@@ -269,29 +269,35 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		else:
 			raise SyntaxError( args )
 
+	def visit_Raise(self, node):
+		return 'error(%s)' % self.visit(node.type)
+
 	def visit_TryExcept(self, node):
 		out = ['__try__ = function()']
 		self.push()
 		for n in node.body:
 			out.append( self.indent() + self.visit(n) )
 		self.pull()
-		out.append( 'end' )
+		out.append( self.indent() + 'end' )
 
-		out.append( self.indent() + 'if pcall(__try__) then' )
-		self.push()
-		out.append('--no errors--')
-		self.pull()
-		out.append( self.indent() + 'else' )
+		out.append( self.indent() + 'local __ok__, __exception__ = pcall(__try__)' )
+		out.append( self.indent() + 'if not __ok__ then' )
 		self.push()
 		for n in node.handlers:
-			out.append( self.indent() + self.visit(n) )
-		out.append( self.indent() + 'end' )
+			out.append( self.visit(n) )
 		self.pull()
+		out.append( self.indent() + 'end' )
 		return '\n'.join( out )
 
 	def visit_ExceptHandler(self, node):
-		## TODO check exception
-		return '--exception: %s' %self.visit(node.type)
+		## TODO check exception type
+		out = []
+		if node.type:
+			out.append( self.indent() + '--exception: %s' %self.visit(node.type) )
+		for n in node.body:
+			out.append( self.indent() + self.visit(n) )
+
+		return '\n'.join(out)
 
 def main(script):
 	tree = ast.parse(script)

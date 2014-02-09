@@ -413,9 +413,19 @@ class CoffeeGenerator( pythonjs.JSGenerator ):
 		out.append( self.indent() + 'catch error' )
 		self.push()
 		for n in node.handlers:
-			out.append( self.indent() + self.visit(n) )
+			out.append( self.visit(n) )
 		self.pull()
 		return '\n'.join( out )
+
+	def visit_ExceptHandler(self, node):
+		## TODO check exception type
+		out = []
+		if node.type:
+			out.append( self.indent() + '###exception: %s' %self.visit(node.type) )
+		for n in node.body:
+			out.append( self.indent() + self.visit(n) )
+
+		return '\n'.join(out)
 
 
 def main(script):
