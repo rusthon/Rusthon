@@ -29,22 +29,32 @@ argv = [os.path.abspath(name)
         ]
 
 def runnable(command):
-    """Returns True is the standard oupt of the command display something"""
-    f = os.popen(command, "r")
-    output = f.read()
-    f.close()
-    return output != ''
+    ## this fails with lua5.1 "lua -v"
+    #"""Returns True is the standard out of the command display something"""
+    #f = os.popen(command, "r")
+    #output = f.read()
+    #f.close()
+    #return output != ''
+    try:
+        subprocess.check_call( command.split() )
+        return True
+    except OSError:
+        return False
 
 ## rhino has problems: like maximum callstack errors simply freeze up rhino
-rhino_runnable = runnable("rhino -help") and '--rhino' in sys.argv
+rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
-dart2js_runnable = runnable( dart2js )
+dart2js_runnable = runnable( dart2js + ' -h' )
 coffee_runnable = runnable( "coffee -v" )
-lua_runnable = luajit_runnable = runnable( "luajit -v" )
-if not luajit_runnable:
-    lua_runnable = runnable( "lua -v" )
+lua_runnable = runnable( "lua -v" )
+luajit_runnable = runnable( "luajit -v" )
 
+lua2js = os.path.abspath( '../external/lua.js/lua2js' )
+luajs_runnable = os.path.isfile( lua2js )
+
+assert lua_runnable
+assert luajs_runnable
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -196,7 +206,7 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False):
     output_name = "%s.py" % tmpname
     if javascript:
         content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename)
@@ -214,7 +224,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
             patch_python(filename)
         ]
         content = '\n'.join( source )
-    elif lua:
+    elif lua or luajs:
         source = [
             'pythonjs.configure(lua=True)',
             read('../runtime/lua_builtins.py'),
@@ -236,6 +246,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--coffee')
     elif lua:
         cmd.append( '--lua')
+    elif luajs:
+        cmd.append( '--luajs')
 
     stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
@@ -285,6 +297,19 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
             else:
                 return ''
 
+        elif luajs:
+            lua2js_input = '/tmp/lua2js-input.lua'
+            lua2js_output = '/tmp/lua2js-output.js'
+            open( lua2js_input, 'wb').write( stdout.encode('utf-8') )
+
+            cmd = [
+                lua2js,
+                lua2js_input,
+                lua2js_output
+            ]
+            subprocess.check_call( cmd )
+            return open( lua2js_output, 'rb' ).read().decode('utf-8')
+
         else:
             return stdout
 
@@ -322,11 +347,11 @@ process = { title:"", version:"" } ;
     return run_command("rhino -O -1 %s.js" % tmpname)
 
 def run_pythonjs_test_on_node(dummy_filename):
-    """PythonJS (normal javascript) on Node"""
+    """PythonJS (normal mode) on Node"""
     return run_if_no_error(run_js_node)
 
 def run_pythonjsjs_test_on_node(filename):
-    """PythonJS (fast javascript) on Node"""
+    """PythonJS (fast mode) on Node"""
     return run_pythonjs_test_on_node(filename)
 
 def run_js_node(content):
@@ -364,12 +389,28 @@ def run_pythonjs_lua_test_on_lua(dummy_filename):
 
 def run_lua_lua(content):
     """Run Lua using Lua"""
-    builtins = '' #read('../runtime/builtins.lua')
-    write("%s.lua" % tmpname, builtins + '\n' + content)
-    if luajit_runnable:
-        return run_command("luajit %s.lua" % tmpname)
-    else:
-        return run_command("lua %s.lua" % tmpname)
+    write("%s.lua" % tmpname, content)
+    return run_command("lua %s.lua" % tmpname)
+
+
+def run_pythonjs_lua_test_on_luajit(dummy_filename):
+    """PythonJS (Lua) on LuaJIT"""
+    return run_if_no_error(run_lua_luajit)
+
+def run_lua_luajit(content):
+    """Run Lua using LuaJIT"""
+    write("%s.lua" % tmpname, content)
+    return run_command("luajit %s.lua" % tmpname)
+
+def run_pythonjs_luajs_test_on_node(dummy_filename):
+    """PythonJS (Lua.js) on Node"""
+    return run_if_no_error(run_luajs_node)
+
+def run_luajs_node(content):
+    """Run Lua.js using Node"""
+    builtins = read(os.path.join("../external/lua.js", "lua.js"))
+    write("%s.js" % tmpname, builtins + '\n' + content)
+    return run_command("node %s.js" % tmpname)
 
 
 table_header = "%-12.12s %-28.28s"
@@ -430,9 +471,17 @@ def run_test_on(filename):
         js = translate_js(filename, javascript=False, dart=False, coffee=True)
         display(run_pythonjs_coffee_test_on_node)
 
+    if luajs_runnable and node_runnable:
+        js = translate_js(filename, luajs=True)
+        display(run_pythonjs_luajs_test_on_node)
+
     if lua_runnable:
         js = translate_js(filename, lua=True)
         display(run_pythonjs_lua_test_on_lua)
+
+    if luajit_runnable:
+        js = translate_js(filename, lua=True)
+        display(run_pythonjs_lua_test_on_luajit)
 
     print()
     return sum_errors
@@ -453,12 +502,16 @@ def run():
             if dart2js_runnable:
                 headers.append("Dart\nNode")
             if coffee_runnable:
-                headers.append("Coffee\nNode")
+                headers.append("Coffe\nNode")
+
+            if luajs_runnable:
+                headers.append("LuaJS\nNode")
+
+        if lua_runnable:
+            headers.append("Lua\nLua")
 
         if luajit_runnable:
             headers.append("Lua\nJIT")
-        elif lua_runnable:
-            headers.append("Lua\nLua")
         
         print(table_header % ("", "Regtest run on")
               + ''.join(table_cell % i.split('\n')[0]

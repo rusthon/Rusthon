@@ -5,7 +5,9 @@
 REQUIRES = 1
 
 LUA = {
-	'time': {  ## requires socket module, install for luajit on ubuntu - `sudo-apt get install lua-socket`
+	'time': {
+		## requires socket module, install for luajit on ubuntu - `sudo-apt get install lua-socket`
+		## for lua interpreter on ubuntu - `sudo apt-get install liblua5.1-socket`
 		REQUIRES : ['socket'],
 		'time' : 'time = function() return socket.gettime() end',
 		'clock' : 'clock = function() return socket.gettime() end'
