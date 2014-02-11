@@ -65,6 +65,9 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	def visit_NotEq(self, node):
 		return '~='
 
+	def visit_Is(self, node):
+		return '=='
+
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
 			return self._visit_subscript_ellipsis( node )
@@ -275,17 +278,8 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		return buffer
 
 
-	def visit_Is(self, node):
-		return ' is '
-
 	def _visit_call_helper_instanceof(self, node):
-		args = map(self.visit, node.args)
-		if len(args) == 2:
-			if args[1] == 'Number':
-				args[1] = 'num'
-			return '%s is %s' %tuple(args)
-		else:
-			raise SyntaxError( args )
+		raise NotImplementedError
 
 	def visit_Raise(self, node):
 		return 'error(%s)' % self.visit(node.type)

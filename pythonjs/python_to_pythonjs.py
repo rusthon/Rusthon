@@ -553,7 +553,7 @@ class PythonToPythonJS(NodeVisitor):
 				a = '__sub__(%s,%s)' %(target, self.visit(node.value))
 			elif op == '*=':
 				a = '__mul__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '/=':
+			elif op == '/=' or op == '//=':
 				a = '__div__(%s,%s)' %(target, self.visit(node.value))
 			elif op == '%=':
 				a = '__mod__(%s,%s)' %(target, self.visit(node.value))
@@ -568,7 +568,7 @@ class PythonToPythonJS(NodeVisitor):
 			elif op == '>>=':
 				a = '__rshift__(%s,%s)' %(target, self.visit(node.value))
 			else:
-				raise NotImplementedError
+				raise NotImplementedError(op)
 
 			writer.write('%s=%s' %(target,a))
 
@@ -578,7 +578,10 @@ class PythonToPythonJS(NodeVisitor):
 			a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
 			writer.write( a )
 		elif op == '//=':
-			a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
+			if self._with_dart:
+				a = '%s = (%s/%s).floor()' %(target, target, self.visit(node.value))
+			else:
+				a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
 			writer.write(a)
 
 		elif self._with_dart:
@@ -1047,10 +1050,7 @@ class PythonToPythonJS(NodeVisitor):
 				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
-			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None' and not self._with_lua:
-				#if self._with_js:
-				#	return 'new Array(%s)' %self.visit(node.right)
-				#else:
+			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None' and not self._with_lua and not self._with_dart:
 				return 'JS("new Array(%s)")' %self.visit(node.right)
 			elif isinstance(node.right,ast.Num):
 				n = node.right.n
@@ -1065,17 +1065,17 @@ class PythonToPythonJS(NodeVisitor):
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
 			for i in range( n ): expanded.extend( elts )
-			#if self._with_js or self._with_dart:
-			#	return '[%s]' %','.join(expanded)
-			#else:
-			#	return '__get__(list, "__call__")( [], {pointer:[%s]} )' %','.join(expanded)
+
 			if self._with_lua:
 				return 'list.__call__([], {pointer:[%s], length:%s})' %(','.join(expanded), n)
 			else:
 				return '[%s]' %','.join(expanded)
 
 		elif op == '//':
-			return 'Math.floor(%s/%s)' %(left, right)
+			if self._with_dart:
+				return '(%s/%s).floor()' %(left, right)				
+			else:
+				return 'Math.floor(%s/%s)' %(left, right)
 
 		elif op == '**':
 			return 'Math.pow(%s,%s)' %(left, right)

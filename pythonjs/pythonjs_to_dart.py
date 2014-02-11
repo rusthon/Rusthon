@@ -369,6 +369,12 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def visit_Is(self, node):
 		return '=='
 
+	def visit_IsNot(self, node):
+		return '!='
+
+	def visit_NotEq(self, node):
+		return '!='
+
 	def _visit_call_helper_instanceof(self, node):
 		args = map(self.visit, node.args)
 		if len(args) == 2:

@@ -17,7 +17,8 @@ LUA = {
 
 DART = {
 	'time': {
-		'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
+		'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }',
+		'clock' : 'clock() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
 	}
 }
 

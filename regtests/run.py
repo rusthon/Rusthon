@@ -307,7 +307,10 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
                 lua2js_input,
                 lua2js_output
             ]
-            subprocess.check_call( cmd )
+            try:
+                subprocess.check_call( cmd )
+            except subprocess.CalledProcessError:
+                return ''
             return open( lua2js_output, 'rb' ).read().decode('utf-8')
 
         else:
@@ -364,7 +367,7 @@ def run_js_node(content):
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_dart_test_on_node(dummy_filename):
-    """Dart2js PythonJS tests on Node"""
+    """PythonJS (dart2js) on Node"""
     return run_if_no_error(run_dart2js_node)
 
 def run_dart2js_node(content):
