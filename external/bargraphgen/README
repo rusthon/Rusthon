@@ -1,0 +1,47 @@
+bargraph.pl: a bar graph builder that supports stacking and clustering.
+Modifies gnuplot's output to fill in bars and add a legend.
+For complete documentation see
+  http://www.burningcutlery.com/derek/bargraph/
+
+Copyright (C) 2004-2009 Derek Bruening <iye@alum.mit.edu>
+http://www.burningcutlery.com/derek/bargraph/
+http://code.google.com/p/bargraphgen/
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
+
+Main features:
+* Stacked bars of 9+ datasets
+* Clustered bars of 8+ datasets
+* Clusters of stacked bars
+* Lets you keep your data in table format, or separated but listed in
+  the same file, rather than requiring each dataset to be in a separate file
+* Custom gnuplot command pass-through for fine-grained customization
+   without having a separate tool chain step outside the script
+* Color control
+* Font face control and limited font size control
+* Automatic arithmetic or harmonic mean calculation
+* Automatic legend creation
+* Automatic sorting, including sorting into SPEC CPU 2000 integer and 
+  floating point benchmark groups
+
+Multiple data sets can either be separated by =multi,
+  or in a table with =table.  Does support incomplete datasets,
+  but issues warning.
+For clusters of stacked bars, separate your stacked data for each
+  cluster with =multi or place in a table, and separate (and optionally
+  name) each cluster with multimulti=
+For complete documentation see
+  http://www.burningcutlery.com/derek/bargraph/
