@@ -988,7 +988,7 @@ lua_libs["os"] = {
   "clock": function () {
     // This function is supposed to return the time the script has been executing
     // not the time since it started, but I don't know of a way to do this.
-    return [(((new Date()).getTime()) / 1000) - _lua_clock_script];
+    return [(((new Date()).getTime()) / 1000) - _lua_clock_start];
   },
   "date": function (format, time) {
     // TODO
@@ -1020,7 +1020,7 @@ lua_libs["os"] = {
     if (table) {
       not_supported();
     } else {
-      return [Math.floor(new Date().getTime() / 1000)];
+      return [new Date().getTime() / 1000];
     }
   }
 };
