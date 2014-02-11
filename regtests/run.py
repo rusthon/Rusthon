@@ -94,8 +94,12 @@ def run_command(command, returns_stdout_stderr=False):
 
     unknown = []
     for line in stdout.splitlines():
-        if line.startswith('*'):
-            pass
+        if _benchmark:
+            if line.startswith('#'):
+                _benchmark.append( line )
+            else:
+                #exe = command.split()[0]
+                _benchmark.append( _test_description + ' ' + line )
         else:
             unknown.append(line)
     errors = '\n'.join(unknown) + stderr
@@ -114,6 +118,29 @@ def run_command(command, returns_stdout_stderr=False):
             d["?"] = 1
     
     return d
+
+_benchmark = None
+def start_benchmark( name ):
+    print('starting benchmark:', name)
+    global _benchmark
+    _benchmark = [
+        'font=Helvetica',
+        'fontsz=12',
+        '=color_per_datum',
+        'yformat=%g',
+        'ylabel=seconds'
+    ]
+
+def end_benchmark( name ):
+    print('ending benchmark:', name)
+    global _benchmark
+    path = '/tmp/%s.perf' %name
+    f = open( path, 'wb' )
+    data = '\n'.join( _benchmark )
+    f.write( data.encode('utf-8') )
+    f.close()
+    os.system( '../external/bargraphgen/bargraph.pl -eps %s > /tmp/%s.eps' %(path,name))
+    _benchmark = None
 
 def patch_assert(filename):
     """Patch the regression tests to add information into asserts"""
@@ -160,12 +187,12 @@ def patch_python(filename, dart=False):
         return '\n'.join( [_patch_header, code, 'main()'] )
 
 def run_python_test_on(filename):
-    """Python tests"""
+    """Python2"""
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python %s.py %s" % (tmpname, display_errors))
 
 def run_python3_test_on(filename):
-    """Python3 tests"""
+    """Python3"""
     write("%s.py" % tmpname, patch_python(filename))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
@@ -295,11 +322,11 @@ process = { title:"", version:"" } ;
     return run_command("rhino -O -1 %s.js" % tmpname)
 
 def run_pythonjs_test_on_node(dummy_filename):
-    """JSJS PythonJS tests on Node"""
+    """PythonJS (normal javascript) on Node"""
     return run_if_no_error(run_js_node)
 
 def run_pythonjsjs_test_on_node(filename):
-    """JSJS PythonJS with javascript tests on Node"""
+    """PythonJS (fast javascript) on Node"""
     return run_pythonjs_test_on_node(filename)
 
 def run_js_node(content):
@@ -321,7 +348,7 @@ def run_dart2js_node(content):
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_coffee_test_on_node(dummy_filename):
-    """Coffee PythonJS tests on Node"""
+    """PythonJS (CoffeeScript) on Node"""
     return run_if_no_error(run_coffee_node)
 
 def run_coffee_node(content):
@@ -332,7 +359,7 @@ def run_coffee_node(content):
 
 
 def run_pythonjs_lua_test_on_lua(dummy_filename):
-    """Lua PythonJS tests on Lua"""
+    """PythonJS (Lua) on Lua"""
     return run_if_no_error(run_lua_lua)
 
 def run_lua_lua(content):
@@ -357,8 +384,11 @@ def run_test_on(filename):
         print(table_header % (filename[2:-3], comment), end='')
     sum_errors = {}
     def display(function):
+        global _test_description
+        _test_description = function.__doc__
         if show_details:
             print('\n<%s>\n' % function.__doc__)
+
         errors = function(filename)
         if errors:
             if not show_details:
@@ -442,6 +472,9 @@ def run():
     errors = []
     total_errors = {}
     for filename in files():
+        if filename.startswith('./bench/'):
+            start_benchmark( os.path.split(filename)[-1] )
+
         if show_details:
             if os.path.abspath(filename) not in argv:
                 continue
@@ -452,6 +485,10 @@ def run():
             errors.append(filename)
             for k, v in sum_errors.items():
                 total_errors[k] = total_errors.get(k, 0) + v
+
+        if filename.startswith('./bench/'):
+            end_benchmark( os.path.split(filename)[-1] )
+
 
     print()
     if errors:

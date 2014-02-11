@@ -219,5 +219,6 @@ def Func3(EnumParIn):
 
 def main():
 	benchtime, stones = pystones( LOOPS )
-	print("*Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
-	print("*This machine benchmarks at pystones/second: %s" %stones)
+	print( benchtime )
+	print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
+	print("#This machine benchmarks at pystones/second: %s" %stones)
