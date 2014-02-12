@@ -175,6 +175,8 @@ end
 __add_op = function(a,b)
 	if type(a) == 'string' then
 		return a .. b
+	elseif type(a) == 'table' and a.__class__ then
+		return a.__add__({b}, {})
 	else
 		return a + b
 	end
@@ -269,6 +271,8 @@ class list:
 			if type(items)=='string':
 				self[...] = string.to_array( items )
 				self.length = string.len(items)
+			elif type(items)=='table' and items.__class__ and items.__class__.__name__=='list':
+				print('HIT TABLE!!!')
 			elif pointer:
 				self[...] = pointer
 			else:
@@ -305,8 +309,12 @@ class list:
 		return __iterator_list(self, 0)
 
 	def __add__(self, other):
+		with lowlevel:
+			ptr = table.shallow_copy( self[...] )
+		copy = list( pointer=ptr, length=self.length )
 		for item in other:
-			self.append( item )
+			copy.append( item )
+		return copy
 
 	def append(self, item):
 		with lowlevel:
