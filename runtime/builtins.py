@@ -965,7 +965,8 @@ class dict:
 				raise TypeError
 
 	def jsify(self):
-		keys = Object.keys( self[...] )
+		#keys = Object.keys( self[...] )  ## TODO check how this got broken, this should always be a low-level object?
+		keys = __object_keys__( self[...] )
 		for key in keys:
 			value = self[...][key]
 			if typeof(value) == 'object':

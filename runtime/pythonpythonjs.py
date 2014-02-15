@@ -74,27 +74,29 @@ def __get__(object, attribute):
 
 		elif JS("{}.toString.call(object) === '[object Function]'"):
 
-			def wrapper(args,kwargs):
+			def wrapper(args,kwargs):  ## TODO double check this on simple functions
 				var(i, arg, keys)
-				i = 0
-				while i < args.length:
-					arg = args[i]
-					#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
-					if typeof(arg) == 'object':
-						if arg.jsify:
-							args[i] = arg.jsify()
-					i += 1
-
-				keys = Object.keys(kwargs)
-				if keys.length != 0:
-					args.push( kwargs )
+				if args != None:
 					i = 0
-					while i < keys.length:
-						arg = kwargs[ keys[i] ]
+					while i < args.length:
+						arg = args[i]
+						#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
 						if typeof(arg) == 'object':
 							if arg.jsify:
-								kwargs[ keys[i] ] = arg.jsify()
+								args[i] = arg.jsify()
 						i += 1
+
+				if kwargs != None:
+					keys = __object_keys__(kwargs)
+					if keys.length != 0:
+						args.push( kwargs )
+						i = 0
+						while i < keys.length:
+							arg = kwargs[ keys[i] ]
+							if typeof(arg) == 'object':
+								if arg.jsify:
+									kwargs[ keys[i] ] = arg.jsify()
+							i += 1
 
 				return object.apply(None, args)
 
@@ -148,9 +150,36 @@ def __get__(object, attribute):
 				## bases, __name__, __dict__, __call__
 				#print 'wrapping something external', object, attribute
 
-				def wrapper(args,kwargs): return attr.apply(object, args)
+				#def wrapper(args,kwargs): return attr.apply(object, args)
+
+				def wrapper(args,kwargs):
+					var(i, arg, keys)
+					if args != None:
+						i = 0
+						while i < args.length:
+							arg = args[i]
+							if typeof(arg) == 'object':
+								if arg.jsify:
+									args[i] = arg.jsify()
+							i += 1
+
+					if kwargs != None:
+						#keys = Object.keys(kwargs)
+						keys = __object_keys__(kwargs)
+						if keys.length != 0:
+							args.push( kwargs )
+							i = 0
+							while i < keys.length:
+								arg = kwargs[ keys[i] ]
+								if typeof(arg) == 'object':
+									if arg.jsify:
+										kwargs[ keys[i] ] = arg.jsify()
+								i += 1
+
+					return attr.apply(object, args)
 				wrapper.is_wrapper = True
 				return wrapper
+
 
 			elif attr.is_classmethod:
 
