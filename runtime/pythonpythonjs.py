@@ -81,7 +81,7 @@ def __get__(object, attribute):
 					while i < args.length:
 						arg = args[i]
 						#if instanceof(arg, Object): ## fails on objects created by Object.create(null)
-						if typeof(arg) == 'object':
+						if arg and typeof(arg) == 'object':
 							if arg.jsify:
 								args[i] = arg.jsify()
 						i += 1
@@ -93,7 +93,7 @@ def __get__(object, attribute):
 						i = 0
 						while i < keys.length:
 							arg = kwargs[ keys[i] ]
-							if typeof(arg) == 'object':
+							if arg and typeof(arg) == 'object':
 								if arg.jsify:
 									kwargs[ keys[i] ] = arg.jsify()
 							i += 1
@@ -158,7 +158,7 @@ def __get__(object, attribute):
 						i = 0
 						while i < args.length:
 							arg = args[i]
-							if typeof(arg) == 'object':
+							if arg and typeof(arg) == 'object':
 								if arg.jsify:
 									args[i] = arg.jsify()
 							i += 1
@@ -171,7 +171,7 @@ def __get__(object, attribute):
 							i = 0
 							while i < keys.length:
 								arg = kwargs[ keys[i] ]
-								if typeof(arg) == 'object':
+								if arg and typeof(arg) == 'object':
 									if arg.jsify:
 										kwargs[ keys[i] ] = arg.jsify()
 								i += 1

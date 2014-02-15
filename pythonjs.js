@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Feb 14 18:08:31 2014
+// PythonJS Runtime - regenerated on: Sat Feb 15 12:34:14 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -66,7 +66,7 @@ __get__ = function(object, attribute) {
               i = 0;
               while (( i ) < args.length) {
                 arg = args[i];
-                if (( typeof(arg) ) == "object") {
+                if (arg && ( typeof(arg) ) == "object") {
                   if (arg.jsify) {
                     args[i] = arg.jsify();
                   }
@@ -81,7 +81,7 @@ __get__ = function(object, attribute) {
                 i = 0;
                 while (( i ) < keys.length) {
                   arg = kwargs[keys[i]];
-                  if (( typeof(arg) ) == "object") {
+                  if (arg && ( typeof(arg) ) == "object") {
                     if (arg.jsify) {
                       kwargs[keys[i]] = arg.jsify();
                     }
@@ -141,7 +141,7 @@ __get__ = function(object, attribute) {
             i = 0;
             while (( i ) < args.length) {
               arg = args[i];
-              if (( typeof(arg) ) == "object") {
+              if (arg && ( typeof(arg) ) == "object") {
                 if (arg.jsify) {
                   args[i] = arg.jsify();
                 }
@@ -156,7 +156,7 @@ __get__ = function(object, attribute) {
               i = 0;
               while (( i ) < keys.length) {
                 arg = kwargs[keys[i]];
-                if (( typeof(arg) ) == "object") {
+                if (arg && ( typeof(arg) ) == "object") {
                   if (arg.jsify) {
                     kwargs[keys[i]] = arg.jsify();
                   }
