@@ -1,0 +1,252 @@
+<html>
+<head>
+<link href='../external/css/bootstrap.css' rel='stylesheet' />
+<link href='../external/css/darkstrap.css' rel='stylesheet' />
+
+<script src="../pythonjs.js"></script>
+<script src="../external/ace.js/ace.js" type="text/javascript" charset="utf-8"></script>
+
+<script type="text/javascript">
+
+_cp = require('child_process');
+
+s = '';
+on_stderr = function( data ) {
+	document.write('ERROR:'+data);
+}
+
+translate = function( options ) {
+	console.log('translating...')
+	console.log( options )
+	var os_name = require('os').type();
+	var args = ['pythonjs/translator.py'];
+	var use_stdin = true;
+	if (options.file) {
+		args.push( options.file );
+		use_stdin = false;
+	}
+	if (os_name == 'Windows_NT') {
+		var proc = _cp.spawn(
+			'external/python/python.exe', 
+			args, 
+			{stdio:['pipe', 'pipe', 'pipe']}
+		);
+	} else {
+		var proc = _cp.spawn(
+			'python', 
+			args, 
+			{stdio:['pipe', 'pipe', 'pipe']}
+		);		
+	}
+	proc.stdout.setEncoding('utf8');
+	proc.stderr.setEncoding('utf8');
+	var buff = [];
+	proc.stderr.on('data', on_stderr);
+	proc.stdout.on('data', function (data){ buff.push(data); console.log('read...') });
+
+	if (options.callback) {
+		proc.stdout.on(
+			'end', 
+			function(){
+				options.callback(''.join(buff));
+			}
+		);
+
+	} else {
+		proc.stdout.on(
+			'end', 
+			function(){s=''.join(buff); console.log(s); eval(s)}
+		);
+	}
+
+	if (use_stdin) {
+		proc.stdin.write( options.data, 'utf8' );
+		proc.stdin.end();
+	}
+}
+
+//translate( {file:'nodejs/bindings/io.py'} );
+//translate( {file:'nodejs/bindings/os.py'} );
+//translate( {file:'nodejs/bindings/sys.py'} );
+
+var on_body_load = function() {
+	var scripts = document.getElementsByTagName('script');
+	for (var i=0; i<scripts.length; i++) {
+		var script = scripts[i];
+		if (script.getAttribute('type')=='text/python') {
+			translate( {data:script.firstChild.nodeValue} );
+		}
+	}
+}
+
+
+
+</script>
+
+<script type="text/python">
+nw_gui = require('nw.gui')
+Reader = new( FileReader() )
+Editors = {}
+
+def run_app():
+	win = nw_gui.Window.open(
+		'',
+		width=480,
+		height=350,
+		toolbar=False,
+		frame=True
+	)
+
+	def loaded():
+		print('APP loaded')
+		win.window.document.write( html_editor.getValue() )
+		dev = win.showDevTools()
+		dev.resizeTo( win.width, 130)
+		dev.moveTo( win.x, win.y + win.height )
+
+		def callback( js ):
+			print('doing callback......')
+			print(js)
+			win.eval( null, js )
+
+		for filename in Editors:
+			print('translate->', filename)
+			ewin = Editors[ filename ]
+			translate( 
+				{
+					'data':ewin.window.editor.getValue(),
+					'callback': callback
+				}
+			)
+
+
+	win.on('loaded', loaded)
+
+
+def open_editor_window( filename, data ):
+	win = nw_gui.Window.open(
+		'editor.html',
+		title=filename,
+		width=700,
+		height=550,
+		toolbar=False,
+		frame=True
+	)
+	def loaded():
+		win.window.editor.setValue(data)
+	win.on('loaded', loaded)
+	Editors[ filename ] = win
+
+
+def allow_drop(e):
+	e.preventDefault()
+
+def on_drop(e):
+	print 'on-drop', e
+	e.preventDefault()
+	#url = e.dataTransfer.getData("text/uri-list")
+	#url = e.dataTransfer.getData("text/plain")
+	if e.dataTransfer.files.length:
+		file = e.dataTransfer.files[0]
+		print file.path
+		with javascript:
+			def custom_on_load(event):
+				contents = event.target.result
+				print contents
+				print 'contents loaded for file: ' + file.name
+				ul = document.getElementById('python_files')
+				li = document.createElement('li')
+				ul.appendChild( li )
+
+				li.appendChild( document.createTextNode(file.name+' ') )
+
+
+				def on_click(e):
+					open_editor_window( file.name, contents )
+				bu = document.createElement('button')
+				bu.setAttribute('class', 'btn btn-warning')
+				bu.addEventListener('click', on_click)
+				bu.appendChild( document.createTextNode('edit') )
+				li.appendChild( bu )
+
+
+		Reader.onload = custom_on_load
+		Reader.readAsText( file )
+
+
+html_editor = ace.edit( 'html_editor' )
+html_editor.setTheme("ace/theme/monokai")
+html_editor.getSession().setMode("ace/mode/python")
+html_editor.setValue( '<head>\n\n\n</head>\n<body>\n\n\n\n\n\n\n</body>' )
+html_editor.container.style.height = '50%'
+
+
+</script>
+</head>
+
+<body
+	onload="javascript:on_body_load();"
+	ondrop="javascript:on_drop(event)"
+	ondragover="javascript:allow_drop(event)"
+>
+<div class="navbar navbar-fixed-top">
+<table 
+	class="navbar-inner"
+	style="-webkit-app-region: drag; width: 100%">
+<tr>
+	<td>
+		<span class="label">pypubjs 0.0.1</span>
+	</td>
+
+	<td>
+		<button 
+			class="close"
+			onclick="nw_gui.Window.get().reload()"
+			style="-webkit-app-region: no-drag;">&#x21ba;
+		</button>
+		<button 
+			class="close"
+			onclick="nw_gui.Window.get().showDevTools()"
+			style="-webkit-app-region: no-drag;">&#x2707;
+		</button>
+
+	</td>
+
+
+	<td style="-webkit-app-region: no-drag;">
+		<button 
+		class="close"
+		style="-webkit-app-region: no-drag;"
+		onclick="nw_gui.Window.get().close()">&times;</button>
+	</td>
+
+</tr>
+</table>
+</div>
+<br/>
+<div class="modal-body" style="height: 80%;">
+
+<h5>html editor</h5>
+<div class="well">
+<div id="html_editor"></div>
+</div>
+
+
+<h5>python scripts</h5>
+<div class="well">
+<ul id="python_files">
+</ul>
+</div>
+
+
+</div>
+<div class="modal-footer">
+<button 
+	class="btn btn-primary"
+	onclick="run_app()"
+	style="-webkit-app-region: no-drag;">run
+</button>
+</div>
+
+</body>
+</html>

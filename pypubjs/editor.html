@@ -1,0 +1,20 @@
+<html>
+<head>
+<link href='../external/css/bootstrap.css' rel='stylesheet' />
+<link href='../external/css/darkstrap.css' rel='stylesheet' />
+
+<script src="../external/ace.js/ace.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+<div id="editor"></div>
+</body>
+
+<script type="text/javascript">
+var editor = ace.edit( "editor" )
+editor.setTheme("ace/theme/monokai")
+editor.getSession().setMode("ace/mode/python")
+editor.container.style.height = '98%'
+</script>
+
+</html>

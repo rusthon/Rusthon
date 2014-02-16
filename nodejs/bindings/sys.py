@@ -4,14 +4,9 @@ class _fake_sys:
 		self.stdin = process.stdin
 		self.stdout = process.stdout
 		self.stderr = process.stderr
-		self.argv = list()
-		for arg in process.argv:
-			self.argv.append( arg )
-
+		self.argv = process.argv
 
 	def exit(self):
 		process.exit()
-
-
 
 sys = _fake_sys()

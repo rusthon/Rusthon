@@ -1,0 +1,2 @@
+#!/bin/bash
+external/node-webkit/osx/node-webkit.app/Contents/MacOS/node-webkit .
