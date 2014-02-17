@@ -238,14 +238,40 @@ html_editor.container.style.height = '50%'
 </ul>
 </div>
 
-
-</div>
-<div class="modal-footer">
 <button 
-	class="btn btn-primary"
+	class="btn btn-warning"
 	onclick="run_app()"
 	style="-webkit-app-region: no-drag;">run
 </button>
+
+
+</div>
+<div class="modal-footer">
+<b>publish</b>
+<button 
+	class="btn btn-primary"
+	onclick="publish_linux()"
+	style="-webkit-app-region: no-drag;">linux
+</button>
+
+<button 
+	class="btn btn-primary"
+	onclick="publish_osx()"
+	style="-webkit-app-region: no-drag;">osx
+</button>
+
+<button 
+	class="btn btn-primary"
+	onclick="publish_windows()"
+	style="-webkit-app-region: no-drag;">windows
+</button>
+
+<button 
+	class="btn btn-primary"
+	onclick="publish_mobile()"
+	style="-webkit-app-region: no-drag;">mobile
+</button>
+
 </div>
 
 </body>
