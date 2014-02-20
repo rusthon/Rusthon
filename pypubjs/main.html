@@ -5,189 +5,19 @@
 
 <script src="../pythonjs.js"></script>
 <script src="../external/ace.js/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="../external/jquery/jquery-latest.js"></script>
 
-<script type="text/javascript">
-
-_cp = require('child_process');
-
-s = '';
-on_stderr = function( data ) {
-	document.write('ERROR:'+data);
-}
-
-translate = function( options ) {
-	console.log('translating...')
-	console.log( options )
-	var os_name = require('os').type();
-	var args = ['pythonjs/translator.py'];
-	var use_stdin = true;
-	if (options.file) {
-		args.push( options.file );
-		use_stdin = false;
-	}
-	if (os_name == 'Windows_NT') {
-		var proc = _cp.spawn(
-			'external/python/python.exe', 
-			args, 
-			{stdio:['pipe', 'pipe', 'pipe']}
-		);
-	} else {
-		var proc = _cp.spawn(
-			'python', 
-			args, 
-			{stdio:['pipe', 'pipe', 'pipe']}
-		);		
-	}
-	proc.stdout.setEncoding('utf8');
-	proc.stderr.setEncoding('utf8');
-	var buff = [];
-	proc.stderr.on('data', on_stderr);
-	proc.stdout.on('data', function (data){ buff.push(data); console.log('read...') });
-
-	if (options.callback) {
-		proc.stdout.on(
-			'end', 
-			function(){
-				options.callback(''.join(buff));
-			}
-		);
-
-	} else {
-		proc.stdout.on(
-			'end', 
-			function(){s=''.join(buff); console.log(s); eval(s)}
-		);
-	}
-
-	if (use_stdin) {
-		proc.stdin.write( options.data, 'utf8' );
-		proc.stdin.end();
-	}
-}
-
-//translate( {file:'nodejs/bindings/io.py'} );
-//translate( {file:'nodejs/bindings/os.py'} );
-//translate( {file:'nodejs/bindings/sys.py'} );
-
-var on_body_load = function() {
-	var scripts = document.getElementsByTagName('script');
-	for (var i=0; i<scripts.length; i++) {
-		var script = scripts[i];
-		if (script.getAttribute('type')=='text/python') {
-			translate( {data:script.firstChild.nodeValue} );
-		}
-	}
-}
+<script type="text/javascript" src="translator_bridge.js"></script>
+<script type="text/python" src="app.py"></script>
 
 
-
-</script>
-
-<script type="text/python">
-nw_gui = require('nw.gui')
-Reader = new( FileReader() )
-Editors = {}
-
-def run_app():
-	win = nw_gui.Window.open(
-		'',
-		width=480,
-		height=350,
-		toolbar=False,
-		frame=True
-	)
-
-	def loaded():
-		print('APP loaded')
-		win.window.document.write( html_editor.getValue() )
-		dev = win.showDevTools()
-		dev.resizeTo( win.width, 130)
-		dev.moveTo( win.x, win.y + win.height )
-
-		def callback( js ):
-			print('doing callback......')
-			print(js)
-			win.eval( null, js )
-
-		for filename in Editors:
-			print('translate->', filename)
-			ewin = Editors[ filename ]
-			translate( 
-				{
-					'data':ewin.window.editor.getValue(),
-					'callback': callback
-				}
-			)
-
-
-	win.on('loaded', loaded)
-
-
-def open_editor_window( filename, data ):
-	win = nw_gui.Window.open(
-		'editor.html',
-		title=filename,
-		width=700,
-		height=550,
-		toolbar=False,
-		frame=True
-	)
-	def loaded():
-		win.window.editor.setValue(data)
-	win.on('loaded', loaded)
-	Editors[ filename ] = win
-
-
-def allow_drop(e):
-	e.preventDefault()
-
-def on_drop(e):
-	print 'on-drop', e
-	e.preventDefault()
-	#url = e.dataTransfer.getData("text/uri-list")
-	#url = e.dataTransfer.getData("text/plain")
-	if e.dataTransfer.files.length:
-		file = e.dataTransfer.files[0]
-		print file.path
-		with javascript:
-			def custom_on_load(event):
-				contents = event.target.result
-				print contents
-				print 'contents loaded for file: ' + file.name
-				ul = document.getElementById('python_files')
-				li = document.createElement('li')
-				ul.appendChild( li )
-
-				li.appendChild( document.createTextNode(file.name+' ') )
-
-
-				def on_click(e):
-					open_editor_window( file.name, contents )
-				bu = document.createElement('button')
-				bu.setAttribute('class', 'btn btn-warning')
-				bu.addEventListener('click', on_click)
-				bu.appendChild( document.createTextNode('edit') )
-				li.appendChild( bu )
-
-
-		Reader.onload = custom_on_load
-		Reader.readAsText( file )
-
-
-html_editor = ace.edit( 'html_editor' )
-html_editor.setTheme("ace/theme/monokai")
-html_editor.getSession().setMode("ace/mode/python")
-html_editor.setValue( '<head>\n\n\n</head>\n<body>\n\n\n\n\n\n\n</body>' )
-html_editor.container.style.height = '50%'
-
-
-</script>
 </head>
 
 <body
-	onload="javascript:on_body_load();"
+	onload="javascript:translate_python_scripts();"
 	ondrop="javascript:on_drop(event)"
 	ondragover="javascript:allow_drop(event)"
+	style="overflow-y: hidden"
 >
 <div class="navbar navbar-fixed-top">
 <table 
@@ -195,84 +25,325 @@ html_editor.container.style.height = '50%'
 	style="-webkit-app-region: drag; width: 100%">
 <tr>
 	<td>
-		<span class="label">pypubjs 0.0.1</span>
-	</td>
+		<span class="label">
 
-	<td>
 		<button 
-			class="close"
+			class="close pull-right"
+			onclick="compile_app()"
+			style="-webkit-app-region: no-drag;">update
+		</button>
+
+
+		<button 
+			class="close pull-left"
 			onclick="nw_gui.Window.get().reload()"
 			style="-webkit-app-region: no-drag;">&#x21ba;
 		</button>
 		<button 
-			class="close"
+			class="close pull-left"
 			onclick="nw_gui.Window.get().showDevTools()"
 			style="-webkit-app-region: no-drag;">&#x2707;
 		</button>
 
+		</span>
+
+	</td>
+	<td>
+		<small>pypubjs 0.0.2</small>
 	</td>
 
-
 	<td style="-webkit-app-region: no-drag;">
+
 		<button 
 		class="close"
 		style="-webkit-app-region: no-drag;"
 		onclick="nw_gui.Window.get().close()">&times;</button>
+
+		<button 
+		class="close"
+		style="-webkit-app-region: no-drag;"
+		onclick="nw_gui.Window.get().maximize()">[]</button>
+
+		<button 
+		class="close"
+		style="-webkit-app-region: no-drag;"
+		onclick="nw_gui.Window.get().unmaximize()">-</button>
+
+		<button 
+		class="close"
+		style="-webkit-app-region: no-drag;"
+		onclick="nw_gui.Window.get().minimize()">.</button>
+
 	</td>
 
 </tr>
 </table>
 </div>
 <br/>
-<div class="modal-body" style="height: 80%;">
-
-<h5>html editor</h5>
-<div class="well">
-<div id="html_editor"></div>
-</div>
 
 
-<h5>python scripts</h5>
-<div class="well">
-<ul id="python_files">
-</ul>
-</div>
+<div class="tabbable tabs-left">
+	<ul class="nav nav-tabs">
+		<li class="active"><a href="#css-tab"  data-toggle="tab">css</a></li>
+		<li><a href="#js-tab" data-toggle="tab">javascript</a></li>
+		<li><a href="#py-tab" data-toggle="tab">python</a></li>
+		<li><a href="#html-tab" data-toggle="tab">html</a></li>
+		<li><a href="#images-tab" data-toggle="tab">images</a></li>
+		<li><a href="#videos-tab" data-toggle="tab">videos</a></li>
+		<li><a href="#audio-tab" data-toggle="tab">audio</a></li>
 
-<button 
-	class="btn btn-warning"
-	onclick="run_app()"
-	style="-webkit-app-region: no-drag;">run
-</button>
+		<li class="dropdown">
+			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+			Export
+			<b class="caret"></b>
+			</a>
+			<ul class="dropdown-menu">
+				<li><a href="">Linux</a></li>
+				<li><a href="">OSX</a></li>
+				<li><a href="">Windows</a></li>
+				<li><a href="">Mobile</a></li>
+				<li class="divider"></li>
+				<li><a href="javascript:compile_app()">Preview</a></li>
+			</ul>
+		</li>
+
+	</ul>
 
 
-</div>
-<div class="modal-footer">
-<b>publish</b>
-<button 
-	class="btn btn-primary"
-	onclick="publish_linux()"
-	style="-webkit-app-region: no-drag;">linux
-</button>
+	<div class="tab-content">
+		<div class="tab-pane active" id="css-tab">
 
-<button 
-	class="btn btn-primary"
-	onclick="publish_osx()"
-	style="-webkit-app-region: no-drag;">osx
-</button>
+			<div class="tabbable well">
+				<form class="navbar-search pull-left">
+					<input type="text" class="search-query pull-left" placeholder="Search"></input>
 
-<button 
-	class="btn btn-primary"
-	onclick="publish_windows()"
-	style="-webkit-app-region: no-drag;">windows
-</button>
+					<div class="btn-group pull-left">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">copy</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">cut</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">paste</b></a>
+					</div>
 
-<button 
-	class="btn btn-primary"
-	onclick="publish_mobile()"
-	style="-webkit-app-region: no-drag;">mobile
-</button>
+					<div class="btn-group pull-right">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">+</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">-</b></a>
+					</div>
 
-</div>
+				</form>
 
+				<ul class="nav nav-tabs">
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<b class="label">File</b>
+						<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a href="">Open</a></li>
+							<li><a href="">Save</a></li>
+							<li class="divider"></li>
+							<li><a href="">Save-As</a></li>
+						</ul>
+					</li>
+					<li class="active" rel="tooltip" id="tooltip-example" data-original-title="mytooltip">
+						<a href="#css-editor-tab" data-toggle="tab"><small>editor</small></a>
+					</li>
+					<li>
+						<a href="#css-imports-tab" data-toggle="tab"><small>imports</small></a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="css-editor-tab">
+						<div id="EDITOR_CSS" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="css-imports-tab">
+						<ul id="IMPORTS_CSS">
+						</ul>
+					</div>
+
+				</div>
+			</div><!--tabbable well-->
+		</div><!--tab-pane-->
+
+
+		<div class="tab-pane" id="js-tab">
+
+			<div class="tabbable well">
+				<form class="navbar-search pull-left">
+					<input type="text" class="search-query pull-left" placeholder="Search"></input>
+
+					<div class="btn-group pull-left">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">copy</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">cut</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">paste</b></a>
+					</div>
+
+					<div class="btn-group pull-right">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">+</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">-</b></a>
+					</div>
+
+				</form>
+
+				<ul class="nav nav-tabs">
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<b class="label">File</b>
+						<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a href="">Open</a></li>
+							<li><a href="">Save</a></li>
+							<li class="divider"></li>
+							<li><a href="">Save-As</a></li>
+						</ul>
+					</li>
+					<li class="active">
+						<a href="#js-body-editor-tab" data-toggle="tab"><small>body</small></a>
+					</li>
+					<li>
+						<a href="#js-head-editor-tab" data-toggle="tab"><small>head</small></a>
+					</li>
+					<li>
+						<a href="#js-imports-tab" data-toggle="tab"><small>imports</small></a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="js-body-editor-tab">
+						<div id="EDITOR_BODY_JS" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="js-body-editor-tab">
+						<div id="EDITOR_HEAD_JS" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="js-imports-tab">
+						js imports
+					</div>
+
+				</div>
+			</div><!--tabbable well-->
+		</div><!--tab-pane-->
+
+		<div class="tab-pane" id="py-tab">
+
+			<div class="tabbable well">
+				<form class="navbar-search pull-left">
+					<input type="text" class="search-query pull-left" placeholder="Search"></input>
+
+					<div class="btn-group pull-left">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">copy</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">cut</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">paste</b></a>
+					</div>
+
+					<div class="btn-group pull-right">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">+</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">-</b></a>
+					</div>
+
+				</form>
+
+				<ul class="nav nav-tabs">
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<b class="label">File</b>
+						<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a href="">Open</a></li>
+							<li><a href="">Save</a></li>
+							<li class="divider"></li>
+							<li><a href="">Save-As</a></li>
+						</ul>
+					</li>
+					<li class="active">
+						<a href="#py-body-editor-tab" data-toggle="tab">body</a>
+					</li>
+					<li>
+						<a href="#py-head-editor-tab" data-toggle="tab">head</a>
+					</li>
+					<li>
+						<a href="#py-imports-tab" data-toggle="tab">imports</a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="py-body-editor-tab">
+						<div id="EDITOR_BODY_PY" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="py-body-editor-tab">
+						<div id="EDITOR_HEAD_PY" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="py-imports-tab">
+						py imports
+					</div>
+
+				</div>
+			</div><!--tabbable well-->
+		</div><!--tab-pane-->
+
+
+		<div class="tab-pane" id="html-tab">
+
+			<div class="tabbable well">
+				<form class="navbar-search pull-left">
+					<input type="text" class="search-query pull-left" placeholder="Search"></input>
+
+					<div class="btn-group pull-left">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">copy</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">cut</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">paste</b></a>
+					</div>
+
+					<div class="btn-group pull-right">
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">+</b></a>
+						<a class="btn btn-mini btn-inverse" href="#"><b class="icon">-</b></a>
+					</div>
+
+				</form>
+
+				<ul class="nav nav-tabs">
+					<li class="dropdown">
+						<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+						<b class="label">File</b>
+						<b class="caret"></b>
+						</a>
+						<ul class="dropdown-menu">
+							<li><a href="">Open</a></li>
+							<li><a href="">Save</a></li>
+							<li class="divider"></li>
+							<li><a href="">Save-As</a></li>
+						</ul>
+					</li>
+					<li class="active">
+						<a href="#html-editor-tab" data-toggle="tab">editor</a>
+					</li>
+					<li>
+						<a href="#html-imports-tab" data-toggle="tab">imports</a>
+					</li>
+				</ul>
+				<div class="tab-content">
+					<div class="tab-pane active" id="html-editor-tab">
+						<div id="EDITOR_HTML" style="height: 80%;"></div>
+					</div>
+
+					<div class="tab-pane" id="html-imports-tab">
+						html imports
+					</div>
+
+				</div>
+			</div><!--tabbable well-->
+		</div><!--tab-pane-->
+
+
+	</div><!--tab-content-->
+
+
+</div><!--well-->
+
+
+
+<script src="../external/bootstrap/bootstrap.min.js"></script>
 </body>
 </html>

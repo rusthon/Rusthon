@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Feb 15 12:34:14 2014
+// PythonJS Runtime - regenerated on: Wed Feb 19 22:36:21 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -725,31 +725,35 @@ __generate_setter__.kwargs_signature = {  };
 __generate_setter__.types_signature = {  };
 __sprintf = function(fmt, args) {
   var chunks, item, arr;
-  chunks = fmt.split("%s");
-  arr = [];
-  var i;
-  i = 0;
-    var __iter6 = chunks;
-  if (! (__iter6 instanceof Array || typeof __iter6 == "string") ) { __iter6 = __object_keys__(__iter6) }
-  for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
-    var txt = __iter6[ __idx6 ];
-    arr.append(txt);
-    if (( i ) >= args.length) {
-      break;
-    }
-    item = args[ (i.__uid__) ? i.__uid__ : i];
-    if (( typeof(item) ) == "string") {
-      arr.append(item);
-    } else {
-      if (( typeof(item) ) == "number") {
-        arr.append(__add_op("", item));
-      } else {
-        arr.append(Object.prototype.toString.call(item));
+  if (args instanceof Array) {
+    chunks = fmt.split("%s");
+    arr = [];
+    var i;
+    i = 0;
+        var __iter6 = chunks;
+    if (! (__iter6 instanceof Array || typeof __iter6 == "string") ) { __iter6 = __object_keys__(__iter6) }
+    for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
+      var txt = __iter6[ __idx6 ];
+      arr.append(txt);
+      if (( i ) >= args.length) {
+        break;
       }
+      item = args[ (i.__uid__) ? i.__uid__ : i];
+      if (( typeof(item) ) == "string") {
+        arr.append(item);
+      } else {
+        if (( typeof(item) ) == "number") {
+          arr.append(__add_op("", item));
+        } else {
+          arr.append(Object.prototype.toString.call(item));
+        }
+      }
+      i += 1;
     }
-    i += 1;
+    return "".join(arr);
+  } else {
+    return fmt.replace("%s", args);
   }
-  return "".join(arr);
 }
 
 __sprintf.NAME = "__sprintf";

@@ -19,3 +19,6 @@ def main():
 	TestError( d[0]=='a' )
 	TestError( d[1]=='b' )
 	TestError( d[2]=='c' )
+
+	e = 'x%sx' %1
+	TestError( e=='x1x' )

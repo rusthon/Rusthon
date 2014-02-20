@@ -4,8 +4,8 @@
   "description": "PythonJS Multiplatform Publisher",
   "main": "pypubjs/main.html",
   "window": {
-    "width": 400,
-    "height": 550,
+    "width": 820,
+    "height": 600,
     "show": true,
     "title": "pypubjs",
     "toolbar": false,

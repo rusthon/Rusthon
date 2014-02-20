@@ -181,20 +181,23 @@ with javascript:
 	def __sprintf(fmt, args):
 		## note: '%sXXX%s'.split().length != args.length
 		## because `%s` at the start or end will split to empty chunks ##
-		chunks = fmt.split('%s')
-		arr = []
-		for i,txt in enumerate(chunks):
-			arr.append( txt )
-			if i >= args.length:
-				break
-			item = args[i]
-			if typeof(item) == 'string':
-				arr.append( item )
-			elif typeof(item) == 'number':
-				arr.append( ''+item )
-			else:
-				arr.append( Object.prototype.toString.call(item) )
-		return ''.join(arr)
+		if instanceof(args, Array):
+			chunks = fmt.split('%s')
+			arr = []
+			for i,txt in enumerate(chunks):
+				arr.append( txt )
+				if i >= args.length:
+					break
+				item = args[i]
+				if typeof(item) == 'string':
+					arr.append( item )
+				elif typeof(item) == 'number':
+					arr.append( ''+item )
+				else:
+					arr.append( Object.prototype.toString.call(item) )
+			return ''.join(arr)
+		else:
+			return fmt.replace('%s', args)
 
 	def __create_class__(class_name, parents, attrs, props):
 		"""Create a PythonScript class"""
