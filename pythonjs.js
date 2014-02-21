@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed Feb 19 22:36:21 2014
+// PythonJS Runtime - regenerated on: Fri Feb 21 00:54:29 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -1631,6 +1631,92 @@ _setup_array_prototype.kwargs_signature = {  };
 _setup_array_prototype.types_signature = {  };
 _setup_array_prototype.pythonscript_function = true;
 _setup_array_prototype();
+_setup_nodelist_prototype = function(args, kwargs) {
+    var func = function(a) {
+    if (( this.indexOf(a) ) == -1) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["a"];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  NodeList.prototype.__contains__ = func;
+    var func = function() {
+    return this.length;
+  }
+
+  func.NAME = "func";
+  func.args_signature = [];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  NodeList.prototype.__len__ = func;
+    var func = function(index) {
+    return this[ (index.__uid__) ? index.__uid__ : index];
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["index"];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  NodeList.prototype.get = func;
+    var __getitem__ = function(index) {
+    ;
+    if (( index ) < 0) {
+      index = __add_op(this.length, index);
+    }
+    return this[ (index.__uid__) ? index.__uid__ : index];
+  }
+
+  __getitem__.NAME = "__getitem__";
+  __getitem__.args_signature = ["index"];
+  __getitem__.kwargs_signature = {  };
+  __getitem__.types_signature = {  };
+  NodeList.prototype.__getitem__ = __getitem__;
+    var __setitem__ = function(index, value) {
+    ;
+    if (( index ) < 0) {
+      index = __add_op(this.length, index);
+    }
+    this[ (index.__uid__) ? index.__uid__ : index] = value;
+  }
+
+  __setitem__.NAME = "__setitem__";
+  __setitem__.args_signature = ["index", "value"];
+  __setitem__.kwargs_signature = {  };
+  __setitem__.types_signature = {  };
+  NodeList.prototype.__setitem__ = __setitem__;
+    var func = function() {
+    return __get__(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
+  }
+
+  func.NAME = "func";
+  func.args_signature = [];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  NodeList.prototype.__iter__ = func;
+    var index = function(obj) {
+    return this.indexOf(obj);
+  }
+
+  index.NAME = "index";
+  index.args_signature = ["obj"];
+  index.kwargs_signature = {  };
+  index.types_signature = {  };
+  NodeList.prototype.index = index;
+}
+
+_setup_nodelist_prototype.NAME = "_setup_nodelist_prototype";
+_setup_nodelist_prototype.args_signature = [];
+_setup_nodelist_prototype.kwargs_signature = {  };
+_setup_nodelist_prototype.types_signature = {  };
+_setup_nodelist_prototype.pythonscript_function = true;
+if (( __NODEJS__ ) == false && ( __WEBWORKER__ ) == false) {
+  _setup_nodelist_prototype();
+}
 bisect = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/

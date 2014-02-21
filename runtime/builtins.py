@@ -500,7 +500,6 @@ def _setup_str_prototype():
 		def func(encoding):
 			return this
 
-
 _setup_str_prototype()
 
 def _setup_array_prototype():
@@ -620,6 +619,49 @@ def _setup_array_prototype():
 			return True
 
 _setup_array_prototype()
+
+
+
+def _setup_nodelist_prototype():
+
+	with javascript:
+
+		@NodeList.prototype.__contains__
+		def func(a):
+			if this.indexOf(a) == -1: return False
+			else: return True
+
+		@NodeList.prototype.__len__
+		def func():
+			return this.length
+
+		@NodeList.prototype.get
+		def func(index):
+			return this[ index ]
+
+		@NodeList.prototype.__getitem__
+		def __getitem__(index):
+			if index < 0: index = this.length + index
+			return this[index]
+
+		@NodeList.prototype.__setitem__
+		def __setitem__(index, value):
+			if index < 0: index = this.length + index
+			this[ index ] = value
+
+		@NodeList.prototype.__iter__
+		def func():
+			with python:
+				return Iterator(this, 0)
+
+		@NodeList.prototype.index
+		def index(obj):
+			return this.indexOf(obj)
+
+
+if __NODEJS__ == False and __WEBWORKER__ == False:
+	_setup_nodelist_prototype()
+
 
 def bisect(a, x, low=None, high=None):
 	if isinstance(a, list):

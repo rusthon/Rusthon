@@ -55,11 +55,23 @@ def _make_list_item( url, ul, manager ):
 	edit = document.createElement('button')
 	edit.setAttribute('class', 'btn btn-mini btn-success')
 	edit.appendChild( document.createTextNode('edit') )
+	def func():
+		print('opening', url)
+		open_editor_window( url, open(os.path.join('pypubjs',url), 'r').read() )
+
+	edit.addEventListener('click', func)
+
 	li.appendChild( edit )
 
 	rem = document.createElement('button')
 	rem.setAttribute('class', 'btn btn-mini btn-danger')
 	rem.appendChild( document.createTextNode('remove') )
+	def func():
+		print('removing:', url)
+		li.style.display = 'none'
+		manager.remove(url)
+
+	rem.addEventListener('click', func)
 	li.appendChild( rem )
 
 	input = document.createElement('input')
@@ -77,6 +89,12 @@ def add_css_import( url ):
 for url in ['../external/css/bootstrap.css', '../external/css/darkstrap.css']:
 	add_css_import( url )
 
+JsImports = []
+def add_js_import( url ):
+	ul = document.getElementById('IMPORTS_JS')
+	_make_list_item( url, ul, JsImports )
+for url in ['../pythonjs.js', '../external/jquery/jquery-latest.js', '../external/bootstrap/bootstrap.min.js']:
+	add_js_import( url )
 
 #################### app compiler #####################
 win = None
@@ -88,10 +106,7 @@ def compile_app():
 		dev.resizeTo( win.width, 130)
 		dev.moveTo( win.x, win.y + win.height + 20 )
 
-		out = [
-			'<html><head>',
-			'<script src="../pythonjs.js"></script>'
-		]
+		out = ['<html><head>']
 
 		for url in CssImports:
 			out.append('<link rel="stylesheet" href="%s"/>' %url)
@@ -100,6 +115,9 @@ def compile_app():
 		out.append( css_editor.getValue() )
 		out.append('</style>')
 
+		for url in JsImports:
+			out.append( '<script type="text/javascript" src="%s"></script>'%url )
+		
 		out.append('<script type="text/javascript">')
 		out.append( js_head_editor.getValue() )
 		out.append('</script>')
@@ -173,27 +191,31 @@ def on_drop(e):
 	if e.dataTransfer.files.length:
 		file = e.dataTransfer.files[0]
 		print file.path
-		with javascript:
-			def custom_on_load(event):
+
+		if file.path.endswith('.css'):
+			add_css_import( file.path )
+		elif file.path.endswith('.js'):
+			add_js_import( file.path )
+		elif file.path.endswith('.jpg') or file.path.endswith('.png'):
+			ul = document.getElementById('IMAGES')
+			li = ul.getElementsByTagName('li')[-1]
+			#li = document.createElement('div')
+			#ul.appendChild(li)
+			print(len(li.childNodes))
+			img = document.createElement('img')
+			img.setAttribute('src', file.path)
+			img.setAttribute('class', 'well img-rounded')
+			img.setAttribute('width', '25%')
+			li.appendChild( img )
+
+			txt = html_editor.getValue()
+			html_editor.setValue(txt+'\n<img src="%s"/>'%file.path)
+
+		elif file.path.endswith('.py'):
+			def on_load(event):
 				contents = event.target.result
-				print contents
-				print 'contents loaded for file: ' + file.name
-				ul = document.getElementById('python_files')
-				li = document.createElement('li')
-				ul.appendChild( li )
+				py_body_editor.setValue( contents )
 
-				li.appendChild( document.createTextNode(file.name+' ') )
-
-
-				def on_click(e):
-					open_editor_window( file.name, contents )
-				bu = document.createElement('button')
-				bu.setAttribute('class', 'btn btn-warning')
-				bu.addEventListener('click', on_click)
-				bu.appendChild( document.createTextNode('edit') )
-				li.appendChild( bu )
-
-
-		Reader.onload = custom_on_load
-		Reader.readAsText( file )
+			Reader.onload = on_load
+			Reader.readAsText( file )
 

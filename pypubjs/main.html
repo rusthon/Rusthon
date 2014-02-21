@@ -6,6 +6,7 @@
 <script src="../pythonjs.js"></script>
 <script src="../external/ace.js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="../external/jquery/jquery-latest.js"></script>
+<script src="../external/bootstrap/bootstrap.min.js"></script>
 
 <script type="text/javascript" src="translator_bridge.js"></script>
 <script type="text/python" src="app.py"></script>
@@ -212,12 +213,13 @@
 						<div id="EDITOR_BODY_JS" style="height: 80%;"></div>
 					</div>
 
-					<div class="tab-pane" id="js-body-editor-tab">
+					<div class="tab-pane" id="js-head-editor-tab">
 						<div id="EDITOR_HEAD_JS" style="height: 80%;"></div>
 					</div>
 
 					<div class="tab-pane" id="js-imports-tab">
-						js imports
+						<ul id="IMPORTS_JS">
+						</ul>
 					</div>
 
 				</div>
@@ -271,12 +273,13 @@
 						<div id="EDITOR_BODY_PY" style="height: 80%;"></div>
 					</div>
 
-					<div class="tab-pane" id="py-body-editor-tab">
+					<div class="tab-pane" id="py-head-editor-tab">
 						<div id="EDITOR_HEAD_PY" style="height: 80%;"></div>
 					</div>
 
 					<div class="tab-pane" id="py-imports-tab">
-						py imports
+						<ul id="IMPORTS_PY">
+						</ul>
 					</div>
 
 				</div>
@@ -329,12 +332,22 @@
 					</div>
 
 					<div class="tab-pane" id="html-imports-tab">
-						html imports
+						<ul id="IMPORTS_HTML">
+						</ul>
 					</div>
 
 				</div>
 			</div><!--tabbable well-->
 		</div><!--tab-pane-->
+
+
+		<div class="tab-pane" id="images-tab">
+			<div class="well">
+				<ul class="thumbnails" id="IMAGES">
+					<li></li>
+				</ul>
+			</div>
+		</div>
 
 
 	</div><!--tab-content-->
@@ -344,6 +357,5 @@
 
 
 
-<script src="../external/bootstrap/bootstrap.min.js"></script>
 </body>
 </html>

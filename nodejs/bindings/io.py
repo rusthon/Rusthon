@@ -7,9 +7,18 @@ class file:
 	and writes all data.
 	'''
 	def __init__(self, path, flags):
-		if flags == 'rb': flags = 'r'
-		elif flags == 'wb': flags = 'w'
 		self.path = path
+
+		if flags == 'rb':
+			self.flags = 'r'
+			self.binary = True
+		elif flags == 'wb':
+			self.flags = 'w'
+			self.binary = True
+		else:
+			self.flags = flags
+			self.binary = False
+
 		self.flags = flags
 		#self.fd = _fs.openSync( path, flags )
 		#self.stat = _fs.statSync( path )
@@ -19,18 +28,18 @@ class file:
 	def read(self, binary=False):
 		path = self.path
 		with javascript:
-			if binary:
+			if binary or self.binary:
 				return _fs.readFileSync( path )
 			else:
-				return _fs.readFileSync( path, {encoding:'utf8'} )
+				return _fs.readFileSync( path, {'encoding':'utf8'} )
 
 	def write(self, data, binary=False):
 		path = self.path
 		with javascript:
-			if binary:
+			if binary or self.binary:
 				_fs.writeFileSync( path, data )
 			else:
-				_fs.writeFileSync( path, data, {encoding:'utf8'} )
+				_fs.writeFileSync( path, data, {'encoding':'utf8'} )
 
 	def close(self):
 		pass
