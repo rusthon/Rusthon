@@ -70,7 +70,7 @@ class Writer(object):
 				prev = self.nodes[-1]
 				style = 'dash-line'
 				width = 1
-				length = 50
+				length = 100
 				if prev.startswith('if '):
 					style = 'arrow'
 				elif prev.startswith('for '):
@@ -153,6 +153,8 @@ class PythonToVisJS(ast.NodeVisitor):
 	def visit_Print(self, node):
 		return 'print %s' % ', '.join(map(self.visit, node.values))
 
+	def visit_Expr(self, node):
+		return self.visit(node.value)
 
 	def visit_If(self, node):
 		#writer.write('if %s:' %self.visit(node.test))
@@ -244,7 +246,9 @@ class PythonToVisJS(ast.NodeVisitor):
 		a = 'def %s\\n%s' % (node.name, ',\\n'.join(args))
 		writer.push_block( a, color=('yellow', 'orange'), font_size=16 )
 		writer.push()
-		map(self.visit, node.body)
+		for n in node.body:
+			res = self.visit(n)
+			if res: writer.write(res)
 		writer.pull()
 		writer.pull_block()
 

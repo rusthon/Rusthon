@@ -179,6 +179,40 @@ def open_editor_window( filename, data ):
 	win.on('loaded', loaded)
 	Editors[ filename ] = win
 
+viswin = None
+def vis_python():
+	print('vis_python..............')
+	global viswin
+
+	def loaded():
+		def callback(code):
+			viswin.window.document.body.innerHTML = ""
+			out = [
+				'<html><head>',
+				'<script src="../external/vis.js/vis.min.js"></script>',
+				'<body>'
+			]
+			out.append( code )
+			out.append('</body></html>')
+			data = '\n'.join(out)
+			print(data)
+			viswin.window.document.write( data )
+
+		translate( {'data':py_body_editor.getValue(),'callback': callback, 'vis':True} )
+
+	if viswin is None:
+		viswin = nw_gui.Window.open(
+			'_blank',
+			title='code graph',
+			width=500,
+			height=600,
+			toolbar=False,
+			frame=True
+		)
+		viswin.on('loaded', loaded)
+	else:
+		loaded()
+
 
 def allow_drop(e):
 	e.preventDefault()
@@ -210,6 +244,32 @@ def on_drop(e):
 
 			txt = html_editor.getValue()
 			html_editor.setValue(txt+'\n<img src="%s"/>'%file.path)
+
+		elif file.path.endswith('.mp4'):
+			ul = document.getElementById('VIDEOS')
+			li = ul.getElementsByTagName('li')[-1]
+			video = document.createElement('video')
+			video.setAttribute('width', '320')
+			video.setAttribute('height', '240')
+			video.setAttribute('controls', 'true')
+			source = document.createElement('source')
+			source.setAttribute('src', file.path)
+			source.setAttribute('type', 'video/mp4')
+			video.appendChild( source )
+			li.appendChild( video )
+
+		elif file.path.endswith('.mp3'):
+			ul = document.getElementById('AUDIO')
+			li = ul.getElementsByTagName('li')[-1]
+			audio = document.createElement('audio')
+			audio.setAttribute('autoplay', 'autoplay')
+			audio.setAttribute('src', file.path)
+			audio.setAttribute('controls', 'controls')
+			source = document.createElement('source')
+			source.setAttribute('src', file.path)
+			source.setAttribute('type', 'audio/mpeg')
+			audio.appendChild( source )
+			li.appendChild( audio )
 
 		elif file.path.endswith('.py'):
 			def on_load(event):

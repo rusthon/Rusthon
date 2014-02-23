@@ -21,6 +21,9 @@ translate = function( options ) {
 		args.push( options.file );
 		use_stdin = false;
 	}
+	if (options.vis) {
+		args.push('--visjs');
+	}
 
 	if (os_name == 'Windows_NT') {
 		var proc = _cp.spawn(
