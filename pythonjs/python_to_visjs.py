@@ -160,12 +160,18 @@ class PythonToVisJS(ast.NodeVisitor):
 		#writer.write('if %s:' %self.visit(node.test))
 		writer.push_block('if \\n%s' %self.visit(node.test), color=('lightgreen', 'green'), size=5, font_size=16)
 		writer.push()
-		map( self.visit, node.body )
+
+		for n in node.body:
+			res = self.visit(n)
+			if res: writer.write(res)
+
 		writer.pull()
 		if node.orelse:
 			writer.push_block('else:', color=('pink', 'red'), size=5, font_size=16)
 			writer.push()
-			map(self.visit, node.orelse)
+			for n in node.orelse:
+				res = self.visit(n)
+				if res: writer.write(res)
 			writer.pull()
 			writer.pull_block()
 
@@ -186,7 +192,9 @@ class PythonToVisJS(ast.NodeVisitor):
 		writer.push_block(a, color=('cyan', 'orange'), size=5, font_size=16)
 
 		writer.push()
-		map( self.visit, node.body )
+		for n in node.body:
+			res = self.visit(n)
+			if res: writer.write( res )
 		writer.pull()
 
 		writer.pull_block()
@@ -195,7 +203,9 @@ class PythonToVisJS(ast.NodeVisitor):
 	def visit_While(self, node):
 		writer.push_block('while \\n%s' % self.visit(node.test))
 		writer.push()
-		map(self.visit, node.body)
+		for n in node.body:
+			res = self.visit(n)
+			if res: writer.write( res )
 		writer.pull()
 		writer.pull_block()
 
@@ -394,7 +404,10 @@ class PythonToVisJS(ast.NodeVisitor):
 
 	def visit_TryExcept(self, node):
 		writer.push_block('try')
-		map(self.visit, node.body)
+		for n in node.body:
+			res = self.visit(n)
+			if res: writer.write( res )
+
 		#map(self.visit, node.handlers)
 		writer.pull_block()
 
