@@ -10,17 +10,21 @@ from pythonjs_to_luajs import main as pythonjs_to_luajs
 
 
 def main(script):
-    a = python_to_pythonjs(script)
-    if '--dart' in sys.argv:
-        return pythonjs_to_dart( a )
-    elif '--coffee' in sys.argv:
-        return pythonjs_to_coffee( a )
-    elif '--lua' in sys.argv:
-        return pythonjs_to_lua( a )
-    elif '--luajs' in sys.argv:
-        return pythonjs_to_luajs( a )
+    if '--visjs' in sys.argv:
+        import python_to_visjs
+        return python_to_visjs.main( script )
     else:
-        return pythonjs_to_javascript( a )
+        a = python_to_pythonjs(script)
+        if '--dart' in sys.argv:
+            return pythonjs_to_dart( a )
+        elif '--coffee' in sys.argv:
+            return pythonjs_to_coffee( a )
+        elif '--lua' in sys.argv:
+            return pythonjs_to_lua( a )
+        elif '--luajs' in sys.argv:
+            return pythonjs_to_luajs( a )
+        else:
+            return pythonjs_to_javascript( a )
 
 
 def command():
