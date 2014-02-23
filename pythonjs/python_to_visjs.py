@@ -276,7 +276,7 @@ class PythonToVisJS(ast.NodeVisitor):
 		return 'pass'
 
 	def visit_Str(self, node):
-		return '`%s`' %node.s.replace('"','&quot;').replace('\n', '\\n')
+		return '`%s`' %node.s.replace('"','&quot;').replace('\n', '\\n').replace('&', '&amp;').replace('<','&lt;').replace('>','&gt;')
 
 	def visit_Name(self, node):
 		return node.id
