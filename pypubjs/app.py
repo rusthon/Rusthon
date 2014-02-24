@@ -5,6 +5,7 @@
 nw_gui = require('nw.gui')
 Reader = new( FileReader() )
 Editors = {}
+Images = []
 
 css_editor = ace.edit( 'EDITOR_CSS' )
 css_editor.setTheme("ace/theme/monokai")
@@ -130,6 +131,8 @@ def export_phonegap():
 		rootdir = os.path.join( tmpdir, project_name )
 		wwwdir = os.path.join( rootdir, 'www')
 		jsdir = os.path.join( wwwdir, 'js' )
+		cssdir = os.path.join( wwwdir, 'css' )
+		imgdir = os.path.join( wwwdir, 'img')
 
 		js_imports = ['phonegap.js']
 		for path in JsImports:
@@ -138,8 +141,25 @@ def export_phonegap():
 			open( os.path.join(jsdir, filename), 'w').write( data )
 			js_imports.append( 'js/'+filename )
 
+		css_imports = []
+		for path in CssImports:
+			filename = os.path.split(path)[-1]
+			data = open( os.path.join('pypubjs', path), 'r' ).read()
+			open( os.path.join(cssdir, filename), 'w').write( data )
+			css_imports.append( 'css/'+filename )
+
+		for path in Images:
+			filename = os.path.split(path)[-1]
+			data = open( path, 'rb' ).read()
+			open( os.path.join(imgdir, filename), 'wb').write( data )
+
 		def callback2( html ):
 			print('-----------saving phonegap html------------')
+
+			for path in Images:
+				filename = os.path.basename(path)
+				html = html.replace(path, 'img/'+filename)
+
 			open( os.path.join(wwwdir, 'index.html'), 'w').write( html )
 
 			def callback3( stdout ):
@@ -156,7 +176,7 @@ def export_phonegap():
 				callback=callback3
 			)
 
-		compile_app( preview=False, js_imports=js_imports, callback=callback2 )
+		compile_app( preview=False, css_imports=css_imports, js_imports=js_imports, callback=callback2 )
 
 	subprocess.call( 'phonegap', args, cwd=tmpdir, stdout=subprocess.PIPE, callback=callback1 )
 
@@ -299,6 +319,7 @@ def on_drop(e):
 
 			txt = html_editor.getValue()
 			html_editor.setValue(txt+'\n<img src="%s"/>'%file.path)
+			Images.append( file.path )
 
 		elif file.path.endswith('.mp4'):
 			ul = document.getElementById('VIDEOS')

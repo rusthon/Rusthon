@@ -1,6 +1,6 @@
 {
   "name": "PythonJS Publisher",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "PythonJS Multiplatform Publisher",
   "main": "pypubjs/main.html",
   "window": {
