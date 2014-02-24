@@ -98,57 +98,8 @@ for url in ['../pythonjs.js', '../external/jquery/jquery-latest.js', '../externa
 
 #################### app compiler #####################
 win = None
-def compile_app():
+def preview_app():
 	global win
-
-	def on_loaded():
-		dev = win.showDevTools()
-		dev.resizeTo( win.width, 130)
-		dev.moveTo( win.x, win.y + win.height + 20 )
-
-		out = ['<html><head>']
-
-		for url in CssImports:
-			out.append('<link rel="stylesheet" href="%s"/>' %url)
-
-		out.append('<style type="text/css">')
-		out.append( css_editor.getValue() )
-		out.append('</style>')
-
-		for url in JsImports:
-			out.append( '<script type="text/javascript" src="%s"></script>'%url )
-		
-		out.append('<script type="text/javascript">')
-		out.append( js_head_editor.getValue() )
-		out.append('</script>')
-
-		def callback1(js):
-			out.append('<script type="text/javascript">')
-			out.append( js )
-			out.append('</script>')
-			out.append('</head>')
-
-			out.append('<body>')
-			out.append( html_editor.getValue() )
-
-			## post init scripts ##
-			out.append('<script type="text/javascript">')
-			out.append( js_body_editor.getValue() )
-			out.append('</script>')
-
-			def callback2(js):
-				out.append('<script type="text/javascript">')
-				out.append( js )
-				out.append('</script>')
-				out.append('</body></html>')
-				data = '\n'.join(out)
-				print(data)
-				win.window.document.write( data )
-
-			translate( {'data':py_body_editor.getValue(),'callback': callback2} )
-
-		translate( {'data':py_head_editor.getValue(),'callback': callback1} )
-
 	if win is None:
 		win = nw_gui.Window.open(
 			'',
@@ -157,12 +108,116 @@ def compile_app():
 			toolbar=False,
 			frame=True
 		)
-		win.on('loaded', on_loaded)
+		win.on(
+			'loaded', 
+			lambda : compile_app( preview=True, css_imports=CssImports, js_imports=JsImports )
+		)
 
 	else:
 		#win.window.document.documentElement.innerHTML=""  ## broken?
 		win.window.document.body.innerHTML=""
-		on_loaded()
+		compile_app( preview=True, css_imports=CssImports, js_imports=JsImports )
+
+def export_phonegap():
+	project_name = 'testing'
+	tmpdir = tempfile.gettempdir()
+	args = ['create', project_name, '--name', project_name, '--id', 'com.example.hello']
+
+	def callback1( stdout ):
+		print('-------phonegap project created---------')
+		print(stdout)
+
+		rootdir = os.path.join( tmpdir, project_name )
+		wwwdir = os.path.join( rootdir, 'www')
+		jsdir = os.path.join( wwwdir, 'js' )
+
+		js_imports = ['phonegap.js']
+		for path in JsImports:
+			filename = os.path.split(path)[-1]
+			data = open( os.path.join('pypubjs', path), 'r' ).read()
+			open( os.path.join(jsdir, filename), 'w').write( data )
+			js_imports.append( 'js/'+filename )
+
+		def callback2( html ):
+			print('-----------saving phonegap html------------')
+			open( os.path.join(wwwdir, 'index.html'), 'w').write( html )
+
+			def callback3( stdout ):
+				print('-----------phonegap project built------------')
+				print(stdout)
+				#apk = open( 'platforms/android/bin/%s-debug.apk' %project_name, 'rb' ).read()
+				subprocess.call( 'phonegap', ['install', 'android', '--emulator'], cwd=rootdir )
+
+			subprocess.call(
+				'phonegap', 
+				['local', 'build', 'android'], 
+				cwd=rootdir, 
+				stdout=subprocess.PIPE, 
+				callback=callback3
+			)
+
+		compile_app( preview=False, js_imports=js_imports, callback=callback2 )
+
+	subprocess.call( 'phonegap', args, cwd=tmpdir, stdout=subprocess.PIPE, callback=callback1 )
+
+
+
+
+def compile_app( preview=False, css_imports=None, js_imports=None, callback=None ):
+
+	if preview:
+		dev = win.showDevTools()
+		dev.resizeTo( win.width, 130)
+		dev.moveTo( win.x, win.y + win.height + 20 )
+
+	out = ['<html><head>']
+
+	if css_imports:
+		for url in css_imports:
+			out.append('<link rel="stylesheet" href="%s"/>' %url)
+
+	out.append('<style type="text/css">')
+	out.append( css_editor.getValue() )
+	out.append('</style>')
+
+	if js_imports:
+		for url in js_imports:
+			out.append( '<script type="text/javascript" src="%s"></script>'%url )
+	
+	out.append('<script type="text/javascript">')
+	out.append( js_head_editor.getValue() )
+	out.append('</script>')
+
+	def _callback1(js):
+		out.append('<script type="text/javascript">')
+		out.append( js )
+		out.append('</script>')
+		out.append('</head>')
+
+		out.append('<body>')
+		out.append( html_editor.getValue() )
+
+		## post init scripts ##
+		out.append('<script type="text/javascript">')
+		out.append( js_body_editor.getValue() )
+		out.append('</script>')
+
+		def _callback2(js):
+			out.append('<script type="text/javascript">')
+			out.append( js )
+			out.append('</script>')
+			out.append('</body></html>')
+			data = '\n'.join(out)
+			if preview:
+				win.window.document.write( data )
+
+			if callback:
+				callback( data )
+
+		translate( {'data':py_body_editor.getValue(),'callback': _callback2} )
+
+	translate( {'data':py_head_editor.getValue(),'callback': _callback1} )
+
 
 
 def open_editor_window( filename, data ):
@@ -278,4 +333,6 @@ def on_drop(e):
 
 			Reader.onload = on_load
 			Reader.readAsText( file )
+
+
 

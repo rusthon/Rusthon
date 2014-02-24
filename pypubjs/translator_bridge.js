@@ -80,6 +80,7 @@ translate( {file:'nodejs/bindings/io.py'} );
 translate( {file:'nodejs/bindings/os.py'} );
 translate( {file:'nodejs/bindings/sys.py'} );
 translate( {file:'nodejs/bindings/tempfile.py'} );
+translate( {file:'nodejs/bindings/subprocess.py'} );
 
 var translate_python_scripts = function() {
 	var scripts = document.getElementsByTagName('script');
