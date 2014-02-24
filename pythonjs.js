@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Feb 21 00:54:29 2014
+// PythonJS Runtime - regenerated on: Sun Feb 23 16:55:29 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -487,13 +487,17 @@ __test_if_true__ = function(ob) {
     if (ob instanceof Array) {
       return ( ob.length ) != 0;
     } else {
-      if (isinstance(ob, dict)) {
-        return ( Object.keys(ob["$wrapped"]).length ) != 0;
+      if (( typeof(ob) ) == "function") {
+        return true;
       } else {
-        if (ob instanceof Object) {
-          return ( Object.keys(ob).length ) != 0;
+        if (isinstance(ob, dict)) {
+          return ( Object.keys(ob["$wrapped"]).length ) != 0;
         } else {
-          return true;
+          if (ob instanceof Object) {
+            return ( Object.keys(ob).length ) != 0;
+          } else {
+            return true;
+          }
         }
       }
     }

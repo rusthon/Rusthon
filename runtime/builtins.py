@@ -51,6 +51,8 @@ with javascript:
 			return False
 		elif instanceof(ob, Array):
 			return ob.length != 0
+		elif typeof(ob) == 'function':
+			return True
 		elif isinstance(ob, dict):
 			return Object.keys( ob[...] ).length != 0
 		elif instanceof(ob, Object):
