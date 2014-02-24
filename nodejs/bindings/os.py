@@ -18,6 +18,11 @@ class _fake_path:
 	def basename(self, path):
 		return _path.basename( path )
 
+	def split(self, path):
+		a = self.dirname(path)
+		b = self.basename(path)
+		return [a,b]
+
 	def exists(self, path):  ## this is new - missing in Node v0.6.19
 		return _fs.existsSync(path)
 

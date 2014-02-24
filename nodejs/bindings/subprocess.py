@@ -16,12 +16,12 @@ class Popen:
 		with javascript:
 			if env is None: env = process.env
 			options = {
-				cwd: cwd,
-				stdio : [stdin, stdout, stderr],
-				env : env,
-				detached : detached
+				'cwd': cwd,
+				'stdio' : [stdin, stdout, stderr],
+				'env' : env,
+				'detached' : detached
 			}
-			proc = __cp__.spawn( executeable, args[...], options )
+			proc = __cp__.spawn( executeable, args, options )
 			self[...] = proc
 			#print 'proc.stdio', proc.stdio ## this is in the new API?
 
