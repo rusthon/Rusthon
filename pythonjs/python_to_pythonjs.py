@@ -4,8 +4,7 @@
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
-import os, sys, pickle, copy
-from tempfile import gettempdir
+import sys, copy
 from types import GeneratorType
 
 import ast
@@ -30,19 +29,15 @@ if sys.version_info.major == 3:
 	import io
 	StringIO = io.StringIO
 else:
-	from cStringIO import StringIO as StringIO
+	from StringIO import StringIO
 
 
 import ministdlib
 
-try:
-	_log_file = open(gettempdir() + '/python_to_pythonjs.log', 'wb')
-except:
-	_log_file = None
+
+## TODO
 def log(txt):
-	if _log_file:
-		_log_file.write( str(txt)+'\n' )
-		_log_file.flush()
+	pass
 
 
 GLOBAL_VARIABLE_SCOPE = False              ## Python style
@@ -191,7 +186,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._function_return_types = dict()
 		self._return_type = None
 		self._module = module
-		self._module_path = module_path
+		self._module_path = module_path  ## DEPRECATED
 		self._typedefs = dict()  ## class name : typedef  (not pickled)
 
 		self._globals = dict()
@@ -302,7 +297,7 @@ class PythonToPythonJS(NodeVisitor):
 				)
 			return self._typedefs[ class_name ]
 
-	def save_module(self):
+	def save_module(self):  ## DEPRECATED
 		if self._module and self._module_path:
 			a = dict(
 				classes = self._classes,
@@ -312,18 +307,20 @@ class PythonToPythonJS(NodeVisitor):
 				function_return_types = self._function_return_types,
 				class_parents = self._class_parents,
 			)
-			pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
+			#pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
 
-	def _check_for_module(self, name):
-		if self._module_path and name+'.module' in os.listdir(self._module_path):
-			return True
-		else:
-			return False
+	def _check_for_module(self, name): ## DEPRECATED
+		#if self._module_path and name+'.module' in os.listdir(self._module_path):
+		#	return True
+		#else:
+		#	return False
+		return False
 
-	def _load_module(self, name):
-		f = open( os.path.join(self._module_path, name+'.module'), 'rb' )
-		a = pickle.load( f ); f.close()
-		return a
+	def _load_module(self, name): ## DEPRECATED
+		#f = open( os.path.join(self._module_path, name+'.module'), 'rb' )
+		#a = pickle.load( f ); f.close()
+		#return a
+		raise NotImplementedError
 
 	def visit_Import(self, node):
 		for alias in node.names:
@@ -2865,7 +2862,6 @@ def main(script):
 
 def command():
 	module = None
-	module_path = gettempdir()
 	scripts = []
 	if len(sys.argv) > 1:
 		argv = sys.argv[1:]
@@ -2889,7 +2885,6 @@ def command():
 	compiler = PythonToPythonJS(
 		source=data, 
 		module=module, 
-		module_path=module_path,
 		dart='--dart' in sys.argv
 	)
 	compiler.save_module()

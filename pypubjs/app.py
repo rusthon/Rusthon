@@ -355,5 +355,15 @@ def on_drop(e):
 			Reader.onload = on_load
 			Reader.readAsText( file )
 
+worker = new( Worker('../pythonjs/empythoned-webworker.js') )
+def empythoned_output( output ):
+	document.getElementById('EMPYTHONED_OUTPUT').value += output.data
 
+def empythoned_eval( code ):
+	worker.postMessage( code )
+worker.addEventListener('message', empythoned_output)
 
+def update_empythoned_console( input ):
+	document.getElementById('EMPYTHONED_OUTPUT').value += '\n>>>' + input.value + '\n'
+	empythoned_eval(input.value+'\n')
+	input.value=''

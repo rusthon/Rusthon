@@ -93,6 +93,8 @@
 		<li><a href="#videos-tab" data-toggle="tab">videos</a></li>
 		<li><a href="#audio-tab" data-toggle="tab">audio</a></li>
 
+		<li><a href="#empythoned-tab" data-toggle="tab">console</a></li>
+
 		<li class="dropdown">
 			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
 			Export
@@ -366,6 +368,19 @@
 				<ul class="thumbnails" id="AUDIO">
 					<li></li>
 				</ul>
+			</div>
+		</div>
+
+		<div class="tab-pane" id="empythoned-tab">
+			<div class="well">
+				<legend>Empythoned Console</legend>
+				<textarea rows="20" cols="180" style="width: 99%;" id="EMPYTHONED_OUTPUT"></textarea>
+				<br/>
+				<input
+					type="text" 
+					class="input-block-level"
+					onkeydown="if (event.keyCode == 13) update_empythoned_console(this)"/>
+
 			</div>
 		</div>
 
