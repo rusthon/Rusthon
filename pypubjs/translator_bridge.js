@@ -11,10 +11,55 @@ on_stderr = function( data ) {
 	document.write('ERROR:'+data);
 }
 
-translate = function( options ) {
+
+function _translate_empythoned( options ) {
+	// TODO optimize this so that a new Empythoned is not spawned each time!
+	var translate_worker = new Worker( '../pythonjs/empythoned-translator-webworker.js' );
+
+	function __on_message( output ) {
+		if (output.data.error) {
+			console.log('TRANSLATION ERROR!')
+			console.log( output.data.error )
+		} else {
+			console.log('---------------translation ok------------------')
+			var code = output.data.code;
+			code = code.substring(1, code.length-1);
+			code = code.split('\\n').join('\n');
+			code = code.split("\\'").join("\'");
+			var lines = code.split('\n');
+			for (var i=0; i<lines.length; i++) console.log( (i+1) +'.' + lines[i] );
+
+			if (options.callback) {
+				if (options.callback_args) {
+					options.callback(code, options.callback_args);
+				} else {
+					options.callback(code);
+				}
+
+			} else {
+				eval( code );
+			}
+		}
+	}
+
+	translate_worker.addEventListener('message', __on_message)
+
+
+
+	if (options.file) {
+		var code = _fs.readFileSync( options.file, {encoding:'utf8'} );
+	} else {
+		var code = options.data;
+	}
+	console.log( code );
+	translate_worker.postMessage( code );
+}
+
+
+function _translate_subprocess( options ) {
 	console.log('translating...')
 	//console.log( options )
-	var os_name = require('os').type();
+	
 	var args = ['pythonjs/translator.py'];
 	var use_stdin = true;
 	if (options.file) {
@@ -25,19 +70,11 @@ translate = function( options ) {
 		args.push('--visjs');
 	}
 
-	if (os_name == 'Windows_NT') {
-		var proc = _cp.spawn(
-			'external/python/python.exe', 
-			args, 
-			{stdio:['pipe', 'pipe', 'pipe']}
-		);
-	} else {
-		var proc = _cp.spawn(
-			'python', 
-			args, 
-			{stdio:['pipe', 'pipe', 'pipe']}
-		);		
-	}
+	var proc = _cp.spawn(
+		'python', 
+		args, 
+		{stdio:['pipe', 'pipe', 'pipe']}
+	);		
 	proc.stdout.setEncoding('utf8');
 	proc.stderr.setEncoding('utf8');
 	var buff = [];
@@ -74,6 +111,14 @@ translate = function( options ) {
 		proc.stdin.write( data, 'utf8' );
 		proc.stdin.end();
 	}
+}
+
+var os_name = require('os').type();
+
+if (os_name == 'Windows_NT') {
+	var translate = _translate_empythoned;
+} else {
+	var translate = _translate_subprocess;
 }
 
 translate( {file:'nodejs/bindings/io.py'} );
