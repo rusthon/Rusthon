@@ -1,12 +1,11 @@
-PythonJS 0.8.6
-############
+##PythonJS 0.8.6
 
-.. image:: http://3.bp.blogspot.com/-BfPFXT-DF3A/UqKugvWVs7I/AAAAAAAAAj0/0Kon76_VDys/s400/pythonjs-0.8.6.png
+![logo](http://3.bp.blogspot.com/-BfPFXT-DF3A/UqKugvWVs7I/AAAAAAAAAj0/0Kon76_VDys/s400/pythonjs-0.8.6.png)
 
 Community
 ---------
 
-https://groups.google.com/forum/#!forum/pythonjs
+[https://groups.google.com/forum/#!forum/pythonjs](https://groups.google.com/forum/#!forum/pythonjs)
 
 irc freenode::
 
@@ -34,307 +33,21 @@ Features can be switched off and on for blocks of code using
 decorators described below.  When PythonJS is run in fastest
 mode (javascript mode) it beats PyPy in the Richards, and N-Body benchmarks.
 
-.. image:: http://2.bp.blogspot.com/-pylzspKRu6M/UqbAv3qIGTI/AAAAAAAAAkE/NnsAM5DZ_8M/s400/nbody.png
+![nbody](http://2.bp.blogspot.com/-pylzspKRu6M/UqbAv3qIGTI/AAAAAAAAAkE/NnsAM5DZ_8M/s400/nbody.png)
 
 N-Body benchmark, PythonJS in javascript mode has similar performance to Dart.
 
-translator.py
-------------
-To convert your python script into javascript use translator.py located in the "pythonjs" directory.  You can give it a list of python files to translate at once.  It will output the translation to stdout.  The default output type is JavaScript.
+##pypubjs - integrated develop environment
 
-Usage::
+[![pypubjs](http://img.youtube.com/vi/WjIGAUbcN9Q/0.jpg)](http://www.youtube.com/watch?v=WjIGAUbcN9Q)
 
-	translator.py [--dart|--coffee] file.py
-
-Example::
-
-	cd PythonJS
-	pythonjs/translator.py --coffee myscript.py > myscript.coffee
-
-NodeJS
----------------
-Using PythonJS you can quickly port your server side code to
-using NodeJS.  If you are using Tornado, porting is even
-simpler because we have written a compatibility layer that
-emulates the Tornado API and hides the NodeJS internal
-modules.
-
-How does it work?
-----------------
-Translation to JavaScript is done in two steps::
-
-	+------------+    +-----------------+    +------------+
-	¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
-	+------------+    +-----------------+    +------------+
-
-First, the script walks the AST tree of Python source and
-translates it into the subset of Python called `pythonjs`.
-This reduced subset is still valid Python code, and its
-AST gets parsed again in the second translation phase
-that converts it into final JavaScript form.
-
-
-
-Writing PythonJS Scripts
-=====================
-
-Function Types
----------------
-
-PythonJS has three main types of functions: "normal", "fastdef", and "javascript".
-
-By default a function is "normal" and fully emulates the Python standard, it allows for: arguments, keyword args with defaults, variable length arguments (*args) and variable length keyword args (**kwargs).  Functions that are "normal" also have special logic that allows them to be called from external JavaScript like normal JavaScript functions (keyword args become normal positional arguments when called from JavaScript).  Calling "normal" functions is slow because of this overhead, when you need faster function calls you can use "fastdef" or "javascript".
-
-Functions decorated with @fastdef, or inside a "with fastdef:" block become "fastdef" type functions.  This makes calling them much faster, but they do not support variable length arguments (*args) or variable length keyword args (**kwargs).
-Another limitation is that when called from external JavaScript you must pack args into an Array as the first argument, and pack keyword arguments into an Object as the second argument.
-
-Functions decorated with @javascript, or inside a "with javascript:" block, or following the call: "pythonjs.configure(javascript=True)" become "javascript" type functions, these offer the highest calling speed.  They do not support *args or **kwargs.  When called from external JavaScript, keyword arguments are not given by name, they become positional arguments that default to the default value if undefined.  When called from within PythonJS code, they need to be called from inside a "with javascript:" block, or following the call pythonjs.configure(javascript=True) that sets all following code to be in "javascript" mode.
-
-Example::
-
-	pythonjs.configure( javascript=True )
-
-	def myfunc(x,y,z, a=1,b=2,c=3):
-		print x,y,z,a,b,c
-
-Example JavaScript Translation::
-
-	myfunc = function(x, y, z, a, b, c) {
-	  if (a === undefined) a = 1;
-	  if (b === undefined) b = 2;
-	  if (c === undefined) c = 3;
-	  console.log(x, y, z, a, b, c);
-	}
-
-Class Types
------------
-
-PythonJS has two types of classes: "normal" and "javascript".  By default classes are "normal" and support operator overloading and properties.  Calling methods on a "javascript" class is much faster than method calls on a "normal" class, but follow the same rules as described above for "javascript" type functions.  Both class types can be used from external JavaScript, the only difference is that instances of a "normal" class can pass their methods directly as arguments to a function that will use the method as a callback - even if that external function depends on the context of "this".  Whereas instances of a "javascript" class can not directly pass their methods as arguments, because they depend on the calling context of "this" - if you are familiar with JavaScript this comes as no surprise.
-
-Example::
-
-	pythonjs.configure( javascript=True )
-	class A:
-		def __init__(self, x,y,z):
-			self.x = x
-			self.y = y
-			self.z = z
-
-		def foo(self, w):
-			return self.x + w
-
-Example JavaScript Translation::
-
-	A = function(x, y, z) {
-	  A.__init__(this, x,y,z);
-	}
-
-	A.prototype.__init__ = function(x, y, z) {
-	  this.x=x;
-	  this.y=y;
-	  this.z=z;
-	}
-	A.__init__ = function () { return A.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	A.prototype.foo = function(w) {
-	  return (this.x + w);
-	}
-	A.foo = function () { return A.prototype.foo.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-
-Method Overrides
-----------------
-In the example above, you might be wondering why in the JavaScript translation, is the class A constructor calling "A.__init__(this, x,y,z)", and why is the __init__ method assigned A.prototype and then wrapped and assigned to A.__init__.  This is done so that subclasses are able to override their parent's methods, but still have a way of calling them, an example that subclasses A will make this more clear.
-
-Example::
-
-	class B( A ):
-		def __init__(self, w):
-			A.__init__(self, 10, 20, 30)
-			self.w = w
-
-Example JavaScript Translation::
-
-	B = function(w) {
-	  B.__init__(this, w);
-	}
-
-	B.prototype.__init__ = function(w) {
-	  A.__init__(this,10,20,30);
-	  this.w=w;
-	}
-	B.__init__ = function () { return B.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
-
-	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
-
-
-The above output Javascript shows how the constructor for B calls B.__init__ which then calls B.prototype.__init__.
-B.prototype.__init__ calls A.__init__ passing "this" as the first argument.  This emulates in JavaScript how unbound methods work in Python.  When using the Dart backend, the output is different but the concept is the same - static "class methods" are created that implement the method body, the instance methods are just short stubs that call the static "class methods".
-
-Example Dart Translation::
-
-	class B implements A {
-	  var y;
-	  var x;
-	  var z;
-	  var w;
-	  B(w) {B.__init__(this,w);}
-	  static void __init__(self, w) {
-	    A.__init__(self,10,20,30);
-	    self.w=w;
-	  }
-
-	  foo(w) { return A.__foo(this,w); }
-	}
-
-Above the method "foo" calls the static class method A.__foo.  Note that the static class methods are automatically prefixed with "__".
-
-
-Multiple Inheritance
---------------------
-
-Multiple inheritance is fully supported for both JavaScript and Dart backends.  When using the Dart backend it will generate stub-methods that call static class methods that are prefixed with "__".
-Methods that the subclass extends can call: ParentClassName.some_method(self) and this will be translated into: ParentClassName.__some_method(this)
-
-Example::
-
-	class A:
-		def foo(self):
-			print 'foo'
-
-	class B:
-		def bar(self):
-			print 'bar'
-
-	class C( A, B ):
-		def call_foo_bar(self):
-			print 'call_foo_bar in subclass C'
-			self.foo()
-			self.bar()
-
-		## extend foo ##
-		def foo(self):
-			A.foo(self)
-			print 'foo extended'
-
-Example Dart Translation::
-
-	class A {
-	  foo() { return A.__foo(this); }
-	  static __foo(self) {
-	    print("foo");
-	  }
-
-	}
-	class B {
-	  bar() { return B.__bar(this); }
-	  static __bar(self) {
-	    print("bar");
-	  }
-
-	}
-	class C implements A, B {
-	  call_foo_bar() { return C.__call_foo_bar(this); }
-	  static __call_foo_bar(self) {
-	    print("call_foo_bar in subclass C");
-	    self.foo();
-	    self.bar();
-	  }
-
-	  foo() { return C.__foo(this); }
-	  static __foo(self) {
-	    A.__foo(self);
-	    print("foo extended");
-	  }
-
-	  bar() { return B.__bar(this); }
-	}
-
-
-Generator Functions
--------------------
-
-Functions that use the yield keyword are generator functions.  They allow you to quickly write complex iterables.
-PythonJS supports simple generator functions that have a single for loop, and up to three yield statements.
-The first yield comes before the for loop, and the final yield comes after the for loop.
-The compiler will translate your generator function into a simple class with state-machine.  This implementation
-bypasses using the native JavaScript yield keyword, and ensures that your generator function can work in all
-web browsers.  
-
-Instances of the generator function will have a next method.  Using a for loop to iterate over a generator function will automatically call its next method.
-
-Example::
-
-	def fib(n):
-		yield 'hello'
-		a, b = 0, 1
-		for x in range(n):
-			yield a
-			a,b = b, a+b
-		yield 'world'
-
-	def test():
-		for n in fib(20):
-			print n
-
-Example Output::
-
-	fib = function(n) {
-	  this.n = n;
-	  this.__head_yield = "hello";
-	  this.__head_returned = 0;
-	  var __r_0;
-	  __r_0 = [0, 1];
-	  this.a = __r_0[0];
-	  this.b = __r_0[1];
-	  this.__iter_start = 0;
-	  this.__iter_index = 0;
-	  this.__iter_end = this.n;
-	  this.__done__ = 0;
-	}
-
-	fib.prototype.next = function() {
-	  if (( this.__head_returned ) == 0) {
-	    this.__head_returned = 1;
-	    return this.__head_yield;
-	  } else {
-	    if (( this.__iter_index ) < this.__iter_end) {
-	      __yield_return__ = this.a;
-	      var __r_1;
-	      __r_1 = [this.b, (this.a + this.b)];
-	      this.a = __r_1[0];
-	      this.b = __r_1[1];
-	      this.__iter_index += 1
-	      return __yield_return__;
-	    } else {
-	      this.__done__ = 1;
-	      __yield_return__ = "world";
-	      return __yield_return__;
-	    }
-	  }
-	}
-
-	test = function(args, kwargs) {
-	  var __iterator__, n;
-	  var n, __generator__;
-	  __generator__ = new fib(20);
-	  while(( __generator__.__done__ ) != 1) {
-	    n = __generator__.next();
-	    console.log(n);
-	  }
-	}
-
-
-Python vs JavaScript Modes
--------------------------
-
-PythonJS has two primary modes you can write code in: "python" and "javascript".  The default mode is "python", you can mark sections of your code to use either mode with "pythonjs.configure(javascript=True/False)" or nesting blocks inside "with python:" or "with javascript:".  The "javascript" mode can be used for sections of code where performance is a major concern.  When in "javascript" mode Python dictionaries become JavaScript Objects.  In both modes you can directly call external JavaScript functions, its only faster in "javascript" mode because function calls are direct without any wrapping.
+PythonJS includes an IDE called __pypubjs__ that is built using Node-Webkit, Ace.js, and Empythoned.  It runs on Linux, OSX, and Windows.
 
 
 Directly Calling JavaScript Functions
 ---------------
 
-HTML DOM Example::
+####HTML DOM Example
 
 	<html><head>
 	<script src="pythonscript.js"></script>
@@ -383,7 +96,7 @@ keyword arguments and they will be automatically converted
 to a JavaScript Object.  Any dictionaries or lists you pass
 to a JavaScript function will be converted to: Array or Object.
 
-Example::
+####Example
 
 	<script type="text/javascript">
 
@@ -404,6 +117,289 @@ Example::
 
 	</script>
 
+
+translator.py
+------------
+To convert your python script into javascript use translator.py located in the "pythonjs" directory.  You can give it a list of python files to translate at once.  It will output the translation to stdout.  The default output type is JavaScript.
+
+Usage::
+
+	translator.py [--dart|--coffee] file.py
+
+Example::
+
+	cd PythonJS
+	pythonjs/translator.py --coffee myscript.py > myscript.coffee
+
+
+
+How does translation work?
+----------------
+Translation to JavaScript is done in two steps::
+
+	+------------+    +-----------------+    +------------+
+	¦ .py source ¦--->¦ pythonjs subset ¦--->¦ .js source ¦
+	+------------+    +-----------------+    +------------+
+
+First, the script walks the AST tree of Python source and
+translates it into the subset of Python called `pythonjs`.
+This reduced subset is still valid Python code, and its
+AST gets parsed again in the second translation phase
+that converts it into final JavaScript form.
+
+
+Python vs JavaScript Modes
+-------------------------
+
+PythonJS has two primary modes you can write code in: `python` and `javascript`.  The default mode is `python`, you can mark sections of your code to use either mode with `pythonjs.configure(javascript=True/False)` or nesting blocks inside `with python:` or `with javascript:`.  The `javascript` mode can be used for sections of code where performance is a major concern.  When in `javascript` mode Python dictionaries become JavaScript Objects.  In both modes you can directly call external JavaScript functions, its only faster in `javascript` mode because function calls are direct without any wrapping.
+
+
+Function Types
+---------------
+
+PythonJS has three main types of functions: `normal`, `fastdef`, and `javascript`.
+
+By default a function is "normal" and fully emulates the Python standard, it allows for: arguments, keyword args with defaults, variable length arguments (*args) and variable length keyword args (**kwargs).  Functions that are "normal" also have special logic that allows them to be called from external JavaScript like normal JavaScript functions (keyword args become normal positional arguments when called from JavaScript).  Calling "normal" functions is slow because of this overhead, when you need faster function calls you can use "fastdef" or "javascript".
+
+Functions decorated with `@fastdef`, or inside a `with fastdef:` block become "fastdef" type functions.  This makes calling them faster, but they do not support variable length arguments (*args) or variable length keyword args (**kwargs).
+Another limitation is that when called from external JavaScript you must pack args into an Array as the first argument, and pack keyword arguments into an Object as the second argument.
+
+Functions decorated with @javascript, or inside a `with javascript:` block, or following the call: `pythonjs.configure(javascript=True)` become `javascript` type functions, these offer the highest calling speed.  They do not support *args or **kwargs.  When called from external JavaScript, keyword arguments are not given by name, they become positional arguments that default to the default value if undefined.  When called from within PythonJS code, they need to be called from inside a `with javascript:` block, or following the call `pythonjs.configure(javascript=True)` that sets all following code to be in `javascript` mode.
+
+####Example
+
+	pythonjs.configure( javascript=True )
+
+	def myfunc(x,y,z, a=1,b=2,c=3):
+		print x,y,z,a,b,c
+
+####Example JavaScript Translation
+
+	myfunc = function(x, y, z, a, b, c) {
+	  if (a === undefined) a = 1;
+	  if (b === undefined) b = 2;
+	  if (c === undefined) c = 3;
+	  console.log(x, y, z, a, b, c);
+	}
+
+Class Types
+-----------
+
+PythonJS has two types of classes: `normal` and `javascript`.  By default classes are `normal` and support operator overloading and properties.  Calling methods on a `javascript` class is much faster than method calls on a `normal` class, but follow the same rules as described above for `javascript` type functions.  Both class types can be used from external JavaScript, the only difference is that instances of a "normal" class can pass their methods directly as arguments to a function that will use the method as a callback - even if that external function depends on the context of `this`.  Whereas instances of a `javascript` class can not directly pass their methods as arguments, because they depend on the calling context of `this` - if you are familiar with JavaScript this comes as no surprise.
+
+Example::
+
+	pythonjs.configure( javascript=True )
+	class A:
+		def __init__(self, x,y,z):
+			self.x = x
+			self.y = y
+			self.z = z
+
+		def foo(self, w):
+			return self.x + w
+
+Example JavaScript Translation::
+
+	A = function(x, y, z) {
+	  A.__init__(this, x,y,z);
+	}
+
+	A.prototype.__init__ = function(x, y, z) {
+	  this.x=x;
+	  this.y=y;
+	  this.z=z;
+	}
+	A.__init__ = function () { return A.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	A.prototype.foo = function(w) {
+	  return (this.x + w);
+	}
+	A.foo = function () { return A.prototype.foo.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+
+Method Overrides
+----------------
+In the example above, you might be wondering why in the JavaScript translation, is the class A constructor calling `A.__init__(this, x,y,z)`, and why is the `__init__` method assigned `A.prototype` and then wrapped and assigned to `A.__init__`.  This is done so that subclasses are able to override their parent's methods, but still have a way of calling them, an example that subclasses A will make this more clear.
+
+####Example
+
+	class B( A ):
+		def __init__(self, w):
+			A.__init__(self, 10, 20, 30)
+			self.w = w
+
+####Example JavaScript Translation
+
+	B = function(w) {
+	  B.__init__(this, w);
+	}
+
+	B.prototype.__init__ = function(w) {
+	  A.__init__(this,10,20,30);
+	  this.w=w;
+	}
+	B.__init__ = function () { return B.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
+
+	for (var n in A.prototype) {  if (!(n in B.prototype)) {    B.prototype[n] = A.prototype[n]  }};
+
+
+The above output Javascript shows how the constructor for `B` calls `B.__init__` which then calls `B.prototype.__init__`.
+`B.prototype.__init__` calls `A.__init__` passing `this` as the first argument.  This emulates in JavaScript how unbound methods work in Python.  When using the Dart backend, the output is different but the concept is the same - static "class methods" are created that implement the method body, the instance methods are just short stubs that call the static "class methods".
+
+####Example Dart Translation
+
+	class B implements A {
+	  var y;
+	  var x;
+	  var z;
+	  var w;
+	  B(w) {B.__init__(this,w);}
+	  static void __init__(self, w) {
+	    A.__init__(self,10,20,30);
+	    self.w=w;
+	  }
+
+	  foo(w) { return A.__foo(this,w); }
+	}
+
+Above the method `foo` calls the static class method `A.__foo`.  Note that the static class methods are automatically prefixed with `__`.
+
+
+Multiple Inheritance
+--------------------
+
+Multiple inheritance is fully supported for both JavaScript and Dart backends.  When using the Dart backend it will generate stub-methods that call static class methods that are prefixed with `__`.
+Methods that the subclass extends can call: ParentClassName.some_method(self) and this will be translated into: ParentClassName.__some_method(this)
+
+#### Example
+
+	class A:
+		def foo(self):
+			print 'foo'
+
+	class B:
+		def bar(self):
+			print 'bar'
+
+	class C( A, B ):
+		def call_foo_bar(self):
+			print 'call_foo_bar in subclass C'
+			self.foo()
+			self.bar()
+
+		## extend foo ##
+		def foo(self):
+			A.foo(self)
+			print 'foo extended'
+
+#### Example Dart Translation
+
+	class A {
+	  foo() { return A.__foo(this); }
+	  static __foo(self) {
+	    print("foo");
+	  }
+
+	}
+	class B {
+	  bar() { return B.__bar(this); }
+	  static __bar(self) {
+	    print("bar");
+	  }
+
+	}
+	class C implements A, B {
+	  call_foo_bar() { return C.__call_foo_bar(this); }
+	  static __call_foo_bar(self) {
+	    print("call_foo_bar in subclass C");
+	    self.foo();
+	    self.bar();
+	  }
+
+	  foo() { return C.__foo(this); }
+	  static __foo(self) {
+	    A.__foo(self);
+	    print("foo extended");
+	  }
+
+	  bar() { return B.__bar(this); }
+	}
+
+
+Generator Functions
+-------------------
+
+Functions that use the `yield` keyword are generator functions.  They allow you to quickly write complex iterables.
+PythonJS supports simple generator functions that have a single for loop, and up to three `yield` statements.
+The first `yield` comes before the for loop, and the final `yield` comes after the for loop.
+The compiler will translate your generator function into a simple class with state-machine.  This implementation
+bypasses using the native JavaScript `yield` keyword, and ensures that your generator function can work in all web browsers.  
+
+Instances of the generator function will have a next method.  Using a for loop to iterate over a generator function will automatically call its next method.
+
+####Example
+
+	def fib(n):
+		yield 'hello'
+		a, b = 0, 1
+		for x in range(n):
+			yield a
+			a,b = b, a+b
+		yield 'world'
+
+	def test():
+		for n in fib(20):
+			print n
+
+####Example Output
+
+	fib = function(n) {
+	  this.n = n;
+	  this.__head_yield = "hello";
+	  this.__head_returned = 0;
+	  var __r_0;
+	  __r_0 = [0, 1];
+	  this.a = __r_0[0];
+	  this.b = __r_0[1];
+	  this.__iter_start = 0;
+	  this.__iter_index = 0;
+	  this.__iter_end = this.n;
+	  this.__done__ = 0;
+	}
+
+	fib.prototype.next = function() {
+	  if (( this.__head_returned ) == 0) {
+	    this.__head_returned = 1;
+	    return this.__head_yield;
+	  } else {
+	    if (( this.__iter_index ) < this.__iter_end) {
+	      __yield_return__ = this.a;
+	      var __r_1;
+	      __r_1 = [this.b, (this.a + this.b)];
+	      this.a = __r_1[0];
+	      this.b = __r_1[1];
+	      this.__iter_index += 1
+	      return __yield_return__;
+	    } else {
+	      this.__done__ = 1;
+	      __yield_return__ = "world";
+	      return __yield_return__;
+	    }
+	  }
+	}
+
+	test = function(args, kwargs) {
+	  var __iterator__, n;
+	  var n, __generator__;
+	  __generator__ = new fib(20);
+	  while(( __generator__.__done__ ) != 1) {
+	    n = __generator__.next();
+	    console.log(n);
+	  }
+	}
+
+
 ---------------
 
 Inline JavaScript
@@ -411,11 +407,11 @@ Inline JavaScript
 
 There are times that JavaScript needs to be directly inlined
 into PythonJS code, this is done with the special
-'JS([str])' function that takes a string literal as its only
+`JS([str])` function that takes a string literal as its only
 argument.  The compiler will insert the string directly into
 the final output JavaScript.
 
-JS Example::
+####JS Example
 
 	JS("var arr = new Array()")
 	JS("var ob = new Object()")
@@ -439,16 +435,16 @@ ways this can be rewritten.
 
 The special function JSArray will create a new JavaScript
 Array object, and JSObject creates a new JavaScript Object.
-The 'instanceof' function will be translated into using the
+The `instanceof` function will be translated into using the
 'instanceof' JavaScript operator.  At the end, arr.push is
-called without wrapping it in JS(), this is allowed because
+called without wrapping it in `JS()`, this is allowed because
 from PythonJS, we can directly call JavaScript functions by
 dynamically wrapping it at runtime.
 
 This code is more clear than before, but the downside is
 that the calls to arr.push will be slower because it gets
 wrapped at runtime.  To have fast and clear code we need to
-use the final method below, 'with javascript'
+use the final method below, `with javascript`
 
 2. with javascript::
 
@@ -459,7 +455,7 @@ use the final method below, 'with javascript'
 			arr.push('hello world')
 			arr.push( ob )
 
-The "with javascript:" statement can be used to mark a block
+The `with javascript:` statement can be used to mark a block
 of code as being direct JavaScript.  The compiler will
 basically wrap each line it can in JS() calls.  The calls to
 arr.push will be fast because there is no longer any runtime
@@ -478,7 +474,7 @@ call it from JavaScript.  Note that if your PythonJS
 function uses keyword arguments, you can use them as a
 normal positional arguments.
 
-Example::
+####Example
 
 	# PythonJS
 	def my_pyfunction( a,b,c, optional='some default'):
@@ -497,10 +493,10 @@ Calling PythonJS methods is also simple, you just need to
 create an instance of the class in PythonJS and then pass
 the method to a JavaScript function, or assign it to a new
 variable that the JavaScript code will use.  PythonJS takes
-care of wrapping the method for you so that "self" is bound
+care of wrapping the method for you so that `self` is bound
 to the method, and is callable from JavaScript.
 
-Example::
+####Example
 
 	// javascript
 	function js_call_method( method_callback ) {
@@ -531,7 +527,7 @@ inefficient.  If you want to pass the PythonJS instance
 itself and have its methods callable from JavaScript, you
 can do this now simply by passing the instance.
 
-Example::
+####Example
 
 	// javascript
 	function js_function( pyob ) {
@@ -578,7 +574,7 @@ Example::
 
 The above example shows how we modify the String type in
 JavaScript to act more like a Python string type.  The
-functions must be defined inside a "with javascript:" block,
+functions must be defined inside a `with javascript:` block,
 and the decorator format is:
 `[class name].prototype.[function name]`
 
@@ -677,12 +673,12 @@ called the function from JavaScript - and if so adapt the
 arguments.  This adds some overhead each time the function
 is called, and will generally be about 15 times slower than
 normal Python.  When performance is a concern you can
-decorate functions that need to be fast with @fastdef, or
+decorate functions that need to be fast with `@fastdef`, or
 use the `with fastdef:` with statement.  Note that functions
 that do not have arguments are always fast.  Using fastdef
 will make each call to your function 100 times faster, so if
 you call the same function many times in a loop, it is a
-good idea to decorate it with @fastdef.
+good idea to decorate it with `@fastdef`.
 
 Example::
 
@@ -706,7 +702,7 @@ Example::
 
 If you need fast function that is callable from javascript
 without packing its arguments like above, you can use the
-@javascript decorator, or nest the function inside a `with
+`@javascript` decorator, or nest the function inside a `with
 javascript:` statement.
 
 Example::
@@ -730,7 +726,7 @@ using NodeJS.  You can use the nodejs.py helper script to
 translate your python script and run it in NodeJS.  This has
 been tested with NodeJS v0.10.22.
 
-Example::
+####Example
 
 	cd PythonJS
 	./nodejs.py myscript.py
@@ -742,7 +738,7 @@ subprocess.  The example below imports the fake io and sys
 libraries, and prints the contents of a file passed as the
 last command line argument to nodejs.py.
 
-Example::
+####Example
 
 	from nodejs.io import *
 	from nodejs.sys import *
@@ -761,12 +757,13 @@ is to run the automated regression tests in PythonJS/regtests.  To test all the 
 you need to install NodeJS, CoffeeScript, and Dart2JS.  You should download the Dart SDK,
 and make sure that the executeable "dart2js" is in "~/dart/dart-sdk/bin/"
 
-Run Regression Tests::
+####Run Regression Tests
 
 	cd PythonJS/regtests
 	./run.py
 
-Test Server
+
+Example Servers
 ===========
 
 PythonJS includes two test servers that run the HTML tests
@@ -779,12 +776,12 @@ compatible binding.
 NodeJS Tornado
 ---------------
 
-Install Modules::
+####Required Modules
 
 	sudo npm install -g mime
 	sudo npm install -g ws
 
-Run NodeJS Server::
+####Run NodeJS Server
 
 	cd PythonJS
 	./nodejs.py nodejs/tests/tornado-demo-server.py
@@ -793,7 +790,7 @@ Run NodeJS Server::
 Python Tornado
 ---------------
 
-Install Tornado for Python3::
+####Install Tornado for Python3
 
 	wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
 	tar xvf tornado-3.1.1.tar.gz
@@ -801,20 +798,19 @@ Install Tornado for Python3::
 	python3 setup.py build
 	sudo python3 setup.py install
 
-Run Python Server::
+####Run Python Server
 
 	cd PythonJS/tests
 	./server.py
 
-Run Python Server in Dart Mode::
+####Run Python Server in Dart Mode
 
 	./server.py --dart
 
 In Dart mode any test page you visit will be translated to Dart, and then converted back to JavaScript using "dart2js".  You need to download the Dart SDK and make sure "dart2js" is located in:
 ~/dart/dart-sdk/bin/
 
-Testing
--------
+###HTML Tests
 
 After running one of the test servers above, open a web
 browser and go to: http://localhost:8080
@@ -824,25 +820,14 @@ this greatly speeds up the testing and development process.
 Any html file you place in the PythonJS/tests directory will
 become available as a new web-page.  When this web-page is
 requested the server will parse the html and check all the
-<script> tags for external or embedded Python, and
+`<script>` tags for external or embedded Python, and
 dynamically convert it to JavaScript.
 
-External Python Scripts::
 
-	<head>
-	<script src="bindings/three.py"></script>
-	</head>
-
-The server knows that the above script needs to be
-dynamically compiled to JavaScript because the script is
-located in the "bindings" directory and the file name ends
-with ".py"
-
-Embedded Python Scripts::
+####Embedded Python Scripts
 
 	<body>
 	<script type="text/python">
-	from three import *
 	v1 = Vector3( x=1, y=2, z=3 )
 	v2 = Vector3( x=4, y=5, z=6 )
 	v3 = v1 + v2
@@ -855,16 +840,5 @@ because the script tag has its type attribute set to
 Python code with JavaScript, change the type attribute to be
 "text/javascript", and serve the page to the client.
 
-The syntax "from three import *" tells the compiler to load
-static type information about the previously compiled
-binding "three.py" into the compilers namespace, this is
-required because three.py uses operator overloading to wrap
-the THREE.js API.  PythonJS programs are explicitly and
-implicitly statically typed to allow for operator
-overloading and optimizations.
 
-
-.. image:: https://d2weczhvl823v0.cloudfront.net/PythonJS/pythonjs/trend.png
-   :alt: Bitdeli badge
-   :target: https://bitdeli.com/free
-
+![bitdeli](https://d2weczhvl823v0.cloudfront.net/PythonJS/pythonjs/trend.png)
