@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed Feb 26 16:47:15 2014
+// PythonJS Runtime - regenerated on: Wed Feb 26 20:34:18 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -169,6 +169,7 @@ __get__ = function(object, attribute) {
         }
 
         wrapper.is_wrapper = true;
+        wrapper.wrapped = attr;
         return wrapper;
       } else {
         if (attr.is_classmethod) {
@@ -353,6 +354,9 @@ __get__ = function(object, attribute) {
       wrapper.is_wrapper = true;
       return wrapper;
     }
+  }
+  if (typeof(object, "function") && object.is_wrapper) {
+    return object.wrapped[attribute];
   }
   return undefined;
 }

@@ -178,6 +178,7 @@ def __get__(object, attribute):
 
 					return attr.apply(object, args)
 				wrapper.is_wrapper = True
+				wrapper.wrapped = attr  ## this is required because some javascript API's `class-method-style` helper functions on the constructor
 				return wrapper
 
 
@@ -337,6 +338,9 @@ def __get__(object, attribute):
 		def wrapper(args,kwargs): object[ args[0] ] = args[1]
 		wrapper.is_wrapper = True
 		return wrapper
+
+	if typeof(object, 'function') and object.is_wrapper:
+		return object.wrapped[ attribute ]
 
 	# raise AttributeError instead? or should we allow this? maybe we should be javascript style here and return undefined
 	return None

@@ -1735,8 +1735,10 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					a = ','.join(args)
 					if node.keywords:
-						args.extend( [self.visit(x.value) for x in node.keywords] )
-						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+						#args.extend( [self.visit(x.value) for x in node.keywords] )
+						#return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+						kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
+						return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
 
 					else:
 						return '%s(%s)' %( self.visit(node.func), ','.join(args) )

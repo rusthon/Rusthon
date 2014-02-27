@@ -2,10 +2,8 @@
 <head>
 <script src="pythonscript.js"></script>
 <script src="libs/pixi/pixi.js"></script>
-<script src="bindings/pixi.py"></script>
 
 <script type="text/python" closure="false">
-from pixi import *
 
 with javascript:
 	def on_drag( data ):
@@ -24,19 +22,22 @@ with javascript:
 		this.dragging = False
 		this.data = null
 
+
 def test():
 	global stage, renderer, sprite
 
 	div = document.createElement( 'div' )
 	document.body.appendChild(div)
 
-	renderer = WebGLRenderer()
+	renderer = new( PIXI.WebGLRenderer() )
 	div.appendChild(renderer.view);
 
-	stage = Stage( interactive=True )
+	bgcolor = 100
+	interactive = True
+	stage = new( PIXI.Stage(bgcolor, interactive) )
 
-	tex = Texture( fromImage='media/trashbody.png' )
-	sprite = Sprite( texture=tex )
+	tex = PIXI.Texture.fromImage( 'media/trashbody.png' )
+	sprite = new( PIXI.Sprite(tex) )
 	sprite.anchor.x = 0.5
 	sprite.anchor.y = 0.5
 	sprite.position.x = 200
@@ -45,31 +46,28 @@ def test():
 	sprite.interactive = True
 	print 'sprite is interactive', sprite.interactive
 	sprite.button = True
-	sprite.set_drag_callback( js_callback=on_drag )
-	sprite.set_pressed_callback( js_callback=on_pressed )
-	sprite.set_released_callback( js_callback=on_released )
+	sprite.mousemove = on_drag
+	sprite.mousedown = on_pressed
+	sprite.mouseup = on_released
 
 	stage.addChild( sprite )
 
-	text = Text( 'PythonJS and Pixi', fill='white' )
+	text = new(
+		PIXI.Text( 'PythonJS and Pixi', fill='white' )
+	)
 	stage.addChild( text )
 	text.interactive = True
 	text.button = True
-	text.set_drag_callback( js_callback=on_drag )
-	text.set_pressed_callback( js_callback=on_pressed )
-	text.set_released_callback( js_callback=on_released )
+	text.mousemove=on_drag
+	text.mousedown=on_pressed
+	text.mouseup=on_released
 
 	animate()
 
 
-
-
 def animate():
 	requestAnimationFrame( animate )
-
-	#sprite.rotation += 0.1  ## TODO fix inplace assignment and properties
-	sprite.rotation = sprite.rotation + 0.1
-
+	sprite.rotation += 0.1
 	renderer.render(stage)
 
 </script>
