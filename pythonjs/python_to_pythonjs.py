@@ -1729,6 +1729,9 @@ class PythonToPythonJS(NodeVisitor):
 				elif anode.attr == 'split' and not args:
 					return '__split_method(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'replace' and len(node.args)==2:
+					return '__replace_method(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+
 				else:
 					a = ','.join(args)
 					if node.keywords:
@@ -1850,7 +1853,7 @@ class PythonToPythonJS(NodeVisitor):
 			#######################################
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split') and not self._with_lua:
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace') and not self._with_lua:
 				anode = node.func
 				if anode.attr == 'get':
 					if args:
@@ -1875,6 +1878,9 @@ class PythonToPythonJS(NodeVisitor):
 
 				elif anode.attr == 'split' and not args:
 					return '__split_method(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'replace' and len(node.args)==2:
+					return '__replace_method(%s, %s)' %(self.visit(anode.value), args )
 
 				else:
 					return '%s(%s)' %( self.visit(node.func), args )

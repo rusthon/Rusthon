@@ -38,6 +38,13 @@ with javascript:
 		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
 			return True
 
+	def __replace_method(ob, a, b):
+		## this is required because string.replace in javascript only replaces the first occurrence
+		if typeof(ob) == 'string':
+			return ob.split(a).join(b)
+		else:
+			return ob.replace(a,b)
+
 	def __split_method( ob ):
 		## special case because calling string.split() without args its not the same as python,
 		## and we do not want to touch the default string.split implementation.
