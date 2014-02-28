@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Feb 28 02:50:05 2014
+// PythonJS Runtime - regenerated on: Fri Feb 28 03:05:37 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -1504,11 +1504,21 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.__iter__ = func;
     var func = function(start, stop, step) {
-    ;
-    if (( stop ) < 0) {
-      stop = __add_op(this.length, stop);
+    var i, arr;
+    if (( start ) === undefined && ( stop ) === undefined) {
+      arr = [];
+      i = 0;
+      while (( i ) < this.length) {
+        arr.push(this[ (i.__uid__) ? i.__uid__ : i]);
+        i += step;
+      }
+      return arr;
+    } else {
+      if (( stop ) < 0) {
+        stop = __add_op(this.length, stop);
+      }
+      return this.slice(start, stop);
     }
-    return this.slice(start, stop);
   }
 
   func.NAME = "func";

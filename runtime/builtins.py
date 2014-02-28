@@ -565,9 +565,17 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			if stop < 0:
-				stop = this.length + stop
-			return this.slice(start, stop)
+			if start is None and stop is None:
+				arr = []
+				i = 0
+				while i < this.length:
+					arr.push( this[i] )
+					i += step
+				return arr
+			else:
+				if stop < 0:
+					stop = this.length + stop
+				return this.slice(start, stop)
 
 		@Array.prototype.append
 		def func(item):
