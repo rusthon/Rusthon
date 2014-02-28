@@ -1738,7 +1738,10 @@ class PythonToPythonJS(NodeVisitor):
 						#args.extend( [self.visit(x.value) for x in node.keywords] )
 						#return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 						kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
-						return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+						if args:
+							return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+						else:
+							return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
 
 					else:
 						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
@@ -1752,7 +1755,6 @@ class PythonToPythonJS(NodeVisitor):
 				return self.inline_function( node )
 
 			elif self._with_dart:  ## DART
-				args
 				if node.keywords:
 					kwargs = ','.join( ['%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords] )
 					if args:
@@ -1766,8 +1768,12 @@ class PythonToPythonJS(NodeVisitor):
 
 			else:  ## javascript mode
 				if node.keywords:
-					args.extend( [self.visit(x.value) for x in node.keywords] )
-					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+					#args.extend( [self.visit(x.value) for x in node.keywords] )
+					kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
+					if args:
+						return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+					else:
+						return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
 
 				else:
 					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
@@ -2084,8 +2090,25 @@ class PythonToPythonJS(NodeVisitor):
 			elif node.args.kwarg:
 				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
 
-			args = [ a.id for a in node.args.args ]
-			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
+			#args = [ a.id for a in node.args.args ]
+
+			args = []
+			offset = len(node.args.args) - len(node.args.defaults)
+			for i, arg in enumerate(node.args.args):
+				a = arg.id
+				dindex = i - offset
+				if dindex >= 0 and node.args.defaults:
+					pass
+				else:
+					args.append( a )
+
+			if len(node.args.defaults):
+				if args:
+					writer.write( 'def %s( %s, _kwargs_ ):' % (node.name, ','.join(args)) )
+				else:
+					writer.write( 'def %s( _kwargs_ ):' % node.name )
+			else:
+				writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 		else:
 			writer.write('def %s(args, kwargs):' % node.name)
@@ -2118,7 +2141,7 @@ class PythonToPythonJS(NodeVisitor):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						writer.write( '''JS("if (%s == undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
+						writer.write( '''JS("if (_kwargs_ === undefined || _kwargs_.%s === undefined) {var %s = %s} else {var %s=_kwargs_.%s}")'''%(arg.id, arg.id, default_value, arg.id, arg.id) )
 
 		elif self._with_fastdef or fastdef:
 			offset = len(node.args.args) - len(node.args.defaults)

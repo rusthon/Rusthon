@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed Feb 26 20:34:18 2014
+// PythonJS Runtime - regenerated on: Thu Feb 27 17:07:11 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -569,8 +569,8 @@ __jsdict.NAME = "__jsdict";
 __jsdict.args_signature = ["items"];
 __jsdict.kwargs_signature = {  };
 __jsdict.types_signature = {  };
-__jsdict_get = function(ob, key, default_value) {
-  if (default_value == undefined) default_value = undefined;
+__jsdict_get = function(ob, key, _kwargs_) {
+  if (_kwargs_ === undefined || _kwargs_.default_value === undefined) {var default_value = undefined} else {var default_value=_kwargs_.default_value};
   if (ob instanceof Object) {
     if (key in ob) {
       return ob[ (key.__uid__) ? key.__uid__ : key];
@@ -655,9 +655,9 @@ __jsdict_items.NAME = "__jsdict_items";
 __jsdict_items.args_signature = ["ob"];
 __jsdict_items.kwargs_signature = {  };
 __jsdict_items.types_signature = {  };
-__jsdict_pop = function(ob, key, _default) {
+__jsdict_pop = function(ob, key, _kwargs_) {
   var v;
-  if (_default == undefined) _default = undefined;
+  if (_kwargs_ === undefined || _kwargs_._default === undefined) {var _default = undefined} else {var _default=_kwargs_._default};
   if (ob instanceof Array) {
     if (ob.length) {
       return ob.pop(key);

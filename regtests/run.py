@@ -45,16 +45,14 @@ def runnable(command):
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
-dart2js_runnable = runnable( dart2js + ' -h' )
-coffee_runnable = runnable( "coffee -v" )
-lua_runnable = runnable( "lua -v" )
-luajit_runnable = runnable( "luajit -v" )
+dart2js_runnable = runnable( dart2js + ' -h' ) and '--all-backends' in sys.argv
+coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
+lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv
+luajit_runnable = runnable( "luajit -v" ) and '--all-backends' in sys.argv
 
 lua2js = os.path.abspath( '../external/lua.js/lua2js' )
-luajs_runnable = os.path.isfile( lua2js )
+luajs_runnable = os.path.isfile( lua2js ) and '--all-backends' in sys.argv
 
-assert lua_runnable
-assert luajs_runnable
 assert rhino_runnable or node_runnable
 
 if show_details:
