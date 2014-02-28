@@ -509,6 +509,16 @@ def _setup_str_prototype():
 		def func(encoding):
 			return this
 
+		@String.prototype.format
+		def func(fmt):
+			r = this
+			keys = Object.keys(fmt)
+			for key in keys:
+				r = r.split(key).join(fmt[key])
+			r = r.split('{').join('').split('}').join('')
+			return r
+
+
 _setup_str_prototype()
 
 def _setup_array_prototype():

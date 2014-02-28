@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu Feb 27 17:07:11 2014
+// PythonJS Runtime - regenerated on: Fri Feb 28 02:50:05 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -1389,6 +1389,25 @@ _setup_str_prototype = function(args, kwargs) {
   func.kwargs_signature = {  };
   func.types_signature = {  };
   String.prototype.encode = func;
+    var func = function(fmt) {
+    var keys, r;
+    r = this;
+    keys = Object.keys(fmt);
+        var __iter13 = keys;
+    if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
+    for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
+      var key = __iter13[ __idx13 ];
+      r = r.split(key).join(fmt[ (key.__uid__) ? key.__uid__ : key]);
+    }
+    r = r.split("{").join("").split("}").join("");
+    return r;
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["fmt"];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  String.prototype.format = func;
 }
 
 _setup_str_prototype.NAME = "_setup_str_prototype";
@@ -1507,10 +1526,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.append = func;
     var extend = function(other) {
-        var __iter13 = other;
-    if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
-    for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
-      var obj = __iter13[ __idx13 ];
+        var __iter14 = other;
+    if (! (__iter14 instanceof Array || typeof __iter14 == "string") ) { __iter14 = __object_keys__(__iter14) }
+    for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
+      var obj = __iter14[ __idx14 ];
       this.push(obj);
     }
   }
@@ -1567,10 +1586,10 @@ _setup_array_prototype = function(args, kwargs) {
     var count = function(obj) {
     var a;
     a = 0;
-        var __iter14 = this;
-    if (! (__iter14 instanceof Array || typeof __iter14 == "string") ) { __iter14 = __object_keys__(__iter14) }
-    for (var __idx14=0; __idx14 < __iter14.length; __idx14++) {
-      var item = __iter14[ __idx14 ];
+        var __iter15 = this;
+    if (! (__iter15 instanceof Array || typeof __iter15 == "string") ) { __iter15 = __object_keys__(__iter15) }
+    for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
+      var item = __iter15[ __idx15 ];
       if (( item ) === obj) {
         a += 1;
       }
@@ -1627,10 +1646,10 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.intersection = func;
     var func = function(other) {
-        var __iter15 = this;
-    if (! (__iter15 instanceof Array || typeof __iter15 == "string") ) { __iter15 = __object_keys__(__iter15) }
-    for (var __idx15=0; __idx15 < __iter15.length; __idx15++) {
-      var item = __iter15[ __idx15 ];
+        var __iter16 = this;
+    if (! (__iter16 instanceof Array || typeof __iter16 == "string") ) { __iter16 = __object_keys__(__iter16) }
+    for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
+      var item = __iter16[ __idx16 ];
       if (( other.indexOf(item) ) == -1) {
         return false;
       }
@@ -2348,10 +2367,10 @@ __pytuple_count = function(args, kwargs) {
   var self = __args__['self'];
   var obj = __args__['obj'];
   a = 0;
-    var __iter16 = self["$wrapped"];
-  if (! (__iter16 instanceof Array || typeof __iter16 == "string") ) { __iter16 = __object_keys__(__iter16) }
-  for (var __idx16=0; __idx16 < __iter16.length; __idx16++) {
-    var item = __iter16[ __idx16 ];
+    var __iter17 = self["$wrapped"];
+  if (! (__iter17 instanceof Array || typeof __iter17 == "string") ) { __iter17 = __object_keys__(__iter17) }
+  for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
+    var item = __iter17[ __idx17 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -2713,10 +2732,10 @@ __pylist_count = function(args, kwargs) {
   var self = __args__['self'];
   var obj = __args__['obj'];
   a = 0;
-    var __iter17 = self["$wrapped"];
-  if (! (__iter17 instanceof Array || typeof __iter17 == "string") ) { __iter17 = __object_keys__(__iter17) }
-  for (var __idx17=0; __idx17 < __iter17.length; __idx17++) {
-    var item = __iter17[ __idx17 ];
+    var __iter18 = self["$wrapped"];
+  if (! (__iter18 instanceof Array || typeof __iter18 == "string") ) { __iter18 = __object_keys__(__iter18) }
+  for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
+    var item = __iter18[ __idx18 ];
     if (( item ) == obj) {
       a += 1;
     }
@@ -3378,10 +3397,10 @@ __dict_values = function(args, kwargs) {
   var self = __args__['self'];
   keys = Object.keys(self["$wrapped"]);
   out = [];
-    var __iter18 = keys;
-  if (! (__iter18 instanceof Array || typeof __iter18 == "string") ) { __iter18 = __object_keys__(__iter18) }
-  for (var __idx18=0; __idx18 < __iter18.length; __idx18++) {
-    var key = __iter18[ __idx18 ];
+    var __iter19 = keys;
+  if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
+  for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
+    var key = __iter19[ __idx19 ];
     out.push(self["$wrapped"][ (key.__uid__) ? key.__uid__ : key]);
   }
   return out;
@@ -3482,10 +3501,10 @@ set = function(args, kwargs) {
   }
   fallback = false;
   if (__test_if_true__(hashtable)) {
-        var __iter19 = a;
-    if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
-    for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
-      var b = __iter19[ __idx19 ];
+        var __iter20 = a;
+    if (! (__iter20 instanceof Array || typeof __iter20 == "string") ) { __iter20 = __object_keys__(__iter20) }
+    for (var __idx20=0; __idx20 < __iter20.length; __idx20++) {
+      var b = __iter20[ __idx20 ];
       if (typeof(b, "number") && ( b ) === ( (b | 0) )) {
         key = (b & mask);
         hashtable[ (key.__uid__) ? key.__uid__ : key] = b;
@@ -3500,20 +3519,20 @@ set = function(args, kwargs) {
   }
   s = [];
   if (__test_if_true__(fallback)) {
-        var __iter20 = a;
-    if (! (__iter20 instanceof Array || typeof __iter20 == "string") ) { __iter20 = __object_keys__(__iter20) }
-    for (var __idx20=0; __idx20 < __iter20.length; __idx20++) {
-      var item = __iter20[ __idx20 ];
+        var __iter21 = a;
+    if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
+    for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
+      var item = __iter21[ __idx21 ];
       if (( s.indexOf(item) ) == -1) {
         s.push(item);
       }
     }
   } else {
     keys.sort();
-        var __iter21 = keys;
-    if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
-    for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
-      var key = __iter21[ __idx21 ];
+        var __iter22 = keys;
+    if (! (__iter22 instanceof Array || typeof __iter22 == "string") ) { __iter22 = __object_keys__(__iter22) }
+    for (var __idx22=0; __idx22 < __iter22.length; __idx22++) {
+      var key = __iter22[ __idx22 ];
       s.push(hashtable[ (key.__uid__) ? key.__uid__ : key]);
     }
   }
