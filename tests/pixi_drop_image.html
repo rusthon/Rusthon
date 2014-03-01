@@ -2,17 +2,21 @@
 <head>
 <script src="pythonscript.js"></script>
 <script src="libs/pixi/pixi.js"></script>
-<script src="bindings/pixi.py"></script>
-<script src="bindings/websocket.py"></script>
 
 <script type="text/python" closure="false">
-from pixi import *
-from websocket import *
 
-ws = websocket('ws://localhost:8080/websocket')
+ws = new( WebSocket('ws://localhost:8080/websocket') )
+ws.binaryType = 'arraybuffer'
+
+def send_json_message(command, **kw):
+	msg = {'command':command}
+	for key in kw: msg[key] = kw[key]
+	data = JSON.stringify( msg )
+	print('sending message', data)
+	ws.send( data )
 
 def websocket_upload(name, data):
-	ws.signal( 'upload', file_name=name, binary=True )
+	send_json_message('upload', file_name=name, binary=True )
 	ws.send( data )
 
 	def func(): create_sprite( '/uploads/'+name )
@@ -42,8 +46,8 @@ def on_drop(e):
 
 def create_sprite( url ):
 	global sprite
-	tex = Texture( fromImage=url )
-	sprite = Sprite( texture=tex )
+	tex = PIXI.Texture.fromImage( url )
+	sprite = new( PIXI.Sprite(tex) )
 	sprite.anchor.x = 0.5
 	sprite.anchor.y = 0.5
 	sprite.position.x = 200
@@ -51,28 +55,20 @@ def create_sprite( url ):
 
 	sprite.interactive = True
 	sprite.button = True
-	sprite.set_drag_callback( js_callback=on_drag )
-	sprite.set_pressed_callback( js_callback=on_pressed )
-	sprite.set_released_callback( js_callback=on_released )
+	sprite.mousemove = on_drag
+	sprite.mousedown = on_pressed
+	sprite.mouseup   = on_released
 
 	stage.addChild( sprite )
 
 with javascript:
 	def on_drag( data ):
 		if this.dragging:
-			wrapper = this[...]
-			assert isinstance(wrapper, Sprite)
 
 			if this.data.originalEvent.button == 0:
 				newPosition = this.data.getLocalPosition(this.parent)
-
-				## this also works, this is direct and faster ##
-				#this.position.x = newPosition.x
-				#this.position.y = newPosition.y
-
-				with python:  ## indirect - via property setter ##
-					wrapper.position.x = newPosition.x
-					wrapper.position.y = newPosition.y
+				this.position.x = newPosition.x
+				this.position.y = newPosition.y
 
 			else:
 				dx = data['global'].x - this.drag_start_x
@@ -110,19 +106,19 @@ def test():
 	div = document.createElement( 'div' )
 	document.body.appendChild(div)
 
-	renderer = WebGLRenderer()
+	renderer = new( PIXI.WebGLRenderer() )
 	div.appendChild(renderer.view);
 
-	stage = Stage( interactive=True )
+	stage = new( PIXI.Stage(0,True) )
 
 
-	text = Text( 'PythonJS and Pixi', fill='white' )
+	text = new( PIXI.Text( 'PythonJS and Pixi', fill='white' ) )
 	stage.addChild( text )
 	text.interactive = True
 	text.button = True
-	text.set_drag_callback( js_callback=on_drag )
-	text.set_pressed_callback( js_callback=on_pressed )
-	text.set_released_callback( js_callback=on_released )
+	text.mousemove = on_drag
+	text.mousedown = on_pressed
+	text.mouseup   = on_released
 
 	animate()
 
