@@ -773,6 +773,20 @@ def ord( char ):
 def chr( num ):
 	return JS('String.fromCharCode(num)')
 
+with javascript:
+	class __ArrayIterator:
+		def __init__(self, arr, index):
+			self.arr = arr
+			self.index = index
+			self.length = arr.length
+
+		def next(self):
+			index = self.index
+			self.index += 1
+			arr = self.arr
+			return JS('arr[index]')
+
+
 class Iterator:
 	## rather than throwing an exception, it could be more optimized to have the iterator set a done flag,
 	## and another downside is having the try/catch around this makes errors in in the loop go slient.
@@ -783,17 +797,6 @@ class Iterator:
 		self.obj_get = obj.get  ## cache this for speed
 
 	def next(self):
-		## slow for looping over something that grows or shrinks while looping,
-		## this conforms to standard Python, but it is slow, and probably not often needed.
-		index = self.index
-		length = len(self.obj)
-		if index == length:
-			raise StopIteration
-		item = self.obj.get(self.index)
-		self.index = self.index + 1
-		return item
-
-	def next_fast(self):
 		with javascript:
 			index = self.index
 			self.index += 1

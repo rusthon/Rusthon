@@ -2087,10 +2087,8 @@ class PythonToPythonJS(NodeVisitor):
 		elif self._with_js or javascript:# or self._with_coffee:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
-			elif node.args.kwarg:
-				raise SyntaxError( 'pure javascript functions can not take variable keyword arguments (**kwargs)' )
-
-			#args = [ a.id for a in node.args.args ]
+			
+			kwargs_name = node.args.kwarg or '_kwargs_'
 
 			args = []
 			offset = len(node.args.args) - len(node.args.defaults)
@@ -2102,11 +2100,11 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					args.append( a )
 
-			if len(node.args.defaults):
+			if len(node.args.defaults) or node.args.kwarg:
 				if args:
-					writer.write( 'def %s( %s, _kwargs_ ):' % (node.name, ','.join(args)) )
+					writer.write( 'def %s( %s, %s ):' % (node.name, ','.join(args), kwargs_name ) )
 				else:
-					writer.write( 'def %s( _kwargs_ ):' % node.name )
+					writer.write( 'def %s( %s ):' % (node.name, kwargs_name) )
 			else:
 				writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
@@ -2136,12 +2134,13 @@ class PythonToPythonJS(NodeVisitor):
 
 		elif self._with_js or javascript:
 			if node.args.defaults:
+				kwargs_name = node.args.kwarg or '_kwargs_'
 				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						writer.write( '''JS("if (_kwargs_ === undefined || _kwargs_.%s === undefined) {var %s = %s} else {var %s=_kwargs_.%s}")'''%(arg.id, arg.id, default_value, arg.id, arg.id) )
+						writer.write( '''JS("if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}")'''%(kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id) )
 
 		elif self._with_fastdef or fastdef:
 			offset = len(node.args.args) - len(node.args.defaults)
@@ -2514,7 +2513,7 @@ class PythonToPythonJS(NodeVisitor):
 			else:
 				if not self._with_coffee:
 					writer.write('var(__next__)')
-				writer.write('__next__ = __get__(__iterator__, "next_fast")')
+				writer.write('__next__ = __get__(__iterator__, "next")')
 				writer.write('while __iterator__.index < __iterator__.length:')
 
 				writer.push()

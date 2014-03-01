@@ -342,6 +342,11 @@ def __get__(object, attribute):
 	if typeof(object, 'function') and object.is_wrapper:
 		return object.wrapped[ attribute ]
 
+	if attribute == '__iter__' and instanceof(object, Object):
+		def wrapper(args, kwargs): return new( __ArrayIterator(Object.keys( object ),0) )
+		wrapper.is_wrapper = True
+		return wrapper
+
 	# raise AttributeError instead? or should we allow this? maybe we should be javascript style here and return undefined
 	return None
 
