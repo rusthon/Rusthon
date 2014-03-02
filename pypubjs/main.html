@@ -3,14 +3,16 @@
 <link href='../external/css/bootstrap.css' rel='stylesheet' />
 <link href='../external/css/darkstrap.css' rel='stylesheet' />
 
-<script src="../pythonjs.js"></script>
 <script src="../external/ace.js/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="../external/jquery/jquery-latest.js"></script>
 <script src="../external/bootstrap/bootstrap.min.js"></script>
 
+<script src="../external/pixi.js/pixi.dev.js"></script>
+
+
+<script src="../pythonjs.js"></script>
 <script type="text/javascript" src="translator_bridge.js"></script>
 <script type="text/python" src="app.py"></script>
-
 
 </head>
 
@@ -50,7 +52,7 @@
 
 	</td>
 	<td>
-		<small>pypubjs 0.0.4</small>
+		<small>pypubjs 0.0.5</small>
 	</td>
 
 	<td style="-webkit-app-region: no-drag;">
@@ -92,8 +94,10 @@
 		<li><a href="#images-tab" data-toggle="tab">images</a></li>
 		<li><a href="#videos-tab" data-toggle="tab">videos</a></li>
 		<li><a href="#audio-tab" data-toggle="tab">audio</a></li>
-
 		<li><a href="#empythoned-tab" data-toggle="tab">console</a></li>
+
+		<li><a href="#project-tab" data-toggle="tab">project</a></li>
+		<li><a href="#pixi-tab" data-toggle="tab">pixi.js</a></li>
 
 		<li class="dropdown">
 			<a class="dropdown-toggle" data-toggle="dropdown" href="#">
@@ -109,7 +113,6 @@
 				<li><a href="javascript:preview_app()">Preview</a></li>
 			</ul>
 		</li>
-
 	</ul>
 
 
@@ -380,6 +383,22 @@
 					type="text" 
 					class="input-block-level"
 					onkeydown="if (event.keyCode == 13) update_empythoned_console(this)"/>
+
+			</div>
+		</div>
+
+		<div class="tab-pane" id="pixi-tab">
+			<div class="row">
+				<div
+					class="well span4" 
+					id="PIXI_WORKSPACE"
+					ondrop="javascript:on_drop_pixi(event)"
+					ondragover="javascript:allow_drop(event)"
+					style="width:610px"
+				>
+				</div>
+				<div class="well span1" id="PIXI_SPRITES">
+				</div>
 
 			</div>
 		</div>

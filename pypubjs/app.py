@@ -306,20 +306,28 @@ def on_drop(e):
 		elif file.path.endswith('.js'):
 			add_js_import( file.path )
 		elif file.path.endswith('.jpg') or file.path.endswith('.png'):
-			ul = document.getElementById('IMAGES')
-			li = ul.getElementsByTagName('li')[-1]
-			#li = document.createElement('div')
-			#ul.appendChild(li)
-			print(len(li.childNodes))
-			img = document.createElement('img')
-			img.setAttribute('src', file.path)
-			img.setAttribute('class', 'well img-rounded')
-			img.setAttribute('width', '25%')
-			li.appendChild( img )
+			if file.path in Images:
+				pass
+			else:
+				ul = document.getElementById('IMAGES')
+				li = ul.getElementsByTagName('li')[-1]
+				img = document.createElement('img')
+				img.setAttribute('src', file.path)
+				img.setAttribute('class', 'well img-rounded')
+				img.setAttribute('width', '25%')
+				li.appendChild( img )
 
-			txt = html_editor.getValue()
-			html_editor.setValue(txt+'\n<img src="%s"/>'%file.path)
-			Images.append( file.path )
+				txt = html_editor.getValue()
+				html_editor.setValue(txt+'\n<img src="%s"/>'%file.path)
+				Images.append( file.path )
+
+				img = document.createElement('img')
+				img.setAttribute('src', file.path)
+				img.setAttribute('class', 'img-rounded')
+				img.setAttribute('width', '64px')
+				div = document.getElementById('PIXI_SPRITES')
+				div.appendChild( img )
+
 
 		elif file.path.endswith('.mp4'):
 			ul = document.getElementById('VIDEOS')
@@ -355,6 +363,8 @@ def on_drop(e):
 			Reader.onload = on_load
 			Reader.readAsText( file )
 
+
+
 worker = new( Worker('../pythonjs/empythoned-webworker.js') )
 def empythoned_output( output ):
 	document.getElementById('EMPYTHONED_OUTPUT').value += output.data
@@ -367,3 +377,83 @@ def update_empythoned_console( input ):
 	document.getElementById('EMPYTHONED_OUTPUT').value += '\n>>>' + input.value + '\n'
 	empythoned_eval(input.value+'\n')
 	input.value=''
+
+############################################################
+
+
+with javascript:
+	def on_drag( data ):
+		if this.dragging:
+
+			if this.data.originalEvent.button == 0:
+				newPosition = this.data.getLocalPosition(this.parent)
+				this.position.x = newPosition.x
+				this.position.y = newPosition.y
+
+			else:
+				dx = data['global'].x - this.drag_start_x
+				dy = data['global'].y - this.drag_start_y
+				dx *= 0.005
+				dy *= 0.005
+				dx += this.drag_scale_x
+				dy += this.drag_scale_y
+				this.scale.x = dx
+				this.scale.y = dx
+
+	def on_pressed( data ):
+		print 'on-pressed'
+		this.dragging = True
+		this.data = data
+		e = data.originalEvent
+		e.preventDefault()
+		e.stopPropagation()
+		this.drag_start_x = data['global'].x
+		this.drag_start_y = data['global'].y
+		this.drag_scale_x = this.scale.x
+		this.drag_scale_y = this.scale.y
+
+
+	def on_released( data ):
+		print 'on-released'
+		this.dragging = False
+		this.data = null
+		e = data.originalEvent
+		e.preventDefault()
+
+
+def create_sprite( url ):
+	tex = PIXI.Texture.fromImage( url )
+	sprite = new( PIXI.Sprite(tex) )
+	sprite.anchor.x = 0.5
+	sprite.anchor.y = 0.5
+	sprite.position.x = 200
+	sprite.position.y = 150
+
+	sprite.interactive = True
+	sprite.button = True
+	sprite.mousemove = on_drag
+	sprite.mousedown = on_pressed
+	sprite.mouseup   = on_released
+
+	stage.addChild( sprite )
+
+def on_drop_pixi(e):
+	e.preventDefault()
+	#e.stopPropagation(True)
+	if e.dataTransfer.files.length:
+		file = e.dataTransfer.files[0]
+		create_sprite( file.path )
+
+pixi_renderer = new( PIXI.WebGLRenderer(600,480, None, False, True) )
+
+document.getElementById('PIXI_WORKSPACE').appendChild(pixi_renderer.view);
+stage = new( PIXI.Stage(0,True) )
+
+
+def animate():
+	requestAnimationFrame( animate )
+	pixi_renderer.render(stage)
+
+animate()
+
+print('app ready')
