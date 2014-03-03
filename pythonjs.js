@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Mar  1 11:44:12 2014
+// PythonJS Runtime - regenerated on: Sun Mar  2 22:07:51 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -135,6 +135,9 @@ __get__ = function(object, attribute) {
   if (( attr ) !== undefined) {
     if (typeof(attr) === 'function') {
       if (attr.pythonscript_function === undefined && attr.is_wrapper === undefined) {
+        if (attr.prototype instanceof Object && ( Object.keys(attr.prototype).length ) > 0) {
+          return attr;
+        }
                 var wrapper = function(args, kwargs) {
           var i, arg, keys;
           if (( args ) != undefined) {
@@ -1052,20 +1055,8 @@ isinstance = function(args, kwargs) {
     if (ob instanceof Array && ( klass ) === list) {
       return true;
     } else {
-      if (( klass ) === dict && ob instanceof Object) {
-        if (ob instanceof Array) {
-          return false;
-        } else {
-          if (ob.__class__) {
-            return false;
-          } else {
-            return true;
-          }
-        }
-      } else {
-        if (! (Object.hasOwnProperty.call(ob, "__class__"))) {
-          return false;
-        }
+      if (! (Object.hasOwnProperty.call(ob, "__class__"))) {
+        return false;
       }
     }
   }

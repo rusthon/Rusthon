@@ -217,7 +217,7 @@ def regenerate_runtime():
 
 
 UploadDirectory = '/tmp'
-ResourcePaths = []
+ResourcePaths = [ os.path.abspath('../') ]
 if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
 	ResourcePaths.append( os.path.expanduser('~/blockly-read-only') )
 

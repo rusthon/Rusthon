@@ -145,14 +145,16 @@ def __get__(object, attribute):
 	if attr is not None:  ## what about cases where attr is None?
 		if JS("typeof(attr) === 'function'"):
 			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
-				## to avoid problems with other generated wrapper funcs not marked with:
-				## F.pythonscript_function or F.is_wrapper, we could check if object has these props:
-				## bases, __name__, __dict__, __call__
-				#print 'wrapping something external', object, attribute
 
-				#def wrapper(args,kwargs): return attr.apply(object, args)
+				## if there is a prototype with methods, then we can be sure that the user indends to call `new` on it,
+				## however rare, it is still possible that it is a constructor without a prototype of any length,
+				## in that case the user must call `new` and using the full scope, because things inside a `new`
+				## call are not wrapped, ie: `new(A.B.C.xxx(args))`
+				if instanceof(attr.prototype, Object) and Object.keys(attr.prototype).length > 0:
+					return attr
 
 				def wrapper(args,kwargs):
+					#if instanceof(args, Array):
 					var(i, arg, keys)
 					if args != None:
 						i = 0
@@ -164,7 +166,6 @@ def __get__(object, attribute):
 							i += 1
 
 					if kwargs != None:
-						#keys = Object.keys(kwargs)
 						keys = __object_keys__(kwargs)
 						if keys.length != 0:
 							args.push( kwargs )
@@ -177,6 +178,9 @@ def __get__(object, attribute):
 								i += 1
 
 					return attr.apply(object, args)
+					#else:  ## TODO are there cases where this is needed?
+					#	return attr.apply(object, arguments)
+
 				wrapper.is_wrapper = True
 				wrapper.wrapped = attr  ## this is required because some javascript API's `class-method-style` helper functions on the constructor
 				return wrapper

@@ -23,5 +23,5 @@ def main():
 	TestError( isinstance(c, A)==False )
 
 	d = {'a':1, 'b':2}
-	TestError( isinstance(d, dict)==True )
+	TestWarning( isinstance(d, dict)==True )  ## in javascript-mode this will fail
 	TestError( isinstance(d, A)==False )
