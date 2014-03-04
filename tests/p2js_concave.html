@@ -1,0 +1,63 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="../external/p2.js/p2.min.js"></script>
+<script src="../external/p2.js/p2.extras.js"></script>
+<script src="../external/pixi.js/pixi.dev.js"></script>
+
+<script src="../external/jquery/jquery-latest.js"></script>
+<script src="../external/bootstrap/bootstrap.min.js"></script>
+
+<script src="../external/p2.js/Demo.js"></script>
+<script src="../external/p2.js/PixiDemo.js"></script>
+
+<link href="../external/css/bootstrap.css" rel="stylesheet"/>
+<link href="../external/css/darkstrap.css" rel="stylesheet"/>
+
+
+<script type="text/python">
+
+def test():
+	bp = new( p2.SAPBroadphase() )
+
+	world = new(
+		p2.World(
+			doProfiling=True,
+			gravity = [0, -10],
+			broadphase = bp
+		)
+	)
+
+	planeShape = new( p2.Plane() )
+	plane = new( p2.Body(position=[0,-2]) )
+	plane.addShape( planeShape )
+	world.addBody( plane )
+
+	concaveBody = new(
+		p2.Body( mass=1, position=[0,2] )
+	)
+	path = [
+		[-1, 1],
+		[-1, 0],
+		[1, 0],
+		[1, 1],
+		[0.5, 0.5]
+	]
+	concaveBody.fromPolygon(path)
+	world.addBody(concaveBody)
+
+	demo = new(PixiDemo(world))
+	demo.setState((Demo.DRAWPOLYGON))
+
+	def on_add_body(evt):
+		evt.body.setDensity(1)
+
+	world.on("addBody",on_add_body)
+
+</script>
+
+</head>
+<body onload="javascript:test()">
+
+</body>
+</html>
