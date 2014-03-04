@@ -93,7 +93,11 @@ PixiDemo.prototype.init = function(){
     var renderer =  this.renderer =     PIXI.autoDetectRenderer(s.width, s.height, null, false, true);
     var stage =     this.stage =        new PIXI.DisplayObjectContainer();
     var container = this.container =    new PIXI.Stage(0xFFFFFF,true);
-    document.body.appendChild(this.renderer.view);
+    if (document.getElementById('demo_container')) {
+        document.getElementById('demo_container').appendChild(this.renderer.view);
+    } else {
+        document.body.appendChild(this.renderer.view);
+    }
 
     this.element = this.renderer.view;
 

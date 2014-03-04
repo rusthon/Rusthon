@@ -82,8 +82,8 @@ function Demo(world){
     this.init();
     this.resize(this.w,this.h);
     this.render();
-    this.createStats();
-    this.createMenu();
+    //this.createStats();
+    //this.createMenu();
 
     var iter = -1;
     world.on("postStep",function(e){
@@ -445,7 +445,7 @@ Demo.prototype.createMenu = function(){
         '<a href="https://twitter.com/share" class="twitter-share-button" data-via="schteppe" data-count="none" data-hashtags="p2js">Tweet</a>',
         "<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>",
         "</div>"].join("")).disableSelection());
-
+    
     // Get title
     var title = "Untitled demo";
     $title = $(document).find("title");
