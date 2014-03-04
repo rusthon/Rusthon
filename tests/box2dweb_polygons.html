@@ -1,0 +1,213 @@
+<html>
+<head>
+<script src="pythonscript.js"></script>
+<script src="../external/box2dweb/Box2dWeb-2.1.a.3.min.js"></script>
+
+<script type="text/javascript">
+ //http://js-tut.aardon.de/js-tut/tutorial/position.html
+ function getElementPosition(element) {
+    var elem=element, tagname="", x=0, y=0;
+   
+    while((typeof(elem) == "object") && (typeof(elem.tagName) != "undefined")) {
+       y += elem.offsetTop;
+       x += elem.offsetLeft;
+       tagname = elem.tagName.toUpperCase();
+
+       if(tagname == "BODY")
+          elem=0;
+
+       if(typeof(elem) == "object") {
+          if(typeof(elem.offsetParent) == "object")
+             elem = elem.offsetParent;
+       }
+    }
+
+    return {x: x, y: y};
+ }
+
+</script>
+
+<script type="text/python">
+
+Vec2  = Box2D.Common.Math.b2Vec2
+AABB = Box2D.Collision.b2AABB
+BodyDef = Box2D.Dynamics.b2BodyDef
+Body = Box2D.Dynamics.b2Body
+FixtureDef = Box2D.Dynamics.b2FixtureDef
+Fixture = Box2D.Dynamics.b2Fixture
+World = Box2D.Dynamics.b2World
+MassData = Box2D.Collision.Shapes.b2MassData
+PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
+CircleShape = Box2D.Collision.Shapes.b2CircleShape
+DebugDraw = Box2D.Dynamics.b2DebugDraw
+MouseJointDef =  Box2D.Dynamics.Joints.b2MouseJointDef
+
+
+mouseX=mouseY=None
+mousePVec=None
+isMouseDown=False
+selectedBody=None
+mouseJoint=None
+canvasPosition = None
+
+def test():
+	global canvasPosition, world
+	canvasPosition = getElementPosition(document.getElementById("canvas"))
+	canvas = document.getElementById("canvas")
+	print('canvas', canvas)
+	ctx = canvas.getContext("2d")
+	print('ctx', ctx)
+
+
+	gravity = new(Vec2(0,10))
+	world = new(World(gravity, True))
+
+	fixDef = new(FixtureDef())
+	fixDef.density = 1.0
+	fixDef.friction = 0.5
+	fixDef.restitution = 0.9
+
+	bodyDef = new(BodyDef())
+
+	bodyDef.type = Body.b2_staticBody
+	fixDef.shape = new(PolygonShape())
+	fixDef.shape.SetAsBox(20, 2);
+
+	bodyDef.position.Set(10, 400 / 30 + 1.8)
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	bodyDef.position.Set(10, -1.8);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	fixDef.shape.SetAsBox(2, 14);
+	bodyDef.position.Set(-1.8, 13);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+	bodyDef.position.Set(21.8, 13);
+	world.CreateBody(bodyDef).CreateFixture(fixDef);
+
+	bodyDef.type = Body.b2_dynamicBody
+	for i in range(10):
+		rand = Math.random()
+		if rand > 0.9:
+			fixDef.shape = new(PolygonShape())
+			fixDef.shape.SetAsBox(
+				Math.random() + 0.1,
+				Math.random() + 0.1
+			)
+		elif rand > 0.6:
+			fixDef.shape = new(CircleShape(Math.random()+0.1))
+
+		else:
+			fixDef.shape = new(PolygonShape())
+			arr = [
+				new(Vec2(-1, -1)),
+				new(Vec2(1+Math.random(), -1)),
+				new(Vec2(1+Math.random(), 1+Math.random())),
+				new(Vec2(-1, 1+Math.random())),
+			]
+			fixDef.shape.SetAsArray(arr)
+
+
+
+		bodyDef.position.x = Math.random() * 10
+		bodyDef.position.y = Math.random() * 10
+		world.CreateBody(bodyDef).CreateFixture(fixDef)
+
+
+	debugDraw = new(DebugDraw())
+	print('dd', debugDraw)
+	debugDraw.SetSprite(ctx)
+	debugDraw.SetDrawScale(30.0)
+	debugDraw.SetFillAlpha(0.5)
+	debugDraw.SetLineThickness(1.0)
+	debugDraw.SetFlags(DebugDraw.e_shapeBit | DebugDraw.e_jointBit)
+	world.SetDebugDraw(debugDraw)
+
+	window.setInterval(update, 1000 / 60);
+
+
+	document.addEventListener("mousedown", _mousedown, True)
+
+	document.addEventListener("mouseup", _mouseup, True)
+
+
+def _mousedown(e):
+	global isMouseDown
+	isMouseDown = True
+	handleMouseMove(e)
+	document.addEventListener("mousemove", handleMouseMove, True)
+
+def _mouseup(e):
+	global isMouseDown, mouseX, mouseY
+	document.removeEventListener("mousemove", handleMouseMove, True)
+	isMouseDown = False;
+	mouseX = undefined
+	mouseY = undefined
+
+def handleMouseMove(e):
+	global mouseX, mouseY
+	mouseX = (e.clientX - canvasPosition.x) / 30;
+	mouseY = (e.clientY - canvasPosition.y) / 30;
+
+def getBodyAtMouse():
+	global mousePVec, selectedBody
+	mousePVec = new( Vec2(mouseX, mouseY) )
+	aabb = new( AABB() )
+	aabb.lowerBound.Set(mouseX - 0.001, mouseY - 0.001)
+	aabb.upperBound.Set(mouseX + 0.001, mouseY + 0.001)
+
+	# Query the world for overlapping shapes.
+	selectedBody = None
+	world.QueryAABB(getBodyCB, aabb);
+	return selectedBody
+
+
+def getBodyCB(fixture):
+	global selectedBody
+	if fixture.GetBody().GetType() != Body.b2_staticBody:
+		if fixture.GetShape().TestPoint(fixture.GetBody().GetTransform(), mousePVec):
+			print('hit IT')
+			selectedBody = fixture.GetBody()
+			return False
+		else:
+			print('point outside')
+	return True
+
+
+def update():
+	global mouseJoint
+
+	if isMouseDown and mouseJoint is None:
+		body = getBodyAtMouse()
+		print('getBodyAtMouse result', body)
+		if body:
+			print('mouse down and joint is none')
+			md = new(MouseJointDef())
+			md.bodyA = world.GetGroundBody()
+			md.bodyB = body
+			md.target.Set(mouseX, mouseY)
+			md.collideConnected = True
+			md.maxForce = 300.0 * body.GetMass()
+			mouseJoint = world.CreateJoint(md)
+			body.SetAwake(True)
+		else:
+			print('no body')
+
+	if mouseJoint:
+		if isMouseDown:
+			mouseJoint.SetTarget(new(Vec2(mouseX, mouseY)))
+		else:
+			world.DestroyJoint(mouseJoint)
+			mouseJoint = None
+
+	world.Step(1 / 60, 10, 10)
+	world.DrawDebugData()
+	world.ClearForces()
+
+
+</script>
+
+</head>
+<body onload="javascript:test()">
+
+<canvas id="canvas" width="600" height="400"></canvas>
+</body>
+</html>
