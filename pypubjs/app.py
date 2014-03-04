@@ -22,10 +22,124 @@ js_head_editor.setTheme("ace/theme/monokai")
 js_head_editor.getSession().setMode("ace/mode/javascript")
 js_head_editor.setValue( '' )
 
+_pycode_ = """
+demo = None
+world = None
+
+def create_blob(N=10, M=10, k=1000, d=10, l=0.35, m=1):
+	bodies = []
+
+	#// Create particle bodies
+	particleShape = new(p2.Particle())
+	for i in range(N):
+		bodies.push([])
+		for j in range(M):
+			p = new(p2.Body(
+				mass=m,
+				position=[(i-N/2)*l*1.05, (j-M/2)*l*1.05]
+			))
+			p.addShape(particleShape)
+			bodies[i].push(p)
+			world.addBody(p)
+
+	#// Vertical springs
+	for i in range(N):
+		for j in range(M-1):
+			bodyA = bodies[i][j];
+			bodyB = bodies[i][j+1];
+			spring = new(p2.Spring(
+				bodyA,bodyB,
+				stiffness=k,
+				restLength=l,
+				damping=d
+			))
+			world.addSpring(spring)
+
+	#// Horizontal springs
+	for i in range(N-1):
+		for j in range(M):
+			bodyA = bodies[i][j];
+			bodyB = bodies[i+1][j];
+			spring = new( p2.Spring(
+				bodyA,bodyB,
+				stiffness=k,
+				restLength=l,
+				damping=d
+			))
+			world.addSpring(spring)
+
+	#// Diagonal right/down springs
+	for i in range(N-1):
+		for j in range(M-1):
+			a = bodies[i][j]
+			b = bodies[i+1][j+1]
+			spring = new(p2.Spring(
+				a,b,
+				stiffness=k,
+				restLength=Math.sqrt(l*l + l*l)
+			))
+			world.addSpring(spring)
+
+	#// Diagonal left/down springs
+	for i in range(N-1):
+		for j in range(M-1):
+			a = bodies[i+1][j]
+			b = bodies[i][j+1]
+			spring = new(p2.Spring(
+				a,b,
+				stiffness=k,
+				restLength=Math.sqrt(l*l + l*l)
+			))
+			world.addSpring(spring)
+
+
+def main():
+	global demo, world
+	bp = new( p2.SAPBroadphase() )
+
+	world = new(
+		p2.World(
+			doProfiling=True,
+			gravity = [0, -10],
+			broadphase = bp
+		)
+	)
+
+	create_blob( N=5, M=5 )
+
+
+	planeShape = new( p2.Plane() )
+	plane = new( p2.Body(position=[0,-2]) )
+	plane.addShape( planeShape )
+	world.addBody( plane )
+
+	concaveBody = new(
+		p2.Body( mass=1, position=[0,2] )
+	)
+	path = [
+		[-1, 1],
+		[-1, 0],
+		[1, 0],
+		[1, 1],
+		[0.5, 0.5]
+	]
+	concaveBody.fromPolygon(path)
+	world.addBody(concaveBody)
+
+	demo = new(PixiDemo(world))
+	demo.setState(Demo.DRAWPOLYGON)
+
+	def on_add_body(evt):
+		evt.body.setDensity(1)
+
+	world.on("addBody",on_add_body)
+
+"""
+
 py_body_editor = ace.edit( 'EDITOR_BODY_PY' )
 py_body_editor.setTheme("ace/theme/monokai")
 py_body_editor.getSession().setMode("ace/mode/python")
-py_body_editor.setValue( 'def test():\n  window.alert("hello world")' )
+py_body_editor.setValue( _pycode_ )
 
 py_head_editor = ace.edit( 'EDITOR_HEAD_PY' )
 py_head_editor.setTheme("ace/theme/monokai")
@@ -34,11 +148,15 @@ py_head_editor.setValue( '' )
 
 
 _html_ = """
-<div class="well">
-	<button class="btn" onclick="test()">
-		clickme
-	</button>
+<div class="navbar">
+	<button class="btn btn-inverse" onclick="javascript:main()">run</button>
+	<button class="btn btn-warning" onclick="javascript:demo.setState(Demo.DEFAULT)">move</button>
+	<button class="btn" onclick="javascript:demo.setState(Demo.DRAWPOLYGON)">draw shape</button>
+	<button class="btn btn-info" onclick="javascript:demo.setState(Demo.DRAWCIRCLE)">draw circle</button>
 </div>
+
+<div class="well" id="demo_container"></div>
+
 """
 
 html_editor = ace.edit( 'EDITOR_HTML' )
@@ -94,7 +212,18 @@ JsImports = []
 def add_js_import( url ):
 	ul = document.getElementById('IMPORTS_JS')
 	_make_list_item( url, ul, JsImports )
-for url in ['../pythonjs.js', '../external/jquery/jquery-latest.js', '../external/bootstrap/bootstrap.min.js']:
+
+_DEFAULT_EXTERN_JS = [
+	'../pythonjs.js', 
+	'../external/jquery/jquery-latest.js', 
+	'../external/bootstrap/bootstrap.min.js',
+	'../external/p2.js/p2.min.js',
+	'../external/p2.js/p2.extras.js',
+	'../external/pixi.js/pixi.dev.js',
+	'../external/p2.js/Demo.js',
+	'../external/p2.js/PixiDemo.js',
+]
+for url in _DEFAULT_EXTERN_JS:
 	add_js_import( url )
 
 #################### app compiler #####################
