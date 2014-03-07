@@ -203,6 +203,8 @@ class PythonToPythonJS(NodeVisitor):
 		self._js_classes = dict()
 		self._in_js_class = False
 
+		self._iter_ids = 0
+
 		self._cache_for_body_calls = False
 		self._cache_while_body_calls = False
 		self._comprehensions = []
@@ -2459,7 +2461,9 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(iter, Name) and iter.id in self._global_typed_lists:
 				self._instances[ target.id ] = list( self._global_typed_lists[ iter.id ] )[0]
 
-			vars.append('__iterator__')  ## TODO - test nested for loops - this should be __iterator__N
+			iterid = self._iter_ids
+			self._iter_ids += 1
+			vars.append('__iterator__%s'%iterid)
 			if not self._with_coffee:
 				writer.write('var(%s)' % ','.join(vars))
 
@@ -2479,7 +2483,7 @@ class PythonToPythonJS(NodeVisitor):
 			elif isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in self._generator_functions:
 				is_generator = True
 			else:
-				writer.write('__iterator__ = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' % self.visit(iter))
+				writer.write('__iterator__%s = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' %(iterid, self.visit(iter)))
 
 			if is_generator:
 				iter_name = self.visit(target)
@@ -2512,9 +2516,9 @@ class PythonToPythonJS(NodeVisitor):
 				writer.pull()
 			else:
 				if not self._with_coffee:
-					writer.write('var(__next__)')
-				writer.write('__next__ = __get__(__iterator__, "next")')
-				writer.write('while __iterator__.index < __iterator__.length:')
+					writer.write('var(__next__%s)'%iterid)
+				writer.write('__next__%s = __get__(__iterator__%s, "next")'%(iterid,iterid))
+				writer.write('while __iterator__%s.index < __iterator__%s.length:'%(iterid,iterid))
 
 				writer.push()
 
@@ -2526,7 +2530,7 @@ class PythonToPythonJS(NodeVisitor):
 						else:
 							writer.write('%s = __mtarget__[%s]' %(elt,i))
 				else:
-					writer.write('%s = __next__()' % target.id)
+					writer.write('%s = __next__%s()' %(target.id, iterid))
 
 				map(self.visit, node.body)
 
