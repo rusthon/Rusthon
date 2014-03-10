@@ -120,7 +120,7 @@ SKPR.ParallelReducer.prototype.__setupRttScene = function () {
         rttQuadGeom.faceVertexUvs[0][0][0].set(0.0, 1.0);
         rttQuadGeom.faceVertexUvs[0][0][1].set(0.0, 1.0 - newMaxUv);
         rttQuadGeom.faceVertexUvs[0][0][2].set(newMaxUv, 1.0 - newMaxUv);
-        rttQuadGeom.faceVertexUvs[0][0][3].set(newMaxUv, 1.0);
+        //rttQuadGeom.faceVertexUvs[0][0][3].set(newMaxUv, 1.0);
         rttQuadGeom.applyMatrix(new THREE.Matrix4().makeTranslation(0.5 * size, -0.5 * size, 0.0));
         rttQuadGeom.applyMatrix(new THREE.Matrix4().makeScale(scale, scale, scale));
         rttQuadGeom.applyMatrix(new THREE.Matrix4().makeTranslation(-0.5 * size, 0.5 * size, 0.0));
