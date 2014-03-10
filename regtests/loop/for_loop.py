@@ -50,3 +50,25 @@ def main():
 	TestError( 'a' in keys )
 	TestError( 'A' in values )
 
+	ob2 = {'c':'C', 'd':'D'}
+	e = 0
+	arr = []
+	for x,y in ob.items():
+		arr.append(x)
+		arr.append(y)
+		for w,z in ob2.items():
+			e += 1
+			arr.append(w)
+			arr.append(z)
+
+	TestError( e==4 )
+	TestError( 'a' in arr)
+	TestError( 'b' in arr)
+	TestError( 'A' in arr)
+	TestError( 'B' in arr)
+	TestError( 'c' in arr)
+	TestError( 'C' in arr)
+	TestError( 'd' in arr)
+	TestError( 'D' in arr)
+
+

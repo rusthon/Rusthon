@@ -2367,6 +2367,9 @@ class PythonToPythonJS(NodeVisitor):
 						c.constant = True
 						self._call_ids += 1
 
+		iterid = self._iter_ids
+		self._iter_ids += 1
+
 		target = node.target
 		enumtar = None
 		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, Name) and node.iter.func.id == 'enumerate':
@@ -2385,7 +2388,7 @@ class PythonToPythonJS(NodeVisitor):
 		multi_target = []
 
 		if isinstance(target, ast.Tuple):
-			vars.append( '__mtarget__')
+			vars.append( '__mtarget__%s' %iterid)
 			for elt in target.elts:
 				if isinstance(elt, ast.Name):
 					multi_target.append( elt.id )
@@ -2428,21 +2431,21 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in self._generator_functions:
 				iter_name = self.visit(target)
-				writer.write('var(%s, __generator__)' %iter_name)
-				writer.write('__generator__ = %s' %self.visit(iter))
-				writer.write('while __generator__.__done__ != 1:')
+				writer.write('var(%s, __generator__%s)' %(iter_name,iterid))
+				writer.write('__generator__%s = %s' %(iterid,self.visit(iter)))
+				writer.write('while __generator__%s.__done__ != 1:'%iterid)
 				writer.push()
-				writer.write('%s = __generator__.next()'%iter_name)
+				writer.write('%s = __generator__%s.next()'%(iter_name,iterid))
 				map(self.visit, node.body)
 				writer.pull()
 
 			else:
 				if multi_target:
 					writer.write('var(%s)' % ','.join(vars))
-					writer.write('for %s in %s:' %('__mtarget__',self.visit(iter)))
+					writer.write('for __mtarget__%s in %s:' %(iterid,self.visit(iter)))
 					writer.push()
 					for i,elt in enumerate(multi_target):
-						writer.write('%s = __mtarget__[%s]' %(elt,i))
+						writer.write('%s = __mtarget__%s[%s]' %(elt,iterid,i))
 
 				else:
 					writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
@@ -2461,8 +2464,7 @@ class PythonToPythonJS(NodeVisitor):
 			if isinstance(iter, Name) and iter.id in self._global_typed_lists:
 				self._instances[ target.id ] = list( self._global_typed_lists[ iter.id ] )[0]
 
-			iterid = self._iter_ids
-			self._iter_ids += 1
+
 			vars.append('__iterator__%s'%iterid)
 			if not self._with_coffee:
 				writer.write('var(%s)' % ','.join(vars))
@@ -2488,11 +2490,11 @@ class PythonToPythonJS(NodeVisitor):
 			if is_generator:
 				iter_name = self.visit(target)
 				if not self._with_coffee:
-					writer.write('var(%s, __generator__)' %iter_name)
-				writer.write('__generator__ = %s' %self.visit(iter))
-				writer.write('while __generator__.__done__ != 1:')
+					writer.write('var(%s, __generator__%s)' %(iter_name, iterid))
+				writer.write('__generator__%s = %s' %(iterid,self.visit(iter)))
+				writer.write('while __generator__%s.__done__ != 1:'%iterid)
 				writer.push()
-				writer.write('%s = __generator__.next()'%iter_name)
+				writer.write('%s = __generator__%s.next()'%(iter_name,iterid))
 				map(self.visit, node.body)
 				writer.pull()
 
@@ -2523,12 +2525,12 @@ class PythonToPythonJS(NodeVisitor):
 				writer.push()
 
 				if multi_target:
-					writer.write('__mtarget__ = __next__()')
+					writer.write('__mtarget__%s = __next__%s()'%(iterid, iterid))
 					for i,elt in enumerate(multi_target):
 						if self._with_lua:
-							writer.write('%s = __mtarget__[...][%s]' %(elt,i+1))
+							writer.write('%s = __mtarget__%s[...][%s]' %(elt,iterid,i+1))
 						else:
-							writer.write('%s = __mtarget__[%s]' %(elt,i))
+							writer.write('%s = __mtarget__%s[%s]' %(elt,iterid,i))
 				else:
 					writer.write('%s = __next__%s()' %(target.id, iterid))
 
