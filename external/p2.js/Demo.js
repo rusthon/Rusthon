@@ -23,7 +23,7 @@ var requestAnimationFrame =     window.requestAnimationFrame       ||
  * @constructor
  * @param {World} world
  */
-function Demo(world){
+function Demo(world, width, height){
     p2.EventEmitter.call(this);
 
     var that = this;
@@ -76,8 +76,8 @@ function Demo(world){
     this.stats_Nsummed = 0;
     this.stats_average = -1;
 
-    this.w = $(window).width();
-    this.h = $(window).height();
+    this.w = width || $(window).width();
+    this.h = height || $(window).height();
 
     this.init();
     this.resize(this.w,this.h);
@@ -107,9 +107,11 @@ function Demo(world){
         that.removeVisual(e.spring);
     });
 
+    /*
     $(window).resize(function(){
         that.resize($(window).width(), $(window).height());
     });
+    */
 
     $(document).keydown(function(e){
         if(e.keyCode){
@@ -309,6 +311,7 @@ Demo.prototype.handleMouseUp = function(physicsPosition){
             if(this.drawPoints.length > 3){
                 // Create polygon
                 b = new p2.Body({ mass : 1 });
+                b._draw_points = this.drawPoints.slice();
                 if(b.fromPolygon(this.drawPoints,{
                     removeCollinearPoints : 0.01,
                 })){

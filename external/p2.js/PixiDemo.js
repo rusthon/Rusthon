@@ -554,7 +554,7 @@ PixiDemo.prototype.addRenderable = function(obj){
     var zero = [0,0];
 
     if(obj instanceof p2.Body && obj.shapes.length){
-
+        obj._sprite_color = color;
         var sprite = new PIXI.Graphics();
         if(obj.concavePath && !this.debugPolygons){
             var path = [];
