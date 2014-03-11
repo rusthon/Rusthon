@@ -221,6 +221,13 @@ ResourcePaths = [ os.path.abspath('../') ]
 if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
 	ResourcePaths.append( os.path.expanduser('~/blockly-read-only') )
 
+if os.path.isdir( os.path.expanduser('~/three.js/examples') ):
+	ResourcePaths.append( os.path.expanduser('~/three.js/examples') )
+
+if os.path.isdir( os.path.expanduser('~/textures') ):
+	ResourcePaths.append( os.path.expanduser('~/textures') )
+
+
 class MainHandler( tornado.web.RequestHandler ):
 	def get(self, path=None):
 		print('path', path)

@@ -177,7 +177,21 @@ class XXX(object):
 
 """
 
-source = document.getElementById('pythonjs_source').firstChild.nodeValue
+source = """
+class XXX:
+	def mymethod(self):
+		if self._with_dart:
+			pass
+
+		elif self._with_js or javascript:
+			a = 1
+			if True:  ## TODO this this
+				b = 2
+
+"""
+
+
+#source = document.getElementById('pythonjs_source').firstChild.nodeValue
 
 
 def test():

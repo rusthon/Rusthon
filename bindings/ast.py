@@ -550,7 +550,7 @@ __MAP = {
 }
 
 def to_ast_node( ctx, node=None ):
-	#print 'to-ast-node', ctx
+	print 'to-ast-node', ctx
 
 	if ctx.type == 'node':
 		print 'NODE::', ctx.node
@@ -598,6 +598,7 @@ def to_ast_node( ctx, node=None ):
 
 	elif ctx.type == 'single_kw':
 		if ctx.token == 'else' or ctx.token == 'elif':
+			#if ctx.token == 'else':  ## TODO fix: "if/elif: if"
 			orelse = IfExp._previous.orelse
 			for child in node.children:
 				walk_nodes( child, orelse )
@@ -610,21 +611,21 @@ def to_ast_node( ctx, node=None ):
 	elif ctx.type == 'node_js':
 		print(ctx.tree[0])
 		## special brython inline javascript ##
-		if len(ctx.tree) == 1 and '__iadd__' in ctx.tree[0]:
-			AugAssign._previous.op = '+'
-		elif len(ctx.tree) == 1 and '__isub__' in ctx.tree[0]:
-			AugAssign._previous.op = '-'
-		elif len(ctx.tree) == 1 and ctx.tree[0].startswith("if($temp.$fast_augm"):
-			print(ctx.tree[0])
-			c = ctx.tree[0].split('"')
-			if len(c) == 3:
-				AugAssign._previous.target = Name( name=c[1] )
-			else:
-				print(c)
-				raise TypeError
+		#if len(ctx.tree) == 1 and '__iadd__' in ctx.tree[0]:
+		#	AugAssign._previous.op = '+'
+		#elif len(ctx.tree) == 1 and '__isub__' in ctx.tree[0]:
+		#	AugAssign._previous.op = '-'
+		#elif len(ctx.tree) == 1 and ctx.tree[0].startswith("if($temp.$fast_augm"):
+		#	print(ctx.tree[0])
+		#	c = ctx.tree[0].split('"')
+		#	if len(c) == 3:
+		#		AugAssign._previous.target = Name( name=c[1] )
+		#	else:
+		#		print(c)
+		#		raise TypeError
 
-		elif len(ctx.tree) == 1 and ctx.tree[0] == 'else':
-			pass
+		if len(ctx.tree) == 1 and ctx.tree[0] == 'else':  ## DEPRECATED
+			raise TypeError
 		else:
 			print '--------special node_js error-------'
 			print(ctx)
