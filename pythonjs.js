@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sun Mar  2 22:07:51 2014
+// PythonJS Runtime - regenerated on: Wed Mar 19 20:48:03 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -1527,6 +1527,7 @@ _setup_array_prototype = function(args, kwargs) {
   Array.prototype.__getslice__ = func;
     var func = function(item) {
     this.push(item);
+    return this;
   }
 
   func.NAME = "func";
@@ -1541,6 +1542,7 @@ _setup_array_prototype = function(args, kwargs) {
       var obj = __iter14[ __idx14 ];
       this.push(obj);
     }
+    return this;
   }
 
   extend.NAME = "extend";
@@ -1909,12 +1911,12 @@ map = function(args, kwargs) {
   var func = __args__['func'];
   var objs = __args__['objs'];
   arr = [];
-  var ob, __iterator__;
-  __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    ob = __next__();
+  var ob, __iterator__16;
+  __iterator__16 = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
+  var __next__16;
+  __next__16 = __get__(__iterator__16, "next");
+  while (( __iterator__16.index ) < __iterator__16.length) {
+    ob = __next__16();
     v = __get__(func, "__call__")([ob], __NULL_OBJECT__);
     arr.push(v);
   }
@@ -1940,12 +1942,12 @@ filter = function(args, kwargs) {
   var func = __args__['func'];
   var objs = __args__['objs'];
   arr = [];
-  var ob, __iterator__;
-  __iterator__ = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    ob = __next__();
+  var ob, __iterator__17;
+  __iterator__17 = __get__(__get__(objs, "__iter__"), "__call__")([], Object());
+  var __next__17;
+  __next__17 = __get__(__iterator__17, "next");
+  while (( __iterator__17.index ) < __iterator__17.length) {
+    ob = __next__17();
     if (__get__(func, "__call__")([ob], __NULL_OBJECT__)) {
       arr.push(ob);
     }
@@ -1971,12 +1973,12 @@ min = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var lst = __args__['lst'];
   a = undefined;
-  var value, __iterator__;
-  __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    value = __next__();
+  var value, __iterator__18;
+  __iterator__18 = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
+  var __next__18;
+  __next__18 = __get__(__iterator__18, "next");
+  while (( __iterator__18.index ) < __iterator__18.length) {
+    value = __next__18();
     if (( a ) === undefined) {
       a = value;
     } else {
@@ -2006,12 +2008,12 @@ max = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var lst = __args__['lst'];
   a = undefined;
-  var value, __iterator__;
-  __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    value = __next__();
+  var value, __iterator__19;
+  __iterator__19 = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
+  var __next__19;
+  __next__19 = __get__(__iterator__19, "next");
+  while (( __iterator__19.index ) < __iterator__19.length) {
+    value = __next__19();
     if (( a ) === undefined) {
       a = value;
     } else {
@@ -2221,23 +2223,23 @@ __pytuple___init__ = function(args, kwargs) {
     self["$wrapped"] = arr;
   }
   if (js_object instanceof Array) {
-    var item, __iterator__;
-    __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-    var __next__;
-    __next__ = __get__(__iterator__, "next");
-    while (( __iterator__.index ) < __iterator__.length) {
-      item = __next__();
+    var item, __iterator__20;
+    __iterator__20 = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+    var __next__20;
+    __next__20 = __get__(__iterator__20, "next");
+    while (( __iterator__20.index ) < __iterator__20.length) {
+      item = __next__20();
       __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
     }
   } else {
     if (__test_if_true__(js_object)) {
       if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
-        var v;
-        __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-        ;
-        __next__ = __get__(__iterator__, "next");
-        while (( __iterator__.index ) < __iterator__.length) {
-          v = __next__();
+        var v, __iterator__21;
+        __iterator__21 = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+        var __next__21;
+        __next__21 = __get__(__iterator__21, "next");
+        while (( __iterator__21.index ) < __iterator__21.length) {
+          v = __next__21();
           __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
         }
       } else {
@@ -2496,23 +2498,23 @@ __pylist___init__ = function(args, kwargs) {
     arr = [];
     self["$wrapped"] = arr;
     if (js_object instanceof Array) {
-      var item, __iterator__;
-      __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-      var __next__;
-      __next__ = __get__(__iterator__, "next");
-      while (( __iterator__.index ) < __iterator__.length) {
-        item = __next__();
+      var item, __iterator__23;
+      __iterator__23 = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+      var __next__23;
+      __next__23 = __get__(__iterator__23, "next");
+      while (( __iterator__23.index ) < __iterator__23.length) {
+        item = __next__23();
         __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
       }
     } else {
       if (__test_if_true__(js_object)) {
         if (isinstance([js_object, array], __NULL_OBJECT__) || isinstance([js_object, tuple], __NULL_OBJECT__) || isinstance([js_object, list], __NULL_OBJECT__)) {
-          var v;
-          __iterator__ = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
-          ;
-          __next__ = __get__(__iterator__, "next");
-          while (( __iterator__.index ) < __iterator__.length) {
-            v = __next__();
+          var v, __iterator__24;
+          __iterator__24 = __get__(__get__(js_object, "__iter__"), "__call__")([], Object());
+          var __next__24;
+          __next__24 = __get__(__iterator__24, "next");
+          while (( __iterator__24.index ) < __iterator__24.length) {
+            v = __next__24();
             __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
           }
         } else {
@@ -2622,12 +2624,12 @@ __pylist_extend = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var other = __args__['other'];
-  var obj, __iterator__;
-  __iterator__ = __get__(__get__(other, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    obj = __next__();
+  var obj, __iterator__25;
+  __iterator__25 = __get__(__get__(other, "__iter__"), "__call__")([], Object());
+  var __next__25;
+  __next__25 = __get__(__iterator__25, "next");
+  while (( __iterator__25.index ) < __iterator__25.length) {
+    obj = __next__25();
     __get__(__get__(self, "append"), "__call__")([obj], __NULL_OBJECT__);
   }
 }
@@ -2998,12 +3000,12 @@ __dict___init__ = function(args, kwargs) {
     if (__test_if_true__(js_object)) {
       ob = js_object;
       if (ob instanceof Array) {
-        var o, __iterator__;
-        __iterator__ = __get__(__get__(ob, "__iter__"), "__call__")([], Object());
-        var __next__;
-        __next__ = __get__(__iterator__, "next");
-        while (( __iterator__.index ) < __iterator__.length) {
-          o = __next__();
+        var o, __iterator__27;
+        __iterator__27 = __get__(__get__(ob, "__iter__"), "__call__")([], Object());
+        var __next__27;
+        __next__27 = __get__(__iterator__27, "next");
+        while (( __iterator__27.index ) < __iterator__27.length) {
+          o = __next__27();
           if (o instanceof Array) {
             __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
           } else {
@@ -3012,12 +3014,12 @@ __dict___init__ = function(args, kwargs) {
         }
       } else {
         if (isinstance([ob, dict], __NULL_OBJECT__)) {
-          var key;
-          __iterator__ = __get__(__get__(__jsdict_keys(ob), "__iter__"), "__call__")([], Object());
-          ;
-          __next__ = __get__(__iterator__, "next");
-          while (( __iterator__.index ) < __iterator__.length) {
-            key = __next__();
+          var key, __iterator__28;
+          __iterator__28 = __get__(__get__(__jsdict_keys(ob), "__iter__"), "__call__")([], Object());
+          var __next__28;
+          __next__28 = __get__(__iterator__28, "next");
+          while (( __iterator__28.index ) < __iterator__28.length) {
+            key = __next__28();
             value = __get__(ob, "__getitem__")([key], Object());
             __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
           }
@@ -3049,12 +3051,12 @@ __dict_jsify = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   keys = __object_keys__([self["$wrapped"]], __NULL_OBJECT__);
-  var key, __iterator__;
-  __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    key = __next__();
+  var key, __iterator__29;
+  __iterator__29 = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
+  var __next__29;
+  __next__29 = __get__(__iterator__29, "next");
+  while (( __iterator__29.index ) < __iterator__29.length) {
+    key = __next__29();
     value = __get__(self["$wrapped"], "__getitem__")([key], Object());
     if (( typeof(value) ) == "object") {
       if (__get__(value, "jsify")) {
@@ -3154,12 +3156,12 @@ __dict_update = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var other = __args__['other'];
-  var key, __iterator__;
-  __iterator__ = __get__(__get__(other, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    key = __next__();
+  var key, __iterator__30;
+  __iterator__30 = __get__(__get__(other, "__iter__"), "__call__")([], Object());
+  var __next__30;
+  __next__30 = __get__(__iterator__30, "next");
+  while (( __iterator__30.index ) < __iterator__30.length) {
+    key = __next__30();
     __get__(__get__(self, "__setitem__"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
   }
 }
@@ -3183,12 +3185,12 @@ __dict_items = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   arr = [];
-  var key, __iterator__;
-  __iterator__ = __get__(__get__(__jsdict_keys(self), "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    key = __next__();
+  var key, __iterator__31;
+  __iterator__31 = __get__(__get__(__jsdict_keys(self), "__iter__"), "__call__")([], Object());
+  var __next__31;
+  __next__31 = __get__(__iterator__31, "next");
+  while (( __iterator__31.index ) < __iterator__31.length) {
+    key = __next__31();
     __get__(__get__(arr, "append"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
   }
   return arr;
@@ -3910,12 +3912,12 @@ __array_extend = function(args, kwargs) {
   __args__ = get_arguments(__sig__, args, kwargs);
   var self = __args__['self'];
   var lst = __args__['lst'];
-  var value, __iterator__;
-  __iterator__ = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
-  var __next__;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    value = __next__();
+  var value, __iterator__36;
+  __iterator__36 = __get__(__get__(lst, "__iter__"), "__call__")([], Object());
+  var __next__36;
+  __next__36 = __get__(__iterator__36, "next");
+  while (( __iterator__36.index ) < __iterator__36.length) {
+    value = __next__36();
     __get__(__get__(self, "append"), "__call__")([value], __NULL_OBJECT__);
   }
 }
@@ -4035,12 +4037,12 @@ _to_pythonjs = function(args, kwargs) {
     raw = __get__(list, "__call__")(__args_1, __kwargs_1);
     ;
     append = __get__(output, "append");
-    var __iterator__;
-    __iterator__ = __get__(__get__(raw, "__iter__"), "__call__")([], Object());
-    var __next__;
-    __next__ = __get__(__iterator__, "next");
-    while (( __iterator__.index ) < __iterator__.length) {
-      item = __next__();
+    var __iterator__37;
+    __iterator__37 = __get__(__get__(raw, "__iter__"), "__call__")([], Object());
+    var __next__37;
+    __next__37 = __get__(__iterator__37, "next");
+    while (( __iterator__37.index ) < __iterator__37.length) {
+      item = __next__37();
       __get__(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], __NULL_OBJECT__);
     }
     return output;
@@ -4052,12 +4054,12 @@ _to_pythonjs = function(args, kwargs) {
   __args_2 = [];
   __kwargs_2 = {"js_object": Object.keys(json)};
   keys = __get__(list, "__call__")(__args_2, __kwargs_2);
-  var key;
-  __iterator__ = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
-  ;
-  __next__ = __get__(__iterator__, "next");
-  while (( __iterator__.index ) < __iterator__.length) {
-    key = __next__();
+  var key, __iterator__38;
+  __iterator__38 = __get__(__get__(keys, "__iter__"), "__call__")([], Object());
+  var __next__38;
+  __next__38 = __get__(__iterator__38, "next");
+  while (( __iterator__38.index ) < __iterator__38.length) {
+    key = __next__38();
     set([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
   }
   return output;
@@ -4101,24 +4103,24 @@ _to_json = function(args, kwargs) {
   var pythonjs = __args__['pythonjs'];
   if (isinstance([pythonjs, list], __NULL_OBJECT__)) {
     r = [];
-    var i, __iterator__;
-    __iterator__ = __get__(__get__(pythonjs, "__iter__"), "__call__")([], Object());
-    var __next__;
-    __next__ = __get__(__iterator__, "next");
-    while (( __iterator__.index ) < __iterator__.length) {
-      i = __next__();
+    var i, __iterator__39;
+    __iterator__39 = __get__(__get__(pythonjs, "__iter__"), "__call__")([], Object());
+    var __next__39;
+    __next__39 = __get__(__iterator__39, "next");
+    while (( __iterator__39.index ) < __iterator__39.length) {
+      i = __next__39();
       __get__(__get__(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
     }
   } else {
     if (isinstance([pythonjs, dict], __NULL_OBJECT__)) {
       ;
       r = Object();
-      ;
-      __iterator__ = __get__(__get__(__jsdict_keys(pythonjs), "__iter__"), "__call__")([], Object());
-      ;
-      __next__ = __get__(__iterator__, "next");
-      while (( __iterator__.index ) < __iterator__.length) {
-        key = __next__();
+      var __iterator__40;
+      __iterator__40 = __get__(__get__(__jsdict_keys(pythonjs), "__iter__"), "__call__")([], Object());
+      var __next__40;
+      __next__40 = __get__(__iterator__40, "next");
+      while (( __iterator__40.index ) < __iterator__40.length) {
+        key = __next__40();
         value = _to_json([__jsdict_get(pythonjs, key)], __NULL_OBJECT__);
         key = _to_json([key], __NULL_OBJECT__);
         r[ (key.__uid__) ? key.__uid__ : key] = value;

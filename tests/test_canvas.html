@@ -1,0 +1,60 @@
+<html>
+<head>
+<script src="pythonjs.js"></script>
+
+<script type="text/python">
+
+from random import random
+
+with javascript:
+	class PlotDrawer:
+
+		def __init__(self, canvas):
+			self.canvas = canvas
+			self.ctx = canvas.getContext("2d")
+
+		def draw_line(self, start, end, thickness, color):
+			print('draw_line')
+			print(start)
+			print(end)
+			self.ctx.beginPath()
+			self.ctx.lineWidth = thickness
+			self.ctx.moveTo(*start)
+			self.ctx.lineTo(*end)
+			self.ctx.strokeStyle = color
+			self.ctx.stroke()
+
+		def draw_axis(self, thickness=3, color="black"):
+			self.draw_line((20, 420), (820, 420), thickness, color)
+			self.draw_line((20, 20), (20, 420), thickness, color)
+
+		def draw_graphic(self, data, thickness=3, color="black"):
+			step = int(800 / len(data))
+			start = None
+			index = 0
+			for item in data:
+				end = (20 + step * index, 420 - item)
+				if start is not None:
+					self.draw_line(start, end, thickness, color)
+				start = end
+				index += 1
+
+
+	def test(thickness=3, color="blue"):
+		canvas = document.getElementById("plotarea")
+		data = [int(random() * 400) for i in range(100)]
+
+		plot = PlotDrawer(canvas)
+		plot.draw_axis()
+		plot.draw_graphic(data, thickness, color)
+
+</script>
+</head>
+
+<body>
+<button onclick="test()">click me</button>
+
+<div><canvas id="plotarea" height="440" width="840"></canvas></div>
+
+</body>
+</html>

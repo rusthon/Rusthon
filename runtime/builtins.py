@@ -580,11 +580,13 @@ def _setup_array_prototype():
 		@Array.prototype.append
 		def func(item):
 			this.push( item )
+			return this
 
 		@Array.prototype.extend
 		def extend(other):
 			for obj in other:
 				this.push(obj)
+			return this
 
 		@Array.prototype.remove
 		def func(item):

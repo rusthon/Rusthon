@@ -121,19 +121,23 @@ def python_to_javascript( src, module=None, dart=False, debug=False, dump=False 
 
 #########################################################
 def get_main_page():
-	root = PATHS['webroot']
-	r = ['<html><head><title>index</title></head><body>']
-	r.append( '<ul>' )
-	files = os.listdir( root )
-	files.sort()
-	for name in files:
-		if name == os.path.split(__file__)[-1]: continue
-		path = os.path.join( root, name )
-		if os.path.isfile( path ):
-			r.append( '<a href="%s"><li>%s</li></a>' %(name,name) )
-	r.append('</ul>')
-	r.append('</body></html>')
-	return ''.join(r)
+	if MAIN_PAGE:
+		data = open(MAIN_PAGE, 'rb').read()
+		return convert_python_html_document( data.decode('utf-8') )
+	else:
+		root = PATHS['webroot']
+		r = ['<html><head><title>index</title></head><body>']
+		r.append( '<ul>' )
+		files = os.listdir( root )
+		files.sort()
+		for name in files:
+			if name == os.path.split(__file__)[-1]: continue
+			path = os.path.join( root, name )
+			if os.path.isfile( path ):
+				r.append( '<a href="%s"><li>%s</li></a>' %(name,name) )
+		r.append('</ul>')
+		r.append('</body></html>')
+		return ''.join(r)
 
 
 def convert_python_html_document( data ):
@@ -224,8 +228,12 @@ if os.path.isdir( os.path.expanduser('~/blockly-read-only') ):
 if os.path.isdir( os.path.expanduser('~/three.js/examples') ):
 	ResourcePaths.append( os.path.expanduser('~/three.js/examples') )
 
-if os.path.isdir( os.path.expanduser('~/textures') ):
-	ResourcePaths.append( os.path.expanduser('~/textures') )
+MAIN_PAGE = None
+for arg in sys.argv:
+	if os.path.isdir( os.path.expanduser(arg) ):
+		ResourcePaths.append( os.path.expanduser(arg) )
+	elif arg.endswith('.html') and os.path.isfile( os.path.expanduser(arg) ):
+		MAIN_PAGE = os.path.expanduser(arg)
 
 
 class MainHandler( tornado.web.RequestHandler ):
@@ -233,7 +241,7 @@ class MainHandler( tornado.web.RequestHandler ):
 		print('path', path)
 		if not path:
 			self.write( get_main_page() )
-		elif path == 'pythonscript.js' or path == 'pythonjs.js':
+		elif path == 'pythonjs.js':
 			data = open( PATHS['runtime'], 'rb').read()
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))

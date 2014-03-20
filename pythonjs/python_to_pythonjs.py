@@ -1735,18 +1735,32 @@ class PythonToPythonJS(NodeVisitor):
 					return '__replace_method(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				else:
-					a = ','.join(args)
+					ctx = '.'.join( self.visit(node.func).split('.')[:-1] )
 					if node.keywords:
-						#args.extend( [self.visit(x.value) for x in node.keywords] )
-						#return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 						kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
+
 						if args:
-							return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+							if node.starargs:
+								a = ( self.visit(node.func), ctx, ','.join(args), self.visit(node.starargs), ','.join(kwargs) )
+								return '%s.apply( %s, [].extend([%s]).extend(%s).append({%s}) )' %a
+							else:
+								return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+
 						else:
-							return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
+							if node.starargs:
+								a = ( self.visit(node.func),ctx, self.visit(node.starargs), ','.join(kwargs) )
+								return '%s.apply(%s, [].extend(%s).append({%s}) )' %a
+
+							else:
+								return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
 
 					else:
-						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+						if node.starargs:
+							a = ( self.visit(node.func), ctx, ','.join(args), self.visit(node.starargs) )
+							return '%s.apply(%s, [].extend([%s]).extend(%s))' %a
+
+						else:
+							return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
@@ -1770,15 +1784,26 @@ class PythonToPythonJS(NodeVisitor):
 
 			else:  ## javascript mode
 				if node.keywords:
-					#args.extend( [self.visit(x.value) for x in node.keywords] )
 					kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
 					if args:
-						return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+						if node.starargs:
+							a = ( self.visit(node.func), self.visit(node.func), ','.join(args), self.visit(node.starargs), ','.join(kwargs) )
+							return '%s.apply( %s, [].extend([%s]).extend(%s).append({%s}) )' %a
+						else:
+							return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
 					else:
-						return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
+						if node.starargs:
+							a = ( self.visit(node.func),self.visit(node.func), self.visit(node.starargs), ','.join(kwargs) )
+							return '%s.apply(%s, [].extend(%s).append({%s}) )' %a
+						else:
+							return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
 
 				else:
-					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+					if node.starargs:
+						a = ( self.visit(node.func), self.visit(node.func), ','.join(args), self.visit(node.starargs) )
+						return '%s.apply(%s, [].extend([%s]).extend(%s))' %a
+					else:
+						return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 
 		elif isinstance(node.func, Name) and node.func.id in self._generator_functions:
@@ -2142,7 +2167,10 @@ class PythonToPythonJS(NodeVisitor):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						writer.write( '''JS("if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}")'''%(kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id) )
+						a = (kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id)
+						b = "if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}" %a
+						c = "JS('''%s''')" %b
+						writer.write( c )
 
 		elif self._with_fastdef or fastdef:
 			offset = len(node.args.args) - len(node.args.defaults)
