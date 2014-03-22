@@ -8,6 +8,8 @@ _PythonJS_UID = 0
 JS("var IndexError = new RangeError()")
 JS("var KeyError = new RangeError()")
 JS("var ValueError = new RangeError()")
+JS("var AttributeError = new RangeError()")
+
 
 #def _setup_object_prototype(): ## NOT USED - see below
 #	with javascript:
@@ -126,10 +128,9 @@ with javascript:
 
 	def __jsdict_items(ob):
 		## `ob.items is None` is for: "self.__dict__.items()" because self.__dict__ is not actually a dict
-		if instanceof(ob, Object) or ob.items is None:
+		if instanceof(ob, Object) or ob.items is undefined:  ## in javascript-mode missing attributes do not raise AttributeError
 			arr = []
 			for key in ob:
-				#if ob.hasOwnProperty(key):
 				if Object.hasOwnProperty.call(ob, key):
 					value = ob[key]
 					arr.push( [key,value] )
@@ -148,7 +149,7 @@ with javascript:
 				v = ob[key]
 				JS("delete ob[key]")
 				return v
-			elif _default is None:
+			elif _default is undefined:
 				raise KeyError
 			else:
 				return _default
@@ -163,7 +164,7 @@ with javascript:
 			. this is different from Object.keys because it traverses the prototype chain.
 		'''
 		arr = []
-		JS('for (key in ob) { arr.push(key) }')
+		JS('for (var key in ob) { arr.push(key) }')
 		return arr
 
 	def __bind_property_descriptors__(o, klass):
@@ -321,7 +322,7 @@ def getattr(ob, attr, property=False):
 			else:
 				print "ERROR: getattr property error", prop
 		else:
-			return __get__(ob, attr)  ## TODO rename to _pyjs_get_attribute
+			return __get__(ob, attr)
 
 def setattr(ob, attr, value, property=False):
 	with javascript:
@@ -347,7 +348,7 @@ def issubclass(C, B):
 
 def isinstance( ob, klass):
 	with javascript:
-		if ob is None or ob is null:
+		if ob is undefined or ob is null:
 			return False
 		elif instanceof(ob, Array) and klass is list:
 			return True
@@ -362,7 +363,7 @@ def isinstance( ob, klass):
 			return False
 
 		ob_class = ob.__class__
-	if ob_class is None:
+	if ob_class is undefined:
 		return False
 	else:
 		return issubclass( ob_class, klass )
@@ -430,7 +431,7 @@ def _setup_str_prototype():
 
 		@String.prototype.__getslice__
 		def func(start, stop, step):
-			if start is None and stop is None and step == -1:
+			if start is undefined and stop is undefined and step == -1:
 				return this.split('').reverse().join('')
 			else:
 				if stop < 0:
@@ -565,7 +566,7 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			if start is None and stop is None:
+			if start is undefined and stop is undefined:
 				arr = []
 				i = 0
 				while i < this.length:
@@ -620,8 +621,8 @@ def _setup_array_prototype():
 
 		@Array.prototype.bisect
 		def func(x, low, high):
-			if low is None: low = 0
-			if high is None: high = this.length
+			if low is undefined: low = 0
+			if high is undefined: high = this.length
 			while low < high:
 				a = low+high
 				mid = Math.floor(a/2)
@@ -693,30 +694,31 @@ if __NODEJS__ == False and __WEBWORKER__ == False:
 
 
 def bisect(a, x, low=None, high=None):
-	if isinstance(a, list):
-		return a[...].bisect(x, low, high)
-	else:
-		return a.bisect(x, low, high)
+	#if isinstance(a, list):
+	#	return a[...].bisect(x, low, high)
+	return a.bisect(x, low, high)
 
 
-def range(num, stop):
+def range(num, stop, step):
 	"""Emulates Python's range function"""
-	if stop is not None:
+	if stop is not undefined:
 		i = num
 		num = stop
 	else:
 		i = 0
+	if step is undefined:
+		step = 1
 	with javascript:
 		arr = []
 		while i < num:
 			arr.push(i)
-			i += 1
+			i += step
 	return arr
 
-def xrange(num, stop):
-	return range(num, stop)
+def xrange(num, stop, step):
+	return range(num, stop, step)
 
-class StopIteration:
+class StopIteration:  ## DEPRECATED
 	pass
 
 
@@ -1109,8 +1111,8 @@ class dict:
 		# The slow down is negligible
 		if __dict and JS("key in __dict"):
 			return JS('__dict[key]')
-		elif __dict is None and JS("key in self"):  ## js-object
-			return JS("self[key]")
+		#elif __dict is None and JS("key in self"):  ## js-object ## DEPRECATED
+		#	return JS("self[key]")
 		raise KeyError
 
 	def __setitem__(self, key, value):

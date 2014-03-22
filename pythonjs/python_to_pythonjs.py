@@ -717,6 +717,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._in_js_class = True
 
 		methods = {}
+		class_vars = []
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
@@ -725,6 +726,11 @@ class PythonToPythonJS(NodeVisitor):
 				for n in finfo['name_nodes']:
 					if n.id == 'self':
 						n.id = 'this'
+			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
+				pass
+			else:
+				class_vars.append( item )
+
 
 		#init = methods.pop('__init__')
 		init = methods.get( '__init__', None)
@@ -795,6 +801,19 @@ class PythonToPythonJS(NodeVisitor):
 			]
 			a = ''.join(a)
 			writer.write( "JS('%s')" %a )
+
+		for item in class_vars:
+			if isinstance(item, Assign) and isinstance(item.targets[0], Name):
+				item_name = item.targets[0].id
+				item.targets[0].id = '__%s_%s' % (name, item_name)
+				self.visit(item)  # this will output the code for the assign
+				writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
+
+
+		## TODO support property decorators in javascript-mode ##
+		writer.write('%s.prototype.__properties__ = {}' %name)
+		writer.write('%s.prototype.__unbound_methods__ = {}' %name)
+
 
 		self._in_js_class = False
 
@@ -989,7 +1008,7 @@ class PythonToPythonJS(NodeVisitor):
 				if self._with_dart:
 					return 'null'
 				else:
-					return 'undefined'
+					return 'null'
 
 		return node.id
 
@@ -1328,7 +1347,7 @@ class PythonToPythonJS(NodeVisitor):
 		elif self._with_js:
 			lower = upper = step = 'undefined'
 		else:
-			lower = upper = step = None
+			lower = upper = step = 'undefined'
 		if node.lower:
 			lower = self.visit(node.lower)
 		if node.upper:

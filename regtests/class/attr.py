@@ -9,18 +9,18 @@ def main():
     a = A()
 
     TestError(a.b == 5)
-    TestWarning(a.g == 6)
+    TestError(a.g == 6)
     try:
         x = a.c
-        TestWarning(not 'No exception: on undefined attribute')
+        TestError(not 'No exception: on undefined attribute')
     except AttributeError:
         pass
 
-    TestError(getattr(a, 'b') == 5)
-    TestWarning(getattr(a, 'g') == 6)
-    # TestWarning(getattr(a, 'c', 42) == 42)
+    b = a
+    TestError(getattr(b, 'b') == 5)
+    TestError(getattr(b, 'g') == 6)
     try:
-        getattr(a, 'c')
-        TestWarning(not 'No exception: getattr on undefined attribute')
+        getattr(b, 'c')
+        TestError(not 'No exception: getattr on undefined attribute')
     except AttributeError:
         pass

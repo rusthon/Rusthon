@@ -63,7 +63,7 @@ def __get__(object, attribute):
 		check the function for a 'cached_wrapper' attribute, if none is found then generate a new
 		wrapper, cache it on the function, and return the wrapper.
 	"""
-	if object == None:
+	if object is None:
 		return None
 
 	if attribute == '__call__':
@@ -140,9 +140,9 @@ def __get__(object, attribute):
 				return wrapper
 			else:
 				return attr
-		
-	#if attribute in object:  ## in test not allowed with javascript-string
-	if attr is not None:  ## what about cases where attr is None?
+
+	## attr can be null and will return, undefined will raise AttributeError ##		
+	if attr is not undefined:
 		if JS("typeof(attr) === 'function'"):
 			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
 
@@ -223,7 +223,7 @@ def __get__(object, attribute):
 	__class__ = object.__class__
 	if __class__:  ## at this point we can assume we are dealing with a pythonjs class instance
 
-		if attribute in __class__.__properties__:  ## @property decorators
+		if attribute in __class__.__properties__:  ## @property decorators - TODO support PythonJSJS classes
 			return __class__.__properties__[ attribute ]['get']( [object], JSObject() )
 
 		if attribute in __class__.__unbound_methods__:
@@ -287,7 +287,7 @@ def __get__(object, attribute):
 
 		for base in bases:
 			attr = _get_upstream_attribute(base, attribute)
-			if attr:
+			if attr is not undefined:
 				if JS("{}.toString.call(attr) === '[object Function]'"):
 
 					if attr.fastdef:
@@ -320,7 +320,7 @@ def __get__(object, attribute):
 		for base in bases:  ## upstream property getters come before __getattr__
 			var( prop )
 			prop = _get_upstream_property(base, attribute)
-			if prop:
+			if prop is not undefined:
 				return prop['get']( [object], JSObject() )
 
 		if '__getattr__' in __class__:
@@ -329,7 +329,7 @@ def __get__(object, attribute):
 		for base in bases:
 			var( f )
 			f = _get_upstream_attribute(base, '__getattr__')
-			if f:
+			if f is not undefined:
 				return f( [object, attribute], JSObject() )
 
 
@@ -351,8 +351,10 @@ def __get__(object, attribute):
 		wrapper.is_wrapper = True
 		return wrapper
 
-	# raise AttributeError instead? or should we allow this? maybe we should be javascript style here and return undefined
-	return None
+	if attr is undefined:
+		raise AttributeError
+	else:
+		return attr
 
 def _get_upstream_attribute(base, attr):
 	if attr in base:
