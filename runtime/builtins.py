@@ -5,27 +5,12 @@
 
 _PythonJS_UID = 0
 
-JS("var IndexError = new RangeError()")
-JS("var KeyError = new RangeError()")
-JS("var ValueError = new RangeError()")
-JS("var AttributeError = new RangeError()")
+JS('function IndexError(msg) {this.message = msg || "";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
+JS('function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
+JS('function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
+JS('function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
 
 
-#def _setup_object_prototype(): ## NOT USED - see below
-#	with javascript:
-#		#@Object.prototype.get
-#		def func(key, default_value=None):
-#			if JS("key in this"): return this[key]
-#			return default_value
-#
-#		Object.defineProperty(
-#			Object, 
-#			'get', 
-#			{enumerable:False, value:func, writeable:False, configurable:False}
-#		)
-#_setup_object_prototype()
-## this is better solved by making these method names special cases in the translation phase,
-## when translated methods named: "get" become __jsdict_get(ob,key,default)
 
 with javascript:
 	def __contains__( ob, a ):

@@ -18,3 +18,11 @@ def main():
 		b = False
 
 	TestError( b==True )
+
+	c = False
+	try:
+		raise AttributeError('name')
+	except AttributeError:
+		c = True
+
+	TestError( c==True )

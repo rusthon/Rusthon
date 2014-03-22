@@ -2,7 +2,6 @@
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
-
 __NULL_OBJECT__ = Object.create( null )
 if 'window' in this and 'document' in this:
 	__WEBWORKER__ = False
@@ -18,32 +17,24 @@ else:
 	__WEBWORKER__ = True
 
 
-def jsrange(num):
-	"""Emulates Python's range function"""
-	var(i, r)
-	i = 0
-	r = []
-	while i < num:
-		r.push(i)
-		i = i + 1
-	return r
-
 
 def __create_array__():
 	"""Used to fix a bug/feature of Javascript where new Array(number)
 	created a array with number of undefined elements which is not
 	what we want"""
-	var(array)
+	var(i, array)
 	array = []
-	for i in jsrange(arguments.length):
+	i = 0
+	while i < arguments.length:
 		array.push(arguments[i])
+		i += 1
 	return array
 
-def adapt_arguments(handler):
-	"""Useful to transform Javascript arguments to Python arguments"""
-	def func():
-		handler(Array.prototype.slice.call(arguments))
-	return func
+#def adapt_arguments(handler):  ## DEPRECATED
+#	"""Useful to transform Javascript arguments to Python arguments"""
+#	def func():
+#		handler(Array.prototype.slice.call(arguments))
+#	return func
 
 
 
@@ -352,7 +343,7 @@ def __get__(object, attribute):
 		return wrapper
 
 	if attr is undefined:
-		raise AttributeError
+		raise AttributeError(attribute)
 	else:
 		return attr
 

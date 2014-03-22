@@ -68,7 +68,7 @@ class JSGenerator(NodeVisitor):
 		return '\n'.join( out )
 
 	def visit_Raise(self, node):
-		return 'throw %s;' % self.visit(node.type)
+		return 'throw new %s;' % self.visit(node.type)
 
 	def visit_Yield(self, node):
 		return 'yield %s' % self.visit(node.value)
@@ -82,7 +82,7 @@ class JSGenerator(NodeVisitor):
 	def visit_ExceptHandler(self, node):
 		out = ''
 		if node.type:
-			out = 'if (__exception__ == %s || isinstance([__exception__, %s], Object())) {\n' % (self.visit(node.type), self.visit(node.type))
+			out = 'if (__exception__ == %s || __exception__ instanceof %s) {\n' % (self.visit(node.type), self.visit(node.type))
 		if node.name:
 			out += 'var %s = __exception__;\n' % self.visit(node.name)
 		out += '\n'.join(map(self.visit, node.body)) + '\n'

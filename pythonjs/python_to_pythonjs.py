@@ -982,7 +982,17 @@ class PythonToPythonJS(NodeVisitor):
 		#if self._with_js or self._with_dart:
 		#	writer.write('throw Error')
 		#else:
-		writer.write('raise %s' % self.visit(node.type))
+		#writer.write('raise %s' % self.visit(node.type))
+		if isinstance(node.type, ast.Name):
+			writer.write('raise %s' % node.type.id)
+
+		elif isinstance(node.type, ast.Call):
+			if len(node.type.args) > 1:
+				raise SyntaxError('error to raise can have at most a single argument')
+			if node.type.args:
+				writer.write( 'raise %s(%s)' %(self.visit(node.type.func), self.visit(node.type.args[0])) )
+			else:
+				writer.write( 'raise %s()' %self.visit(node.type.func) )
 
 	def visit_ExceptHandler(self, node):
 		if node.type and node.name:

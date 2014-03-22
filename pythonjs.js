@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri Mar 21 20:39:54 2014
+// PythonJS Runtime - regenerated on: Sat Mar 22 00:04:03 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -13,38 +13,16 @@ if (( "window" )  in  this && ( "document" )  in  this) {
     __WEBWORKER__ = true;
   }
 }
-jsrange = function(num) {
-  "Emulates Python's range function";
-  var i, r;
-  i = 0;
-  r = [];
-  while (( i ) < num) {
-    r.push(i);
-    i = (i + 1);
-  }
-  return r;
-}
-
 __create_array__ = function() {
   "Used to fix a bug/feature of Javascript where new Array(number)\n	created a array with number of undefined elements which is not\n	what we want";
-  var array;
+  var i, array;
   array = [];
-    var __iter1 = jsrange(arguments.length);
-  if (! (__iter1 instanceof Array || typeof __iter1 == "string") ) { __iter1 = __object_keys__(__iter1) }
-  for (var __idx1=0; __idx1 < __iter1.length; __idx1++) {
-    var i = __iter1[ __idx1 ];
+  i = 0;
+  while (( i ) < arguments.length) {
     array.push(arguments[i]);
+    i += 1;
   }
   return array;
-}
-
-adapt_arguments = function(handler) {
-  "Useful to transform Javascript arguments to Python arguments";
-    var func = function() {
-    handler(Array.prototype.slice.call(arguments));
-  }
-
-  return func;
 }
 
 __get__ = function(object, attribute) {
@@ -278,10 +256,10 @@ __get__ = function(object, attribute) {
       }
     }
     bases = __class__.__bases__;
-        var __iter2 = bases;
-    if (! (__iter2 instanceof Array || typeof __iter2 == "string") ) { __iter2 = __object_keys__(__iter2) }
-    for (var __idx2=0; __idx2 < __iter2.length; __idx2++) {
-      var base = __iter2[ __idx2 ];
+        var __iter1 = bases;
+    if (! (__iter1 instanceof Array || typeof __iter1 == "string") ) { __iter1 = __object_keys__(__iter1) }
+    for (var __idx1=0; __idx1 < __iter1.length; __idx1++) {
+      var base = __iter1[ __idx1 ];
       attr = _get_upstream_attribute(base, attribute);
       if (( attr ) !== undefined) {
         if ({}.toString.call(attr) === '[object Function]') {
@@ -317,10 +295,10 @@ __get__ = function(object, attribute) {
         }
       }
     }
-        var __iter3 = bases;
-    if (! (__iter3 instanceof Array || typeof __iter3 == "string") ) { __iter3 = __object_keys__(__iter3) }
-    for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
-      var base = __iter3[ __idx3 ];
+        var __iter2 = bases;
+    if (! (__iter2 instanceof Array || typeof __iter2 == "string") ) { __iter2 = __object_keys__(__iter2) }
+    for (var __idx2=0; __idx2 < __iter2.length; __idx2++) {
+      var base = __iter2[ __idx2 ];
       var prop;
       prop = _get_upstream_property(base, attribute);
       if (( prop ) !== undefined) {
@@ -330,10 +308,10 @@ __get__ = function(object, attribute) {
     if (( "__getattr__" )  in  __class__) {
       return __class__["__getattr__"]([object, attribute], Object());
     }
-        var __iter4 = bases;
-    if (! (__iter4 instanceof Array || typeof __iter4 == "string") ) { __iter4 = __object_keys__(__iter4) }
-    for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
-      var base = __iter4[ __idx4 ];
+        var __iter3 = bases;
+    if (! (__iter3 instanceof Array || typeof __iter3 == "string") ) { __iter3 = __object_keys__(__iter3) }
+    for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
+      var base = __iter3[ __idx3 ];
       var f;
       f = _get_upstream_attribute(base, "__getattr__");
       if (( f ) !== undefined) {
@@ -370,7 +348,7 @@ __get__ = function(object, attribute) {
     return wrapper;
   }
   if (( attr ) === undefined) {
-    throw AttributeError;
+    throw new AttributeError(attribute);
   } else {
     return attr;
   }
@@ -380,10 +358,10 @@ _get_upstream_attribute = function(base, attr) {
   if (( attr )  in  base) {
     return base[attr];
   }
-    var __iter5 = base.__bases__;
-  if (! (__iter5 instanceof Array || typeof __iter5 == "string") ) { __iter5 = __object_keys__(__iter5) }
-  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
-    var parent = __iter5[ __idx5 ];
+    var __iter4 = base.__bases__;
+  if (! (__iter4 instanceof Array || typeof __iter4 == "string") ) { __iter4 = __object_keys__(__iter4) }
+  for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
+    var parent = __iter4[ __idx4 ];
     return _get_upstream_attribute(parent, attr);
   }
 }
@@ -392,10 +370,10 @@ _get_upstream_property = function(base, attr) {
   if (( attr )  in  base.__properties__) {
     return base.__properties__[attr];
   }
-    var __iter6 = base.__bases__;
-  if (! (__iter6 instanceof Array || typeof __iter6 == "string") ) { __iter6 = __object_keys__(__iter6) }
-  for (var __idx6=0; __idx6 < __iter6.length; __idx6++) {
-    var parent = __iter6[ __idx6 ];
+    var __iter5 = base.__bases__;
+  if (! (__iter5 instanceof Array || typeof __iter5 == "string") ) { __iter5 = __object_keys__(__iter5) }
+  for (var __idx5=0; __idx5 < __iter5.length; __idx5++) {
+    var parent = __iter5[ __idx5 ];
     return _get_upstream_property(parent, attr);
   }
 }
@@ -427,7 +405,7 @@ get_arguments = function(signature, args, kwargs) {
       /*pass*/
     } else {
       console.log("ERROR args:", args, "kwargs:", kwargs, "sig:", signature);
-      throw TypeError("Supplemental positional arguments provided but signature doesn't accept them");
+      throw new TypeError("Supplemental positional arguments provided but signature doesn't accept them");
     }
   }
   j = 0;
@@ -456,10 +434,10 @@ get_arguments = function(signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
-var IndexError = new RangeError();
-var KeyError = new RangeError();
-var ValueError = new RangeError();
-var AttributeError = new RangeError();
+function IndexError(msg) {this.message = msg || "";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";
+function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";
+function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";
+function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";
 __contains__ = function(ob, a) {
   var t;
   t = typeof(ob);
@@ -471,7 +449,7 @@ __contains__ = function(ob, a) {
     }
   } else {
     if (( t ) == "number") {
-      throw TypeError;
+      throw new TypeError;
     } else {
       if (ob.__contains__) {
         return ob.__contains__(a);
@@ -555,7 +533,7 @@ __add_op = function(a, b) {
       if (a.__add__) {
         return a.__add__(b);
       } else {
-        throw TypeError;
+        throw new TypeError;
       }
     }
   }
@@ -678,7 +656,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
     if (ob.length) {
       return ob.pop(key);
     } else {
-      throw IndexError;
+      throw new IndexError;
     }
   } else {
     if (ob instanceof Object) {
@@ -688,7 +666,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
         return v;
       } else {
         if (( _default ) === undefined) {
-          throw KeyError;
+          throw new KeyError;
         } else {
           return _default;
         }
@@ -1092,7 +1070,7 @@ int = function(args, kwargs) {
   var a = __args__['a'];
   a = Math.round(a);
   if (isNaN(a)) {
-    throw ValueError;
+    throw new ValueError;
   }
   return a;
 }
@@ -1116,7 +1094,7 @@ float = function(args, kwargs) {
   var a = __args__['a'];
   a = Number(a);
   if (isNaN(a)) {
-    throw ValueError;
+    throw new ValueError;
   }
   return a;
 }
@@ -1335,7 +1313,7 @@ _setup_str_prototype = function(args, kwargs) {
     ;
     a = this.indexOf(a);
     if (( a ) == -1) {
-      throw ValueError;
+      throw new ValueError;
     }
     return a;
   }
@@ -2195,7 +2173,7 @@ tuple = function(args, kwargs) {
       } else {
         console.log(a);
         console.log(arguments);
-        throw TypeError;
+        throw new TypeError;
       }
     }
   }
@@ -2251,7 +2229,7 @@ __pytuple___init__ = function(args, kwargs) {
           __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
         }
       } else {
-        throw TypeError;
+        throw new TypeError;
       }
     }
   }
@@ -2471,7 +2449,7 @@ list = function(args, kwargs) {
       } else {
         console.log(a);
         console.log(arguments);
-        throw TypeError;
+        throw new TypeError;
       }
     }
   }
@@ -2526,7 +2504,7 @@ __pylist___init__ = function(args, kwargs) {
             __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
           }
         } else {
-          throw TypeError;
+          throw new TypeError;
         }
       }
     }
@@ -3033,7 +3011,7 @@ __dict___init__ = function(args, kwargs) {
           }
         } else {
           console.log("ERROR init dict from:", js_object);
-          throw TypeError;
+          throw new TypeError;
         }
       }
     }
@@ -3300,12 +3278,12 @@ __dict___getitem__ = function(args, kwargs) {
     if (key.__uid__ && key.__uid__ in __dict) {
       return __dict[key.__uid__];
     }
-    throw KeyError;
+    throw new KeyError;
   }
   if (__dict && key in __dict) {
     return __dict[key];
   }
-  throw KeyError;
+  throw new KeyError;
 }
 
 __dict___getitem__.NAME = "__dict___getitem__";
@@ -3708,7 +3686,7 @@ __array___getitem__ = function(args, kwargs) {
     }
     return value;
   } else {
-    throw IndexError;
+    throw new IndexError;
   }
 }
 
@@ -3750,7 +3728,7 @@ __array___setitem__ = function(args, kwargs) {
     }
     func(offset, value);
   } else {
-    throw IndexError;
+    throw new IndexError;
   }
 }
 
@@ -3839,7 +3817,7 @@ __array_fromlist = function(args, kwargs) {
       i += 1;
     }
   } else {
-    throw TypeError;
+    throw new TypeError;
   }
 }
 
