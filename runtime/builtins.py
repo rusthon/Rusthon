@@ -66,7 +66,7 @@ with javascript:
 		elif a.__add__:
 			return a.__add__(b)
 		else:
-			raise TypeError
+			raise TypeError('invalid objects for addition')
 
 	def __jsdict( items ):
 		d = JS("{}")
@@ -128,14 +128,14 @@ with javascript:
 			if ob.length:
 				return JS("ob.pop(key)")
 			else:
-				raise IndexError
+				raise IndexError(key)
 		elif instanceof(ob, Object):
 			if JS("key in ob"):
 				v = ob[key]
 				JS("delete ob[key]")
 				return v
 			elif _default is undefined:
-				raise KeyError
+				raise KeyError(key)
 			else:
 				return _default
 		else:  ## PythonJS object instance ##
@@ -359,14 +359,14 @@ def int(a):
 	with javascript:
 		a = Math.round(a)
 		if isNaN(a):
-			raise ValueError
+			raise ValueError('not a number')
 		return a
 
 def float(a):
 	with javascript:
 		a = Number(a)
 		if isNaN(a):
-			raise ValueError
+			raise ValueError('not a number')
 		return a
 
 def round(a, places):
@@ -470,10 +470,10 @@ def _setup_str_prototype():
 
 		@String.prototype.index
 		def func(a):
-			a = this.indexOf(a)
-			if a == -1:
-				raise ValueError
-			return a
+			i = this.indexOf(a)
+			if i == -1:
+				raise ValueError(a + ' - not in string')
+			return i
 
 		@String.prototype.find
 		def func(a):
@@ -1091,14 +1091,14 @@ class dict:
 			# Test undefined because it can be in the dict
 			if JS("key.__uid__ && key.__uid__ in __dict"):
 				return JS('__dict[key.__uid__]')
-			raise KeyError
+			raise KeyError(key)
+
 		# Tested after in order to not convert functions to strings.
 		# The slow down is negligible
 		if __dict and JS("key in __dict"):
 			return JS('__dict[key]')
-		#elif __dict is None and JS("key in self"):  ## js-object ## DEPRECATED
-		#	return JS("self[key]")
-		raise KeyError
+
+		raise KeyError(key)
 
 	def __setitem__(self, key, value):
 		__dict = self[...]
@@ -1328,7 +1328,7 @@ class array:
 				value = value * self._norm_get
 			return value
 		else:
-			raise IndexError
+			raise IndexError(index)
 
 	def __setitem__(self, index, value):
 		step = self.itemsize
@@ -1347,7 +1347,7 @@ class array:
 
 			JS('func(offset, value)')
 		else:
-			raise IndexError
+			raise IndexError(index)
 
 	def __iter__(self):
 		return Iterator(self, 0)

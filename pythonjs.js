@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Mar 22 00:04:03 2014
+// PythonJS Runtime - regenerated on: Sat Mar 22 00:21:03 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -533,7 +533,7 @@ __add_op = function(a, b) {
       if (a.__add__) {
         return a.__add__(b);
       } else {
-        throw new TypeError;
+        throw new TypeError("invalid objects for addition");
       }
     }
   }
@@ -656,7 +656,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
     if (ob.length) {
       return ob.pop(key);
     } else {
-      throw new IndexError;
+      throw new IndexError(key);
     }
   } else {
     if (ob instanceof Object) {
@@ -666,7 +666,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
         return v;
       } else {
         if (( _default ) === undefined) {
-          throw new KeyError;
+          throw new KeyError(key);
         } else {
           return _default;
         }
@@ -1070,7 +1070,7 @@ int = function(args, kwargs) {
   var a = __args__['a'];
   a = Math.round(a);
   if (isNaN(a)) {
-    throw new ValueError;
+    throw new ValueError("not a number");
   }
   return a;
 }
@@ -1094,7 +1094,7 @@ float = function(args, kwargs) {
   var a = __args__['a'];
   a = Number(a);
   if (isNaN(a)) {
-    throw new ValueError;
+    throw new ValueError("not a number");
   }
   return a;
 }
@@ -1310,12 +1310,12 @@ _setup_str_prototype = function(args, kwargs) {
   func.types_signature = {  };
   String.prototype.lower = func;
     var func = function(a) {
-    ;
-    a = this.indexOf(a);
-    if (( a ) == -1) {
-      throw new ValueError;
+    var i;
+    i = this.indexOf(a);
+    if (( i ) == -1) {
+      throw new ValueError(__add_op(a, " - not in string"));
     }
-    return a;
+    return i;
   }
 
   func.NAME = "func";
@@ -3278,12 +3278,12 @@ __dict___getitem__ = function(args, kwargs) {
     if (key.__uid__ && key.__uid__ in __dict) {
       return __dict[key.__uid__];
     }
-    throw new KeyError;
+    throw new KeyError(key);
   }
   if (__dict && key in __dict) {
     return __dict[key];
   }
-  throw new KeyError;
+  throw new KeyError(key);
 }
 
 __dict___getitem__.NAME = "__dict___getitem__";
@@ -3686,7 +3686,7 @@ __array___getitem__ = function(args, kwargs) {
     }
     return value;
   } else {
-    throw new IndexError;
+    throw new IndexError(index);
   }
 }
 
@@ -3728,7 +3728,7 @@ __array___setitem__ = function(args, kwargs) {
     }
     func(offset, value);
   } else {
-    throw new IndexError;
+    throw new IndexError(index);
   }
 }
 
