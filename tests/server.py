@@ -241,7 +241,9 @@ class MainHandler( tornado.web.RequestHandler ):
 		print('path', path)
 		if not path:
 			self.write( get_main_page() )
-		elif path == 'pythonjs.js':
+		elif path == 'pythonjs.js' or path=='pythonscript.js':
+			if path == 'pythonscript.js':
+				print('WARNING: pythonscript.js alias is deprecated - use pythonjs.js')
 			data = open( PATHS['runtime'], 'rb').read()
 			self.set_header("Content-Type", "text/javascript; charset=utf-8")
 			self.set_header("Content-Length", len(data))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # NodeJS Wrapper for PythonJS
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
