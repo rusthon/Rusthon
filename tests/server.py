@@ -120,8 +120,12 @@ def python_to_javascript( src, module=None, dart=False, debug=False, dump=False 
 
 
 #########################################################
-def get_main_page():
-	if MAIN_PAGE:
+MainPageHook = None
+def get_main_page(server):
+	res = None
+	if MainPageHook: res = MainPageHook(server)
+	if res: return res
+	elif MAIN_PAGE:
 		data = open(MAIN_PAGE, 'rb').read()
 		return convert_python_html_document( data.decode('utf-8') )
 	else:
@@ -229,18 +233,33 @@ if os.path.isdir( os.path.expanduser('~/three.js/examples') ):
 	ResourcePaths.append( os.path.expanduser('~/three.js/examples') )
 
 MAIN_PAGE = None
+PLUGINS = []  ## allow simple extending of the server logic
 for arg in sys.argv:
+	if arg == sys.argv[0]: continue
 	if os.path.isdir( os.path.expanduser(arg) ):
 		ResourcePaths.append( os.path.expanduser(arg) )
 	elif arg.endswith('.html') and os.path.isfile( os.path.expanduser(arg) ):
 		MAIN_PAGE = os.path.expanduser(arg)
+	elif arg.endswith('.py') and os.path.isfile( os.path.expanduser(arg) ):
+		PLUGINS.append( open(os.path.expanduser(arg),'rb').read().decode('utf-8') )
 
+
+GetRequestHook = None  ## plugins can monkey-patch this to define custom http GET responses
+PostRequestHook = None  ## plugins can monkey-patch this to define custom http POST responses
 
 class MainHandler( tornado.web.RequestHandler ):
+	def post(self, path=None):
+		## note: self.get_argument(name, default) gets the posted data
+		if PostRequestHook:
+			PostRequestHook(self, path)
+		else:
+			raise tornado.web.HTTPError(404)
+
 	def get(self, path=None):
 		print('path', path)
 		if not path:
-			self.write( get_main_page() )
+			res = get_main_page(self)
+			if res: self.write( res )
 		elif path == 'pythonjs.js' or path=='pythonscript.js':
 			if path == 'pythonscript.js':
 				print('WARNING: pythonscript.js alias is deprecated - use pythonjs.js')
@@ -308,7 +327,10 @@ class MainHandler( tornado.web.RequestHandler ):
 						break
 
 				if not found:
-					print( 'FILE NOT FOUND', path)
+					if GetRequestHook:
+						GetRequestHook(self, path)
+					else:
+						print( 'FILE NOT FOUND', path)
 
 
 LIBS = dict(
@@ -371,12 +393,22 @@ class LibsHandler( tornado.web.RequestHandler ):
 		self.write( data )
 
 
+## a plugin can monkey-patch these to take control of the websocket connection ##
+WebSocketMessageHook = None
+WebSocketOpenHook = None
+WebSocketCloseHook = None
+
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
-		print( self.request.connection )
+		print( 'new websocket connection->', self.request.connection )
+		if WebSocketOpenHook:
+			WebSocketOpenHook( self )
 
 	def on_message(self, msg):
-		if hasattr(self.ws_connection, 'previous_command') and self.ws_connection.previous_command and self.ws_connection.previous_command.get('binary', False):
+		print('new websocket message', msg )
+		if WebSocketMessageHook:
+			WebSocketMessageHook(self, msg)
+		elif hasattr(self.ws_connection, 'previous_command') and self.ws_connection.previous_command and self.ws_connection.previous_command.get('binary', False):
 			if self.ws_connection.previous_command['command'] == 'upload':
 				path = os.path.join(
 					UploadDirectory, 
@@ -408,7 +440,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
 	def on_close(self):
 		print('websocket closed')
-		if self.ws_connection:
+		if WebSocketCloseHook:
+			WebSocketCloseHook( self )
+		elif self.ws_connection:
 			self.close()
 
 
@@ -429,6 +463,10 @@ if __name__ == '__main__':
 		print(data)
 
 	else:
+		for code in PLUGINS:
+			print('exec')
+			print(code)
+			exec(code)
 		print('running server...')
 		print('http://localhost:8080')
 		app = tornado.web.Application(
