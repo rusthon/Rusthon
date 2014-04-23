@@ -77,7 +77,7 @@ with javascript:
 			d[ key ] = item[1]
 		return d
 
-	def __jsdict_get(ob, key, default_value=None):
+	def __jsdict_get(ob, key, default_value):
 		if instanceof(ob, Object):
 			if JS("key in ob"): return ob[key]
 			return default_value

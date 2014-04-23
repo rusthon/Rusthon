@@ -17,3 +17,5 @@ def main():
 	TestError(a[G] == 55)
 	TestError(a[g] == 66)
 
+	TestError(a.get('none', 'default') == 'default')
+

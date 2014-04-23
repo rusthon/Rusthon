@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Mar 22 00:21:03 2014
+// PythonJS Runtime - regenerated on: Tue Apr 22 23:29:54 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -563,8 +563,7 @@ __jsdict.NAME = "__jsdict";
 __jsdict.args_signature = ["items"];
 __jsdict.kwargs_signature = {  };
 __jsdict.types_signature = {  };
-__jsdict_get = function(ob, key, _kwargs_) {
-  if (_kwargs_ === undefined || _kwargs_.default_value === undefined) {var default_value = null} else {var default_value=_kwargs_.default_value};
+__jsdict_get = function(ob, key, default_value) {
   if (ob instanceof Object) {
     if (key in ob) {
       return ob[ (key.__uid__) ? key.__uid__ : key];
@@ -577,8 +576,8 @@ __jsdict_get = function(ob, key, _kwargs_) {
 
 __jsdict_get.NAME = "__jsdict_get";
 __jsdict_get.args_signature = ["ob", "key", "default_value"];
-__jsdict_get.kwargs_signature = { default_value:null };
-__jsdict_get.types_signature = { default_value:"None" };
+__jsdict_get.kwargs_signature = {  };
+__jsdict_get.types_signature = {  };
 __jsdict_set = function(ob, key, value) {
   if (ob instanceof Object) {
     ob[ (key.__uid__) ? key.__uid__ : key] = value;
