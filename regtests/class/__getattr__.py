@@ -43,6 +43,7 @@ def main():
 	TestError( a.y == 2 )
 	TestError( a.z == 3 )
 
-	TestError( a.hello == 100 )
+	b = a.hello
+	TestError( b == 100 )
 	TestError( a.world == 200 )
 	TestError( a.XXX == 300 )

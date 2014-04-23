@@ -202,6 +202,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._inline_breakout = False
 		self._js_classes = dict()
 		self._in_js_class = False
+		self._in_assign_target = False
 
 		self._iter_ids = 0
 
@@ -540,7 +541,10 @@ class PythonToPythonJS(NodeVisitor):
 		raise RuntimeError('"not in" is only allowed in if-test: see method - visit_Compare')
 
 	def visit_AugAssign(self, node):
+		self._in_assign_target = True
 		target = self.visit( node.target )
+		self._in_assign_target = False
+
 		op = '%s=' %self.visit( node.op )
 
 		typedef = self.get_typedef( node.target )
@@ -1229,11 +1233,18 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_USub(self, node):
 		return '-'
 
+
 	def visit_Attribute(self, node):
 		node_value = self.visit(node.value)
 
-		if self._with_js or self._with_dart or self._with_ll:
+		if self._with_dart or self._with_ll:
 			return '%s.%s' %(node_value, node.attr)
+		elif self._with_js:
+			return '%s.%s' %(node_value, node.attr)
+			#if self._in_assign_target or not isinstance(node.attr, str):
+			#	return '%s.%s' %(node_value, node.attr)
+			#else:
+			#	return '__ternary_operator__(%s.%s is not undefined, %s.%s, __getattr__(%s, "%s"))' %(node_value, node.attr, node_value, node.attr, node_value, node.attr)
 		typedef = None
 		if isinstance(node.value, Name):
 			typedef = self.get_typedef( instance=node.value )
@@ -1401,7 +1412,9 @@ class PythonToPythonJS(NodeVisitor):
 			writer.write(code)
 
 		elif isinstance(target, Attribute):
+			self._in_assign_target = True
 			target_value = self.visit(target.value)  ## target.value may have "returns_type" after being visited
+			self._in_assign_target = False
 			typedef = None
 			if isinstance(target.value, Name):
 				if target.value.id == 'self' and isinstance(self._catch_attributes, set):
@@ -1733,6 +1746,9 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
 				anode = node.func
+				self._in_assign_target = True
+				method = self.visit( node.func )
+				self._in_assign_target = False
 				if anode.attr == 'get':
 					if args:
 						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
@@ -1770,10 +1786,10 @@ class PythonToPythonJS(NodeVisitor):
 
 						if args:
 							if node.starargs:
-								a = ( self.visit(node.func), ctx, ','.join(args), self.visit(node.starargs), ','.join(kwargs) )
+								a = ( method, ctx, ','.join(args), self.visit(node.starargs), ','.join(kwargs) )
 								return '%s.apply( %s, [].extend([%s]).extend(%s).append({%s}) )' %a
 							else:
-								return '%s(%s, {%s})' %( self.visit(node.func), ','.join(args), ','.join(kwargs) )
+								return '%s(%s, {%s})' %( method, ','.join(args), ','.join(kwargs) )
 
 						else:
 							if node.starargs:
@@ -1781,7 +1797,7 @@ class PythonToPythonJS(NodeVisitor):
 								return '%s.apply(%s, [].extend(%s).append({%s}) )' %a
 
 							else:
-								return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
+								return '%s({%s})' %( method, ','.join(kwargs) )
 
 					else:
 						if node.starargs:
@@ -1789,7 +1805,7 @@ class PythonToPythonJS(NodeVisitor):
 							return '%s.apply(%s, [].extend([%s]).extend(%s))' %a
 
 						else:
-							return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+							return '%s(%s)' %( method, ','.join(args) )
 
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
@@ -2055,7 +2071,9 @@ class PythonToPythonJS(NodeVisitor):
 				with_dart_decorators.append( self.visit(decorator) )
 
 			elif self._with_js:  ## decorators are special in with-js mode
+				self._in_assign_target = True
 				with_js_decorators.append( self.visit( decorator ) )
+				self._in_assign_target = False
 
 			elif isinstance(decorator, Name) and decorator.id == 'fastdef':
 				fastdef = True
@@ -2505,7 +2523,11 @@ class PythonToPythonJS(NodeVisitor):
 						writer.write('%s = __mtarget__%s[%s]' %(elt,iterid,i))
 
 				else:
-					writer.write('for %s in %s:' %(self.visit(target),self.visit(iter)))
+					a = self.visit(target)
+					self._in_assign_target = True
+					b = self.visit(iter)
+					self._in_assign_target = False
+					writer.write('for %s in %s:' %(a, b))
 					writer.push()
 
 

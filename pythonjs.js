@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Tue Apr 22 23:29:54 2014
+// PythonJS Runtime - regenerated on: Wed Apr 23 02:28:54 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -438,6 +438,28 @@ function IndexError(msg) {this.message = msg || "";} IndexError.prototype = Obje
 function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";
 function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";
 function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";
+__getattr__ = function(args, kwargs) {
+  if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments);
+    kwargs = Object();
+  }
+  var __sig__, __args__;
+  __sig__ = { kwargs:Object(),args:__create_array__("ob", "a") };
+  __args__ = get_arguments(__sig__, args, kwargs);
+  var ob = __args__['ob'];
+  var a = __args__['a'];
+  if (ob.__getattr__) {
+    return ob.__getattr__(a);
+  }
+}
+
+__getattr__.NAME = "__getattr__";
+__getattr__.args_signature = ["ob", "a"];
+__getattr__.kwargs_signature = {  };
+__getattr__.types_signature = {  };
+__getattr__.pythonscript_function = true;
 __contains__ = function(ob, a) {
   var t;
   t = typeof(ob);
@@ -774,13 +796,8 @@ __sprintf.args_signature = ["fmt", "args"];
 __sprintf.kwargs_signature = {  };
 __sprintf.types_signature = {  };
 __create_class__ = function(class_name, parents, attrs, props) {
-  var metaclass, klass, prop;
+  var f, klass, prop;
   "Create a PythonScript class";
-  if (attrs.__metaclass__) {
-    metaclass = attrs.__metaclass__;
-    attrs.__metaclass__ = null;
-    return metaclass([class_name, parents, attrs]);
-  }
   klass = Object.create(null);
   klass.__bases__ = parents;
   klass.__name__ = class_name;
@@ -794,10 +811,15 @@ __create_class__ = function(class_name, parents, attrs, props) {
     var key = __iter7[ __idx7 ];
     if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
       klass.__all_method_names__.push(key);
-      if (attrs[ (key.__uid__) ? key.__uid__ : key].is_classmethod || attrs[ (key.__uid__) ? key.__uid__ : key].is_staticmethod) {
+      f = attrs[ (key.__uid__) ? key.__uid__ : key];
+      if (hasattr(f, "is_classmethod") && f.is_classmethod) {
         /*pass*/
       } else {
-        klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+        if (hasattr(f, "is_staticmethod") && f.is_staticmethod) {
+          /*pass*/
+        } else {
+          klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+        }
       }
     }
     if (( key ) == "__getattribute__") {

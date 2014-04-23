@@ -10,9 +10,17 @@ JS('function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Obje
 JS('function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
 JS('function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
 
+with lowlevel:
+	def __getattr__(ob, a ):
+		if ob.__getattr__:
+			return JS("ob.__getattr__(a)")
+		#else:
+		#	raise AttributeError(a)
 
 
 with javascript:
+
+
 	def __contains__( ob, a ):
 		t = typeof(ob)
 		if t == 'string':
@@ -196,10 +204,10 @@ with javascript:
 
 	def __create_class__(class_name, parents, attrs, props):
 		"""Create a PythonScript class"""
-		if attrs.__metaclass__:
-			metaclass = attrs.__metaclass__
-			attrs.__metaclass__ = None
-			return metaclass([class_name, parents, attrs])
+		#if attrs.__metaclass__:
+		#	metaclass = attrs.__metaclass__
+		#	attrs.__metaclass__ = None
+		#	return metaclass([class_name, parents, attrs])
 
 		klass = Object.create(null)
 		klass.__bases__ = parents
@@ -212,7 +220,10 @@ with javascript:
 		for key in attrs:
 			if typeof( attrs[key] ) == 'function':
 				klass.__all_method_names__.push( key )
-				if attrs[key].is_classmethod or attrs[key].is_staticmethod:
+				f = attrs[key]
+				if hasattr(f, 'is_classmethod') and f.is_classmethod:
+					pass
+				elif hasattr(f, 'is_staticmethod') and f.is_staticmethod:
 					pass
 				else:
 					klass.__unbound_methods__[key] = attrs[key]
