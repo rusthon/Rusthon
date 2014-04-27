@@ -2302,12 +2302,10 @@ class PythonToPythonJS(NodeVisitor):
 				keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
 
 			# create a JS Object to store the value of each parameter
-			#signature = ', '.join(map(lambda x: '%s=%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
-			#writer.write('__sig__ = JSObject(%s)' % signature)
 			signature = ', '.join(map(lambda x: '%s:%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
 			writer.write('__sig__ = {%s}' % signature)
 
-			writer.write('__args__ = get_arguments(__sig__, args, kwargs)')
+			writer.write('__args__ = __getargs__("%s", __sig__, args, kwargs)' %node.name)
 			# # then for each argument assign its value
 			for arg in node.args.args:
 				writer.write("""JS("var %s = __args__['%s']")""" % (arg.id, arg.id))

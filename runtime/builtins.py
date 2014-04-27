@@ -1117,7 +1117,7 @@ class dict:
 			if JS("key.__uid__ === undefined"):
 				# "￼" is needed so that integers can also be
 				# used as keys
-				JS("key.__uid__ = '￼' + _PythonJS_UID++")
+				JS(u"key.__uid__ = '￼' + _PythonJS_UID++")
 			JS('__dict[key.__uid__] = value')
 		else:
 			JS('__dict[key] = value')

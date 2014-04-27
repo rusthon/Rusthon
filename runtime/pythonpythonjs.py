@@ -382,7 +382,7 @@ def __set__(object, attribute, value):
 
 
 
-def get_arguments(signature, args, kwargs):
+def __getargs__(func_name, signature, args, kwargs):
 	"""Based on ``signature`` and ``args``, ``kwargs`` parameters retrieve
 	the actual parameters.
 
@@ -401,7 +401,8 @@ def get_arguments(signature, args, kwargs):
 		if signature.vararg:
 			pass
 		else:
-			print 'ERROR args:', args, 'kwargs:', kwargs, 'sig:', signature
+			print 'Error in function->' + func_name
+			print 'args:', args, 'kwargs:', kwargs, 'sig:', signature
 			raise TypeError("Supplemental positional arguments provided but signature doesn't accept them")
 
 	j = 0
