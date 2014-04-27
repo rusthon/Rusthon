@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Apr 26 23:00:23 2014
+// PythonJS Runtime - regenerated on: Sun Apr 27 01:29:37 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -25,7 +25,7 @@ __create_array__ = function() {
   return array;
 }
 
-__get__ = function(object, attribute) {
+__get__ = function(object, attribute, error_message) {
   "Retrieve an attribute, method, property, or wrapper function.\n\n	method are actually functions which are converted to methods by\n	prepending their arguments with the current object. Properties are\n	not functions!\n\n	DOM support:\n		http://stackoverflow.com/questions/14202699/document-createelement-not-working\n		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n	Direct JavaScript Calls:\n		if an external javascript function is found, and it was not a wrapper that was generated here,\n		check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n		wrapper, cache it on the function, and return the wrapper.\n	";
   if (( object ) === null) {
     throw new AttributeError(("null object (None) has no attribute: " + attribute));
@@ -352,7 +352,11 @@ __get__ = function(object, attribute) {
     return wrapper;
   }
   if (( attr ) === undefined) {
-    throw new AttributeError(attribute);
+    if (error_message) {
+      throw new AttributeError(error_message);
+    } else {
+      throw new AttributeError(attribute);
+    }
   } else {
     return attr;
   }
@@ -441,7 +445,9 @@ __getargs__ = function(func_name, signature, args, kwargs) {
 try {
 /*pass*/
 } catch(__exception__) {
-console.log("RuntimeError -> line 5: pythonjs.configure(runtime_exceptions=False)");
+console.trace();
+console.error(__exception__, __exception__.message);
+console.error("line 5: pythonjs.configure(runtime_exceptions=False)");
 throw new RuntimeError("line 5: pythonjs.configure(runtime_exceptions=False)");
 
 }
@@ -1039,7 +1045,7 @@ issubclass = function(args, kwargs) {
   }
   bases = C.__bases__;
   i = 0;
-  while (( i ) < __get__(bases, "length")) {
+  while (( i ) < __get__(bases, "length", "line 341: while i < bases.length:")) {
     if (issubclass([__get__(bases, "__getitem__")([i], Object()), B], __NULL_OBJECT__)) {
       return true;
     }
@@ -1798,7 +1804,7 @@ bisect = function(args, kwargs) {
   var x = __args__['x'];
   var low = __args__['low'];
   var high = __args__['high'];
-  return __get__(__get__(a, "bisect"), "__call__")([x, low, high], __NULL_OBJECT__);
+  return __get__(__get__(a, "bisect", "line 697: return a.bisect(x, low, high)"), "__call__")([x, low, high], __NULL_OBJECT__);
 }
 
 bisect.NAME = "bisect";
@@ -1886,7 +1892,7 @@ len = function(args, kwargs) {
     if (ob instanceof Object) {
       return Object.keys(ob).length;
     } else {
-      return __get__(__get__(ob, "__len__"), "__call__")();
+      return __get__(__get__(ob, "__len__", "line 731: return ob.__len__()"), "__call__")();
     }
   }
 }
@@ -1907,7 +1913,7 @@ next = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("obj") };
   __args__ = __getargs__("next", __sig__, args, kwargs);
   var obj = __args__['obj'];
-  return __get__(__get__(obj, "next"), "__call__")();
+  return __get__(__get__(obj, "next", "line 735: return obj.next()"), "__call__")();
 }
 
 next.NAME = "next";
@@ -2152,7 +2158,7 @@ __Iterator___init__ = function(args, kwargs) {
   self.obj = obj;
   self.index = index;
   self.length = len([obj], __NULL_OBJECT__);
-  self.obj_get = __get__(obj, "get");
+  self.obj_get = __get__(obj, "get", "line 799: self.obj_get = obj.get  ## cache this for speed");
 }
 
 __Iterator___init__.NAME = "__Iterator___init__";
@@ -2249,7 +2255,7 @@ __pytuple___init__ = function(args, kwargs) {
     __next__20 = __get__(__iterator__20, "next");
     while (( __iterator__20.index ) < __iterator__20.length) {
       item = __next__20();
-      __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+      __get__(__get__(arr, "push", "line 834: arr.push( item )"), "__call__")([item], __NULL_OBJECT__);
     }
   } else {
     if (__test_if_true__(js_object)) {
@@ -2260,7 +2266,7 @@ __pytuple___init__ = function(args, kwargs) {
         __next__21 = __get__(__iterator__21, "next");
         while (( __iterator__21.index ) < __iterator__21.length) {
           v = __next__21();
-          __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+          __get__(__get__(arr, "push", "line 840: arr.push( v )"), "__call__")([v], __NULL_OBJECT__);
         }
       } else {
         throw new TypeError;
@@ -2289,7 +2295,7 @@ __pytuple___getitem__ = function(args, kwargs) {
   var self = __args__['self'];
   var index = __args__['index'];
   if (( index ) < 0) {
-    index = __add_op(__get__(self["$wrapped"], "length"), index);
+    index = __add_op(__get__(self["$wrapped"], "length", "line 848: index = self[...].length + index"), index);
   }
   return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
 }
@@ -2524,7 +2530,7 @@ __pylist___init__ = function(args, kwargs) {
       __next__23 = __get__(__iterator__23, "next");
       while (( __iterator__23.index ) < __iterator__23.length) {
         item = __next__23();
-        __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+        __get__(__get__(arr, "push", "line 916: arr.push( item )"), "__call__")([item], __NULL_OBJECT__);
       }
     } else {
       if (__test_if_true__(js_object)) {
@@ -2535,7 +2541,7 @@ __pylist___init__ = function(args, kwargs) {
           __next__24 = __get__(__iterator__24, "next");
           while (( __iterator__24.index ) < __iterator__24.length) {
             v = __next__24();
-            __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+            __get__(__get__(arr, "push", "line 922: arr.push( v )"), "__call__")([v], __NULL_OBJECT__);
           }
         } else {
           throw new TypeError;
@@ -2556,7 +2562,7 @@ __pylist___getitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   if (( index ) < 0) {
-    index = __add_op(__get__(self["$wrapped"], "length"), index);
+    index = __add_op(__get__(self["$wrapped"], "length", "line 929: index = self[...].length + index"), index);
   }
   return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
 }
@@ -2650,7 +2656,7 @@ __pylist_extend = function(args, kwargs) {
   __next__25 = __get__(__iterator__25, "next");
   while (( __iterator__25.index ) < __iterator__25.length) {
     obj = __next__25();
-    __get__(__get__(self, "append"), "__call__")([obj], __NULL_OBJECT__);
+    __get__(__get__(self, "append", "line 948: self.append(obj)"), "__call__")([obj], __NULL_OBJECT__);
   }
 }
 
@@ -2695,7 +2701,7 @@ __pylist_remove = function(args, kwargs) {
   __args__ = __getargs__("__pylist_remove", __sig__, args, kwargs);
   var self = __args__['self'];
   var obj = __args__['obj'];
-  index = __get__(__get__(self, "index"), "__call__")([obj], __NULL_OBJECT__);
+  index = __get__(__get__(self, "index", "line 955: index = self.index(obj)"), "__call__")([obj], __NULL_OBJECT__);
   self["$wrapped"].splice(index, 1);
 }
 
@@ -3027,9 +3033,9 @@ __dict___init__ = function(args, kwargs) {
         while (( __iterator__27.index ) < __iterator__27.length) {
           o = __next__27();
           if (o instanceof Array) {
-            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
+            __get__(__get__(self, "__setitem__", "line 1033: self.__setitem__( o[0], o[1] )"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
           } else {
-            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
+            __get__(__get__(self, "__setitem__", "line 1035: self.__setitem__( o['key'], o['value'] )"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
           }
         }
       } else {
@@ -3041,7 +3047,7 @@ __dict___init__ = function(args, kwargs) {
           while (( __iterator__28.index ) < __iterator__28.length) {
             key = __next__28();
             value = __get__(ob, "__getitem__")([key], Object());
-            __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+            __get__(__get__(self, "__setitem__", "line 1039: self.__setitem__( key, value )"), "__call__")([key, value], __NULL_OBJECT__);
           }
         } else {
           console.log("ERROR init dict from:", js_object);
@@ -3079,8 +3085,8 @@ __dict_jsify = function(args, kwargs) {
     key = __next__29();
     value = __get__(self["$wrapped"], "__getitem__")([key], Object());
     if (( typeof(value) ) == "object") {
-      if (__get__(value, "jsify")) {
-        __get__(__get__(self["$wrapped"], "__setitem__"), "__call__")([key, __get__(__get__(value, "jsify"), "__call__")()], Object());
+      if (__get__(value, "jsify", "line 1050: if value.jsify:")) {
+        __get__(__get__(self["$wrapped"], "__setitem__"), "__call__")([key, __get__(__get__(value, "jsify", "line 1051: self[...][key] = value.jsify()"), "__call__")()], Object());
       }
     }
   }
@@ -3149,7 +3155,7 @@ __dict_has_key = function(args, kwargs) {
   var key = __args__['key'];
   __dict = self["$wrapped"];
   if (typeof(key) === 'object' || typeof(key) === 'function') {
-    key = __get__(key, "__uid__");
+    key = __get__(key, "__uid__", "line 1065: key = key.__uid__");
   }
   if (key in __dict) {
     return true;
@@ -3182,7 +3188,7 @@ __dict_update = function(args, kwargs) {
   __next__30 = __get__(__iterator__30, "next");
   while (( __iterator__30.index ) < __iterator__30.length) {
     key = __next__30();
-    __get__(__get__(self, "__setitem__"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
+    __get__(__get__(self, "__setitem__", "line 1074: self.__setitem__( key, other[key] )"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
   }
 }
 
@@ -3211,7 +3217,7 @@ __dict_items = function(args, kwargs) {
   __next__31 = __get__(__iterator__31, "next");
   while (( __iterator__31.index ) < __iterator__31.length) {
     key = __next__31();
-    __get__(__get__(arr, "append"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
+    __get__(__get__(arr, "append", "line 1079: arr.append( [key, self[key]] )"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
   }
   return arr;
 }
@@ -3262,7 +3268,7 @@ __dict_set = function(args, kwargs) {
   var self = __args__['self'];
   var key = __args__['key'];
   var value = __args__['value'];
-  __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+  __get__(__get__(self, "__setitem__", "line 1089: self.__setitem__(key, value)"), "__call__")([key, value], __NULL_OBJECT__);
 }
 
 __dict_set.NAME = "__dict_set";
@@ -3611,31 +3617,31 @@ __array___init__ = function(args, kwargs) {
   var initializer = __args__['initializer'];
   var little_endian = __args__['little_endian'];
   self.typecode = typecode;
-  self.itemsize = __get__(__get__(self, "typecodes"), "__getitem__")([typecode], Object());
+  self.itemsize = __get__(__get__(self, "typecodes", "line 1291: self.itemsize = self.typecodes[ typecode ]"), "__getitem__")([typecode], Object());
   self.little_endian = little_endian;
   if (__test_if_true__(initializer)) {
     self.length = len([initializer], __NULL_OBJECT__);
-    self.bytes = (self.length * self.itemsize);
-    if (( self.typecode ) == "float8") {
+    self.bytes = (__get__(self, "length", "line 1296: self.bytes = self.length * self.itemsize") * __get__(self, "itemsize", "line 1296: self.bytes = self.length * self.itemsize"));
+    if (( __get__(self, "typecode", "line 1298: if self.typecode == 'float8':") ) == "float8") {
       self._scale = max([[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]], __NULL_OBJECT__);
-      self._norm_get = (self._scale / 127);
-      self._norm_set = (1.0 / self._norm_get);
+      self._norm_get = (__get__(self, "_scale", "line 1300: self._norm_get = self._scale / 127  ## half 8bits-1") / 127);
+      self._norm_set = (1.0 / __get__(self, "_norm_get", "line 1301: self._norm_set = 1.0 / self._norm_get"));
     } else {
-      if (( self.typecode ) == "float16") {
+      if (( __get__(self, "typecode", "line 1302: elif self.typecode == 'float16':") ) == "float16") {
         self._scale = max([[abs([min([initializer], __NULL_OBJECT__)], __NULL_OBJECT__), max([initializer], __NULL_OBJECT__)]], __NULL_OBJECT__);
-        self._norm_get = (self._scale / 32767);
-        self._norm_set = (1.0 / self._norm_get);
+        self._norm_get = (__get__(self, "_scale", "line 1304: self._norm_get = self._scale / 32767  ## half 16bits-1") / 32767);
+        self._norm_set = (1.0 / __get__(self, "_norm_get", "line 1305: self._norm_set = 1.0 / self._norm_get"));
       }
     }
   } else {
     self.length = 0;
     self.bytes = 0;
   }
-  size = self.bytes;
+  size = __get__(self, "bytes", "line 1311: size = self.bytes");
   buff = new ArrayBuffer(size);
   self.dataview = new DataView(buff);
   self.buffer = buff;
-  __get__(__get__(self, "fromlist"), "__call__")([initializer], __NULL_OBJECT__);
+  __get__(__get__(self, "fromlist", "line 1315: self.fromlist( initializer )"), "__call__")([initializer], __NULL_OBJECT__);
 }
 
 __array___init__.NAME = "__array___init__";
@@ -3655,7 +3661,7 @@ __array___len__ = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = __getargs__("__array___len__", __sig__, args, kwargs);
   var self = __args__['self'];
-  return self.length;
+  return __get__(self, "length", "line 1318: return self.length");
 }
 
 __array___len__.NAME = "__array___len__";
@@ -3677,7 +3683,7 @@ __array___contains__ = function(args, kwargs) {
   __args__ = __getargs__("__array___contains__", __sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
-  arr = __get__(__get__(self, "to_array"), "__call__")();
+  arr = __get__(__get__(self, "to_array", "line 1323: arr = self.to_array()"), "__call__")();
   if (( arr.indexOf(value) ) == -1) {
     return false;
   } else {
@@ -3704,18 +3710,18 @@ __array___getitem__ = function(args, kwargs) {
   __args__ = __getargs__("__array___getitem__", __sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
-  step = self.itemsize;
+  step = __get__(self, "itemsize", "line 1329: step = self.itemsize");
   offset = (step * index);
-  dataview = self.dataview;
-  func_name = __add_op("get", __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
+  dataview = __get__(self, "dataview", "line 1332: dataview = self.dataview");
+  func_name = __add_op("get", __get__(__get__(self, "typecode_names", "line 1333: func_name = 'get'+self.typecode_names[ self.typecode ]"), "__getitem__")([__get__(self, "typecode", "line 1333: func_name = 'get'+self.typecode_names[ self.typecode ]")], Object()));
   func = dataview[func_name].bind(dataview);
-  if (( offset ) < self.bytes) {
+  if (( offset ) < __get__(self, "bytes", "line 1336: if offset < self.bytes:")) {
     value = func(offset);
-    if (( self.typecode ) == "float8") {
-      value = (value * self._norm_get);
+    if (( __get__(self, "typecode", "line 1338: if self.typecode == 'float8':") ) == "float8") {
+      value = (value * __get__(self, "_norm_get", "line 1339: value = value * self._norm_get"));
     } else {
-      if (( self.typecode ) == "float16") {
-        value = (value * self._norm_get);
+      if (( __get__(self, "typecode", "line 1340: elif self.typecode == 'float16':") ) == "float16") {
+        value = (value * __get__(self, "_norm_get", "line 1341: value = value * self._norm_get"));
       }
     }
     return value;
@@ -3744,20 +3750,20 @@ __array___setitem__ = function(args, kwargs) {
   var self = __args__['self'];
   var index = __args__['index'];
   var value = __args__['value'];
-  step = self.itemsize;
+  step = __get__(self, "itemsize", "line 1347: step = self.itemsize");
   if (( index ) < 0) {
-    index = (__add_op(self.length, index) - 1);
+    index = (__add_op(__get__(self, "length", "line 1348: if index < 0: index = self.length + index -1  ## TODO fixme"), index) - 1);
   }
   offset = (step * index);
-  dataview = self.dataview;
-  func_name = __add_op("set", __get__(__get__(self, "typecode_names"), "__getitem__")([self.typecode], Object()));
+  dataview = __get__(self, "dataview", "line 1351: dataview = self.dataview");
+  func_name = __add_op("set", __get__(__get__(self, "typecode_names", "line 1352: func_name = 'set'+self.typecode_names[ self.typecode ]"), "__getitem__")([__get__(self, "typecode", "line 1352: func_name = 'set'+self.typecode_names[ self.typecode ]")], Object()));
   func = dataview[func_name].bind(dataview);
-  if (( offset ) < self.bytes) {
-    if (( self.typecode ) == "float8") {
-      value = (value * self._norm_set);
+  if (( offset ) < __get__(self, "bytes", "line 1355: if offset < self.bytes:")) {
+    if (( __get__(self, "typecode", "line 1356: if self.typecode == 'float8':") ) == "float8") {
+      value = (value * __get__(self, "_norm_set", "line 1357: value = value * self._norm_set"));
     } else {
-      if (( self.typecode ) == "float16") {
-        value = (value * self._norm_set);
+      if (( __get__(self, "typecode", "line 1358: elif self.typecode == 'float16':") ) == "float16") {
+        value = (value * __get__(self, "_norm_set", "line 1359: value = value * self._norm_set"));
       }
     }
     func(offset, value);
@@ -3828,22 +3834,22 @@ __array_fromlist = function(args, kwargs) {
   var self = __args__['self'];
   var lst = __args__['lst'];
   length = len([lst], __NULL_OBJECT__);
-  step = self.itemsize;
-  typecode = self.typecode;
+  step = __get__(self, "itemsize", "line 1373: step = self.itemsize");
+  typecode = __get__(self, "typecode", "line 1374: typecode = self.typecode");
   size = (length * step);
-  dataview = self.dataview;
-  func_name = __add_op("set", __get__(__get__(self, "typecode_names"), "__getitem__")([typecode], Object()));
+  dataview = __get__(self, "dataview", "line 1376: dataview = self.dataview");
+  func_name = __add_op("set", __get__(__get__(self, "typecode_names", "line 1377: func_name = 'set'+self.typecode_names[ typecode ]"), "__getitem__")([typecode], Object()));
   func = dataview[func_name].bind(dataview);
-  if (( size ) <= self.bytes) {
+  if (( size ) <= __get__(self, "bytes", "line 1379: if size <= self.bytes:")) {
     i = 0;
     offset = 0;
     while (( i ) < length) {
       item = __get__(lst, "__getitem__")([i], Object());
       if (( typecode ) == "float8") {
-        item *= self._norm_set;
+        item *= __get__(self, "_norm_set", "line 1384: item *= self._norm_set");
       } else {
         if (( typecode ) == "float16") {
-          item *= self._norm_set;
+          item *= __get__(self, "_norm_set", "line 1386: item *= self._norm_set");
         }
       }
       func(offset,item);
@@ -3874,9 +3880,9 @@ __array_resize = function(args, kwargs) {
   __args__ = __getargs__("__array_resize", __sig__, args, kwargs);
   var self = __args__['self'];
   var length = __args__['length'];
-  buff = self.buffer;
+  buff = __get__(self, "buffer", "line 1395: buff = self.buffer");
   source = new Uint8Array(buff);
-  new_size = (length * self.itemsize);
+  new_size = (length * __get__(self, "itemsize", "line 1398: new_size = length * self.itemsize"));
   new_buff = new ArrayBuffer(new_size);
   target = new Uint8Array(new_buff);
   target.set(source);
@@ -3905,8 +3911,8 @@ __array_append = function(args, kwargs) {
   __args__ = __getargs__("__array_append", __sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
-  length = self.length;
-  __get__(__get__(self, "resize"), "__call__")([__add_op(self.length, 1)], __NULL_OBJECT__);
+  length = __get__(self, "length", "line 1409: length = self.length");
+  __get__(__get__(self, "resize", "line 1410: self.resize( self.length + 1 )"), "__call__")([__add_op(__get__(self, "length", "line 1410: self.resize( self.length + 1 )"), 1)], __NULL_OBJECT__);
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], Object());
 }
 
@@ -3934,7 +3940,7 @@ __array_extend = function(args, kwargs) {
   __next__36 = __get__(__iterator__36, "next");
   while (( __iterator__36.index ) < __iterator__36.length) {
     value = __next__36();
-    __get__(__get__(self, "append"), "__call__")([value], __NULL_OBJECT__);
+    __get__(__get__(self, "append", "line 1415: self.append( value )"), "__call__")([value], __NULL_OBJECT__);
   }
 }
 
@@ -3958,7 +3964,7 @@ __array_to_array = function(args, kwargs) {
   var self = __args__['self'];
   arr = [];
   i = 0;
-  while (( i ) < self.length) {
+  while (( i ) < __get__(self, "length", "line 1420: while i < self.length:")) {
     item = __array___getitem__([self, i], Object());
     arr.push( item );
     i += 1;
@@ -3983,7 +3989,7 @@ __array_to_list = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("self") };
   __args__ = __getargs__("__array_to_list", __sig__, args, kwargs);
   var self = __args__['self'];
-  return __get__(__get__(self, "to_array"), "__call__")();
+  return __get__(__get__(self, "to_array", "line 1427: return self.to_array()"), "__call__")();
 }
 
 __array_to_list.NAME = "__array_to_list";
@@ -4005,9 +4011,9 @@ __array_to_ascii = function(args, kwargs) {
   __args__ = __getargs__("__array_to_ascii", __sig__, args, kwargs);
   var self = __args__['self'];
   string = "";
-  arr = __get__(__get__(self, "to_array"), "__call__")();
+  arr = __get__(__get__(self, "to_array", "line 1431: arr = self.to_array()"), "__call__")();
   i = 0;
-  length = __get__(arr, "length");
+  length = __get__(arr, "length", "line 1432: i = 0; length = arr.length");
   while (( i ) < length) {
     var num = arr[i];
     var char = String.fromCharCode(num);
@@ -4052,7 +4058,7 @@ _to_pythonjs = function(args, kwargs) {
     __kwargs_1 = {"js_object": json};
     raw = __get__(list, "__call__")(__args_1, __kwargs_1);
     ;
-    append = __get__(output, "append");
+    append = __get__(output, "append", "line 1461: append = output.append");
     var __iterator__37;
     __iterator__37 = __get__(__get__(raw, "__iter__"), "__call__")([], Object());
     var __next__37;
@@ -4065,7 +4071,7 @@ _to_pythonjs = function(args, kwargs) {
   }
   output = __get__(dict, "__call__")();
   ;
-  set = __get__(output, "set");
+  set = __get__(output, "set", "line 1468: set = output.set");
   var __args_2, __kwargs_2;
   __args_2 = [];
   __kwargs_2 = {"js_object": Object.keys(json)};
@@ -4097,7 +4103,7 @@ json_to_pythonjs = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("json") };
   __args__ = __getargs__("json_to_pythonjs", __sig__, args, kwargs);
   var json = __args__['json'];
-  return _to_pythonjs([__get__(__get__(JSON, "parse"), "__call__")([json], __NULL_OBJECT__)], __NULL_OBJECT__);
+  return _to_pythonjs([__get__(__get__(JSON, "parse", "line 1475: return _to_pythonjs(JSON.parse(json))"), "__call__")([json], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 
 json_to_pythonjs.NAME = "json_to_pythonjs";
@@ -4125,7 +4131,7 @@ _to_json = function(args, kwargs) {
     __next__39 = __get__(__iterator__39, "next");
     while (( __iterator__39.index ) < __iterator__39.length) {
       i = __next__39();
-      __get__(__get__(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
+      __get__(__get__(r, "push", "line 1483: r.push(_to_json(i))"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
     }
   } else {
     if (isinstance([pythonjs, dict], __NULL_OBJECT__)) {
@@ -4164,7 +4170,7 @@ pythonjs_to_json = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("pythonjs") };
   __args__ = __getargs__("pythonjs_to_json", __sig__, args, kwargs);
   var pythonjs = __args__['pythonjs'];
-  return __get__(__get__(JSON, "stringify"), "__call__")([_to_json([pythonjs], __NULL_OBJECT__)], __NULL_OBJECT__);
+  return __get__(__get__(JSON, "stringify", "line 1498: return JSON.stringify(_to_json(pythonjs))"), "__call__")([_to_json([pythonjs], __NULL_OBJECT__)], __NULL_OBJECT__);
 }
 
 pythonjs_to_json.NAME = "pythonjs_to_json";

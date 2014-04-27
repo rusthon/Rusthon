@@ -1242,66 +1242,27 @@ class PythonToPythonJS(NodeVisitor):
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_js:
 			return '%s.%s' %(node_value, node.attr)
+			## TODO pythonjs.configure to allow this
 			#if self._in_assign_target or not isinstance(node.attr, str):
 			#	return '%s.%s' %(node_value, node.attr)
 			#else:
 			#	return '__ternary_operator__(%s.%s is not undefined, %s.%s, __getattr__(%s, "%s"))' %(node_value, node.attr, node_value, node.attr, node_value, node.attr)
-		typedef = None
-		if isinstance(node.value, Name):
-			typedef = self.get_typedef( instance=node.value )
-		elif hasattr(node.value, 'returns_type'):
-			typedef = self.get_typedef( class_name=node.value.returns_type )
 
-		if typedef:
-			if node.attr in typedef.properties:
-				getter = typedef.properties[ node.attr ]['get']
-				if getter in self._function_return_types:
-					node.returns_type = self._function_return_types[getter]
-				return '%s( [%s], JSObject() )' %(getter, node_value)
+		## TODO - in some cases the translator knows what type a node is and what attribute's it has, in those cases the call to `__get__` can be optimized away,
+		## this is disabled because if the user wants the best performance, they should instead use javascript-mode.
+		#typedef = None
+		#if isinstance(node.value, Name):
+		#	typedef = self.get_typedef( instance=node.value )
+		#elif hasattr(node.value, 'returns_type'):
+		#	typedef = self.get_typedef( class_name=node.value.returns_type )
 
-			if '__getattribute__' in typedef.methods or typedef.check_for_parent_with( method='__getattribute__' ):
-				return '__get__(%s, "%s")' % (node_value, node.attr)
-
-
-			#elif node.attr in typedef.class_attributes and not typedef.check_for_parent_with( class_attribute=node.attr ) and node_value != 'self':
-			#	## This optimization breaks when a subclass redefines a class attribute,
-			#	## but we need it for inplace assignment operators, this is safe only when
-			#	## other parent classes have not defined the same class attribute.
-			#	## This is also not safe when node_value is "self".
-			#	return "%s['__class__']['%s']" %(node_value, node.attr)
-
-			elif node.attr in typedef.attributes:
-				return "%s.%s" %(node_value, node.attr)
-
-			#elif '__getattr__' in typedef.methods:
-			#	func = typedef.get_pythonjs_function_name( '__getattr__' )
-			#	return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
-
-			elif typedef.check_for_parent_with( property=node.attr ):
-				parent = typedef.check_for_parent_with( property=node.attr )
-				getter = parent.properties[ node.attr ]['get']
-				if getter in self._function_return_types:
-					node.returns_type = self._function_return_types[getter]
-				return '%s( [%s], JSObject() )' %(getter, node_value)
-
-			#elif typedef.check_for_parent_with( class_attribute=node.attr ):
-			#	#return '__get__(%s, "%s")' % (node_value, node.attr)  ## __get__ is broken with grandparent class attributes - TODO double check and fix this
-			#	if node.attr in typedef.class_attributes:
-			#		## this might not be always correct
-			#		return "%s['__class__']['%s']" %(node_value, node.attr)
-			#	else:
-			#		parent = typedef.check_for_parent_with( class_attribute=node.attr )
-			#		return "__%s_attrs['%s']" %(parent.name, node.attr)  ## TODO, get from class.__dict__
-
-			#elif typedef.check_for_parent_with( method='__getattr__' ):
-			#	parent = typedef.check_for_parent_with( method='__getattr__' )
-			#	func = parent.get_pythonjs_function_name( '__getattr__' )
-			#	return '%s([%s, "%s"], JSObject())' %(func, node_value, node.attr)
-
-			else:
-				return '__get__(%s, "%s")' % (node_value, node.attr)  ## TODO - this could be a builtin class like: list, dict, etc.
+		if hasattr(node, 'lineno'):
+			src = self._source[ node.lineno-1 ]
+			src = src.replace('"', '\\"')
+			err = 'missing attribute `%s` - line %s: %s'	%(node.attr, node.lineno, src.strip())
+			return '__get__(%s, "%s", "%s")' % (node_value, node.attr, err)
 		else:
-			return '__get__(%s, "%s")' % (node_value, node.attr)      ## TODO - double check this
+			return '__get__(%s, "%s")' % (node_value, node.attr)
 
 
 	def visit_Index(self, node):
@@ -1610,7 +1571,9 @@ class PythonToPythonJS(NodeVisitor):
 				src = self._source[ node.lineno-1 ]
 				src = src.replace('"', '\\"')
 				src = 'line %s: %s'	%(node.lineno, src.strip())
-				writer.write('print """RuntimeError -> %s"""' %src)
+				writer.write('console.trace()')
+				writer.write('console.error(__exception__, __exception__.message)')
+				writer.write('console.error("""%s""")' %src)
 				writer.write('raise RuntimeError("""%s""")' %src)
 			else:
 				writer.write('raise RuntimeError("no source code")')

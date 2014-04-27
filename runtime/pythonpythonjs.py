@@ -30,15 +30,8 @@ def __create_array__():
 		i += 1
 	return array
 
-#def adapt_arguments(handler):  ## DEPRECATED
-#	"""Useful to transform Javascript arguments to Python arguments"""
-#	def func():
-#		handler(Array.prototype.slice.call(arguments))
-#	return func
 
-
-
-def __get__(object, attribute):
+def __get__(object, attribute, error_message):
 	"""Retrieve an attribute, method, property, or wrapper function.
 
 	method are actually functions which are converted to methods by
@@ -101,16 +94,6 @@ def __get__(object, attribute):
 	if Object.hasOwnProperty.call(object, '__getattribute__'):
 		return object.__getattribute__( attribute )
 
-
-	#if JS('object instanceof Array'):
-	#	if attribute == '__getitem__':
-	#		def wrapper(args,kwargs): return object.__getitem__( args[0] )
-	#		wrapper.is_wrapper = True
-	#		return wrapper
-	#	elif attribute == '__setitem__':
-	#		def wrapper(args,kwargs): object.__setitem__( args[0], args[1] )
-	#		wrapper.is_wrapper = True
-	#		return wrapper
 
 	var(attr)
 	attr = object[attribute]  ## this could be a javascript object with cached method
@@ -345,7 +328,10 @@ def __get__(object, attribute):
 		return wrapper
 
 	if attr is undefined:
-		raise AttributeError(attribute)
+		if error_message:
+			raise AttributeError(error_message)
+		else:
+			raise AttributeError(attribute)
 	else:
 		return attr
 
