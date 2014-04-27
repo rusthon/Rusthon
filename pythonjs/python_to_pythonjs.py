@@ -1588,9 +1588,29 @@ class PythonToPythonJS(NodeVisitor):
 			src = self._source[ node.lineno ]
 			log( src )
 
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
+		if use_runtime_errors:
+			writer.write('try:')
+			writer.push()
+
 		line = self.visit(node.value)
 		if line:
 			writer.write(line)
+
+		if use_runtime_errors:
+			writer.pull()
+			writer.write('except:')
+			writer.push()
+			if node.lineno-1 < len(self._source):
+				src = self._source[ node.lineno-1 ]
+				src = src.replace('"', '\\"')
+				src = 'line %s: %s'	%(node.lineno, src.strip())
+				writer.write('print """RuntimeError -> %s"""' %src)
+				writer.write('raise RuntimeError("""%s""")' %src)
+			else:
+				writer.write('raise RuntimeError("no source code")')
+
+			writer.pull()
 
 	def inline_function(self, node):
 		name = self.visit(node.func)

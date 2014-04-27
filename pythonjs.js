@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Apr 26 21:37:04 2014
+// PythonJS Runtime - regenerated on: Sat Apr 26 22:33:03 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -439,10 +439,41 @@ __getargs__ = function(func_name, signature, args, kwargs) {
   return out;
 }
 _PythonJS_UID = 0;
+try {
 function IndexError(msg) {this.message = msg || "";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";
+} catch(__exception__) {
+console.log("RuntimeError -> line 8: JS('function IndexError(msg) {this.message = msg || \"\";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = \"IndexError\";')");
+throw new RuntimeError("line 8: JS('function IndexError(msg) {this.message = msg || \"\";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = \"IndexError\";')");
+
+}
+try {
 function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";
+} catch(__exception__) {
+console.log("RuntimeError -> line 9: JS('function KeyError(msg) {this.message = msg || \"\";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = \"KeyError\";')");
+throw new RuntimeError("line 9: JS('function KeyError(msg) {this.message = msg || \"\";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = \"KeyError\";')");
+
+}
+try {
 function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";
+} catch(__exception__) {
+console.log("RuntimeError -> line 10: JS('function ValueError(msg) {this.message = msg || \"\";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = \"ValueError\";')");
+throw new RuntimeError("line 10: JS('function ValueError(msg) {this.message = msg || \"\";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = \"ValueError\";')");
+
+}
+try {
 function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";
+} catch(__exception__) {
+console.log("RuntimeError -> line 11: JS('function AttributeError(msg) {this.message = msg || \"\";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = \"AttributeError\";')");
+throw new RuntimeError("line 11: JS('function AttributeError(msg) {this.message = msg || \"\";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = \"AttributeError\";')");
+
+}
+try {
+function RuntimeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "RuntimeError";
+} catch(__exception__) {
+console.log("RuntimeError -> line 12: JS('function RuntimeError(msg) {this.message = msg || \"\";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = \"RuntimeError\";')");
+throw new RuntimeError("line 12: JS('function RuntimeError(msg) {this.message = msg || \"\";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = \"RuntimeError\";')");
+
+}
 __getattr__ = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
     /*pass*/
@@ -916,7 +947,13 @@ type = function(args, kwargs) {
   var ob_or_class_name = __args__['ob_or_class_name'];
   var bases = __args__['bases'];
   var class_dict = __args__['class_dict'];
-  "\n	type(object) -> the object's type\n	type(name, bases, dict) -> a new type  ## broken? - TODO test\n	";
+    try {
+"\n	type(object) -> the object's type\n	type(name, bases, dict) -> a new type  ## broken? - TODO test\n	";
+  } catch(__exception__) {
+console.log("RuntimeError -> line 297: '''");
+throw new RuntimeError("line 297: '''");
+
+}
   if (( bases ) === null && ( class_dict ) === null) {
     return ob_or_class_name.__class__;
   } else {
@@ -1179,7 +1216,13 @@ str.kwargs_signature = {  };
 str.types_signature = {  };
 str.pythonscript_function = true;
 _setup_str_prototype = function(args, kwargs) {
-  "\n	Extend JavaScript String.prototype with methods that implement the Python str API.\n	The decorator @String.prototype.[name] assigns the function to the prototype,\n	and ensures that the special 'this' variable will work.\n	";
+    try {
+"\n	Extend JavaScript String.prototype with methods that implement the Python str API.\n	The decorator @String.prototype.[name] assigns the function to the prototype,\n	and ensures that the special 'this' variable will work.\n	";
+  } catch(__exception__) {
+console.log("RuntimeError -> line 404: '''");
+throw new RuntimeError("line 404: '''");
+
+}
     var func = function(a) {
     if (( this.indexOf(a) ) == -1) {
       return false;
@@ -1423,7 +1466,13 @@ _setup_str_prototype.args_signature = [];
 _setup_str_prototype.kwargs_signature = {  };
 _setup_str_prototype.types_signature = {  };
 _setup_str_prototype.pythonscript_function = true;
+try {
 _setup_str_prototype();
+} catch(__exception__) {
+console.log("RuntimeError -> line 520: _setup_str_prototype()");
+throw new RuntimeError("line 520: _setup_str_prototype()");
+
+}
 _setup_array_prototype = function(args, kwargs) {
     var func = function() {
     var i, item;
@@ -1689,7 +1738,13 @@ _setup_array_prototype.args_signature = [];
 _setup_array_prototype.kwargs_signature = {  };
 _setup_array_prototype.types_signature = {  };
 _setup_array_prototype.pythonscript_function = true;
+try {
 _setup_array_prototype();
+} catch(__exception__) {
+console.log("RuntimeError -> line 648: _setup_array_prototype()");
+throw new RuntimeError("line 648: _setup_array_prototype()");
+
+}
 _setup_nodelist_prototype = function(args, kwargs) {
     var func = function(a) {
     if (( this.indexOf(a) ) == -1) {
@@ -1774,7 +1829,13 @@ _setup_nodelist_prototype.kwargs_signature = {  };
 _setup_nodelist_prototype.types_signature = {  };
 _setup_nodelist_prototype.pythonscript_function = true;
 if (( __NODEJS__ ) == false && ( __WEBWORKER__ ) == false) {
-  _setup_nodelist_prototype();
+    try {
+_setup_nodelist_prototype();
+  } catch(__exception__) {
+console.log("RuntimeError -> line 690: _setup_nodelist_prototype()");
+throw new RuntimeError("line 690: _setup_nodelist_prototype()");
+
+}
 }
 bisect = function(args, kwargs) {
   if (args instanceof Array && {}.toString.call(kwargs) === '[object Object]' && ( arguments.length ) == 2) {
@@ -1812,7 +1873,13 @@ range = function(args, kwargs) {
   var num = __args__['num'];
   var stop = __args__['stop'];
   var step = __args__['step'];
-  "Emulates Python's range function";
+    try {
+"Emulates Python's range function";
+  } catch(__exception__) {
+console.log("RuntimeError -> line 700: \"\"\"Emulates Python's range function\"\"\"");
+throw new RuntimeError("line 700: \"\"\"Emulates Python's range function\"\"\"");
+
+}
   if (( stop ) !== undefined) {
     i = num;
     num = stop;
@@ -2241,7 +2308,13 @@ __pytuple___init__ = function(args, kwargs) {
     __next__20 = __get__(__iterator__20, "next");
     while (( __iterator__20.index ) < __iterator__20.length) {
       item = __next__20();
-      __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+            try {
+__get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+      } catch(__exception__) {
+console.log("RuntimeError -> line 833: arr.push( item )");
+throw new RuntimeError("line 833: arr.push( item )");
+
+}
     }
   } else {
     if (__test_if_true__(js_object)) {
@@ -2252,7 +2325,13 @@ __pytuple___init__ = function(args, kwargs) {
         __next__21 = __get__(__iterator__21, "next");
         while (( __iterator__21.index ) < __iterator__21.length) {
           v = __next__21();
-          __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+                    try {
+__get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+          } catch(__exception__) {
+console.log("RuntimeError -> line 839: arr.push( v )");
+throw new RuntimeError("line 839: arr.push( v )");
+
+}
         }
       } else {
         throw new TypeError;
@@ -2516,7 +2595,13 @@ __pylist___init__ = function(args, kwargs) {
       __next__23 = __get__(__iterator__23, "next");
       while (( __iterator__23.index ) < __iterator__23.length) {
         item = __next__23();
-        __get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+                try {
+__get__(__get__(arr, "push"), "__call__")([item], __NULL_OBJECT__);
+        } catch(__exception__) {
+console.log("RuntimeError -> line 915: arr.push( item )");
+throw new RuntimeError("line 915: arr.push( item )");
+
+}
       }
     } else {
       if (__test_if_true__(js_object)) {
@@ -2527,7 +2612,13 @@ __pylist___init__ = function(args, kwargs) {
           __next__24 = __get__(__iterator__24, "next");
           while (( __iterator__24.index ) < __iterator__24.length) {
             v = __next__24();
-            __get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+                        try {
+__get__(__get__(arr, "push"), "__call__")([v], __NULL_OBJECT__);
+            } catch(__exception__) {
+console.log("RuntimeError -> line 921: arr.push( v )");
+throw new RuntimeError("line 921: arr.push( v )");
+
+}
           }
         } else {
           throw new TypeError;
@@ -2642,7 +2733,13 @@ __pylist_extend = function(args, kwargs) {
   __next__25 = __get__(__iterator__25, "next");
   while (( __iterator__25.index ) < __iterator__25.length) {
     obj = __next__25();
-    __get__(__get__(self, "append"), "__call__")([obj], __NULL_OBJECT__);
+        try {
+__get__(__get__(self, "append"), "__call__")([obj], __NULL_OBJECT__);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 947: self.append(obj)");
+throw new RuntimeError("line 947: self.append(obj)");
+
+}
   }
 }
 
@@ -3019,9 +3116,21 @@ __dict___init__ = function(args, kwargs) {
         while (( __iterator__27.index ) < __iterator__27.length) {
           o = __next__27();
           if (o instanceof Array) {
-            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
+                        try {
+__get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")([0], Object()), __get__(o, "__getitem__")([1], Object())], __NULL_OBJECT__);
+            } catch(__exception__) {
+console.log("RuntimeError -> line 1032: self.__setitem__( o[0], o[1] )");
+throw new RuntimeError("line 1032: self.__setitem__( o[0], o[1] )");
+
+}
           } else {
-            __get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
+                        try {
+__get__(__get__(self, "__setitem__"), "__call__")([__get__(o, "__getitem__")(["key"], Object()), __get__(o, "__getitem__")(["value"], Object())], __NULL_OBJECT__);
+            } catch(__exception__) {
+console.log("RuntimeError -> line 1034: self.__setitem__( o['key'], o['value'] )");
+throw new RuntimeError("line 1034: self.__setitem__( o['key'], o['value'] )");
+
+}
           }
         }
       } else {
@@ -3033,7 +3142,13 @@ __dict___init__ = function(args, kwargs) {
           while (( __iterator__28.index ) < __iterator__28.length) {
             key = __next__28();
             value = __get__(ob, "__getitem__")([key], Object());
-            __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+                        try {
+__get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+            } catch(__exception__) {
+console.log("RuntimeError -> line 1038: self.__setitem__( key, value )");
+throw new RuntimeError("line 1038: self.__setitem__( key, value )");
+
+}
           }
         } else {
           console.log("ERROR init dict from:", js_object);
@@ -3174,7 +3289,13 @@ __dict_update = function(args, kwargs) {
   __next__30 = __get__(__iterator__30, "next");
   while (( __iterator__30.index ) < __iterator__30.length) {
     key = __next__30();
-    __get__(__get__(self, "__setitem__"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
+        try {
+__get__(__get__(self, "__setitem__"), "__call__")([key, __get__(other, "__getitem__")([key], Object())], __NULL_OBJECT__);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1073: self.__setitem__( key, other[key] )");
+throw new RuntimeError("line 1073: self.__setitem__( key, other[key] )");
+
+}
   }
 }
 
@@ -3203,7 +3324,13 @@ __dict_items = function(args, kwargs) {
   __next__31 = __get__(__iterator__31, "next");
   while (( __iterator__31.index ) < __iterator__31.length) {
     key = __next__31();
-    __get__(__get__(arr, "append"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
+        try {
+__get__(__get__(arr, "append"), "__call__")([[key, __get__(self, "__getitem__")([key], Object())]], __NULL_OBJECT__);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1078: arr.append( [key, self[key]] )");
+throw new RuntimeError("line 1078: arr.append( [key, self[key]] )");
+
+}
   }
   return arr;
 }
@@ -3254,7 +3381,13 @@ __dict_set = function(args, kwargs) {
   var self = __args__['self'];
   var key = __args__['key'];
   var value = __args__['value'];
-  __get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+    try {
+__get__(__get__(self, "__setitem__"), "__call__")([key, value], __NULL_OBJECT__);
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1088: self.__setitem__(key, value)");
+throw new RuntimeError("line 1088: self.__setitem__(key, value)");
+
+}
 }
 
 __dict_set.NAME = "__dict_set";
@@ -3298,7 +3431,13 @@ __dict___getitem__ = function(args, kwargs) {
   __args__ = __getargs__("__dict___getitem__", __sig__, args, kwargs);
   var self = __args__['self'];
   var key = __args__['key'];
-  "\n		notes:\n			. '4' and 4 are the same key\n			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,\n			  that is why below we return the key in self if __dict is undefined.\n		";
+    try {
+"\n		notes:\n			. '4' and 4 are the same key\n			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,\n			  that is why below we return the key in self if __dict is undefined.\n		";
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1100: '''");
+throw new RuntimeError("line 1100: '''");
+
+}
   __dict = self["$wrapped"];
   if (typeof(key) === 'object' || typeof(key) === 'function') {
     if (key.__uid__ && key.__uid__ in __dict) {
@@ -3335,11 +3474,29 @@ __dict___setitem__ = function(args, kwargs) {
   __dict = self["$wrapped"];
   if (typeof(key) === 'object' || typeof(key) === 'function') {
     if (key.__uid__ === undefined) {
-      key.__uid__ = 'ï¿¼' + _PythonJS_UID++;
+            try {
+key.__uid__ = 'ï¿¼' + _PythonJS_UID++;
+      } catch(__exception__) {
+console.log("RuntimeError -> line 1121: JS(u\"key.__uid__ = '￼' + _PythonJS_UID++\")");
+throw new RuntimeError("line 1121: JS(u\"key.__uid__ = '￼' + _PythonJS_UID++\")");
+
+}
     }
-    __dict[key.__uid__] = value;
+        try {
+__dict[key.__uid__] = value;
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1122: JS('__dict[key.__uid__] = value')");
+throw new RuntimeError("line 1122: JS('__dict[key.__uid__] = value')");
+
+}
   } else {
-    __dict[key] = value;
+        try {
+__dict[key] = value;
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1124: JS('__dict[key] = value')");
+throw new RuntimeError("line 1124: JS('__dict[key] = value')");
+
+}
   }
 }
 
@@ -3388,7 +3545,13 @@ __dict_pop = function(args, kwargs) {
     return d;
   } else {
     js_object = self["$wrapped"];
-    delete js_object[key];
+        try {
+delete js_object[key];
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1136: JS(\"delete js_object[key]\")");
+throw new RuntimeError("line 1136: JS(\"delete js_object[key]\")");
+
+}
     return v;
   }
 }
@@ -3441,7 +3604,13 @@ __dict___contains__ = function(args, kwargs) {
   var self = __args__['self'];
   var value = __args__['value'];
     try {
+    try {
 __dict___getitem__([self, value], Object());
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1149: self[value]");
+throw new RuntimeError("line 1149: self[value]");
+
+}
 return true;
   } catch(__exception__) {
 return false;
@@ -3489,7 +3658,13 @@ set = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("a") };
   __args__ = __getargs__("set", __sig__, args, kwargs);
   var a = __args__['a'];
-  "\n	This returns an array that is a minimal implementation of set.\n	Often sets are used simply to remove duplicate entries from a list, \n	and then it get converted back to a list, it is safe to use fastset for this.\n\n	The array prototype is overloaded with basic set functions:\n		difference\n		intersection\n		issubset\n\n	Note: sets in Python are not subscriptable, but can be iterated over.\n\n	Python docs say that set are unordered, some programs may rely on this disorder\n	for randomness, for sets of integers we emulate the unorder only uppon initalization \n	of the set, by masking the value by bits-1. Python implements sets starting with an \n	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates \n	a new array of length 32 and mask of 31.  This is only emulated for arrays of \n	integers up to an array length of 1536.\n\n	";
+    try {
+"\n	This returns an array that is a minimal implementation of set.\n	Often sets are used simply to remove duplicate entries from a list, \n	and then it get converted back to a list, it is safe to use fastset for this.\n\n	The array prototype is overloaded with basic set functions:\n		difference\n		intersection\n		issubset\n\n	Note: sets in Python are not subscriptable, but can be iterated over.\n\n	Python docs say that set are unordered, some programs may rely on this disorder\n	for randomness, for sets of integers we emulate the unorder only uppon initalization \n	of the set, by masking the value by bits-1. Python implements sets starting with an \n	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates \n	a new array of length 32 and mask of 31.  This is only emulated for arrays of \n	integers up to an array length of 1536.\n\n	";
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1179: '''");
+throw new RuntimeError("line 1179: '''");
+
+}
   if (a instanceof Array) {
     a = a["$wrapped"];
   }
@@ -3627,7 +3802,13 @@ __array___init__ = function(args, kwargs) {
   buff = new ArrayBuffer(size);
   self.dataview = new DataView(buff);
   self.buffer = buff;
-  __get__(__get__(self, "fromlist"), "__call__")([initializer], __NULL_OBJECT__);
+    try {
+__get__(__get__(self, "fromlist"), "__call__")([initializer], __NULL_OBJECT__);
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1314: self.fromlist( initializer )");
+throw new RuntimeError("line 1314: self.fromlist( initializer )");
+
+}
 }
 
 __array___init__.NAME = "__array___init__";
@@ -3752,7 +3933,13 @@ __array___setitem__ = function(args, kwargs) {
         value = (value * self._norm_set);
       }
     }
-    func(offset, value);
+        try {
+func(offset, value);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1360: JS('func(offset, value)')");
+throw new RuntimeError("line 1360: JS('func(offset, value)')");
+
+}
   } else {
     throw new IndexError(index);
   }
@@ -3838,7 +4025,13 @@ __array_fromlist = function(args, kwargs) {
           item *= self._norm_set;
         }
       }
-      func(offset,item);
+            try {
+func(offset,item);
+      } catch(__exception__) {
+console.log("RuntimeError -> line 1387: JS('func(offset,item)')");
+throw new RuntimeError("line 1387: JS('func(offset,item)')");
+
+}
       offset += step;
       i += 1;
     }
@@ -3871,7 +4064,13 @@ __array_resize = function(args, kwargs) {
   new_size = (length * self.itemsize);
   new_buff = new ArrayBuffer(new_size);
   target = new Uint8Array(new_buff);
-  target.set(source);
+    try {
+target.set(source);
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1400: JS('target.set(source)')");
+throw new RuntimeError("line 1400: JS('target.set(source)')");
+
+}
   self.length = length;
   self.bytes = new_size;
   self.buffer = new_buff;
@@ -3898,7 +4097,13 @@ __array_append = function(args, kwargs) {
   var self = __args__['self'];
   var value = __args__['value'];
   length = self.length;
-  __get__(__get__(self, "resize"), "__call__")([__add_op(self.length, 1)], __NULL_OBJECT__);
+    try {
+__get__(__get__(self, "resize"), "__call__")([__add_op(self.length, 1)], __NULL_OBJECT__);
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1409: self.resize( self.length + 1 )");
+throw new RuntimeError("line 1409: self.resize( self.length + 1 )");
+
+}
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], Object());
 }
 
@@ -3926,7 +4131,13 @@ __array_extend = function(args, kwargs) {
   __next__36 = __get__(__iterator__36, "next");
   while (( __iterator__36.index ) < __iterator__36.length) {
     value = __next__36();
-    __get__(__get__(self, "append"), "__call__")([value], __NULL_OBJECT__);
+        try {
+__get__(__get__(self, "append"), "__call__")([value], __NULL_OBJECT__);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1414: self.append( value )");
+throw new RuntimeError("line 1414: self.append( value )");
+
+}
   }
 }
 
@@ -3952,7 +4163,13 @@ __array_to_array = function(args, kwargs) {
   i = 0;
   while (( i ) < self.length) {
     item = __array___getitem__([self, i], Object());
-    arr.push( item );
+        try {
+arr.push( item );
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1421: JS('arr.push( item )')");
+throw new RuntimeError("line 1421: JS('arr.push( item )')");
+
+}
     i += 1;
   }
   return arr;
@@ -4001,8 +4218,20 @@ __array_to_ascii = function(args, kwargs) {
   i = 0;
   length = __get__(arr, "length");
   while (( i ) < length) {
-    var num = arr[i];
-    var char = String.fromCharCode(num);
+        try {
+var num = arr[i];
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1433: JS('var num = arr[i]')");
+throw new RuntimeError("line 1433: JS('var num = arr[i]')");
+
+}
+        try {
+var char = String.fromCharCode(num);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1434: JS('var char = String.fromCharCode(num)')");
+throw new RuntimeError("line 1434: JS('var char = String.fromCharCode(num)')");
+
+}
     string += char;
     i += 1;
   }
@@ -4029,7 +4258,13 @@ _to_pythonjs = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("json") };
   __args__ = __getargs__("_to_pythonjs", __sig__, args, kwargs);
   var json = __args__['json'];
-  var item;
+    try {
+var item;
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1450: var(jstype, item, output)");
+throw new RuntimeError("line 1450: var(jstype, item, output)");
+
+}
   jstype = typeof json;
   if (( jstype ) == "number") {
     return json;
@@ -4043,7 +4278,13 @@ _to_pythonjs = function(args, kwargs) {
     __args_1 = [];
     __kwargs_1 = {"js_object": json};
     raw = __get__(list, "__call__")(__args_1, __kwargs_1);
-    ;
+        try {
+;
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1459: var(append)");
+throw new RuntimeError("line 1459: var(append)");
+
+}
     append = __get__(output, "append");
     var __iterator__37;
     __iterator__37 = __get__(__get__(raw, "__iter__"), "__call__")([], Object());
@@ -4051,12 +4292,24 @@ _to_pythonjs = function(args, kwargs) {
     __next__37 = __get__(__iterator__37, "next");
     while (( __iterator__37.index ) < __iterator__37.length) {
       item = __next__37();
-      __get__(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], __NULL_OBJECT__);
+            try {
+__get__(append, "__call__")([_to_pythonjs([item], __NULL_OBJECT__)], __NULL_OBJECT__);
+      } catch(__exception__) {
+console.log("RuntimeError -> line 1462: append(_to_pythonjs(item))");
+throw new RuntimeError("line 1462: append(_to_pythonjs(item))");
+
+}
     }
     return output;
   }
   output = __get__(dict, "__call__")();
-  ;
+    try {
+;
+  } catch(__exception__) {
+console.log("RuntimeError -> line 1466: var(set)");
+throw new RuntimeError("line 1466: var(set)");
+
+}
   set = __get__(output, "set");
   var __args_2, __kwargs_2;
   __args_2 = [];
@@ -4068,7 +4321,13 @@ _to_pythonjs = function(args, kwargs) {
   __next__38 = __get__(__iterator__38, "next");
   while (( __iterator__38.index ) < __iterator__38.length) {
     key = __next__38();
-    set([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
+        try {
+set([key, _to_pythonjs([json[key]], __NULL_OBJECT__)], __NULL_OBJECT__);
+    } catch(__exception__) {
+console.log("RuntimeError -> line 1470: set(key, _to_pythonjs(JS(\"json[key]\")))");
+throw new RuntimeError("line 1470: set(key, _to_pythonjs(JS(\"json[key]\")))");
+
+}
   }
   return output;
 }
@@ -4117,11 +4376,23 @@ _to_json = function(args, kwargs) {
     __next__39 = __get__(__iterator__39, "next");
     while (( __iterator__39.index ) < __iterator__39.length) {
       i = __next__39();
-      __get__(__get__(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
+            try {
+__get__(__get__(r, "push"), "__call__")([_to_json([i], __NULL_OBJECT__)], __NULL_OBJECT__);
+      } catch(__exception__) {
+console.log("RuntimeError -> line 1482: r.push(_to_json(i))");
+throw new RuntimeError("line 1482: r.push(_to_json(i))");
+
+}
     }
   } else {
     if (isinstance([pythonjs, dict], __NULL_OBJECT__)) {
-      ;
+            try {
+;
+      } catch(__exception__) {
+console.log("RuntimeError -> line 1484: var(r)");
+throw new RuntimeError("line 1484: var(r)");
+
+}
       r = Object();
       var __iterator__40;
       __iterator__40 = __get__(__get__(__jsdict_keys(pythonjs), "__iter__"), "__call__")([], Object());

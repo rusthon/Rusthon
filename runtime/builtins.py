@@ -9,6 +9,7 @@ JS('function IndexError(msg) {this.message = msg || "";} IndexError.prototype = 
 JS('function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
 JS('function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
 JS('function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
+JS('function RuntimeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "RuntimeError";')
 
 with lowlevel:
 	def __getattr__(ob, a ):
