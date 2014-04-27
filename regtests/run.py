@@ -162,7 +162,7 @@ def patch_assert(filename):
     return '\n'.join(out)
         
 
-_patch_header = """# -*- coding: utf-8 -*-
+_patch_header = """
 def TestError(file, line, result, test):
     if result == False:
         print(file + ":" + str(line) + " Error fail " + test)
@@ -234,10 +234,18 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     else:
         content = patch_python(filename)
 
-    write(output_name, 'pythonjs.configure(runtime_exceptions=False)\n' + content)
+    code = '\n'.join(
+        [
+            '# -*- coding: utf-8 -*-',
+            'pythonjs.configure(runtime_exceptions=False)',
+            content
+        ]
+    )
+    write(output_name, code)
     cmd = [
         os.path.join("..", "pythonjs", "translator.py"),
-        output_name
+        output_name,
+        '--debug'
     ]
     if dart:
         cmd.append( '--dart' )

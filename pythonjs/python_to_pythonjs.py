@@ -581,7 +581,13 @@ class PythonToPythonJS(NodeVisitor):
 			func = typedef.operators[ op ]
 			a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
 			writer.write( a )
+
 		elif op == '//=':
+			if isinstance(node.target, ast.Attribute):
+				name = self.visit(node.target.value)
+				attr = node.target.attr
+				target = '%s.%s' %(name, attr)
+
 			if self._with_dart:
 				a = '%s = (%s/%s).floor()' %(target, target, self.visit(node.value))
 			else:
@@ -1319,8 +1325,15 @@ class PythonToPythonJS(NodeVisitor):
 					self.visit(node.slice),
 				)
 		else:
-			return '__get__(%s, "__getitem__")([%s], JSObject())' % (
+			err = ""
+			if hasattr(node, 'lineno'):
+				src = self._source[ node.lineno-1 ]
+				src = src.replace('"', '\\"')
+				err = 'line %s: %s'	%(node.lineno, src.strip())
+
+			return '__get__(%s, "__getitem__", "%s")([%s], JSObject())' % (
 				self.visit(node.value),
+				err,
 				self.visit(node.slice),
 			)
 
@@ -1340,9 +1353,37 @@ class PythonToPythonJS(NodeVisitor):
 		return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
+		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
+
+		lineno = node.lineno
+
+		if use_runtime_errors:
+			writer.write('try:')
+			writer.push()
+
 		for target in node.targets:
 			self._visit_assign_helper( node, target )
 			node = ast.Expr( value=target )
+
+		if use_runtime_errors:
+			writer.pull()
+			writer.write('except:')
+			writer.push()
+			if lineno-1 < len(self._source):
+				src = self._source[ lineno-1 ]
+				src = src.replace('"', '\\"')
+				src = 'line %s: %s'	%(lineno, src.strip())
+				writer.write('console.trace()')
+				writer.write('console.error(__exception__, __exception__.message)')
+				writer.write('console.error("""%s""")' %src)
+				writer.write('raise RuntimeError("""%s""")' %src)
+			else:
+				writer.write('raise RuntimeError("no source code")')
+
+			writer.pull()
+
+
 
 	def _visit_assign_helper(self, node, target):
 		if isinstance(target, Subscript):
@@ -2568,7 +2609,14 @@ class PythonToPythonJS(NodeVisitor):
 			elif isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in self._generator_functions:
 				is_generator = True
 			else:
-				writer.write('__iterator__%s = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' %(iterid, self.visit(iter)))
+				if hasattr(node, 'lineno'):
+					src = self._source[ node.lineno-1 ]
+					src = src.replace('"', '\\"')
+					err = 'no iterator - line %s: %s'	%(node.lineno, src.strip())
+					writer.write('__iterator__%s = __get__(__get__(%s, "__iter__", "%s"), "__call__")(JSArray(), JSObject())' %(iterid, self.visit(iter), err))
+
+				else:
+					writer.write('__iterator__%s = __get__(__get__(%s, "__iter__"), "__call__")(JSArray(), JSObject())' %(iterid, self.visit(iter)))
 
 			if is_generator:
 				iter_name = self.visit(target)
@@ -2976,7 +3024,13 @@ def inspect_method( node ):
 
 def main(script):
 	PythonToPythonJS( source=script, dart='--dart' in sys.argv )
-	return writer.getvalue()
+	code = writer.getvalue()
+	if '--debug' in sys.argv:
+		try:
+			open('/tmp/python-to-pythonjs.debug.py', 'wb').write(code)
+		except:
+			pass
+	return code
 
 
 def command():

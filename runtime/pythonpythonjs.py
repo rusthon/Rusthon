@@ -48,9 +48,15 @@ def __get__(object, attribute, error_message):
 		wrapper, cache it on the function, and return the wrapper.
 	"""
 	if object is None:
-		raise AttributeError('null object (None) has no attribute: '+attribute)
+		if error_message:
+			raise AttributeError('(`null` has no attributes) ' +error_message)
+		else:
+			raise AttributeError('null object (None) has no attribute: '+attribute)
 	elif object is undefined:
-		raise AttributeError('undefined has no attribute: ' +attribute)
+		if error_message:
+			raise AttributeError('(`undefined` has no attributes) ' +error_message)
+		else:
+			raise AttributeError('undefined has no attribute: ' +attribute)
 
 	if attribute == '__call__':
 		if object.pythonscript_function or object.is_wrapper:  ## common case
