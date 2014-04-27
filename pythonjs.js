@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Sat Apr 26 21:14:58 2014
+// PythonJS Runtime - regenerated on: Sat Apr 26 21:37:04 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -28,7 +28,11 @@ __create_array__ = function() {
 __get__ = function(object, attribute) {
   "Retrieve an attribute, method, property, or wrapper function.\n\n	method are actually functions which are converted to methods by\n	prepending their arguments with the current object. Properties are\n	not functions!\n\n	DOM support:\n		http://stackoverflow.com/questions/14202699/document-createelement-not-working\n		https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/instanceof\n\n	Direct JavaScript Calls:\n		if an external javascript function is found, and it was not a wrapper that was generated here,\n		check the function for a 'cached_wrapper' attribute, if none is found then generate a new\n		wrapper, cache it on the function, and return the wrapper.\n	";
   if (( object ) === null) {
-    return null;
+    throw new AttributeError(("null object (None) has no attribute: " + attribute));
+  } else {
+    if (( object ) === undefined) {
+      throw new AttributeError(("undefined has no attribute: " + attribute));
+    }
   }
   if (( attribute ) == "__call__") {
     if (object.pythonscript_function || object.is_wrapper) {

@@ -55,7 +55,9 @@ def __get__(object, attribute):
 		wrapper, cache it on the function, and return the wrapper.
 	"""
 	if object is None:
-		return None
+		raise AttributeError('null object (None) has no attribute: '+attribute)
+	elif object is undefined:
+		raise AttributeError('undefined has no attribute: ' +attribute)
 
 	if attribute == '__call__':
 		if object.pythonscript_function or object.is_wrapper:  ## common case
