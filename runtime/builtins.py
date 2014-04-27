@@ -2,6 +2,7 @@
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+pythonjs.configure(runtime_exceptions=False)
 
 _PythonJS_UID = 0
 
@@ -56,7 +57,7 @@ with javascript:
 			return ob.length != 0
 		elif typeof(ob) == 'function':
 			return True
-		elif isinstance(ob, dict):
+		elif ob.__class__ and ob.__class__ is dict: #isinstance(ob, dict):
 			return Object.keys( ob[...] ).length != 0
 		elif instanceof(ob, Object):
 			return Object.keys(ob).length != 0

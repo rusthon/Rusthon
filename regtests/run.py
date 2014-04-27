@@ -234,7 +234,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     else:
         content = patch_python(filename)
 
-    write(output_name, content)
+    write(output_name, 'pythonjs.configure(runtime_exceptions=False)\n' + content)
     cmd = [
         os.path.join("..", "pythonjs", "translator.py"),
         output_name

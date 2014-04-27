@@ -203,6 +203,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._js_classes = dict()
 		self._in_js_class = False
 		self._in_assign_target = False
+		self._with_runtime_exceptions = True
 
 		self._iter_ids = 0
 
@@ -1589,6 +1590,8 @@ class PythonToPythonJS(NodeVisitor):
 			log( src )
 
 		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
+		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
+
 		if use_runtime_errors:
 			writer.write('try:')
 			writer.push()
@@ -1596,6 +1599,8 @@ class PythonToPythonJS(NodeVisitor):
 		line = self.visit(node.value)
 		if line:
 			writer.write(line)
+		elif use_runtime_errors:
+			writer.write('pass')
 
 		if use_runtime_errors:
 			writer.pull()
@@ -1727,6 +1732,14 @@ class PythonToPythonJS(NodeVisitor):
 						self._with_inline = True
 					elif kw.value.id == 'False':
 						self._with_inline = False
+					else:
+						raise SyntaxError
+
+				elif kw.arg == 'runtime_exceptions':
+					if kw.value.id == 'True':
+						self._with_runtime_exceptions = True
+					elif kw.value.id == 'False':
+						self._with_runtime_exceptions = False
 					else:
 						raise SyntaxError
 
