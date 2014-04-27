@@ -318,9 +318,9 @@ class JSGenerator(NodeVisitor):
 		return '\n'.join( body )
 
 	def visit_Str(self, node):
-		s = node.s.replace("\\", "\\\\").replace('\n', '\\n')
-		if '"' in s:
-			return "'%s'" % s
+		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('"', '\\"')
+		#if '"' in s:
+		#	return "'%s'" % s
 		return '"%s"' % s
 
 	def visit_BinOp(self, node):

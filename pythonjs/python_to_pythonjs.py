@@ -1570,6 +1570,8 @@ class PythonToPythonJS(NodeVisitor):
 
 	def visit_Str(self, node):
 		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\0', '\\0')
+		s = s.replace('\"', '\\"')
+
 		if self._with_js or self._with_dart:
 			return '"%s"' %s.encode('utf-8')
 		else:

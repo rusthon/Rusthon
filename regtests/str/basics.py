@@ -22,3 +22,12 @@ def main():
 
 	e = 'x%sx' %1
 	TestError( e=='x1x' )
+
+	f = 'x"y'
+	TestError( ord(f[1]) == 34 )
+
+	f = 'x\"y'
+	TestError( ord(f[1]) == 34 )
+
+	f = 'x\'y"'
+	TestError( ord(f[1]) == 39 )
