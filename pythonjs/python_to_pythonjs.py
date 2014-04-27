@@ -1744,6 +1744,14 @@ class PythonToPythonJS(NodeVisitor):
 				assert len(args) == 1
 				return 'new(%s)' %args[0]
 
+			elif isinstance(node.func, Name) and node.func.id == 'isinstance':
+				assert len(args) == 2
+				if args[1] == 'dict':
+					args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
+				elif args[1] == 'list':
+					args[1] = 'Array'
+				return 'instanceof(%s, %s)' %(args[0], args[1])
+
 			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
 				anode = node.func
 				self._in_assign_target = True
