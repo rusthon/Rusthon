@@ -156,7 +156,7 @@ def patch_assert(filename):
     out = []
     for i, line in enumerate(read(filename).split('\n')):
         out.append(re.sub("(TestError|TestWarning)\((.*)\)",
-                          r'\1("%s",%d,\2,"\2")' % (filename, i),
+                          r'\1("%s",%d,\2,u"\2")' % (filename, i),
                           line)
                    )
     return '\n'.join(out)

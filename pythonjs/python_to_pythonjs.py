@@ -1571,14 +1571,14 @@ class PythonToPythonJS(NodeVisitor):
 	def visit_Str(self, node):
 		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\0', '\\0')
 		if self._with_js or self._with_dart:
-			return '"%s"' %s
+			return '"%s"' %s.encode('utf-8')
 		else:
 			if len(s) == 0:
 				return '""'
 			elif s.startswith('"') or s.endswith('"'):
-				return "'''%s'''" %s
+				return "'''%s'''" %s.encode('utf-8')
 			else:
-				return '"""%s"""' %s
+				return '"""%s"""' %s.encode('utf-8')
 
 	def visit_Expr(self, node):
 		log('line: %s' %node.lineno )
