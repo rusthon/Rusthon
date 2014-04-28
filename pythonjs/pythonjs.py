@@ -318,7 +318,7 @@ class JSGenerator(NodeVisitor):
 		return '\n'.join( body )
 
 	def visit_Str(self, node):
-		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('"', '\\"')
+		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		#if '"' in s:
 		#	return "'%s'" % s
 		return '"%s"' % s

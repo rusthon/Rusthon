@@ -31,3 +31,7 @@ def main():
 
 	f = 'x\'y"'
 	TestError( ord(f[1]) == 39 )
+
+	f = '\r'
+	TestError( ord(f[0]) == 13 )
+
