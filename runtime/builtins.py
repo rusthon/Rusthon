@@ -19,6 +19,25 @@ with lowlevel:
 		#else:
 		#	raise AttributeError(a)
 
+	def __test_if_true__( ob ):
+		if ob is True:
+			return True
+		elif ob is False:
+			return False
+		elif typeof(ob) == 'string':
+			return ob.length != 0
+		elif not ob:
+			return False
+		elif instanceof(ob, Array):
+			return ob.length != 0
+		elif typeof(ob) == 'function':
+			return True
+		elif ob.__class__ and ob.__class__ is dict: #isinstance(ob, dict):
+			return Object.keys( ob[...] ).length != 0
+		elif instanceof(ob, Object):
+			return Object.keys(ob).length != 0
+		else:
+			return True
 
 with javascript:
 
@@ -49,20 +68,6 @@ with javascript:
 			return ob.split(' ')
 		else:
 			return ob.split()
-
-	def __test_if_true__( ob ):
-		if not ob:
-			return False
-		elif instanceof(ob, Array):
-			return ob.length != 0
-		elif typeof(ob) == 'function':
-			return True
-		elif ob.__class__ and ob.__class__ is dict: #isinstance(ob, dict):
-			return Object.keys( ob[...] ).length != 0
-		elif instanceof(ob, Object):
-			return Object.keys(ob).length != 0
-		else:
-			return True
 
 	def __add_op(a, b):
 		t = typeof(a)

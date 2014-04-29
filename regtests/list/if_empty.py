@@ -1,4 +1,8 @@
 """if empty list then false"""
+
+class A:
+	pass
+
 def main():
 	d = []
 	if d:
@@ -20,3 +24,12 @@ def main():
 	TestError( err1 == 0 )
 	TestError( err2 == 0 )
 	TestError( err3 == 0 )
+
+	a = A()
+	a.x = []
+	if a.x:
+		err4 = 1
+	else:
+		err4 = 0
+
+	TestError( err4 == 0 )

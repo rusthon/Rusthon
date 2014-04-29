@@ -969,10 +969,13 @@ class PythonToPythonJS(NodeVisitor):
 		elif isinstance(node.test, ast.List):
 			writer.write('if %s.length:' % self.visit(node.test))
 
-		elif isinstance(node.test, ast.Name):
-			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
-		else:
+		elif self._with_ll:
 			writer.write('if %s:' % self.visit(node.test))
+		elif isinstance(node.test, ast.Compare):
+			writer.write('if %s:' % self.visit(node.test))
+		else:
+			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
+
 		writer.push()
 		map(self.visit, node.body)
 		writer.pull()

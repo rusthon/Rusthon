@@ -162,7 +162,7 @@ def patch_assert(filename):
     return '\n'.join(out)
         
 
-_patch_header = """
+_patch_header = """# -*- coding: utf-8 -*-
 def TestError(file, line, result, test):
     if result == False:
         print(file + ":" + str(line) + " Error fail " + test)
@@ -467,11 +467,12 @@ def run_test_on(filename):
     if node_runnable:
         display(run_pythonjs_test_on_node)
 
-    js = translate_js(filename, javascript=True)
-    if rhino_runnable:
-        display(run_pythonjsjs_test_on)
-    if node_runnable:
-        display(run_pythonjsjs_test_on_node)
+    if '--no-javascript-mode' not in sys.argv:
+        js = translate_js(filename, javascript=True)
+        if rhino_runnable:
+            display(run_pythonjsjs_test_on)
+        if node_runnable:
+            display(run_pythonjsjs_test_on_node)
 
     if dart2js_runnable and node_runnable:
         js = translate_js(filename, javascript=False, dart=True)
