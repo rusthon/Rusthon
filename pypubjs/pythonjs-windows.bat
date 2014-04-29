@@ -1,1 +1,1 @@
-external\node-webkit\windows\nw.exe .
+..\external\node-webkit\windows\nw.exe .

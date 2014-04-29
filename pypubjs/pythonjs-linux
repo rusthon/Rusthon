@@ -1,2 +1,2 @@
 #!/bin/bash
-external/node-webkit/linux/nw .
+../external/node-webkit/linux/nw .

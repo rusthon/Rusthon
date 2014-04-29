@@ -2,7 +2,7 @@
   "name": "PythonJS Publisher",
   "version": "0.0.5",
   "description": "PythonJS Multiplatform Publisher",
-  "main": "pypubjs/main.html",
+  "main": "main.html",
   "window": {
     "width": 900,
     "height": 600,

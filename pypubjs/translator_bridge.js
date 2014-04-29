@@ -60,7 +60,7 @@ function _translate_subprocess( options ) {
 	console.log('translating...')
 	//console.log( options )
 	
-	var args = ['pythonjs/translator.py'];
+	var args = ['../pythonjs/translator.py'];
 	var use_stdin = true;
 	if (options.file) {
 		args.push( options.file );
@@ -121,11 +121,11 @@ if (os_name == 'Windows_NT') {
 	var translate = _translate_subprocess;
 }
 
-translate( {file:'nodejs/bindings/io.py'} );
-translate( {file:'nodejs/bindings/os.py'} );
-translate( {file:'nodejs/bindings/sys.py'} );
-translate( {file:'nodejs/bindings/tempfile.py'} );
-translate( {file:'nodejs/bindings/subprocess.py'} );
+translate( {file:'../nodejs/bindings/io.py'} );
+translate( {file:'../nodejs/bindings/os.py'} );
+translate( {file:'../nodejs/bindings/sys.py'} );
+translate( {file:'../nodejs/bindings/tempfile.py'} );
+translate( {file:'../nodejs/bindings/subprocess.py'} );
 
 var translate_python_scripts = function() {
 	var scripts = document.getElementsByTagName('script');
@@ -133,7 +133,7 @@ var translate_python_scripts = function() {
 		var script = scripts[i];
 		if (script.getAttribute('type')=='text/python') {
 			if (script.getAttribute('src')) {
-				var code = _fs.readFileSync( 'pypubjs/'+script.getAttribute('src'), {encoding:'utf8'} );
+				var code = _fs.readFileSync( script.getAttribute('src'), {encoding:'utf8'} );
 				translate( {data:code} );
 			} else {
 				translate( {data:script.firstChild.nodeValue} );
