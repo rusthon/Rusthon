@@ -171,7 +171,7 @@ def TestWarning(file, line, result, test):
         print(file + ":" + str(line) + " Warning fail " + test)
 """
 
-def patch_python(filename, dart=False):
+def patch_python(filename, dart=False, python='PYTHONJS'):
     """Rewrite the Python code"""
     code = patch_assert(filename)
 
@@ -191,18 +191,18 @@ def patch_python(filename, dart=False):
     #            out.append( line )
     #    code = '\n'.join( out )
     if dart:
-        return '\n'.join( [_patch_header, code] )
+        return '\n'.join( [_patch_header, 'PYTHON="%s"'%python, code] )
     else:
-        return '\n'.join( [_patch_header, code, 'main()'] )
+        return '\n'.join( [_patch_header, 'PYTHON="%s"'%python, code, 'main()'] )
 
 def run_python_test_on(filename):
     """Python2"""
-    write("%s.py" % tmpname, patch_python(filename))
+    write("%s.py" % tmpname, patch_python(filename, python='PYTHON2'))
     return run_command("python %s.py %s" % (tmpname, display_errors))
 
 def run_python3_test_on(filename):
     """Python3"""
-    write("%s.py" % tmpname, patch_python(filename))
+    write("%s.py" % tmpname, patch_python(filename, python='PYTHON3'))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
 def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False):

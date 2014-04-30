@@ -2441,7 +2441,12 @@ class PythonToPythonJS(NodeVisitor):
 					## therefore this function can not be marked as f.pythonscript_function,
 					## because we need __get__(f,'__call__') to dynamically bind "this"
 					writer.write( '%s=%s'%(dec,node.name) )
-				else:  ## TODO fix with-javascript decorators
+				elif dec == 'javascript':
+					pass
+				elif dec == 'fastdef':
+					pass
+				else:
+					## TODO: check ifdecorators in javascript mode are working properly
 					writer.write( '%s = __get__(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
 
 
