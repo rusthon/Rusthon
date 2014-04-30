@@ -6,11 +6,11 @@ pythonjs.configure(runtime_exceptions=False)
 
 _PythonJS_UID = 0
 
-JS('function IndexError(msg) {this.message = msg || "";} IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
-JS('function KeyError(msg) {this.message = msg || "";} KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
-JS('function ValueError(msg) {this.message = msg || "";} ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
-JS('function AttributeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
-JS('function RuntimeError(msg) {this.message = msg || "";} AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "RuntimeError";')
+JS('IndexError = function(msg) {this.message = msg || "";}; IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
+JS('KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
+JS('ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
+JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
+JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with lowlevel:
 	def __getattr__(ob, a ):
