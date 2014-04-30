@@ -1,0 +1,32 @@
+{
+	"author": "Brett Hartshorn <goatman.py@gmail.com>",
+	"name": "python-js",
+	"description": "python to javascript translator",
+	"version": "0.8.9",
+	"license": "BSD-3-Clause",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/PythonJS/PythonJS.git"
+	},
+	"keywords": [
+		"pythonjs",
+		"python"
+	],
+	"dependencies": {},
+	"engines": {
+		"node": "*"
+	},
+	"preferGlobal":true,
+
+	"main": "./python-js",
+
+	"files": [
+		"lib", 
+		"empythoned.js",
+		"python-js", 
+		"pythonjs.js",
+		"pythonjs.py",
+		"python_to_pythonjs.py",
+		"ministdlib.py"
+	]
+}
