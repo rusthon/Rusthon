@@ -20,7 +20,7 @@ PATHS = dict(
 	webroot = os.path.dirname(os.path.abspath(__file__)),
 	pythonjs = os.path.abspath('../pythonjs'),
 	bindings = os.path.abspath('../bindings'),
-	runtime = os.path.abspath('../pythonjs.js'),
+	runtime = os.path.abspath('../pythonjs/pythonjs.js'),
 	module_cache = '/tmp',
 
 	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
