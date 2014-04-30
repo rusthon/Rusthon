@@ -1,5 +1,6 @@
 import ast
-from cStringIO import StringIO as StringIO
+#from cStringIO import StringIO as StringIO
+from StringIO import StringIO as StringIO
 
 head = """
 <div id="mygraph"></div>

@@ -1,7 +1,7 @@
 {
 	"author": "Brett Hartshorn <goatman.py@gmail.com>",
 	"name": "python-js",
-	"description": "python to javascript translator",
+	"description": "python multi-translator: javascript, dart, coffee, lua, vis.js",
 	"version": "0.8.9",
 	"license": "BSD-3-Clause",
 	"repository": {
@@ -27,6 +27,10 @@
 		"pythonjs.js",
 		"pythonjs.py",
 		"python_to_pythonjs.py",
-		"ministdlib.py"
+		"ministdlib.py",
+		"pythonjs_to_dart.py",
+		"pythonjs_to_coffee.py",
+		"pythonjs_to_lua.py",
+		"python_to_visjs.py"
 	]
 }

@@ -2,7 +2,7 @@
 # PythonJS to CoffeeScript Translator
 # by Brett Hartshorn - copyright 2014
 # License: "New BSD"
-import os, sys
+import sys
 import ast
 import pythonjs
 

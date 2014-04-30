@@ -2,7 +2,7 @@
 # PythonJS to Dart Translator
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
-import os, sys
+import sys
 import ast
 import pythonjs
 

@@ -1,9 +1,7 @@
 #!/usr/bin/env node
-var pyjs = require('./pythonjs.js')
-console.log(ord)
-console.log(RuntimeError)
-console.log(__NULL_OBJECT__)
 
+var _path = require('path');
+var pyjs = require('./pythonjs.js');
 var empythoned = require('./empythoned.js');
 var Python = empythoned.Python;
 var buffer = [];
@@ -29,6 +27,23 @@ empythoned.FS.createLazyFile(".", "ministdlib.py", "./ministdlib.py",
 	true,false
 );
 
+empythoned.FS.createLazyFile(".", "pythonjs_to_dart.py", "./pythonjs_to_dart.py",
+	true,false
+);
+
+empythoned.FS.createLazyFile(".", "pythonjs_to_coffee.py", "./pythonjs_to_coffee.py",
+	true,false
+);
+
+empythoned.FS.createLazyFile(".", "pythonjs_to_lua.py", "./pythonjs_to_lua.py",
+	true,false
+);
+
+empythoned.FS.createLazyFile(".", "python_to_visjs.py", "./python_to_visjs.py",
+	true,false
+);
+
+
 Python.initialize(
 	null,         // stdin
 	null,         // stdout
@@ -37,27 +52,62 @@ Python.initialize(
 
 
 Python.eval('from python_to_pythonjs import main as to_pythonjs');
-Python.eval('from pythonjs import main as to_javascript');
-Python.eval('def translate_to_javascript(src): return to_javascript(to_pythonjs(src))');
+Python.eval('from pythonjs import main as _to_javascript');
+Python.eval('from pythonjs_to_dart import main as _to_dart');
+Python.eval('from pythonjs_to_coffee import main as _to_coffee');
+Python.eval('from pythonjs_to_lua import main as _to_lua');
+Python.eval('from python_to_visjs import main as to_visjs');
 
+Python.eval('def to_javascript(src): return _to_javascript(to_pythonjs(src))');
+Python.eval('def to_dart(src): return _to_dart(to_pythonjs(src))');
+Python.eval('def to_coffee(src): return _to_coffee(to_pythonjs(src))');
+Python.eval('def to_lua(src): return _to_lua(to_pythonjs(src))');
 
-function translate(data) {
-	// data is written to a file to avoid any problems with escaping string quotes
-	// note: emscripten 1.0 api
-	empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
-	var code = Python.eval('translate_to_javascript(open("/sandbox/temp","r").read())');
-	if (code !== null && code !== undefined) {
-		code = code.substring(1, code.length-1);  // strip quotes
-		code = code.split('\\n').join('\n');
-		code = code.split("\\'").join("\'");
-		code = code.split('\\"').join('\"');
-		var lines = code.split('\n');
-		for (var i=0; i<lines.length; i++) console.log( (i+1) +'.' + lines[i] );
-		return code;
-	}
+function clean_code( code ) {
+	code = code.substring(1, code.length-1);  // strip quotes
+	code = code.split('\\n').join('\n');
+	code = code.split("\\'").join("\'");
+	code = code.split('\\"').join('\"');
+	return code;
 }
 
-var test = translate( 'print "hi"; a = chr(100); print a')
-console.log(test)
-eval( test )
-console.log('XXX'+a)
+// data is written to a file to avoid any problems with escaping string quotes
+// note: `FS.createDataFile` is part of the old Emscripten 1.0 API
+
+exports.translator = {
+	to_javascript : function(data) {
+		empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
+		var code = Python.eval('to_javascript(open("/sandbox/temp","r").read())');
+		if (code !== null && code !== undefined) {
+			return clean_code( code );
+		}
+	},
+	to_dart : function(data) {
+		empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
+		var code = Python.eval('to_dart(open("/sandbox/temp","r").read())');
+		if (code !== null && code !== undefined) {
+			return clean_code( code );
+		}
+	},
+	to_coffee : function(data) {
+		empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
+		var code = Python.eval('to_coffee(open("/sandbox/temp","r").read())');
+		if (code !== null && code !== undefined) {
+			return clean_code( code );
+		}
+	},
+	to_lua : function(data) {
+		empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
+		var code = Python.eval('to_lua(open("/sandbox/temp","r").read())');
+		if (code !== null && code !== undefined) {
+			return clean_code( code );
+		}
+	},
+	to_visjs : function(data) {
+		empythoned.FS.createDataFile( "/sandbox", "temp", data, true, true );
+		var code = Python.eval('to_visjs(open("/sandbox/temp","r").read())');
+		if (code !== null && code !== undefined) {
+			return clean_code( code );
+		}
+	}
+}
