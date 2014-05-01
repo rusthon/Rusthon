@@ -298,7 +298,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
             if serr:
                 return ''
             elif sout:
-                builtins = read(os.path.join("..", "pythonjs.js"))
+                builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
                 open('/tmp/coffee-output.js', 'wb').write( (builtins+'\n'+sout).encode('utf-8') )
                 return sout
             else:
@@ -341,7 +341,7 @@ def run_pythonjsjs_test_on(filename):
 
 def run_js_rhino(content):
     """Run Javascript using Rhino"""
-    builtins = read(os.path.join("..", "pythonjs.js"))
+    builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
     # Patch in order to run Rhino
     builtins = builtins.replace('Object.create(null)', '{}', 1)
     # Add the program to test
@@ -366,7 +366,7 @@ def run_pythonjsjs_test_on_node(filename):
 
 def run_js_node(content):
     """Run Javascript using Node"""
-    builtins = read(os.path.join("..", "pythonjs.js"))
+    builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
     write("%s.js" % tmpname,
           builtins.replace('console.log(process.title);','')  ## no longer required
           .replace('console.log(process.version);','')
@@ -388,7 +388,7 @@ def run_pythonjs_coffee_test_on_node(dummy_filename):
 
 def run_coffee_node(content):
     """Run CoffeeScript using Node"""
-    builtins = read(os.path.join("..", "pythonjs.js"))
+    builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
     write("%s.js" % tmpname, builtins + '\n' + content)
     return run_command("node %s.js" % tmpname)
 
