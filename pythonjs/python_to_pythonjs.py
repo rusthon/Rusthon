@@ -3030,8 +3030,13 @@ def inspect_method( node ):
 	info['properties'] = retrieve_properties( node.body )
 	return info
 
-def main(script):
-	PythonToPythonJS( source=script, dart='--dart' in sys.argv )
+def main(script, dart=False, coffee=False, lua=False):
+	PythonToPythonJS(
+		source = script, 
+		dart   = dart or '--dart' in sys.argv,
+		coffee = coffee,
+		lua    = lua
+	)
 	code = writer.getvalue()
 	if '--debug' in sys.argv:
 		try:

@@ -23,9 +23,9 @@ PATHS = dict(
 	runtime = os.path.abspath('../pythonjs/pythonjs.js'),
 	module_cache = '/tmp',
 
-	runtime_pythonjs = os.path.abspath('../runtime/pythonpythonjs.py'),  ## handwritten pythonjs
-	runtime_builtins = os.path.abspath('../runtime/builtins.py'),
-	runtime_dart = os.path.abspath('../runtime/dart_builtins.py'),
+	runtime_pythonjs = os.path.abspath('../pythonjs/runtime/pythonpythonjs.py'),  ## handwritten pythonjs
+	runtime_builtins = os.path.abspath('../pythonjs/runtime/builtins.py'),
+	runtime_dart = os.path.abspath('../pythonjs/runtime/dart_builtins.py'),
 
 	dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js'),
 	dartanalyzer = os.path.expanduser( '~/dart/dart-sdk/bin/dartanalyzer'),

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+// python-js module for nodejs //
 
 var _path = require('path');
 var pyjs = require('./pythonjs.js');
@@ -59,9 +59,9 @@ Python.eval('from pythonjs_to_lua import main as _to_lua');
 Python.eval('from python_to_visjs import main as to_visjs');
 
 Python.eval('def to_javascript(src): return _to_javascript(to_pythonjs(src))');
-Python.eval('def to_dart(src): return _to_dart(to_pythonjs(src))');
-Python.eval('def to_coffee(src): return _to_coffee(to_pythonjs(src))');
-Python.eval('def to_lua(src): return _to_lua(to_pythonjs(src))');
+Python.eval('def to_dart(src): return _to_dart(to_pythonjs(src, dart=True))');
+Python.eval('def to_coffee(src): return _to_coffee(to_pythonjs(src, coffee=True))');
+Python.eval('def to_lua(src): return _to_lua(to_pythonjs(src, lua=True))');
 
 function clean_code( code ) {
 	code = code.substring(1, code.length-1);  // strip quotes

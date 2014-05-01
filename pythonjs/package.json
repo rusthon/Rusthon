@@ -19,6 +19,7 @@
 	"preferGlobal":true,
 
 	"main": "./python-js",
+	"bin" : {"python-js" : "./cli.js"},
 
 	"files": [
 		"lib", 
@@ -31,6 +32,8 @@
 		"pythonjs_to_dart.py",
 		"pythonjs_to_coffee.py",
 		"pythonjs_to_lua.py",
-		"python_to_visjs.py"
+		"python_to_visjs.py",
+		"cli.js",
+		"runtime"
 	]
 }
