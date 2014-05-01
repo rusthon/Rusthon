@@ -1,4 +1,4 @@
-##PythonJS 0.8.8
+##PythonJS 0.8.9
 
 ![logo](http://3.bp.blogspot.com/-BfPFXT-DF3A/UqKugvWVs7I/AAAAAAAAAj0/0Kon76_VDys/s400/pythonjs-0.8.6.png)
 

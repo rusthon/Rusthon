@@ -3,13 +3,14 @@
 # by Brett Hartshorn - copyright 2013
 # License: "New BSD"
 # tested with NodeJS v0.10.22
+# (this script is deprecated) - instead use "npm install python-js"
 
 import os, sys, subprocess
 
 PATHS = dict(
 	pythonjs = os.path.abspath('pythonjs'),
 	nodejs_bindings = os.path.abspath('nodejs/bindings'),
-	runtime = os.path.abspath('pythonjs.js'),
+	runtime = os.path.abspath('pythonjs/pythonjs.js'),
 	module_cache = '/tmp',
 )
 

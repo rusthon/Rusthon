@@ -1,6 +1,7 @@
 // python-js module for nodejs //
 
-var _path = require('path');
+var fs = require('fs');
+var path = require('path');
 var pyjs = require('./pythonjs.js');
 var empythoned = require('./empythoned.js');
 var Python = empythoned.Python;
@@ -66,6 +67,7 @@ Python.eval('def to_lua(src): return _to_lua(to_pythonjs(src, lua=True))');
 function clean_code( code ) {
 	code = code.substring(1, code.length-1);  // strip quotes
 	code = code.split('\\n').join('\n');
+	code = code.split('\\t').join('\t');
 	code = code.split("\\'").join("\'");
 	code = code.split('\\"').join('\"');
 	return code;
@@ -110,4 +112,11 @@ exports.translator = {
 			return clean_code( code );
 		}
 	}
+}
+
+var basepath = path.dirname( __filename );
+exports.runtime = {
+	javascript : fs.readFileSync( basepath+'/pythonjs.js', {'encoding':'utf8'} ),
+	dart : fs.readFileSync( basepath+'/runtime/dart_builtins.py', {'encoding':'utf8'} ),
+	lua  : fs.readFileSync( basepath+'/runtime/lua_builtins.py', {'encoding':'utf8'} ),
 }

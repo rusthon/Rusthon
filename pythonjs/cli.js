@@ -10,16 +10,17 @@ if (process.argv.length <= 2) {
 	var input = fs.readFileSync( process.argv[2], {'encoding':'utf8'} )
 
 	if (process.argv.indexOf('--dart') != -1) {
-		var output = pythonjs.translator.to_dart( input )
+		var header = pythonjs.runtime.dart;
+		var output = pythonjs.translator.to_dart( header + '\n' + input )
 	} else if (process.argv.indexOf('--coffee') != -1) {
 		var output = pythonjs.translator.to_coffee( input )
 	} else if (process.argv.indexOf('--lua') != -1) {
-		var output = pythonjs.translator.to_lua( input )
+		var header = pythonjs.runtime.lua;
+		var output = pythonjs.translator.to_lua( header + '\n' + input )
 	} else if (process.argv.indexOf('--visjs') != -1) {
 		var output = pythonjs.translator.to_visjs( input )
 	} else {
 		var output = pythonjs.translator.to_javascript( input )
-
 	}
 
 	if (process.argv.length >= 4) {
