@@ -2006,8 +2006,11 @@ class PythonToPythonJS(NodeVisitor):
 					else:
 						return '__jsdict_pop(%s)' %self.visit(anode.value)
 
-				elif anode.attr == 'split' and not args:
-					return '__split_method(%s)' %self.visit(anode.value)
+				elif anode.attr == 'split' and len(node.args) <= 1:
+					if not args:
+						return '__split_method(%s)' %self.visit(anode.value)
+					else:
+						return '__split_method(%s, %s)' %(self.visit(anode.value), args)
 
 				elif anode.attr == 'replace' and len(node.args)==2:
 					return '__replace_method(%s, %s)' %(self.visit(anode.value), args )

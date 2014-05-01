@@ -61,13 +61,19 @@ with javascript:
 		else:
 			return ob.replace(a,b)
 
-	def __split_method( ob ):
+	def __split_method( ob, delim ):
 		## special case because calling string.split() without args its not the same as python,
 		## and we do not want to touch the default string.split implementation.
 		if typeof(ob) == 'string':
-			return ob.split(' ')
+			if delim is undefined:
+				return ob.split(' ')
+			else:
+				return ob.split( delim )
 		else:
-			return ob.split()
+			if delim is undefined:
+				return ob.split()
+			else:
+				return ob.split( delim )
 
 	def __add_op(a, b):
 		t = typeof(a)
