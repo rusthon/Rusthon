@@ -423,7 +423,10 @@ def _setup_str_prototype():
 
 		@String.prototype.get
 		def func(index):
-			return this[ index ]
+			if index < 0:
+				return this[ this.length + index ]
+			else:
+				return this[ index ]
 
 		@String.prototype.__iter__
 		def func(self):
@@ -432,7 +435,10 @@ def _setup_str_prototype():
 
 		@String.prototype.__getitem__
 		def func(idx):
-			return this[ idx ]
+			if idx < 0:
+				return this[ this.length + idx ]
+			else:
+				return this[ idx ]
 
 		@String.prototype.__len__
 		def func():

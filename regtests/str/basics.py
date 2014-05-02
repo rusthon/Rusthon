@@ -4,6 +4,12 @@ def main():
 	TestError(len('a') == 1)
 	a = 'XYZ'
 	TestError( a[0] == 'X' )
+	TestError( a[-1] == 'Z' )
+	TestError( a[0:2] == 'XY' )
+	TestError( a[:2] == 'XY' )
+	TestError( a[1:3] == 'YZ' )
+	TestError( a[1:] == 'YZ' )
+	TestError( a[-3:-1] == 'XY' )
 
 	TestError( a.lower() == 'xyz' )
 	b = 'abc'
