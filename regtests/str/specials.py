@@ -1,14 +1,16 @@
 """Specials chars in strings"""
 
 class C:
-    pass
+	def __init__(self):
+		self.value = None
 
 def main():
 	TestError(len('\\') == 1)
 	TestError(u'éè' == u'é' + u'è')
 
-	C.value = u"é"
-	TestError( C.value == u'é')
+	c = C()
+	c.value = u"é"
+	TestError( c.value == u'é')
 
 	if len(u'éè') == 2: # The interpreter assumes UTF8 (all except Python2)
 		TestError(u'éè'[::-1] == u'èé')

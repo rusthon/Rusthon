@@ -45,7 +45,7 @@ def runnable(command):
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
-dart2js_runnable = runnable( dart2js + ' -h' ) and '--all-backends' in sys.argv
+dart2js_runnable = runnable( dart2js + ' -h' )
 coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
 lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv
 luajit_runnable = runnable( "luajit -v" ) and '--all-backends' in sys.argv
@@ -212,21 +212,20 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     elif dart:
         source = [
             'pythonjs.configure(dart=True)',
-            open('../runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
+            open('../pythonjs/runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
             patch_python(filename, dart=True)
         ]
         content = '\n'.join( source )
     elif coffee:
         source = [
             'pythonjs.configure(coffee=True)',
-            #open('../runtime/coffee_builtins.py', 'rb').read().decode('utf-8'),
             patch_python(filename)
         ]
         content = '\n'.join( source )
     elif lua or luajs:
         source = [
             'pythonjs.configure(lua=True)',
-            read('../runtime/lua_builtins.py'),
+            read('../pythonjs/runtime/lua_builtins.py'),
             patch_python(filename)
         ]
         content = '\n'.join( source )
