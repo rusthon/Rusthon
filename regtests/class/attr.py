@@ -24,3 +24,6 @@ def main():
         TestError(not 'No exception: getattr on undefined attribute')
     except AttributeError:
         pass
+
+    b.g = 100
+    TestError( A.g == 6)
