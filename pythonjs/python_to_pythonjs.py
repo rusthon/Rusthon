@@ -2264,6 +2264,13 @@ class PythonToPythonJS(NodeVisitor):
 		elif self._with_js or javascript:
 			if node.args.defaults:
 				kwargs_name = node.args.kwarg or '_kwargs_'
+				lines = [ 'if (!( %s instanceof Object )) {' %kwargs_name ]
+				a = '%s,'.join( ['%s: arguments[%s]' %(arg.id, i) for i,arg in enumerate(node.args.args)] )
+				lines.append( 'var %s = {%s}' %(kwargs_name, a))
+				lines.append( '}')
+				for a in lines:
+					writer.write("JS('''%s''')" %a)
+
 				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):
 					dindex = i - offset
