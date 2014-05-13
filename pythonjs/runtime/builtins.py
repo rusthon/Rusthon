@@ -733,6 +733,12 @@ def range(num, stop, step):
 def xrange(num, stop, step):
 	return range(num, stop, step)
 
+def sum( arr ):
+	a = 0
+	for b in arr:
+		a += b
+	return a
+
 class StopIteration:  ## DEPRECATED
 	pass
 
