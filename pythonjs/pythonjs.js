@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri May  2 11:21:19 2014
+// PythonJS Runtime - regenerated on: Mon May 12 23:08:01 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -601,7 +601,7 @@ __split_method.types_signature = {  };
 __add_op = function(a, b) {
   var c, t;
   t = typeof(a);
-  if (__test_if_true__(( t ) == "number" || ( t ) == "string")) {
+  if (( t ) == "string") {
     return a+b;
   } else {
     if (__test_if_true__(a instanceof Array)) {
@@ -634,7 +634,7 @@ __jsdict = function(items) {
     if (__test_if_true__(key.__uid__)) {
       key = key.__uid__;
     }
-    d[ (key.__uid__) ? key.__uid__ : key] = item[1];
+    d[((key.__uid__) ? key.__uid__ : key)] = item[1];
   }
   return d;
 }
@@ -646,7 +646,7 @@ __jsdict.types_signature = {  };
 __jsdict_get = function(ob, key, default_value) {
   if (__test_if_true__(ob instanceof Object)) {
     if (__test_if_true__(key in ob)) {
-      return ob[ (key.__uid__) ? key.__uid__ : key];
+      return ob[((key.__uid__) ? key.__uid__ : key)];
     }
     return default_value;
   } else {
@@ -660,7 +660,7 @@ __jsdict_get.kwargs_signature = {  };
 __jsdict_get.types_signature = {  };
 __jsdict_set = function(ob, key, value) {
   if (__test_if_true__(ob instanceof Object)) {
-    ob[ (key.__uid__) ? key.__uid__ : key] = value;
+    ob[((key.__uid__) ? key.__uid__ : key)] = value;
   } else {
     ob.set(key,value);
   }
@@ -691,7 +691,7 @@ __jsdict_values = function(ob) {
     for (var __idx2=0; __idx2 < __iter2.length; __idx2++) {
       var key = __iter2[ __idx2 ];
       if (__test_if_true__(ob.hasOwnProperty(key))) {
-        value = ob[ (key.__uid__) ? key.__uid__ : key];
+        value = ob[((key.__uid__) ? key.__uid__ : key)];
         arr.push(value);
       }
     }
@@ -714,7 +714,7 @@ __jsdict_items = function(ob) {
     for (var __idx3=0; __idx3 < __iter3.length; __idx3++) {
       var key = __iter3[ __idx3 ];
       if (__test_if_true__(Object.hasOwnProperty.call(ob, key))) {
-        value = ob[ (key.__uid__) ? key.__uid__ : key];
+        value = ob[((key.__uid__) ? key.__uid__ : key)];
         arr.push([key, value]);
       }
     }
@@ -730,6 +730,9 @@ __jsdict_items.kwargs_signature = {  };
 __jsdict_items.types_signature = {  };
 __jsdict_pop = function(ob, key, _kwargs_) {
   var v;
+  if (!( _kwargs_ instanceof Object )) {;
+  var _kwargs_ = {ob: arguments[0],key: arguments[1],_default: arguments[2]};
+  };
   if (_kwargs_ === undefined || _kwargs_._default === undefined) {var _default = null} else {var _default=_kwargs_._default};
   if (__test_if_true__(ob instanceof Array)) {
     if (__test_if_true__(ob.length)) {
@@ -740,7 +743,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
   } else {
     if (__test_if_true__(ob instanceof Object)) {
       if (__test_if_true__(key in ob)) {
-        v = ob[ (key.__uid__) ? key.__uid__ : key];
+        v = ob[((key.__uid__) ? key.__uid__ : key)];
         delete ob[key];
         return v;
       } else {
@@ -779,12 +782,12 @@ __bind_property_descriptors__ = function(o, klass) {
   for (var __idx4=0; __idx4 < __iter4.length; __idx4++) {
     var name = __iter4[ __idx4 ];
     desc = __jsdict([["enumerable", true]]);
-    prop = klass.__properties__[ (name.__uid__) ? name.__uid__ : name];
-    if (__test_if_true__(prop[ ("get".__uid__) ? "get".__uid__ : "get"])) {
-      desc[ ("get".__uid__) ? "get".__uid__ : "get"] = __generate_getter__(klass, o, name);
+    prop = klass.__properties__[((name.__uid__) ? name.__uid__ : name)];
+    if (__test_if_true__(prop[(("get".__uid__) ? "get".__uid__ : "get")])) {
+      desc[(("get".__uid__) ? "get".__uid__ : "get")] = __generate_getter__(klass, o, name);
     }
-    if (__test_if_true__(prop[ ("set".__uid__) ? "set".__uid__ : "set"])) {
-      desc[ ("set".__uid__) ? "set".__uid__ : "set"] = __generate_setter__(klass, o, name);
+    if (__test_if_true__(prop[(("set".__uid__) ? "set".__uid__ : "set")])) {
+      desc[(("set".__uid__) ? "set".__uid__ : "set")] = __generate_setter__(klass, o, name);
     }
     Object.defineProperty(o, name, desc);
   }
@@ -801,7 +804,7 @@ __bind_property_descriptors__.args_signature = ["o", "klass"];
 __bind_property_descriptors__.kwargs_signature = {  };
 __bind_property_descriptors__.types_signature = {  };
 __generate_getter__ = function(klass, o, n) {
-  return (function () {return klass.__properties__[ (n.__uid__) ? n.__uid__ : n][ ("get".__uid__) ? "get".__uid__ : "get"]([o], __jsdict([]))});
+  return (function () {return klass.__properties__[((n.__uid__) ? n.__uid__ : n)][(("get".__uid__) ? "get".__uid__ : "get")]([o], __jsdict([]))});
 }
 
 __generate_getter__.NAME = "__generate_getter__";
@@ -809,7 +812,7 @@ __generate_getter__.args_signature = ["klass", "o", "n"];
 __generate_getter__.kwargs_signature = {  };
 __generate_getter__.types_signature = {  };
 __generate_setter__ = function(klass, o, n) {
-  return (function (v) {return klass.__properties__[ (n.__uid__) ? n.__uid__ : n][ ("set".__uid__) ? "set".__uid__ : "set"]([o, v], __jsdict([]))});
+  return (function (v) {return klass.__properties__[((n.__uid__) ? n.__uid__ : n)][(("set".__uid__) ? "set".__uid__ : "set")]([o, v], __jsdict([]))});
 }
 
 __generate_setter__.NAME = "__generate_setter__";
@@ -831,12 +834,15 @@ __sprintf = function(fmt, args) {
       if (( i ) >= args.length) {
         break;
       }
-      item = args[ (i.__uid__) ? i.__uid__ : i];
+      item = args[((i.__uid__) ? i.__uid__ : i)];
       if (( typeof(item) ) == "string") {
         arr.append(item);
       } else {
         if (( typeof(item) ) == "number") {
-          arr.append(__add_op("", item));
+          var __left0, __right1;
+          __left0 = "";
+          __right1 = item;
+          arr.append(((( typeof(__left0) ) == "number") ? (__left0 + __right1) : __add_op(__left0, __right1)));
         } else {
           arr.append(Object.prototype.toString.call(item));
         }
@@ -867,23 +873,23 @@ __create_class__ = function(class_name, parents, attrs, props) {
   if (! (__iter7 instanceof Array || typeof __iter7 == "string") ) { __iter7 = __object_keys__(__iter7) }
   for (var __idx7=0; __idx7 < __iter7.length; __idx7++) {
     var key = __iter7[ __idx7 ];
-    if (( typeof(attrs[ (key.__uid__) ? key.__uid__ : key]) ) == "function") {
+    if (( typeof(attrs[((key.__uid__) ? key.__uid__ : key)]) ) == "function") {
       klass.__all_method_names__.push(key);
-      f = attrs[ (key.__uid__) ? key.__uid__ : key];
+      f = attrs[((key.__uid__) ? key.__uid__ : key)];
       if (__test_if_true__(hasattr(f, "is_classmethod") && f.is_classmethod)) {
         /*pass*/
       } else {
         if (__test_if_true__(hasattr(f, "is_staticmethod") && f.is_staticmethod)) {
           /*pass*/
         } else {
-          klass.__unbound_methods__[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+          klass.__unbound_methods__[((key.__uid__) ? key.__uid__ : key)] = attrs[((key.__uid__) ? key.__uid__ : key)];
         }
       }
     }
     if (( key ) == "__getattribute__") {
       continue
     }
-    klass[ (key.__uid__) ? key.__uid__ : key] = attrs[ (key.__uid__) ? key.__uid__ : key];
+    klass[((key.__uid__) ? key.__uid__ : key)] = attrs[((key.__uid__) ? key.__uid__ : key)];
   }
   klass.__setters__ = [];
   klass.__getters__ = [];
@@ -891,9 +897,9 @@ __create_class__ = function(class_name, parents, attrs, props) {
   if (! (__iter8 instanceof Array || typeof __iter8 == "string") ) { __iter8 = __object_keys__(__iter8) }
   for (var __idx8=0; __idx8 < __iter8.length; __idx8++) {
     var name = __iter8[ __idx8 ];
-    prop = klass.__properties__[ (name.__uid__) ? name.__uid__ : name];
+    prop = klass.__properties__[((name.__uid__) ? name.__uid__ : name)];
     klass.__getters__.push(name);
-    if (__test_if_true__(prop[ ("set".__uid__) ? "set".__uid__ : "set"])) {
+    if (__test_if_true__(prop[(("set".__uid__) ? "set".__uid__ : "set")])) {
       klass.__setters__.push(name);
     }
   }
@@ -1019,8 +1025,8 @@ getattr = function(args, kwargs) {
   var property = __args__['property'];
   if (__test_if_true__(property)) {
     prop = _get_upstream_property(ob.__class__, attr);
-    if (__test_if_true__(prop && prop[ ("get".__uid__) ? "get".__uid__ : "get"])) {
-      return prop[ ("get".__uid__) ? "get".__uid__ : "get"]([ob], __jsdict([]));
+    if (__test_if_true__(prop && prop[(("get".__uid__) ? "get".__uid__ : "get")])) {
+      return prop[(("get".__uid__) ? "get".__uid__ : "get")]([ob], __jsdict([]));
     } else {
       console.log("ERROR: getattr property error", prop);
     }
@@ -1051,8 +1057,8 @@ setattr = function(args, kwargs) {
   var property = __args__['property'];
   if (__test_if_true__(property)) {
     prop = _get_upstream_property(ob.__class__, attr);
-    if (__test_if_true__(prop && prop[ ("set".__uid__) ? "set".__uid__ : "set"])) {
-      prop[ ("set".__uid__) ? "set".__uid__ : "set"]([ob, value], __jsdict([]));
+    if (__test_if_true__(prop && prop[(("set".__uid__) ? "set".__uid__ : "set")])) {
+      prop[(("set".__uid__) ? "set".__uid__ : "set")]([ob, value], __jsdict([]));
     } else {
       console.log("ERROR: setattr property error", prop);
     }
@@ -1196,14 +1202,23 @@ round = function(args, kwargs) {
   __args__ = __getargs__("round", __sig__, args, kwargs);
   var a = __args__['a'];
   var places = __args__['places'];
-  b = __add_op("", a);
+  var __left2, __right3;
+  __left2 = "";
+  __right3 = a;
+  b = ((( typeof(__left2) ) == "number") ? (__left2 + __right3) : __add_op(__left2, __right3));
   if (( b.indexOf(".") ) == -1) {
     return a;
   } else {
     c = b.split(".");
     x = c[0];
     y = c[1].substring(0, places);
-    return parseFloat(__add_op(__add_op(x, "."), y));
+    var __left4, __right5;
+    __left4 = x;
+    __right5 = ".";
+    var __left6, __right7;
+    __left6 = ((( typeof(__left4) ) == "number") ? (__left4 + __right5) : __add_op(__left4, __right5));
+    __right7 = y;
+    return parseFloat(((( typeof(__left6) ) == "number") ? (__left6 + __right7) : __add_op(__left6, __right7)));
   }
 }
 
@@ -1223,7 +1238,10 @@ str = function(args, kwargs) {
   __sig__ = { kwargs:Object(),args:__create_array__("s") };
   __args__ = __getargs__("str", __sig__, args, kwargs);
   var s = __args__['s'];
-  return __add_op("", s);
+  var __left8, __right9;
+  __left8 = "";
+  __right9 = s;
+  return ((( typeof(__left8) ) == "number") ? (__left8 + __right9) : __add_op(__left8, __right9));
 }
 
 str.NAME = "str";
@@ -1248,9 +1266,12 @@ _setup_str_prototype = function(args, kwargs) {
   String.prototype.__contains__ = func;
     var func = function(index) {
     if (( index ) < 0) {
-      return this[ (__add_op(this.length, index).__uid__) ? __add_op(this.length, index).__uid__ : __add_op(this.length, index)];
+      var __left10, __right11;
+      __left10 = this.length;
+      __right11 = index;
+      return this[((((( typeof(__left10) ) == "number") ? (__left10 + __right11) : __add_op(__left10, __right11)).__uid__) ? ((( typeof(__left10) ) == "number") ? (__left10 + __right11) : __add_op(__left10, __right11)).__uid__ : ((( typeof(__left10) ) == "number") ? (__left10 + __right11) : __add_op(__left10, __right11)))];
     } else {
-      return this[ (index.__uid__) ? index.__uid__ : index];
+      return this[((index.__uid__) ? index.__uid__ : index)];
     }
   }
 
@@ -1270,9 +1291,12 @@ _setup_str_prototype = function(args, kwargs) {
   String.prototype.__iter__ = func;
     var func = function(idx) {
     if (( idx ) < 0) {
-      return this[ (__add_op(this.length, idx).__uid__) ? __add_op(this.length, idx).__uid__ : __add_op(this.length, idx)];
+      var __left12, __right13;
+      __left12 = this.length;
+      __right13 = idx;
+      return this[((((( typeof(__left12) ) == "number") ? (__left12 + __right13) : __add_op(__left12, __right13)).__uid__) ? ((( typeof(__left12) ) == "number") ? (__left12 + __right13) : __add_op(__left12, __right13)).__uid__ : ((( typeof(__left12) ) == "number") ? (__left12 + __right13) : __add_op(__left12, __right13)))];
     } else {
-      return this[ (idx.__uid__) ? idx.__uid__ : idx];
+      return this[((idx.__uid__) ? idx.__uid__ : idx)];
     }
   }
 
@@ -1296,7 +1320,10 @@ _setup_str_prototype = function(args, kwargs) {
       return this.split("").reverse().join("");
     } else {
       if (( stop ) < 0) {
-        stop = __add_op(this.length, stop);
+        var __left14, __right15;
+        __left14 = this.length;
+        __right15 = stop;
+        stop = ((( typeof(__left14) ) == "number") ? (__left14 + __right15) : __add_op(__left14, __right15));
       }
       return this.substring(start, stop);
     }
@@ -1400,7 +1427,10 @@ _setup_str_prototype = function(args, kwargs) {
     var i;
     i = this.indexOf(a);
     if (( i ) == -1) {
-      throw new ValueError(__add_op(a, " - not in string"));
+      var __left16, __right17;
+      __left16 = a;
+      __right17 = " - not in string";
+      throw new ValueError(((( typeof(__left16) ) == "number") ? (__left16 + __right17) : __add_op(__left16, __right17)));
     }
     return i;
   }
@@ -1466,7 +1496,7 @@ _setup_str_prototype = function(args, kwargs) {
     if (! (__iter13 instanceof Array || typeof __iter13 == "string") ) { __iter13 = __object_keys__(__iter13) }
     for (var __idx13=0; __idx13 < __iter13.length; __idx13++) {
       var key = __iter13[ __idx13 ];
-      r = r.split(key).join(fmt[ (key.__uid__) ? key.__uid__ : key]);
+      r = r.split(key).join(fmt[((key.__uid__) ? key.__uid__ : key)]);
     }
     r = r.split("{").join("").split("}").join("");
     return r;
@@ -1490,10 +1520,10 @@ _setup_array_prototype = function(args, kwargs) {
     var i, item;
     i = 0;
     while (( i ) < this.length) {
-      item = this[ (i.__uid__) ? i.__uid__ : i];
+      item = this[((i.__uid__) ? i.__uid__ : i)];
       if (( typeof(item) ) == "object") {
         if (__test_if_true__(item.jsify)) {
-          this[ (i.__uid__) ? i.__uid__ : i] = item.jsify();
+          this[((i.__uid__) ? i.__uid__ : i)] = item.jsify();
         }
       }
       i += 1;
@@ -1529,7 +1559,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.types_signature = {  };
   Array.prototype.__len__ = func;
     var func = function(index) {
-    return this[ (index.__uid__) ? index.__uid__ : index];
+    return this[((index.__uid__) ? index.__uid__ : index)];
   }
 
   func.NAME = "func";
@@ -1540,9 +1570,12 @@ _setup_array_prototype = function(args, kwargs) {
     var __getitem__ = function(index) {
     ;
     if (( index ) < 0) {
-      index = __add_op(this.length, index);
+      var __left18, __right19;
+      __left18 = this.length;
+      __right19 = index;
+      index = ((( typeof(__left18) ) == "number") ? (__left18 + __right19) : __add_op(__left18, __right19));
     }
-    return this[ (index.__uid__) ? index.__uid__ : index];
+    return this[((index.__uid__) ? index.__uid__ : index)];
   }
 
   __getitem__.NAME = "__getitem__";
@@ -1553,9 +1586,12 @@ _setup_array_prototype = function(args, kwargs) {
     var __setitem__ = function(index, value) {
     ;
     if (( index ) < 0) {
-      index = __add_op(this.length, index);
+      var __left20, __right21;
+      __left20 = this.length;
+      __right21 = index;
+      index = ((( typeof(__left20) ) == "number") ? (__left20 + __right21) : __add_op(__left20, __right21));
     }
-    this[ (index.__uid__) ? index.__uid__ : index] = value;
+    this[((index.__uid__) ? index.__uid__ : index)] = value;
   }
 
   __setitem__.NAME = "__setitem__";
@@ -1578,13 +1614,16 @@ _setup_array_prototype = function(args, kwargs) {
       arr = [];
       i = 0;
       while (( i ) < this.length) {
-        arr.push(this[ (i.__uid__) ? i.__uid__ : i]);
+        arr.push(this[((i.__uid__) ? i.__uid__ : i)]);
         i += step;
       }
       return arr;
     } else {
       if (( stop ) < 0) {
-        stop = __add_op(this.length, stop);
+        var __left22, __right23;
+        __left22 = this.length;
+        __right23 = stop;
+        stop = ((( typeof(__left22) ) == "number") ? (__left22 + __right23) : __add_op(__left22, __right23));
       }
       return this.slice(start, stop);
     }
@@ -1634,7 +1673,10 @@ _setup_array_prototype = function(args, kwargs) {
     var insert = function(index, obj) {
     ;
     if (( index ) < 0) {
-      index = __add_op(this.length, index);
+      var __left24, __right25;
+      __left24 = this.length;
+      __right25 = index;
+      index = ((( typeof(__left24) ) == "number") ? (__left24 + __right25) : __add_op(__left24, __right25));
     }
     this.splice(index, 0, obj);
   }
@@ -1692,12 +1734,18 @@ _setup_array_prototype = function(args, kwargs) {
       high = this.length;
     }
     while (( low ) < high) {
-      a = __add_op(low, high);
+      var __left26, __right27;
+      __left26 = low;
+      __right27 = high;
+      a = ((( typeof(__left26) ) == "number") ? (__left26 + __right27) : __add_op(__left26, __right27));
       mid = Math.floor((a / 2));
-      if (( x ) < this[ (mid.__uid__) ? mid.__uid__ : mid]) {
+      if (( x ) < this[((mid.__uid__) ? mid.__uid__ : mid)]) {
         high = mid;
       } else {
-        low = __add_op(mid, 1);
+        var __left28, __right29;
+        __left28 = mid;
+        __right29 = 1;
+        low = ((( typeof(__left28) ) == "number") ? (__left28 + __right29) : __add_op(__left28, __right29));
       }
     }
     return low;
@@ -1775,7 +1823,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   func.types_signature = {  };
   NodeList.prototype.__len__ = func;
     var func = function(index) {
-    return this[ (index.__uid__) ? index.__uid__ : index];
+    return this[((index.__uid__) ? index.__uid__ : index)];
   }
 
   func.NAME = "func";
@@ -1786,9 +1834,12 @@ _setup_nodelist_prototype = function(args, kwargs) {
     var __getitem__ = function(index) {
     ;
     if (( index ) < 0) {
-      index = __add_op(this.length, index);
+      var __left30, __right31;
+      __left30 = this.length;
+      __right31 = index;
+      index = ((( typeof(__left30) ) == "number") ? (__left30 + __right31) : __add_op(__left30, __right31));
     }
-    return this[ (index.__uid__) ? index.__uid__ : index];
+    return this[((index.__uid__) ? index.__uid__ : index)];
   }
 
   __getitem__.NAME = "__getitem__";
@@ -1799,9 +1850,12 @@ _setup_nodelist_prototype = function(args, kwargs) {
     var __setitem__ = function(index, value) {
     ;
     if (( index ) < 0) {
-      index = __add_op(this.length, index);
+      var __left32, __right33;
+      __left32 = this.length;
+      __right33 = index;
+      index = ((( typeof(__left32) ) == "number") ? (__left32 + __right33) : __add_op(__left32, __right33));
     }
-    this[ (index.__uid__) ? index.__uid__ : index] = value;
+    this[((index.__uid__) ? index.__uid__ : index)] = value;
   }
 
   __setitem__.NAME = "__setitem__";
@@ -2342,9 +2396,12 @@ __pytuple___getitem__ = function(args, kwargs) {
   var self = __args__['self'];
   var index = __args__['index'];
   if (( index ) < 0) {
-    index = __add_op(__get__(self["$wrapped"], "length", "missing attribute `length` - line 865: index = self[...].length + index"), index);
+    var __left34, __right35;
+    __left34 = __get__(self["$wrapped"], "length", "missing attribute `length` - line 865: index = self[...].length + index");
+    __right35 = index;
+    index = ((( typeof(__left34) ) == "number") ? (__left34 + __right35) : __add_op(__left34, __right35));
   }
-  return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
+  return self["$wrapped"][((index.__uid__) ? index.__uid__ : index)];
 }
 
 __pytuple___getitem__.NAME = "__pytuple___getitem__";
@@ -2477,7 +2534,7 @@ __pytuple_get = function(args, kwargs) {
   __args__ = __getargs__("__pytuple_get", __sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
-  return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
+  return self["$wrapped"][((index.__uid__) ? index.__uid__ : index)];
 }
 
 __pytuple_get.NAME = "__pytuple_get";
@@ -2609,9 +2666,12 @@ __pylist___getitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   if (( index ) < 0) {
-    index = __add_op(__get__(self["$wrapped"], "length", "missing attribute `length` - line 946: index = self[...].length + index"), index);
+    var __left36, __right37;
+    __left36 = __get__(self["$wrapped"], "length", "missing attribute `length` - line 946: index = self[...].length + index");
+    __right37 = index;
+    index = ((( typeof(__left36) ) == "number") ? (__left36 + __right37) : __add_op(__left36, __right37));
   }
-  return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
+  return self["$wrapped"][((index.__uid__) ? index.__uid__ : index)];
 }
 
 __pylist___getitem__.NAME = "__pylist___getitem__";
@@ -2625,7 +2685,7 @@ __pylist___setitem__ = function(args, kwargs) {
   var self = args[ 0 ];
   var index = args[ 1 ];
   var value = args[ 2 ];
-  self["$wrapped"][ (index.__uid__) ? index.__uid__ : index] = value;
+  self["$wrapped"][((index.__uid__) ? index.__uid__ : index)] = value;
 }
 
 __pylist___setitem__.NAME = "__pylist___setitem__";
@@ -2925,7 +2985,7 @@ __pylist_get = function(args, kwargs) {
   __args__ = __getargs__("__pylist_get", __sig__, args, kwargs);
   var self = __args__['self'];
   var index = __args__['index'];
-  return self["$wrapped"][ (index.__uid__) ? index.__uid__ : index];
+  return self["$wrapped"][((index.__uid__) ? index.__uid__ : index)];
 }
 
 __pylist_get.NAME = "__pylist_get";
@@ -2947,7 +3007,7 @@ __pylist_set = function(args, kwargs) {
   var self = __args__['self'];
   var index = __args__['index'];
   var value = __args__['value'];
-  self["$wrapped"][ (index.__uid__) ? index.__uid__ : index] = value;
+  self["$wrapped"][((index.__uid__) ? index.__uid__ : index)] = value;
 }
 
 __pylist_set.NAME = "__pylist_set";
@@ -3478,7 +3538,7 @@ __dict_values = function(args, kwargs) {
   if (! (__iter19 instanceof Array || typeof __iter19 == "string") ) { __iter19 = __object_keys__(__iter19) }
   for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
     var key = __iter19[ __idx19 ];
-    out.push(self["$wrapped"][ (key.__uid__) ? key.__uid__ : key]);
+    out.push(self["$wrapped"][((key.__uid__) ? key.__uid__ : key)]);
   }
   return out;
 }
@@ -3584,7 +3644,7 @@ set = function(args, kwargs) {
       var b = __iter20[ __idx20 ];
       if (__test_if_true__(typeof(b, "number") && ( b ) === ( (b | 0) ))) {
         key = (b & mask);
-        hashtable[ (key.__uid__) ? key.__uid__ : key] = b;
+        hashtable[((key.__uid__) ? key.__uid__ : key)] = b;
         keys.push(key);
       } else {
         fallback = true;
@@ -3610,7 +3670,7 @@ set = function(args, kwargs) {
     if (! (__iter22 instanceof Array || typeof __iter22 == "string") ) { __iter22 = __object_keys__(__iter22) }
     for (var __idx22=0; __idx22 < __iter22.length; __idx22++) {
       var key = __iter22[ __idx22 ];
-      s.push(hashtable[ (key.__uid__) ? key.__uid__ : key]);
+      s.push(hashtable[((key.__uid__) ? key.__uid__ : key)]);
     }
   }
   return s;
@@ -3760,7 +3820,10 @@ __array___getitem__ = function(args, kwargs) {
   step = __get__(self, "itemsize", "missing attribute `itemsize` - line 1346: step = self.itemsize");
   offset = (step * index);
   dataview = __get__(self, "dataview", "missing attribute `dataview` - line 1349: dataview = self.dataview");
-  func_name = __add_op("get", __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]")([__get__(self, "typecode", "missing attribute `typecode` - line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]")], Object()));
+  var __left38, __right39;
+  __left38 = "get";
+  __right39 = __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]")([__get__(self, "typecode", "missing attribute `typecode` - line 1350: func_name = 'get'+self.typecode_names[ self.typecode ]")], Object());
+  func_name = ((( typeof(__left38) ) == "number") ? (__left38 + __right39) : __add_op(__left38, __right39));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < __get__(self, "bytes", "missing attribute `bytes` - line 1353: if offset < self.bytes:")) {
     value = func(offset);
@@ -3799,11 +3862,17 @@ __array___setitem__ = function(args, kwargs) {
   var value = __args__['value'];
   step = __get__(self, "itemsize", "missing attribute `itemsize` - line 1364: step = self.itemsize");
   if (( index ) < 0) {
-    index = (__add_op(__get__(self, "length", "missing attribute `length` - line 1365: if index < 0: index = self.length + index -1  ## TODO fixme"), index) - 1);
+    var __left40, __right41;
+    __left40 = __get__(self, "length", "missing attribute `length` - line 1365: if index < 0: index = self.length + index -1  ## TODO fixme");
+    __right41 = index;
+    index = (((( typeof(__left40) ) == "number") ? (__left40 + __right41) : __add_op(__left40, __right41)) - 1);
   }
   offset = (step * index);
   dataview = __get__(self, "dataview", "missing attribute `dataview` - line 1368: dataview = self.dataview");
-  func_name = __add_op("set", __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]")([__get__(self, "typecode", "missing attribute `typecode` - line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]")], Object()));
+  var __left42, __right43;
+  __left42 = "set";
+  __right43 = __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]")([__get__(self, "typecode", "missing attribute `typecode` - line 1369: func_name = 'set'+self.typecode_names[ self.typecode ]")], Object());
+  func_name = ((( typeof(__left42) ) == "number") ? (__left42 + __right43) : __add_op(__left42, __right43));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < __get__(self, "bytes", "missing attribute `bytes` - line 1372: if offset < self.bytes:")) {
     if (( __get__(self, "typecode", "missing attribute `typecode` - line 1373: if self.typecode == 'float8':") ) == "float8") {
@@ -3885,7 +3954,10 @@ __array_fromlist = function(args, kwargs) {
   typecode = __get__(self, "typecode", "missing attribute `typecode` - line 1391: typecode = self.typecode");
   size = (length * step);
   dataview = __get__(self, "dataview", "missing attribute `dataview` - line 1393: dataview = self.dataview");
-  func_name = __add_op("set", __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1394: func_name = 'set'+self.typecode_names[ typecode ]"), "__getitem__", "line 1394: func_name = 'set'+self.typecode_names[ typecode ]")([typecode], Object()));
+  var __left44, __right45;
+  __left44 = "set";
+  __right45 = __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1394: func_name = 'set'+self.typecode_names[ typecode ]"), "__getitem__", "line 1394: func_name = 'set'+self.typecode_names[ typecode ]")([typecode], Object());
+  func_name = ((( typeof(__left44) ) == "number") ? (__left44 + __right45) : __add_op(__left44, __right45));
   func = dataview[func_name].bind(dataview);
   if (( size ) <= __get__(self, "bytes", "missing attribute `bytes` - line 1396: if size <= self.bytes:")) {
     i = 0;
@@ -3959,7 +4031,10 @@ __array_append = function(args, kwargs) {
   var self = __args__['self'];
   var value = __args__['value'];
   length = __get__(self, "length", "missing attribute `length` - line 1426: length = self.length");
-  __get__(__get__(self, "resize", "missing attribute `resize` - line 1427: self.resize( self.length + 1 )"), "__call__")([__add_op(__get__(self, "length", "missing attribute `length` - line 1427: self.resize( self.length + 1 )"), 1)], __NULL_OBJECT__);
+  var __left46, __right47;
+  __left46 = __get__(self, "length", "missing attribute `length` - line 1427: self.resize( self.length + 1 )");
+  __right47 = 1;
+  __get__(__get__(self, "resize", "missing attribute `resize` - line 1427: self.resize( self.length + 1 )"), "__call__")([((( typeof(__left46) ) == "number") ? (__left46 + __right47) : __add_op(__left46, __right47))], __NULL_OBJECT__);
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], Object());
 }
 
@@ -4192,7 +4267,7 @@ _to_json = function(args, kwargs) {
         key = __next__40();
         value = _to_json([__jsdict_get(pythonjs, key)], __NULL_OBJECT__);
         key = _to_json([key], __NULL_OBJECT__);
-        r[ (key.__uid__) ? key.__uid__ : key] = value;
+        r[((key.__uid__) ? key.__uid__ : key)] = value;
       }
     } else {
       r = pythonjs;

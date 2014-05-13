@@ -206,6 +206,7 @@ class PythonToPythonJS(NodeVisitor):
 		self._with_runtime_exceptions = True
 
 		self._iter_ids = 0
+		self._addop_ids = 0
 
 		self._cache_for_body_calls = False
 		self._cache_while_body_calls = False
@@ -1123,7 +1124,19 @@ class PythonToPythonJS(NodeVisitor):
 			return 'Math.pow(%s,%s)' %(left, right)
 
 		elif op == '+' and not self._with_dart:
-			return '__add_op(%s, %s)'%(left, right)
+			#return '__add_op(%s, %s)'%(left, right)  ## this is very slow compared to using the ternary op with typeof check
+			## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
+			## used to check if the first variable is a number, and if so add the numbers, otherwise fallback to using the
+			## __add_op function, the __add_op function checks if the first variable is an Array, and if so then concatenate;
+			## else __add_op will call the "__add__" method of the left operand, passing right as the first argument.
+			l = '__left%s' %self._addop_ids
+			self._addop_ids += 1
+			r = '__right%s' %self._addop_ids
+			writer.write('var(%s,%s)' %(l,r))
+			self._addop_ids += 1
+			writer.write('%s = %s' %(l,left))
+			writer.write('%s = %s' %(r,right))
+			return '__ternary_operator__( typeof(%s)=="number", %s + %s, __add_op(%s, %s))'%(l, l, r, l, r)
 
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
@@ -2265,7 +2278,7 @@ class PythonToPythonJS(NodeVisitor):
 			if node.args.defaults:
 				kwargs_name = node.args.kwarg or '_kwargs_'
 				lines = [ 'if (!( %s instanceof Object )) {' %kwargs_name ]
-				a = '%s,'.join( ['%s: arguments[%s]' %(arg.id, i) for i,arg in enumerate(node.args.args)] )
+				a = ','.join( ['%s: arguments[%s]' %(arg.id, i) for i,arg in enumerate(node.args.args)] )
 				lines.append( 'var %s = {%s}' %(kwargs_name, a))
 				lines.append( '}')
 				for a in lines:
@@ -2557,9 +2570,11 @@ class PythonToPythonJS(NodeVisitor):
 					iter_end = self.visit(iter.args[0])
 
 				iter_name = target.id
-				writer.write('var(%s)' %iter_name)
+				writer.write('var(%s, %s__end__)' %(iter_name, iter_name))
 				writer.write('%s = %s' %(iter_name, iter_start))
-				writer.write('while %s < %s:' %(iter_name, iter_end))
+				writer.write('%s__end__ = %s' %(iter_name, iter_end))
+				writer.write('while %s < %s__end__:' %(iter_name, iter_name))
+
 				writer.push()
 				map(self.visit, node.body)
 				writer.write('%s += 1' %iter_name )
@@ -2653,9 +2668,12 @@ class PythonToPythonJS(NodeVisitor):
 			elif is_range:
 				iter_name = target.id
 				if not self._with_coffee:
-					writer.write('var(%s)' %iter_name)
+					writer.write('var(%s, %s__end__)' %(iter_name, iter_name))
 				writer.write('%s = %s' %(iter_name, iter_start))
-				writer.write('while %s < %s:' %(iter_name, iter_end))
+				writer.write('%s__end__ = %s' %(iter_name, iter_end))   ## assign to a temp variable.
+				#writer.write('while %s < %s:' %(iter_name, iter_end))  ## this fails with the ternary __add_op
+				writer.write('while %s < %s__end__:' %(iter_name, iter_name))
+
 				writer.push()
 				map(self.visit, node.body)
 				if self._with_lua:
@@ -2794,12 +2812,14 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes
 		self._global_functions = compiler._global_functions
+		self._addop_ids = compiler._addop_ids
 		self._with_inline = False
 		self._cache_for_body_calls = False
 		self._source = compiler._source
 		self._instances = dict()
 		self._head_yield = False
 		self.visit( node )
+		compiler._addop_ids = self._addop_ids
 
 	def visit_Yield(self, node):
 		if self._in_head:

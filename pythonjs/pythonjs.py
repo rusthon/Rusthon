@@ -209,9 +209,9 @@ class JSGenerator(NodeVisitor):
 		elif name == '__ternary_operator__':
 			args = map(self.visit, node.args)
 			if len(args) == 2:
-				return ' (%s) ? %s : %s' %(args[0], args[0], args[1])
+				return '((%s) ? %s : %s)' %(args[0], args[0], args[1])
 			elif len(args) == 3:
-				return ' (%s) ? %s : %s' %(args[0], args[1], args[2])
+				return '((%s) ? %s : %s)' %(args[0], args[1], args[2])
 			else:
 				raise SyntaxError( args )
 

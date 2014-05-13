@@ -77,7 +77,7 @@ with javascript:
 
 	def __add_op(a, b):
 		t = typeof(a)
-		if t == 'number' or t == 'string':
+		if t == 'string':  ## 'number' is already checked before this gets called (ternary op)
 			return JS("a+b")
 		elif instanceof(a, Array):
 			c = []

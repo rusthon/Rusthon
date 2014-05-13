@@ -2,7 +2,7 @@
 	"author": "Brett Hartshorn <goatman.py@gmail.com>",
 	"name": "python-js",
 	"description": "python multi-translator: javascript, dart, coffee, lua, vis.js",
-	"version": "0.9.1",
+	"version": "0.9.2",
 	"license": "BSD-3-Clause",
 	"repository": {
 		"type": "git",

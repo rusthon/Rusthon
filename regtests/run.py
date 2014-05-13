@@ -42,6 +42,7 @@ def runnable(command):
         return False
 
 ## rhino has problems: like maximum callstack errors simply freeze up rhino
+pypy_runnable = runnable( 'pypy --help' )
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
 dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
@@ -205,6 +206,12 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename, python='PYTHON3'))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
+def run_pypy_test_on(filename):
+    """PyPy"""
+    write("%s.py" % tmpname, patch_python(filename, python='PYPY'))
+    return run_command("pypy %s.py %s" % (tmpname, display_errors))
+
+
 def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False):
     output_name = "%s.py" % tmpname
     if javascript:
@@ -356,11 +363,11 @@ process = { title:"", version:"" } ;
     return run_command("rhino -O -1 %s.js" % tmpname)
 
 def run_pythonjs_test_on_node(dummy_filename):
-    """PythonJS (normal mode) on Node"""
+    """PythonJS (normal mode)"""
     return run_if_no_error(run_js_node)
 
 def run_pythonjsjs_test_on_node(filename):
-    """PythonJS (fast mode) on Node"""
+    """PythonJS (fast mode)"""
     return run_pythonjs_test_on_node(filename)
 
 def run_js_node(content):
@@ -373,7 +380,7 @@ def run_js_node(content):
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_dart_test_on_node(dummy_filename):
-    """PythonJS (dart2js) on Node"""
+    """PythonJS (dart2js)"""
     return run_if_no_error(run_dart2js_node)
 
 def run_dart2js_node(content):
@@ -382,7 +389,7 @@ def run_dart2js_node(content):
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_coffee_test_on_node(dummy_filename):
-    """PythonJS (CoffeeScript) on Node"""
+    """PythonJS (CoffeeScript)"""
     return run_if_no_error(run_coffee_node)
 
 def run_coffee_node(content):
@@ -412,7 +419,7 @@ def run_lua_luajit(content):
     return run_command("luajit %s.lua" % tmpname)
 
 def run_pythonjs_luajs_test_on_node(dummy_filename):
-    """PythonJS (Lua.js) on Node"""
+    """PythonJS (Lua.js)"""
     return run_if_no_error(run_luajs_node)
 
 def run_luajs_node(content):
@@ -459,6 +466,10 @@ def run_test_on(filename):
         
     display(run_python_test_on)
     display(run_python3_test_on)
+    if pypy_runnable:
+        display(run_pypy_test_on)
+
+
     global js
     js = translate_js(filename, javascript=False)
     if rhino_runnable:
@@ -501,6 +512,8 @@ def run():
 
     if not show_details:
         headers =  ["Py-\nthon", "Py-\nthon3"]
+        if pypy_runnable:
+            headers.append("PyPy\n")
         if rhino_runnable:
             headers.append("JS\nRhino")
         if node_runnable:
