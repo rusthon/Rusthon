@@ -19,7 +19,7 @@ class list( ListBase ):
 		self[...] = new( List() )
 		if instanceof(items, String):
 			self[...].addAll( items.split("") )
-		else:
+		elif items is not None:
 			self[...].addAll( items )
 
 	@property
@@ -41,12 +41,15 @@ class list( ListBase ):
 
 	def __getslice__(self, start, stop, step):
 		if stop == null and step == null:
-			return self[...].sublist( start, self[...].length )
+			return self[...].sublist( start )
+		elif stop == null:
+			return self[...].sublist(start)
 		elif stop < 0:
 			stop = self[...].length + stop
-			return self[...].sublist(start, stop)
-		else:
-			return self[...].sublist(start, self[...].length)
+			if start != null:
+				return self[...].sublist(start, stop)
+			else:
+				return self[...].sublist(0, stop)
 
 	def __add__(self, other):
 		self[...].addAll( other[...] )
@@ -108,7 +111,7 @@ def range(n):
 	r = []
 	i = 0
 	while i < n:
-		r.add( i )
+		r.append( i )
 		i += 1
 	return r
 
@@ -136,7 +139,7 @@ def __getslice__(a, start, stop, step):
 			b = __reverse__(b)
 		return b
 	else:
-		return a.__getslice__(start, stop, step)
+		return list.____getslice__(a, start, stop, step)
 
 def __reverse__(a):
 	if instanceof(a, String):
@@ -148,7 +151,7 @@ def __reverse__(a):
 		return buff.toString()
 
 def __create_list( size ):
-	a = []
+	a = list()
 	for i in range(size):
 		a.append( None )
 	return a

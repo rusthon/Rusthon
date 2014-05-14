@@ -253,7 +253,7 @@ class __iterator_list:
 		self.index = index
 		self.length = len(obj)
 
-	def next_fast(self):
+	def next(self):
 		with lowlevel:
 			index = self.index
 			self.index += 1
