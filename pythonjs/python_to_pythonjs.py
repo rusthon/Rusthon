@@ -167,6 +167,7 @@ class PythonToPythonJS(NodeVisitor):
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
 		super(PythonToPythonJS, self).__init__()
 
+		self._direct_operators = set()  ## optimize "+" operator
 		self._with_ll = False   ## lowlevel
 		self._with_lua = lua
 		self._with_coffee = coffee
@@ -1124,19 +1125,23 @@ class PythonToPythonJS(NodeVisitor):
 			return 'Math.pow(%s,%s)' %(left, right)
 
 		elif op == '+' and not self._with_dart:
-			#return '__add_op(%s, %s)'%(left, right)  ## this is very slow compared to using the ternary op with typeof check
-			## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
-			## used to check if the first variable is a number, and if so add the numbers, otherwise fallback to using the
-			## __add_op function, the __add_op function checks if the first variable is an Array, and if so then concatenate;
-			## else __add_op will call the "__add__" method of the left operand, passing right as the first argument.
-			l = '__left%s' %self._addop_ids
-			self._addop_ids += 1
-			r = '__right%s' %self._addop_ids
-			writer.write('var(%s,%s)' %(l,r))
-			self._addop_ids += 1
-			writer.write('%s = %s' %(l,left))
-			writer.write('%s = %s' %(r,right))
-			return '__ternary_operator__( typeof(%s)=="number", %s + %s, __add_op(%s, %s))'%(l, l, r, l, r)
+			if '+' in self._direct_operators:
+				return '%s+%s'%(left, right)
+			elif self._with_lua:
+				return '__add_op(%s, %s)'%(left, right)
+			else:
+				## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
+				## used to check if the first variable is a number, and if so add the numbers, otherwise fallback to using the
+				## __add_op function, the __add_op function checks if the first variable is an Array, and if so then concatenate;
+				## else __add_op will call the "__add__" method of the left operand, passing right as the first argument.
+				l = '__left%s' %self._addop_ids
+				self._addop_ids += 1
+				r = '__right%s' %self._addop_ids
+				writer.write('var(%s,%s)' %(l,r))
+				self._addop_ids += 1
+				writer.write('%s = %s' %(l,left))
+				writer.write('%s = %s' %(r,right))
+				return '__ternary_operator__( typeof(%s)=="number", %s + %s, __add_op(%s, %s))'%(l, l, r, l, r)
 
 		elif isinstance(node.left, Name):
 			typedef = self.get_typedef( node.left )
@@ -1764,6 +1769,13 @@ class PythonToPythonJS(NodeVisitor):
 						self._with_runtime_exceptions = False
 					else:
 						raise SyntaxError
+
+				elif kw.arg == 'direct_operator':
+					assert kw.value.s in ['None', '+']
+					if kw.value.s == 'None':
+						self._direct_operators = set()
+					else:
+						self._direct_operators.add( kw.value.s )
 
 				else:
 					raise SyntaxError

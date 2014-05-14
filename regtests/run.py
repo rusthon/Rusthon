@@ -49,7 +49,7 @@ dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
 dart2js_runnable = runnable( dart2js + ' -h' )
 coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
 lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv
-luajit_runnable = runnable( "luajit -v" ) and '--all-backends' in sys.argv
+luajit_runnable = runnable( "luajit -v" )
 
 lua2js = os.path.abspath( '../external/lua.js/lua2js' )
 luajs_runnable = os.path.isfile( lua2js ) and '--all-backends' in sys.argv
@@ -98,6 +98,9 @@ def run_command(command, returns_stdout_stderr=False):
             sys.exit()
     if returns_stdout_stderr:
         return stdout, stderr
+
+    #########################
+
     if stdout:
         if show_details:
             print(stdout)
@@ -172,7 +175,7 @@ def TestWarning(file, line, result, test):
         print(file + ":" + str(line) + " Warning fail " + test)
 """
 
-def patch_python(filename, dart=False, python='PYTHONJS'):
+def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
     """Rewrite the Python code"""
     code = patch_assert(filename)
 
@@ -191,10 +194,17 @@ def patch_python(filename, dart=False, python='PYTHONJS'):
     #        else:
     #            out.append( line )
     #    code = '\n'.join( out )
-    if dart:
-        return '\n'.join( [_patch_header, 'PYTHON="%s"'%python, code] )
-    else:
-        return '\n'.join( [_patch_header, 'PYTHON="%s"'%python, code, 'main()'] )
+    a = [
+        _patch_header, 
+        'PYTHON="%s"'%python, 
+        'BACKEND="%s"'%backend, 
+        code
+    ]
+
+    if not dart:
+        a.append( 'main()' )
+
+    return '\n'.join( a )
 
 def run_python_test_on(filename):
     """Python2"""
@@ -213,27 +223,33 @@ def run_pypy_test_on(filename):
 
 
 def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False):
+    global tmpname
+    tmpname = os.path.join(
+        tempfile.gettempdir(), 
+        'test-%s-js=%s-dart=%s-lua=%s' %(filename.split('/')[-1], javascript, dart, lua)
+    )
+
     output_name = "%s.py" % tmpname
     if javascript:
-        content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename)
+        content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename, backend='JAVASCRIPT')
     elif dart:
         source = [
             'pythonjs.configure(dart=True)',
             open('../pythonjs/runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
-            patch_python(filename, dart=True)
+            patch_python(filename, dart=True, backend='DART')
         ]
         content = '\n'.join( source )
     elif coffee:
         source = [
             'pythonjs.configure(coffee=True)',
-            patch_python(filename)
+            patch_python(filename, backend='COFFEE')
         ]
         content = '\n'.join( source )
     elif lua or luajs:
         source = [
             'pythonjs.configure(lua=True)',
             read('../pythonjs/runtime/lua_builtins.py'),
-            patch_python(filename)
+            patch_python(filename, backend='LUA')
         ]
         content = '\n'.join( source )
 
@@ -363,11 +379,11 @@ process = { title:"", version:"" } ;
     return run_command("rhino -O -1 %s.js" % tmpname)
 
 def run_pythonjs_test_on_node(dummy_filename):
-    """PythonJS (normal mode)"""
+    """PythonJS (normal)"""
     return run_if_no_error(run_js_node)
 
 def run_pythonjsjs_test_on_node(filename):
-    """PythonJS (fast mode)"""
+    """PythonJS (fast backend)"""
     return run_pythonjs_test_on_node(filename)
 
 def run_js_node(content):
@@ -380,7 +396,7 @@ def run_js_node(content):
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_dart_test_on_node(dummy_filename):
-    """PythonJS (dart2js)"""
+    """PythonJS (Dart backend)"""
     return run_if_no_error(run_dart2js_node)
 
 def run_dart2js_node(content):
@@ -410,7 +426,7 @@ def run_lua_lua(content):
 
 
 def run_pythonjs_lua_test_on_luajit(dummy_filename):
-    """PythonJS (Lua) on LuaJIT"""
+    """PythonJS (LuaJIT backend)"""
     return run_if_no_error(run_lua_luajit)
 
 def run_lua_luajit(content):
