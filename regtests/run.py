@@ -95,7 +95,7 @@ def run_command(command, returns_stdout_stderr=False):
     if stderr:
         if show_details:
             print(stderr)
-            sys.exit()
+            #sys.exit()
     if returns_stdout_stderr:
         return stdout, stderr
 

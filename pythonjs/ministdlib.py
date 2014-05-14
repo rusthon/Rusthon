@@ -13,9 +13,9 @@ LUA = {
 		'clock' : 'clock = function() return socket.gettime() end'
 	},
 	'math': {
-		'sin' : 'sin = Math.sin',
-		'cos' : 'cos = Math.cos',
-		'sqrt' : 'sqrt = Math.sqrt',
+		'sin' : 'sin = function(a) return math.sin(a[1]) end',
+		'cos' : 'cos = function(a) return math.cos(a[1]) end',
+		'sqrt' : 'sqrt = function(a) return math.sqrt(a[1]) end',
 	}
 }
 

@@ -375,6 +375,16 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def visit_NotEq(self, node):
 		return '!='
 
+	def _visit_call_helper_list(self, node):
+		name = self.visit(node.func)
+		if node.args:
+			args = [self.visit(e) for e in node.args]
+			args = ', '.join([e for e in args if e])
+		else:
+			args = '[]'
+		return '%s(%s)' % (name, args)
+
+
 	def _visit_call_helper_instanceof(self, node):
 		args = map(self.visit, node.args)
 		if len(args) == 2:

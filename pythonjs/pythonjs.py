@@ -235,6 +235,8 @@ class JSGenerator(NodeVisitor):
 				return 'import "%s" as %s;' %(node.args[0].s, node.args[1].s)
 			else:
 				raise SyntaxError
+		elif name == 'list':
+			return self._visit_call_helper_list( node )
 
 		elif name == '__get__' and len(node.args)==2 and isinstance(node.args[1], ast.Str) and node.args[1].s=='__call__':
 			return self._visit_call_helper_get_call_special( node )
@@ -245,6 +247,15 @@ class JSGenerator(NodeVisitor):
 			else:
 				args = ''
 			return '%s(%s)' % (name, args)
+
+	def _visit_call_helper_list(self, node):
+		name = self.visit(node.func)
+		if node.args:
+			args = [self.visit(e) for e in node.args]
+			args = ', '.join([e for e in args if e])
+		else:
+			args = ''
+		return '%s(%s)' % (name, args)
 
 	def _visit_call_helper_get_call_special(self, node):
 		name = self.visit(node.func)
