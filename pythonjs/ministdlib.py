@@ -11,6 +11,11 @@ LUA = {
 		REQUIRES : ['socket'],
 		'time' : 'time = function() return socket.gettime() end',
 		'clock' : 'clock = function() return socket.gettime() end'
+	},
+	'math': {
+		'sin' : 'sin = Math.sin',
+		'cos' : 'cos = Math.cos',
+		'sqrt' : 'sqrt = Math.sqrt',
 	}
 }
 
@@ -19,7 +24,13 @@ DART = {
 	'time': {
 		'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }',
 		'clock' : 'clock() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
+	},
+	'math': {
+		'sin' : 'sin = math.sin',
+		'cos' : 'cos = math.cos',
+		'sqrt' : 'sqrt = math.sqrt',
 	}
+
 }
 
 JS = {

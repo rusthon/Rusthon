@@ -41,10 +41,12 @@ class list( ListBase ):
 
 	def __getslice__(self, start, stop, step):
 		if stop == null and step == null:
-			return self[...].sublist( start )
+			return self[...].sublist( start, self[...].length )
 		elif stop < 0:
 			stop = self[...].length + stop
 			return self[...].sublist(start, stop)
+		else:
+			return self[...].sublist(start, self[...].length)
 
 	def __add__(self, other):
 		self[...].addAll( other[...] )
@@ -96,6 +98,12 @@ class dict: #( HashMap ):
 			r.append( [key,value] )
 		return r
 
+def sum( arr ):
+	a = 0
+	for b in arr:
+		a += b
+	return a
+
 def range(n):
 	r = []
 	i = 0
@@ -127,6 +135,8 @@ def __getslice__(a, start, stop, step):
 		if step != null:
 			b = __reverse__(b)
 		return b
+	else:
+		return a.__getslice__(start, stop, step)
 
 def __reverse__(a):
 	if instanceof(a, String):
@@ -137,9 +147,17 @@ def __reverse__(a):
 			n -= 1
 		return buff.toString()
 
+def __create_list( size ):
+	a = []
+	for i in range(size):
+		a.append( None )
+	return a
+
 with lowlevel:
 	def __test_if_true__( ob ):
-		if instanceof(ob, String):
+		if ob == True: return True
+		elif ob == False: return False
+		elif instanceof(ob, String):
 			return ob.length != 0
 		elif instanceof(ob, Number):
 			return ob != 0

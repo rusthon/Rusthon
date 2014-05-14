@@ -14,16 +14,20 @@ def main(script):
         import python_to_visjs
         return python_to_visjs.main( script )
     else:
-        a = python_to_pythonjs(script)
         if '--dart' in sys.argv:
+            a = python_to_pythonjs(script, dart=True)
             return pythonjs_to_dart( a )
         elif '--coffee' in sys.argv:
+            a = python_to_pythonjs(script, coffee=True)
             return pythonjs_to_coffee( a )
         elif '--lua' in sys.argv:
+            a = python_to_pythonjs(script, lua=True)
             return pythonjs_to_lua( a )
         elif '--luajs' in sys.argv:
+            a = python_to_pythonjs(script, lua=True)
             return pythonjs_to_luajs( a )
         else:
+            a = python_to_pythonjs(script)
             return pythonjs_to_javascript( a )
 
 

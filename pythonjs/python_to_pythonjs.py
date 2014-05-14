@@ -357,7 +357,7 @@ class PythonToPythonJS(NodeVisitor):
 						self._builtin_functions[ n.name ] = n.name + '()'
 
 
-		elif self._check_for_module( node.module ):
+		elif self._check_for_module( node.module ):  ## DEPRECATE
 			if node.names[0].name == '*':
 				a = self._load_module( node.module )
 				self._classes.update( a['classes'] )
@@ -376,7 +376,7 @@ class PythonToPythonJS(NodeVisitor):
 			## the helper script (nodejs.py) checks for these import statements, and loads the binding,
 			pass
 		else:
-			raise SyntaxError( 'invalid import - could not find cached module: %s' %node.module )
+			raise SyntaxError( 'invalid import - could not find cached module: %s' %lib)#node.module )
 
 	def visit_Assert(self, node):
 		## hijacking "assert isinstance(a,A)" as a type system ##
@@ -1094,8 +1094,13 @@ class PythonToPythonJS(NodeVisitor):
 				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 
 		elif op == '*' and isinstance(node.left, ast.List):
-			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None' and not self._with_lua and not self._with_dart:
-				return 'JS("new Array(%s)")' %self.visit(node.right)
+			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
+				if self._with_dart:
+					return 'JS("__create_list(%s)")' %self.visit(node.right)
+				elif self._with_lua:
+					return 'JS("{%s}")' %self.visit(node.right)
+				else:
+					return 'JS("new Array(%s)")' %self.visit(node.right)
 			elif isinstance(node.right,ast.Num):
 				n = node.right.n
 			elif isinstance(node.right, Name):
@@ -1321,7 +1326,8 @@ class PythonToPythonJS(NodeVisitor):
 					return '%s[ %s.length+%s ]' %(name, name, self.visit(node.slice))
 				else:
 					return '%s[ %s ]' %(name, self.visit(node.slice))
-
+			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.BinOp):
+				return '%s[ %s ]' %(name, self.visit(node.slice))
 			else:
 				s = self.visit(node.slice)
 				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
@@ -1420,7 +1426,7 @@ class PythonToPythonJS(NodeVisitor):
 
 			elif self._with_js:
 				s = self.visit(target.slice.value)
-				if isinstance(target.slice.value, ast.Num):
+				if isinstance(target.slice.value, ast.Num) or isinstance(target.slice.value, ast.BinOp):
 					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
 				else:
 					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' % (self.visit(target.value), s, s, self.visit(node.value))
@@ -1889,7 +1895,7 @@ class PythonToPythonJS(NodeVisitor):
 				a = ','.join(args)
 				return 'new( %s(%s) )' %( self.visit(node.func), a )
 
-			elif name in self._global_functions and self._with_inline:
+			elif name in self._global_functions and self._with_inline and not self._with_lua:
 				return self.inline_function( node )
 
 			elif self._with_dart:  ## DART
@@ -2062,7 +2068,7 @@ class PythonToPythonJS(NodeVisitor):
 				else:
 					return '%s()' %name
 
-			elif name in self._global_functions and self._with_inline:
+			elif name in self._global_functions and self._with_inline and not self._with_lua:
 				return self.inline_function( node )
 
 			elif call_has_args_only:

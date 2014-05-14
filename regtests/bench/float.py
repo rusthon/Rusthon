@@ -3,33 +3,20 @@ float numbers
 '''
 
 from time import clock
-
-def main():
-	start = clock()
-	a = 0
-	for i in range(1000000):
-		a = 1 + 2
-	print(clock()-start)
-
-
-from time import time
 from math import sin, cos, sqrt
 
 class Point(object):
 
 	def __init__(self, i):
-		self.x = x = sin(i)
+		self.x = sin(i)
 		self.y = cos(i) * 3
-		self.z = (x * x) / 2
+		self.z = (self.x * self.x) / 2
 
 	def __repr__(self):
 		return "Point: x=%s, y=%s, z=%s" % (self.x, self.y, self.z)
 
 	def normalize(self):
-		x = self.x
-		y = self.y
-		z = self.z
-		norm = sqrt(x * x + y * y + z * z)
+		norm = sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
 		self.x /= norm
 		self.y /= norm
 		self.z /= norm
@@ -60,9 +47,9 @@ POINTS = 100000
 def test(arg):	
 	times = []
 	for i in range(arg):
-		t0 = time()
+		t0 = clock()
 		o = benchmark(POINTS)
-		tk = time()
+		tk = clock()
 		times.append(tk - t0)
 	return times
 	
