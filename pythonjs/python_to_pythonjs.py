@@ -1098,7 +1098,7 @@ class PythonToPythonJS(NodeVisitor):
 				if self._with_dart:
 					return 'JS("__create_list(%s)")' %self.visit(node.right)
 				elif self._with_lua:
-					return 'JS("{%s}")' %self.visit(node.right)
+					return 'JS("__create_list(%s)")' %self.visit(node.right)
 				else:
 					return 'JS("new Array(%s)")' %self.visit(node.right)
 			elif isinstance(node.right,ast.Num):

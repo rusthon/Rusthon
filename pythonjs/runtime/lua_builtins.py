@@ -234,6 +234,12 @@ def isinstance( ob, klass ):
 	else:
 		return False
 
+def sum( arr ):
+	a = 0
+	for b in arr:
+		a += b
+	return a
+
 class __iterator_string:
 	def __init__(self, obj, index):
 		with lowlevel:
@@ -241,7 +247,7 @@ class __iterator_string:
 			self.index = index
 			self.length = string.len(obj)
 
-	def next_fast(self):
+	def next(self):
 		with lowlevel:
 			index = self.index
 			self.index += 1
@@ -333,6 +339,11 @@ tuple = list
 ## this must come after list because list.__call__ is used directly,
 ## and the lua compiler can not use forward references.
 JS('''
+
+__create_list = function(size)
+	return __get__(list, "__call__")({}, {pointer={},length=size})
+end
+
 __get__helper_string = function(s, name)
 	local wrapper
 	if name == '__getitem__' then

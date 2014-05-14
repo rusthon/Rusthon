@@ -381,7 +381,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 			args = [self.visit(e) for e in node.args]
 			args = ', '.join([e for e in args if e])
 		else:
-			args = '[]'
+			args = '[]'  ## the dart list builtin requires an argument
 		return '%s(%s)' % (name, args)
 
 
