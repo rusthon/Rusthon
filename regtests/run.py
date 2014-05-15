@@ -101,9 +101,8 @@ def run_command(command, returns_stdout_stderr=False):
 
     #########################
 
-    if stdout:
-        if show_details:
-            print(stdout)
+    if show_details and stdout:
+        print(stdout)
 
     unknown = []
     for line in stdout.splitlines():

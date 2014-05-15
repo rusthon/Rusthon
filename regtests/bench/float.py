@@ -37,7 +37,8 @@ def maximize(points):
 def benchmark(n):
 	points = [None] * n
 	for i in range(n):
-		points[i] = Point(i)
+		a = Point(i)
+		points[i] = a #Point(i)
 	for p in points:
 		p.normalize()
 	return maximize(points)
@@ -54,6 +55,11 @@ def test(arg):
 	return times
 	
 def main():
+	if PYTHON=='PYTHONJS':  ## about 25% faster with normal and javascript backends
+		pythonjs.configure( direct_operator='+' )
+		pass
+
+
 	times = test( 3 )
 	avg = sum(times) / len(times)
 	print( avg )

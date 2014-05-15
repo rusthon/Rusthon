@@ -554,13 +554,13 @@ class PythonToPythonJS(NodeVisitor):
 
 		if self._with_lua:
 			if op == '+=':
-				a = '__add__(%s,%s)' %(target, self.visit(node.value))
+				a = '__add_op(%s,%s)' %(target, self.visit(node.value))
 			elif op == '-=':
-				a = '__sub__(%s,%s)' %(target, self.visit(node.value))
+				a = '(%s - %s)' %(target, self.visit(node.value))
 			elif op == '*=':
-				a = '__mul__(%s,%s)' %(target, self.visit(node.value))
+				a = '(%s * %s)' %(target, self.visit(node.value))
 			elif op == '/=' or op == '//=':
-				a = '__div__(%s,%s)' %(target, self.visit(node.value))
+				a = '(%s / %s)' %(target, self.visit(node.value))
 			elif op == '%=':
 				a = '__mod__(%s,%s)' %(target, self.visit(node.value))
 			elif op == '&=':
@@ -1268,6 +1268,15 @@ class PythonToPythonJS(NodeVisitor):
 
 
 	def visit_Attribute(self, node):
+		## TODO - in some cases the translator knows what type a node is and what attribute's it has, in those cases the call to `__get__` can be optimized away,
+		## this is disabled because if the user wants the best performance, they should instead use javascript-mode.
+		#typedef = None
+		#if isinstance(node.value, Name):
+		#	typedef = self.get_typedef( instance=node.value )
+		#elif hasattr(node.value, 'returns_type'):
+		#	typedef = self.get_typedef( class_name=node.value.returns_type )
+
+
 		node_value = self.visit(node.value)
 
 		if self._with_dart or self._with_ll:
@@ -1280,15 +1289,10 @@ class PythonToPythonJS(NodeVisitor):
 			#else:
 			#	return '__ternary_operator__(%s.%s is not undefined, %s.%s, __getattr__(%s, "%s"))' %(node_value, node.attr, node_value, node.attr, node_value, node.attr)
 
-		## TODO - in some cases the translator knows what type a node is and what attribute's it has, in those cases the call to `__get__` can be optimized away,
-		## this is disabled because if the user wants the best performance, they should instead use javascript-mode.
-		#typedef = None
-		#if isinstance(node.value, Name):
-		#	typedef = self.get_typedef( instance=node.value )
-		#elif hasattr(node.value, 'returns_type'):
-		#	typedef = self.get_typedef( class_name=node.value.returns_type )
+		elif self._with_lua and self._in_assign_target:  ## this is required because lua has no support for inplace assignment ops like "+="
+			return '%s.%s' %(node_value, node.attr)
 
-		if hasattr(node, 'lineno'):
+		elif hasattr(node, 'lineno'):
 			src = self._source[ node.lineno-1 ]
 			src = src.replace('"', '\\"')
 			err = 'missing attribute `%s` - line %s: %s'	%(node.attr, node.lineno, src.strip())
