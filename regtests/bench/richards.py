@@ -237,7 +237,7 @@ class Task(TaskState):
 	def findtcb(self,id):
 		t = taskWorkArea.taskTab[id]
 		if t is None:
-			raise Exception
+			print('Exception in findtcb')
 		return t
 			
 

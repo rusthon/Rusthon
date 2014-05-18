@@ -5,6 +5,16 @@ float numbers
 from time import clock
 from math import sin, cos, sqrt
 
+def main():
+	if PYTHON=='PYTHONJS':  ## about 25% faster with normal and javascript backends
+		pythonjs.configure( direct_operator='+' )
+		pass
+
+	times = test( 3 )
+	avg = sum(times) / len(times)
+	print( avg )
+
+
 class Point(object):
 
 	def __init__(self, i):
@@ -31,15 +41,16 @@ class Point(object):
 def maximize(points):
 	next = points[0]
 	for p in points[1:]:
+		assert isinstance(p, Point)
 		next = next.maximize(p)
 	return next
 
 def benchmark(n):
 	points = [None] * n
 	for i in range(n):
-		a = Point(i)
-		points[i] = a #Point(i)
+		points[i] = Point(i)
 	for p in points:
+		assert isinstance(p, Point)
 		p.normalize()
 	return maximize(points)
 
@@ -54,12 +65,3 @@ def test(arg):
 		times.append(tk - t0)
 	return times
 	
-def main():
-	if PYTHON=='PYTHONJS':  ## about 25% faster with normal and javascript backends
-		pythonjs.configure( direct_operator='+' )
-		pass
-
-
-	times = test( 3 )
-	avg = sum(times) / len(times)
-	print( avg )

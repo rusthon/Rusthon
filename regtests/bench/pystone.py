@@ -1,18 +1,31 @@
 '''
-builtin isinstance
+pystone
 '''
-LOOPS = 100000
 
 from time import clock
-
 __version__ = "1.1"
 
-[Ident1, Ident2, Ident3, Ident4, Ident5] = range(1, 6)
+
+def main():
+	LOOPS = 100000
+	if PYTHON=='PYTHONJS':  
+		pythonjs.configure( direct_operator='+' ) ## about 25% faster with normal and javascript backends
+		#pythonjs.configure( inline=True )  ## TODO fix dart backend
+		pass
+	a = pystones( LOOPS )
+	benchtime = a[0]
+	stones = a[1]
+	print( benchtime )
+	print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
+	print("#This machine benchmarks at pystones/second: %s" %stones)
+
+def pystones(loops):
+	return Proc0(loops)
+
 
 class Record:
 
-	def __init__(self, PtrComp = None, Discr = 0, EnumComp = 0,
-					   IntComp = 0, StringComp = 0):
+	def __init__(self, PtrComp = None, Discr = 0, EnumComp = 0, IntComp = 0, StringComp = 0):
 		self.PtrComp = PtrComp
 		self.Discr = Discr
 		self.EnumComp = EnumComp
@@ -20,25 +33,45 @@ class Record:
 		self.StringComp = StringComp
 
 	def copy(self):
-		return Record(self.PtrComp, self.Discr, self.EnumComp,
-					  self.IntComp, self.StringComp)
+		return Record(
+					PtrComp=self.PtrComp,
+					Discr=self.Discr, 
+					EnumComp=self.EnumComp,
+					IntComp=self.IntComp, 
+					StringComp=self.StringComp
+				)
 
 TRUE = 1
 FALSE = 0
-
-def pystones(loops=LOOPS):
-	return Proc0(loops)
-
 IntGlob = 0
 BoolGlob = FALSE
 Char1Glob = '\0'
 Char2Glob = '\0'
-Array1Glob = [0]*51
-Array2Glob = [ Array1Glob[:] for i in range(51) ]
 PtrGlb = None
 PtrGlbNext = None
 
-def Proc0(loops=LOOPS):
+Ident1 = 1
+Ident2 = 2 
+Ident3 = 3
+Ident4 = 4
+Ident5 = 5
+
+def create_array1glob(n):
+	return [0]*51
+
+def create_array2glob(n):
+	return [ Array1Glob[:] for i in range(n) ]
+
+Array1Glob = [0]*51
+Array2Glob = create_array2glob(51)
+
+
+
+
+
+
+
+def Proc0(loops):
 	global IntGlob
 	global BoolGlob
 	global Char1Glob
@@ -53,13 +86,15 @@ def Proc0(loops=LOOPS):
 		pass
 	nulltime = clock() - starttime
 
-	PtrGlbNext = Record()
-	PtrGlb = Record()
-	PtrGlb.PtrComp = PtrGlbNext
-	PtrGlb.Discr = Ident1
-	PtrGlb.EnumComp = Ident3
-	PtrGlb.IntComp = 40
-	PtrGlb.StringComp = "DHRYSTONE PROGRAM, SOME STRING"
+	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
+	PtrGlb = Record(
+		PtrComp=PtrGlbNext, 
+		Discr=Ident1, 
+		EnumComp=Ident3, 
+		IntComp=40, 
+		StringComp="DHRYSTONE PROGRAM, SOME STRING"
+	)
+
 	String1Loc = "DHRYSTONE PROGRAM, 1'ST STRING"
 	Array2Glob[8][7] = 10
 
@@ -115,7 +150,7 @@ def Proc1(PtrParIn):
 
 def Proc2(IntParIO):
 	IntLoc = IntParIO + 10
-	while 1:
+	while True:
 		if Char1Glob == 'A':
 			IntLoc = IntLoc - 1
 			IntParIO = IntLoc - IntGlob
@@ -217,8 +252,3 @@ def Func3(EnumParIn):
 
 
 
-def main():
-	benchtime, stones = pystones( LOOPS )
-	print( benchtime )
-	print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
-	print("#This machine benchmarks at pystones/second: %s" %stones)
