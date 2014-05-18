@@ -43,15 +43,15 @@ class list( ListBase ):
 
 	def __getslice__(self, start, stop, step):
 		if stop == null and step == null:
-			return self[...].sublist( start )
+			return list( self[...] )
 		elif stop == null:
-			return self[...].sublist(start)
+			return list( self[...].sublist(start) )
 		elif stop < 0:
 			stop = self[...].length + stop
 			if start != null:
-				return self[...].sublist(start, stop)
+				return list( self[...].sublist(start, stop) )
 			else:
-				return self[...].sublist(0, stop)
+				return list( self[...].sublist(0, stop) )
 
 	def __add__(self, other):
 		self[...].addAll( other[...] )
