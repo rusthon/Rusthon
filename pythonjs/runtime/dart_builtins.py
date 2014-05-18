@@ -42,12 +42,19 @@ class list( ListBase ):
 		self[...][index] = value
 
 	def __getslice__(self, start, stop, step):
-		if stop == null and step == null:
+		if step == -1:
+			return list( self[...].reversed )
+		elif stop == null and step == null:
 			return list( self[...] )
 		elif stop == null:
 			return list( self[...].sublist(start) )
 		elif stop < 0:
 			stop = self[...].length + stop
+			if start != null:
+				return list( self[...].sublist(start, stop) )
+			else:
+				return list( self[...].sublist(0, stop) )
+		else:
 			if start != null:
 				return list( self[...].sublist(start, stop) )
 			else:
@@ -122,8 +129,12 @@ def len(a):
 	return a.length
 
 def str(a):
-	## TODO conversions to string
-	return new(String(a))
+	if instanceof(a, String):
+		return a
+	elif instanceof(a, double):
+		return a.toStringAsFixed(6)  ## TODO how to find best size for each double?
+	else:
+		return a.toString()
 
 def isinstance(a, klass):
 	## this will not work in dart, because 'is' test fails when klass is a variable
@@ -192,15 +203,13 @@ with lowlevel:
 				if i >= args.length:
 					break
 				else:
-					if instanceof(args[i], String):
-						arr.append( args[i] )
-					else:
-						arr.append( args[i].toString() )
+					arr.append( str(args[i]) )
+
 				i += 1
 			return arr[...].join('')
 
-		else:  ## assume args is a String
-			return fmt.replaceFirst('%s', args)
+		else:
+			return fmt.replaceFirst('%s', str(args))
 
 	def __replace_method(o,a,b):
 		if instanceof(a, String):
@@ -225,4 +234,29 @@ with lowlevel:
 			return s.toLowerCase()
 		else:
 			return s.lower()
+
+	def __lt__(a,b):
+		if instanceof(a, String):
+			return JS("a.codeUnitAt(0) < b.codeUnitAt(0)")
+		else:
+			return JS("a < b")
+
+	def __gt__(a,b):
+		if instanceof(a, String):
+			return JS("a.codeUnitAt(0) > b.codeUnitAt(0)")
+		else:
+			return JS("a > b")
+
+
+	def __lte__(a,b):
+		if instanceof(a, String):
+			return JS("a.codeUnitAt(0) <= b.codeUnitAt(0)")
+		else:
+			return JS("a <= b")
+
+	def __gte__(a,b):
+		if instanceof(a, String):
+			return JS("a.codeUnitAt(0) >= b.codeUnitAt(0)")
+		else:
+			return JS("a >= b")
 

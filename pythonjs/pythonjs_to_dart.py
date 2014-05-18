@@ -449,6 +449,48 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def visit_ExceptHandler(self, node):
 		return '\n'.join( [self.visit(n) for n in node.body] )
 
+	def visit_Compare(self, node):
+		specials = {
+			'<' : '__lt__',
+			'>' : '__gt__', 
+			'<=' : '__lte__', 
+			'>=' : '__gte__'
+		}
+		comp = []
+		if len(node.ops) == 0:
+
+			comp.append('(')
+			comp.append( self.visit(node.left) )
+			comp.append( ')' )
+
+		else:
+			if self.visit(node.ops[0]) in specials:
+				pass
+			else:
+				comp.append('(')
+				comp.append( self.visit(node.left) )
+				comp.append( ')' )
+
+			for i in range( len(node.ops) ):
+				op = self.visit(node.ops[i])
+
+				if op in specials:
+					comp.append( specials[op] + '(%s,' %self.visit(node.left) )
+				else:
+					comp.append( op )
+
+				if isinstance(node.comparators[i], ast.BinOp):
+					comp.append('(')
+					comp.append( self.visit(node.comparators[i]) )
+					comp.append(')')
+				else:
+					comp.append( self.visit(node.comparators[i]) )
+
+				if op in specials:
+					comp.append( ')' )
+
+
+		return ' '.join( comp )
 
 def main(script):
 	tree = ast.parse(script)
