@@ -394,16 +394,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._comprehensions.append( cnode )
 
 		cname = node._comp_name
-		if not self._with_dart:
-			writer.write('var(%s)'%cname)
+		writer.write('var(%s)'%cname)
 
-			length = len( node.generators )
-			a = ['idx%s'%i for i in range(length)]
-			writer.write('var( %s )' %','.join(a) )
-			a = ['iter%s'%i for i in range(length)]
-			writer.write('var( %s )' %','.join(a) )
-			a = ['get%s'%i for i in range(length)]
-			writer.write('var( %s )' %','.join(a) )
+		length = len( node.generators )
+		a = ['idx%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['iter%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['get%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
 
 		writer.write('%s = JSArray()'%cname)
 
@@ -1566,7 +1565,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\0', '\\0')
 		s = s.replace('\"', '\\"')
 
-		if self._with_js or self._with_dart:
+		if self._with_dart and s == '\\0':  ## TODO other numbers
+			return 'new(String.fromCharCode(0))'
+
+		elif self._with_js or self._with_dart:
 			return '"%s"' %s.encode('utf-8')
 		else:
 			if len(s) == 0:
