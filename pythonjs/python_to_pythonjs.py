@@ -1534,7 +1534,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
-		elif self._with_lua or self._with_dart:  ## Tuple - lua and dart supports destructured assignment
+		elif self._with_lua:  ## Tuple - lua supports destructured assignment
 			elts = [self.visit(e) for e in target.elts]
 			writer.write('%s = %s' % (','.join(elts), self.visit(node.value)))
 
