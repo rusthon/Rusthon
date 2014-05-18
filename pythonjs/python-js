@@ -44,6 +44,13 @@ empythoned.FS.createLazyFile(".", "python_to_visjs.py", "./python_to_visjs.py",
 	true,false
 );
 
+empythoned.FS.createLazyFile(".", "code_writer.py", "./code_writer.py",
+	true,false
+);
+
+empythoned.FS.createLazyFile(".", "inline_function.py", "./inline_function.py",
+	true,false
+);
 
 Python.initialize(
 	null,         // stdin

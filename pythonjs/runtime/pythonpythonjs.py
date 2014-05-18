@@ -18,7 +18,7 @@ else:
 
 
 
-def __create_array__():
+def __create_array__():  ## DEPRECATED
 	"""Used to fix a bug/feature of Javascript where new Array(number)
 	created a array with number of undefined elements which is not
 	what we want"""
@@ -65,8 +65,8 @@ def __get__(object, attribute, error_message):
 			return object.cached_wrapper
 
 		elif JS("{}.toString.call(object) === '[object Function]'"):
-
-			def wrapper(args,kwargs):  ## TODO double check this on simple functions
+			## TODO double check that this is not a pythonjs function
+			def wrapper(args,kwargs):  ## dyanmically wrap external javascript function
 				var(i, arg, keys)
 				if args != None:
 					i = 0
@@ -125,7 +125,7 @@ def __get__(object, attribute, error_message):
 
 	## attr can be null and will return, undefined will raise AttributeError ##		
 	if attr is not undefined:
-		if JS("typeof(attr) === 'function'"):
+		if typeof(attr) == 'function':
 			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
 
 				## if there is a prototype with methods, then we can be sure that the user indends to call `new` on it,
@@ -218,15 +218,15 @@ def __get__(object, attribute, error_message):
 					else:
 						return attr( [object], {} )
 			else:
-				def method():
-					var(args)
-					args =  Array.prototype.slice.call(arguments)
-					if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+				def method(args,kwargs):
+					if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
 						pass
 					else:
-						args = [args, JSObject()]
-					args[0].splice(0, 0, object)
-					return attr.apply(this, args)  ## this is bound so that callback methods can use `this` from the caller
+						args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
+					args.splice(0, 0, object)
+					args.push( kwargs )
+					#TODO: return attr.direct_call.apply(this, args)  ## version of the method without the `if called from javascript` header.
+					return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
 
 			method.is_wrapper = True
 			object[attribute] = method  ## cache method - we assume that methods do not change
@@ -247,17 +247,15 @@ def __get__(object, attribute, error_message):
 						else:
 							return attr( [object], {} )
 				else:
-					def method():
-						var(args)
-						args =  Array.prototype.slice.call(arguments)
-						if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+					def method(args,kwargs):
+						if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
 							pass
 						else:
-							# in the case where the method was submitted to javascript code
-							# put the arguments in order to be processed by PythonJS
-							args = [args, JSObject()]
-						args[0].splice(0, 0, object)
-						return attr.apply(this, args)
+							args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
+						args.splice(0, 0, object)
+						args.push( kwargs )
+						return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
+
 
 				method.is_wrapper = True
 				object[attribute] = method  ## cache method - we assume that methods do not change
@@ -280,18 +278,15 @@ def __get__(object, attribute, error_message):
 							else:
 								return attr( [object], {} )
 					else:
-						def method():
-							var(args)
-							args =  Array.prototype.slice.call(arguments)
-							if (JS('args[0] instanceof Array') and JS("{}.toString.call(args[1]) === '[object Object]'") and args.length == 2):
+						def method(args,kwargs):
+							if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
 								pass
 							else:
-								# in the case where the method was submitted to javascript code
-								# put the arguments in order to be processed by PythonJS
-								args = [args, JSObject()]
+								args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
+							args.splice(0, 0, object)
+							args.push( kwargs )
+							return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
 
-							args[0].splice(0, 0, object)
-							return attr.apply(this, args)
 
 					method.is_wrapper = True
 					object[attribute] = method  ## cache method - we assume that methods do not change
@@ -383,11 +378,9 @@ def __getargs__(func_name, signature, args, kwargs):
 	This will set default keyword arguments and retrieve positional arguments
 	in kwargs if their called as such"""
 
-	if args is None:
-		args = []
-	if kwargs is None:
-		kwargs = JSObject()
-	out = JSObject()
+	if args is None: args = []
+	if kwargs is None: kwargs = {}
+	out = {}
 
 	# if the caller did not specify supplemental positional arguments e.g. *args in the signature
 	# raise an error
@@ -414,6 +407,7 @@ def __getargs__(func_name, signature, args, kwargs):
 		j += 1
 
 	args = args.slice(j)  ## note that if this fails because args is not an array, then a pythonjs function was called from javascript in a bad way.
+	#args = Array.prototype.slice.call(args, j)  ## this fix should not be required
 
 	if signature.vararg:
 		out[signature.vararg] = args

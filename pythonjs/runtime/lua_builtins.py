@@ -1,4 +1,6 @@
 JS("""
+
+local __bitops__ = require('bit')
 __NULL_OBJECT__ = {}
 
 __concat_tables_array = function(t1, t2)

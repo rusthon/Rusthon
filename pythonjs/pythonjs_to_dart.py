@@ -6,6 +6,7 @@ import sys
 import ast
 import pythonjs
 
+
 class TransformSuperCalls( ast.NodeVisitor ):
 	def __init__(self, node, class_names):
 		self._class_names = class_names
@@ -167,15 +168,30 @@ class DartGenerator( pythonjs.JSGenerator ):
 				out.append( line )
 
 			elif isinstance(b, ast.FunctionDef) and b.name == node.name:
-				args = [self.visit(a) for a in b.args.args][1:]
-				args = ','.join(args)
+				args, kwargs = self.get_args_kwargs_from_funcdef(b, skip_self=True)
+				kwargs_init = ['%s:%s' %(x.split(':')[0], x.split(':')[0]) for x in kwargs]
+
+				#args = [self.visit(a) for a in b.args.args][1:]
+				#args = ','.join(args)
 				b._prefix = 'static void'
 				b.name = '__init__'
 				out.append( self.visit(b) )
 				if args:
+					args = ','.join(args)
+					if kwargs:
+						out.append(
+							self.indent()+'%s(%s, {%s}) {%s.__init__(this,%s,%s);}'%(node.name, args, ','.join(kwargs), node.name, args, ','.join(kwargs_init))
+						)
+
+					else:
+						out.append(
+							self.indent()+'%s(%s) {%s.__init__(this,%s);}'%(node.name, args, node.name, args)
+						)
+				elif kwargs:
 					out.append(
-						self.indent()+'%s(%s) {%s.__init__(this,%s);}'%(node.name, args, node.name, args)
+						self.indent()+'%s( {%s} ) {%s.__init__(this,%s);}'%(node.name, ','.join(kwargs), node.name, ','.join(kwargs_init))
 					)
+
 				else:
 					out.append(
 						self.indent()+'%s() {%s.__init__(this);}'%(node.name, node.name)
@@ -253,6 +269,25 @@ class DartGenerator( pythonjs.JSGenerator ):
 		self.pull()
 		out.append('}')
 		return '\n'.join(out)
+
+	def get_args_kwargs_from_funcdef(self, node, skip_self=False):
+		args = []
+		kwargs = []
+		if skip_self: nargs = node.args.args[1:]
+		else: nargs = node.args.args
+
+		offset = len(nargs) - len(node.args.defaults)
+		for i, arg in enumerate(nargs):
+			a = arg.id
+			dindex = i - offset
+			if dindex >= 0 and node.args.defaults:
+				default_value = self.visit( node.args.defaults[dindex] )
+				kwargs.append( '%s:%s' %(a, default_value) )
+			else:
+				args.append( a )
+
+		return args, kwargs
+
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		out.append(
@@ -374,6 +409,23 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 	def visit_NotEq(self, node):
 		return '!='
+
+	def _visit_call_helper(self, node):
+		if node.args:
+			args = [self.visit(e) for e in node.args]
+			args = ', '.join([e for e in args if e])
+		else:
+			args = ''
+
+		if node.keywords:
+			kwargs = ','.join( ['%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords] )
+			if args:
+				return '%s(%s, %s)' %( self.visit(node.func), ','.join(args), kwargs )
+			else:
+				return '%s( %s )' %( self.visit(node.func), kwargs )
+
+		else:
+			return '%s(%s)' % (self.visit(node.func), args)
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)

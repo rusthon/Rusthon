@@ -31,6 +31,23 @@ class LuaGenerator( pythonjs.JSGenerator ):
 	_classes = dict()
 	_class_props = dict()
 
+	def visit_BinOp(self, node):
+		left = self.visit(node.left)
+		op = self.visit(node.op)
+		right = self.visit(node.right)
+		if op == '&':
+			return '(__bitops__.band(%s, %s))' %(left, right)
+		elif op == '|':
+			return '(__bitops__.bor(%s, %s))' %(left, right)
+		elif op == '^':
+			return '(__bitops__.bxor(%s, %s))' %(left, right)
+		elif op == '<<':
+			return '(__bitops__.lshift(%s, %s))' %(left, right)
+		elif op == '>>':
+			return '(__bitops__.rshift(%s, %s))' %(left, right)
+		else:
+			return '(%s %s %s)' % (left, op, right)
+
 	def visit_Import(self, node):
 		for alias in node.names:
 			return 'require "%s"' %alias.name

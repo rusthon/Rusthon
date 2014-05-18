@@ -19,6 +19,8 @@ class list( ListBase ):
 		self[...] = new( List() )
 		if instanceof(items, String):
 			self[...].addAll( items.split("") )
+		elif instanceof(items, list):
+			self[...].addAll( items[...] )
 		elif items is not None:
 			self[...].addAll( items )
 
@@ -62,7 +64,8 @@ class list( ListBase ):
 		return self[...].indexOf(obj)
 
 
-tuple = list
+def tuple(a):
+	return list(a)
 
 #@dart.extends
 class dict: #( HashMap ):
@@ -120,7 +123,7 @@ def len(a):
 
 def str(a):
 	## TODO conversions to string
-	return a
+	return new(String(a))
 
 def isinstance(a, klass):
 	## this will not work in dart, because 'is' test fails when klass is a variable
@@ -129,14 +132,21 @@ def isinstance(a, klass):
 
 def __getslice__(a, start, stop, step):
 	if instanceof(a, String):
-		if start != null and stop != null:
-			b = a.substring( start, stop )
-		elif start != null:
-			b = a.substring( start )
-		else:
-			b = a
 		if step != null:
-			b = __reverse__(b)
+			b = __reverse__(a)
+		elif start != null and stop != null:
+			if start < 0: start = a.length + start
+			if stop < 0: stop = a.length + stop
+			b = a.substring( start, stop )
+		elif start != null and stop == null:
+			if start < 0: start = a.length + start
+			b = a.substring( start )
+		elif stop != null:
+			if stop < 0: stop = a.length + stop
+			b = a.substring( 0, stop )
+		else:
+			b = a.substring(0)
+
 		return b
 	else:
 		return list.____getslice__(a, start, stop, step)
@@ -156,6 +166,8 @@ def __create_list( size ):
 		a.append( None )
 	return a
 
+
+
 with lowlevel:
 	def __test_if_true__( ob ):
 		if ob == True: return True
@@ -170,3 +182,47 @@ with lowlevel:
 			return ob.length != 0
 		elif ob != null:
 			return True
+
+	def __sprintf(fmt, args):
+		if instanceof(args, list):
+			i = 0
+			arr = []
+			for part in fmt.split('%s'):
+				arr.append(part)
+				if i >= args.length:
+					break
+				else:
+					if instanceof(args[i], String):
+						arr.append( args[i] )
+					else:
+						arr.append( args[i].toString() )
+				i += 1
+			return arr[...].join('')
+
+		else:  ## assume args is a String
+			return fmt.replaceFirst('%s', args)
+
+	def __replace_method(o,a,b):
+		if instanceof(a, String):
+			return o.replaceAll(a,b)
+		else:
+			return o.replace(a,b)
+
+	def __split_method(s):
+		if instanceof(s, String):
+			return s.split(' ')
+		else:
+			return s.split()
+
+	def __upper_method(s):
+		if instanceof(s, String):
+			return s.toUpperCase()
+		else:
+			return s.upper()
+
+	def __lower_method(s):
+		if instanceof(s, String):
+			return s.toLowerCase()
+		else:
+			return s.lower()
+

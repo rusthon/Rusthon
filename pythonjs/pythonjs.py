@@ -15,11 +15,15 @@ from ast import parse
 from ast import Attribute
 from ast import NodeVisitor
 
+#import inline_function
+#import code_writer
 
-class JSGenerator(NodeVisitor):
+class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def __init__(self):
+		#writer = code_writer.Writer()
+		#self.setup_inliner( writer )
 		self._indent = 0
-		self._global_funcions = {}
+		self._global_functions = {}
 		self._function_stack = []
 
 	def indent(self): return '  ' * self._indent
@@ -103,7 +107,7 @@ class JSGenerator(NodeVisitor):
 
 		if node == self._function_stack[0]:  ## could do something special here with global function
 			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
-			self._global_funcions[ node.name ] = buffer
+			self._global_functions[ node.name ] = node
 
 		self._function_stack.pop()
 		return buffer
@@ -194,17 +198,20 @@ class JSGenerator(NodeVisitor):
 		else:
 			raise SyntaxError( args )
 
+	def _visit_call_helper_new(self, node):
+		args = map(self.visit, node.args)
+		if len(args) == 1:
+			return ' new %s' %args[0]
+		else:
+			raise SyntaxError( args )
+
 	def visit_Call(self, node):
 		name = self.visit(node.func)
 		if name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
 
 		elif name == 'new':
-			args = map(self.visit, node.args)
-			if len(args) == 1:
-				return ' new %s' %args[0]
-			else:
-				raise SyntaxError( args )
+			return self._visit_call_helper_new( node )
 
 		elif name == '__ternary_operator__':
 			args = map(self.visit, node.args)
@@ -240,13 +247,29 @@ class JSGenerator(NodeVisitor):
 
 		elif name == '__get__' and len(node.args)==2 and isinstance(node.args[1], ast.Str) and node.args[1].s=='__call__':
 			return self._visit_call_helper_get_call_special( node )
+
+		#elif name in self._global_functions:
+		#	return_id = self.inline_function( node )
+		#	code = self.writer.getvalue()
+		#	return '\n'.join([code, return_id])
+
 		else:
-			if node.args:
-				args = [self.visit(e) for e in node.args]
-				args = ', '.join([e for e in args if e])
-			else:
-				args = ''
-			return '%s(%s)' % (name, args)
+			return self._visit_call_helper(node)
+
+	def _visit_call_helper(self, node):
+		if node.args:
+			args = [self.visit(e) for e in node.args]
+			args = ', '.join([e for e in args if e])
+		else:
+			args = ''
+		return '%s(%s)' % (self.visit(node.func), args)
+
+	def inline_helper_remap_names(self, remap):
+		return "var %s;" %','.join(remap.values())
+
+	def inline_helper_return_id(self, return_id):
+		return "var __returns__%s = null;"%return_id
+
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)
@@ -271,7 +294,9 @@ class JSGenerator(NodeVisitor):
 		if node.args:
 			args = map(self.visit, node.args)
 			out = ', '.join(args)
-			return '__create_array__(%s)' % out
+			#return '__create_array__(%s)' % out
+			return '[%s]' % out
+
 		else:
 			return '[]'
 
@@ -283,7 +308,7 @@ class JSGenerator(NodeVisitor):
 			out = ', '.join(map(f, kwargs))
 			return '{%s}' % out
 		else:
-			return 'Object()'
+			return '{}'
 
 	def _visit_call_helper_var(self, node):
 		args = [ self.visit(a) for a in node.args ]

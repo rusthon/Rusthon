@@ -258,7 +258,7 @@ with javascript:
 			Array.prototype.push.apply( klass.__all_method_names__, base.__all_method_names__ )
 
 
-		def __call__():
+		def __call__(args, kwargs):
 			"""Create a PythonJS object"""
 			object = Object.create(null)
 			object.__class__ = klass
@@ -293,7 +293,8 @@ with javascript:
 			__bind_property_descriptors__(object, klass)
 
 			if object.__init__:
-				object.__init__.apply(this, arguments)
+				#object.__init__.apply(this, arguments)
+				object.__init__.call(this,args, kwargs)
 
 			return object
 
