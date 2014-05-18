@@ -19,6 +19,7 @@ def main():
 	print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
 	print("#This machine benchmarks at pystones/second: %s" %stones)
 
+
 def pystones(loops):
 	return Proc0(loops)
 

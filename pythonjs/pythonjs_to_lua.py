@@ -209,7 +209,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
-			return 'return %s;' % ', '.join([self.visit(e) for e in node.value.elts])
+			return 'return __get__(list,"__call__")({}, {pointer={%s}, length=%s});' % (', '.join([self.visit(e) for e in node.value.elts]), len(node.value.elts))
 		if node.value:
 			return 'return %s;' % self.visit(node.value)
 		return 'return nil;'

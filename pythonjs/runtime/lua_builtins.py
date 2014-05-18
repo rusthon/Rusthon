@@ -28,9 +28,14 @@ end
 __test_if_true__ = function( x )
 	if x == true then return true
 	elseif x == false then return false
-	elseif x == 0 then return false
 	elseif x == nil then return false
 	elseif x == '' then return false
+
+	elseif type(x) == 'number' then
+		if x == 0 then return false
+		else return true
+		end
+
 	elseif x.__class__ and x.__class__.__name__ == 'list' then
 		if x.length > 0 then return true
 		else return false end
