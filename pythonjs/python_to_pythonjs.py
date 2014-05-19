@@ -500,7 +500,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		typedef = self.get_typedef( node.target )
 
 		if self._with_lua:
-			if op == '+=':
+
+			if isinstance(node.target, ast.Subscript):
+				name = self.visit(node.target.value)
+				slice = self.visit(node.target.slice)
+				op = self.visit(node.op)
+				a = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'
+				a = a %(name, slice, name, slice, op, self.visit(node.value))
+				writer.write( a )
+				return
+
+			elif op == '+=':
 				a = '__add_op(%s,%s)' %(target, self.visit(node.value))
 			elif op == '-=':
 				a = '(%s - %s)' %(target, self.visit(node.value))

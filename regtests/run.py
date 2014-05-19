@@ -45,7 +45,7 @@ def runnable(command):
 pypy_runnable = runnable( 'pypy --help' )
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
-dart2js = os.path.expanduser( '~/dart/dart-sdk/bin/dart2js')
+dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+
 dart2js_runnable = runnable( dart2js + ' -h' )
 coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
 lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv

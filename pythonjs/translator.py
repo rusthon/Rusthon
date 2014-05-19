@@ -25,7 +25,14 @@ def main(script):
             a = python_to_pythonjs(script, lua=True)
             try: code = pythonjs_to_lua( a )
             except SyntaxError:
-                sys.stderr.write( '\n'.join([traceback.format_exc(),a]) )
+                err = traceback.format_exc()
+                lineno = 0
+                for line in err.splitlines():
+                    if "<unknown>" in line:
+                        lineno = int(line.split()[-1])
+
+                b = a.splitlines()[ lineno ]
+                sys.stderr.write( '\n'.join([err,b]) )
                 
         elif '--luajs' in sys.argv:
             a = python_to_pythonjs(script, lua=True)
