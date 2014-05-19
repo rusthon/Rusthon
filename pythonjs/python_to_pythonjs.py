@@ -671,9 +671,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			methods.pop( '__init__' )
 			init.name = node.name
 			self.visit(init)
+
 		## methods
 		for method in method_list:
 			self.visit(method)
+
+		for item in node.body:
+			if isinstance(item, ast.With):
+				s = self.visit(item)
+				if s: writer.write( s )
+
 
 		if not init and not method_list:
 			writer.write( 'pass' )
@@ -1626,6 +1633,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 	def visit_Call(self, node):
+		name = self.visit(node.func)
+
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
@@ -1662,7 +1671,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					else:
 						raise SyntaxError
 
-				elif kw.arg == 'inline':
+				elif kw.arg == 'inline_functions':
 					if kw.value.id == 'True':
 						self._with_inline = True
 					elif kw.value.id == 'False':
@@ -1679,8 +1688,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						raise SyntaxError
 
 				elif kw.arg == 'direct_operator':
-					assert kw.value.s in ['None', '+']
-					if kw.value.s == 'None':
+					if kw.value.s.lower() == 'none':
 						self._direct_operators = set()
 					else:
 						self._direct_operators.add( kw.value.s )
@@ -1688,8 +1696,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				else:
 					raise SyntaxError
 
-		elif self._with_ll:
-			name = self.visit(node.func)
+		elif self._with_ll or name == 'inline':
 			args = [self.visit(arg) for arg in node.args]
 			if node.keywords:
 				args.extend( [self.visit(x.value) for x in node.keywords] )
@@ -1699,7 +1706,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
-			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 
 			if name in self._generator_functions:
@@ -1717,11 +1723,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				else:
 					return self._builtin_functions[name]
 
-			elif isinstance(node.func, Name) and node.func.id == 'new':
+			elif name == 'new':
 				assert len(args) == 1
 				return 'new(%s)' %args[0]
 
-			elif isinstance(node.func, Name) and node.func.id == 'isinstance':
+			elif name == 'isinstance':
 				assert len(args) == 2
 				if args[1] == 'dict':
 					args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
@@ -1863,12 +1869,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		elif isinstance(node.func, Name) and node.func.id in self._generator_functions:
-			name = self.visit(node.func)
 			args = list( map(self.visit, node.args) )
 			if name in self._generator_functions:
 				return 'JS("new %s(%s)")' %(name, ','.join(args))
 
-		elif isinstance(node.func, Name) and node.func.id == 'new':
+		elif name == 'new':
 			tmp = self._with_js
 			self._with_js = True
 			args = list( map(self.visit, node.args) )
@@ -2684,7 +2689,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.pull()
 
 	def visit_With(self, node):
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'lowlevel':
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
+			writer.write('with inline:')
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'lowlevel':
 			self._with_ll = True
 			map(self.visit, node.body)
 			self._with_ll = False

@@ -5,8 +5,9 @@
 dart_import('dart:collection')
 dart_import('dart:math', 'Math')
 
-@dart.extends
-class list( ListBase ):
+#@dart.extends
+#class list( ListBase ):
+class list:
 	'''
 	a List in Dart is growable if no size is given in the constructor,
 	otherwise if size is given it becomes a fixed length list.
@@ -15,6 +16,14 @@ class list( ListBase ):
 		https://code.google.com/p/dart/issues/detail?id=11201
 		http://stackoverflow.com/questions/16247045/how-do-i-extend-a-list-in-dart
 	'''
+
+	## dart 1.3 ##
+	#with inline: """
+	#Iterator<dynamic> get iterator => new ListIterator<dynamic>(this);
+	#Iterable map(f(dynamic element)) => new MappedListIterable(this, f);
+	#"""
+
+
 	def __init__(self, items):
 		self[...] = new( List() )
 		if instanceof(items, String):

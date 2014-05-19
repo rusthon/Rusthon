@@ -231,7 +231,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		elif name == 'JSArray':
 			return self._visit_call_helper_JSArray( node )
 
-		elif name == 'JS':
+		elif name == 'inline' or name == 'JS':
 			assert len(node.args)==1 and isinstance(node.args[0], ast.Str)
 			return self._inline_code_helper( node.args[0].s )
 

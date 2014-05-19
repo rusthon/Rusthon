@@ -33,6 +33,15 @@ class DartGenerator( pythonjs.JSGenerator ):
 	_class_props = dict()
 	_raw_dict = False
 
+	def visit_With(self, node):
+		s = []
+		for b in node.body:
+			a = self.visit(b)
+			a = a.replace('\\n', '\n')
+			a = a.strip()[1:-2] # strip `"x";` to `x`
+			s.append( a )
+		return '\n'.join(s)
+
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
 		return '%s.$wrapped' %name
@@ -115,7 +124,9 @@ class DartGenerator( pythonjs.JSGenerator ):
 		method_names = set()
 		for b in node.body:
 
-			if isinstance(b, ast.FunctionDef) and len(b.decorator_list):  ##getter/setters
+			if isinstance(b, ast.With):
+				out.append( self.visit(b) )
+			elif isinstance(b, ast.FunctionDef) and len(b.decorator_list):  ##getter/setters
 				for name_node in collect_names( b ):
 					if name_node.id == 'self':
 						name_node.id = 'this'
