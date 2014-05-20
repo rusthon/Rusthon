@@ -1,6 +1,11 @@
-##PythonJS 0.9.2
+##PythonJS 0.9.3
 
 ![logo](http://3.bp.blogspot.com/-BfPFXT-DF3A/UqKugvWVs7I/AAAAAAAAAj0/0Kon76_VDys/s400/pythonjs-0.8.6.png)
+
+Quick Install (NodeJS)
+=====================
+	npm install python-js
+
 
 Community
 ---------
@@ -13,9 +18,6 @@ irc freenode::
 
 ---------------
 
-Quick Install (NodeJS)::
-
-	npm install python-js
 
 
 Introduction

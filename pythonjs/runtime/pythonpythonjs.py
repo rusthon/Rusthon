@@ -219,14 +219,19 @@ def __get__(object, attribute, error_message):
 						return attr( [object], {} )
 			else:
 				def method(args,kwargs):
-					if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
-						pass
+					if arguments.length == 0:
+						return attr( [object], __NULL_OBJECT__ )
+					elif instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
+						args.splice(0, 0, object)
+						if kwargs is undefined:
+							return attr( args, __NULL_OBJECT__ )
+						else:
+							return attr( args, kwargs )
 					else:
-						args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
-					args.splice(0, 0, object)
-					args.push( kwargs )
-					#TODO: return attr.direct_call.apply(this, args)  ## version of the method without the `if called from javascript` header.
-					return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
+						args = Array.prototype.slice.call(arguments)
+						args.splice(0, 0, object)
+						args = [args, __NULL_OBJECT__]  ## TODO - way to pass keyword args from javascript?
+						return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
 
 			method.is_wrapper = True
 			object[attribute] = method  ## cache method - we assume that methods do not change
@@ -248,13 +253,19 @@ def __get__(object, attribute, error_message):
 							return attr( [object], {} )
 				else:
 					def method(args,kwargs):
-						if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
-							pass
+						if arguments.length == 0:
+							return attr( [object], __NULL_OBJECT__ )
+						elif instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
+							args.splice(0, 0, object)
+							if kwargs is undefined:
+								return attr( args, __NULL_OBJECT__ )
+							else:
+								return attr( args, kwargs )
 						else:
-							args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
-						args.splice(0, 0, object)
-						args.push( kwargs )
-						return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
+							args = Array.prototype.slice.call(arguments)
+							args.splice(0, 0, object)
+							args = [args, __NULL_OBJECT__]  ## TODO - way to pass keyword args from javascript?
+							return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
 
 
 				method.is_wrapper = True
@@ -279,13 +290,20 @@ def __get__(object, attribute, error_message):
 								return attr( [object], {} )
 					else:
 						def method(args,kwargs):
-							if instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
-								pass
+							if arguments.length == 0:
+								return attr( [object], __NULL_OBJECT__ )
+							elif instanceof(args,Array) and typeof(kwargs) is "object" and arguments.length==2:
+								args.splice(0, 0, object)
+								if kwargs is undefined:
+									return attr( args, __NULL_OBJECT__ )
+								else:
+									return attr( args, kwargs )
 							else:
-								args = [Array.prototype.slice.call(arguments), JSObject()]  ## TODO - way to pass keyword args from javascript?
-							args.splice(0, 0, object)
-							args.push( kwargs )
-							return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
+								args = Array.prototype.slice.call(arguments)
+								args.splice(0, 0, object)
+								args = [args, __NULL_OBJECT__]  ## TODO - way to pass keyword args from javascript?
+								return attr.apply(this, args)  ## this is bound here so that callback methods can use `this` from the caller
+
 
 
 					method.is_wrapper = True

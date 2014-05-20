@@ -73,9 +73,8 @@ with javascript:
 			raise TypeError
 		elif ob.__contains__:
 			return ob.__contains__(a)
-		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
-			return True
-
+		else:
+			return False
 
 	def __add_op(a, b):
 		t = typeof(a)
@@ -260,9 +259,9 @@ with javascript:
 			Array.prototype.push.apply( klass.__all_method_names__, base.__all_method_names__ )
 
 
-		def __call__(args, kwargs):
+		def __call__():
 			"""Create a PythonJS object"""
-			object = Object.create(null)
+			object = Object.create(null)  ## this makes pythonjs object not compatible with things like: Object.hasOwnProperty
 			object.__class__ = klass
 			object.__dict__ = object
 			## we need __dict__ so that __setattr__ can still set attributes using `old-style`: self.__dict__[n]=x
@@ -295,8 +294,8 @@ with javascript:
 			__bind_property_descriptors__(object, klass)
 
 			if object.__init__:
-				#object.__init__.apply(this, arguments)
-				object.__init__.call(this,args, kwargs)
+				object.__init__.apply(this, arguments)
+				#object.__init__.call(this,args, kwargs)
 
 			return object
 

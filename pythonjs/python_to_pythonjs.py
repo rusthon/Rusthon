@@ -348,7 +348,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				#else:
 				#	a.append( '"%s":%s'%(k,v) )
 			else:
-				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )
+				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## this allows non-string keys
 
 		if self._with_js:
 			b = ','.join( a )
@@ -358,8 +358,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return '{%s}' %b
 		else:
 			b = '[%s]' %', '.join(a)
-			#return '__get__(dict, "__call__")([], JSObject(js_object=%s))' %b
-			return '__get__(dict, "__call__")([%s], JSObject())' %b
+			return '__get__(dict, "__call__")([], {"js_object":%s})' %b
 
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
@@ -2709,17 +2708,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._with_ll = False
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
 			self._with_js = True
-			writer.with_javascript = True
 			map(self.visit, node.body)
-			writer.with_javascript = False
 			self._with_js = False
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'python':
 			if not self._with_js:
 				raise SyntaxError('"with python:" is only used inside of a "with javascript:" block')
 			self._with_js = False
-			writer.with_javascript = False
 			map(self.visit, node.body)
-			writer.with_javascript = True
 			self._with_js = True
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'fastdef':
@@ -2732,20 +2727,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			map(self.visit, node.body)
 			self._with_static_type = False
 
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline_function':
 			self._with_inline = True
 			map(self.visit, node.body)
 			self._with_inline = False
-
-		elif isinstance( node.context_expr, Name ) and node.optional_vars and isinstance(node.optional_vars, Name) and node.optional_vars.id == 'jsobject':
-			#instance_name = node.context_expr.id
-			#for n in node.body:
-			#    if isinstance(n, ast.Expr) and isinstance(n.value, Name):
-			#        attr_name = n.value.id
-			#        writer.write('%s.%s = __get__(%s, "%s")'%(instance_name, attr_name, instance_name, attr_name))
-			#    else:
-			#        raise SyntaxError('invalid statement inside of "with x as jsobject:" block')
-			raise SyntaxError('"with x as jsobject:" is DEPRECATED - methods on instances are now callable by default from JavaScript')
 
 		else:
 			raise SyntaxError('improper use of "with" statement')
@@ -2777,6 +2762,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		else:
 			self._with_js = True
 
+		self._direct_operators = compiler._direct_operators
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes
 		self._global_functions = compiler._global_functions
