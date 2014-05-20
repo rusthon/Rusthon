@@ -1014,20 +1014,24 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(node.value, Name) and node.value.id == 'self' and 'self' in self._instances:
 				self._return_type = self._instances['self']
 
-			if self._cached_property:
-				writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
-				writer.write('return self["__dict__"]["%s"]' %self._cached_property)
+			## cached property is DEPRECATED
+			#if self._cached_property:
+			#	writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
+			#	writer.write('return self["__dict__"]["%s"]' %self._cached_property)
+			#else:
+			if self._inline:
+				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
+				if self._inline_breakout:
+					writer.write('break')
+			elif isinstance(node.value, ast.Lambda):
+				self.visit( node.value )
+				writer.write( 'return __lambda__' )
+
+			elif isinstance(node.value, ast.Tuple):
+				writer.write( 'return %s;' % ','.join([self.visit(e) for e in node.value.elts]) )
+
 			else:
-				if self._inline:
-					writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
-					if self._inline_breakout:
-						writer.write('break')
-
-				elif isinstance(node.value, ast.Tuple):
-					writer.write( 'return %s;' % ','.join([self.visit(e) for e in node.value.elts]) )
-
-				else:
-					writer.write('return %s' % self.visit(node.value))
+				writer.write('return %s' % self.visit(node.value))
 
 		else:
 			if self._inline:
@@ -2784,6 +2788,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		else:
 			self._with_js = True
 
+		self._in_lambda = False
 		self._direct_operators = compiler._direct_operators
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes

@@ -65,12 +65,19 @@ else:
 
 def files():
     """All the filenames of the regression tests"""
+    tests = []
+    benchmarks = []
     for dirpath, dirnames, filenames in os.walk('.'):
         if dirpath == '.':
             continue
         for filename in filenames:
             if filename.endswith(".py"):
-                yield dirpath + os.path.sep + filename
+                if 'bench' in dirpath:
+                    benchmarks.append( dirpath + os.path.sep + filename )
+                else:
+                    tests.append( dirpath + os.path.sep + filename )
+    tests.extend( benchmarks )
+    return tests
 
 def read(filename):
     """Returns the file content as a string"""
