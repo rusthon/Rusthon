@@ -39,21 +39,6 @@ with lowlevel:
 		else:
 			return True
 
-with javascript:
-
-
-	def __contains__( ob, a ):
-		t = typeof(ob)
-		if t == 'string':
-			if ob.indexOf(a) == -1: return False
-			else: return True
-		elif t == 'number':
-			raise TypeError
-		elif ob.__contains__:
-			return ob.__contains__(a)
-		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
-			return True
-
 	def __replace_method(ob, a, b):
 		## this is required because string.replace in javascript only replaces the first occurrence
 		if typeof(ob) == 'string':
@@ -74,6 +59,23 @@ with javascript:
 				return ob.split()
 			else:
 				return ob.split( delim )
+
+
+with javascript:
+
+
+	def __contains__( ob, a ):
+		t = typeof(ob)
+		if t == 'string':
+			if ob.indexOf(a) == -1: return False
+			else: return True
+		elif t == 'number':
+			raise TypeError
+		elif ob.__contains__:
+			return ob.__contains__(a)
+		elif typeof(a)=='string' and Object.hasOwnProperty.call(ob, a):
+			return True
+
 
 	def __add_op(a, b):
 		t = typeof(a)

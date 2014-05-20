@@ -2177,7 +2177,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript:# or self._with_coffee:
+		elif self._with_js or javascript or self._with_ll:# or self._with_coffee:
 			if node.args.vararg:
 				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 			
@@ -2225,7 +2225,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if self._with_dart:
 			pass
 
-		elif self._with_js or javascript:
+		elif self._with_js or javascript or self._with_ll:
 			if node.args.defaults:
 				kwargs_name = node.args.kwarg or '_kwargs_'
 				lines = [ 'if (!( %s instanceof Object )) {' %kwargs_name ]
@@ -2420,6 +2420,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					## therefore this function can not be marked as f.pythonscript_function,
 					## because we need __get__(f,'__call__') to dynamically bind "this"
 					writer.write( '%s=%s'%(dec,node.name) )
+
+					## TODO - @XXX.prototype.YYY sets properties with enumerable as False,
+					## this fixes external javascript that is using `for (var i in anArray)`
+					#head, tail = dec.split('.prototype.')
+					#a = (head, tail, node.name)
+					#writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:False, configurable:False})' %a)
+
 				elif dec == 'javascript':
 					pass
 				elif dec == 'fastdef':
