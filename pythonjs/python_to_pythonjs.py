@@ -124,6 +124,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_js = False
+		self._in_lambda = False
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1097,7 +1098,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
-			elif self._with_lua:
+			elif self._with_lua or self._in_lambda:
+				## this is also required when in an inlined lambda like "(lambda a,b: a+b)(1,2)"
 				return '__add_op(%s, %s)'%(left, right)
 			else:
 				## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
@@ -1638,8 +1640,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 	def visit_Call(self, node):
-		name = self.visit(node.func)
+		if isinstance(node.func, ast.Lambda):  ## inlined and called lambda "(lambda x: x)(y)"
+			node.func.keep_as_lambda = True
+			#raise SyntaxError("lambda functions must be assigned to a variable before being called")
 
+		name = self.visit(node.func)
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
@@ -2056,13 +2061,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		#if self._with_js:  ## TODO is it better to return a normal lambda
 		#	return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
 		#else:
-		#return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
-		node.name = '__lambda__'
-		node.decorator_list = []
-		node.body = [node.body]
-		b = node.body[-1]
-		node.body[-1] = ast.Return( b )
-		return self.visit_FunctionDef(node)
+		if hasattr(node, 'keep_as_lambda'):
+			self._in_lambda = True
+			a = '(lambda %s: %s)' %(','.join(args), self.visit(node.body))
+			self._in_lambda = False
+			return a
+		else:
+			node.name = '__lambda__'
+			node.decorator_list = []
+			node.body = [node.body]
+			b = node.body[-1]
+			node.body[-1] = ast.Return( b )
+			return self.visit_FunctionDef(node)
 
 	def visit_FunctionDef(self, node):
 		log('-----------------')

@@ -77,8 +77,10 @@ with javascript:
 			return False
 
 	def __add_op(a, b):
+		## 'number' is already checked before this gets called (ternary op)
+		## but it can still appear here when called from an inlined lambda
 		t = typeof(a)
-		if t == 'string':  ## 'number' is already checked before this gets called (ternary op)
+		if t == 'string' or t == 'number':
 			return JS("a+b")
 		elif instanceof(a, Array):
 			c = []
@@ -652,11 +654,13 @@ def _setup_array_prototype():
 		## `-` operator
 		@Array.prototype.difference
 		def func(other):
-			return this.filter( lambda i: other.indexOf(i)==-1)
+			f = lambda i: other.indexOf(i)==-1
+			return this.filter( f )
 		## `&` operator
 		@Array.prototype.intersection
 		def func(other):
-			return this.filter( lambda i: other.indexOf(i)!=-1)
+			f = lambda i: other.indexOf(i)!=-1
+			return this.filter( f )
 		## `<=` operator
 		@Array.prototype.issubset
 		def func(other):
