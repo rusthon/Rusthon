@@ -1390,7 +1390,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 	def _visit_assign_helper(self, node, target):
-		if isinstance(target, Subscript):
+		if isinstance(node.value, ast.Lambda):
+			self.visit(node.value)  ## writes function def
+			writer.write('%s = __lambda__' %self.visit(target))
+
+		elif isinstance(target, Subscript):
 			name = self.visit(target.value)  ## target.value may have "returns_type" after being visited
 
 			if isinstance(target.slice, ast.Ellipsis):
@@ -1429,6 +1433,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				typedef = self.get_typedef( instance=target.value )
 			elif hasattr(target.value, 'returns_type'):
 				typedef = self.get_typedef( class_name=target.value.returns_type )
+
+			#####################################
 
 			if self._with_js or self._with_dart:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
@@ -2050,7 +2056,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		#if self._with_js:  ## TODO is it better to return a normal lambda
 		#	return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
 		#else:
-		return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
+		#return 'lambda %s: %s' %(','.join(args), self.visit(node.body))
+		node.name = '__lambda__'
+		node.decorator_list = []
+		node.body = [node.body]
+		b = node.body[-1]
+		node.body[-1] = ast.Return( b )
+		return self.visit_FunctionDef(node)
 
 	def visit_FunctionDef(self, node):
 		log('-----------------')
