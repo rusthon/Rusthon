@@ -2440,13 +2440,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					## here we assume that they depend on the special "this" variable,
 					## therefore this function can not be marked as f.pythonscript_function,
 					## because we need __get__(f,'__call__') to dynamically bind "this"
-					writer.write( '%s=%s'%(dec,node.name) )
+					#writer.write( '%s=%s'%(dec,node.name) )
 
 					## TODO - @XXX.prototype.YYY sets properties with enumerable as False,
 					## this fixes external javascript that is using `for (var i in anArray)`
-					#head, tail = dec.split('.prototype.')
-					#a = (head, tail, node.name)
-					#writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:False, configurable:False})' %a)
+					head, tail = dec.split('.prototype.')
+					a = (head, tail, node.name)
+					writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:False, configurable:False})' %a)
 
 				elif dec == 'javascript':
 					pass

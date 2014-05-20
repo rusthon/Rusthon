@@ -618,11 +618,6 @@ def _setup_array_prototype():
 			if index < 0: index = this.length + index
 			this.splice(index, 0, obj)
 
-		@Array.prototype.remove
-		def remove(obj):
-			index = this.indexOf(obj)
-			this.splice(index, 1)
-
 		@Array.prototype.index
 		def index(obj):
 			return this.indexOf(obj)
