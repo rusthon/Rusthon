@@ -13,7 +13,10 @@ About the tests:
 
 """
 
-import os, sys, re, tempfile, subprocess
+import os, sys, re, tempfile, subprocess, json
+
+if 'NODE_PATH' not in os.environ:
+    os.environ['NODE_PATH'] = '/usr/local/lib/node_modules/'
 
 tmpname = os.path.join(tempfile.gettempdir(), "xxx_regtest")
 
@@ -230,7 +233,7 @@ def run_pypy_test_on(filename):
     return run_command("pypy %s.py %s" % (tmpname, display_errors))
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, multioutput=False):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -290,6 +293,16 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     if stderr:
         return ''
     else:
+
+        if multioutput:
+            d = json.loads( stdout )
+            stdout = d.pop('main')
+
+            for jsfile in d:
+                if not jsfile.startswith('/'):
+                    stdout = stdout.replace('"%s"' %jsfile, '"/tmp/%s"' %jsfile)
+                write( os.path.join('/tmp', jsfile), d[jsfile] )
+
         if dart:
 
             if os.path.isfile('/tmp/dart2js-output.js'):
@@ -493,9 +506,12 @@ def run_test_on(filename):
     if pypy_runnable:
         display(run_pypy_test_on)
 
-
     global js
-    js = translate_js(filename, javascript=False)
+    js = translate_js(
+        filename, 
+        javascript=False, 
+        multioutput=filename.startswith('./threads/')
+    )
     if rhino_runnable:
         display(run_pythonjs_test_on)
     if node_runnable:

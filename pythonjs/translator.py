@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, traceback
+import sys, traceback, json
 
 from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
@@ -39,7 +39,13 @@ def main(script):
             code = pythonjs_to_luajs( a )
         else:
             a = python_to_pythonjs(script)
-            code = pythonjs_to_javascript( a )
+            if isinstance(a, dict):
+                res = {}
+                for jsfile in a:
+                    res[ jsfile ] = pythonjs_to_javascript( a[jsfile] )
+                return res
+            else:
+                code = pythonjs_to_javascript( a )
 
         return code
 
@@ -59,7 +65,10 @@ def command():
         data = sys.stdin.read()
 
     js = main(data)
-    print(js)
+    if isinstance(js, dict):
+        print( json.dumps(js) )
+    else:
+        print(js)
 
 
 if __name__ == '__main__':

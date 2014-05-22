@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Tue May 20 03:05:36 2014
+// PythonJS Runtime - regenerated on: Thu May 22 03:39:00 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3475,3 +3475,34 @@ __lambda__.args_signature = ["o"];
 __lambda__.kwargs_signature = {  };
 __lambda__.types_signature = {  };
 json = __jsdict([["loads", null], ["dumps", null]]);
+threading = __jsdict([["shared_list", []]]);
+__start_new_thread = function(f, args) {
+  var worker;
+  worker =  new Worker(f);
+    var func = function(event) {
+    console.log("got signal from thread");
+    if (( event.data.type ) == "terminate") {
+      worker.terminate();
+    } else {
+      if (( event.data.type ) == "append") {
+        console.log("got append event");
+        threading.shared_list.push(event.data.value);
+      } else {
+        console.log("unknown event");
+      }
+    }
+  }
+
+  func.NAME = "func";
+  func.args_signature = ["event"];
+  func.kwargs_signature = {  };
+  func.types_signature = {  };
+  worker.onmessage = func;
+  worker.postMessage(__jsdict([["type", "execute"], ["args", args]]));
+  return worker;
+}
+
+__start_new_thread.NAME = "__start_new_thread";
+__start_new_thread.args_signature = ["f", "args"];
+__start_new_thread.kwargs_signature = {  };
+__start_new_thread.types_signature = {  };

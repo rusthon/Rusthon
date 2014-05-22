@@ -41,7 +41,13 @@ if '--global-variable-scope' in sys.argv:  ## JavaScript style
 	GLOBAL_VARIABLE_SCOPE = True
 	log('not using python style variable scope')
 
-writer = code_writer.Writer()
+writer = writer_main = code_writer.Writer()
+
+__webworker_writers = dict()
+def get_webworker_writer( jsfile ):
+	if jsfile not in __webworker_writers:
+		__webworker_writers[ jsfile ] = code_writer.Writer()
+	return __webworker_writers[ jsfile ]
 
 
 
@@ -125,6 +131,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_dart = dart
 		self._with_js = False
 		self._in_lambda = False
+		self._use_threading = False
+		self._webworker_functions = dict()
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -180,6 +188,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				self.visit(node)
 
+	def has_webworkers(self):
+		return len(self._webworker_functions.keys())
+
+	def get_webworker_file_names(self):
+		return set(self._webworker_functions.values())
 
 	def preprocess_custom_operators(self, data):
 		'''
@@ -279,9 +292,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_Import(self, node):
 		for alias in node.names:
-			writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
-                        ## TODO namespaces: import x as y
-			raise NotImplementedError('import, line %s' % node.lineno)
+			if alias.name == 'threading':
+				self._use_threading = True
+				writer.write( 'Worker = require("workerjs")')
+			else:
+				#writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
+				raise NotImplementedError('import, line %s' % node.lineno)
 
 	def visit_ImportFrom(self, node):
 		if self._with_dart:
@@ -290,7 +306,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			lib = ministdlib.LUA
 		else:
 			lib = ministdlib.JS
-
 
 		if node.module in lib:
 			imported = False
@@ -1649,7 +1664,19 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#raise SyntaxError("lambda functions must be assigned to a variable before being called")
 
 		name = self.visit(node.func)
-		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
+		if self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
+			if node.func.attr == 'start_new_thread':
+				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
+			else:
+				raise SyntaxError(node.func.attr)
+
+		elif self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Attribute) and isinstance(node.func.value.value, Name) and node.func.value.value.id == 'threading':
+			assert node.func.value.attr == 'shared_list'
+			if node.func.attr == 'append':
+				return '__shared_list_append( %s )' %self.visit(node.args[0])
+
+
+		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
 					if kw.value.id == 'True':
@@ -2079,7 +2106,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return self.visit_FunctionDef(node)
 
 	def visit_FunctionDef(self, node):
-		log('-----------------')
+		global writer
+
 		if node in self._generator_function_nodes:
 			log('generator function: %s'%node.name)
 			self._generator_functions.add( node.name )
@@ -2090,6 +2118,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return
 		log('function: %s'%node.name)
 
+		threaded = False
 		property_decorator = None
 		decorators = []
 		with_js_decorators = []
@@ -2111,6 +2140,33 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				inline = True
 				self._with_inline = True
 
+			elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'webworker':
+				if not self._with_dart:
+					threaded = True
+					assert len(decorator.args) == 1
+					jsfile = decorator.args[0].s #self.visit(decorator.args[0])
+					writer_main.write('%s = "%s"' %(node.name, jsfile))
+					self._webworker_functions[ node.name ] = jsfile
+
+					writer = get_webworker_writer( jsfile )
+					writer.write( '__shared_list = []' )
+					writer.write('def __shared_list_append(v):')
+					writer.push()
+					writer.write(  'print("child sending message")' )
+					writer.write(  '__shared_list.push(v)' )
+					writer.write(  'self.postMessage({"type":"append", "value":v})' )
+					writer.pull()
+
+					writer.write('def onmessage(e):')
+					writer.push()
+					writer.write(  'print("got message from parent")' )
+					writer.write(  'if e.data.type=="execute": %s.call(self, e.data.args, {}); self.postMessage({"type":"terminate"})' %node.name )
+					writer.write(  'elif e.data.type=="append": __shared_list.push(e.data.value)' )
+					writer.write(  'elif e.data.type=="setitem": __shared_list.insert(e.data.index, e.data.value)' )
+					writer.pull()
+					writer.write('self.onmessage = onmessage' )
+
+
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
 
@@ -2125,13 +2181,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(decorator, Name) and decorator.id == 'javascript':
 				javascript = True
 
-			elif isinstance(decorator, Name) and decorator.id in ('property', 'cached_property'):
+			elif isinstance(decorator, Name) and decorator.id == 'property':
 				property_decorator = decorator
 				n = node.name + '__getprop__'
 				self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
 				node.name = n
-				if decorator.id == 'cached_property':  ## TODO DEPRECATE
-					self._cached_property = node.original_name
+				#if decorator.id == 'cached_property':  ## TODO DEPRECATE
+				#	self._cached_property = node.original_name
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
 				if decorator.attr == 'setter':
@@ -2361,13 +2417,34 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			log('(function has no arguments)')
 
 		################# function body #################
-		if self._cached_property:
-			writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
 
+		#if self._cached_property:  ## DEPRECATED
+		#	writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
 
 		self._return_type = None # tries to catch a return type in visit_Return
 
-		map(self.visit, node.body)  ## write function body
+		## write function body ##
+		## if a new thread/webworker is started, the following function body must be wrapped in
+		## a closure callback and called later by setTimeout 
+		timeouts = 0
+		for b in node.body:
+
+			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call): 
+				if isinstance(b.value.func, ast.Attribute) and isinstance(b.value.func.value, Name) and b.value.func.value.id == 'threading':
+					if b.value.func.attr == 'start_new_thread':
+						self.visit(b)
+						writer.write('def __callback%s():' %timeouts)
+						writer.push()
+						timeouts += 1
+						continue
+
+			self.visit(b)
+
+
+		for i in range(timeouts):
+			writer.pull()
+			## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
+			writer.write('setTimeout(__callback%s, 500)' %i)
 
 		if self._return_type:       ## check if a return type was caught
 			if return_type:
@@ -2397,12 +2474,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.pull()
 				writer.pull()
 
-		writer.pull()
+		writer.pull()  ## end function body
 
 		if inline:
 			self._with_inline = False
 
 		if self._in_js_class:
+			writer = writer_main
 			return
 
 
@@ -2473,6 +2551,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write( '%s.is_wrapper = True' %node.name)
 			else:
 				writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, dec, node.name))
+
+		#if threaded:
+		#	writer.write('%s()' %node.name)
+		#	writer.write('self.termintate()')
+
+
+		writer = writer_main
+
 
 	#################### loops ###################
 	## the old-style for loop that puts a while loop inside a try/except and catches StopIteration,
@@ -2963,19 +3049,27 @@ def collect_generator_functions(node):
 
 
 def main(script, dart=False, coffee=False, lua=False):
-	PythonToPythonJS(
+	translator = PythonToPythonJS(
 		source = script, 
 		dart   = dart or '--dart' in sys.argv,
 		coffee = coffee,
 		lua    = lua
 	)
+
 	code = writer.getvalue()
-	if '--debug' in sys.argv:
-		try:
-			open('/tmp/python-to-pythonjs.debug.py', 'wb').write(code)
-		except:
-			pass
-	return code
+
+	if translator.has_webworkers():
+		res = {'main':code}
+		for jsfile in translator.get_webworker_file_names():
+			res[ jsfile ] = get_webworker_writer( jsfile ).getvalue()
+		return res
+	else:
+		if '--debug' in sys.argv:
+			try:
+				open('/tmp/python-to-pythonjs.debug.py', 'wb').write(code)
+			except:
+				pass
+		return code
 
 
 def command():

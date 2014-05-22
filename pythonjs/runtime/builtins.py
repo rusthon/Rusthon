@@ -1288,4 +1288,25 @@ with javascript:
 		'loads': lambda s: JSON.parse(s),
 		'dumps': lambda o: JSON.stringify(o)
 	}
+	threading = {
+		'shared_list' : []
+	}
+
+
+	def __start_new_thread(f, args):
+		worker = new(Worker(f))
+
+		def func(event):
+			print('got signal from thread')
+			if event.data.type == 'terminate':
+				worker.terminate()
+			elif event.data.type == 'append':
+				print('got append event')
+				threading.shared_list.push( event.data.value )
+			else:
+				print('unknown event')
+
+		worker.onmessage = func
+		worker.postMessage( {'type':'execute', 'args':args} )
+		return worker
 
