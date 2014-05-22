@@ -2160,7 +2160,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					writer.write('def onmessage(e):')
 					writer.push()
 					writer.write(  'print("got message from parent")' )
-					writer.write(  'if e.data.type=="execute": %s.call(self, e.data.args, {}); self.postMessage({"type":"terminate"})' %node.name )
+					#writer.write(  'if e.data.type=="execute": %s.call(self, e.data.args, {}); self.postMessage({"type":"terminate"})' %node.name )
+					writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
 					writer.write(  'elif e.data.type=="append": __shared_list.push(e.data.value)' )
 					writer.write(  'elif e.data.type=="setitem": __shared_list.insert(e.data.index, e.data.value)' )
 					writer.pull()
@@ -2444,7 +2445,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for i in range(timeouts):
 			writer.pull()
 			## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
-			writer.write('setTimeout(__callback%s, 500)' %i)
+			writer.write('setTimeout(__callback%s, 100)' %i)
 
 		if self._return_type:       ## check if a return type was caught
 			if return_type:

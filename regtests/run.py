@@ -297,11 +297,14 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         if multioutput:
             d = json.loads( stdout )
             stdout = d.pop('main')
-
+            builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
             for jsfile in d:
                 if not jsfile.startswith('/'):
                     stdout = stdout.replace('"%s"' %jsfile, '"/tmp/%s"' %jsfile)
-                write( os.path.join('/tmp', jsfile), d[jsfile] )
+                write(
+                    os.path.join('/tmp', jsfile), 
+                    '\n'.join( [builtins, d[jsfile]] ) 
+                )
 
         if dart:
 
@@ -518,7 +521,7 @@ def run_test_on(filename):
         display(run_pythonjs_test_on_node)
 
     if '--no-javascript-mode' not in sys.argv:
-        js = translate_js(filename, javascript=True)
+        js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/'))
         if rhino_runnable:
             display(run_pythonjsjs_test_on)
         if node_runnable:
