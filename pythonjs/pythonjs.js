@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Thu May 22 03:39:00 2014
+// PythonJS Runtime - regenerated on: Fri May 23 16:48:52 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -984,7 +984,7 @@ __create_class__.types_signature = {  };
 type = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{"bases": null, "class_dict": null},args:["ob_or_class_name", "bases", "class_dict"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1010,7 +1010,7 @@ type.pythonscript_function = true;
 hasattr = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["ob", "attr"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1031,7 +1031,7 @@ getattr = function(args, kwargs) {
   var prop;
   var __sig__, __args__;
   __sig__ = { kwargs:{"property": false},args:["ob", "attr", "property"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1062,7 +1062,7 @@ setattr = function(args, kwargs) {
   var prop;
   var __sig__, __args__;
   __sig__ = { kwargs:{"property": false},args:["ob", "attr", "value", "property"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1094,7 +1094,7 @@ issubclass = function(args, kwargs) {
   var i, bases;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["C", "B"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1126,7 +1126,7 @@ isinstance = function(args, kwargs) {
   var ob_class;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["ob", "klass"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1163,7 +1163,7 @@ int = function(args, kwargs) {
   ;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1187,7 +1187,7 @@ float = function(args, kwargs) {
   ;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1211,7 +1211,7 @@ round = function(args, kwargs) {
   var y, x, c, b;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a", "places"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1248,7 +1248,7 @@ round.pythonscript_function = true;
 str = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["s"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1281,7 +1281,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "__contains__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "__contains__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(index) {
     if (( index ) < 0) {
       var __left10, __right11;
@@ -1297,7 +1297,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["index"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "get", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "get", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(self) {
     return __get__(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
   }
@@ -1306,7 +1306,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["self"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "__iter__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "__iter__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(idx) {
     if (( idx ) < 0) {
       var __left12, __right13;
@@ -1322,7 +1322,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["idx"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "__getitem__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "__getitem__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.length;
   }
@@ -1331,7 +1331,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "__len__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "__len__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(start, stop, step) {
     ;
     if (__test_if_true__(( start ) === undefined && ( stop ) === undefined && ( step ) == -1)) {
@@ -1351,7 +1351,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["start", "stop", "step"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "__getslice__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "__getslice__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.split("\n");
   }
@@ -1360,7 +1360,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "splitlines", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "splitlines", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.trim();
   }
@@ -1369,7 +1369,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "strip", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "strip", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     if (( this.substring(0, a.length) ) == a) {
       return true;
@@ -1382,7 +1382,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "startswith", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "startswith", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     if (( this.substring((this.length - a.length), this.length) ) == a) {
       return true;
@@ -1395,7 +1395,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "endswith", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "endswith", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     var i, arr, out;
     out = "";
@@ -1422,7 +1422,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "join", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "join", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.toUpperCase();
   }
@@ -1431,7 +1431,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "upper", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "upper", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.toLowerCase();
   }
@@ -1440,7 +1440,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "lower", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "lower", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     var i;
     i = this.indexOf(a);
@@ -1457,7 +1457,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "index", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "index", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     return this.indexOf(a);
   }
@@ -1466,7 +1466,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "find", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "find", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     var digits;
     digits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -1487,7 +1487,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "isdigit", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "isdigit", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(encoding) {
     return this;
   }
@@ -1496,7 +1496,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["encoding"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "decode", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "decode", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(encoding) {
     return this;
   }
@@ -1505,7 +1505,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["encoding"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "encode", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "encode", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(fmt) {
     var keys, r;
     r = this;
@@ -1524,7 +1524,7 @@ _setup_str_prototype = function(args, kwargs) {
   func.args_signature = ["fmt"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(String.prototype, "format", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(String.prototype, "format", { enumerable:false,value:func,writeable:true,configurable:true });
 }
 
 _setup_str_prototype.NAME = "_setup_str_prototype";
@@ -1553,7 +1553,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "jsify", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "jsify", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(a) {
     if (( this.indexOf(a) ) == -1) {
       return false;
@@ -1566,7 +1566,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__contains__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__contains__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.length;
   }
@@ -1575,7 +1575,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__len__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__len__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(index) {
     return this[((index.__uid__) ? index.__uid__ : index)];
   }
@@ -1584,7 +1584,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["index"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "get", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "get", { enumerable:false,value:func,writeable:true,configurable:true });
     var __getitem__ = function(index) {
     ;
     if (( index ) < 0) {
@@ -1600,7 +1600,7 @@ _setup_array_prototype = function(args, kwargs) {
   __getitem__.args_signature = ["index"];
   __getitem__.kwargs_signature = {  };
   __getitem__.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__getitem__", { enumerable:false,value:__getitem__,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__getitem__", { enumerable:false,value:__getitem__,writeable:true,configurable:true });
     var __setitem__ = function(index, value) {
     ;
     if (( index ) < 0) {
@@ -1616,7 +1616,7 @@ _setup_array_prototype = function(args, kwargs) {
   __setitem__.args_signature = ["index", "value"];
   __setitem__.kwargs_signature = {  };
   __setitem__.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__setitem__", { enumerable:false,value:__setitem__,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__setitem__", { enumerable:false,value:__setitem__,writeable:true,configurable:true });
     var func = function() {
     return __get__(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
   }
@@ -1625,7 +1625,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__iter__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__iter__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(start, stop, step) {
     var i, arr;
     if (__test_if_true__(( start ) === undefined && ( stop ) === undefined)) {
@@ -1651,7 +1651,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["start", "stop", "step"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "__getslice__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "__getslice__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(item) {
     this.push(item);
     return this;
@@ -1661,7 +1661,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["item"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "append", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "append", { enumerable:false,value:func,writeable:true,configurable:true });
     var extend = function(other) {
         var __iter14 = other;
     if (! (__iter14 instanceof Array || typeof __iter14 == "string") ) { __iter14 = __object_keys__(__iter14) }
@@ -1676,7 +1676,7 @@ _setup_array_prototype = function(args, kwargs) {
   extend.args_signature = ["other"];
   extend.kwargs_signature = {  };
   extend.types_signature = {  };
-  Object.defineProperty(Array.prototype, "extend", { enumerable:false,value:extend,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "extend", { enumerable:false,value:extend,writeable:true,configurable:true });
     var func = function(item) {
     var index;
     index = this.indexOf(item);
@@ -1687,7 +1687,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["item"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "remove", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "remove", { enumerable:false,value:func,writeable:true,configurable:true });
     var insert = function(index, obj) {
     ;
     if (( index ) < 0) {
@@ -1703,7 +1703,7 @@ _setup_array_prototype = function(args, kwargs) {
   insert.args_signature = ["index", "obj"];
   insert.kwargs_signature = {  };
   insert.types_signature = {  };
-  Object.defineProperty(Array.prototype, "insert", { enumerable:false,value:insert,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "insert", { enumerable:false,value:insert,writeable:true,configurable:true });
     var index = function(obj) {
     return this.indexOf(obj);
   }
@@ -1712,7 +1712,7 @@ _setup_array_prototype = function(args, kwargs) {
   index.args_signature = ["obj"];
   index.kwargs_signature = {  };
   index.types_signature = {  };
-  Object.defineProperty(Array.prototype, "index", { enumerable:false,value:index,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "index", { enumerable:false,value:index,writeable:true,configurable:true });
     var count = function(obj) {
     var a;
     a = 0;
@@ -1731,7 +1731,7 @@ _setup_array_prototype = function(args, kwargs) {
   count.args_signature = ["obj"];
   count.kwargs_signature = {  };
   count.types_signature = {  };
-  Object.defineProperty(Array.prototype, "count", { enumerable:false,value:count,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "count", { enumerable:false,value:count,writeable:true,configurable:true });
     var func = function(x, low, high) {
     var a, mid;
     if (( low ) === undefined) {
@@ -1762,7 +1762,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["x", "low", "high"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "bisect", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "bisect", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(other) {
     var f;
         var __lambda__ = function(i) {
@@ -1781,7 +1781,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["other"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "difference", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "difference", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(other) {
     var f;
         var __lambda__ = function(i) {
@@ -1800,7 +1800,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["other"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "intersection", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "intersection", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(other) {
         var __iter16 = this;
     if (! (__iter16 instanceof Array || typeof __iter16 == "string") ) { __iter16 = __object_keys__(__iter16) }
@@ -1817,7 +1817,7 @@ _setup_array_prototype = function(args, kwargs) {
   func.args_signature = ["other"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(Array.prototype, "issubset", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(Array.prototype, "issubset", { enumerable:false,value:func,writeable:true,configurable:true });
 }
 
 _setup_array_prototype.NAME = "_setup_array_prototype";
@@ -1839,7 +1839,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   func.args_signature = ["a"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "__contains__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "__contains__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function() {
     return this.length;
   }
@@ -1848,7 +1848,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "__len__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "__len__", { enumerable:false,value:func,writeable:true,configurable:true });
     var func = function(index) {
     return this[((index.__uid__) ? index.__uid__ : index)];
   }
@@ -1857,7 +1857,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   func.args_signature = ["index"];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "get", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "get", { enumerable:false,value:func,writeable:true,configurable:true });
     var __getitem__ = function(index) {
     ;
     if (( index ) < 0) {
@@ -1873,7 +1873,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   __getitem__.args_signature = ["index"];
   __getitem__.kwargs_signature = {  };
   __getitem__.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "__getitem__", { enumerable:false,value:__getitem__,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "__getitem__", { enumerable:false,value:__getitem__,writeable:true,configurable:true });
     var __setitem__ = function(index, value) {
     ;
     if (( index ) < 0) {
@@ -1889,7 +1889,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   __setitem__.args_signature = ["index", "value"];
   __setitem__.kwargs_signature = {  };
   __setitem__.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "__setitem__", { enumerable:false,value:__setitem__,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "__setitem__", { enumerable:false,value:__setitem__,writeable:true,configurable:true });
     var func = function() {
     return __get__(Iterator, "__call__")([this, 0], __NULL_OBJECT__);
   }
@@ -1898,7 +1898,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   func.args_signature = [];
   func.kwargs_signature = {  };
   func.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "__iter__", { enumerable:false,value:func,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "__iter__", { enumerable:false,value:func,writeable:true,configurable:true });
     var index = function(obj) {
     return this.indexOf(obj);
   }
@@ -1907,7 +1907,7 @@ _setup_nodelist_prototype = function(args, kwargs) {
   index.args_signature = ["obj"];
   index.kwargs_signature = {  };
   index.types_signature = {  };
-  Object.defineProperty(NodeList.prototype, "index", { enumerable:false,value:index,writeable:false,configurable:false });
+  Object.defineProperty(NodeList.prototype, "index", { enumerable:false,value:index,writeable:true,configurable:true });
 }
 
 _setup_nodelist_prototype.NAME = "_setup_nodelist_prototype";
@@ -1921,7 +1921,7 @@ if (__test_if_true__(( __NODEJS__ ) == false && ( __WEBWORKER__ ) == false)) {
 bisect = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{"low": null, "high": null},args:["a", "x", "low", "high"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1944,7 +1944,7 @@ range = function(args, kwargs) {
   var i, arr;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["num", "stop", "step"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -1980,7 +1980,7 @@ range.pythonscript_function = true;
 xrange = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["num", "stop", "step"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2002,7 +2002,7 @@ sum = function(args, kwargs) {
   var a;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["arr"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2035,7 +2035,7 @@ StopIteration = __create_class__("StopIteration", __StopIteration_parents, __Sto
 len = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["ob"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2062,7 +2062,7 @@ len.pythonscript_function = true;
 next = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["obj"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2082,7 +2082,7 @@ map = function(args, kwargs) {
   var arr, v;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["func", "objs"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2113,7 +2113,7 @@ filter = function(args, kwargs) {
   var arr;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["func", "objs"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2145,7 +2145,7 @@ min = function(args, kwargs) {
   var a;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["lst"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2180,7 +2180,7 @@ max = function(args, kwargs) {
   var a;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["lst"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2214,7 +2214,7 @@ max.pythonscript_function = true;
 abs = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["num"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2233,7 +2233,7 @@ abs.pythonscript_function = true;
 ord = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["char"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2252,7 +2252,7 @@ ord.pythonscript_function = true;
 chr = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["num"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2302,7 +2302,7 @@ __Iterator_properties = {};
 __Iterator___init__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "obj", "index"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2328,7 +2328,7 @@ __Iterator_next = function(args, kwargs) {
   var index;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2351,7 +2351,7 @@ Iterator = __create_class__("Iterator", __Iterator_parents, __Iterator_attrs, __
 tuple = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2384,7 +2384,7 @@ tuple.pythonscript_function = true;
 list = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2422,7 +2422,7 @@ __dict___init__ = function(args, kwargs) {
   var ob, value;
   var __sig__, __args__;
   __sig__ = { kwargs:{"js_object": null, "pointer": null},args:["self", "js_object", "pointer"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2481,7 +2481,7 @@ __dict_jsify = function(args, kwargs) {
   var keys, value;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2515,7 +2515,7 @@ __dict_attrs.jsify = __dict_jsify;
 __dict_copy = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2536,7 +2536,7 @@ __dict_attrs.copy = __dict_copy;
 __dict_clear = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2557,7 +2557,7 @@ __dict_has_key = function(args, kwargs) {
   var __dict;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "key"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2586,7 +2586,7 @@ __dict_attrs.has_key = __dict_has_key;
 __dict_update = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "other"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2615,7 +2615,7 @@ __dict_items = function(args, kwargs) {
   var arr;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2644,7 +2644,7 @@ __dict_attrs.items = __dict_items;
 __dict_get = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{"_default": null},args:["self", "key", "_default"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2671,7 +2671,7 @@ __dict_attrs.get = __dict_get;
 __dict_set = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "key", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2694,7 +2694,7 @@ __dict___len__ = function(args, kwargs) {
   var __dict;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2716,7 +2716,7 @@ __dict___getitem__ = function(args, kwargs) {
   var __dict;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "key"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2749,7 +2749,7 @@ __dict___setitem__ = function(args, kwargs) {
   var __dict;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "key", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2779,7 +2779,7 @@ __dict_attrs.__setitem__ = __dict___setitem__;
 __dict_keys = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2800,7 +2800,7 @@ __dict_pop = function(args, kwargs) {
   var js_object, v;
   var __sig__, __args__;
   __sig__ = { kwargs:{"d": null},args:["self", "key", "d"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2830,7 +2830,7 @@ __dict_values = function(args, kwargs) {
   var keys, out;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2858,7 +2858,7 @@ __dict_attrs.values = __dict_values;
 __dict___contains__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2885,7 +2885,7 @@ __dict_attrs.__contains__ = __dict___contains__;
 __dict___iter__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2908,7 +2908,7 @@ set = function(args, kwargs) {
   var keys, mask, s, hashtable, key, fallback;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -2990,7 +2990,7 @@ set.pythonscript_function = true;
 frozenset = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["a"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3018,7 +3018,7 @@ __array___init__ = function(args, kwargs) {
   var size, buff;
   var __sig__, __args__;
   __sig__ = { kwargs:{"initializer": null, "little_endian": false},args:["self", "typecode", "initializer", "little_endian"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3066,7 +3066,7 @@ __array_attrs.__init__ = __array___init__;
 __array___len__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3087,7 +3087,7 @@ __array___contains__ = function(args, kwargs) {
   var arr;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3114,7 +3114,7 @@ __array___getitem__ = function(args, kwargs) {
   var func_name, dataview, value, step, func, offset;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "index"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3156,7 +3156,7 @@ __array___setitem__ = function(args, kwargs) {
   var func_name, dataview, step, func, offset;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "index", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3203,7 +3203,7 @@ __array_attrs.__setitem__ = __array___setitem__;
 __array___iter__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3224,7 +3224,7 @@ __array_attrs.__iter__ = __array___iter__;
 __array_get = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "index"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3246,7 +3246,7 @@ __array_fromlist = function(args, kwargs) {
   var typecode, i, func_name, dataview, length, item, step, func, offset, size;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "lst"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3296,7 +3296,7 @@ __array_resize = function(args, kwargs) {
   var source, new_buff, target, new_size, buff;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "length"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3327,7 +3327,7 @@ __array_append = function(args, kwargs) {
   var length;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "value"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3353,7 +3353,7 @@ __array_attrs.append = __array_append;
 __array_extend = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self", "lst"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3382,7 +3382,7 @@ __array_to_array = function(args, kwargs) {
   var i, item, arr;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3409,7 +3409,7 @@ __array_attrs.to_array = __array_to_array;
 __array_to_list = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3430,7 +3430,7 @@ __array_to_ascii = function(args, kwargs) {
   var i, length, arr, string;
   var __sig__, __args__;
   __sig__ = { kwargs:{},args:["self"] };
-  if (args instanceof Array && ( typeof(kwargs) ) == "object" && ( arguments.length ) == 2) {
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
     /*pass*/
   } else {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
@@ -3477,18 +3477,29 @@ __lambda__.types_signature = {  };
 json = __jsdict([["loads", null], ["dumps", null]]);
 threading = __jsdict([["shared_list", []]]);
 __start_new_thread = function(f, args) {
-  var worker;
+  var numargs, worker;
   worker =  new Worker(f);
+  numargs = len(args);
     var func = function(event) {
+    var a, value;
     console.log("got signal from thread");
+    console.log(event.data);
     if (( event.data.type ) == "terminate") {
       worker.terminate();
     } else {
       if (( event.data.type ) == "append") {
         console.log("got append event");
-        threading.shared_list.push(event.data.value);
+        a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
+        a.push(event.data.value);
       } else {
-        console.log("unknown event");
+        if (( event.data.type ) == "__setitem__") {
+          console.log("got __setitem__ event");
+          a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
+          value = event.data.value;
+          a.__setitem__(event.data.index, value);
+        } else {
+          throw new RuntimeError("unknown event");
+        }
       }
     }
   }
@@ -3506,3 +3517,35 @@ __start_new_thread.NAME = "__start_new_thread";
 __start_new_thread.args_signature = ["f", "args"];
 __start_new_thread.kwargs_signature = {  };
 __start_new_thread.types_signature = {  };
+__webworker_wrap = function(ob, argindex) {
+  if (__test_if_true__(ob instanceof Array)) {
+        var func = function(index, item) {
+      console.log("posting to parent setitem");
+      postMessage(__jsdict([["type", "__setitem__"], ["index", index], ["value", item], ["argindex", argindex]]));
+      Array.prototype.__setitem__.call(ob, index, item);
+    }
+
+    func.NAME = "func";
+    func.args_signature = ["index", "item"];
+    func.kwargs_signature = {  };
+    func.types_signature = {  };
+    Object.defineProperty(ob, "__setitem__", __jsdict([["enumerable", false], ["value", func], ["writeable", true], ["configurable", true]]));
+        var func = function(item) {
+      console.log("posting to parent append");
+      postMessage(__jsdict([["type", "append"], ["value", item], ["argindex", argindex]]));
+      Array.prototype.push.call(ob, item);
+    }
+
+    func.NAME = "func";
+    func.args_signature = ["item"];
+    func.kwargs_signature = {  };
+    func.types_signature = {  };
+    Object.defineProperty(ob, "append", __jsdict([["enumerable", false], ["value", func], ["writeable", true], ["configurable", true]]));
+  }
+  return ob;
+}
+
+__webworker_wrap.NAME = "__webworker_wrap";
+__webworker_wrap.args_signature = ["ob", "argindex"];
+__webworker_wrap.kwargs_signature = {  };
+__webworker_wrap.types_signature = {  };

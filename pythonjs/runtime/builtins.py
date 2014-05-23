@@ -1295,18 +1295,52 @@ with javascript:
 
 	def __start_new_thread(f, args):
 		worker = new(Worker(f))
+		numargs = len(args)
 
 		def func(event):
 			print('got signal from thread')
+			print(event.data)
 			if event.data.type == 'terminate':
 				worker.terminate()
 			elif event.data.type == 'append':
 				print('got append event')
-				threading.shared_list.push( event.data.value )
+				a = args[ event.data.argindex ]
+				a.push( event.data.value )
+
+			elif event.data.type == '__setitem__':
+				print('got __setitem__ event')
+				a = args[ event.data.argindex ]
+				value = event.data.value
+				a.__setitem__(event.data.index, value)
+
 			else:
-				print('unknown event')
+				raise RuntimeError('unknown event')
 
 		worker.onmessage = func
 		worker.postMessage( {'type':'execute', 'args':args} )
 		return worker
+
+	######## webworker client #########
+
+	def __webworker_wrap(ob, argindex):
+		if instanceof(ob, Array):
+			#ob.__argindex__ = argindex
+
+			def func(index, item):
+				print('posting to parent setitem')
+				postMessage({'type':'__setitem__', 'index':index, 'value':item, 'argindex':argindex})
+				Array.prototype.__setitem__.call(ob, index, item)
+			Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
+
+			def func(item):
+				print('posting to parent append')
+				postMessage({'type':'append', 'value':item, 'argindex':argindex})
+				Array.prototype.push.call(ob, item)
+			Object.defineProperty(ob, "append", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
+
+
+		return ob
+
+
+
 

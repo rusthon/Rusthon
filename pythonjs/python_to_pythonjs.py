@@ -131,6 +131,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_dart = dart
 		self._with_js = False
 		self._in_lambda = False
+		self._in_while_test = False
 		self._use_threading = False
 		self._webworker_functions = dict()
 
@@ -294,7 +295,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for alias in node.names:
 			if alias.name == 'threading':
 				self._use_threading = True
+				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
 				writer.write( 'Worker = require("workerjs")')
+
 			else:
 				#writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
 				raise NotImplementedError('import, line %s' % node.lineno)
@@ -1117,7 +1120,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
-			elif self._with_lua or self._in_lambda:
+			elif self._with_lua or self._in_lambda or self._in_while_test:
 				## this is also required when in an inlined lambda like "(lambda a,b: a+b)(1,2)"
 				return '__add_op(%s, %s)'%(left, right)
 			else:
@@ -2391,7 +2394,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			# ie. that this function is not a callback of javascript code
 
 
-			writer.write("""if instanceof(args,Array) and typeof(kwargs) == 'object' and arguments.length==2:""")
+			writer.write("""if instanceof(args,Array) and Object.prototype.toString.call(kwargs) == '[object Object]' and arguments.length==2:""")
 			writer.push()
 			writer.write('pass')  # do nothing if it's not called from javascript
 			writer.pull()
@@ -2418,6 +2421,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			log('(function has no arguments)')
 
 		################# function body #################
+
+
+		if threaded:
+			for i,arg in enumerate(node.args.args):
+				writer.write( '%s = __webworker_wrap(%s, %s)' %(arg.id, arg.id, i))
 
 		#if self._cached_property:  ## DEPRECATED
 		#	writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
@@ -2529,7 +2537,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					## this fixes external javascript that is using `for (var i in anArray)`
 					head, tail = dec.split('.prototype.')
 					a = (head, tail, node.name)
-					writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:False, configurable:False})' %a)
+					## these props need to be writeable so that webworkers can redefine methods like: push, __setitem__
+					## note to overwrite one of these props Object.defineProperty needs to be called again (ob.xxx=yyy will not work)
+					writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:True, configurable:True})' %a)
 
 				elif dec == 'javascript':
 					pass
@@ -2801,8 +2811,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						c.constant = True
 						self._call_ids += 1
 
-
+		self._in_while_test = True
 		writer.write('while %s:' % self.visit(node.test))
+		self._in_while_test = False
 		writer.push()
 		map(self.visit, node.body)
 		writer.pull()
