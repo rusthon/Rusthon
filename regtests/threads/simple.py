@@ -12,19 +12,18 @@ def webworker(a):
 	return lambda f : f
 
 @webworker( 'xxx.js' )
-def mythread():
+def mythread(a):
 	for i in range(100):
-		threading.shared_list.append( i )
-		print(i)
+		a.append( i )
 
 def main():
 	if PYTHON != "PYTHONJS":
 		threading.start_new_thread = threading._start_new_thread
-		threading.shared_list = list()
 
-	t = threading.start_new_thread( mythread, tuple() )
+	arr = []
+	t = threading.start_new_thread( mythread, (arr,) )
 	ticks = 0
-	while len(threading.shared_list) < 100:
+	while len(arr) < 100:
 		ticks += 1
 
-	TestError( sum(threading.shared_list) == 4950 )
+	TestError( sum(arr) == 4950 )

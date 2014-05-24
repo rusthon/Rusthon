@@ -1673,13 +1673,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				raise SyntaxError(node.func.attr)
 
-		elif self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Attribute) and isinstance(node.func.value.value, Name) and node.func.value.value.id == 'threading':
-			assert node.func.value.attr == 'shared_list'
-			if node.func.attr == 'append':
-				return '__shared_list_append( %s )' %self.visit(node.args[0])
-
-
-		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
+		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
 					if kw.value.id == 'True':
@@ -2152,21 +2146,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					self._webworker_functions[ node.name ] = jsfile
 
 					writer = get_webworker_writer( jsfile )
-					writer.write( '__shared_list = []' )
-					writer.write('def __shared_list_append(v):')
-					writer.push()
-					writer.write(  'print("child sending message")' )
-					writer.write(  '__shared_list.push(v)' )
-					writer.write(  'self.postMessage({"type":"append", "value":v})' )
-					writer.pull()
 
+					## TODO: two-way list and dict sync
 					writer.write('def onmessage(e):')
 					writer.push()
-					writer.write(  'print("got message from parent")' )
-					#writer.write(  'if e.data.type=="execute": %s.call(self, e.data.args, {}); self.postMessage({"type":"terminate"})' %node.name )
+					writer.write(  'print("worker got message from parent")' )
 					writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
-					writer.write(  'elif e.data.type=="append": __shared_list.push(e.data.value)' )
-					writer.write(  'elif e.data.type=="setitem": __shared_list.insert(e.data.index, e.data.value)' )
 					writer.pull()
 					writer.write('self.onmessage = onmessage' )
 
