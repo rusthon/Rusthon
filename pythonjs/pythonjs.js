@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri May 23 16:48:52 2014
+// PythonJS Runtime - regenerated on: Fri May 23 20:02:27 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3477,7 +3477,7 @@ __lambda__.types_signature = {  };
 json = __jsdict([["loads", null], ["dumps", null]]);
 threading = __jsdict([["shared_list", []]]);
 __start_new_thread = function(f, args) {
-  var numargs, worker;
+  var numargs, jsargs, worker;
   worker =  new Worker(f);
   numargs = len(args);
     var func = function(event) {
@@ -3496,7 +3496,11 @@ __start_new_thread = function(f, args) {
           console.log("got __setitem__ event");
           a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
           value = event.data.value;
-          a.__setitem__(event.data.index, value);
+          if (__test_if_true__(a.__setitem__)) {
+            a.__setitem__(event.data.index, value);
+          } else {
+            a[((event.data.index.__uid__) ? event.data.index.__uid__ : event.data.index)] = value;
+          }
         } else {
           throw new RuntimeError("unknown event");
         }
@@ -3509,7 +3513,18 @@ __start_new_thread = function(f, args) {
   func.kwargs_signature = {  };
   func.types_signature = {  };
   worker.onmessage = func;
-  worker.postMessage(__jsdict([["type", "execute"], ["args", args]]));
+  jsargs = [];
+    var __iter21 = args;
+  if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
+  for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
+    var arg = __iter21[ __idx21 ];
+    if (__test_if_true__(arg.jsify)) {
+      jsargs.append(arg.jsify());
+    } else {
+      jsargs.append(arg);
+    }
+  }
+  worker.postMessage(__jsdict([["type", "execute"], ["args", jsargs]]));
   return worker;
 }
 
@@ -3518,6 +3533,7 @@ __start_new_thread.args_signature = ["f", "args"];
 __start_new_thread.kwargs_signature = {  };
 __start_new_thread.types_signature = {  };
 __webworker_wrap = function(ob, argindex) {
+  var setitem;
   if (__test_if_true__(ob instanceof Array)) {
         var func = function(index, item) {
       console.log("posting to parent setitem");
@@ -3541,6 +3557,21 @@ __webworker_wrap = function(ob, argindex) {
     func.kwargs_signature = {  };
     func.types_signature = {  };
     Object.defineProperty(ob, "append", __jsdict([["enumerable", false], ["value", func], ["writeable", true], ["configurable", true]]));
+  } else {
+    if (( typeof(ob) ) == "object") {
+      setitem = ob.__setitem__;
+            var func = function(key, item) {
+        console.log("posting to parent setitem object");
+        postMessage(__jsdict([["type", "__setitem__"], ["index", key], ["value", item], ["argindex", argindex]]));
+        ob[((key.__uid__) ? key.__uid__ : key)] = item;
+      }
+
+      func.NAME = "func";
+      func.args_signature = ["key", "item"];
+      func.kwargs_signature = {  };
+      func.types_signature = {  };
+      ob.__setitem__ = func;
+    }
   }
   return ob;
 }

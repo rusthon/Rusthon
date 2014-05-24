@@ -25,5 +25,7 @@ def main():
 	ticks = 0
 	while len(arr) < 100:
 		ticks += 1
+		if ticks > 1000:  ## do not hangup if there is a bug in the webworker
+			break
 
 	TestError( sum(arr) == 4950 )

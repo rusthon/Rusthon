@@ -1311,13 +1311,23 @@ with javascript:
 				print('got __setitem__ event')
 				a = args[ event.data.argindex ]
 				value = event.data.value
-				a.__setitem__(event.data.index, value)
+				if a.__setitem__:
+					a.__setitem__(event.data.index, value)
+				else:
+					a[event.data.index] = value
 
 			else:
 				raise RuntimeError('unknown event')
 
 		worker.onmessage = func
-		worker.postMessage( {'type':'execute', 'args':args} )
+		jsargs = []
+		for arg in args:
+			if arg.jsify:
+				jsargs.append( arg.jsify() )
+			else:
+				jsargs.append( arg )
+
+		worker.postMessage( {'type':'execute', 'args':jsargs} )
 		return worker
 
 	######## webworker client #########
@@ -1338,6 +1348,13 @@ with javascript:
 				Array.prototype.push.call(ob, item)
 			Object.defineProperty(ob, "append", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
 
+		elif typeof(ob) == 'object':
+			setitem = ob.__setitem__
+			def func(key, item):
+				print('posting to parent setitem object')
+				postMessage({'type':'__setitem__', 'index':key, 'value':item, 'argindex':argindex})
+				ob[ key ] = item
+			ob.__setitem__ = func
 
 		return ob
 

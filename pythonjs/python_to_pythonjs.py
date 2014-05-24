@@ -2141,7 +2141,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				if not self._with_dart:
 					threaded = True
 					assert len(decorator.args) == 1
-					jsfile = decorator.args[0].s #self.visit(decorator.args[0])
+					jsfile = decorator.args[0].s
 					writer_main.write('%s = "%s"' %(node.name, jsfile))
 					self._webworker_functions[ node.name ] = jsfile
 

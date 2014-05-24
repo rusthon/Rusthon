@@ -28,6 +28,8 @@ def main():
 	ticks = 0
 	while len(c) < 2:
 		ticks += 1
+		if ticks > 1000:  ## do not hangup if there is a bug in the webworker
+			break
 
 	TestError( c[0] == 'hello' )
 	TestError( c[1] == 'worker' )

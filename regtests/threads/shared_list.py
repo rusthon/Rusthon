@@ -37,6 +37,8 @@ def main():
 	ticks = 0
 	while len(shared1) + len(shared2) < 2:
 		ticks += 1
+		if ticks > 1000:  ## do not hangup if there is a bug in the webworker
+			break
 
 	TestError( shared1[0] == 'hello' )
 	TestError( shared2[0] == 'world' )
