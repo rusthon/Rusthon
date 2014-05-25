@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Fri May 23 20:02:27 2014
+// PythonJS Runtime - regenerated on: Sat May 24 07:38:41 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3514,6 +3514,8 @@ __start_new_thread = function(f, args) {
   func.types_signature = {  };
   worker.onmessage = func;
   jsargs = [];
+  var i;
+  i = 0;
     var __iter21 = args;
   if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
   for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
@@ -3523,6 +3525,10 @@ __start_new_thread = function(f, args) {
     } else {
       jsargs.append(arg);
     }
+    if (__test_if_true__(arg instanceof Array)) {
+      __gen_worker_append(worker, arg, i);
+    }
+    i += 1;
   }
   worker.postMessage(__jsdict([["type", "execute"], ["args", jsargs]]));
   return worker;
@@ -3532,6 +3538,24 @@ __start_new_thread.NAME = "__start_new_thread";
 __start_new_thread.args_signature = ["f", "args"];
 __start_new_thread.kwargs_signature = {  };
 __start_new_thread.types_signature = {  };
+__gen_worker_append = function(worker, ob, index) {
+    var append = function(item) {
+    console.log("posting to thread - append");
+    worker.postMessage(__jsdict([["type", "append"], ["argindex", index], ["value", item]]));
+    ob.push(item);
+  }
+
+  append.NAME = "append";
+  append.args_signature = ["item"];
+  append.kwargs_signature = {  };
+  append.types_signature = {  };
+  Object.defineProperty(ob, "append", __jsdict([["enumerable", false], ["value", append], ["writeable", true], ["configurable", true]]));
+}
+
+__gen_worker_append.NAME = "__gen_worker_append";
+__gen_worker_append.args_signature = ["worker", "ob", "index"];
+__gen_worker_append.kwargs_signature = {  };
+__gen_worker_append.types_signature = {  };
 __webworker_wrap = function(ob, argindex) {
   var setitem;
   if (__test_if_true__(ob instanceof Array)) {

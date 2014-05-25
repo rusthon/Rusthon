@@ -13,6 +13,7 @@ def webworker(a):
 
 @webworker( 'xxx.js' )
 def mythread(a,b):
+	print('------enter thread------')
 	## checks a and b, if they are Array, then wrap them.
 	print(a)
 	print(b)
@@ -25,6 +26,18 @@ def mythread(a,b):
 	## and instead b[1] is used directly.
 	b[1] = 'YYY'
 
+	ticks = 0
+	while True: #'ZZZ' not in a:
+		ticks += 1
+		if ticks > 100000:
+			break
+		if 'ZZZ' in a:
+			break
+
+	
+	print(a)
+	print('thread exit-------')
+
 def main():
 	if PYTHON != "PYTHONJS":
 		threading.start_new_thread = threading._start_new_thread
@@ -35,11 +48,19 @@ def main():
 	t = threading.start_new_thread( mythread, (shared1, shared2) )
 
 	ticks = 0
-	while len(shared1) + len(shared2) < 2:
+	while len(shared1) + len(shared2) < 4:
 		ticks += 1
-		if ticks > 1000:  ## do not hangup if there is a bug in the webworker
+		if ticks > 100000:  ## do not hangup if there is a bug in the webworker
 			break
+
+	shared1.append( 'ZZZ' )
 
 	TestError( shared1[0] == 'hello' )
 	TestError( shared2[0] == 'world' )
 	TestError( shared2[1] == 'YYY' )
+
+	ticks = 0
+	while ticks < 100000:
+		ticks += 1
+
+	print('-----main exit')

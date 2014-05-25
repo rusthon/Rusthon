@@ -133,6 +133,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._in_lambda = False
 		self._in_while_test = False
 		self._use_threading = False
+		self._use_sleep = False
 		self._webworker_functions = dict()
 
 		self._source = source.splitlines()
@@ -295,8 +296,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for alias in node.names:
 			if alias.name == 'threading':
 				self._use_threading = True
-				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
-				writer.write( 'Worker = require("workerjs")')
+				writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
+				#writer.write( 'Worker = require("workerjs")')
 
 			else:
 				#writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
@@ -309,6 +310,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			lib = ministdlib.LUA
 		else:
 			lib = ministdlib.JS
+
+		if node.module == 'time' and node.names[0].name == 'sleep':
+			self._use_sleep = True
 
 		if node.module in lib:
 			imported = False
@@ -2115,6 +2119,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return
 		log('function: %s'%node.name)
 
+		is_worker_entry = False
 		threaded = False
 		property_decorator = None
 		decorators = []
@@ -2146,14 +2151,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					self._webworker_functions[ node.name ] = jsfile
 
 					writer = get_webworker_writer( jsfile )
+					if writer.output.len == 0:
+						is_worker_entry = True
+						## TODO: two-way list and dict sync
+						writer.write('__wargs__ = []')
+						writer.write('def onmessage(e):')
+						writer.push()
+						writer.write(  'print("worker got message from parent")' )
+						writer.write(  'print(e.data)' )
+						writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
+						writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
 
-					## TODO: two-way list and dict sync
-					writer.write('def onmessage(e):')
-					writer.push()
-					writer.write(  'print("worker got message from parent")' )
-					writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
-					writer.pull()
-					writer.write('self.onmessage = onmessage' )
+						writer.write(  'print(__wargs__)' )
+
+						writer.pull()
+						writer.write('self.onmessage = onmessage' )
 
 
 			elif self._with_dart:
@@ -2411,6 +2423,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if threaded:
 			for i,arg in enumerate(node.args.args):
 				writer.write( '%s = __webworker_wrap(%s, %s)' %(arg.id, arg.id, i))
+				if is_worker_entry:
+					writer.write('__wargs__.push(%s)'%arg.id)
 
 		#if self._cached_property:  ## DEPRECATED
 		#	writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
@@ -2418,27 +2432,56 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._return_type = None # tries to catch a return type in visit_Return
 
 		## write function body ##
-		## if a new thread/webworker is started, the following function body must be wrapped in
+		## if sleep() is called or a new webworker is started, the following function body must be wrapped in
 		## a closure callback and called later by setTimeout 
-		timeouts = 0
+		timeouts = []
+		continues = []
 		for b in node.body:
 
 			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call): 
 				if isinstance(b.value.func, ast.Attribute) and isinstance(b.value.func.value, Name) and b.value.func.value.id == 'threading':
 					if b.value.func.attr == 'start_new_thread':
 						self.visit(b)
-						writer.write('def __callback%s():' %timeouts)
+						writer.write('__run__ = True')
+						writer.write('def __callback%s():' %len(timeouts))
 						writer.push()
-						timeouts += 1
+						## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
+						timeouts.append(100)
 						continue
+
+			elif self._use_sleep:
+				c = b
+				if isinstance(b, ast.Expr):
+					b = b.value
+
+				if isinstance(b, ast.Call) and isinstance(b.func, ast.Name) and b.func.id == 'sleep':
+					writer.write('__run__ = True')
+					writer.write('def __callback%s():' %len(timeouts))
+					writer.push()
+					timeouts.append( self.visit(b.args[0]) )
+					continue
+
+				elif isinstance(b, ast.While):  ## TODO
+					for bb in b.body:
+						if isinstance(bb, ast.Call) and isinstance(bb.func, ast.Name) and bb.func.id == 'sleep':
+							writer.write('__run__ = False')
+							writer.write('def __callback%s():' %len(timeouts))
+							writer.push()
+							timeouts.append( self.visit(bb.func.args[0]) )
+							continues.append( 'if %s: __run__ = True' %self.visit(bb.test))  ## recursive
+							continue
+
+				b = c  ## replace orig b
 
 			self.visit(b)
 
-
-		for i in range(timeouts):
+		i = len(timeouts)-1
+		while timeouts:
 			writer.pull()
-			## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
-			writer.write('setTimeout(__callback%s, 100)' %i)
+			ms = timeouts.pop()
+			writer.write('if __run__: setTimeout(__callback%s, %s)' %(i, ms))
+			writer.write('elif __continue__: setTimeout(__continue%s, %s)' %(i, ms))
+			i -= 1
 
 		if self._return_type:       ## check if a return type was caught
 			if return_type:

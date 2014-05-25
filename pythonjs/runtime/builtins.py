@@ -1321,14 +1321,26 @@ with javascript:
 
 		worker.onmessage = func
 		jsargs = []
-		for arg in args:
+		for i,arg in enumerate(args):
 			if arg.jsify:
 				jsargs.append( arg.jsify() )
 			else:
 				jsargs.append( arg )
 
+
+			if instanceof(arg, Array):
+				__gen_worker_append(worker, arg, i)
+
 		worker.postMessage( {'type':'execute', 'args':jsargs} )
 		return worker
+
+
+	def __gen_worker_append(worker, ob, index):
+		def append(item):
+			print('posting to thread - append')
+			worker.postMessage( {'type':'append', 'argindex':index, 'value':item} )
+			ob.push( item )
+		Object.defineProperty(ob, "append", {'enumerable':False, 'value':append, 'writeable':True, 'configurable':True})
 
 	######## webworker client #########
 
