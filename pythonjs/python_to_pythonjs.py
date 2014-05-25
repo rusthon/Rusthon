@@ -2436,6 +2436,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		## a closure callback and called later by setTimeout 
 		timeouts = []
 		continues = []
+		after_while = False
 		for b in node.body:
 
 			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call): 
@@ -2448,6 +2449,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
 						timeouts.append(100)
 						continue
+
+			elif after_while:
+				after_while = False
+
 
 			elif self._use_sleep:
 				c = b
@@ -2462,14 +2467,58 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					continue
 
 				elif isinstance(b, ast.While):  ## TODO
+					has_sleep = False
 					for bb in b.body:
+						if isinstance(bb, ast.Expr):
+							bb = bb.value
 						if isinstance(bb, ast.Call) and isinstance(bb.func, ast.Name) and bb.func.id == 'sleep':
-							writer.write('__run__ = False')
-							writer.write('def __callback%s():' %len(timeouts))
-							writer.push()
-							timeouts.append( self.visit(bb.func.args[0]) )
-							continues.append( 'if %s: __run__ = True' %self.visit(bb.test))  ## recursive
+							has_sleep = float(self.visit(bb.args[0]))
+
+							#timeouts.append( self.visit(bb.args[0]) )
+							#continues.append( 'if %s: __run__ = True' %self.visit(b.test))  ## recursive
+							#continues.append( 'else: __run__ = False')
 							continue
+
+						else:
+							#e = self.visit(bb)
+							#if e: writer.write( e )
+							pass
+
+					if has_sleep > 0.0:
+
+						#writer.write('__run_while__ = True')
+						writer.write('__continue__ = True')
+						writer.write('def __while():')
+						writer.push()
+
+						for bb in b.body:
+							if isinstance(bb, ast.Expr):
+								bb = bb.value
+							if isinstance(bb, ast.Call) and isinstance(bb.func, ast.Name) and bb.func.id == 'sleep':
+								continue
+								#TODO - split body and generate new callback - now sleep is only valid at the end of the while loop
+
+							else:
+								e = self.visit(bb)
+								if e: writer.write( e )
+
+						writer.write( 'if %s: __run_while__ = True' %self.visit(b.test))
+						writer.write( 'else: __run_while__ = False')
+
+						writer.write('if __run_while__: setTimeout(__while, %s)' %has_sleep)
+						writer.write('elif __continue__: setTimeout(__callback%s, 50)' %len(timeouts))
+
+						writer.pull()
+
+						writer.write('setTimeout(__while, 1)')
+						writer.write('__run__ = True')
+						writer.write('def __callback%s():' %len(timeouts))
+						writer.push()
+						timeouts.append(None)
+						continue
+
+
+					continue
 
 				b = c  ## replace orig b
 
@@ -2477,10 +2526,19 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		i = len(timeouts)-1
 		while timeouts:
+			j = i
+			#if continues:
+			#	continue_else = continues.pop()
+			#	loop_if = continues.pop()
+			#	writer.write( loop_if )
+			#	writer.write( continue_else )
+			#	j -= 1
+
 			writer.pull()
 			ms = timeouts.pop()
-			writer.write('if __run__: setTimeout(__callback%s, %s)' %(i, ms))
-			writer.write('elif __continue__: setTimeout(__continue%s, %s)' %(i, ms))
+			if ms is not None:
+				writer.write('if __run__: setTimeout(__callback%s, %s)' %(j, ms))
+				writer.write('elif __continue__: setTimeout(__callback%s, %s)' %(j+1, ms))
 			i -= 1
 
 		if self._return_type:       ## check if a return type was caught
