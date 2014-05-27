@@ -294,7 +294,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         return ''
     else:
 
-        if multioutput:
+        if multioutput or (stdout.startswith("{") and stdout.endswith("}")):
             d = json.loads( stdout )
             stdout = d.pop('main')
             builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
@@ -513,7 +513,7 @@ def run_test_on(filename):
     js = translate_js(
         filename, 
         javascript=False, 
-        multioutput=filename.startswith('./threads/')
+        multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker'))
     )
     if rhino_runnable:
         display(run_pythonjs_test_on)
@@ -521,7 +521,7 @@ def run_test_on(filename):
         display(run_pythonjs_test_on_node)
 
     if '--no-javascript-mode' not in sys.argv:
-        js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/'))
+        js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
         if rhino_runnable:
             display(run_pythonjsjs_test_on)
         if node_runnable:

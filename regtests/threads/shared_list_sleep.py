@@ -14,9 +14,11 @@ def webworker(a):
 @webworker( 'xxx.js' )
 def mythread(a,b):
 	print('------enter thread------')
-	for i in range(10):
+	i = 0
+	while i < 10:
 		a.append('o')
-		#sleep(0.01)
+		i += 1
+		#sleep(0.1)
 	
 	print(a)
 	print('thread exit-------')
@@ -33,7 +35,12 @@ def main():
 	while i < 10:
 		shared1.append('x')
 		i += 1
-		sleep(0.01)
+		sleep(0.2)
+
+	while len(shared1) != 20:
+		print(shared1)
+		shared1.append('0')
+		sleep(0.1)
 
 	TestError( len(shared1) == 20 )
 	print('_____')

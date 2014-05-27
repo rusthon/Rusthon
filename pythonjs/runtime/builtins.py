@@ -73,6 +73,8 @@ with javascript:
 			raise TypeError
 		elif ob.__contains__:
 			return ob.__contains__(a)
+		elif instanceof(ob, Object) and Object.hasOwnProperty.call(ob, a):
+			return True
 		else:
 			return False
 
@@ -890,8 +892,10 @@ class dict:
 		for key in keys:
 			value = self[...][key]
 			if typeof(value) == 'object':
-				if value.jsify:
+				if hasattr(value, 'jsify'):
 					self[...][key] = value.jsify()
+			elif typeof(value) == 'function':
+				raise RuntimeError("can not jsify function")
 		return self[...]
 
 	def copy(self):
@@ -1288,27 +1292,24 @@ with javascript:
 		'loads': lambda s: JSON.parse(s),
 		'dumps': lambda o: JSON.stringify(o)
 	}
-	threading = {
-		'shared_list' : []
-	}
+	threading = {}
 
 
 	def __start_new_thread(f, args):
 		worker = new(Worker(f))
-		numargs = len(args)
 
 		def func(event):
-			print('got signal from thread')
-			print(event.data)
+			#print('got signal from thread')
+			#print(event.data)
 			if event.data.type == 'terminate':
 				worker.terminate()
 			elif event.data.type == 'append':
-				print('got append event')
+				#print('got append event')
 				a = args[ event.data.argindex ]
 				a.push( event.data.value )
 
 			elif event.data.type == '__setitem__':
-				print('got __setitem__ event')
+				#print('got __setitem__ event')
 				a = args[ event.data.argindex ]
 				value = event.data.value
 				if a.__setitem__:
@@ -1337,7 +1338,7 @@ with javascript:
 
 	def __gen_worker_append(worker, ob, index):
 		def append(item):
-			print('posting to thread - append')
+			#print('posting to thread - append')
 			worker.postMessage( {'type':'append', 'argindex':index, 'value':item} )
 			ob.push( item )
 		Object.defineProperty(ob, "append", {'enumerable':False, 'value':append, 'writeable':True, 'configurable':True})
@@ -1349,24 +1350,25 @@ with javascript:
 			#ob.__argindex__ = argindex
 
 			def func(index, item):
-				print('posting to parent setitem')
+				#print('posting to parent setitem')
 				postMessage({'type':'__setitem__', 'index':index, 'value':item, 'argindex':argindex})
 				Array.prototype.__setitem__.call(ob, index, item)
 			Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
+			#ob.__setitem__ =func
 
 			def func(item):
-				print('posting to parent append')
+				#print('posting to parent append')
 				postMessage({'type':'append', 'value':item, 'argindex':argindex})
 				Array.prototype.push.call(ob, item)
 			Object.defineProperty(ob, "append", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
-
+			#ob.append = func
 		elif typeof(ob) == 'object':
-			setitem = ob.__setitem__
 			def func(key, item):
-				print('posting to parent setitem object')
+				#print('posting to parent setitem object')
 				postMessage({'type':'__setitem__', 'index':key, 'value':item, 'argindex':argindex})
 				ob[ key ] = item
 			ob.__setitem__ = func
+			#Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
 
 		return ob
 

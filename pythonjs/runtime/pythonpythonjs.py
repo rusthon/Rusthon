@@ -346,6 +346,12 @@ def __get__(object, attribute, error_message):
 		wrapper.is_wrapper = True
 		return wrapper
 
+	if attribute == '__contains__' and instanceof(object, Object):
+		def wrapper(args, kwargs): return (Object.keys( object )).indexOf( args[0] ) != -1
+		wrapper.is_wrapper = True
+		return wrapper
+
+
 	if attr is undefined:
 		if error_message:
 			raise AttributeError(error_message)

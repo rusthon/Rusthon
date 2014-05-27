@@ -135,6 +135,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._use_threading = False
 		self._use_sleep = False
 		self._webworker_functions = dict()
+		self._with_webworker = False
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1672,7 +1673,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		name = self.visit(node.func)
 		if self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
-			if node.func.attr == 'start_new_thread':
+			if node.func.attr == 'start_new_thread' or node.func.attr == '_start_new_thread':
+				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
+			elif node.func.attr == 'start_webworker':
 				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
 			else:
 				raise SyntaxError(node.func.attr)
@@ -2120,7 +2123,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		log('function: %s'%node.name)
 
 		is_worker_entry = False
-		threaded = False
 		property_decorator = None
 		decorators = []
 		with_js_decorators = []
@@ -2130,6 +2132,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		fastdef = False
 		javascript = False
 		inline = False
+		threaded = self._with_webworker
+		jsfile = None
+
+
+		## deprecated?
 		self._cached_property = None
 		self._func_typedefs = {}
 
@@ -2147,25 +2154,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					threaded = True
 					assert len(decorator.args) == 1
 					jsfile = decorator.args[0].s
-					writer_main.write('%s = "%s"' %(node.name, jsfile))
-					self._webworker_functions[ node.name ] = jsfile
-
-					writer = get_webworker_writer( jsfile )
-					if writer.output.len == 0:
-						is_worker_entry = True
-						## TODO: two-way list and dict sync
-						writer.write('__wargs__ = []')
-						writer.write('def onmessage(e):')
-						writer.push()
-						writer.write(  'print("worker got message from parent")' )
-						writer.write(  'print(e.data)' )
-						writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
-						writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
-
-						writer.write(  'print(__wargs__)' )
-
-						writer.pull()
-						writer.write('self.onmessage = onmessage' )
 
 
 			elif self._with_dart:
@@ -2229,6 +2217,30 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			else:
 				decorators.append( decorator )
+
+
+		if threaded:
+			if not jsfile: jsfile = 'worker.js'
+			writer_main.write('%s = "%s"' %(node.name, jsfile))
+			self._webworker_functions[ node.name ] = jsfile
+
+			writer = get_webworker_writer( jsfile )
+			if writer.output.len == 0:
+				is_worker_entry = True
+				## TODO: two-way list and dict sync
+				writer.write('__wargs__ = []')
+				writer.write('def onmessage(e):')
+				writer.push()
+				writer.write(  'print("worker got message from parent")' )
+				writer.write(  'print(e.data)' )
+				writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
+				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
+
+				writer.write(  'print(__wargs__)' )
+
+				writer.pull()
+				writer.write('self.onmessage = onmessage' )
+
 
 		if self._with_dart:
 			## dart supports optional positional params [x=1, y=2], or optional named {x:1, y:2}
@@ -2435,8 +2447,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		## if sleep() is called or a new webworker is started, the following function body must be wrapped in
 		## a closure callback and called later by setTimeout 
 		timeouts = []
-		continues = []
-		after_while = False
+		#continues = []
 		for b in node.body:
 
 			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call): 
@@ -2447,12 +2458,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						writer.write('def __callback%s():' %len(timeouts))
 						writer.push()
 						## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
-						timeouts.append(100)
+						timeouts.append(0.2)
 						continue
-
-			elif after_while:
-				after_while = False
-
+					elif b.value.func.attr == 'start_webworker':
+						self.visit(b)
+						writer.write('__run__ = True')
+						writer.write('def __callback%s():' %len(timeouts))
+						writer.push()
+						## workerjs for nodejs requires at least 100ms to initalize onmessage/postMessage
+						timeouts.append(0.2)
+						continue
 
 			elif self._use_sleep:
 				c = b
@@ -2473,16 +2488,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 							bb = bb.value
 						if isinstance(bb, ast.Call) and isinstance(bb.func, ast.Name) and bb.func.id == 'sleep':
 							has_sleep = float(self.visit(bb.args[0]))
-
-							#timeouts.append( self.visit(bb.args[0]) )
-							#continues.append( 'if %s: __run__ = True' %self.visit(b.test))  ## recursive
-							#continues.append( 'else: __run__ = False')
-							continue
-
-						else:
-							#e = self.visit(bb)
-							#if e: writer.write( e )
-							pass
 
 					if has_sleep > 0.0:
 
@@ -2505,18 +2510,20 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						writer.write( 'if %s: __run_while__ = True' %self.visit(b.test))
 						writer.write( 'else: __run_while__ = False')
 
-						writer.write('if __run_while__: setTimeout(__while, %s)' %has_sleep)
-						writer.write('elif __continue__: setTimeout(__callback%s, 50)' %len(timeouts))
+						writer.write('if __run_while__: setTimeout(__while, %s)' %(has_sleep))
+						writer.write('elif __continue__: setTimeout(__callback%s, 0)' %len(timeouts))
 
 						writer.pull()
 
-						writer.write('setTimeout(__while, 1)')
+						writer.write('setTimeout(__while, 0)')
 						writer.write('__run__ = True')
 						writer.write('def __callback%s():' %len(timeouts))
 						writer.push()
 						timeouts.append(None)
 						continue
 
+					else:
+						self.visit(b)
 
 					continue
 
@@ -2526,19 +2533,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		i = len(timeouts)-1
 		while timeouts:
-			j = i
-			#if continues:
-			#	continue_else = continues.pop()
-			#	loop_if = continues.pop()
-			#	writer.write( loop_if )
-			#	writer.write( continue_else )
-			#	j -= 1
-
 			writer.pull()
 			ms = timeouts.pop()
 			if ms is not None:
-				writer.write('if __run__: setTimeout(__callback%s, %s)' %(j, ms))
-				writer.write('elif __continue__: setTimeout(__callback%s, %s)' %(j+1, ms))
+				ms = float(ms)
+				ms *= 1000
+				writer.write('if __run__: setTimeout(__callback%s, %s)' %(i, ms))
+				writer.write('elif __continue__: setTimeout(__callback%s, %s)' %(i+1, ms))
 			i -= 1
 
 		if self._return_type:       ## check if a return type was caught
@@ -2905,7 +2906,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.pull()
 
 	def visit_With(self, node):
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'webworker':
+			self._with_webworker = True
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			self._with_webworker = False
+
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
 			writer.write('with inline:')
 			writer.push()
 			for b in node.body:
