@@ -13,23 +13,28 @@ def main():
 		pythonjs.configure( direct_operator='+' )
 		pass
 	else:
-		l = lambda f,a,name=None: threading._start_new_thread(f,a)
+		def l (f,a): threading._start_new_thread(f,a)
 		threading.start_webworker = l
 
 	start = time()
-	n = 600
+	n = 2000
 	seq = []
-	cache = {}
+	#cache = {0:True, 1:True, 2:True, 3:True}
+	cache = []
 
 	#w = worker(n,seq, cache)
 	w1 = threading.start_webworker( worker, (0, n, seq, cache) )
-	w2 = threading.start_webworker( worker, (1, n, seq, cache) )
+	w2 = threading.start_webworker( worker, (10, n, seq, cache) )
+	#w3 = threading.start_webworker( worker, (400, n, seq, cache) )
 	sleep(1.0)
 
-	print(time()-start)
-	print(len(seq))
-	#seq.sort()
-	print(seq)
+	testtime = time()-start
+	primes_per_sec = len(seq) * (1.0 / testtime)
+
+	#print('#%s' %len(seq))
+	#seq.sort()  ## TODO fix sort for numbers
+	print(primes_per_sec)
+	print('#total test time: %s' %testtime)
 	print('-----main exit')
 
 if PYTHON != 'PYTHONJS':
@@ -43,15 +48,13 @@ with webworker:
 		print('------enter worker------')
 		for i in range(start, end):
 			if i in cache:
-				continue
+				#continue  ## TODO - fix continue
+				pass
 			else:
-				cache[i] = None  ## prevent other worker from doing same job
+				cache.append( i )
 				if is_prime(i):
 					seq.append( i )
-					cache[i] = True
-				else:
-					cache[i] = False
-		print('worker exit-------')
+		print('#worker reached: %s' %i)
 
 	def is_prime(n):
 		hits = 0

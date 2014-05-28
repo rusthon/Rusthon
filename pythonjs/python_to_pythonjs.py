@@ -2231,8 +2231,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('__wargs__ = []')
 				writer.write('def onmessage(e):')
 				writer.push()
-				writer.write(  'print("worker got message from parent")' )
-				writer.write(  'print(e.data)' )
 				writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
 				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
 
@@ -2273,8 +2271,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		elif self._with_js or javascript or self._with_ll:# or self._with_coffee:
 			if node.args.vararg:
-				raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
-			
+				#raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
+				writer.write('#WARNING - NOT IMPLEMENTED: javascript-mode functions with (*args)')
 			kwargs_name = node.args.kwarg or '_kwargs_'
 
 			args = []
@@ -2432,11 +2430,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		################# function body #################
 
 
-		if threaded:
+		if threaded and is_worker_entry:
 			for i,arg in enumerate(node.args.args):
 				writer.write( '%s = __webworker_wrap(%s, %s)' %(arg.id, arg.id, i))
-				if is_worker_entry:
-					writer.write('__wargs__.push(%s)'%arg.id)
+				writer.write('__wargs__.push(%s)'%arg.id)
 
 		#if self._cached_property:  ## DEPRECATED
 		#	writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))

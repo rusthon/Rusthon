@@ -1353,6 +1353,8 @@ with javascript:
 				#print('posting to parent setitem')
 				postMessage({'type':'__setitem__', 'index':index, 'value':item, 'argindex':argindex})
 				Array.prototype.__setitem__.call(ob, index, item)
+
+			## this can raise RangeError recursive overflow if the worker entry point is a recursive function
 			Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
 			#ob.__setitem__ =func
 
@@ -1367,8 +1369,8 @@ with javascript:
 				#print('posting to parent setitem object')
 				postMessage({'type':'__setitem__', 'index':key, 'value':item, 'argindex':argindex})
 				ob[ key ] = item
-			ob.__setitem__ = func
-			#Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
+			#ob.__setitem__ = func
+			Object.defineProperty(ob, "__setitem__", {"enumerable":False, "value":func, "writeable":True, "configurable":True})
 
 		return ob
 
