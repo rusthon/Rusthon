@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Tue May 27 08:24:04 2014
+// PythonJS Runtime - regenerated on: Tue May 27 18:23:04 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3599,7 +3599,7 @@ __webworker_wrap = function(ob, argindex) {
       func.args_signature = ["key", "item"];
       func.kwargs_signature = {  };
       func.types_signature = {  };
-      ob.__setitem__ = func;
+      Object.defineProperty(ob, "__setitem__", __jsdict([["enumerable", false], ["value", func], ["writeable", true], ["configurable", true]]));
     }
   }
   return ob;

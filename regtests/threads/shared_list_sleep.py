@@ -37,7 +37,7 @@ def main():
 		i += 1
 		sleep(0.2)
 
-	while len(shared1) != 20:
+	while len(shared1) <= 20:
 		print(shared1)
 		shared1.append('0')
 		sleep(0.1)
