@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Tue May 27 18:23:04 2014
+// PythonJS Runtime - regenerated on: Wed May 28 15:59:59 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3491,10 +3491,41 @@ __lambda__.args_signature = ["o"];
 __lambda__.kwargs_signature = {  };
 __lambda__.types_signature = {  };
 json = __jsdict([["loads", null], ["dumps", null]]);
-threading = __jsdict([]);
+__get_other_workers_with_shared_arg = function(worker, ob) {
+  var a, other, args;
+  a = [];
+    var __iter21 = threading.workers;
+  if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
+  for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
+    var b = __iter21[ __idx21 ];
+    other = b[(("worker".__uid__) ? "worker".__uid__ : "worker")];
+    args = b[(("args".__uid__) ? "args".__uid__ : "args")];
+    if (( other ) !== worker) {
+            var __iter22 = args;
+      if (! (__iter22 instanceof Array || typeof __iter22 == "string") ) { __iter22 = __object_keys__(__iter22) }
+      for (var __idx22=0; __idx22 < __iter22.length; __idx22++) {
+        var arg = __iter22[ __idx22 ];
+        if (( arg ) === ob) {
+          if (! (__contains__(a, other))) {
+            a.append(other);
+          }
+        }
+      }
+    }
+  }
+  return a;
+}
+
+__get_other_workers_with_shared_arg.NAME = "__get_other_workers_with_shared_arg";
+__get_other_workers_with_shared_arg.args_signature = ["worker", "ob"];
+__get_other_workers_with_shared_arg.kwargs_signature = {  };
+__get_other_workers_with_shared_arg.types_signature = {  };
+threading = __jsdict([["workers", []]]);
 __start_new_thread = function(f, args) {
   var jsargs, worker;
   worker =  new Worker(f);
+  worker.__uid__ = len(threading.workers);
+  threading.workers.append(__jsdict([["worker", worker], ["args", args]]));
     var func = function(event) {
     var a, value;
     if (( event.data.type ) == "terminate") {
@@ -3503,6 +3534,12 @@ __start_new_thread = function(f, args) {
       if (( event.data.type ) == "append") {
         a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
         a.push(event.data.value);
+                var __iter23 = __get_other_workers_with_shared_arg(worker, a);
+        if (! (__iter23 instanceof Array || typeof __iter23 == "string") ) { __iter23 = __object_keys__(__iter23) }
+        for (var __idx23=0; __idx23 < __iter23.length; __idx23++) {
+          var other = __iter23[ __idx23 ];
+          other.postMessage(__jsdict([["type", "append"], ["argindex", event.data.argindex], ["value", event.data.value]]));
+        }
       } else {
         if (( event.data.type ) == "__setitem__") {
           a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
@@ -3527,10 +3564,10 @@ __start_new_thread = function(f, args) {
   jsargs = [];
   var i;
   i = 0;
-    var __iter21 = args;
-  if (! (__iter21 instanceof Array || typeof __iter21 == "string") ) { __iter21 = __object_keys__(__iter21) }
-  for (var __idx21=0; __idx21 < __iter21.length; __idx21++) {
-    var arg = __iter21[ __idx21 ];
+    var __iter24 = args;
+  if (! (__iter24 instanceof Array || typeof __iter24 == "string") ) { __iter24 = __object_keys__(__iter24) }
+  for (var __idx24=0; __idx24 < __iter24.length; __idx24++) {
+    var arg = __iter24[ __idx24 ];
     if (__test_if_true__(arg.jsify)) {
       jsargs.append(arg.jsify());
     } else {

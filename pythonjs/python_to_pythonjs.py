@@ -297,8 +297,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for alias in node.names:
 			if alias.name == 'threading':
 				self._use_threading = True
-				writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
-				#writer.write( 'Worker = require("workerjs")')
+				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
+				writer.write( 'Worker = require("workerjs")')
 
 			else:
 				#writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )

@@ -1292,11 +1292,25 @@ with javascript:
 		'loads': lambda s: JSON.parse(s),
 		'dumps': lambda o: JSON.stringify(o)
 	}
-	threading = {}
+	def __get_other_workers_with_shared_arg( worker, ob ):
+		a = []
+		for b in threading.workers:
+			other = b['worker']
+			args = b['args']
+			if other is not worker:
+				for arg in args:
+					if arg is ob:
+						if other not in a:
+							a.append( other )
+		return a
+
+	threading = {'workers': [] }
 
 
 	def __start_new_thread(f, args):
 		worker = new(Worker(f))
+		worker.__uid__ = len( threading.workers )
+		threading.workers.append( {'worker':worker,'args':args} )
 
 		def func(event):
 			#print('got signal from thread')
@@ -1307,6 +1321,8 @@ with javascript:
 				#print('got append event')
 				a = args[ event.data.argindex ]
 				a.push( event.data.value )
+				for other in __get_other_workers_with_shared_arg(worker, a):
+					other.postMessage( {'type':'append', 'argindex':event.data.argindex, 'value':event.data.value} )
 
 			elif event.data.type == '__setitem__':
 				#print('got __setitem__ event')
