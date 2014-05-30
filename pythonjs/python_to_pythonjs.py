@@ -2233,8 +2233,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.push()
 				writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
 				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
-
-				writer.write(  'print(__wargs__)' )
+				writer.write(  'elif e.data.type=="__setitem__": __wargs__[ e.data.argindex ][e.data.key] = e.data.value' )
+				#writer.push()
+				#writer.write(		'if instanceof(__wargs__[e.data.argindex], Array): __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
+				#writer.write(		'else: __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
+				#writer.pull()
 
 				writer.pull()
 				writer.write('self.onmessage = onmessage' )
@@ -2487,7 +2490,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 							has_sleep = float(self.visit(bb.args[0]))
 
 					if has_sleep > 0.0:
-
+						has_sleep = int(has_sleep*1000)
 						#writer.write('__run_while__ = True')
 						writer.write('__continue__ = True')
 						writer.write('def __while():')

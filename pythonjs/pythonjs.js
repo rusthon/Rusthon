@@ -1,4 +1,4 @@
-// PythonJS Runtime - regenerated on: Wed May 28 15:59:59 2014
+// PythonJS Runtime - regenerated on: Thu May 29 18:36:16 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
@@ -3549,6 +3549,12 @@ __start_new_thread = function(f, args) {
           } else {
             a[((event.data.index.__uid__) ? event.data.index.__uid__ : event.data.index)] = value;
           }
+                    var __iter24 = __get_other_workers_with_shared_arg(worker, a);
+          if (! (__iter24 instanceof Array || typeof __iter24 == "string") ) { __iter24 = __object_keys__(__iter24) }
+          for (var __idx24=0; __idx24 < __iter24.length; __idx24++) {
+            var other = __iter24[ __idx24 ];
+            other.postMessage(__jsdict([["type", "__setitem__"], ["argindex", event.data.argindex], ["key", event.data.index], ["value", event.data.value]]));
+          }
         } else {
           throw new RuntimeError("unknown event");
         }
@@ -3564,10 +3570,10 @@ __start_new_thread = function(f, args) {
   jsargs = [];
   var i;
   i = 0;
-    var __iter24 = args;
-  if (! (__iter24 instanceof Array || typeof __iter24 == "string") ) { __iter24 = __object_keys__(__iter24) }
-  for (var __idx24=0; __idx24 < __iter24.length; __idx24++) {
-    var arg = __iter24[ __idx24 ];
+    var __iter25 = args;
+  if (! (__iter25 instanceof Array || typeof __iter25 == "string") ) { __iter25 = __object_keys__(__iter25) }
+  for (var __idx25=0; __idx25 < __iter25.length; __idx25++) {
+    var arg = __iter25[ __idx25 ];
     if (__test_if_true__(arg.jsify)) {
       jsargs.append(arg.jsify());
     } else {

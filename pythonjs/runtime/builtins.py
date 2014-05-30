@@ -1333,6 +1333,11 @@ with javascript:
 				else:
 					a[event.data.index] = value
 
+				for other in __get_other_workers_with_shared_arg(worker, a):
+					#print('relay __setitem__')
+					other.postMessage( {'type':'__setitem__', 'argindex':event.data.argindex, 'key':event.data.index, 'value':event.data.value} )
+
+
 			else:
 				raise RuntimeError('unknown event')
 
