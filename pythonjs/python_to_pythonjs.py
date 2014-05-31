@@ -372,7 +372,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		a = []
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
-			v = self.visit( node.values[i] )
+			v = node.values[i]
+			if isinstance(v, ast.Lambda):
+				v.keep_as_lambda = True
+			v = self.visit( v )
 			if self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
 			elif self._with_dart or self._with_ll:

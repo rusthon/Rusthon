@@ -21,3 +21,6 @@ def main():
 	funcs = [lambda a,b: a+b, lambda x,y: x+y]
 	TestError( funcs[0](1,2) == 3 )
 	TestError( funcs[1](1,2) == 3 )
+
+	d = { 'x':lambda a,b: a+b }
+	TestError( d['x'](1,2) == 3 )

@@ -3474,23 +3474,7 @@ __array_to_ascii.types_signature = {  };
 __array_to_ascii.pythonscript_function = true;
 __array_attrs.to_ascii = __array_to_ascii;
 array = __create_class__("array", __array_parents, __array_attrs, __array_properties);
-__lambda__ = function(s) {
-  return JSON.parse(s);
-}
-
-__lambda__.NAME = "__lambda__";
-__lambda__.args_signature = ["s"];
-__lambda__.kwargs_signature = {  };
-__lambda__.types_signature = {  };
-__lambda__ = function(o) {
-  return JSON.stringify(o);
-}
-
-__lambda__.NAME = "__lambda__";
-__lambda__.args_signature = ["o"];
-__lambda__.kwargs_signature = {  };
-__lambda__.types_signature = {  };
-json = __jsdict([["loads", null], ["dumps", null]]);
+json = __jsdict([["loads", (function (s) {return JSON.parse(s)})], ["dumps", (function (o) {return JSON.stringify(o)})]]);
 __get_other_workers_with_shared_arg = function(worker, ob) {
   var a, other, args;
   a = [];
