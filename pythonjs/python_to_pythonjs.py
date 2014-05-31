@@ -404,7 +404,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
-		a = '[%s]' % ', '.join(map(self.visit, node.elts))
+
+		a = []
+		for e in node.elts:
+			if isinstance(e, ast.Lambda):  ## inlined and called lambda "(lambda x: x)(y)"
+				e.keep_as_lambda = True
+			v = self.visit(e)
+			assert v is not None
+			a.append( v )
+
+		a = '[%s]' % ', '.join(a)
 		if self._with_ll:
 			pass
 		elif self._with_lua:
