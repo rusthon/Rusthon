@@ -294,16 +294,19 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         return ''
     else:
 
+        #jsheader = 'if (typeof(process) != "undefined") { var requirejs = require("requirejs"); }'
+        jsheader = ''
+
         if multioutput or (stdout.startswith("{") and stdout.endswith("}")):
             d = json.loads( stdout )
             stdout = d.pop('main')
-            builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
+            #builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
             for jsfile in d:
                 if not jsfile.startswith('/'):
                     stdout = stdout.replace('"%s"' %jsfile, '"/tmp/%s"' %jsfile)
                 write(
                     os.path.join('/tmp', jsfile), 
-                    '\n'.join( [builtins, d[jsfile]] ) 
+                    '\n'.join( [jsheader, d[jsfile]] ) 
                 )
 
         if dart:
@@ -367,7 +370,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
             return open( lua2js_output, 'rb' ).read().decode('utf-8')
 
         else:
-            return stdout
+            return '\n'.join( [jsheader, stdout] )
 
 def run_if_no_error(function):
     """Run the function if the JS code is not empty"""
@@ -412,11 +415,8 @@ def run_pythonjsjs_test_on_node(filename):
 
 def run_js_node(content):
     """Run Javascript using Node"""
-    builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
-    write("%s.js" % tmpname,
-          builtins.replace('console.log(process.title);','')  ## no longer required
-          .replace('console.log(process.version);','')
-          + content)
+    #builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
+    write("%s.js" % tmpname, content)
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_dart_test_on_node(dummy_filename):
@@ -434,8 +434,8 @@ def run_pythonjs_coffee_test_on_node(dummy_filename):
 
 def run_coffee_node(content):
     """Run CoffeeScript using Node"""
-    builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
-    write("%s.js" % tmpname, builtins + '\n' + content)
+    #builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
+    write("%s.js" % tmpname, content)
     return run_command("node %s.js" % tmpname)
 
 

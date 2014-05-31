@@ -13,7 +13,8 @@
 		"python"
 	],
 	"dependencies": {
-		"workerjs": "*"
+		"workerjs": "*",
+		"requirejs": "*"
 	},
 	"engines": {
 		"node": "*"

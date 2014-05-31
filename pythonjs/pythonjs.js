@@ -1,11 +1,10 @@
-// PythonJS Runtime - regenerated on: Thu May 29 18:36:16 2014
 __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
   __NODEJS__ = false;
   pythonjs = {  };
 } else {
-  if (( "process" )  in  this) {
+  if (( typeof(process) ) != "undefined") {
     __WEBWORKER__ = false;
     __NODEJS__ = true;
   } else {
@@ -482,6 +481,7 @@ __getargs__ = function(func_name, signature, args, kwargs) {
   }
   return out;
 }
+
 try {
 /*pass*/
 } catch(__exception__) {

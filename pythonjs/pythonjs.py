@@ -4,7 +4,7 @@
 # License: "New BSD"
 
 
-import sys
+import os, sys
 from types import GeneratorType
 
 import ast
@@ -19,34 +19,79 @@ from ast import NodeVisitor
 #import code_writer
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self):
+	def __init__(self, requirejs=True, insert_runtime=True):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
 		self._indent = 0
 		self._global_functions = {}
 		self._function_stack = []
+		self._requirejs = requirejs
+		self._insert_runtime = insert_runtime
+		self._exports = set()
 
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
 	def pull(self):
 		if self._indent > 0: self._indent -= 1
 
-	def visit_In(self, node):
-		return ' in '
+
+	def visit_Assign(self, node):
+		# XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
+		target = node.targets[0]
+		if isinstance(target, Tuple):
+			raise NotImplementedError
+		else:
+			target = self.visit(target)
+			value = self.visit(node.value)
+			code = '%s = %s;' % (target, value)
+			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
+				self._exports.add( target )
+			return code
 
 	def visit_AugAssign(self, node):
 		a = '%s %s= %s;' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
 		return a
 
 	def visit_Module(self, node):
-		lines = []
+		if self._requirejs:
+			lines = [
+				'define( function(){',
+				'__module__ = {}'
+			]
+		else:
+			lines = []
+
+		if self._insert_runtime:
+			dirname = os.path.dirname(os.path.abspath(__file__))
+			runtime = open( os.path.join(dirname, 'pythonjs.js') ).read()
+			lines.append( runtime.replace('\n', ';') )
+
 		for b in node.body:
 			line = self.visit(b)
 			if line: lines.append( line )
 			else:
 				#raise b
 				pass
+
+		if self._requirejs:
+			for name in self._exports:
+				lines.append( '__module__.%s = %s' %(name,name))
+
+			lines.append( 'return __module__')
+			lines.append('}) //end requirejs define')
+
 		return '\n'.join(lines)
+
+	def visit_Expr(self, node):
+		# XXX: this is UGLY
+		s = self.visit(node.value)
+		if not s.endswith(';'):
+			s += ';'
+		return s
+
+
+	def visit_In(self, node):
+		return ' in '
 
 	def visit_Tuple(self, node):
 		return '[%s]' % ', '.join(map(self.visit, node.elts))
@@ -108,6 +153,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if node == self._function_stack[0]:  ## could do something special here with global function
 			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
 			self._global_functions[ node.name ] = node
+			if self._requirejs and node.name not in self._exports:
+				self._exports.add( node.name )
 
 		self._function_stack.pop()
 		return buffer
@@ -403,25 +450,6 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_BitAnd(self, node):
 		return '&'
 
-
-	def visit_Assign(self, node):
-		# XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
-		target = node.targets[0]
-		if isinstance(target, Tuple):
-			raise NotImplementedError
-		else:
-			target = self.visit(target)
-			value = self.visit(node.value)
-			code = '%s = %s;' % (target, value)
-			return code
-
-	def visit_Expr(self, node):
-		# XXX: this is UGLY
-		s = self.visit(node.value)
-		if not s.endswith(';'):
-			s += ';'
-		return s
-
 	def visit_Return(self, node):
 		if isinstance(node.value, Tuple):
 			return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
@@ -580,9 +608,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Break(self, node):
 		return 'break;'
 
-def main(script):
+
+
+def generate_runtime():
+	from python_to_pythonjs import main as py2pyjs
+	lines = [
+		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False ), ## lowlevel pythonjs
+		main( py2pyjs(open('runtime/builtins.py', 'rb').read()), requirejs=False, insert_runtime=False )
+	]
+	return '\n'.join( lines )
+
+def main(script, requirejs=True, insert_runtime=True):
 	tree = ast.parse( script )
-	return JSGenerator().visit(tree)
+	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime ).visit(tree)
 
 
 def command():
@@ -605,4 +643,8 @@ def command():
 
 
 if __name__ == '__main__':
-	command()
+	if '--runtime' in sys.argv:
+		print('creating new runtime: pythonjs.js')
+		open('pythonjs.js', 'wb').write( generate_runtime() )
+	else:
+		command()

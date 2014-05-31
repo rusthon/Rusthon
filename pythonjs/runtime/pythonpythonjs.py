@@ -7,7 +7,7 @@ if 'window' in this and 'document' in this:
 	__WEBWORKER__ = False
 	__NODEJS__ = False
 	pythonjs = {}
-elif 'process' in this:
+elif typeof(process) != 'undefined':
 	## note, we can not test for '"process" in global'
 	## make sure we are really inside NodeJS by letting this fail, and halting the program.
 	__WEBWORKER__ = False
@@ -16,7 +16,8 @@ else:
 	__NODEJS__ = False
 	__WEBWORKER__ = True
 
-
+#if __NODEJS__:
+#	require('requirejs')
 
 def __create_array__():  ## DEPRECATED
 	"""Used to fix a bug/feature of Javascript where new Array(number)
