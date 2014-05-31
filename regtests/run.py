@@ -212,7 +212,7 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         code
     ]
 
-    if not dart:
+    if not dart and python != 'PYTHONJS':
         a.append( 'main()' )
 
     return '\n'.join( a )
@@ -416,7 +416,13 @@ def run_pythonjsjs_test_on_node(filename):
 def run_js_node(content):
     """Run Javascript using Node"""
     #builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
-    write("%s.js" % tmpname, content)
+    write("/tmp/mymodule.js", content)
+    lines = [
+        "var requirejs = require('requirejs')",
+        "var module = requirejs('mymodule')",
+        "module.main()"
+    ]
+    write("%s.js" % tmpname, '\n'.join(lines))
     return run_command("node %s.js" % tmpname)
 
 def run_pythonjs_dart_test_on_node(dummy_filename):

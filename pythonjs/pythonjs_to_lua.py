@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# PythonJS to CoffeeScript Translator
+# PythonJS to Lua Translator
 # by Brett Hartshorn - copyright 2014
 # License: "New BSD"
 import sys
@@ -28,8 +28,11 @@ def collect_names(node):
 
 
 class LuaGenerator( pythonjs.JSGenerator ):
-	_classes = dict()
-	_class_props = dict()
+
+	def __init__(self, requirejs=False, insert_runtime=False):
+		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
+		self._classes = dict()
+		self._class_props = dict()
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)

@@ -294,15 +294,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		raise NotImplementedError
 
 	def visit_Import(self, node):
+		'''
+		fallback to requirejs or if in webworker importScripts.
+		some special modules from pythons stdlib can be faked here like:
+			. threading
+
+		'''
 		for alias in node.names:
 			if alias.name == 'threading':
 				self._use_threading = True
 				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
-				writer.write( 'Worker = require("workerjs")')
+				writer.write( 'if __NODEJS__: Worker = require("workerjs")')
 
+			elif alias.asname:
+				writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
+
+			elif '.' in alias.name:
+				raise NotImplementedError('import with dot not yet supported: line %s' % node.lineno)
 			else:
-				#writer.write( '## import: %s :: %s' %(alias.name, alias.asname) )
-				raise NotImplementedError('import, line %s' % node.lineno)
+				writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.name, alias.name) )
 
 	def visit_ImportFrom(self, node):
 		if self._with_dart:

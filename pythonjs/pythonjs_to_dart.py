@@ -29,9 +29,12 @@ def collect_names(node):
 
 
 class DartGenerator( pythonjs.JSGenerator ):
-	_classes = dict()
-	_class_props = dict()
-	_raw_dict = False
+
+	def __init__(self, requirejs=False, insert_runtime=False):
+		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
+		self._classes = dict()
+		self._class_props = dict()
+		self._raw_dict = False
 
 	def visit_With(self, node):
 		s = []
