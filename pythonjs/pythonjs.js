@@ -2055,7 +2055,7 @@ len = function(args, kwargs) {
   }
   __args__ = __getargs__("len", __sig__, args, kwargs);
   var ob = __args__['ob'];
-  if (__test_if_true__(ob instanceof Array)) {
+  if (__test_if_true__(ob instanceof Array || ob instanceof Float32Array || ob instanceof ArrayBuffer)) {
     return ob.length;
   } else {
     if (__test_if_true__(ob instanceof Object)) {

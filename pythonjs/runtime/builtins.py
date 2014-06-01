@@ -743,7 +743,7 @@ class StopIteration:  ## DEPRECATED
 
 
 def len(ob):
-	if instanceof(ob, Array):
+	if instanceof(ob, Array) or instanceof(ob, Float32Array) or instanceof(ob, ArrayBuffer):
 		with javascript:
 			return ob.length
 	elif instanceof(ob, Object):

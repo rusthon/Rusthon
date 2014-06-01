@@ -509,11 +509,11 @@ def run_test_on(filename):
         if show_details:
             print('-'*77)
 
-        
-    display(run_python_test_on)
-    display(run_python3_test_on)
-    if pypy_runnable:
-        display(run_pypy_test_on)
+    if 'requirejs' not in filename:
+        display(run_python_test_on)
+        display(run_python3_test_on)
+        if pypy_runnable:
+            display(run_pypy_test_on)
 
     global js
     js = translate_js(
@@ -533,25 +533,27 @@ def run_test_on(filename):
         if node_runnable:
             display(run_pythonjsjs_test_on_node)
 
-    if dart2js_runnable and node_runnable:
-        js = translate_js(filename, javascript=False, dart=True)
-        display(run_pythonjs_dart_test_on_node)
+    if 'requirejs' not in filename:
 
-    if coffee_runnable and node_runnable:
-        js = translate_js(filename, javascript=False, dart=False, coffee=True)
-        display(run_pythonjs_coffee_test_on_node)
+        if dart2js_runnable and node_runnable:
+            js = translate_js(filename, javascript=False, dart=True)
+            display(run_pythonjs_dart_test_on_node)
 
-    if luajs_runnable and node_runnable:
-        js = translate_js(filename, luajs=True)
-        display(run_pythonjs_luajs_test_on_node)
+        if coffee_runnable and node_runnable:
+            js = translate_js(filename, javascript=False, dart=False, coffee=True)
+            display(run_pythonjs_coffee_test_on_node)
 
-    if lua_runnable:
-        js = translate_js(filename, lua=True)
-        display(run_pythonjs_lua_test_on_lua)
+        if luajs_runnable and node_runnable:
+            js = translate_js(filename, luajs=True)
+            display(run_pythonjs_luajs_test_on_node)
 
-    if luajit_runnable:
-        js = translate_js(filename, lua=True)
-        display(run_pythonjs_lua_test_on_luajit)
+        if lua_runnable:
+            js = translate_js(filename, lua=True)
+            display(run_pythonjs_lua_test_on_lua)
+
+        if luajit_runnable:
+            js = translate_js(filename, lua=True)
+            display(run_pythonjs_lua_test_on_luajit)
 
     print()
     return sum_errors
