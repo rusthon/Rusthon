@@ -301,7 +301,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		'''
 		for alias in node.names:
-			if alias.name == 'threading':
+			if alias.name == 'json':
+				pass  ## part of builtins.py
+			elif alias.name == 'threading':
 				self._use_threading = True
 				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
 				writer.write( 'if __NODEJS__: Worker = require("workerjs")')
