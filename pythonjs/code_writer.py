@@ -12,6 +12,7 @@ class Writer(object):
 		self.level = 0
 		self.buffer = list()
 		self.output = StringIO()
+		self.functions = []
 
 	def is_at_global_level(self):
 		return self.level == 0

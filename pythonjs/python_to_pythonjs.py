@@ -2144,7 +2144,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				GeneratorFunctionTransformer( node, compiler=self )
 				return
-		log('function: %s'%node.name)
+
+		writer.functions.append(node.name)
 
 		is_worker_entry = False
 		property_decorator = None
@@ -2249,7 +2250,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._webworker_functions[ node.name ] = jsfile
 
 			writer = get_webworker_writer( jsfile )
-			if writer.output.len == 0:
+			if len(writer.functions) == 1:
 				is_worker_entry = True
 				## TODO: two-way list and dict sync
 				writer.write('__wargs__ = []')
@@ -2930,12 +2931,20 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.pull()
 
 	def visit_With(self, node):
+		global writer
 		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'webworker':
 			self._with_webworker = True
+			writer = get_webworker_writer( 'worker.js' )
+
+			#writer.write('if typeof(process) != "undefined": requirejs = require("requirejs")')
+			writer.write('if typeof(process) != "undefined": requirejs = require')
+			writer.write('else: importScripts("require.js")')
+
 			for b in node.body:
 				a = self.visit(b)
 				if a: writer.write(a)
 			self._with_webworker = False
+			writer = writer_main
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
 			writer.write('with inline:')
