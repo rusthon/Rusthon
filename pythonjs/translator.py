@@ -42,7 +42,7 @@ def main(script):
             if isinstance(a, dict):
                 res = {}
                 for jsfile in a:
-                    res[ jsfile ] = pythonjs_to_javascript( a[jsfile] )
+                    res[ jsfile ] = pythonjs_to_javascript( a[jsfile], webworker=jsfile != 'main' )
                 return res
             else:
                 code = pythonjs_to_javascript( a )

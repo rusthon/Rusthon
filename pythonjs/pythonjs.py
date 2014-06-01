@@ -19,7 +19,7 @@ from ast import NodeVisitor
 #import code_writer
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True):
+	def __init__(self, requirejs=True, insert_runtime=True, webworker=False):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
 		self._indent = 0
@@ -27,6 +27,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._function_stack = []
 		self._requirejs = requirejs
 		self._insert_runtime = insert_runtime
+		self._webworker = webworker
 		self._exports = set()
 
 	def indent(self): return '  ' * self._indent
@@ -53,7 +54,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return a
 
 	def visit_Module(self, node):
-		if self._requirejs:
+		if self._requirejs and not self._webworker:
 			lines = [
 				'define( function(){',
 				'__module__ = {}'
@@ -73,7 +74,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				#raise b
 				pass
 
-		if self._requirejs:
+		if self._requirejs and not self._webworker:
 			for name in self._exports:
 				lines.append( '__module__.%s = %s' %(name,name))
 
@@ -618,9 +619,9 @@ def generate_runtime():
 	]
 	return '\n'.join( lines )
 
-def main(script, requirejs=True, insert_runtime=True):
+def main(script, requirejs=True, insert_runtime=True, webworker=False):
 	tree = ast.parse( script )
-	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime ).visit(tree)
+	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker ).visit(tree)
 
 
 def command():
