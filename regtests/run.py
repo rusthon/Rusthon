@@ -470,13 +470,22 @@ def run_pythonjsjs_test_on_nodewebkit(filename):
 
 def run_js_nodewebkit(content):
     """Run Javascript using NodeWebkit"""
+
+    ## there is likely a bug in requirejs and/or nodewebkit that prevents WebWorkers from working,
+    ## `workerjs` for node also seems like its incompatible with nodewebkit and requirejs,
+    ## as a quick workaround simply strip away the wrapper function from the javascript.
+    code = '\n'.join( content.strip().splitlines()[1:-2] )
+
+
     write("/tmp/package.json", '{"name":"test", "main":"test.html"}')
-    write("/tmp/mymodule.js", content)
+    #write("/tmp/mymodule.js", content)
     lines = [
         "var __nw = require('nw.gui')",
         "var requirejs = require('requirejs')",
-        "var module = requirejs('mymodule')",
-        "module.main()",
+        #"var module = requirejs('mymodule')",
+        #"module.main()",
+        code,
+        "main()",
         "__nw.App.quit()"
     ]
     write("/tmp/test.html", '<html><script>%s</script></html>' %'\n'.join(lines))

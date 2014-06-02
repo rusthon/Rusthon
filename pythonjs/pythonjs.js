@@ -3515,32 +3515,36 @@ __start_new_thread = function(f, args) {
     if (( event.data.type ) == "terminate") {
       worker.terminate();
     } else {
-      if (( event.data.type ) == "append") {
-        a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
-        a.push(event.data.value);
-                var __iter23 = __get_other_workers_with_shared_arg(worker, a);
-        if (! (__iter23 instanceof Array || typeof __iter23 == "string") ) { __iter23 = __object_keys__(__iter23) }
-        for (var __idx23=0; __idx23 < __iter23.length; __idx23++) {
-          var other = __iter23[ __idx23 ];
-          other.postMessage(__jsdict([["type", "append"], ["argindex", event.data.argindex], ["value", event.data.value]]));
-        }
+      if (( event.data.type ) == "call") {
+        __module__[((event.data.function.__uid__) ? event.data.function.__uid__ : event.data.function)].apply(null, event.data.args);
       } else {
-        if (( event.data.type ) == "__setitem__") {
+        if (( event.data.type ) == "append") {
           a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
-          value = event.data.value;
-          if (__test_if_true__(a.__setitem__)) {
-            a.__setitem__(event.data.index, value);
-          } else {
-            a[((event.data.index.__uid__) ? event.data.index.__uid__ : event.data.index)] = value;
-          }
-                    var __iter24 = __get_other_workers_with_shared_arg(worker, a);
-          if (! (__iter24 instanceof Array || typeof __iter24 == "string") ) { __iter24 = __object_keys__(__iter24) }
-          for (var __idx24=0; __idx24 < __iter24.length; __idx24++) {
-            var other = __iter24[ __idx24 ];
-            other.postMessage(__jsdict([["type", "__setitem__"], ["argindex", event.data.argindex], ["key", event.data.index], ["value", event.data.value]]));
+          a.push(event.data.value);
+                    var __iter23 = __get_other_workers_with_shared_arg(worker, a);
+          if (! (__iter23 instanceof Array || typeof __iter23 == "string") ) { __iter23 = __object_keys__(__iter23) }
+          for (var __idx23=0; __idx23 < __iter23.length; __idx23++) {
+            var other = __iter23[ __idx23 ];
+            other.postMessage(__jsdict([["type", "append"], ["argindex", event.data.argindex], ["value", event.data.value]]));
           }
         } else {
-          throw new RuntimeError("unknown event");
+          if (( event.data.type ) == "__setitem__") {
+            a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];
+            value = event.data.value;
+            if (__test_if_true__(a.__setitem__)) {
+              a.__setitem__(event.data.index, value);
+            } else {
+              a[((event.data.index.__uid__) ? event.data.index.__uid__ : event.data.index)] = value;
+            }
+                        var __iter24 = __get_other_workers_with_shared_arg(worker, a);
+            if (! (__iter24 instanceof Array || typeof __iter24 == "string") ) { __iter24 = __object_keys__(__iter24) }
+            for (var __idx24=0; __idx24 < __iter24.length; __idx24++) {
+              var other = __iter24[ __idx24 ];
+              other.postMessage(__jsdict([["type", "__setitem__"], ["argindex", event.data.argindex], ["key", event.data.index], ["value", event.data.value]]));
+            }
+          } else {
+            throw new RuntimeError("unknown event");
+          }
         }
       }
     }

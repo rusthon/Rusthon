@@ -1317,6 +1317,9 @@ with javascript:
 			#print(event.data)
 			if event.data.type == 'terminate':
 				worker.terminate()
+			elif event.data.type == 'call':
+				__module__[ event.data.function ].apply(null, event.data.args)
+
 			elif event.data.type == 'append':
 				#print('got append event')
 				a = args[ event.data.argindex ]

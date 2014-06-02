@@ -306,7 +306,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif alias.name == 'threading':
 				self._use_threading = True
 				#writer.write( 'Worker = require("/usr/local/lib/node_modules/workerjs")')
-				writer.write( 'if __NODEJS__: Worker = require("workerjs")')
+
+				## note: nodewebkit includes Worker, but only from the main script context,
+				## there might be a bug in requirejs or nodewebkit where Worker gets lost
+				## when code is loaded into main as a module using requirejs, as a workaround
+				## allow "workerjs" to be loaded as a fallback, however this appears to not work in nodewebkit.
+				writer.write( 'if __NODEJS__==True and typeof(Worker)=="undefined": Worker = require("workerjs")')
 
 			elif alias.asname:
 				writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
@@ -1704,6 +1709,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				raise SyntaxError(node.func.attr)
 
+		elif self._with_webworker and name in self._global_functions:
+			args = [self.visit(arg) for arg in node.args]
+			return 'self.postMessage({"type":"call", "function":"%s", "args":[%s]})' %(name, ','.join(args))
+
+		#########################################
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
@@ -2165,7 +2175,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._cached_property = None
 		self._func_typedefs = {}
 
-		if writer.is_at_global_level():
+		if writer.is_at_global_level() and not self._with_webworker:
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
@@ -2937,7 +2947,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer = get_webworker_writer( 'worker.js' )
 
 			#writer.write('if typeof(process) != "undefined": requirejs = require("requirejs")')
-			writer.write('if typeof(process) != "undefined": requirejs = require')
+			#writer.write('if typeof(process) != "undefined": requirejs = require')
+			writer.write('if typeof(require) != "undefined": requirejs = require')  ## compatible with nodewebkit
 			writer.write('else: importScripts("require.js")')
 
 			for b in node.body:
