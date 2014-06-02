@@ -48,6 +48,24 @@ def runnable(command):
 pypy_runnable = runnable( 'pypy --help' )
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 node_runnable = runnable("node --help")
+
+## sudo npm install nodewebkit -g
+## nodewebkit npm package is broken? https://github.com/shama/nodewebkit/issues/31
+#nodewebkit = '/usr/local/lib/node_modules/nodewebkit/bin/nodewebkit'
+
+## download https://github.com/rogerwang/node-webkit/releases/tag/nw-v0.9.2
+## and extract to your home directory.
+nodewebkit_runnable = False
+nodewebkit = os.path.expanduser('~/node-webkit-v0.9.2-linux-x64/nw')
+if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
+else:
+    nodewebkit = os.path.expanduser('~/node-webkit-v0.9.1-linux-x64/nw')
+    if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
+    else:
+        nodewebkit = os.path.expanduser('~/node-webkit-v0.8.4-linux-x64/nw')
+        if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
+
+
 #dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+
 dart2js = os.path.expanduser( '~/dart-sdk/bin/dart2js') # tested with dart 1.3
 
@@ -95,7 +113,7 @@ def write(filename, content):
     f.write(content)
     f.close()
 
-def run_command(command, returns_stdout_stderr=False):
+def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=False):
     """Returns the number of problems"""
     if os.path.isfile("%s.errors" % tmpname):
         os.unlink("%s.errors" % tmpname)
@@ -103,9 +121,25 @@ def run_command(command, returns_stdout_stderr=False):
     stdout = f.read().strip()
     f.close()
 
+
     stderr = read("%s.errors" % tmpname)
+
+
+    if nodewebkit_workaround:
+        stdout = stderr
+        stderr = ''
+        a = []
+        for line in stdout.splitlines():
+            if 'INFO:CONSOLE' in line:
+                start = line.index('"')
+                end = line.rindex('"')
+                a.append( line[start+1:end] )
+        stdout = '\n'.join(a)
+
+
     if stderr:
         if show_details:
+            print('TEST ERROR!')
             print(stderr)
             #sys.exit()
     if returns_stdout_stderr:
@@ -425,6 +459,34 @@ def run_js_node(content):
     write("%s.js" % tmpname, '\n'.join(lines))
     return run_command("node %s.js" % tmpname)
 
+
+def run_pythonjs_test_on_nodewebkit(dummy_filename):
+    """PythonJS (normal) - NodeWebkit"""
+    return run_if_no_error(run_js_nodewebkit)
+
+def run_pythonjsjs_test_on_nodewebkit(filename):
+    """PythonJS (fast backend) - NodeWebkit"""
+    return run_pythonjs_test_on_nodewebkit(filename)
+
+def run_js_nodewebkit(content):
+    """Run Javascript using NodeWebkit"""
+    write("/tmp/package.json", '{"name":"test", "main":"test.html"}')
+    write("/tmp/mymodule.js", content)
+    lines = [
+        "var __nw = require('nw.gui')",
+        "var requirejs = require('requirejs')",
+        "var module = requirejs('mymodule')",
+        "module.main()",
+        "__nw.App.quit()"
+    ]
+    write("/tmp/test.html", '<html><script>%s</script></html>' %'\n'.join(lines))
+
+    #write("%s.js" % tmpname, '\n'.join(lines))
+    #return run_command("node %s.js" % tmpname)
+    return run_command("%s /tmp" %nodewebkit, nodewebkit_workaround=True)
+
+
+
 def run_pythonjs_dart_test_on_node(dummy_filename):
     """PythonJS (Dart backend)"""
     return run_if_no_error(run_dart2js_node)
@@ -526,12 +588,20 @@ def run_test_on(filename):
     if node_runnable:
         display(run_pythonjs_test_on_node)
 
+    if nodewebkit_runnable:
+        display(run_pythonjs_test_on_nodewebkit)
+
+
     if '--no-javascript-mode' not in sys.argv:
         js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
         if rhino_runnable:
             display(run_pythonjsjs_test_on)
         if node_runnable:
             display(run_pythonjsjs_test_on_node)
+
+        if nodewebkit_runnable:
+            display(run_pythonjsjs_test_on_nodewebkit)
+
 
     if 'requirejs' not in filename:
 
@@ -562,17 +632,28 @@ def run():
     """Run all the tests or the selected ones"""
 
     if not show_details:
-        headers =  ["Py-\nthon", "Py-\nthon3"]
+        headers =  ["Py-\nthon2", "Py-\nthon3"]
         if pypy_runnable:
             headers.append("PyPy\n")
         if rhino_runnable:
             headers.append("JS\nRhino")
         if node_runnable:
             headers.append("JS\nNode")
+
+        if nodewebkit_runnable:
+            headers.append("JS\nWebkit")
+
         if rhino_runnable:
             headers.append("JSJS\nRhino")
+
         if node_runnable:
             headers.append("JSJS\nNode")
+
+        if nodewebkit_runnable:
+            headers.append("JSJS\nWebkit")
+
+        if node_runnable:
+
             if dart2js_runnable:
                 headers.append("Dart\nNode")
             if coffee_runnable:
