@@ -134,6 +134,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._in_while_test = False
 		self._use_threading = False
 		self._use_sleep = False
+		self._use_array = False
 		self._webworker_functions = dict()
 		self._with_webworker = False
 
@@ -268,30 +269,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				)
 			return self._typedefs[ class_name ]
 
-	def save_module(self):  ## DEPRECATED
-		if self._module and self._module_path:
-			a = dict(
-				classes = self._classes,
-				instance_attributes = self._instance_attributes,
-				class_attributes = self._class_attributes,
-				decorator_class_props = self._decorator_class_props,
-				function_return_types = self._function_return_types,
-				class_parents = self._class_parents,
-			)
-			#pickle.dump( a, open(os.path.join(self._module_path, self._module+'.module'), 'wb') )
-
-	def _check_for_module(self, name): ## DEPRECATED
-		#if self._module_path and name+'.module' in os.listdir(self._module_path):
-		#	return True
-		#else:
-		#	return False
-		return False
-
-	def _load_module(self, name): ## DEPRECATED
-		#f = open( os.path.join(self._module_path, name+'.module'), 'rb' )
-		#a = pickle.load( f ); f.close()
-		#return a
-		raise NotImplementedError
 
 	def visit_Import(self, node):
 		'''
@@ -331,8 +308,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		if node.module == 'time' and node.names[0].name == 'sleep':
 			self._use_sleep = True
+		elif node.module == 'array' and node.names[0].name == 'array':
+			self._use_array = True ## this is just a hint that calls to array call the builtin array
 
-		if node.module in lib:
+		elif node.module in lib:
 			imported = False
 			for n in node.names:
 				if n.name in lib[ node.module ]:
@@ -345,27 +324,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 
-
-		elif self._check_for_module( node.module ):  ## DEPRECATE
-			if node.names[0].name == '*':
-				a = self._load_module( node.module )
-				self._classes.update( a['classes'] )
-				self._class_attributes.update( a['class_attributes'] )
-				self._instance_attributes.update( a['instance_attributes'] )
-				self._decorator_class_props.update( a['decorator_class_props'] )
-				self._function_return_types.update( a['function_return_types'] )
-				self._class_parents.update( a['class_parents'] )
-			else:
-				raise SyntaxError('only "from module import *" is allowed')
-
-			writer.write('## import from: %s :: %s' %(node.module, [ (a.name,a.asname) for a in node.names]))
-
-		elif node.module.startswith('nodejs.'):
+		elif node.module.startswith('nodejs.'):  ## TODO - DEPRECATE
 			## this import syntax is now used to import NodeJS bindings see: PythonJS/nodejs/bindings
 			## the helper script (nodejs.py) checks for these import statements, and loads the binding,
 			pass
 		else:
-			raise SyntaxError( 'invalid import - could not find cached module: %s' %lib)#node.module )
+			raise SyntaxError( 'invalid import - %s' %node.module )
 
 	def visit_Assert(self, node):
 		## hijacking "assert isinstance(a,A)" as a type system ##
@@ -1712,6 +1676,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif self._with_webworker and name in self._global_functions:
 			args = [self.visit(arg) for arg in node.args]
 			return 'self.postMessage({"type":"call", "function":"%s", "args":[%s]})' %(name, ','.join(args))
+
+		elif self._with_js and self._use_array and name == 'array':  ## TODO how to support array from javascript mode? `arr[ INDEX ]` lookups fail.
+			args = [self.visit(arg) for arg in node.args]
+			return 'array.__call__([%s], __NULL_OBJECT__)' %','.join(args)
 
 		#########################################
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
@@ -3249,7 +3217,6 @@ def command():
 		module=module, 
 		dart='--dart' in sys.argv
 	)
-	compiler.save_module()
 	output = writer.getvalue()
 	print( output )  ## pipe to stdout
 
