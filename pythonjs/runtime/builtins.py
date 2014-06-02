@@ -63,6 +63,25 @@ with lowlevel:
 
 with javascript:
 
+	def __is_typed_array( ob ):
+		if instanceof( ob, Int8Array ) or instanceof( ob, Uint8Array ):
+			return True
+		elif instanceof( ob, Int16Array ) or instanceof( ob, Uint16Array ):
+			return True
+		elif instanceof( ob, Int32Array ) or instanceof( ob, Uint32Array ):
+			return True
+		elif instanceof( ob, Float32Array ) or instanceof( ob, Float64Array ):
+			return True
+		else:
+			return False
+
+
+	def __js_typed_array( t, a ):
+		if t == 'i':
+			arr = new( Int32Array(a.length) )
+
+		arr.set( a )
+		return arr
 
 	def __contains__( ob, a ):
 		t = typeof(ob)
@@ -71,6 +90,11 @@ with javascript:
 			else: return True
 		elif t == 'number':
 			raise TypeError
+		elif __is_typed_array(ob):
+			for x in ob:
+				if x == a:
+					return True
+			return False
 		elif ob.__contains__:
 			return ob.__contains__(a)
 		elif instanceof(ob, Object) and Object.hasOwnProperty.call(ob, a):
@@ -743,14 +767,18 @@ class StopIteration:  ## DEPRECATED
 
 
 def len(ob):
-	if instanceof(ob, Array) or instanceof(ob, Float32Array) or instanceof(ob, ArrayBuffer):
-		with javascript:
+	with javascript:
+		if instanceof(ob, Array):
 			return ob.length
-	elif instanceof(ob, Object):
-		with javascript:
+		elif __is_typed_array(ob):
+			return ob.length
+		elif instanceof(ob, ArrayBuffer):
+			return ob.byteLength
+		elif instanceof(ob, Object):
 			return Object.keys(ob).length
-	else:
-		return ob.__len__()
+		else:
+			with python:
+				return ob.__len__()
 
 
 def next(obj):
@@ -1072,7 +1100,6 @@ def set(a):
 
 def frozenset(a):
 	return set(a)
-
 
 
 

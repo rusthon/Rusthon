@@ -1677,9 +1677,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			args = [self.visit(arg) for arg in node.args]
 			return 'self.postMessage({"type":"call", "function":"%s", "args":[%s]})' %(name, ','.join(args))
 
-		elif self._with_js and self._use_array and name == 'array':  ## TODO how to support array from javascript mode? `arr[ INDEX ]` lookups fail.
+		elif self._with_js and self._use_array and name == 'array':
 			args = [self.visit(arg) for arg in node.args]
-			return 'array.__call__([%s], __NULL_OBJECT__)' %','.join(args)
+			#return 'array.__call__([%s], __NULL_OBJECT__)' %','.join(args)  ## this breaks `arr[ INDEX ]`
+			return '__js_typed_array(%s)' %','.join(args)
 
 		#########################################
 		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
