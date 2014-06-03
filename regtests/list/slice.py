@@ -1,4 +1,11 @@
 """list slice"""
+
+class XXX:
+	def __init__(self):
+		self.v = range(10)
+	def method(self, a):
+		return a
+
 def main():
 	a = range(10)[:-5]
 	TestError( len(a)==5 )
@@ -11,3 +18,14 @@ def main():
 	TestError( b[2]==4 )
 	TestError( b[3]==6 )
 	TestError( b[4]==8 )
+
+	c = range(20)
+	d = c[ len(b) : ]
+	TestError( len(d)==15 )
+
+	x = XXX()
+	e = x.v[ len(b) : ]
+	TestError( len(e)==5 )
+
+	f = x.method( x.v[len(b):] )
+	TestError( len(f)==5 )

@@ -133,7 +133,10 @@ with javascript:
 			return default_value
 		else:  ## PythonJS object instance ##
 			## this works because instances from PythonJS are created using Object.create(null) ##
-			return JS("ob.get(key, default_value)")
+			if default_value is not undefined:
+				return JS("ob.get(key, default_value)")
+			else:
+				return JS("ob.get(key)")
 
 	def __jsdict_set(ob, key, value):
 		if instanceof(ob, Object):

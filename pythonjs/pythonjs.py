@@ -76,6 +76,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		if self._requirejs and not self._webworker:
 			for name in self._exports:
+				if name.startswith('__'): continue
 				lines.append( '__module__.%s = %s' %(name,name))
 
 			lines.append( 'return __module__')
@@ -154,8 +155,6 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if node == self._function_stack[0]:  ## could do something special here with global function
 			#buffer += 'pythonjs.%s = %s' %(node.name, node.name)  ## this is no longer needed
 			self._global_functions[ node.name ] = node
-			if self._requirejs and node.name not in self._exports:
-				self._exports.add( node.name )
 
 		self._function_stack.pop()
 		return buffer
@@ -171,8 +170,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 			## this is required for eval to be able to work in NodeJS, note there is no var keyword.
 			buffer = self.indent() + '%s = function(%s) {\n' % (node.name, ', '.join(args))
+
+			if self._requirejs and node.name not in self._exports:
+				self._exports.add( node.name )
+
 		else:
 			buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+
+
 		self.push()
 		body = list()
 		for child in node.body:
@@ -205,7 +210,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return self.visit(node.value)
 
 	def visit_Slice(self, node):
-		raise SyntaxError  ## slicing not allowed here at js level
+		#print(node.lower)
+		#print(node.upper)
+		#print(node.step)
+		raise SyntaxError(node)  ## slicing not allowed here at js level
 
 	def visit_arguments(self, node):
 		out = []
@@ -519,6 +527,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self.push()
 
 		for line in list(map(self.visit, node.body)):
+			if line is None: continue
 			out.append( self.indent() + line )
 
 		orelse = []

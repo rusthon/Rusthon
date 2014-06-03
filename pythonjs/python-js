@@ -62,6 +62,12 @@ empythoned.FS.createLazyFile(".", "pythonjs.js", "./pythonjs.js",
 	true,false
 );
 
+empythoned.FS.createFolder(".","fakelibs",true,true);
+
+empythoned.FS.createLazyFile("./fakelibs", "tornado.py", "./fakelibs/tornado.py",
+	true,false
+);
+
 
 Python.initialize(
 	null,         // stdin

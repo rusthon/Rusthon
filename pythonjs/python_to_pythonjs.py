@@ -4,7 +4,7 @@
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
-import sys, copy
+import os, sys, copy
 from types import GeneratorType
 
 import ast
@@ -182,7 +182,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self.setup_builtins()
 
 		source = self.preprocess_custom_operators( source )
-		tree = parse( source )
+
+		## check for special imports - TODO clean this up ##
+		for line in source.splitlines():
+			if line.strip().startswith('import tornado'):
+				dirname = os.path.dirname(os.path.abspath(__file__))
+				header = open( os.path.join(dirname, os.path.join('fakelibs', 'tornado.py')) ).read()
+				source = header + '\n' + source
+				self._source = source.splitlines()
+				break
+
+		tree = parse( source )  ## ast.parse
 		self._generator_function_nodes = collect_generator_functions( tree )
 
 		for node in tree.body:
@@ -275,10 +285,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		fallback to requirejs or if in webworker importScripts.
 		some special modules from pythons stdlib can be faked here like:
 			. threading
+			. tornado
 
 		'''
+
+		tornado = ['tornado', 'tornado.web', 'tornado.ioloop']
+
 		for alias in node.names:
-			if alias.name == 'json':
+			if alias.name in tornado:
+				pass  ## pythonjs/fakelibs/tornado.py
+			elif alias.name == 'json':
 				pass  ## part of builtins.py
 			elif alias.name == 'threading':
 				self._use_threading = True
@@ -1788,11 +1804,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._in_assign_target = True
 				method = self.visit( node.func )
 				self._in_assign_target = False
-				if anode.attr == 'get':
-					if args:
-						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
-					else:
-						return '__jsdict_get(%s)' %self.visit(anode.value)
+				if anode.attr == 'get' and len(args) > 0 and len(args) <= 2:
+					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				elif anode.attr == 'set' and len(args)==2:
 					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))
@@ -1999,11 +2012,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			## special method calls ##
 			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace') and not self._with_lua:
 				anode = node.func
-				if anode.attr == 'get':
-					if args:
-						return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
-					else:
-						return '__jsdict_get(%s)' %self.visit(anode.value)
+				if anode.attr == 'get' and len(node.args) > 0 and len(node.args) <= 2:
+					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
 
 				elif anode.attr == 'keys' and not args:
 					return '__jsdict_keys(%s)' %self.visit(anode.value)
