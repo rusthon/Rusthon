@@ -67,6 +67,9 @@ empythoned.FS.createFolder(".","fakelibs",true,true);
 empythoned.FS.createLazyFile("./fakelibs", "tornado.py", "./fakelibs/tornado.py",
 	true,false
 );
+empythoned.FS.createLazyFile("./fakelibs", "os.py", "./fakelibs/os.py",
+	true,false
+);
 
 
 Python.initialize(

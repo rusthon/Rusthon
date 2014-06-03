@@ -1315,13 +1315,61 @@ class array:
 		return string
 
 
-# JSON stuff
+## file IO ##
+class file:
+	'''
+	TODO, support multiple read/writes.  Currently this just reads all data,
+	and writes all data.
+	'''
+	def __init__(self, path, flags):
+		self.path = path
+
+		if flags == 'rb':
+			self.flags = 'r'
+			self.binary = True
+		elif flags == 'wb':
+			self.flags = 'w'
+			self.binary = True
+		else:
+			self.flags = flags
+			self.binary = False
+
+		self.flags = flags
+
+	def read(self, binary=False):
+		_fs = require('fs')
+		path = self.path
+		with javascript:
+			if binary or self.binary:
+				return _fs.readFileSync( path )
+			else:
+				return _fs.readFileSync( path, {'encoding':'utf8'} )
+
+	def write(self, data, binary=False):
+		_fs = require('fs')
+		path = self.path
+		with javascript:
+			if binary or self.binary:
+				_fs.writeFileSync( path, data )
+			else:
+				_fs.writeFileSync( path, data, {'encoding':'utf8'} )
+
+	def close(self):
+		pass
+
+def open( path, mode=None):
+	return file( path, mode )
+
 
 with javascript:
+
+	## mini json library ##
 	json = {
 		'loads': lambda s: JSON.parse(s),
 		'dumps': lambda o: JSON.stringify(o)
 	}
+
+
 	def __get_other_workers_with_shared_arg( worker, ob ):
 		a = []
 		for b in threading.workers:

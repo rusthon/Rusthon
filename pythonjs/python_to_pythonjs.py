@@ -190,7 +190,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				header = open( os.path.join(dirname, os.path.join('fakelibs', 'tornado.py')) ).read()
 				source = header + '\n' + source
 				self._source = source.splitlines()
-				break
+			elif line.strip().startswith('import os'):
+				dirname = os.path.dirname(os.path.abspath(__file__))
+				header = open( os.path.join(dirname, os.path.join('fakelibs', 'os.py')) ).read()
+				source = header + '\n' + source
+				self._source = source.splitlines()
 
 		tree = parse( source )  ## ast.parse
 		self._generator_function_nodes = collect_generator_functions( tree )
@@ -285,7 +289,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		fallback to requirejs or if in webworker importScripts.
 		some special modules from pythons stdlib can be faked here like:
 			. threading
+
+		nodejs only:
 			. tornado
+			. os
 
 		'''
 
@@ -294,7 +301,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for alias in node.names:
 			if alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
-			elif alias.name == 'json':
+			elif alias.name == 'json' or alias.name == 'os':
 				pass  ## part of builtins.py
 			elif alias.name == 'threading':
 				self._use_threading = True

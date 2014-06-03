@@ -2,7 +2,7 @@
 	"author": "Brett Hartshorn <goatman.py@gmail.com>",
 	"name": "python-js",
 	"description": "python multi-translator: javascript, dart, coffee, lua, vis.js",
-	"version": "0.9.4",
+	"version": "0.9.5",
 	"license": "BSD-3-Clause",
 	"repository": {
 		"type": "git",
@@ -10,7 +10,10 @@
 	},
 	"keywords": [
 		"pythonjs",
-		"python"
+		"python",
+		"dart",
+		"lua",
+		"transpiler"
 	],
 	"dependencies": {
 		"workerjs": "*",
@@ -26,6 +29,7 @@
 
 	"files": [
 		"lib", 
+		"fakelibs",
 		"empythoned.js",
 		"python-js", 
 		"pythonjs.js",

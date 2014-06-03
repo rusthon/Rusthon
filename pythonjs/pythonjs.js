@@ -3535,6 +3535,144 @@ __array_to_ascii.types_signature = {  };
 __array_to_ascii.pythonscript_function = true;
 __array_attrs.to_ascii = __array_to_ascii;
 array = __create_class__("array", __array_parents, __array_attrs, __array_properties);
+var file, __file_attrs, __file_parents;
+__file_attrs = {};
+__file_parents = [];
+__file_properties = {};
+__file___init__ = function(args, kwargs) {
+  var __sig__, __args__;
+  __sig__ = { kwargs:{},args:["self", "path", "flags"] };
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
+    kwargs = {};
+  }
+  __args__ = __getargs__("__file___init__", __sig__, args, kwargs);
+  var self = __args__['self'];
+  var path = __args__['path'];
+  var flags = __args__['flags'];
+  self.path = path;
+  if (( flags ) == "rb") {
+    self.flags = "r";
+    self.binary = true;
+  } else {
+    if (( flags ) == "wb") {
+      self.flags = "w";
+      self.binary = true;
+    } else {
+      self.flags = flags;
+      self.binary = false;
+    }
+  }
+  self.flags = flags;
+}
+
+__file___init__.NAME = "__file___init__";
+__file___init__.args_signature = ["self", "path", "flags"];
+__file___init__.kwargs_signature = {  };
+__file___init__.types_signature = {  };
+__file___init__.pythonscript_function = true;
+__file_attrs.__init__ = __file___init__;
+__file_read = function(args, kwargs) {
+  var _fs, path;
+  var __sig__, __args__;
+  __sig__ = { kwargs:{"binary": false},args:["self", "binary"] };
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
+    kwargs = {};
+  }
+  __args__ = __getargs__("__file_read", __sig__, args, kwargs);
+  var self = __args__['self'];
+  var binary = __args__['binary'];
+  _fs = __get__(require, "__call__")(["fs"], __NULL_OBJECT__);
+  path = self.path;
+  if (__test_if_true__(binary || self.binary)) {
+    return _fs.readFileSync(path);
+  } else {
+    return _fs.readFileSync(path, __jsdict([["encoding", "utf8"]]));
+  }
+}
+
+__file_read.NAME = "__file_read";
+__file_read.args_signature = ["self", "binary"];
+__file_read.kwargs_signature = { binary:false };
+__file_read.types_signature = { binary:"False" };
+__file_read.pythonscript_function = true;
+__file_attrs.read = __file_read;
+__file_write = function(args, kwargs) {
+  var _fs, path;
+  var __sig__, __args__;
+  __sig__ = { kwargs:{"binary": false},args:["self", "data", "binary"] };
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
+    kwargs = {};
+  }
+  __args__ = __getargs__("__file_write", __sig__, args, kwargs);
+  var self = __args__['self'];
+  var data = __args__['data'];
+  var binary = __args__['binary'];
+  _fs = __get__(require, "__call__")(["fs"], __NULL_OBJECT__);
+  path = self.path;
+  if (__test_if_true__(binary || self.binary)) {
+    _fs.writeFileSync(path, data);
+  } else {
+    _fs.writeFileSync(path, data, __jsdict([["encoding", "utf8"]]));
+  }
+}
+
+__file_write.NAME = "__file_write";
+__file_write.args_signature = ["self", "data", "binary"];
+__file_write.kwargs_signature = { binary:false };
+__file_write.types_signature = { binary:"False" };
+__file_write.pythonscript_function = true;
+__file_attrs.write = __file_write;
+__file_close = function(args, kwargs) {
+  var __sig__, __args__;
+  __sig__ = { kwargs:{},args:["self"] };
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
+    kwargs = {};
+  }
+  __args__ = __getargs__("__file_close", __sig__, args, kwargs);
+  var self = __args__['self'];
+  /*pass*/
+}
+
+__file_close.NAME = "__file_close";
+__file_close.args_signature = ["self"];
+__file_close.kwargs_signature = {  };
+__file_close.types_signature = {  };
+__file_close.pythonscript_function = true;
+__file_attrs.close = __file_close;
+file = __create_class__("file", __file_parents, __file_attrs, __file_properties);
+open = function(args, kwargs) {
+  var __sig__, __args__;
+  __sig__ = { kwargs:{"mode": null},args:["path", "mode"] };
+  if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
+    /*pass*/
+  } else {
+    args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
+    kwargs = {};
+  }
+  __args__ = __getargs__("open", __sig__, args, kwargs);
+  var path = __args__['path'];
+  var mode = __args__['mode'];
+  return __get__(file, "__call__")([path, mode], __NULL_OBJECT__);
+}
+
+open.NAME = "open";
+open.args_signature = ["path", "mode"];
+open.kwargs_signature = { mode:null };
+open.types_signature = { mode:"None" };
+open.return_type = "file";
+open.pythonscript_function = true;
 json = __jsdict([["loads", (function (s) {return JSON.parse(s)})], ["dumps", (function (o) {return JSON.stringify(o)})]]);
 __get_other_workers_with_shared_arg = function(worker, ob) {
   var a, other, args;
