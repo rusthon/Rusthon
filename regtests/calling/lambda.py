@@ -24,3 +24,7 @@ def main():
 
 	d = { 'x':lambda a,b: a+b }
 	TestError( d['x'](1,2) == 3 )
+
+	e = ( lambda a,b: a+b, lambda x,y: x+y )
+	TestError( e[0](1,2) == 3 )
+	TestError( e[1](1,2) == 3 )
