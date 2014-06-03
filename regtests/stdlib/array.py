@@ -10,3 +10,9 @@ def main():
 	for y in a:
 		x += y
 	TestError( x == 6 )
+
+	## this fails in javascript-mode because it is a raw typed array can not be resized
+	#a.append( 4 )
+	#TestError( len(a)==4 )
+
+

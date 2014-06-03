@@ -38,6 +38,7 @@
 		"python_to_visjs.py",
 		"code_writer.py",
 		"inline_function.py",
+		"ast_utils.py",
 		"cli.js",
 		"runtime"
 	]
