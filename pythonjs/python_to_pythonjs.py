@@ -1694,7 +1694,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	def visit_Call(self, node):
 		if isinstance(node.func, ast.Lambda):  ## inlined and called lambda "(lambda x: x)(y)"
 			node.func.keep_as_lambda = True
-			#raise SyntaxError("lambda functions must be assigned to a variable before being called")
+
+		for a in node.args:
+			if isinstance(a, ast.Lambda):
+				a.keep_as_lambda = True
+
+		for kw in node.keywords:
+			if isinstance(kw.value, ast.Lambda):
+				kw.value.keep_as_lambda = True
+
 
 		name = self.visit(node.func)
 		if self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':

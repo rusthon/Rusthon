@@ -6,6 +6,12 @@ def get_lambda():
 def get_lambdas():
 	return [lambda a,b: a+b, lambda x,y: x+y]
 
+def call_lambda( F ):
+	return F()
+
+def call_lambda2( callback=None ):
+	return callback()
+
 def main():
 	f = lambda a,b: a+b
 	TestError( f(1,2) == 3 )
@@ -28,3 +34,10 @@ def main():
 	e = ( lambda a,b: a+b, lambda x,y: x+y )
 	TestError( e[0](1,2) == 3 )
 	TestError( e[1](1,2) == 3 )
+
+	r = call_lambda( lambda : int(100) )
+	TestError( r==100 )
+
+
+	r = call_lambda2( callback = lambda : int(200) )
+	TestError( r==200 )

@@ -35,6 +35,7 @@ pythonjs.runtime.javascript // runtime required by translator output
 Example Projects
 ----------------
 [https://github.com/PythonJS/pythonjs-demo-server-nodejs](https://github.com/PythonJS/pythonjs-demo-server-nodejs)
+
 [https://github.com/PythonJS/pypubjs](https://github.com/PythonJS/pypubjs)
 
 
@@ -178,6 +179,7 @@ Supported Features
 	math.sin
 	math.cos
 	math.sqrt
+	array.array
 	os.path.dirname
 	bisect.bisect
 	random.random
