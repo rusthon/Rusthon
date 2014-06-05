@@ -3651,7 +3651,7 @@ __file_close.types_signature = {  };
 __file_close.pythonscript_function = true;
 __file_attrs.close = __file_close;
 file = __create_class__("file", __file_parents, __file_attrs, __file_properties);
-open = function(args, kwargs) {
+__open__ = function(args, kwargs) {
   var __sig__, __args__;
   __sig__ = { kwargs:{"mode": null},args:["path", "mode"] };
   if (args instanceof Array && ( Object.prototype.toString.call(kwargs) ) == "[object Object]" && ( arguments.length ) == 2) {
@@ -3660,18 +3660,18 @@ open = function(args, kwargs) {
     args = Array.prototype.slice.call(arguments, 0, __sig__.args.length);
     kwargs = {};
   }
-  __args__ = __getargs__("open", __sig__, args, kwargs);
+  __args__ = __getargs__("__open__", __sig__, args, kwargs);
   var path = __args__['path'];
   var mode = __args__['mode'];
   return __get__(file, "__call__")([path, mode], __NULL_OBJECT__);
 }
 
-open.NAME = "open";
-open.args_signature = ["path", "mode"];
-open.kwargs_signature = { mode:null };
-open.types_signature = { mode:"None" };
-open.return_type = "file";
-open.pythonscript_function = true;
+__open__.NAME = "__open__";
+__open__.args_signature = ["path", "mode"];
+__open__.kwargs_signature = { mode:null };
+__open__.types_signature = { mode:"None" };
+__open__.return_type = "file";
+__open__.pythonscript_function = true;
 json = __jsdict([["loads", (function (s) {return JSON.parse(s);})], ["dumps", (function (o) {return JSON.stringify(o);})]]);
 __get_other_workers_with_shared_arg = function(worker, ob) {
   var a, other, args;

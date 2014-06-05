@@ -1357,7 +1357,7 @@ class file:
 	def close(self):
 		pass
 
-def open( path, mode=None):
+def __open__( path, mode=None):  ## this can not be named `open` because it replaces `window.open`
 	return file( path, mode )
 
 

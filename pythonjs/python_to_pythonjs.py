@@ -1729,6 +1729,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		name = self.visit(node.func)
+
+		if name == 'open':  ## do not overwrite window.open ##
+			name = '__open__'
+			node.func.id = '__open__'
+
 		if self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
 			if node.func.attr == 'start_new_thread' or node.func.attr == '_start_new_thread':
 				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
