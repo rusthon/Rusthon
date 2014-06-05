@@ -2,7 +2,6 @@ __NULL_OBJECT__ = Object.create(null);
 if (( "window" )  in  this && ( "document" )  in  this) {
   __WEBWORKER__ = false;
   __NODEJS__ = false;
-  pythonjs = {  };
 } else {
   if (( typeof(process) ) != "undefined") {
     __WEBWORKER__ = false;
@@ -3673,7 +3672,7 @@ open.kwargs_signature = { mode:null };
 open.types_signature = { mode:"None" };
 open.return_type = "file";
 open.pythonscript_function = true;
-json = __jsdict([["loads", (function (s) {return JSON.parse(s)})], ["dumps", (function (o) {return JSON.stringify(o)})]]);
+json = __jsdict([["loads", (function (s) {return JSON.parse(s);})], ["dumps", (function (o) {return JSON.stringify(o);})]]);
 __get_other_workers_with_shared_arg = function(worker, ob) {
   var a, other, args;
   a = [];

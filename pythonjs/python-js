@@ -70,6 +70,15 @@ empythoned.FS.createLazyFile("./fakelibs", "tornado.py", "./fakelibs/tornado.py"
 empythoned.FS.createLazyFile("./fakelibs", "os.py", "./fakelibs/os.py",
 	true,false
 );
+empythoned.FS.createLazyFile("./fakelibs", "sys.py", "./fakelibs/sys.py",
+	true,false
+);
+empythoned.FS.createLazyFile("./fakelibs", "tempfile.py", "./fakelibs/tempfile.py",
+	true,false
+);
+empythoned.FS.createLazyFile("./fakelibs", "subprocess.py", "./fakelibs/subprocess.py",
+	true,false
+);
 
 
 Python.initialize(
@@ -81,16 +90,16 @@ Python.initialize(
 
 Python.eval('from python_to_pythonjs import main as to_pythonjs');
 Python.eval('from pythonjs import main as _to_javascript');
-Python.eval('from pythonjs_to_dart import main as _to_dart');
-Python.eval('from pythonjs_to_coffee import main as _to_coffee');
-Python.eval('from pythonjs_to_lua import main as _to_lua');
+//Python.eval('from pythonjs_to_dart import main as _to_dart');
+//Python.eval('from pythonjs_to_coffee import main as _to_coffee');
+//Python.eval('from pythonjs_to_lua import main as _to_lua');
 Python.eval('from python_to_visjs import main as to_visjs');
 
 Python.eval('def to_javascript_module(src, runtime=True): return _to_javascript(to_pythonjs(src), requirejs=True, insert_runtime=runtime)');
 Python.eval('def to_javascript(src, runtime=False): return _to_javascript(to_pythonjs(src), requirejs=False, insert_runtime=runtime)');
-Python.eval('def to_dart(src): return _to_dart(to_pythonjs(src, dart=True))');
-Python.eval('def to_coffee(src): return _to_coffee(to_pythonjs(src, coffee=True))');
-Python.eval('def to_lua(src): return _to_lua(to_pythonjs(src, lua=True))');
+Python.eval('def to_dart(src): from pythonjs_to_dart import main as _to_dart; return _to_dart(to_pythonjs(src, dart=True))');
+Python.eval('def to_coffee(src): from pythonjs_to_coffee import main as _to_coffee; return _to_coffee(to_pythonjs(src, coffee=True))');
+Python.eval('def to_lua(src): from pythonjs_to_lua import main as _to_lua; return _to_lua(to_pythonjs(src, lua=True))');
 
 function clean_code( code ) {
 	code = code.substring(1, code.length-1);  // strip quotes

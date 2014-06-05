@@ -195,6 +195,23 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				header = open( os.path.join(dirname, os.path.join('fakelibs', 'os.py')) ).read()
 				source = header + '\n' + source
 				self._source = source.splitlines()
+			elif line.strip().startswith('import tempfile'):
+				dirname = os.path.dirname(os.path.abspath(__file__))
+				header = open( os.path.join(dirname, os.path.join('fakelibs', 'tempfile.py')) ).read()
+				source = header + '\n' + source
+				self._source = source.splitlines()
+			elif line.strip().startswith('import sys'):
+				dirname = os.path.dirname(os.path.abspath(__file__))
+				header = open( os.path.join(dirname, os.path.join('fakelibs', 'sys.py')) ).read()
+				source = header + '\n' + source
+				self._source = source.splitlines()
+			elif line.strip().startswith('import subprocess'):
+				dirname = os.path.dirname(os.path.abspath(__file__))
+				header = open( os.path.join(dirname, os.path.join('fakelibs', 'subprocess.py')) ).read()
+				source = header + '\n' + source
+				self._source = source.splitlines()
+
+
 
 		tree = parse( source )  ## ast.parse
 		self._generator_function_nodes = collect_generator_functions( tree )
@@ -301,6 +318,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		for alias in node.names:
 			if alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
+			elif alias.name == 'tempfile':
+				pass  ## pythonjs/fakelibs/tempfile.py
+			elif alias.name == 'sys':
+				pass  ## pythonjs/fakelibs/sys.py
+			elif alias.name == 'subprocess':
+				pass  ## pythonjs/fakelibs/subprocess.py
+
 			elif alias.name == 'json' or alias.name == 'os':
 				pass  ## part of builtins.py
 			elif alias.name == 'threading':

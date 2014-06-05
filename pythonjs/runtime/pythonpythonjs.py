@@ -6,7 +6,6 @@ __NULL_OBJECT__ = Object.create( null )
 if 'window' in this and 'document' in this:
 	__WEBWORKER__ = False
 	__NODEJS__ = False
-	pythonjs = {}
 elif typeof(process) != 'undefined':
 	## note, we can not test for '"process" in global'
 	## make sure we are really inside NodeJS by letting this fail, and halting the program.

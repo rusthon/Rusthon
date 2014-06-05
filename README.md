@@ -185,6 +185,17 @@ Supported Features
 	random.random
 	threading.start_new_thread
 
+#####Libraries (nodejs only)
+	tempfile.gettempdir
+	sys.stdin
+	sys.stdout
+	sys.stderr
+	sys.argv
+	sys.exit
+	subprocess.Popen
+	subprocess.call
+	os.path.*
+
 ------------------------------
 
 Regression Tests
