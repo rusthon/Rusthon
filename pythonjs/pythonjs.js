@@ -3709,12 +3709,15 @@ __start_new_thread = function(f, args) {
   worker.__uid__ = len(threading.workers);
   threading.workers.append(__jsdict([["worker", worker], ["args", args]]));
     var func = function(event) {
-    var a, value;
+    var a, res, value;
     if (( event.data.type ) == "terminate") {
       worker.terminate();
     } else {
       if (( event.data.type ) == "call") {
-        __module__[((event.data.function.__uid__) ? event.data.function.__uid__ : event.data.function)].apply(null, event.data.args);
+        res = __module__[((event.data.function.__uid__) ? event.data.function.__uid__ : event.data.function)].apply(null, event.data.args);
+        if (__test_if_true__(( res ) !== null && ( res ) !== undefined)) {
+          worker.postMessage(__jsdict([["type", "return_to_blocking_callback"], ["result", res]]));
+        }
       } else {
         if (( event.data.type ) == "append") {
           a = args[((event.data.argindex.__uid__) ? event.data.argindex.__uid__ : event.data.argindex)];

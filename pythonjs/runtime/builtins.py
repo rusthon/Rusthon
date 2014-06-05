@@ -1396,7 +1396,10 @@ with javascript:
 			if event.data.type == 'terminate':
 				worker.terminate()
 			elif event.data.type == 'call':
-				__module__[ event.data.function ].apply(null, event.data.args)
+				res = __module__[ event.data.function ].apply(null, event.data.args)
+				if res is not None and res is not undefined:
+					worker.postMessage({'type':'return_to_blocking_callback', 'result':res})
+
 
 			elif event.data.type == 'append':
 				#print('got append event')

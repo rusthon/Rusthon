@@ -1743,6 +1743,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				raise SyntaxError(node.func.attr)
 
 		elif self._with_webworker and name in self._global_functions:
+			node.calling_from_worker = True
 			args = [self.visit(arg) for arg in node.args]
 			return 'self.postMessage({"type":"call", "function":"%s", "args":[%s]})' %(name, ','.join(args))
 
@@ -2298,7 +2299,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('__wargs__ = []')
 				writer.write('def onmessage(e):')
 				writer.push()
+				## need a better way to quit the worker after work is done, check if threading._blocking_callback is waiting, else terminate
 				writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
+				writer.write(  'elif e.data.type=="return_to_blocking_callback": threading._blocking_callback( e.data.result )' )
 				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
 				writer.write(  'elif e.data.type=="__setitem__": __wargs__[ e.data.argindex ][e.data.key] = e.data.value' )
 				#writer.push()
@@ -2536,6 +2539,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						timeouts.append(0.2)
 						continue
 
+				elif self._with_webworker and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id in self._global_functions:
+					#assert b.value.calling_from_worker
+					#raise SyntaxError(b)
+					self.visit(b)
+					writer.write('def __blocking( %s ):' %self.visit(b.targets[0]))
+					writer.push()
+					timeouts.append('BLOCKING')
+					continue
+
+
 			elif self._use_sleep:
 				c = b
 				if isinstance(b, ast.Expr):
@@ -2602,7 +2615,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		while timeouts:
 			writer.pull()
 			ms = timeouts.pop()
-			if ms is not None:
+			if ms == 'BLOCKING':
+				writer.write('threading._blocking_callback = __blocking')
+			elif ms is not None:
 				ms = float(ms)
 				ms *= 1000
 				writer.write('if __run__: setTimeout(__callback%s, %s)' %(i, ms))
