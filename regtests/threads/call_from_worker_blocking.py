@@ -27,5 +27,6 @@ with webworker:
 	def worker():
 		## the translator knows this is blocking because the result of the function is assigned to `v`,
 		v = blocking_func( 10, 20 )
-		print('returned to blocking callback', v)
+		#print('returned to blocking callback', v)
 		async_func( v )
+		self.terminate()

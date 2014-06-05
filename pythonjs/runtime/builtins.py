@@ -1382,7 +1382,7 @@ with javascript:
 							a.append( other )
 		return a
 
-	threading = {'workers': [] }
+	threading = {'workers': [], '_blocking_callback':None }
 
 
 	def __start_new_thread(f, args):

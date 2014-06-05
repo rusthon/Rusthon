@@ -1734,7 +1734,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			name = '__open__'
 			node.func.id = '__open__'
 
-		if self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
+		if self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
+			return 'self.postMessage({"type":"terminate"})'
+
+		elif self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
 			if node.func.attr == 'start_new_thread' or node.func.attr == '_start_new_thread':
 				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
 			elif node.func.attr == 'start_webworker':
@@ -2300,10 +2303,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('def onmessage(e):')
 				writer.push()
 				## need a better way to quit the worker after work is done, check if threading._blocking_callback is waiting, else terminate
-				writer.write(  'if e.data.type=="execute": %s.apply(self, e.data.args); self.postMessage({"type":"terminate"})' %node.name )
-				writer.write(  'elif e.data.type=="return_to_blocking_callback": threading._blocking_callback( e.data.result )' )
+				writer.write(  'if e.data.type=="execute":' )
+				writer.push()
+				writer.write(		'%s.apply(self, e.data.args)'%node.name )
+				writer.write(		'if not threading._blocking_callback: self.postMessage({"type":"terminate"})')
+				writer.pull()
 				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
 				writer.write(  'elif e.data.type=="__setitem__": __wargs__[ e.data.argindex ][e.data.key] = e.data.value' )
+				writer.write(  'elif e.data.type=="return_to_blocking_callback": threading._blocking_callback( e.data.result )' )
 				#writer.push()
 				#writer.write(		'if instanceof(__wargs__[e.data.argindex], Array): __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
 				#writer.write(		'else: __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
@@ -2613,11 +2620,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		i = len(timeouts)-1
 		while timeouts:
-			writer.pull()
 			ms = timeouts.pop()
 			if ms == 'BLOCKING':
+				writer.write(	'threading._blocking_callback = None')
+				writer.pull()
 				writer.write('threading._blocking_callback = __blocking')
 			elif ms is not None:
+				writer.pull()
+
 				ms = float(ms)
 				ms *= 1000
 				writer.write('if __run__: setTimeout(__callback%s, %s)' %(i, ms))

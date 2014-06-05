@@ -3702,7 +3702,7 @@ __get_other_workers_with_shared_arg.NAME = "__get_other_workers_with_shared_arg"
 __get_other_workers_with_shared_arg.args_signature = ["worker", "ob"];
 __get_other_workers_with_shared_arg.kwargs_signature = {  };
 __get_other_workers_with_shared_arg.types_signature = {  };
-threading = __jsdict([["workers", []]]);
+threading = __jsdict([["workers", []], ["_blocking_callback", null]]);
 __start_new_thread = function(f, args) {
   var jsargs, worker;
   worker =  new Worker(f);
