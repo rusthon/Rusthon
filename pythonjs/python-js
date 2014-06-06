@@ -30,6 +30,10 @@ empythoned.FS.createLazyFile(".", "ministdlib.py", "./ministdlib.py",
 	true,false
 );
 
+empythoned.FS.createLazyFile(".", "typedpython.py", "./typedpython.py",
+	true,false
+);
+
 empythoned.FS.createLazyFile(".", "pythonjs_to_dart.py", "./pythonjs_to_dart.py",
 	true,false
 );

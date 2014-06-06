@@ -15,6 +15,9 @@ About the tests:
 
 import os, sys, re, tempfile, subprocess, json
 
+sys.path.append('../pythonjs')
+import typedpython
+
 if 'NODE_PATH' not in os.environ:
     os.environ['NODE_PATH'] = '/usr/local/lib/node_modules/'
 
@@ -262,6 +265,7 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
     ]
 
     if python != 'PYTHONJS':
+        code = typedpython.transform_source( code, strip=True )
         a.append( _python_only_extra_header )
 
     a.append( code )

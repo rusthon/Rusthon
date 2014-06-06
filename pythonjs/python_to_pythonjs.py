@@ -25,16 +25,18 @@ from ast import With
 from ast import parse
 from ast import NodeVisitor
 
+import typedpython
 import ministdlib
 import inline_function
 import code_writer
 from ast_utils import *
 
-
 ## TODO
 def log(txt):
 	pass
 
+
+POWER_OF_TWO = [ 2**i for i in range(32) ]
 
 GLOBAL_VARIABLE_SCOPE = False              ## Python style
 if '--global-variable-scope' in sys.argv:  ## JavaScript style
@@ -121,6 +123,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	_func_typedefs = ()
 
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
+
+		source = typedpython.transform_source( source )
+
 		super(PythonToPythonJS, self).__init__()
 		self.setup_inliner( writer )
 
@@ -144,7 +149,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._instance_attributes = dict()  ## class name : [attribute names]
 		self._class_attributes = dict()
 		self._catch_attributes = None
-		self._names = set() ## not used?
+		self._typedef_vars = dict()
+		#self._names = set() ## not used?
 		self._instances = dict()  ## instance name : class name
 		self._decorator_properties = dict()
 		self._decorator_class_props = dict()
@@ -1162,6 +1168,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				return '[%s]' %','.join(expanded)
 
+		elif op == '*' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
+			power = POWER_OF_TWO.index( node.right.n )
+			return '%s << %s'%(left, power)
+
+		elif op == '//' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
+			power = POWER_OF_TWO.index( node.right.n )
+			return '%s >> %s'%(left, power)
+
 		elif op == '//':
 			if self._with_dart:
 				return '(%s/%s).floor()' %(left, right)				
@@ -1174,6 +1188,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
+			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.number_types:
+				return '%s+%s'%(left, right)
+
 			elif self._with_lua or self._in_lambda or self._in_while_test:
 				## this is also required when in an inlined lambda like "(lambda a,b: a+b)(1,2)"
 				return '__add_op(%s, %s)'%(left, right)
@@ -1444,7 +1461,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('try:')
 			writer.push()
 
-		for target in node.targets:
+		targets = list( node.targets )
+		target = targets[0]
+		if isinstance(target, ast.Name) and target.id in typedpython.types:
+			if len(targets)==2 and isinstance(targets[1], ast.Name):
+				self._typedef_vars[ targets[1].id ] = target.id
+				targets = targets[1:]
+			else:
+				raise SyntaxError(targets)
+
+		for target in targets:
 			self._visit_assign_helper( node, target )
 			node = ast.Expr( value=target )
 
@@ -2663,6 +2689,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.pull()
 
 		writer.pull()  ## end function body
+
+		self._typedef_vars = dict()  ## clear typed variables
 
 		if inline:
 			self._with_inline = False
