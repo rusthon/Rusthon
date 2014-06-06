@@ -1,6 +1,6 @@
 whitespace = [' ', '\t']
 number_types = ['int', 'float']
-types = ['str']
+types = ['str', 'list']
 types.extend( number_types)
 
 

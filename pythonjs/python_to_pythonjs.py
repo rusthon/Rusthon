@@ -1168,11 +1168,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				return '[%s]' %','.join(expanded)
 
-		elif op == '*' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
+		elif not self._with_dart and op == '*' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
 			power = POWER_OF_TWO.index( node.right.n )
 			return '%s << %s'%(left, power)
 
-		elif op == '//' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
+		elif not self._with_dart and op == '//' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
 			power = POWER_OF_TWO.index( node.right.n )
 			return '%s >> %s'%(left, power)
 
@@ -1467,6 +1467,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if len(targets)==2 and isinstance(targets[1], ast.Name):
 				self._typedef_vars[ targets[1].id ] = target.id
 				targets = targets[1:]
+			elif len(targets)==1 and isinstance(node.value, ast.Name) and target.id in typedpython.types:
+				self._typedef_vars[ node.value.id ] = target.id
+				return None
 			else:
 				raise SyntaxError(targets)
 
@@ -1759,8 +1762,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if name == 'open':  ## do not overwrite window.open ##
 			name = '__open__'
 			node.func.id = '__open__'
+		###############################################
 
-		if self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
+
+		if not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
+			if node.func.attr == 'append':
+				#return '%s.append( [%s], __NULL_OBJECT__)' %(node.func.value.id, self.visit(node.args[0]) )
+				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
+			else:
+				raise SyntaxError
+
+
+		elif self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
 			return 'self.postMessage({"type":"terminate"})'
 
 		elif self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
