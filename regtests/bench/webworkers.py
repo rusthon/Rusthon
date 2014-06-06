@@ -6,15 +6,10 @@ from time import time
 from time import sleep
 import threading
 
-#PYTHON = 'O'
-
 def main():
 	if PYTHON=='PYTHONJS':
 		pythonjs.configure( direct_operator='+' )
 		pass
-	else:
-		def l (f,a): threading._start_new_thread(f,a)
-		threading.start_webworker = l
 
 	start = time()
 	n = 2000
@@ -37,11 +32,6 @@ def main():
 	print('#total test time: %s' %testtime)
 	print('-----main exit')
 
-if PYTHON != 'PYTHONJS':
-	class webworker(object):
-		def __enter__(self, *args): pass
-		def __exit__(self, *args): pass
-	webworker = webworker()
 
 with webworker:
 	def worker(start, end, seq, cache):
@@ -66,5 +56,3 @@ with webworker:
 						return False
 		return True
 
-
-#main()

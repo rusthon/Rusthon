@@ -11,9 +11,6 @@ def main():
 	if PYTHON=='PYTHONJS':
 		pythonjs.configure( direct_operator='+' )
 		pass
-	else:
-		def l (f,a): threading._start_new_thread(f,a)
-		threading.start_webworker = l
 
 
 	def is_prime(n):
@@ -59,12 +56,6 @@ def main():
 	print('-----main exit')
 
 
-
-if PYTHON != 'PYTHONJS':
-	class webworker(object):
-		def __enter__(self, *args): pass
-		def __exit__(self, *args): pass
-	webworker = webworker()
 
 with webworker:
 	def worker(start, end, seq, cache):

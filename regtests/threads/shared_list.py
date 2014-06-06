@@ -2,23 +2,11 @@
 
 import threading
 
-def webworker(a):
-	## In CPython this decorator does nothing.
-	## In PythonJS this decorator name is special,
-	## and triggers special code injected into the
-	## header of the function, and saves the worker
-	## function in a file "xxx.js" and in the main
-	## script the function is changed to a string
-	return lambda f : f
 
 @webworker( 'xxx.js' )
 def mythread(a,b):
-	print('------enter thread------')
 	## checks a and b, if they are Array, then wrap them.
-	print(a)
-	print(b)
 	a.append('hello')
-
 	b.append('world')
 	b.append( 'XXX' )
 
@@ -34,13 +22,7 @@ def mythread(a,b):
 		if 'ZZZ' in a:
 			break
 
-	
-	print(a)
-	print('thread exit-------')
-
 def main():
-	if PYTHON != "PYTHONJS":
-		threading.start_new_thread = threading._start_new_thread
 
 	shared1 = []
 	shared2 = []
@@ -62,5 +44,3 @@ def main():
 	ticks = 0
 	while ticks < 100000:
 		ticks += 1
-
-	print('-----main exit')

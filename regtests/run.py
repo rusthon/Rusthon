@@ -65,6 +65,8 @@ else:
         nodewebkit = os.path.expanduser('~/node-webkit-v0.8.4-linux-x64/nw')
         if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
+if not show_details:
+    nodewebkit_runnable = False
 
 #dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+
 dart2js = os.path.expanduser( '~/dart-sdk/bin/dart2js') # tested with dart 1.3
@@ -197,7 +199,7 @@ def end_benchmark( name ):
     data = '\n'.join( _benchmark )
     f.write( data.encode('utf-8') )
     f.close()
-    os.system( '../external/bargraphgen/bargraph.pl -eps %s > /tmp/%s.eps' %(path,name))
+    os.system( './bargraph.pl -eps %s > /tmp/%s.eps' %(path,name))
     _benchmark = None
 
 def patch_assert(filename):
@@ -218,6 +220,20 @@ def TestError(file, line, result, test):
 def TestWarning(file, line, result, test):
     if result == False:
         print(file + ":" + str(line) + " Warning fail " + test)
+"""
+
+_python_only_extra_header = """
+import threading
+threading.start_webworker = lambda f,a: threading._start_new_thread(f,a)
+threading.start_new_thread = threading._start_new_thread
+
+class webworker(object):
+    def __enter__(self, *args): pass
+    def __exit__(self, *args): pass
+    def __call__(self, name):
+        return lambda f: f
+webworker = webworker()
+
 """
 
 def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
@@ -243,8 +259,12 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         _patch_header, 
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
-        code
     ]
+
+    if python != 'PYTHONJS':
+        a.append( _python_only_extra_header )
+
+    a.append( code )
 
     if not dart and python != 'PYTHONJS':
         a.append( 'main()' )
