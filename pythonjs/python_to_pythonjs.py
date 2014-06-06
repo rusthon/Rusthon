@@ -2296,7 +2296,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._webworker_functions[ node.name ] = jsfile
 
 			writer = get_webworker_writer( jsfile )
-			if len(writer.functions) == 1:
+			if len(writer.functions) <= 1:
 				is_worker_entry = True
 				## TODO: two-way list and dict sync
 				writer.write('__wargs__ = []')
