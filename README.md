@@ -41,17 +41,29 @@ Example Projects
 
 Speed
 ---------------
-PythonJS allows you to select which features you need for
-each section of your code, where you need performance you
-can disable operator overloading, and other slow operations.
-Features can be switched off and on for blocks of code using
-`pythonjs.configure()` or the special `with` statements and
-decorators described below.  When PythonJS is run in fastest
-mode (javascript mode) it beats native PyPy in the Richards, and N-Body benchmarks.
+PythonJS gives you the option to optimize your program for speed with a new syntax for static typing, in some cases this results in code that is 20X faster.
+A variable can be statically typed as: int, float, long, str, list, or dict.  
+The translator then uses this type information to speed up runtime checks and method calls.
+In the example below `x` and `y` are typed as `int`.
+```
+def f(x,y):
+	int x
+	int y
+	return x+y
+
+```
+
+The `int` type is accurate up to 53bits, if you need true 64bit integer math you can use the `long` type.  Note using `long` requires the Long.js library.
+
+You can further optimize your code with `pythonjs.configure` or special with statements that mark sections of the code as less dynamic.
 
 N-Body benchmark
+
 ![nbody](http://2.bp.blogspot.com/-pylzspKRu6M/UqbAv3qIGTI/AAAAAAAAAkE/NnsAM5DZ_8M/s400/nbody.png)
 
+more benchmarks
+
+[http://pythonjs.blogspot.com/2014/05/pythonjs-now-faster-than-cpython.html](pystone, nbody, richards)
 
 
 translator.py
