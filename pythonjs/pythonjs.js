@@ -1,15 +1,15 @@
 __NULL_OBJECT__ = Object.create(null);
-if (( "window" )  in  this && ( "document" )  in  this) {
-  __WEBWORKER__ = false;
-  __NODEJS__ = false;
-} else {
-  if (( typeof(process) ) != "undefined") {
-    __WEBWORKER__ = false;
-    __NODEJS__ = true;
-  } else {
-    __NODEJS__ = false;
-    __WEBWORKER__ = true;
-  }
+__WEBWORKER__ = false;
+__NODEJS__ = false;
+__BROWSER__ = false;
+if (( typeof(process) ) != "undefined") {
+  __NODEJS__ = true;
+}
+if (( typeof(window) ) != "undefined") {
+  __BROWSER__ = true;
+}
+if (( typeof(importScripts) ) == "function") {
+  __WEBWORKER__ = true;
 }
 __create_array__ = function() {
   "Used to fix a bug/feature of Javascript where new Array(number)\n	created a array with number of undefined elements which is not\n	what we want";

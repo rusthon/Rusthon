@@ -1,6 +1,9 @@
 whitespace = [' ', '\t']
-number_types = ['int', 'float']
-types = ['str', 'list']
+native_number_types = ['int', 'float', 'double']  ## float and double are the same
+number_types = ['long']  ## requires https://github.com/dcodeIO/Long.js
+number_types.extend( native_number_types )
+
+types = ['str', 'list', 'dict']
 types.extend( number_types)
 
 

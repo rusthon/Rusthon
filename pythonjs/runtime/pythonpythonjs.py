@@ -3,20 +3,18 @@
 # License: "New BSD"
 
 __NULL_OBJECT__ = Object.create( null )
-if 'window' in this and 'document' in this:
-	__WEBWORKER__ = False
-	__NODEJS__ = False
-elif typeof(process) != 'undefined':
-	## note, we can not test for '"process" in global'
-	## make sure we are really inside NodeJS by letting this fail, and halting the program.
-	__WEBWORKER__ = False
+__WEBWORKER__ = False
+__NODEJS__ = False
+__BROWSER__ = False
+
+## note browser and nodejs can both be true in the case of NodeWebkit
+if typeof(process) != 'undefined':  ## TODO check if this is true inside a nodejs webworker
 	__NODEJS__ = True
-else:
-	__NODEJS__ = False
+if typeof(window) != 'undefined':
+	__BROWSER__ = True
+if typeof(importScripts) == 'function':
 	__WEBWORKER__ = True
 
-#if __NODEJS__:
-#	require('requirejs')
 
 def __create_array__():  ## DEPRECATED
 	"""Used to fix a bug/feature of Javascript where new Array(number)

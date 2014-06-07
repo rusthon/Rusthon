@@ -1168,6 +1168,20 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				return '[%s]' %','.join(expanded)
 
+		elif not self._with_dart and left in self._typedef_vars and self._typedef_vars[left]=='long':
+			if op == '*':
+				return '%s.multiply(%s)'%(left, right)
+			elif op == '+':
+				return '%s.add(%s)'%(left, right)
+			elif op == '-':
+				return '%s.subtract(%s)'%(left, right)
+			elif op == '/' or op == '//':
+				return '%s.div(%s)'%(left, right)
+			elif op == '%':
+				return '%s.modulo(%s)'%(left, right)
+			else:
+				raise NotImplementedError('long operator: %s'%op)
+
 		elif not self._with_dart and op == '*' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
 			power = POWER_OF_TWO.index( node.right.n )
 			return '%s << %s'%(left, power)
@@ -1188,7 +1202,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
-			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.number_types:
+			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
 				return '%s+%s'%(left, right)
 
 			elif self._with_lua or self._in_lambda or self._in_while_test:
@@ -1272,7 +1286,24 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		left = self.visit(node.left)
 		comp = [ left ]
 		for i in range( len(node.ops) ):
-			if isinstance(node.ops[i], ast.In) or isinstance(node.ops[i], ast.NotIn):
+			if i==0 and isinstance(node.left, ast.Name) and node.left.id in self._typedef_vars:
+				#raise RuntimeError(node)
+				if isinstance(node.ops[i], ast.Eq):
+					comp = ['%s.equals(%s)' %(left, self.visit(node.comparators[i]))]
+				elif isinstance(node.ops[i], ast.Lt):
+					comp = ['%s.lessThan(%s)' %(left, self.visit(node.comparators[i]))]
+				elif isinstance(node.ops[i], ast.Gt):
+					comp = ['%s.greaterThan(%s)' %(left, self.visit(node.comparators[i]))]
+
+				elif isinstance(node.ops[i], ast.LtE):
+					comp = ['%s.lessThanOrEqual(%s)' %(left, self.visit(node.comparators[i]))]
+				elif isinstance(node.ops[i], ast.GtE):
+					comp = ['%s.greaterThanOrEqual(%s)' %(left, self.visit(node.comparators[i]))]
+
+				else:
+					raise NotImplementedError( node.ops[i] )
+
+			elif isinstance(node.ops[i], ast.In) or isinstance(node.ops[i], ast.NotIn):
 				if comp[-1] == left:
 					comp.pop()
 				else:
@@ -1466,7 +1497,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if isinstance(target, ast.Name) and target.id in typedpython.types:
 			if len(targets)==2 and isinstance(targets[1], ast.Name):
 				self._typedef_vars[ targets[1].id ] = target.id
-				targets = targets[1:]
+				if target.id == 'long' and isinstance(node.value, ast.Num):
+					## requires long library ##
+					writer.write('%s = long.fromString("%s")' %(targets[1].id, self.visit(node.value)))
+					return None
+				else:
+					targets = targets[1:]
 			elif len(targets)==1 and isinstance(node.value, ast.Name) and target.id in typedpython.types:
 				self._typedef_vars[ node.value.id ] = target.id
 				return None
@@ -2427,6 +2463,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 				for v in local_vars-global_vars:
 					if v in args: pass
+					elif v == 'long': writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
 					else: vars.append( v )
 
 				a = ','.join( vars )
