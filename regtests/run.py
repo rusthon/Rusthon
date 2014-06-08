@@ -14,6 +14,7 @@ About the tests:
 """
 
 import os, sys, re, tempfile, subprocess, json
+import wsgiref, wsgiref.simple_server
 
 sys.path.append('../pythonjs')
 import typedpython
@@ -33,6 +34,37 @@ argv = [os.path.abspath(name)
         for name in sys.argv[1:]
         if os.path.exists(name)
         ]
+
+
+def httpd_reply( env, start_response ):
+    path = env['PATH_INFO']
+    host = env['HTTP_HOST']
+    client = env['REMOTE_ADDR']
+    arg = env['QUERY_STRING']
+    length = 0
+    if 'CONTENT_LENGTH' in env:
+        length = int(env['CONTENT_LENGTH'])
+    data = env['wsgi.input'].read( length ).decode('utf-8')
+
+    print('http_reply ->', path, host, client, arg, data)
+
+    msg = json.loads( data )
+    assert 'call' in msg
+    assert 'args' in msg
+    if msg['call'] == 'concat':
+        res = ''.join( msg['args'] )
+    elif msg['call'] == 'add':
+        res = msg['args'][0] + msg['args'][1]
+
+    print( res )
+    start_response( '200 OK', [] )
+    return [b'0']
+
+httpd = wsgiref.simple_server.make_server( 'localhost', 8080, httpd_reply )
+import threading
+httpd = threading._start_new_thread( httpd.serve_forever, ())
+print(httpd)
+
 
 def runnable(command):
     ## this fails with lua5.1 "lua -v"

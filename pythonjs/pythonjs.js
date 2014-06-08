@@ -3841,3 +3841,16 @@ __webworker_wrap.NAME = "__webworker_wrap";
 __webworker_wrap.args_signature = ["ob", "argindex"];
 __webworker_wrap.kwargs_signature = {  };
 __webworker_wrap.types_signature = {  };
+__rpc__ = function(url, func, args) {
+  var req;
+  req =  new XMLHttpRequest();
+  req.open("POST", url, false);
+  req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  req.send(JSON.stringify(__jsdict([["call", func], ["args", args]])));
+  return JSON.parse(req.responseText);
+}
+
+__rpc__.NAME = "__rpc__";
+__rpc__.args_signature = ["url", "func", "args"];
+__rpc__.kwargs_signature = {  };
+__rpc__.types_signature = {  };

@@ -142,6 +142,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._use_array = False
 		self._webworker_functions = dict()
 		self._with_webworker = False
+		self._with_rpc = None
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1799,9 +1800,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			name = '__open__'
 			node.func.id = '__open__'
 		###############################################
+		if self._with_rpc:
+			return '__rpc__( %s, "%s", [%s] )' %(self._with_rpc, name, ','.join([self.visit(a) for a in node.args]))
 
-
-		if not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
+		elif not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
 			if node.func.attr == 'append':
 				#return '%s.append( [%s], __NULL_OBJECT__)' %(node.func.value.id, self.visit(node.args[0]) )
 				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
@@ -3077,7 +3079,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_With(self, node):
 		global writer
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'webworker':
+
+		if isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
+			self._with_rpc = self.visit( node.context_expr.args[0] )
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			self._with_rpc = None
+
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'webworker':
 			self._with_webworker = True
 			writer = get_webworker_writer( 'worker.js' )
 
