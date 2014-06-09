@@ -143,6 +143,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._webworker_functions = dict()
 		self._with_webworker = False
 		self._with_rpc = None
+		self._with_rpc_name = None
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1796,14 +1797,22 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		name = self.visit(node.func)
 
+		if self._with_rpc:
+			if not self._with_rpc_name:
+				return '__rpc__( %s, "%s", [%s] )' %(self._with_rpc, name, ','.join([self.visit(a) for a in node.args]))
+			elif self._with_rpc_name:
+				if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == self._with_rpc_name:
+					name = name[ len(self._with_rpc_name)+1 : ]
+					return '__rpc__( %s, "%s", [%s] )' %(self._with_rpc, name, ','.join([self.visit(a) for a in node.args]))
+
+		###############################################
+
 		if name == 'open':  ## do not overwrite window.open ##
 			name = '__open__'
 			node.func.id = '__open__'
-		###############################################
-		if self._with_rpc:
-			return '__rpc__( %s, "%s", [%s] )' %(self._with_rpc, name, ','.join([self.visit(a) for a in node.args]))
 
-		elif not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
+		###############################################
+		if not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
 			if node.func.attr == 'append':
 				#return '%s.append( [%s], __NULL_OBJECT__)' %(node.func.value.id, self.visit(node.args[0]) )
 				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
@@ -3082,10 +3091,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		if isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
 			self._with_rpc = self.visit( node.context_expr.args[0] )
+			if isinstance(node.optional_vars, ast.Name):
+				self._with_rpc_name = node.optional_vars.id
 			for b in node.body:
 				a = self.visit(b)
 				if a: writer.write(a)
 			self._with_rpc = None
+			self._with_rpc_name = None
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'webworker':
 			self._with_webworker = True
