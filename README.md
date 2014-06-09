@@ -95,7 +95,15 @@ Supported Features
 	regular and lambda functions
 	function calls with *args and **kwargs
 
+####Operator Overloading
 
+	__getattr__
+	__getattribute__
+	__getitem__
+	__setitem__
+	__call__
+	__iter__
+	__add__
 
 ####builtins
 
