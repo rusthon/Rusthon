@@ -1487,3 +1487,9 @@ with javascript:
 		req.send( JSON.stringify({'call':func, 'args':args}) )
 		return JSON.parse( req.responseText )
 
+	def __rpc_iter__( url, attr):
+		req = new( XMLHttpRequest() )
+		req.open('POST', url, False)  ## false is sync
+		req.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
+		req.send( JSON.stringify({'iter':attr}) )
+		return JSON.parse( req.responseText )

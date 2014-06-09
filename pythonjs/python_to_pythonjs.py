@@ -2857,7 +2857,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('break')
 
 	def visit_For(self, node):
-		log('for loop:')
+
 		if self._cache_for_body_calls:  ## TODO add option for this
 			for n in node.body:
 				calls = collect_calls(n)
@@ -2870,6 +2870,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						c.func.id = '__call__%s'%i
 						c.constant = True
 						self._call_ids += 1
+
+		if self._with_rpc_name and isinstance(node.iter, ast.Attribute) and isinstance(node.iter.value, ast.Name) and node.iter.value.id == self._with_rpc_name:
+			target = self.visit(node.target)
+			writer.write('def __rpc_loop__():')
+			writer.push()
+			writer.write(	'%s = __rpc_iter__(%s, "%s")' %(target, self._with_rpc, node.iter.attr) )
+			writer.write(	'if %s == "__STOP_ITERATION__": __continue__()' %target)
+			writer.write(	'else:')
+			writer.push()
+			map( 				self.visit, node.body )
+			writer.write(		'__rpc_loop__()')
+			writer.pull()
+			writer.pull()
+			writer.write('__rpc_loop__()')
+
+			writer.write('def __continue__():')  ## because this def comes after, it needs to be `hoisted` up by the javascript VM
+			writer.push()
+			return None
+
 
 		iterid = self._iter_ids
 		self._iter_ids += 1

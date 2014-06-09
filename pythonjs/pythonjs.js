@@ -3854,3 +3854,16 @@ __rpc__.NAME = "__rpc__";
 __rpc__.args_signature = ["url", "func", "args"];
 __rpc__.kwargs_signature = {  };
 __rpc__.types_signature = {  };
+__rpc_iter__ = function(url, attr) {
+  var req;
+  req =  new XMLHttpRequest();
+  req.open("POST", url, false);
+  req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  req.send(JSON.stringify(__jsdict([["iter", attr]])));
+  return JSON.parse(req.responseText);
+}
+
+__rpc_iter__.NAME = "__rpc_iter__";
+__rpc_iter__.args_signature = ["url", "attr"];
+__rpc_iter__.kwargs_signature = {  };
+__rpc_iter__.types_signature = {  };

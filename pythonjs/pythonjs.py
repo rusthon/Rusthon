@@ -22,6 +22,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def __init__(self, requirejs=True, insert_runtime=True, webworker=False):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
+		self._func_expressions = False
 		self._indent = 0
 		self._global_functions = {}
 		self._function_stack = []
@@ -169,14 +170,21 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			## this style will not make function global to the eval context in NodeJS ##
 			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 			## this is required for eval to be able to work in NodeJS, note there is no var keyword.
-			buffer = self.indent() + '%s = function(%s) {\n' % (node.name, ', '.join(args))
+
+			if self._func_expressions:
+				buffer = self.indent() + '%s = function(%s) {\n' % (node.name, ', '.join(args))
+			else:
+				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 
 			if self._requirejs and node.name not in self._exports:
 				self._exports.add( node.name )
 
 		else:
-			buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
 
+			if self._func_expressions:
+				buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+			else:
+				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 
 		self.push()
 		body = list()

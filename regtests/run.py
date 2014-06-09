@@ -36,11 +36,19 @@ argv = [os.path.abspath(name)
         ]
 
 
+mycollection = range(10)
+__clients = {}  ## keeps track of iterator indices
+
 def httpd_reply( env, start_response ):
+
     path = env['PATH_INFO']
     host = env['HTTP_HOST']
     client = env['REMOTE_ADDR']
     arg = env['QUERY_STRING']
+
+    if client not in __clients:
+        __clients[ client ] = {}
+
     length = 0
     if 'CONTENT_LENGTH' in env:
         length = int(env['CONTENT_LENGTH'])
@@ -49,12 +57,29 @@ def httpd_reply( env, start_response ):
     print('http_reply ->', path, host, client, arg, data)
 
     msg = json.loads( data )
-    assert 'call' in msg
-    assert 'args' in msg
-    if msg['call'] == 'concat':
-        res = ''.join( msg['args'] )
-    elif msg['call'] == 'add':
-        res = msg['args'][0] + msg['args'][1]
+    if 'call' in msg:
+        assert 'args' in msg
+        if msg['call'] == 'concat':
+            res = ''.join( msg['args'] )
+        elif msg['call'] == 'add':
+            res = msg['args'][0] + msg['args'][1]
+        else:
+            raise NotImplementedError( msg )
+    elif 'iter' in msg:
+        name = msg['iter']
+        assert name in globals()
+        if name not in __clients[ client ]:
+            __clients[ client ][name] = 0
+        index = __clients[ client ][name]
+        iterable = globals()[name]
+        if index == len(iterable):
+            index = 0
+            res = '__STOP_ITERATION__'
+        else:
+            res = iterable[ index ]
+            index += 1
+        __clients[ client ][name] = index
+
     else:
         raise NotImplementedError( msg )
 
@@ -64,8 +89,7 @@ def httpd_reply( env, start_response ):
 
 httpd = wsgiref.simple_server.make_server( 'localhost', 8080, httpd_reply )
 import threading
-httpd = threading._start_new_thread( httpd.serve_forever, ())
-print(httpd)
+thread_id = threading._start_new_thread( httpd.serve_forever, ())
 
 
 def runnable(command):
