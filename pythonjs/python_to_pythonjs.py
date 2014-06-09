@@ -3172,6 +3172,12 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		self._with_dart = False
 		self._with_coffee = False
 		self._with_lua = False
+		self._with_rpc = None
+		self._with_rpc_name = None
+		self._with_inline = False
+		self._in_while_test = False
+		self._in_lambda = False
+
 		if compiler._with_dart:  ## TODO
 			self._with_dart = True
 		elif compiler._with_coffee:
@@ -3181,13 +3187,12 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		else:
 			self._with_js = True
 
-		self._in_lambda = False
+		self._typedef_vars = compiler._typedef_vars
 		self._direct_operators = compiler._direct_operators
 		self._builtin_functions = compiler._builtin_functions
 		self._js_classes = compiler._js_classes
 		self._global_functions = compiler._global_functions
 		self._addop_ids = compiler._addop_ids
-		self._with_inline = False
 		self._cache_for_body_calls = False
 		self._source = compiler._source
 		self._instances = dict()
