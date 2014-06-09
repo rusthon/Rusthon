@@ -55,10 +55,12 @@ def httpd_reply( env, start_response ):
         res = ''.join( msg['args'] )
     elif msg['call'] == 'add':
         res = msg['args'][0] + msg['args'][1]
+    else:
+        raise NotImplementedError( msg )
 
     print( res )
     start_response( '200 OK', [] )
-    return [b'0']
+    return [ json.dumps(res).encode('utf-8') ]
 
 httpd = wsgiref.simple_server.make_server( 'localhost', 8080, httpd_reply )
 import threading
