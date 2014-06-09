@@ -70,7 +70,7 @@ class _fake_app:
 			response.writeHead(404)
 			response.end()
 
-	def listen(self, port):
+	def listen(self, port, address=""):
 		print 'listening on:', port
 
 		server = self[...]
@@ -86,7 +86,7 @@ class _fake_app:
 			self.wss = wss
 			self.wss.on('connection', self.on_ws_connection)
 
-		server.listen( port )
+		server.listen( port , address)
 
 	def on_ws_connection(self, ws):  ## ws is a websocket client
 		print 'new ws connection'
