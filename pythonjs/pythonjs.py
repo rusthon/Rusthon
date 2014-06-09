@@ -83,7 +83,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append( 'return __module__')
 			lines.append('}) //end requirejs define')
 
-		return '\n'.join(lines)
+		#return '\n'.join(lines)
+		## fixed by Foxboron
+		return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
 
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
