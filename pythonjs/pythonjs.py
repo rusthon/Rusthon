@@ -19,10 +19,10 @@ from ast import NodeVisitor
 #import code_writer
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True, webworker=False):
+	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
-		self._func_expressions = False
+		self._func_expressions = function_expressions
 		self._indent = 0
 		self._global_functions = {}
 		self._function_stack = []
@@ -633,14 +633,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 def generate_runtime():
 	from python_to_pythonjs import main as py2pyjs
 	lines = [
-		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False ), ## lowlevel pythonjs
-		main( py2pyjs(open('runtime/builtins.py', 'rb').read()), requirejs=False, insert_runtime=False )
+		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True ), ## lowlevel pythonjs
+		main( py2pyjs(open('runtime/builtins.py', 'rb').read()), requirejs=False, insert_runtime=False, function_expressions=True )
 	]
 	return '\n'.join( lines )
 
-def main(script, requirejs=True, insert_runtime=True, webworker=False):
+def main(script, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
 	tree = ast.parse( script )
-	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker ).visit(tree)
+	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions ).visit(tree)
 
 
 def command():
