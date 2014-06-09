@@ -36,7 +36,9 @@ argv = [os.path.abspath(name)
         ]
 
 
-mycollection = range(10)
+__sandbox = {
+    'mycollection' : range(10)
+}
 __clients = {}  ## keeps track of iterator indices
 
 def httpd_reply( env, start_response ):
@@ -50,13 +52,13 @@ def httpd_reply( env, start_response ):
         __clients[ client ] = {}
 
     length = 0
-    if 'CONTENT_LENGTH' in env:
-        length = int(env['CONTENT_LENGTH'])
+    if 'CONTENT_LENGTH' in env: length = int(env['CONTENT_LENGTH'])
     data = env['wsgi.input'].read( length ).decode('utf-8')
-
-    print('http_reply ->', path, host, client, arg, data)
+    #print('http_reply ->', path, host, client, arg, data)
 
     msg = json.loads( data )
+    res = ''
+
     if 'call' in msg:
         assert 'args' in msg
         if msg['call'] == 'concat':
@@ -65,13 +67,14 @@ def httpd_reply( env, start_response ):
             res = msg['args'][0] + msg['args'][1]
         else:
             raise NotImplementedError( msg )
+
     elif 'iter' in msg:
         name = msg['iter']
-        assert name in globals()
+        assert name in __sandbox
         if name not in __clients[ client ]:
             __clients[ client ][name] = 0
         index = __clients[ client ][name]
-        iterable = globals()[name]
+        iterable = __sandbox[name]
         if index == len(iterable):
             index = 0
             res = '__STOP_ITERATION__'
@@ -80,10 +83,15 @@ def httpd_reply( env, start_response ):
             index += 1
         __clients[ client ][name] = index
 
+    elif 'set' in msg:
+        __sandbox[ msg['set'] ] = msg['value']
+
+    elif 'get' in msg:
+        res = __sandbox[ msg['get'] ]
+
     else:
         raise NotImplementedError( msg )
 
-    print( res )
     start_response( '200 OK', [] )
     return [ json.dumps(res).encode('utf-8') ]
 

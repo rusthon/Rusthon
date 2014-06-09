@@ -1493,3 +1493,17 @@ with javascript:
 		req.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
 		req.send( JSON.stringify({'iter':attr}) )
 		return JSON.parse( req.responseText )
+
+	def __rpc_set__( url, attr, value):
+		req = new( XMLHttpRequest() )
+		req.open('POST', url, False)  ## false is sync
+		req.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
+		req.send( JSON.stringify({'set':attr, 'value':value}) )
+
+	def __rpc_get__( url, attr):
+		req = new( XMLHttpRequest() )
+		req.open('POST', url, False)  ## false is sync
+		req.setRequestHeader("Content-Type", "application/json;charset=UTF-8")
+		req.send( JSON.stringify({'get':attr}) )
+		return JSON.parse( req.responseText )
+

@@ -1511,6 +1511,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				raise SyntaxError(targets)
 
+		elif self._with_rpc_name and isinstance(target, Attribute) and isinstance(target.value, Name) and target.value.id == self._with_rpc_name:
+			writer.write('__rpc_set__(%s, "%s", %s)' %(self._with_rpc, target.attr, self.visit(node.value)))
+			return None
+		elif self._with_rpc_name and isinstance(node.value, Attribute) and isinstance(node.value.value, Name) and node.value.value.id == self._with_rpc_name:
+			writer.write('%s = __rpc_get__(%s, "%s")' %(self.visit(target), self._with_rpc, node.value.attr))
+			return None
+
+		#############################################
 		for target in targets:
 			self._visit_assign_helper( node, target )
 			node = ast.Expr( value=target )
