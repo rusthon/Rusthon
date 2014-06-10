@@ -647,17 +647,42 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			if start is undefined and stop is undefined:
-				arr = []
-				i = 0
-				while i < this.length:
-					arr.push( this[i] )
-					i += step
-				return arr
+			#if start is undefined and stop is undefined:
+			#	arr = []
+			#	i = 0
+			#	while i < this.length:
+			#		arr.push( this[i] )
+			#		i += step
+			#	return arr
+			#else:
+			#	if stop < 0:
+			#		stop = this.length + stop
+			#	return this.slice(start, stop)
+
+			reverse = step < 0  ## in javascript `null<0` and `undefined<0` are false
+			if typeof(step)=='number':
+				if reverse: step = Math.abs(step)
 			else:
-				if stop < 0:
-					stop = this.length + stop
-				return this.slice(start, stop)
+				step = 1
+
+			arr = []
+			i = 0
+			while i < this.length:
+				arr.push( this[i] )
+				i += step
+
+			if start is undefined and stop is undefined:
+				if reverse: arr.reverse()
+			elif reverse:
+				arr = arr.slice(stop, start+1)
+				arr.reverse()
+			else:
+				#if stop < 0:  ## mozilla spec says negative indices are supported
+				#	stop = arr.length + stop
+				arr = arr.slice(start, stop)
+
+			return arr
+
 
 		@Array.prototype.__setslice__
 		def func(start, stop, step, items):
