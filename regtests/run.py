@@ -211,7 +211,14 @@ def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=Fals
     if os.path.isfile("%s.errors" % tmpname):
         os.unlink("%s.errors" % tmpname)
     f = os.popen(command + " 2>%s.errors" % tmpname,  'r')
-    stdout = f.read().strip()
+
+    killed = False
+    try:
+        stdout = f.read().strip()
+    except KeyboardInterrupt:
+        stdout = f.read().strip()
+        killed = True
+
     f.close()
 
 
@@ -234,7 +241,11 @@ def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=Fals
         if show_details:
             print('TEST ERROR!')
             print(stderr)
-            #sys.exit()
+
+    if killed:
+        print(stdout)
+        sys.exit()
+
     if returns_stdout_stderr:
         return stdout, stderr
 

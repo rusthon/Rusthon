@@ -19,3 +19,12 @@ def main():
 	TestError( a[9]==7 )
 	TestError( a[10]==8 )
 	TestError( a[11]==9 )
+
+	b = list(range(3))
+	c = b [ :2 ]
+	TestError( c[0]==0 )
+	TestError( c[1]==1 )
+
+	b[ :2 ] = 'ABC'
+	TestError( len(b)==4 )
+	TestError( b[0]=='A' )

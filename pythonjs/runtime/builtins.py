@@ -652,18 +652,6 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			#if start is undefined and stop is undefined:
-			#	arr = []
-			#	i = 0
-			#	while i < this.length:
-			#		arr.push( this[i] )
-			#		i += step
-			#	return arr
-			#else:
-			#	if stop < 0:
-			#		stop = this.length + stop
-			#	return this.slice(start, stop)
-
 			reverse = step < 0  ## in javascript `null<0` and `undefined<0` are false
 			if typeof(step)=='number':
 				if reverse: step = Math.abs(step)
@@ -688,9 +676,10 @@ def _setup_array_prototype():
 
 			return arr
 
-
 		@Array.prototype.__setslice__
 		def func(start, stop, step, items):
+			if start is undefined: start = 0
+			if stop is undefined: stop = this.length
 			arr = [start, stop-start]
 			for item in items: arr.push( item )
 			this.splice.apply(this, arr )
