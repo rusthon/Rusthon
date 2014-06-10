@@ -79,6 +79,9 @@ class list:
 	def index(self, obj):
 		return self[...].indexOf(obj)
 
+	def pop(self, n):
+		return self[...].removeAt( n )
+
 
 def tuple(a):
 	return list(a)
@@ -130,6 +133,14 @@ def range(n):
 	r = []
 	i = 0
 	while i < n:
+		r.append( i )
+		i += 1
+	return r
+
+def __range2(start, stop):
+	r = []
+	i = start
+	while i < stop:
 		r.append( i )
 		i += 1
 	return r

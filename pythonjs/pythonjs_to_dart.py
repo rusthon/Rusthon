@@ -431,15 +431,20 @@ class DartGenerator( pythonjs.JSGenerator ):
 		else:
 			args = ''
 
+		if isinstance(node.func, ast.Name) and node.func.id == 'range' and len(node.args)==2:
+			func = '__range2'
+		else:
+			func = self.visit(node.func)
+
 		if node.keywords:
 			kwargs = ','.join( ['%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords] )
 			if args:
-				return '%s(%s, %s)' %( self.visit(node.func), ','.join(args), kwargs )
+				return '%s(%s, %s)' %( func, ','.join(args), kwargs )
 			else:
-				return '%s( %s )' %( self.visit(node.func), kwargs )
+				return '%s( %s )' %( func, kwargs )
 
 		else:
-			return '%s(%s)' % (self.visit(node.func), args)
+			return '%s(%s)' % (func, args)
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)
