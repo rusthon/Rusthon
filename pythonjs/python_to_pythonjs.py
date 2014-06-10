@@ -1584,6 +1584,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				#code = '%s["$wrapped"] = %s' %(self.visit(target.value), self.visit(node.value))
 				code = '%s[...] = %s' %(self.visit(target.value), self.visit(node.value))
 
+			elif isinstance(target.slice, ast.Slice):
+				code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
+
 			elif self._with_dart or self._with_ll:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
@@ -1596,7 +1599,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' % (self.visit(target.value), s, s, self.visit(node.value))
 
 			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
-				#code = '%s[...][%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
 				code = '%s[%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
 
 			else:

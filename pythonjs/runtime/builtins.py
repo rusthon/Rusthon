@@ -659,6 +659,13 @@ def _setup_array_prototype():
 					stop = this.length + stop
 				return this.slice(start, stop)
 
+		@Array.prototype.__setslice__
+		def func(start, stop, step, items):
+			arr = [start, stop-start]
+			for item in items: arr.push( item )
+			this.splice.apply(this, arr )
+			return this
+
 		@Array.prototype.append
 		def func(item):
 			this.push( item )

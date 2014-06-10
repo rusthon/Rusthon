@@ -113,9 +113,31 @@ def runnable(command):
     except OSError:
         return False
 
-## rhino has problems: like maximum callstack errors simply freeze up rhino
-pypy_runnable = runnable( 'pypy --help' )
+def run_pypy_test_on(filename):
+    """PyPy"""
+    write("%s.py" % tmpname, patch_python(filename, python='PYPY'))
+    return run_command("%s %s.py %s" % (pypy_exe, tmpname, display_errors))
+
+
+pypy_runnable = False
+pypy_exe = None
+if os.path.isfile( os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy') ):
+    pypy_runnable = True
+    pypy_exe = os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy')
+    run_pypy_test_on.__doc__ = 'PyPy 2.3.1'
+elif os.path.isfile( os.path.expanduser('~/pypy-2.2-linux64/bin/pypy') ):
+    pypy_runnable = True
+    pypy_exe = os.path.expanduser('~/pypy-2.2-linux64/bin/pypy')
+    run_pypy_test_on.__doc__ = 'PyPy 2.2'
+elif runnable( 'pypy --help' ):
+    pypy_runnable = True
+    pypy_exe = 'pypy'
+
+
+
+## rhino is not run by default because it simply freezes up on maximum callstack errors
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
+
 node_runnable = runnable("node --help")
 
 ## sudo npm install nodewebkit -g
@@ -351,10 +373,6 @@ def run_python3_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename, python='PYTHON3'))
     return run_command("python3 %s.py %s" % (tmpname, display_errors))
 
-def run_pypy_test_on(filename):
-    """PyPy"""
-    write("%s.py" % tmpname, patch_python(filename, python='PYPY'))
-    return run_command("pypy %s.py %s" % (tmpname, display_errors))
 
 
 def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, multioutput=False):
