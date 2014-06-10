@@ -3035,9 +3035,6 @@ set = function(args, kwargs) {
   __args__ = __getargs__("set", __sig__, args, kwargs);
   var a = __args__['a'];
   "\n	This returns an array that is a minimal implementation of set.\n	Often sets are used simply to remove duplicate entries from a list, \n	and then it get converted back to a list, it is safe to use fastset for this.\n\n	The array prototype is overloaded with basic set functions:\n		difference\n		intersection\n		issubset\n\n	Note: sets in Python are not subscriptable, but can be iterated over.\n\n	Python docs say that set are unordered, some programs may rely on this disorder\n	for randomness, for sets of integers we emulate the unorder only uppon initalization \n	of the set, by masking the value by bits-1. Python implements sets starting with an \n	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates \n	a new array of length 32 and mask of 31.  This is only emulated for arrays of \n	integers up to an array length of 1536.\n\n	";
-  if (__test_if_true__(a instanceof Array)) {
-    a = a["$wrapped"];
-  }
   hashtable = null;
   if (( a.length ) <= 1536) {
     hashtable = __jsdict([]);
@@ -3066,7 +3063,7 @@ set = function(args, kwargs) {
     if (! (__iter19 instanceof Array || typeof __iter19 == "string" || __is_typed_array(__iter19)) ) { __iter19 = __object_keys__(__iter19) }
     for (var __idx19=0; __idx19 < __iter19.length; __idx19++) {
       var b = __iter19[ __idx19 ];
-      if (__test_if_true__(typeof(b, "number") && ( b ) === ( (b | 0) ))) {
+      if (__test_if_true__(( typeof(b) ) == "number" && ( b ) === ( (b | 0) ))) {
         key = (b & mask);
         hashtable[((key.__uid__) ? key.__uid__ : key)] = b;
         keys.push(key);

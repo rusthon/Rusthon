@@ -1077,7 +1077,7 @@ def set(a):
 
 	'''
 	with javascript:
-		if isinstance(a, list): a = a[...]
+
 		hashtable = null
 		if a.length <= 1536:
 			hashtable = {}
@@ -1096,7 +1096,7 @@ def set(a):
 		fallback = False
 		if hashtable:
 			for b in a:
-				if typeof(b,'number') and b is (b|0):  ## set if integer
+				if typeof(b)=='number' and b is (b|0):  ## set if integer
 					key = b & mask
 					hashtable[ key ] = b
 					keys.push( key )
