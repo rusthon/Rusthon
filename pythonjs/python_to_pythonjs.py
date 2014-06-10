@@ -2901,6 +2901,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		return ''
 
 	def visit_Break(self, node):
+		writer.write('__break__ = True')
 		writer.write('break')
 
 	def visit_For(self, node):
@@ -3131,13 +3132,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	_call_ids = 0
 	def visit_While(self, node):
-		log('while loop:')
 		if self._cache_while_body_calls:  ## TODO add option for this
 			for n in node.body:
 				calls = collect_calls(n)
 				for c in calls:
-					log('--call: %s' %c)
-					log('------: %s' %c.func)
 					if isinstance(c.func, ast.Name):  ## these are constant for sure
 						i = self._call_ids
 						writer.write( '__call__%s = __get__(%s,"__call__")' %(i,self.visit(c.func)) )
@@ -3145,12 +3143,22 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						c.constant = True
 						self._call_ids += 1
 
+		if node.orelse:
+			writer.write('var(__break__)')
+			writer.write('__break__ = False')
+
 		self._in_while_test = True
 		writer.write('while %s:' % self.visit(node.test))
 		self._in_while_test = False
 		writer.push()
 		map(self.visit, node.body)
 		writer.pull()
+
+		if node.orelse:
+			writer.write('if __break__ == False:')
+			writer.push()
+			map(self.visit, node.orelse)
+			writer.pull()
 
 	def visit_With(self, node):
 		global writer
