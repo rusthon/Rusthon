@@ -122,12 +122,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	identifier = 0
 	_func_typedefs = ()
 
+	def format_error(self, node):
+		lines = []
+		if self._line_number > 0:
+			lines.append( self._source[self._line_number-1] )
+		lines.append( self._source[self._line_number] )
+		if self._line_number+1 < len(self._source):
+			lines.append( self._source[self._line_number+1] )
+
+		return 'line %s\n%s\n%s' %(self._line_number, '\n'.join(lines), node)
+
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
 
 		source = typedpython.transform_source( source )
 
 		super(PythonToPythonJS, self).__init__()
 		self.setup_inliner( writer )
+
+		self._line = None
+		self._line_number = 0
 
 		self._direct_operators = set()  ## optimize "+" operator
 		self._with_ll = False   ## lowlevel
@@ -365,6 +378,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._use_sleep = True
 		elif node.module == 'array' and node.names[0].name == 'array':
 			self._use_array = True ## this is just a hint that calls to array call the builtin array
+
+		elif node.module == 'bisect' and node.names[0].name == 'bisect':
+			## bisect library is part of the stdlib, 
+			## in pythonjs it is a builtin function defined in builtins.py
+			pass
 
 		elif node.module in lib:
 			imported = False
@@ -1004,7 +1022,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_If(self, node):
 		if self._with_dart and writer.is_at_global_level():
-			raise SyntaxError('if statements can not be used at module level in dart')
+			raise SyntaxError( self.format_error('if statements can not be used at module level in dart') )
 		elif self._with_lua:
 			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
 
@@ -1050,7 +1068,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		elif isinstance(node.type, ast.Call):
 			if len(node.type.args) > 1:
-				raise SyntaxError('error to raise can have at most a single argument')
+				raise SyntaxError( self.format_error('raise Error(x) can only have a single argument') )
 			if node.type.args:
 				writer.write( 'raise %s(%s)' %(self.visit(node.type.func), self.visit(node.type.args[0])) )
 			else:
@@ -1157,9 +1175,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				if node.right.id in self._global_nodes:
 					n = self._global_nodes[ node.right.id ].n
 				else:
-					raise SyntaxError
+					raise SyntaxError( self.format_error(node) )
 			else:
-				raise SyntaxError
+				#raise SyntaxError( self.format_error(node) )
+				return '__mul_op(%s,%s)'%(left, right)
 
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
@@ -1495,6 +1514,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		lineno = node.lineno
+		if node.lineno < len(self._source):
+			src = self._source[ node.lineno ]
+			self._line_number = node.lineno
+			self._line = src
+
 
 		if use_runtime_errors:
 			writer.write('try:')
@@ -1515,7 +1539,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._typedef_vars[ node.value.id ] = target.id
 				return None
 			else:
-				raise SyntaxError(targets)
+				raise SyntaxError( self.format_error(targets) )
 
 		elif self._with_rpc_name and isinstance(target, Attribute) and isinstance(target.value, Name) and target.value.id == self._with_rpc_name:
 			writer.write('__rpc_set__(%s, "%s", %s)' %(self._with_rpc, target.attr, self.visit(node.value)))
@@ -1760,10 +1784,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return '"""%s"""' %s.encode('utf-8')
 
 	def visit_Expr(self, node):
-		log('line: %s' %node.lineno )
 		if node.lineno < len(self._source):
 			src = self._source[ node.lineno ]
-			log( src )
+			## TODO raise SyntaxErrors with the line number and line source
+			self._line_number = node.lineno
+			self._line = src
 
 		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
@@ -1831,7 +1856,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				#return '%s.append( [%s], __NULL_OBJECT__)' %(node.func.value.id, self.visit(node.args[0]) )
 				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
 			else:
-				raise SyntaxError
+				raise SyntaxError( self.format_error(node) )
 
 
 		elif self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
@@ -1843,7 +1868,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif node.func.attr == 'start_webworker':
 				return '__start_new_thread( %s, %s )' %(self.visit(node.args[0]), self.visit(node.args[1]))
 			else:
-				raise SyntaxError(node.func.attr)
+				raise SyntaxError( self.format_error(node.func.attr) )
 
 		elif self._with_webworker and name in self._global_functions:
 			node.calling_from_worker = True
@@ -1866,7 +1891,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._with_js = False
 						writer.with_javascript = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'dart':
 					if kw.value.id == 'True':
@@ -1874,7 +1899,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					elif kw.value.id == 'False':
 						self._with_dart = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'coffee':
 					if kw.value.id == 'True':
@@ -1882,7 +1907,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					elif kw.value.id == 'False':
 						self._with_coffee = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'lua':
 					if kw.value.id == 'True':
@@ -1890,7 +1915,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					elif kw.value.id == 'False':
 						self._with_lua = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'inline_functions':
 					if kw.value.id == 'True':
@@ -1898,7 +1923,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					elif kw.value.id == 'False':
 						self._with_inline = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'runtime_exceptions':
 					if kw.value.id == 'True':
@@ -1906,7 +1931,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					elif kw.value.id == 'False':
 						self._with_runtime_exceptions = False
 					else:
-						raise SyntaxError
+						raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'direct_operator':
 					if kw.value.s.lower() == 'none':
@@ -1915,7 +1940,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._direct_operators.add( kw.value.s )
 
 				else:
-					raise SyntaxError
+					raise SyntaxError( self.format_error(node) )
 
 		elif self._with_ll or name == 'inline':
 			args = [self.visit(arg) for arg in node.args]
@@ -2352,7 +2377,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
 				if decorator.attr == 'setter':
 					if self._decorator_properties[ decorator.value.id ]['set']:
-						raise SyntaxError('user error - the same decorator.setter is used more than once!')
+						raise SyntaxError( self.format_error("decorator.setter is used more than once") )
 					n = node.name + '__setprop__'
 					self._decorator_properties[ decorator.value.id ]['set'] = n
 					node.name = n
@@ -2424,7 +2449,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			## dart supports optional positional params [x=1, y=2], or optional named {x:1, y:2}
 			## but not both at the same time.
 			if node.args.kwarg:
-				raise SyntaxError( 'dart functions can not take variable keyword arguments (**kwargs)' )
+				raise SyntaxError( self.format_error('dart functions can not take variable keyword arguments (**kwargs)' ) )
 
 			for dec in with_dart_decorators: writer.write('@%s'%dec)
 
@@ -2441,7 +2466,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			if node.args.vararg:
 				if node.args.defaults:
-					raise SyntaxError( 'dart functions can not use variable arguments (*args) and have keyword arguments' )
+					raise SyntaxError( self.format_error('dart functions can not use variable arguments (*args) and have keyword arguments' ) )
 
 				args.append('__variable_args__%s' %node.args.vararg)
 

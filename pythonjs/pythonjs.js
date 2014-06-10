@@ -2038,7 +2038,7 @@ bisect = function(args, kwargs) {
   var x = __args__['x'];
   var low = __args__['low'];
   var high = __args__['high'];
-  return __get__(__get__(a, "bisect", "missing attribute `bisect` - line 760: return a.bisect(x, low, high)"), "__call__")([x, low, high], __NULL_OBJECT__);
+  return a.bisect(x, low, high);
 }
 
 bisect.NAME = "bisect";

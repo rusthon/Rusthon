@@ -755,9 +755,9 @@ if __NODEJS__ == False and __WEBWORKER__ == False:
 
 
 def bisect(a, x, low=None, high=None):
-	#if isinstance(a, list):
-	#	return a[...].bisect(x, low, high)
-	return a.bisect(x, low, high)
+	## bisect function from bisect module of the stdlib
+	with javascript:
+		return a.bisect(x, low, high)
 
 
 def range(num, stop, step):
