@@ -2010,6 +2010,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				elif anode.attr == 'split' and not args:
 					return '__split_method(%s)' %self.visit(anode.value)
 
+				elif anode.attr == 'sort' and not args:
+					return '__sort_method(%s)' %self.visit(anode.value)
+
 				elif anode.attr == 'replace' and len(node.args)==2:
 					return '__replace_method(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
@@ -2192,7 +2195,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#######################################
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace') and not self._with_lua:
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace', 'sort') and not self._with_lua:
 				anode = node.func
 				if anode.attr == 'get' and len(node.args) > 0 and len(node.args) <= 2:
 					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
@@ -2211,6 +2214,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), args )
 					else:
 						return '__jsdict_pop(%s)' %self.visit(anode.value)
+
+				elif anode.attr == 'sort' and not args:
+					return '__sort_method(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'split' and len(node.args) <= 1:
 					if not args:

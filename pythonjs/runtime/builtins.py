@@ -586,6 +586,23 @@ def _setup_str_prototype():
 
 _setup_str_prototype()
 
+
+## note Arrays in javascript by default sort by string order, even if the elements are numbers.
+with javascript:
+	def __sort_method(ob):
+		if instanceof(ob, Array):
+			def f(a,b):
+				if a < b:
+					return -1
+				elif a > b:
+					return 1
+				else:
+					return 0
+			return JS("ob.sort( f )")
+
+		else:
+			return JS("ob.sort()")
+
 def _setup_array_prototype():
 
 	with javascript:
