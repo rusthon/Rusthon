@@ -82,6 +82,10 @@ class list:
 	def pop(self, n):
 		return self[...].removeAt( n )
 
+	def insert(self, i, o):
+		if i < 0: i = self.length+i
+		self[...].insert(i,o)
+
 
 def tuple(a):
 	return list(a)
