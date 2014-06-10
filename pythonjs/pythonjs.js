@@ -848,7 +848,7 @@ __jsdict_pop = function(ob, key, _kwargs_) {
       if (( key ) === undefined) {
         return ob.pop();
       } else {
-        return ob.splice(ob.indexOf(key), 1)[0];
+        return ob.splice(key, 1)[0];
       }
     } else {
       throw new IndexError(key);

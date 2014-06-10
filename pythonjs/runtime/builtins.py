@@ -203,7 +203,7 @@ with javascript:
 				if key is undefined:
 					return inline("ob.pop()")
 				else:
-					return ob.splice( ob.indexOf(key), 1 )[0]
+					return ob.splice( key, 1 )[0]
 			else:
 				raise IndexError(key)
 
