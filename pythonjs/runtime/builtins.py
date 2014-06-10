@@ -199,9 +199,14 @@ with javascript:
 	def __jsdict_pop(ob, key, _default=None):
 		if instanceof(ob, Array):
 			if ob.length:
-				return JS("ob.pop(key)")
+				## note: javascript array.pop only pops the end of an array
+				if key is undefined:
+					return inline("ob.pop()")
+				else:
+					return ob.splice( ob.indexOf(key), 1 )[0]
 			else:
 				raise IndexError(key)
+
 		elif instanceof(ob, Object):
 			if JS("key in ob"):
 				v = ob[key]
