@@ -1192,6 +1192,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			power = POWER_OF_TWO.index( node.right.n )
 			return '%s >> %s'%(left, power)
 
+		elif not self._with_dart and not self._with_js and op == '*':
+			if left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
+				return '(%s * %s)'%(left, right)
+			else:
+				return '__mul_op(%s,%s)'%(left, right)
+
 		elif op == '//':
 			if self._with_dart:
 				return '(%s/%s).floor()' %(left, right)				

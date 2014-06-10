@@ -118,6 +118,26 @@ with javascript:
 		else:
 			raise TypeError('invalid objects for addition')
 
+	def __mul_op(a, b):
+		t = typeof(a)
+		if t == 'number':
+			return JS("a * b")
+		elif t == 'string':
+			arr = []
+			for i in range(b):
+				arr.append(a)
+			return ''.join(arr)
+		elif instanceof(a, Array):
+			c = []
+			for i in range(b):
+				c.extend(a)
+			return c
+		elif a.__mul__:
+			return a.__mul__(b)
+		else:
+			raise TypeError('invalid objects for multiplication')
+
+
 	def __jsdict( items ):
 		d = JS("{}")
 		for item in items:

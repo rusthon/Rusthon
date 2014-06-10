@@ -104,6 +104,7 @@ Supported Features
 	__call__
 	__iter__
 	__add__
+	__mul__
 
 ####builtins
 
