@@ -157,6 +157,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_webworker = False
 		self._with_rpc = None
 		self._with_rpc_name = None
+		self._with_direct_keys = False
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1458,6 +1459,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.BinOp):
 				return '%s[ %s ]' %(name, self.visit(node.slice))
 
+			elif self._with_direct_keys:
+				return '%s[ %s ]' %(name, self.visit(node.slice))
+
 			else:  ## ------------------ javascript mode ------------------------
 				s = self.visit(node.slice)
 				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
@@ -1594,6 +1598,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif self._with_js:
 				s = self.visit(target.slice.value)
 				if isinstance(target.slice.value, ast.Num) or isinstance(target.slice.value, ast.BinOp):
+					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
+				elif self._with_direct_keys:
 					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
 				else:
 					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' % (self.visit(target.value), s, s, self.visit(node.value))
@@ -1932,6 +1938,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._with_runtime_exceptions = True
 					elif kw.value.id == 'False':
 						self._with_runtime_exceptions = False
+					else:
+						raise SyntaxError( self.format_error(node) )
+
+				elif kw.arg == 'direct_keys':
+					if kw.value.id == 'True':
+						self._with_direct_keys = True
+					elif kw.value.id == 'False':
+						self._with_direct_keys = False
 					else:
 						raise SyntaxError( self.format_error(node) )
 

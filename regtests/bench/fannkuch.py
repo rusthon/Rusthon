@@ -12,6 +12,7 @@ DEFAULT_ARG = 9
 def main():
 	if PYTHON=='PYTHONJS':
 		pythonjs.configure( direct_operator='+' )
+		pythonjs.configure( direct_keys=True )
 		pass
 
 	times = []

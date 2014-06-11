@@ -51,23 +51,36 @@ class list:
 		self[...][index] = value
 
 	def __getslice__(self, start, stop, step):
-		if step == -1:
-			return list( self[...].reversed )
-		elif stop == null and step == null:
+
+		if start == null and stop == null and step == null:
 			return list( self[...] )
-		elif stop == null:
-			return list( self[...].sublist(start) )
-		elif stop < 0:
-			stop = self[...].length + stop
-			if start != null:
-				return list( self[...].sublist(start, stop) )
-			else:
-				return list( self[...].sublist(0, stop) )
 		else:
-			if start != null:
-				return list( self[...].sublist(start, stop) )
+			if step == null: step = 1
+			reverse = False
+			if step < 0:
+				step = step.abs()
+				reverse = True
+
+			a = new( List() )
+			i = 0
+			while i < self[...].length:
+				a.add( self[...][i] )
+				i += step
+
+			if start == null: start = 0
+			if stop == null: stop = a.length
+			if start < 0:
+				start = a.length + start
+			if stop < 0:
+				stop = a.length + stop
+
+			if reverse:
+				b = new( List() )
+				b.addAll( a.reversed )
+				return list( b.sublist(a.length-(start+1), stop) )
 			else:
-				return list( self[...].sublist(0, stop) )
+				return list( a.sublist(start, stop) )
+
 
 	def __add__(self, other):
 		self[...].addAll( other[...] )
@@ -184,7 +197,8 @@ def __getslice__(a, start, stop, step):
 
 		return b
 	else:
-		return list.____getslice__(a, start, stop, step)
+		#return list.____getslice__(a, start, stop, step)
+		return a.__getslice__(start, stop, step)
 
 def __reverse__(a):
 	if instanceof(a, String):

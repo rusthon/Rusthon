@@ -11,6 +11,12 @@ def main():
 	TestError( len(a)==5 )
 	TestError( a[4]==4 )
 
+	#if BACKEND=='DART':
+	#	print(a[...])
+	#else:
+	#	print(a)
+
+
 	b = range(10)[::2]
 	TestError( len(b)==5 )
 	TestError( b[0]==0 )
@@ -19,8 +25,20 @@ def main():
 	TestError( b[3]==6 )
 	TestError( b[4]==8 )
 
+	#if BACKEND=='DART':
+	#	print(b[...])
+	#else:
+	#	print(b)
+
+
 	c = range(20)
 	d = c[ len(b) : ]
+
+	#if BACKEND=='DART':
+	#	print(d[...])
+	#else:
+	#	print(d)
+
 	TestError( len(d)==15 )
 
 	x = XXX()
