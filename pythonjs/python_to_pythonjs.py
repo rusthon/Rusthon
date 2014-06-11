@@ -701,8 +701,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#	writer.write(a %(name, slice, op, self.visit(node.value)))
 			#else:
 			op = self.visit(node.op)
-			a = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'
-			writer.write(a %(name, slice, name, slice, op, self.visit(node.value)))
+			value = self.visit(node.value)
+			#a = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'
+			fallback = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'%(name, slice, name, slice, op, value)
+			if isinstance(node.target.value, ast.Name):
+				## TODO also check for arr.remote (RPC) if defined then __setitem__ can not be bypassed
+
+				## the overhead of checking if target is an array,
+				## and calling __setitem__ directly bypassing a single __get__,
+				## is greather than simply calling the fallback
+				#writer.write('if instanceof(%s, Array): %s.__setitem__([%s, %s[%s] %s (%s) ], __NULL_OBJECT__)' %(name, name, slice, name,slice, op, value))
+
+				writer.write('if instanceof(%s, Array): %s[%s] %s= %s' %(name, name,slice, op, value))
+				writer.write('else: %s' %fallback)
+			else:
+				writer.write(fallback)
 
 		else:
 			## TODO extra checks to make sure the operator type is valid in this context
