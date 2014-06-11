@@ -16,7 +16,7 @@ def main():
 		pass
 
 	times = []
-	for i in range(3):
+	for i in range(4):
 		t0 = time()
 		#res = fannkuch(DEFAULT_ARG)
 		res = fannkuch(8)
@@ -52,7 +52,8 @@ def fannkuch(n):
 			perm = perm1[:]
 			flips_count = 0
 			k = perm[0]
-			while k:
+			#while k:  ## TODO fix for dart
+			while k != 0:
 				perm[:k+1] = perm[k::-1]
 				flips_count += 1
 				k = perm[0]

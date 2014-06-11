@@ -51,7 +51,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			return code
 
 	def visit_AugAssign(self, node):
-		a = '%s %s= %s;' %(self.visit(node.target), self.visit(node.op), self.visit(node.value))
+		## n++ and n-- are slightly faster than n+=1 and n-=1
+		target = self.visit(node.target)
+		op = self.visit(node.op)
+		value = self.visit(node.value)
+		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
+			a = '%s ++;' %target
+		if op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
+			a = '%s --;' %target
+		else:
+			a = '%s %s= %s;' %(target, op, value)
 		return a
 
 	def visit_Module(self, node):
@@ -66,7 +75,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if self._insert_runtime:
 			dirname = os.path.dirname(os.path.abspath(__file__))
 			runtime = open( os.path.join(dirname, 'pythonjs.js') ).read()
-			lines.append( runtime.replace('\n', ';') )
+			lines.append( runtime )  #.replace('\n', ';') )
 
 		for b in node.body:
 			line = self.visit(b)

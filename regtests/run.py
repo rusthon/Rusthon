@@ -156,7 +156,7 @@ else:
         nodewebkit = os.path.expanduser('~/node-webkit-v0.8.4-linux-x64/nw')
         if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
-if not show_details:
+if not show_details or '--no-nodewebkit' in sys.argv:
     nodewebkit_runnable = False
 
 #dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+

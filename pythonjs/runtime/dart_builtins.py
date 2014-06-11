@@ -91,6 +91,8 @@ class list:
 			stop -= 1
 		if instanceof(items, String):
 			items = items.split('')
+		elif instanceof(items, list):
+			items = items[...]
 		self[...].insertAll(start, items)
 
 

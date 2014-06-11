@@ -3,6 +3,8 @@
 # License: "New BSD"
 
 pythonjs.configure(runtime_exceptions=False)
+pythonjs.configure( direct_operator='+' )
+pythonjs.configure( direct_operator='*' )
 
 _PythonJS_UID = 0
 
@@ -652,29 +654,74 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			reverse = step < 0  ## in javascript `null<0` and `undefined<0` are false
+			arr = [] #new(Array(this.length))
+
+			start = start | 0
+			stop = stop | this.length
+
+			if start < 0:
+				start = this.length + start
+			if stop < 0:
+				stop = this.length + stop
+
+			#reverse = step < 0  ## in javascript `null<0` and `undefined<0` are false
+			#reverse = False
+
 			if typeof(step)=='number':
-				if reverse: step = Math.abs(step)
+				#reverse = step < 0
+				#if reverse:
+				if step < 0:
+					#step = Math.abs(step)
+					i = start
+					while i >= 0:
+						arr.push( this[i] )
+						i += step
+					return arr
+
+				else:
+					i = start
+					n = stop
+					while i < n:
+						arr.push( this[i] )
+						i += step
+					return arr
+
 			else:
-				step = 1
+				i = start
+				n = stop
+				while i < n:
+					#arr[ i ] = this[i]  ## slower in chrome
+					arr.push( this[i] )
+					i += 1  ## this gets optimized to i++
+				return arr
 
-			arr = []
-			i = 0
-			while i < this.length:
-				arr.push( this[i] )
-				i += step
+			#if reverse:
+			#	arr.reverse()
 
-			if start is undefined and stop is undefined:
-				if reverse: arr.reverse()
-			elif reverse:
-				arr = arr.slice(stop, start+1)
-				arr.reverse()
-			else:
-				#if stop < 0:  ## mozilla spec says negative indices are supported
-				#	stop = arr.length + stop
-				arr = arr.slice(start, stop)
+			#if step == 1:
+			#	arr = new(Array(this.length))
+			#	i = 0
+			#	while i < this.length:
+			#		arr[ i ] = this[i]
+			#		i += 1  ## this gets optimized to i++
+			#else:
+			#	arr = []
+			#	i = 0
+			#	while i < this.length:
+			#		arr.push( this[i] )
+			#		i += step
 
-			return arr
+			#if start is undefined and stop is undefined:
+			#	if reverse: arr.reverse()
+			#elif reverse:
+			#	arr = arr.slice(stop, start+1)
+			#	arr.reverse()
+			#else:
+			#	#if stop < 0:  ## mozilla spec says negative indices are supported
+			#	#	stop = arr.length + stop
+			#	arr = arr.slice(start, stop)
+
+			#return arr
 
 		@Array.prototype.__setslice__
 		def func(start, stop, step, items):
@@ -683,7 +730,6 @@ def _setup_array_prototype():
 			arr = [start, stop-start]
 			for item in items: arr.push( item )
 			this.splice.apply(this, arr )
-			return this
 
 		@Array.prototype.append
 		def func(item):
