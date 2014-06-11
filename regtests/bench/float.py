@@ -6,8 +6,10 @@ from time import clock
 from math import sin, cos, sqrt
 
 def main():
-	if PYTHON=='PYTHONJS':  ## about 25% faster with normal and javascript backends
+	if PYTHON=='PYTHONJS':
 		pythonjs.configure( direct_operator='+' )
+		pythonjs.configure( direct_operator='*' )
+		pythonjs.configure( direct_keys=True )
 		pass
 
 	times = test( 3 )

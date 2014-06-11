@@ -2,9 +2,10 @@
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
-pythonjs.configure(runtime_exceptions=False)
+pythonjs.configure( runtime_exceptions=False )
 pythonjs.configure( direct_operator='+' )
 pythonjs.configure( direct_operator='*' )
+pythonjs.configure( direct_keys=True )
 
 _PythonJS_UID = 0
 
@@ -797,6 +798,17 @@ def _setup_array_prototype():
 				if other.indexOf(item) == -1:
 					return False
 			return True
+
+		## non-standard utils ##
+		@Array.prototype.copy
+		def func():
+			arr = []
+			i = 0
+			while i < this.length:
+				arr.push( this[i] )
+				i += 1
+			return arr
+
 
 _setup_array_prototype()
 

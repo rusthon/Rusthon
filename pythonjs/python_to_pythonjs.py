@@ -142,7 +142,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._line = None
 		self._line_number = 0
 
-		self._direct_operators = set()  ## optimize "+" operator
+		self._direct_operators = set()  ## optimize "+" and "*" operator
 		self._with_ll = False   ## lowlevel
 		self._with_lua = lua
 		self._with_coffee = coffee
@@ -196,6 +196,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._cache_while_body_calls = False
 		self._comprehensions = []
 		self._generator_functions = set()
+
+		self._in_loop_with_else = False
 
 		self._custom_operators = {}
 		self._injector = []  ## advanced meta-programming hacks
@@ -1212,6 +1214,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			power = POWER_OF_TWO.index( node.right.n )
 			return '%s >> %s'%(left, power)
 
+		elif not self._with_dart and op == '*' and '*' in self._direct_operators:
+			return '(%s * %s)'%(left, right)
+
 		elif not self._with_dart and not self._with_js and op == '*':
 			if left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
 				return '(%s * %s)'%(left, right)
@@ -1442,7 +1447,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					## this is required because we need to support slices on String ##
 					return '__getslice__(%s, %s)'%(name, self.visit(node.slice))
 				else:
-					return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
+					if not node.slice.lower and not node.slice.upper and not node.slice.step:
+						return '%s.copy()' %name
+					else:
+						return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
 
 
 			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num):
@@ -1769,7 +1777,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				elif self._with_js or self._with_dart:
 					writer.write("%s = %s[%s]" % (self.visit(target), r, i))
 				else:
-					writer.write("%s = __get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" % (self.visit(target), r, i))
+					fallback = "__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i)
+					writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
 
 	def visit_Print(self, node):
 		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
@@ -2915,7 +2924,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		return ''
 
 	def visit_Break(self, node):
-		writer.write('__break__ = True')
+		if self._in_loop_with_else:
+			writer.write('__break__ = True')
 		writer.write('break')
 
 	def visit_For(self, node):
@@ -3158,6 +3168,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._call_ids += 1
 
 		if node.orelse:
+			self._in_loop_with_else = True
 			writer.write('var(__break__)')
 			writer.write('__break__ = False')
 
@@ -3169,6 +3180,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.pull()
 
 		if node.orelse:
+			self._in_loop_with_else = False
 			writer.write('if __break__ == False:')
 			writer.push()
 			map(self.visit, node.orelse)

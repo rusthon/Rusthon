@@ -9,8 +9,9 @@ __version__ = "1.1"
 def main():
 	LOOPS = 100000
 	if PYTHON=='PYTHONJS':  
-		pythonjs.configure( direct_operator='+' ) ## about 25% faster with normal and javascript backends
-		#pythonjs.configure( inline=True )  ## TODO fix dart backend
+		pythonjs.configure( direct_operator='+' )
+		pythonjs.configure( direct_operator='*' )
+		pythonjs.configure( direct_keys=True )
 		pass
 	a = pystones( LOOPS )
 	benchtime = a[0]
@@ -65,10 +66,6 @@ def create_array2glob(n):
 
 Array1Glob = [0]*51
 Array2Glob = create_array2glob(51)
-
-
-
-
 
 
 
