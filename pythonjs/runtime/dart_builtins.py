@@ -82,6 +82,18 @@ class list:
 				return list( a.sublist(start, stop) )
 
 
+	def __setslice__(self, start, stop, step, items):
+		if start == null: start = 0
+		if stop == null: stop = self[...].length
+		stop -= start
+		while stop != 0:
+			self[...].removeAt(start)
+			stop -= 1
+		if instanceof(items, String):
+			items = items.split('')
+		self[...].insertAll(start, items)
+
+
 	def __add__(self, other):
 		self[...].addAll( other[...] )
 		return self

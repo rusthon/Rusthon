@@ -5,6 +5,11 @@ def main():
 	a = list(range(10))
 	a[ 2:4 ] = 'XXXY'
 
+	#if BACKEND=='DART':
+	#	print(a[...])
+	#else:
+	#	print(a)
+
 	TestError( a[0]==0 )
 	TestError( a[1]==1 )
 
