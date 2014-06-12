@@ -118,9 +118,14 @@ def run_pypy_test_on(filename):
     write("%s.py" % tmpname, patch_python(filename, python='PYPY'))
     return run_command("%s %s.py %s" % (pypy_exe, tmpname, display_errors))
 
+def run_old_pypy_test_on(filename):
+    """PyPy 1.9"""
+    write("%s.py" % tmpname, patch_python(filename, python='PYPY'))
+    return run_command("%s %s.py %s" % (old_pypy_exe, tmpname, display_errors))
 
-pypy_runnable = False
-pypy_exe = None
+
+old_pypy_runnable = pypy_runnable = False
+old_pypy_exe = pypy_exe = None
 if os.path.isfile( os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy') ):
     pypy_runnable = True
     pypy_exe = os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy')
@@ -132,6 +137,10 @@ elif os.path.isfile( os.path.expanduser('~/pypy-2.2-linux64/bin/pypy') ):
 elif runnable( 'pypy --help' ):
     pypy_runnable = True
     pypy_exe = 'pypy'
+
+if os.path.isfile( os.path.expanduser('~/pypy-1.9/bin/pypy') ):
+    old_pypy_runnable = True
+    old_pypy_exe = os.path.expanduser('~/pypy-1.9/bin/pypy')
 
 
 
@@ -704,6 +713,8 @@ def run_test_on(filename):
         display(run_python3_test_on)
         if pypy_runnable:
             display(run_pypy_test_on)
+        if old_pypy_runnable:
+            display(run_old_pypy_test_on)
 
     global js
     js = translate_js(
@@ -763,6 +774,10 @@ def run():
         headers =  ["Py-\nthon2", "Py-\nthon3"]
         if pypy_runnable:
             headers.append("PyPy\n")
+
+        if old_pypy_runnable:
+            headers.append("PyPy\n1.9")
+
         if rhino_runnable:
             headers.append("JS\nRhino")
         if node_runnable:

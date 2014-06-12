@@ -33,3 +33,10 @@ def main():
 	b[ :2 ] = 'ABC'
 	TestError( len(b)==4 )
 	TestError( b[0]=='A' )
+
+	d = list(range(10))
+	d[ 2:4 ] = [99, 100]
+	TestError( d[0]==0 )
+	TestError( d[1]==1 )
+	TestError( d[2]==99 )
+	TestError( d[3]==100 )
