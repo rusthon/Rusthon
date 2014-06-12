@@ -1513,11 +1513,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				src = src.replace('"', '\\"')
 				err = 'line %s: %s'	%(node.lineno, src.strip())
 
-			return '__get__(%s, "__getitem__", "%s")([%s], __NULL_OBJECT__)' % (
-				self.visit(node.value),
-				err,
-				self.visit(node.slice)
-			)
+			value = self.visit(node.value)
+			slice = self.visit(node.slice)
+			fallback = '__get__(%s, "__getitem__", "%s")([%s], __NULL_OBJECT__)' % (value, err, slice)
+			if not self._with_lua and isinstance(node.value, ast.Name):
+				return '__ternary_operator__(instanceof(%s, Array), %s[%s], %s)' %(value, value,slice, fallback)
+			else:
+				return fallback
 
 	def visit_Slice(self, node):
 		if self._with_dart:
