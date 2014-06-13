@@ -297,6 +297,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			else:
 				raise SyntaxError( args )
 
+		elif name == 'numpy.array':
+			return self._visit_call_helper_numpy_array(node)
+
 		elif name == 'JSObject':
 			return self._visit_call_helper_JSObject( node )
 
@@ -345,6 +348,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def inline_helper_return_id(self, return_id):
 		return "var __returns__%s = null;"%return_id
 
+	def _visit_call_helper_numpy_array(self, node):
+		return self.visit(node.args[0])  ## TODO typed arrays
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)

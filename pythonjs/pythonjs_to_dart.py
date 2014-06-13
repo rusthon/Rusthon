@@ -485,6 +485,19 @@ class DartGenerator( pythonjs.JSGenerator ):
 		return '%s(%s)' % (name, args)
 
 
+	def _visit_call_helper_numpy_array(self, node):
+		simd = {
+			'float32': 'Float32x4'
+		}
+		args = ','.join( [self.visit(a) for a in node.args[0].elts] )
+		if node.keywords:
+			for key in node.keywords:
+				if key.arg == 'dtype':
+					if isinstance(key.value, ast.Attribute) and key.value.attr in simd:
+						return 'new %s(%s)' %(simd[key.value.attr] ,args)
+		return '[%s]' %args  ## TODO
+
+
 	def _visit_call_helper_instanceof(self, node):
 		args = map(self.visit, node.args)
 		if len(args) == 2:

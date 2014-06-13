@@ -343,6 +343,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				pass  ## pythonjs/fakelibs/sys.py
 			elif alias.name == 'subprocess':
 				pass  ## pythonjs/fakelibs/subprocess.py
+			elif alias.name == 'numpy':
+				pass
 
 			elif alias.name == 'json' or alias.name == 'os':
 				pass  ## part of builtins.py
@@ -1911,7 +1913,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return '__js_typed_array(%s)' %','.join(args)
 
 		#########################################
-		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
+		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'numpy' and node.func.attr == 'array':
+			args = [self.visit(arg) for arg in node.args]
+			if node.keywords:
+				kwargs = [ '%s=%s' %(x.arg, self.visit(x.value)) for x in node.keywords]
+				return 'numpy.array(%s, %s)' %( ','.join(args), ','.join(kwargs) )
+			else:
+				return 'numpy.array(%s)' %','.join(args)
+
+		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
 					if kw.value.id == 'True':
