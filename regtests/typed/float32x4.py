@@ -1,5 +1,4 @@
 """simd float32x4"""
-import numpy
 
 def main():
 	float32x4 a = numpy.array( [1.1, 1.2, 1.3, 0.4], dtype=numpy.float32 )

@@ -349,6 +349,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return "var __returns__%s = null;"%return_id
 
 	def _visit_call_helper_numpy_array(self, node):
+		raise NotImplementedError('TODO numpy.array')
 		return self.visit(node.args[0])  ## TODO typed arrays
 
 	def _visit_call_helper_list(self, node):

@@ -348,6 +348,11 @@ class webworker(object):
         return lambda f: f
 webworker = webworker()
 
+try:
+    import numpy
+except:
+    import numpypy as numpy
+
 """
 
 def patch_python(filename, dart=False, python='PYTHONJS', backend=None):

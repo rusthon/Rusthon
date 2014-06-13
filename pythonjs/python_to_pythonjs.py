@@ -676,7 +676,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				raise NotImplementedError
 
 			b = '%s %s %s' %(target, op, self.visit(node.value))
-			if isinstance( node.target, ast.Name ) and node.target.id in self._typedef_vars and self._typedef_vars[node.target.id] in typedpython.native_number_types:
+			if isinstance( node.target, ast.Name ) and node.target.id in self._typedef_vars and self._typedef_vars[node.target.id] in typedpython.native_number_types+typedpython.vector_types:
 				writer.write(b)
 
 			else:
