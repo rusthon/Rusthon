@@ -3,6 +3,7 @@
 # License: "New BSD"
 
 dart_import('dart:collection')
+dart_import('dart:typed_data')
 dart_import('dart:math', 'Math')
 
 #@dart.extends

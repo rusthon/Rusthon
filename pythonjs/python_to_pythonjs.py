@@ -2495,6 +2495,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		## the dart backend can use this extra type information.
 		vars = []
 		local_typedefs = []
+		local_typedef_names = set()
 		if not self._with_coffee:
 			local_vars, global_vars = retrieve_vars(node.body)
 			local_vars = local_vars-global_vars
@@ -2506,7 +2507,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					usertype = None
 					if '=' in v:
 						t,n = v.split('=')  ## unpack type and name
+						if self._with_dart and t in typedpython.simd_types:
+							t = t[0].upper() + t[1:]
 						v = '%s=%s' %(n,t)  ## reverse
+						local_typedef_names.add( n )
 						if t == 'long':
 							writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
 
@@ -2514,7 +2518,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 							args_typedefs.append( v )
 						else:
 							local_typedefs.append( v )
-					elif v in args: pass
+					elif v in args or v in local_typedef_names: pass
 					else: vars.append( v )
 
 				if args_typedefs:

@@ -46,6 +46,12 @@ def retrieve_vars(body):
 						local_vars.add( '%s=%s' %(user_typedef, u.id) )
 						user_typedef = None
 					else:
+						#add = True   ## TODO this should work?!
+						#for x in local_vars:
+						#	if u.id == x or ('=' in x and x.split('=')[-1] == u.id):
+						#		add = False
+						#		break
+						#if add:
 						local_vars.add( u.id )
 
 				elif isinstance(u, ast.Tuple):

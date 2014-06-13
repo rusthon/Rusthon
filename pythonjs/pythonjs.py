@@ -403,7 +403,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if args:
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
-			out.append( 'var ' + ','.join([key.value.id for key in node.keywords]) )
+			out.append( 'var ' + ','.join([key.arg for key in node.keywords]) )
 
 		return ';'.join(out)
 

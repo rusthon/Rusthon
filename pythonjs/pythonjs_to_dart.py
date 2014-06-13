@@ -471,7 +471,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			for key in node.keywords:
-				out.append( '%s %s' %(key.arg, key.value.id) )
+				out.append( '%s %s' %(key.value.id, key.arg) )
 
 		return ';'.join(out)
 
