@@ -1332,8 +1332,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		left = self.visit(node.left)
 		comp = [ left ]
 		for i in range( len(node.ops) ):
-			if i==0 and isinstance(node.left, ast.Name) and node.left.id in self._typedef_vars:
-				#raise RuntimeError(node)
+			if i==0 and isinstance(node.left, ast.Name) and node.left.id in self._typedef_vars and self._typedef_vars[node.left.id] == 'long':
 				if isinstance(node.ops[i], ast.Eq):
 					comp = ['%s.equals(%s)' %(left, self.visit(node.comparators[i]))]
 				elif isinstance(node.ops[i], ast.Lt):
