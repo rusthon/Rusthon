@@ -1,4 +1,5 @@
 import ast
+import typedpython
 
 class CollectNames(ast.NodeVisitor):
 	_names_ = []
@@ -31,9 +32,22 @@ def retrieve_vars(body):
 		#	for c in n.targets[0].elts:
 		#		local_vars.add( c.id )
 		if isinstance(n, ast.Assign):
-			for u in n.targets:
+			user_typedef = None
+			#targets = list(n.targets)
+			#targets.reverse()
+			for i,u in enumerate(n.targets):
 				if isinstance(u, ast.Name):
-					local_vars.add( u.id )
+					if i==0:
+						if u.id in typedpython.types:
+							user_typedef = u.id
+						else:
+							local_vars.add( u.id )
+					elif user_typedef:
+						local_vars.add( '%s=%s' %(user_typedef, u.id) )
+						user_typedef = None
+					else:
+						local_vars.add( u.id )
+
 				elif isinstance(u, ast.Tuple):
 					for uu in u.elts:
 						if isinstance(uu, ast.Name):
@@ -41,8 +55,11 @@ def retrieve_vars(body):
 						else:
 							raise NotImplementedError(uu)
 				else:
-					#raise NotImplementedError(u)
 					pass  ## skips assignment to an attribute `a.x = y`
+
+			if user_typedef:  ## `int x`
+				assert isinstance(n.value, ast.Name)
+				local_vars.add( '%s=%s' %(user_typedef, n.value.id))
 
 		elif isinstance(n, ast.Global):
 			global_vars.update( n.names )

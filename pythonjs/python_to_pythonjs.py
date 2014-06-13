@@ -38,11 +38,6 @@ def log(txt):
 
 POWER_OF_TWO = [ 2**i for i in range(32) ]
 
-GLOBAL_VARIABLE_SCOPE = False              ## Python style
-if '--global-variable-scope' in sys.argv:  ## JavaScript style
-	GLOBAL_VARIABLE_SCOPE = True
-	log('not using python style variable scope')
-
 writer = writer_main = code_writer.Writer()
 
 __webworker_writers = dict()
@@ -679,9 +674,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				raise NotImplementedError
 
 			b = '%s %s %s' %(target, op, self.visit(node.value))
-			## dart2js is smart enough to optimize this if/else away ##
-			writer.write('if instanceof(%s, Number) or instanceof(%s, String): %s' %(target,target,b) )
-			writer.write('else: %s' %a)
+			if isinstance( node.target, ast.Name ) and node.target.id in self._typedef_vars and self._typedef_vars[node.target.id] in typedpython.native_number_types:
+				writer.write(b)
+
+			else:
+				## dart2js is smart enough to optimize this if/else away ##
+				writer.write('if instanceof(%s, Number) or instanceof(%s, String): %s' %(target,target,b) )
+				writer.write('else: %s' %a)
 
 		elif self._with_js:  ## no operator overloading in with-js mode
 			a = '%s %s %s' %(target, op, self.visit(node.value))
@@ -2063,6 +2062,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						if args:
 							if node.starargs:
 								a = ( method, ctx, ','.join(args), self.visit(node.starargs), ','.join(kwargs) )
+								## note: this depends on the fact that [].extend in PythonJS returns self (this),
+								## which is different from regular python where list.extend returns None
 								return '%s.apply( %s, [].extend([%s]).extend(%s).append({%s}) )' %a
 							else:
 								return '%s(%s, {%s})' %( method, ','.join(args), ','.join(kwargs) )
@@ -2490,6 +2491,36 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('self.onmessage = onmessage' )
 
 
+		## force python variable scope, and pass user type information to second stage of translation.
+		## the dart backend can use this extra type information.
+		vars = []
+		local_typedefs = []
+		if not self._with_coffee:
+			local_vars, global_vars = retrieve_vars(node.body)
+			local_vars = local_vars-global_vars
+			if local_vars:
+				args_typedefs = []
+				args = [ a.id for a in node.args.args ]
+
+				for v in local_vars:
+					usertype = None
+					if '=' in v:
+						t,n = v.split('=')  ## unpack type and name
+						v = '%s=%s' %(n,t)  ## reverse
+						if t == 'long':
+							writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
+
+						if n in args:
+							args_typedefs.append( v )
+						else:
+							local_typedefs.append( v )
+					elif v in args: pass
+					else: vars.append( v )
+
+				if args_typedefs:
+					writer.write('@__typedef__(%s)' %','.join(args_typedefs))
+
+
 		if self._with_dart:
 			## dart supports optional positional params [x=1, y=2], or optional named {x:1, y:2}
 			## but not both at the same time.
@@ -2547,22 +2578,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('def %s(args, kwargs):' % node.name)
 		writer.push()
 
-		## the user will almost always want to use Python-style variable scope,
-		## this is kept here as an option to be sure we are compatible with the
-		## old-style code in runtime/pythonpythonjs.py and runtime/builtins.py
-		if not GLOBAL_VARIABLE_SCOPE and not self._with_coffee:
-			local_vars, global_vars = retrieve_vars(node.body)
-			if local_vars-global_vars:
-				vars = []
-				args = [ a.id for a in node.args.args ]
 
-				for v in local_vars-global_vars:
-					if v in args: pass
-					elif v == 'long': writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
-					else: vars.append( v )
 
-				a = ','.join( vars )
-				writer.write('var(%s)' %a)
+		## write local typedefs and var scope ##
+		a = ','.join( vars )
+		if local_typedefs:
+			if a: a += ','
+			a += ','.join(local_typedefs)
+		writer.write('var(%s)' %a)
 
 		#####################################################################
 		if self._with_dart:

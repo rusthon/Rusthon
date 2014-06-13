@@ -241,6 +241,8 @@ class LuaGenerator( pythonjs.JSGenerator ):
 				setter = True
 			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'prototype':
 				klass = self.visit(decor)
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+				pass
 			else:
 				raise SyntaxError(decor)
 

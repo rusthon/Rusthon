@@ -355,11 +355,15 @@ class DartGenerator( pythonjs.JSGenerator ):
 	def _visit_function(self, node):
 		getter = False
 		setter = False
+		args_typedefs = {}
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == 'property':
 				getter = True
 			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
 				setter = True
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+				for key in decor.keywords:
+					args_typedefs[ key.arg ] = key.value.id
 			else:
 				raise SyntaxError
 
@@ -370,6 +374,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 		varargs_name = None
 		for i, arg in enumerate(node.args.args):
 			a = arg.id
+			if a in args_typedefs:
+				a = '%s %s' %(args_typedefs[a], a)
 			dindex = i - offset
 			if a.startswith('__variable_args__'):
 				varargs_name = a.split('__')[-1]
@@ -445,6 +451,29 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 		else:
 			return '%s(%s)' % (func, args)
+
+	def _visit_call_helper_var(self, node):
+		args = [ self.visit(a) for a in node.args ]
+		if self._function_stack:
+			fnode = self._function_stack[-1]
+			rem = []
+			for arg in args:
+				if arg in fnode._local_vars:
+					rem.append( arg )
+				else:
+					fnode._local_vars.add( arg )
+			for arg in rem:
+				args.remove( arg )
+
+		out = []
+
+		if args:
+			out.append( 'var ' + ','.join(args) )
+		if node.keywords:
+			for key in node.keywords:
+				out.append( '%s %s' %(key.arg, key.value.id) )
+
+		return ';'.join(out)
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)

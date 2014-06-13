@@ -173,10 +173,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def _visit_function(self, node):
 		args = self.visit(node.args)
-		if len(node.decorator_list):
-			assert len(node.decorator_list)==1
+		if len(node.decorator_list)==1 and not ( isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id == '__typedef__' ):
 			dec = self.visit(node.decorator_list[0])
 			buffer = self.indent() + '%s.%s = function(%s) {\n' % (dec,node.name, ', '.join(args))
+
 		elif len(self._function_stack) == 1:
 			## this style will not make function global to the eval context in NodeJS ##
 			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
@@ -398,12 +398,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			for arg in rem:
 				args.remove( arg )
 
-		if args:
-			out = ', '.join(args)
-			return 'var %s' % out
-		else:
-			return ''
+		out = []
 
+		if args:
+			out.append( 'var ' + ','.join(args) )
+		if node.keywords:
+			out.append( 'var ' + ','.join([key.value.id for key in node.keywords]) )
+
+		return ';'.join(out)
 
 	def _inline_code_helper(self, s):
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
