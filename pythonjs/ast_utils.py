@@ -25,11 +25,25 @@ def retrieve_vars(body):
 	local_vars = set()
 	global_vars = set()
 	for n in body:
-		if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name):  ## assignment to local - TODO support `a=b=c`
-			local_vars.add( n.targets[0].id )
-		elif isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Tuple):
-			for c in n.targets[0].elts:
-				local_vars.add( c.id )
+		#if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name):  ## assignment to local - TODO support `a=b=c`
+		#	local_vars.add( n.targets[0].id )
+		#elif isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Tuple):
+		#	for c in n.targets[0].elts:
+		#		local_vars.add( c.id )
+		if isinstance(n, ast.Assign):
+			for u in n.targets:
+				if isinstance(u, ast.Name):
+					local_vars.add( u.id )
+				elif isinstance(u, ast.Tuple):
+					for uu in u.elts:
+						if isinstance(uu, ast.Name):
+							local_vars.add( uu.id )
+						else:
+							raise NotImplementedError(uu)
+				else:
+					#raise NotImplementedError(u)
+					pass  ## skips assignment to an attribute `a.x = y`
+
 		elif isinstance(n, ast.Global):
 			global_vars.update( n.names )
 		elif hasattr(n, 'body') and not isinstance(n, ast.FunctionDef):

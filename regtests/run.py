@@ -170,8 +170,11 @@ if not show_details or '--no-nodewebkit' in sys.argv:
 
 #dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+
 dart2js = os.path.expanduser( '~/dart-sdk/bin/dart2js') # tested with dart 1.3
-
 dart2js_runnable = runnable( dart2js + ' -h' )
+
+dart_exe = os.path.expanduser( '~/dart-sdk/bin/dart')
+dart_runnable = os.path.isfile( dart_exe )
+
 coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
 lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv
 luajit_runnable = runnable( "luajit -v" )
@@ -625,13 +628,23 @@ def run_js_nodewebkit(content):
 
 
 def run_pythonjs_dart_test_on_node(dummy_filename):
-    """PythonJS (Dart backend)"""
+    """PythonJS (Dart backend - dart2js)"""
     return run_if_no_error(run_dart2js_node)
 
 def run_dart2js_node(content):
     """Run Dart2js using Node"""
     write("%s.js" % tmpname, content)
     return run_command("node %s.js" % tmpname)
+
+def run_pythonjs_dart_test_on_dart(dummy_filename):
+    """PythonJS (Dart backend - Dart VM)"""
+    return run_if_no_error(run_dart)
+
+def run_dart(content):
+    """Run Dart2js using Node"""
+    #write("%s.js" % tmpname, content)
+    return run_command("%s %s" % (dart_exe, "/tmp/dart2js-input.dart"))
+
 
 def run_pythonjs_coffee_test_on_node(dummy_filename):
     """PythonJS (CoffeeScript)"""
@@ -744,6 +757,10 @@ def run_test_on(filename):
 
     if 'requirejs' not in filename:
 
+        if dart_runnable:
+            js = translate_js(filename, javascript=False, dart=True)
+            display(run_pythonjs_dart_test_on_dart)
+
         if dart2js_runnable and node_runnable:
             js = translate_js(filename, javascript=False, dart=True)
             display(run_pythonjs_dart_test_on_node)
@@ -794,6 +811,9 @@ def run():
 
         if nodewebkit_runnable:
             headers.append("JSJS\nWebkit")
+
+        if dart_runnable:
+            headers.append("Dart\nDart")
 
         if node_runnable:
 
