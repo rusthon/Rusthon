@@ -153,6 +153,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_rpc = None
 		self._with_rpc_name = None
 		self._with_direct_keys = False
+		self._with_glsl = False
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1134,7 +1135,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#	writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
 			#	writer.write('return self["__dict__"]["%s"]' %self._cached_property)
 			#else:
-			if self._inline:
+			if self._with_glsl:
+				writer.write('out_float = %s' %self.visit(node.value))
+			elif self._inline:
 				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
 				if self._inline_breakout:
 					writer.write('break')
@@ -1160,7 +1163,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		op = self.visit(node.op)
 		right = self.visit(node.right)
 
-		if op == '|':
+		if self._with_glsl:
+			return '(%s %s %s)' % (left, op, right)
+
+		elif op == '|':
 			if isinstance(node.right, Str):
 				self._custom_op_hack = (node.right.s, left)
 				return ''
@@ -1451,7 +1457,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
-		elif self._with_ll:
+		elif self._with_ll or self._with_glsl:
 			return '%s[ %s ]' %(name, self.visit(node.slice))
 
 		elif self._with_js or self._with_dart:
@@ -2392,7 +2398,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._cached_property = None
 		self._func_typedefs = {}
 
-		if writer.is_at_global_level() and not self._with_webworker:
+		if writer.is_at_global_level() and not self._with_webworker and not self._with_glsl:
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
@@ -2564,7 +2570,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript or self._with_ll:# or self._with_coffee:
+		elif self._with_js or javascript or self._with_ll or self._with_glsl:
+
+			if self._with_glsl:
+				writer.write('@__glsl__')
+
 			if node.args.vararg:
 				#raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
 				writer.write('#WARNING - NOT IMPLEMENTED: javascript-mode functions with (*args)')
@@ -2994,6 +3004,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						c.constant = True
 						self._call_ids += 1
 
+		if self._with_glsl:
+			writer.write( 'for %s in %s:' %(self.visit(node.target), self.visit(node.iter)) )
+			writer.push()
+			map(self.visit, node.body)
+			writer.pull()
+			return None
+
 		if self._with_rpc_name and isinstance(node.iter, ast.Attribute) and isinstance(node.iter.value, ast.Name) and node.iter.value.id == self._with_rpc_name:
 			target = self.visit(node.target)
 			writer.write('def __rpc_loop__():')
@@ -3240,7 +3257,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	def visit_With(self, node):
 		global writer
 
-		if isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'glsl':
+			writer.inline_glsl = True
+			self._with_glsl = True
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			self._with_glsl = False
+			writer.inline_glsl = False
+
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
 			self._with_rpc = self.visit( node.context_expr.args[0] )
 			if isinstance(node.optional_vars, ast.Name):
 				self._with_rpc_name = node.optional_vars.id

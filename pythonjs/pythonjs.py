@@ -31,6 +31,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._webworker = webworker
 		self._exports = set()
 
+		self.special_decorators = set(['__typedef__', '__glsl__'])
+		self._glsl = False
+
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
 	def pull(self):
@@ -172,8 +175,57 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return buffer
 
 	def _visit_function(self, node):
+		glsl = False
+		args_typedefs = {}
+		for decor in node.decorator_list:
+			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
+				glsl = True
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+				for key in decor.keywords:
+					args_typedefs[ key.arg ] = key.value.id
+
 		args = self.visit(node.args)
-		if len(node.decorator_list)==1 and not ( isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id == '__typedef__' ):
+
+		if glsl:
+			lines = ['var __program__ = [];']
+			x = []
+			for i,arg in enumerate(args):
+				assert arg in args_typedefs
+				x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
+			lines.append( '__program__.push("void main( %s ) {");' %', '.join(x) )
+
+			self.push()
+			self._glsl = True
+			for child in node.body:
+				if isinstance(child, Str):
+					continue
+				else:
+					for sub in self.visit(child).splitlines():
+						lines.append( '__program__.push("%s");' %(self.indent()+sub) )
+			self._glsl = False
+			#buffer += '\n'.join(body)
+			self.pull()
+			lines.append('\n__program__.push("%s}");' %self.indent())
+			lines.append('function call_webclgl_program( %s ) {' %','.join(args))
+			lines.append('	var offset = 0')  ## TODO data range, 0 allows 0-1.0
+			lines.append('  var __webclgl = new WebCLGL()')
+			lines.append('  var return_buffer = __webclgl.createBuffer(1, "FLOAT", offset)')  ## TODO length of return buffer
+			for arg in args:
+				lines.append('  var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", offset)' %(arg,arg))
+				lines.append('  __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
+
+			lines.append('  var __kernel = __webclgl.createKernel( __program__ );')
+			for i,arg in enumerate(args):
+				lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
+
+			lines.append('	__kernel.compile()')
+			lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
+			lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
+			lines.append('} // end of wrapper')
+
+			return '\n'.join(lines)
+
+		elif len(node.decorator_list)==1 and not ( isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id not in self.special_decorators ):
 			dec = self.visit(node.decorator_list[0])
 			buffer = self.indent() + '%s.%s = function(%s) {\n' % (dec,node.name, ', '.join(args))
 
@@ -605,6 +657,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		above works because [...] returns the internal Array of mylist
 
 		'''
+		if self._glsl:
+			target = self.visit(node.target)
+			iter = self.visit(node.iter.args[0])
+			lines = ['for (int %s; %s < %s; %s++) {' %(target, target, iter, target)]
+			for b in node.body:
+				lines.append( self.visit(b) )
+			lines.append( '}' )
+			return '\n'.join(lines)
+
+
 		self._iter_id += 1
 		iname = '__iter%s' %self._iter_id
 		index = '__idx%s' %self._iter_id

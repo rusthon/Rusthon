@@ -15,9 +15,6 @@ class float32vec:
 		self[...] = new( List() )
 		self.length = items.length
 
-		#vec = new( Float32x4.zero() )
-		#self[...].add( vec )
-
 		i = 0; s = 0
 		while i < items.length:
 			x = items[i]
@@ -42,7 +39,6 @@ class float32vec:
 	def __setitem__(self, index, value):
 		if index < 0: index = self.length + index
 
-		#float32x4 vec = self[...][ index // 4 ]
 		vec = self[...][ index // 4 ]
 		lane = index % 4
 		if lane == 0: vec = vec.withX(value)

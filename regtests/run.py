@@ -348,6 +348,13 @@ class webworker(object):
         return lambda f: f
 webworker = webworker()
 
+class glsl(object):
+    def __enter__(self, *args): pass
+    def __exit__(self, *args): pass
+    def __call__(self, name):
+        return lambda f: f
+glsl = glsl()
+
 try:
     import numpy
 except:

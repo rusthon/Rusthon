@@ -9,6 +9,8 @@ else:
 class Writer(object):
 
 	def __init__(self):
+		self.inline_glsl = False
+		self.inline_skip = ('@', 'def ', 'while ', 'if ', 'for ', 'var(')
 		self.level = 0
 		self.buffer = list()
 		self.output = StringIO()
@@ -34,6 +36,8 @@ class Writer(object):
 
 	def _write(self, code):
 		indentation = self.level * 4 * ' '
+		if self.inline_glsl and not code.startswith( self.inline_skip ):
+			code = "inline('''%s''')" %code
 		s = '%s%s\n' % (indentation, code)
 		self.output.write(s)
 
