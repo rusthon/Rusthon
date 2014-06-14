@@ -1996,7 +1996,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				else:
 					raise SyntaxError( self.format_error(node) )
 
-		elif self._with_ll or name == 'inline':
+		elif self._with_ll or name == 'inline' or self._with_glsl:
 			args = [self.visit(arg) for arg in node.args]
 			if node.keywords:
 				args.extend( [self.visit(x.value) for x in node.keywords] )

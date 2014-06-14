@@ -174,6 +174,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._function_stack.pop()
 		return buffer
 
+	def _visit_call_helper_var_glsl(self, node):
+		lines = []
+		for key in node.keywords:
+			lines.append( '%s %s' %(key.value.id, key.arg))
+
+		return ';'.join(lines)
+
+
 	def _visit_function(self, node):
 		glsl = False
 		args_typedefs = {}
@@ -356,7 +364,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			return self._visit_call_helper_JSObject( node )
 
 		elif name == 'var':
-			return self._visit_call_helper_var( node )
+			if self._glsl:
+				return self._visit_call_helper_var_glsl( node )
+			else:
+				return self._visit_call_helper_var( node )
 
 		elif name == 'JSArray':
 			return self._visit_call_helper_JSArray( node )
