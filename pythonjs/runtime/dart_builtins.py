@@ -6,6 +6,75 @@ dart_import('dart:collection')
 dart_import('dart:typed_data')
 dart_import('dart:math', 'Math')
 
+__random_gen__ = new(Math.Random())
+def __random__(): return __random_gen__.nextDouble()
+
+
+class float32vec:
+	def __init__(self, items):
+		self[...] = new( List() )
+		self.length = items.length
+
+		#vec = new( Float32x4.zero() )
+		#self[...].add( vec )
+
+		i = 0; s = 0
+		while i < items.length:
+			x = items[i]
+			y = items[i+1]
+			z = items[i+2]
+			w = items[i+3]
+			vec = new( Float32x4(x,y,z,w) )
+			self[...].add( vec )
+			i += 4
+
+
+	def __getitem__(self, index):
+		if index < 0: index = self.length + index
+
+		float32x4 vec = self[...][ index // 4 ]
+		lane = index % 4
+		if lane == 0: return vec.x
+		elif lane == 1: return vec.y
+		elif lane == 2: return vec.z
+		elif lane == 3: return vec.w
+
+	def __setitem__(self, index, value):
+		if index < 0: index = self.length + index
+
+		#float32x4 vec = self[...][ index // 4 ]
+		vec = self[...][ index // 4 ]
+		lane = index % 4
+		if lane == 0: vec = vec.withX(value)
+		elif lane == 1: vec = vec.withY(value)
+		elif lane == 2: vec = vec.withZ(value)
+		elif lane == 3: vec = vec.withW(value)
+
+		self[...][ index // 4 ] = vec
+
+	def __add__(self, other):
+		arr = new( List() )
+		for i, vec1 in enumerate( self[...] ):
+			vec2 = other[...][ i ]
+			arr.add( vec1+vec2 )
+
+		v = inline("new float32vec([])")
+		v.length = self.length
+		v[...] = arr
+		return v
+
+	def __mul__(self, other):
+		arr = new( List() )
+		for i, vec1 in enumerate( self[...] ):
+			vec2 = other[...][ i ]
+			arr.add( vec1*vec2 )
+
+		v = inline("new float32vec([])")
+		v.length = self.length
+		v[...] = arr
+		return v
+
+
 #@dart.extends
 #class list( ListBase ):
 class list:

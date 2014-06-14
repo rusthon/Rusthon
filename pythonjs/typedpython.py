@@ -1,7 +1,8 @@
 whitespace = [' ', '\t']
 native_number_types = ['int', 'float', 'double']  ## float and double are the same
 simd_types = ['float32x4', 'int32x4']
-vector_types = simd_types  ## TODO support non-simd vec types like vec3f?
+vector_types = ['float32vec']
+vector_types.extend( simd_types )
 number_types = ['long']  ## requires https://github.com/dcodeIO/Long.js
 number_types.extend( native_number_types )
 

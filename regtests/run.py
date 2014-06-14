@@ -170,17 +170,17 @@ if not show_details or '--no-nodewebkit' in sys.argv:
 
 #dart2js = os.path.expanduser( '~/dart-sdk-1.0/dart-sdk/bin/dart2js')  ## TODO support dart-sdk-1.3+
 dart2js = os.path.expanduser( '~/dart-sdk/bin/dart2js') # tested with dart 1.3
-dart2js_runnable = runnable( dart2js + ' -h' )
+dart2js_runnable = runnable( dart2js + ' -h' ) and '--dart2js' in sys.argv
 
 dart_exe = os.path.expanduser( '~/dart-sdk/bin/dart')
 dart_runnable = os.path.isfile( dart_exe )
 
-coffee_runnable = runnable( "coffee -v" ) and '--all-backends' in sys.argv
-lua_runnable = runnable( "lua -v" ) and '--all-backends' in sys.argv
-luajit_runnable = runnable( "luajit -v" )
+coffee_runnable = runnable( "coffee -v" ) and '--coffee' in sys.argv
+lua_runnable = runnable( "lua -v" ) and '--lua' in sys.argv
+luajit_runnable = runnable( "luajit -v" ) and '--luajit' in sys.argv
 
 lua2js = os.path.abspath( '../external/lua.js/lua2js' )
-luajs_runnable = os.path.isfile( lua2js ) and '--all-backends' in sys.argv
+luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 
 assert rhino_runnable or node_runnable
 

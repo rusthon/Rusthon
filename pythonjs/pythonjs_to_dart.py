@@ -489,13 +489,27 @@ class DartGenerator( pythonjs.JSGenerator ):
 		simd = {
 			'float32': 'Float32x4'
 		}
-		args = ','.join( [self.visit(a) for a in node.args[0].elts] )
+		arg_name = args = None
+		direct = False
+		if isinstance(node.args[0], ast.Name):
+			arg_name = node.args[0].id
+		else:
+			args = ','.join( [self.visit(a) for a in node.args[0].elts] )
+			if len(node.args[0].elts) == 4:  ## simple rule: if there are 4 items, its a direct SIMD type
+				direct = True
+
 		if node.keywords:
 			for key in node.keywords:
 				if key.arg == 'dtype':
 					if isinstance(key.value, ast.Attribute) and key.value.attr in simd:
-						return 'new %s(%s)' %(simd[key.value.attr] ,args)
-		return '[%s]' %args  ## TODO
+						if arg_name:
+							return 'new float32vec( %s )' %arg_name
+						elif direct:
+							return 'new %s(%s)' %(simd[key.value.attr] ,args)
+						else:
+							return 'new float32vec( [%s] )' %args
+		else:
+			raise NotImplementedError('numpy.array requires dtype is given')
 
 
 	def _visit_call_helper_instanceof(self, node):

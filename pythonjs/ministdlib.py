@@ -26,9 +26,12 @@ DART = {
 		'clock' : 'clock() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
 	},
 	'math': {
-		'sin' : 'sin = math.sin',
-		'cos' : 'cos = math.cos',
-		'sqrt' : 'sqrt = math.sqrt',
+		'sin' : 'var sin = math.sin',
+		'cos' : 'var cos = math.cos',
+		'sqrt' : 'var sqrt = math.sqrt',
+	},
+	'random' : {
+		'random' : 'var random = __random__'
 	}
 
 }
