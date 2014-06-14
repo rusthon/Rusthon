@@ -61,10 +61,7 @@ N-Body benchmark
 
 ![nbody](http://2.bp.blogspot.com/-pylzspKRu6M/UqbAv3qIGTI/AAAAAAAAAkE/NnsAM5DZ_8M/s400/nbody.png)
 
-more benchmarks
-
-[http://pythonjs.blogspot.com/2014/05/pythonjs-now-faster-than-cpython.html](pystone, nbody, richards)
-
+[More benchmarks](http://pythonjs.blogspot.com/2014/05/pythonjs-now-faster-than-cpython.html)
 
 translator.py
 ------------
