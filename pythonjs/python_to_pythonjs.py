@@ -3258,13 +3258,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		global writer
 
 		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'glsl':
+			if not isinstance(node.optional_vars, ast.Name):
+				raise SyntaxError( self.format_error('wrapper function name must be given: `with glsl as myfunc:`') )
+			main_func = None
 			writer.inline_glsl = True
 			self._with_glsl = True
 			for b in node.body:
+				if isinstance(b, ast.FunctionDef) and b.name == 'main':
+					main_func = True
+					writer.write('@__glsl__.%s' %node.optional_vars.id)
 				a = self.visit(b)
 				if a: writer.write(a)
 			self._with_glsl = False
 			writer.inline_glsl = False
+			if not main_func:
+				raise SyntaxError( self.format_error('a function named `main` must be defined as the entry point for the shader program') )
 
 		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
 			self._with_rpc = self.visit( node.context_expr.args[0] )

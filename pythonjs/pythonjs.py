@@ -33,6 +33,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		self.special_decorators = set(['__typedef__', '__glsl__'])
 		self._glsl = False
+		self._has_glsl = False
 
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
@@ -67,13 +68,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return a
 
 	def visit_Module(self, node):
+		header = []
+		lines = []
+
 		if self._requirejs and not self._webworker:
-			lines = [
+			header.extend([
 				'define( function(){',
 				'__module__ = {}'
-			]
-		else:
-			lines = []
+			])
+
 
 		if self._insert_runtime:
 			dirname = os.path.dirname(os.path.abspath(__file__))
@@ -95,7 +98,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append( 'return __module__')
 			lines.append('}) //end requirejs define')
 
-		#return '\n'.join(lines)
+		if self._has_glsl:
+			header.append( 'var __shader__ = []' )
+
+		lines = header + lines
 		## fixed by Foxboron
 		return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
 
@@ -184,10 +190,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def _visit_function(self, node):
 		glsl = False
+		glsl_wrapper_name = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
 				glsl = True
+			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.value.id == '__glsl__':
+				glsl_wrapper_name = decor.attr
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
 					args_typedefs[ key.arg ] = key.value.id
@@ -195,12 +204,18 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		args = self.visit(node.args)
 
 		if glsl:
-			lines = ['var __program__ = [];']
+			is_main = node.name == 'main'
+			self._has_glsl = True  ## writes `__shader__ = []` in header
+			lines = []
 			x = []
 			for i,arg in enumerate(args):
 				assert arg in args_typedefs
 				x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
-			lines.append( '__program__.push("void main( %s ) {");' %', '.join(x) )
+
+			if is_main:
+				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
+			else:  ## TODO return type
+				lines.append( '__shader__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
 
 			self.push()
 			self._glsl = True
@@ -209,27 +224,30 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					continue
 				else:
 					for sub in self.visit(child).splitlines():
-						lines.append( '__program__.push("%s");' %(self.indent()+sub) )
+						lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
 			self._glsl = False
 			#buffer += '\n'.join(body)
 			self.pull()
-			lines.append('\n__program__.push("%s}");' %self.indent())
-			lines.append('function call_webclgl_program( %s ) {' %','.join(args))
-			lines.append('	var offset = 0')  ## TODO data range, 0 allows 0-1.0
-			lines.append('  var __webclgl = new WebCLGL()')
-			lines.append('  var return_buffer = __webclgl.createBuffer(1, "FLOAT", offset)')  ## TODO length of return buffer
-			for arg in args:
-				lines.append('  var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", offset)' %(arg,arg))
-				lines.append('  __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
+			lines.append('__shader__.push("%s}");' %self.indent())
 
-			lines.append('  var __kernel = __webclgl.createKernel( __program__ );')
-			for i,arg in enumerate(args):
-				lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
+			if is_main:
+				lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
+				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0
+				lines.append('  var __webclgl = new WebCLGL()')
+				lines.append('  var __kernel = __webclgl.createKernel( __shader__ );')
 
-			lines.append('	__kernel.compile()')
-			lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
-			lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
-			lines.append('} // end of wrapper')
+				lines.append('  var return_buffer = __webclgl.createBuffer(1, "FLOAT", __offset)')  ## TODO length of return buffer
+				for i,arg in enumerate(args):
+					lines.append('  if (%s instanceof Array) {' %arg)
+					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", __offset)' %(arg,arg))
+					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
+					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
+					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
+
+				lines.append('	__kernel.compile()')
+				lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
+				lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
+				lines.append('} // end of wrapper')
 
 			return '\n'.join(lines)
 
