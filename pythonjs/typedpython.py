@@ -46,7 +46,22 @@ def transform_source( source, strip=False ):
 					a.append( char )
 			else:
 				a.append( char )
-		output.append( ''.join(a) )
+
+		c = ''.join(a)
+		if '= def ' in c:
+			x, c = c.split('= def ')
+			indent = []
+			pre = []
+			for char in x:
+				if char in __whitespace:
+					indent.append(char)
+				else:
+					pre.append( char )
+			indent = ''.join(indent)
+			pre = ''.join(pre)
+			output.append( indent + '@returns(%s)' %pre)
+			c = indent+'def '+c
+		output.append( c )
 
 	return '\n'.join(output)
 
@@ -56,6 +71,10 @@ int a = 1
 float b = 1.1
 str c = "hi"
 int d
+int def xxx(): pass
+if True:
+	float* def Y():
+		pass
 '''
 
 if __name__ == '__main__':
