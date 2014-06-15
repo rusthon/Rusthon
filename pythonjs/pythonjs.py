@@ -108,7 +108,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
 		s = self.visit(node.value)
-		if not s.endswith(';'):
+		if s.strip() and not s.endswith(';'):
 			s += ';'
 		return s
 
@@ -189,6 +189,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 
 	def _visit_function(self, node):
+		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
 		args_typedefs = {}
@@ -200,6 +201,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
 					args_typedefs[ key.arg ] = key.value.id
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
+				return_type = decor.args[0].id
 
 		args = self.visit(node.args)
 
@@ -214,7 +217,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 			if is_main:
 				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
-			else:  ## TODO return type
+			elif return_type:
+				lines.append( '__shader__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
+			else:
 				lines.append( '__shader__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
 
 			self.push()

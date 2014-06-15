@@ -2394,7 +2394,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		threaded = self._with_webworker
 		jsfile = None
 
-
 		## deprecated?
 		self._cached_property = None
 		self._func_typedefs = {}
@@ -2413,6 +2412,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					threaded = True
 					assert len(decorator.args) == 1
 					jsfile = decorator.args[0].s
+
+			elif isinstance(decorator, Call) and decorator.func.id == 'returns':
+				assert len(decorator.args) == 1
+				assert isinstance( decorator.args[0], Name)
+				return_type = decorator.args[0].id
 
 
 			elif self._with_dart:
@@ -2460,10 +2464,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					raise RuntimeError( op, self._custom_operators )
 				self._custom_operators[ op ] = node.name
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'returns':
-				assert len(decorator.args) == 1
-				assert isinstance( decorator.args[0], Name)
-				return_type = decorator.args[0].id
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
 				c = decorator
@@ -2508,6 +2508,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('self.onmessage = onmessage' )
 
 
+		if return_type:
+			writer.write('@returns(%s)' %return_type)
 		## force python variable scope, and pass user type information to second stage of translation.
 		## the dart backend can use this extra type information.
 		vars = []
