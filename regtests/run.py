@@ -343,19 +343,17 @@ import threading
 threading.start_webworker = lambda f,a: threading._start_new_thread(f,a)
 threading.start_new_thread = threading._start_new_thread
 
-class webworker(object):
+class __faker__(object):
     def __enter__(self, *args): pass
     def __exit__(self, *args): pass
     def __call__(self, name):
         return lambda f: f
-webworker = webworker()
+    def vectorize(self, f):
+        return f
 
-class glsl(object):
-    def __enter__(self, *args): pass
-    def __exit__(self, *args): pass
-    def __call__(self, name):
-        return lambda f: f
-glsl = glsl()
+webworker = __faker__()
+glsl = __faker__()
+gpu = __faker__()
 
 try:
     import numpy

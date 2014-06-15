@@ -34,6 +34,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self.special_decorators = set(['__typedef__', '__glsl__'])
 		self._glsl = False
 		self._has_glsl = False
+		self._typed_vars = dict()
 
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
@@ -49,10 +50,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
-			code = '%s = %s;' % (target, value)
-			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
-				self._exports.add( target )
-			return code
+			## visit_BinOp checks for `numpy.float32` and changes the operands from `a*a` to `a[id]*a[id]`
+			if self._glsl and value.startswith('numpy.'):
+				self._typed_vars[ target ] = value
+				return ''
+			else:
+				code = '%s = %s;' % (target, value)
+				if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
+					self._exports.add( target )
+				return code
 
 	def visit_AugAssign(self, node):
 		## n++ and n-- are slightly faster than n+=1 and n-=1
@@ -192,6 +198,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
+		glsl_vectorize = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
@@ -204,6 +211,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				return_type = decor.args[0].id
 
+			elif isinstance(decor, Attribute) and isinstance(decor.value, Name) and decor.value.id == 'gpu':
+				assert decor.attr == 'vectorize'
+				gpu_vectorize = True
+
+
 		args = self.visit(node.args)
 
 		if glsl:
@@ -212,10 +224,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines = []
 			x = []
 			for i,arg in enumerate(args):
-				assert arg in args_typedefs
-				x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
+				if gpu_vectorize and arg not in args_typedefs:
+					x.append( 'float* %s' %arg )
+				else:
+					assert arg in args_typedefs
+					x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
 
-			if is_main:
+			if is_main or gpu_vectorize:
 				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
 			elif return_type:
 				lines.append( '__shader__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
@@ -223,6 +238,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append( '__shader__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
 
 			self.push()
+			if gpu_vectorize:
+				lines.append( '__shader__.push("vec2 _id_ = get_global_id();");')
+
 			self._glsl = True
 			for child in node.body:
 				if isinstance(child, Str):
@@ -235,7 +253,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			self.pull()
 			lines.append('__shader__.push("%s}");' %self.indent())
 
-			if is_main:
+			if is_main or gpu_vectorize:
+				if not glsl_wrapper_name:
+					glsl_wrapper_name = node.name
 				lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
 				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0
 				lines.append('  var __webclgl = new WebCLGL()')
@@ -438,8 +458,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return "var __returns__%s = null;"%return_id
 
 	def _visit_call_helper_numpy_array(self, node):
-		#raise NotImplementedError('TODO numpy.array')
-		return self.visit(node.args[0])  ## TODO typed arrays
+		if self._glsl:
+			return self.visit(node.keywords[0].value)
+		else:
+			return self.visit(node.args[0])
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)
@@ -535,6 +557,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		left = self.visit(node.left)
 		op = self.visit(node.op)
 		right = self.visit(node.right)
+
+		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
+			left += '[_id_]'
+		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':
+			right += '[_id_]'
+
 		return '(%s %s %s)' % (left, op, right)
 
 	def visit_Mult(self, node):

@@ -2393,6 +2393,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		inline = False
 		threaded = self._with_webworker
 		jsfile = None
+		gpu_vectorize = False
 
 		## deprecated?
 		self._cached_property = None
@@ -2418,6 +2419,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				assert isinstance( decorator.args[0], Name)
 				return_type = decorator.args[0].id
 
+			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
+				assert decorator.attr == 'vectorize'
+				gpu_vectorize = True
+				restore_with_glsl = self._with_glsl
+				self._with_glsl = True
 
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
@@ -2510,6 +2516,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		if return_type:
 			writer.write('@returns(%s)' %return_type)
+		if gpu_vectorize:
+			writer.write('@gpu.vectorize')
 		## force python variable scope, and pass user type information to second stage of translation.
 		## the dart backend can use this extra type information.
 		vars = []
@@ -2863,6 +2871,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._function_return_types[ node.name ] = self._return_type
 		self._return_type = None
 
+
+		############################################################
+		### DEPRECATED
 		if setter and 'set' in self._injector:  ## inject extra code
 			value_name = node.args.args[1].id
 			inject = [
@@ -2882,8 +2893,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('callback( [self], JSObject() )')
 				writer.pull()
 				writer.pull()
+		############################################################
 
 		writer.pull()  ## end function body
+
+		if gpu_vectorize:
+			self._with_glsl = restore_with_glsl
 
 		self._typedef_vars = dict()  ## clear typed variables
 
