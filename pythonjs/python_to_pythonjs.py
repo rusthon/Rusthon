@@ -194,6 +194,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._generator_functions = set()
 
 		self._in_loop_with_else = False
+		self._introspective_functions = False
 
 		self._custom_operators = {}
 		self._injector = []  ## advanced meta-programming hacks
@@ -2904,20 +2905,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		if not self._with_dart and not self._with_lua:  ## Dart functions can not have extra attributes?
-			## note, in javascript function.name is a non-standard readonly attribute,
-			## the compiler creates anonymous functions with name set to an empty string.
-			writer.write('%s.NAME = "%s"' %(node.name,node.name))
+			if self._introspective_functions:
+				## note, in javascript function.name is a non-standard readonly attribute,
+				## the compiler creates anonymous functions with name set to an empty string.
+				writer.write('%s.NAME = "%s"' %(node.name,node.name))
 
-			writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
-			defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
-			writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
-			if self._with_fastdef or fastdef:
-				writer.write('%s.fastdef = True' %node.name)
+				writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
+				defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
+				writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
+				if self._with_fastdef or fastdef:
+					writer.write('%s.fastdef = True' %node.name)
 
-			writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
+				writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
 
-			if return_type:
-				writer.write('%s.return_type = "%s"'%(node.name, return_type))
+				if return_type:
+					writer.write('%s.return_type = "%s"'%(node.name, return_type))
 
 			if not self._with_js and not javascript:
 				writer.write('%s.pythonscript_function=True'%node.name)
