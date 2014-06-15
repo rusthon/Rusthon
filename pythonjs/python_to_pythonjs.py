@@ -1459,7 +1459,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return '%s[...]' %name
 
 		elif self._with_ll or self._with_glsl:
-			return '%s[ %s ]' %(name, self.visit(node.slice))
+			return '%s[%s]' %(name, self.visit(node.slice))
 
 		elif self._with_js or self._with_dart:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
