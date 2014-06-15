@@ -234,15 +234,18 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
 				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0
 				lines.append('  var __webclgl = new WebCLGL()')
-				lines.append('  var __kernel = __webclgl.createKernel( __shader__ );')
+				lines.append('  var __kernel = __webclgl.createKernel( "\\n".join(__shader__) );')
+				lines.append('  var __return_length = 1')
 
-				lines.append('  var return_buffer = __webclgl.createBuffer(1, "FLOAT", __offset)')  ## TODO length of return buffer
 				for i,arg in enumerate(args):
 					lines.append('  if (%s instanceof Array) {' %arg)
+					lines.append('    __return_length = %s.length' %arg)
 					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", __offset)' %(arg,arg))
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
+
+				lines.append('  var return_buffer = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
 
 				lines.append('	__kernel.compile()')
 				lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
@@ -430,7 +433,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return "var __returns__%s = null;"%return_id
 
 	def _visit_call_helper_numpy_array(self, node):
-		raise NotImplementedError('TODO numpy.array')
+		#raise NotImplementedError('TODO numpy.array')
 		return self.visit(node.args[0])  ## TODO typed arrays
 
 	def _visit_call_helper_list(self, node):

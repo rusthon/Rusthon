@@ -138,11 +138,13 @@ elif runnable( 'pypy --help' ):
     pypy_runnable = True
     pypy_exe = 'pypy'
 
-if os.path.isfile( os.path.expanduser('~/pypy-1.9/bin/pypy') ):
+if os.path.isfile( os.path.expanduser('~/pypy-1.9/bin/pypy') ) and '--old-pypy' in sys.argv:
     old_pypy_runnable = True
     old_pypy_exe = os.path.expanduser('~/pypy-1.9/bin/pypy')
 
-
+webclgl = None
+if os.path.isfile( os.path.expanduser('~/webclgl/WebCLGL_2.0.Min.class.js') ):
+    webclgl = open( os.path.expanduser('~/webclgl/WebCLGL_2.0.Min.class.js'), 'rb').read().decode('utf-8')
 
 ## rhino is not run by default because it simply freezes up on maximum callstack errors
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
@@ -631,7 +633,19 @@ def run_js_nodewebkit(content):
         "main()",
         "__nw.App.quit()"
     ]
-    write("/tmp/test.html", '<html><script>%s</script></html>' %'\n'.join(lines))
+
+    html = ['<html>']
+    if webclgl:
+        html.append('<script>')
+        html.append( webclgl )
+        html.append('</script>')
+
+    html.append('<script>')
+    html.extend( lines )
+    html.append('</script>')
+
+    html.append('</html>')
+    write("/tmp/test.html", '\n'.join(html))
 
     #write("%s.js" % tmpname, '\n'.join(lines))
     #return run_command("node %s.js" % tmpname)
