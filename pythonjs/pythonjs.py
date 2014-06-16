@@ -108,8 +108,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			header.append( 'var __shader__ = []' )
 
 		lines = header + lines
-		## fixed by Foxboron
-		return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
+		if False:
+			for line in lines:
+				assert isinstance(line, str)
+			return '\n'.join(lines)
+		else:
+			## fixed by Foxboron
+			return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
 
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
@@ -198,7 +203,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
-		glsl_vectorize = False
+		gpu_vectorize = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
@@ -725,7 +730,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if self._glsl:
 			target = self.visit(node.target)
 			iter = self.visit(node.iter.args[0])
-			lines = ['for (int %s; %s < %s; %s++) {' %(target, target, iter, target)]
+			lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
 			for b in node.body:
 				lines.append( self.visit(b) )
 			lines.append( '}' )
