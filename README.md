@@ -61,7 +61,15 @@ N-Body benchmark
 
 ![nbody](http://2.bp.blogspot.com/-pylzspKRu6M/UqbAv3qIGTI/AAAAAAAAAkE/NnsAM5DZ_8M/s400/nbody.png)
 
-[More benchmarks](http://pythonjs.blogspot.com/2014/05/pythonjs-now-faster-than-cpython.html)
+[More benchmarks: Richards, n-body, Pystone, Fannkuch](http://pythonjs.blogspot.com/2014/06/pythonjs-faster-than-cpython-part2.html)
+
+
+GPU Translation
+---------------
+A Python typed subset can be translated to a GLSL fragment shader to speed up math on large arrays.
+[GPU Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/gpu.md)
+
+
 
 translator.py
 ------------

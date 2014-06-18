@@ -1,6 +1,6 @@
 types = ['str', 'list', 'dict']
 
-glsl_types = ['float*', 'vec2']
+glsl_types = ['float*', 'vec2', 'vec3', 'vec4']
 glsl_aliases = ['floatPOINTER']
 types.extend( glsl_types )
 types.extend( glsl_aliases )

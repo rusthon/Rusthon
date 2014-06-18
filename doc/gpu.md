@@ -2,6 +2,22 @@ GPU Translation
 ---------------
 A subset of Python with extra type information can be translated into a GLSL fragment shader.  The `@gpu` decorator marks a function for translation to GLSL.  All variables inside the function must be typed using GLSL types.  You can type your variables using decorators or special PythonJS type syntax.
 
+Python GPU Subset:
+-----------------
+
+	. for loops `for i in range(n):`
+	. if/elif/else
+	. subroutines
+	. input/output 1D/2D arrays of floats and or vec4
+	. all variables must be given a GLSL typedef.
+
+GLSL Types:
+----------
+
+	. int
+	. float, float*
+	. vec2, vec3, vec4
+
 Typing with Decorators
 ----------------------
 
@@ -27,7 +43,7 @@ Typing with Decorators
 ```
 
 
-Typing C-style
+Typing with PythonJS C-style type prefixes
 ----------------------
 
 ```
@@ -54,7 +70,29 @@ Typing C-style
 ---------
 The main entry point function marked with `@gpu.main` must also use the `@returns(array=[w,h])` decorator to declare the width and height of the 2D array that it will return. Subroutines must also use the `@returns` decorator to declare their GLSL return type like this: `@returns(float)`
 
+@typedef
+--------
+This decorator allows you to give a GLSL type to each variable in the function.  The syntax is `@typedef( VARIABLE_NAME=GLSL_TYPE )`.
+
 
 get_global_id()
 --------------
 The GLSL function `get_global_id()` is part of the WebCLGL API and returns a vec2 that contains the current `x` and `y` index.
+
+subroutines
+-----------
+Function subroutines are decorated with `@gpu`.  The main entry point function is decorated with `@gpu.main`. Example:
+
+```
+	@returns( float )
+	@typedef( x=float, y=float )
+	@gpu
+	def mysub(x,y):
+		return x-y
+
+	@returns( array=[64,64] )
+	@gpu.main
+	def myfunc():
+		return mysub( 1.1, 2.2 )
+
+```
