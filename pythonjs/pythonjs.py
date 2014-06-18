@@ -105,6 +105,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append('}) //end requirejs define')
 
 		if self._has_glsl:
+			header.append( 'var __shader_header__ = []' )
 			header.append( 'var __shader__ = []' )
 
 		lines = header + lines
@@ -200,6 +201,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 
 	def _visit_function(self, node):
+		is_main = node.name == 'main'
 		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
@@ -217,14 +219,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				return_type = decor.args[0].id
 
 			elif isinstance(decor, Attribute) and isinstance(decor.value, Name) and decor.value.id == 'gpu':
-				assert decor.attr == 'vectorize'
-				gpu_vectorize = True
+				if decor.attr == 'vectorize':
+					gpu_vectorize = True
+				elif decor.attr == 'main':
+					is_main = True
 
 
 		args = self.visit(node.args)
 
 		if glsl:
-			is_main = node.name == 'main'
 			self._has_glsl = True  ## writes `__shader__ = []` in header
 			lines = []
 			x = []
@@ -232,19 +235,24 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				if gpu_vectorize and arg not in args_typedefs:
 					x.append( 'float* %s' %arg )
 				else:
-					assert arg in args_typedefs
-					x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
+					if arg in args_typedefs:
+						x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
+					else:
+						x.append( 'float* %s' %arg )
 
-			if is_main or gpu_vectorize:
+			if is_main:
 				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
 			elif return_type:
-				lines.append( '__shader__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
+				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
 			else:
-				lines.append( '__shader__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
+				lines.append( '__shader_header__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
 
 			self.push()
-			if gpu_vectorize:
+			# `_id_` always write out an array of floats or array of vec4floats
+			if is_main:
 				lines.append( '__shader__.push("vec2 _id_ = get_global_id();");')
+			else:
+				lines.append( '__shader_header__.push("vec2 _id_ = get_global_id();");')
 
 			self._glsl = True
 			for child in node.body:
@@ -252,32 +260,44 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					continue
 				else:
 					for sub in self.visit(child).splitlines():
-						lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
+						if is_main:
+							lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
+						else:
+							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
 			self._glsl = False
 			#buffer += '\n'.join(body)
 			self.pull()
-			lines.append('__shader__.push("%s}");' %self.indent())
+			if is_main:
+				lines.append('__shader__.push("%s}");' %self.indent())
+			else:
+				lines.append('__shader_header__.push("%s}");' %self.indent())
 
-			if is_main or gpu_vectorize:
+			lines.append(';')
+
+			if is_main:
 				if not glsl_wrapper_name:
 					glsl_wrapper_name = node.name
 				lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
-				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0
+				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
+
 				lines.append('  var __webclgl = new WebCLGL()')
-				lines.append('  var __kernel = __webclgl.createKernel( "\\n".join(__shader__) );')
-				lines.append('  var __return_length = 1')
+				lines.append('	var header = "\\n".join(__shader_header__)')
+				lines.append('	var shader = "\\n".join(__shader__)')
+				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
+
+				lines.append('  var __return_length = 64')  ## minimum size is 64
 
 				for i,arg in enumerate(args):
 					lines.append('  if (%s instanceof Array) {' %arg)
-					lines.append('    __return_length = %s.length' %arg)
+					lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
 					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", __offset)' %(arg,arg))
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
 
 				lines.append('  var return_buffer = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
-
 				lines.append('	__kernel.compile()')
+
 				lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
 				lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
 				lines.append('} // end of wrapper')

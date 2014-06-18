@@ -1,26 +1,19 @@
 """subroutine"""
 
 def main():
-	with glsl as myfunc:
-		## glsl compiler requires subroutines defined first
-		float def mysub(x,y):
-			float x
-			float y
-			return x+y
+	@gpu
+	float def mysub(x,y):
+		float x
+		float y
+		return x-y
 
-		def main(buffA, buffB, num):
-			float* buffA
-			float* buffB
-			float num
-			vec2 n = get_global_id()  ## WebCL API
-			float result = 0.0
-			for i in range(1000):
-				result = sqrt(result + A[n] + B[n] + float(i))
-			return mysub( result, num )
+	#@gpu.returns.vec4
+	@gpu.main
+	def myfunc(a):
+		float* a
+		return mysub( 1.1 * a[_id_], 2.2 )
 
 
-
-	A = [1,2,3]
-	B = [4,5,6]
-	res = myfunc( A, B, 2.0 )
+	A = [1.3 for i in range(64)]
+	res = myfunc( A )
 	print(res)

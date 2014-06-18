@@ -153,7 +153,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_rpc = None
 		self._with_rpc_name = None
 		self._with_direct_keys = False
+
 		self._with_glsl = False
+		self._in_gpu_main = False
+		self._gpu_return_type = 'array'  ## 'array' or float32 or array of 'vec4' float32's.
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1054,7 +1057,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif isinstance(node.test, ast.List):
 			writer.write('if %s.length:' % self.visit(node.test))
 
-		elif self._with_ll:
+		elif self._with_ll or self._with_glsl:
 			writer.write('if %s:' % self.visit(node.test))
 		elif isinstance(node.test, ast.Compare):
 			writer.write('if %s:' % self.visit(node.test))
@@ -1131,17 +1134,22 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(node.value, Name) and node.value.id == 'self' and 'self' in self._instances:
 				self._return_type = self._instances['self']
 
-			## cached property is DEPRECATED
-			#if self._cached_property:
-			#	writer.write('self["__dict__"]["%s"] = %s' %(self._cached_property, self.visit(node.value)) )
-			#	writer.write('return self["__dict__"]["%s"]' %self._cached_property)
-			#else:
-			if self._with_glsl:
-				writer.write('out_float = %s' %self.visit(node.value))
+
+			if self._with_glsl and self._in_gpu_main:
+				## _id_ is inserted into all function headers by pythonjs.py for glsl functions.
+				if self._gpu_return_type == 'array':
+					writer.write('out_float = %s' %self.visit(node.value))
+				elif self._gpu_return_type == 'vec4':
+					writer.write('out_float4 = %s' %self.visit(node.value))
+				else:
+					raise NotImplementedError(node)
+
+
 			elif self._inline:
 				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
 				if self._inline_breakout:
 					writer.write('break')
+
 			elif isinstance(node.value, ast.Lambda):
 				self.visit( node.value )
 				writer.write( 'return __lambda__' )
@@ -2393,6 +2401,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		inline = False
 		threaded = self._with_webworker
 		jsfile = None
+
+		gpu = False
+		gpu_main = False
 		gpu_vectorize = False
 
 		## deprecated?
@@ -2404,7 +2415,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		for decorator in reversed(node.decorator_list):
 			log('@decorator: %s' %decorator)
-			if isinstance(decorator, Name) and decorator.id == 'inline':
+			if isinstance(decorator, Name) and decorator.id == 'gpu':
+				gpu = True
+
+			elif isinstance(decorator, Name) and decorator.id == 'inline':
 				inline = True
 				self._with_inline = True
 
@@ -2420,10 +2434,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return_type = decorator.args[0].id
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
-				assert decorator.attr == 'vectorize'
-				gpu_vectorize = True
-				restore_with_glsl = self._with_glsl
-				self._with_glsl = True
+				gpu = True
+				if decorator.attr == 'vectorize':
+					gpu_vectorize = True
+				elif decorator.attr == 'main':
+					gpu_main = True
+				elif decorator.attr == 'typedef':
+					pass
+				else:
+					raise NotImplementedError(decorator)
 
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
@@ -2482,6 +2501,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			else:
 				decorators.append( decorator )
+
+
+		if gpu:
+			restore_with_glsl = self._with_glsl
+			self._with_glsl = True
+			if gpu_main:  ## sets float
+				self._in_gpu_main = True
+				writer.write('@gpu.main')
+
 
 
 		if threaded:
@@ -2612,8 +2640,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		else:
 			writer.write('def %s(args, kwargs):' % node.name)
 		writer.push()
-
-
 
 		## write local typedefs and var scope ##
 		a = ','.join( vars )
@@ -2897,8 +2923,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		writer.pull()  ## end function body
 
-		if gpu_vectorize:
+		if gpu:
 			self._with_glsl = restore_with_glsl
+			if gpu_main:
+				self._in_gpu_main = False
 
 		self._typedef_vars = dict()  ## clear typed variables
 
