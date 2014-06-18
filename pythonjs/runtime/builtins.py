@@ -16,6 +16,19 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with lowlevel:
+	def __unpack_array2d(arr, dims):
+		w,h = dims
+		row = []
+		rows = [row]
+		for value in arr:
+			row.append(value)
+			if row.length >= w:
+				row = []
+				rows.append(row)
+		if rows.length != h:
+			print('ERROR: __unpack_array2d, invalid height.')
+		return rows
+
 	def __getattr__(ob, a ):
 		if ob.__getattr__:
 			return JS("ob.__getattr__(a)")

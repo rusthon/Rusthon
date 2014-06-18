@@ -30,5 +30,7 @@ def main():
 		return float(runaway) * 0.01
 
 	res = gpufunc()
-	pprint(res, 32)
-
+	#pprint(res, 32)
+	for row in res:
+		a = [ round(v,3) for v in row ]
+		print( a )

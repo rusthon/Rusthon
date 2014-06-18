@@ -316,7 +316,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('	__kernel.compile()')
 
 				lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
-				lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
+
+				if gpu_return_types:
+					rtype = gpu_return_types[ 'array' ]
+					lines.append('	var arrayres = __webclgl.enqueueReadBuffer_Float( return_buffer )')
+					lines.append('	return __unpack_array2d(arrayres, %s)' %rtype )
+				else:
+					lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
 				lines.append('} // end of wrapper')
 
 			return '\n'.join(lines)
