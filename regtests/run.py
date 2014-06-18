@@ -346,7 +346,7 @@ threading.start_new_thread = threading._start_new_thread
 class __faker__(object):
     def __enter__(self, *args): pass
     def __exit__(self, *args): pass
-    def __call__(self, name):
+    def __call__(self, *args, **kw):
         return lambda f: f
     def vectorize(self, f):
         return f
@@ -356,6 +356,9 @@ class __faker__(object):
 webworker = __faker__()
 glsl = __faker__()
 gpu = __faker__()
+returns = __faker__()
+typedef = __faker__()
+vec2 = None
 
 try:
     import numpy
