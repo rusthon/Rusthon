@@ -2406,6 +2406,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		gpu = False
 		gpu_main = False
 		gpu_vectorize = False
+		local_typedefs = []
 
 		## deprecated?
 		self._cached_property = None
@@ -2418,6 +2419,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			log('@decorator: %s' %decorator)
 			if isinstance(decorator, Name) and decorator.id == 'gpu':
 				gpu = True
+
+			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
+				c = decorator
+				assert len(c.args) == 0 and len(c.keywords)
+				for kw in c.keywords:
+					assert isinstance( kw.value, Name)
+					self._instances[ kw.arg ] = kw.value.id
+					self._func_typedefs[ kw.arg ] = kw.value.id
+					local_typedefs.append( '%s=%s' %(kw.arg, kw.value.id))
+
 
 			elif isinstance(decorator, Name) and decorator.id == 'inline':
 				inline = True
@@ -2498,15 +2509,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._custom_operators[ op ] = node.name
 
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
-				c = decorator
-				assert len(c.args) == 0 and len(c.keywords)
-				for kw in c.keywords:
-					assert isinstance( kw.value, Name)
-					self._instances[ kw.arg ] = kw.value.id
-					self._func_typedefs[ kw.arg ] = kw.value.id
-					log('@typedef - %s : %s'%(kw.arg, kw.value.id))
-
 			else:
 				decorators.append( decorator )
 
@@ -2564,7 +2566,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		## force python variable scope, and pass user type information to second stage of translation.
 		## the dart backend can use this extra type information.
 		vars = []
-		local_typedefs = []
 		local_typedef_names = set()
 		if not self._with_coffee:
 			local_vars, global_vars = retrieve_vars(node.body)
