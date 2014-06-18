@@ -2396,6 +2396,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		with_dart_decorators = []
 		setter = False
 		return_type = None
+		return_type_keywords = {}
 		fastdef = False
 		javascript = False
 		inline = False
@@ -2428,10 +2429,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					assert len(decorator.args) == 1
 					jsfile = decorator.args[0].s
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'returns':
-				assert len(decorator.args) == 1
-				assert isinstance( decorator.args[0], Name)
-				return_type = decorator.args[0].id
+			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
+				if decorator.keywords:
+					for k in decorator.keywords:
+						key = k.arg
+						assert key == 'array' or key == 'vec4'
+						return_type_keywords[ key ] = self.visit(k.value)
+
+				else:
+					assert len(decorator.args) == 1
+					assert isinstance( decorator.args[0], Name)
+					return_type = decorator.args[0].id
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
 				gpu = True
@@ -2542,8 +2550,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('self.onmessage = onmessage' )
 
 
-		if return_type:
-			writer.write('@returns(%s)' %return_type)
+		if return_type or return_type_keywords:
+			if return_type_keywords and return_type:
+				kw = ['%s=%s' %(k,v) for k,v in return_type_keywords.items()]
+				writer.write('@returns(%s, %s)' %(return_type,','.join(kw)) )
+			elif return_type_keywords:
+				writer.write('@returns(%s)' %','.join( ['%s=%s' %(k,v) for k,v in return_type_keywords.items()] ))
+			else:
+				writer.write('@returns(%s)' %return_type)
+
 		if gpu_vectorize:
 			writer.write('@gpu.vectorize')
 		## force python variable scope, and pass user type information to second stage of translation.

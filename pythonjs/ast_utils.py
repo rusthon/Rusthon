@@ -64,7 +64,8 @@ def retrieve_vars(body):
 					pass  ## skips assignment to an attribute `a.x = y`
 
 			if user_typedef:  ## `int x`
-				assert isinstance(n.value, ast.Name)
+				if not isinstance(n.value, ast.Name):
+					raise SyntaxError(n.value)
 				local_vars.add( '%s=%s' %(user_typedef, n.value.id))
 
 		elif isinstance(n, ast.Global):

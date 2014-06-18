@@ -205,6 +205,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
+		gpu_return_types = {}
 		gpu_vectorize = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
@@ -216,7 +217,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				for key in decor.keywords:
 					args_typedefs[ key.arg ] = key.value.id
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
-				return_type = decor.args[0].id
+				if decor.keywords:
+					for k in decor.keywords:
+						key = k.arg
+						assert key == 'array' or key == 'vec4'
+						gpu_return_types[ key ] = self.visit(k.value)
+
+				else:
+					return_type = decor.args[0].id
 
 			elif isinstance(decor, Attribute) and isinstance(decor.value, Name) and decor.value.id == 'gpu':
 				if decor.attr == 'vectorize':
@@ -277,7 +285,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			if is_main:
 				if not glsl_wrapper_name:
 					glsl_wrapper_name = node.name
-				lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
+
+				if args:
+					lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
+				else:
+					lines.append('function %s( __offset ) {' %glsl_wrapper_name )
+
 				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
 
 				lines.append('  var __webclgl = new WebCLGL()')
@@ -294,6 +307,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
+
+				if gpu_return_types:
+					rtype = gpu_return_types[ 'array' ]
+					lines.append('  __return_length = %s' %rtype)
 
 				lines.append('  var return_buffer = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
 				lines.append('	__kernel.compile()')

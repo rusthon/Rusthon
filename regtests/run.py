@@ -350,6 +350,8 @@ class __faker__(object):
         return lambda f: f
     def vectorize(self, f):
         return f
+    def main(self, f):
+        return f
 
 webworker = __faker__()
 glsl = __faker__()
