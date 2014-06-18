@@ -96,3 +96,25 @@ Function subroutines are decorated with `@gpu`.  The main entry point function i
 		return mysub( 1.1, 2.2 )
 
 ```
+
+using arrays as arguments to gpu.main
+---------------------------------------
+You can pass a list of floats as arguments to your gpu entry point function, these will be translated into WebCLGL buffers and uploaded to the GPU.  By default the input arrays are expected to have a range of 0.0-1.0.  If you are using arrays with values outside of the default range, it can be changed by setting the `scale` variable on the list before passing it to the gpu entry point function, the scale integer sets the range from -scale to +scale.  Example:
+
+```
+@gpu.main
+def gpufunc(a,b,c):
+	float* a
+	float* b
+	float* c
+
+A = [2.0 for i in range(64)]
+A.scale=2
+B = [-4.0 for i in range(64)]
+B.scale=4
+C = [1.5 for i in range(64)]
+A.scale=2  ## set scale to largest integer
+
+gpufunc( A, B, C )
+
+```

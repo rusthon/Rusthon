@@ -303,7 +303,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				for i,arg in enumerate(args):
 					lines.append('  if (%s instanceof Array) {' %arg)
 					lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
-					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", __offset)' %(arg,arg))
+					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", %s.scale || __offset)' %(arg,arg,arg))
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
