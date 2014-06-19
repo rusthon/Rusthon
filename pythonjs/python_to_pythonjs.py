@@ -156,7 +156,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._with_glsl = False
 		self._in_gpu_main = False
-		self._gpu_return_type = 'array'  ## 'array' or float32 or array of 'vec4' float32's.
+		self._gpu_return_types = set() ## 'array' or float32, or array of 'vec4' float32's.
 
 		self._source = source.splitlines()
 		self._classes = dict()    ## class name : [method names]
@@ -1137,13 +1137,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			if self._with_glsl and self._in_gpu_main:
 				## _id_ is inserted into all function headers by pythonjs.py for glsl functions.
-				if self._gpu_return_type == 'array':
+				if 'array' in self._gpu_return_types:
 					writer.write('out_float = %s' %self.visit(node.value))
-				elif self._gpu_return_type == 'vec4':
+				if 'vec4' in self._gpu_return_types:
 					writer.write('out_float4 = %s' %self.visit(node.value))
-				else:
-					raise NotImplementedError(node)
-
 
 			elif self._inline:
 				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
@@ -2407,6 +2404,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		threaded = self._with_webworker
 		jsfile = None
 
+		self._gpu_return_types = set()
 		gpu = False
 		gpu_main = False
 		gpu_vectorize = False
@@ -2449,6 +2447,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					for k in decorator.keywords:
 						key = k.arg
 						assert key == 'array' or key == 'vec4'
+						self._gpu_return_types.add(key)  ## used in visit_Return ##
 						return_type_keywords[ key ] = self.visit(k.value)
 
 				else:
