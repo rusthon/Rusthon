@@ -16,6 +16,13 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with lowlevel:
+
+	def __glsl_inline_object(ob):
+		if instanceof(ob,Array):
+			return 'TODO'
+		else:
+			return ob
+
 	def __unpack_array2d(arr, dims):
 		w,h = dims
 		row = []
