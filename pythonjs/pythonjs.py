@@ -298,32 +298,57 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('	var shader = "\\n".join(__shader__)')
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
-				lines.append('  var __return_length = 64')  ## minimum size is 64
+				if gpu_return_types:
+					if 'array' in gpu_return_types:
+						w,h = gpu_return_types['array'][1:-1].split(',')
+					elif 'vec4' in gpu_return_types:
+						w,h = gpu_return_types['vec4'][1:-1].split(',')
+					else:
+						raise NotImplementedError
+					lines.append('  var __return_length = %s * %s' %(w,h))
+				else:
+					lines.append('  var __return_length = 64')  ## minimum size is 64
 
 				for i,arg in enumerate(args):
 					lines.append('  if (%s instanceof Array) {' %arg)
-					lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
+					#lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
 					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", %s.scale || __offset)' %(arg,arg,arg))
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
 
-				if gpu_return_types:
-					rtype = gpu_return_types[ 'array' ]
-					lines.append('  __return_length = %s' %rtype)
-
-				lines.append('  var return_buffer = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
+				#lines.append('	console.log("kernel.compile...")')
 				lines.append('	__kernel.compile()')
-
-				lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, return_buffer)')
+				#lines.append('	console.log("kernel.compile OK")')
 
 				if gpu_return_types:
-					rtype = gpu_return_types[ 'array' ]
-					lines.append('	var arrayres = __webclgl.enqueueReadBuffer_Float( return_buffer )')
-					lines.append('	return __unpack_array2d(arrayres, %s)' %rtype )
+					if 'array' in gpu_return_types:
+						dim = gpu_return_types[ 'array' ]
+						lines.append('	var rbuffer_array = __webclgl.createBuffer(%s, "FLOAT", __offset)' %dim)
+						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_array)')
+						lines.append('  var _raw_array_res = __webclgl.enqueueReadBuffer_Float( rbuffer_array )')
+					else:
+						dim = gpu_return_types[ 'vec4' ]
+						lines.append('	var rbuffer_vec4 = __webclgl.createBuffer(%s, "FLOAT4", __offset)' %dim)
+						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_vec4)')
+						lines.append('  var _raw_vec4_res = __webclgl.enqueueReadBuffer_Float4( rbuffer_vec4 )')
+
+					if 'array' in gpu_return_types and 'vec4' in gpu_return_types:
+						adim = gpu_return_types['array']
+						vdim = gpu_return_types['vec4']
+						lines.append('	return [__unpack_array2d(_raw_array_res, %s),__unpack_vec4(_raw_vec4_res, %s)]' %(adim, vdim))
+					elif 'vec4' in gpu_return_types:
+						lines.append('	return __unpack_vec4(_raw_vec4_res, %s)' %gpu_return_types['vec4'])
+					else:
+						lines.append('	return __unpack_array2d(_raw_array_res, %s)' %gpu_return_types['array'])
+
 				else:
-					lines.append('	return __webclgl.enqueueReadBuffer_Float( return_buffer )')
+					lines.append('  var __return = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
+					lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, __return)')
+					lines.append('	return __webclgl.enqueueReadBuffer_Float( __return )')
+
 				lines.append('} // end of wrapper')
+
 
 			return '\n'.join(lines)
 

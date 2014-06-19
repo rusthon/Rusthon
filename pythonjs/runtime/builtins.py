@@ -25,9 +25,29 @@ with lowlevel:
 			if row.length >= w:
 				row = []
 				rows.append(row)
+		rows.pop()
 		if rows.length != h:
 			print('ERROR: __unpack_array2d, invalid height.')
 		return rows
+
+	def __unpack_vec4(arr, dims):
+		w,h = dims
+		rows = []
+		i=0
+		for y in range(h):
+			row = []
+			rows.append( row )
+			for x in range(w):
+				vec = []
+				for j in range(4):
+					vec.append( arr[i])
+					i += 1
+				row.append( vec )
+
+		if rows.length != h:
+			print('ERROR: __unpack_vec4, invalid height.')
+		return rows
+
 
 	def __getattr__(ob, a ):
 		if ob.__getattr__:

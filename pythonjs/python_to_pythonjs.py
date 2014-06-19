@@ -1431,7 +1431,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		node_value = self.visit(node.value)
 
-		if self._with_dart or self._with_ll:
+		if self._with_dart or self._with_ll or self._with_glsl:
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_js:
 			return '%s.%s' %(node_value, node.attr)
@@ -2665,7 +2665,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('var(%s)' %a)
 
 		#####################################################################
-		if self._with_dart:
+		if self._with_dart or self._with_glsl:
 			pass
 
 		elif self._with_js or javascript or self._with_ll:
@@ -2939,6 +2939,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		writer.pull()  ## end function body
 
+		if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
+			writer.write('%s.pythonscript_function=True'%node.name)
+
+
 		if gpu:
 			self._with_glsl = restore_with_glsl
 			if gpu_main:
@@ -2982,8 +2986,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				if return_type:
 					writer.write('%s.return_type = "%s"'%(node.name, return_type))
 
-			if not self._with_js and not javascript:
-				writer.write('%s.pythonscript_function=True'%node.name)
 
 
 		if self._with_js and with_js_decorators:
