@@ -249,6 +249,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						x.append( 'float* %s' %arg )
 
 			if is_main:
+				lines.append( 'var __shader__ = [];')  ## dynamic
 				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
 			elif return_type:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
@@ -269,7 +270,20 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					for sub in self.visit(child).splitlines():
 						if is_main:
-							lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
+							if '`' in sub:
+								chunks = sub.split('`')
+								sub = []
+								for ci,chk in enumerate(chunks):
+									if not ci%2:
+										if ci==0:
+											sub.append('"%s"'%chk)
+										else:
+											sub.append(' + "%s"'%chk)
+									else:
+										sub.append(' + __glsl_inline_object(%s)' %chk)
+								lines.append( '__shader__.push(%s);' %''.join(sub))
+							else:
+								lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
 						else:
 							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
 			self._glsl = False
@@ -461,7 +475,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
-		if name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
+		if name == 'glsl_inline_object':
+			return '`%s`' %self.visit(node.args[0])
+		elif name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
 
 		elif name == 'new':

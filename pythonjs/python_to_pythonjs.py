@@ -1430,8 +1430,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		node_value = self.visit(node.value)
-
-		if self._with_dart or self._with_ll or self._with_glsl:
+		if self._with_glsl:
+			if node_value not in self._typedef_vars:  ## dynamic var
+				return 'glsl_inline_object(%s.%s)' %(node_value, node.attr)
+			else:
+				return '%s.%s' %(node_value, node.attr)
+		elif self._with_dart or self._with_ll:
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_js:
 			return '%s.%s' %(node_value, node.attr)
