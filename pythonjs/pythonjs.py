@@ -250,7 +250,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 			if is_main:
 				lines.append( 'var __shader__ = [];')  ## dynamic
-				lines.append( '__shader__.push("void main( %s ) {");' %', '.join(x) )
+				lines.append( '__shader__.push("void main(%s) {");' %','.join(x) )  ## if shader failed to compile with error like "uniform float float" syntax error something likely went wrong here.
 			elif return_type:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
 			else:
