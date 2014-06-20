@@ -1630,7 +1630,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(target.slice, ast.Slice):
 				code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 
-			elif self._with_dart or self._with_ll:
+			elif self._with_dart or self._with_ll or self._with_glsl:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
@@ -1721,6 +1721,20 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		elif isinstance(target, Name):
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
+
+			######################### inserts glsl object at runtime ################################
+			if 'glsl_inline_object' in node_value:
+				if isinstance(node.value, ast.Attribute):
+					## this triggers special logic in pythonjs.py that will check if the object to
+					## inline is an array, and if so this will be injected into the shader,
+					## otherwise it will fallback to using glsl_inline_object.
+					## this is a workaround because WebGL GLSL is missing support for array literals.
+					writer.write('glsl_inline_array(%s.%s, "%s")' %(node.value.value.id, node.value.attr, target.id))
+				else:
+					pass
+
+			###########################################################################################
+
 
 			if writer.is_at_global_level():
 				log('GLOBAL: %s : %s'%(target.id, node_value))

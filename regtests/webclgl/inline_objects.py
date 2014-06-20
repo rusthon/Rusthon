@@ -1,7 +1,7 @@
 """inline dynamic object data"""
 class A:
-	def __init__(self):
-		self.myattr = 22/7.0
+	def __init__(self, value):
+		self.readonly_attr = value
 
 def main():
 	def my_wrapper(a,b, x,y,z,w):
@@ -13,13 +13,13 @@ def main():
 			float y
 			float z
 			float w
-			float D = a.myattr
-			vec4 V = vec4( x+D, y+D,z,w)
-			return x+y+z+w+D
+			float D = a.readonly_attr
+			vec4 V = vec4( x+D, y+b.readonly_attr,z,w)
+			return V.x
 
 		return gpufunc(x,y,z,w)
 
-	ai = A()
-	bi = A()
+	ai = A(22/7.0)
+	bi = A(0.420)
 	res = my_wrapper(ai,bi, 0.1, 0.2, 0.3, 0.4)
 	print(res)

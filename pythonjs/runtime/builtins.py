@@ -16,10 +16,24 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with lowlevel:
+	def __glsl_inline_array(ob, name):
+		## normally it would be ok to just return `float name[n]`, and then in __glsl_inline_object
+		## return the literal array as `{a,b,c}`, but no static arrays are allowed in WebGL GLSL.
+		## note: only array types need to be dynamically typedef with fixed size given ##
+		a = ['float ' + name + '[' + ob.length + ']']
+		i = 0
+		while i < ob.length:
+			a.push(';'+name+'['+i+']='+ob[i])
+			i += 1
+		return ''.join(a)
 
-	def __glsl_inline_object(ob):
+
+	def __glsl_inline_object(ob, name):
 		if instanceof(ob,Array):
-			return 'TODO'
+			#return '{'+ob.toString()+'}'             ## no static arrays in WebGL GLSL
+			#return 'float['+ob.length+'](' + ob.toString() + ')'  ## this will not work either
+			print('ERROR: WebGL GLSL arrays can not be inlined in __glsl_inline_object')
+			return ''
 		else:
 			return ob
 

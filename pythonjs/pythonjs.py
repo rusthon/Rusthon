@@ -105,6 +105,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append('}) //end requirejs define')
 
 		if self._has_glsl:
+			#header.append( 'var __shader_header__ = ["float a[4]=float[4](0.1,0.2,0.3,0.4);"]' )
+			#header.append( 'var __shader_header__ = ["float a[4];a=1.1;"]' )
 			header.append( 'var __shader_header__ = []' )
 			header.append( 'var __shader__ = []' )
 
@@ -195,7 +197,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def _visit_call_helper_var_glsl(self, node):
 		lines = []
 		for key in node.keywords:
-			lines.append( '%s %s' %(key.value.id, key.arg))
+			ptrs = key.value.id.count('POINTER')
+			if ptrs:
+				## TODO - preallocate array size - if nonliteral arrays are used later ##
+				#name = key.arg
+				#pid = '[`%s.length`]' %name
+				#ptrs = pid * ptrs
+				#lines.append( '%s %s' %(key.value.id.replace('POINTER',''), name+ptrs))
+
+				## assume that this is a dynamic variable and will be typedef'ed by
+				## __glsl_dynamic_typedef() is inserted just before the assignment.
+				pass
+			else:
+				lines.append( '%s %s' %(key.value.id, key.arg))
 
 		return ';'.join(lines)
 
@@ -271,6 +285,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					for sub in self.visit(child).splitlines():
 						if is_main:
 							if '`' in sub:
+								check_for_array = False
+
 								chunks = sub.split('`')
 								sub = []
 								for ci,chk in enumerate(chunks):
@@ -280,10 +296,20 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 										else:
 											sub.append(' + "%s"'%chk)
 									else:
-										sub.append(' + __glsl_inline_object(%s)' %chk)
-								lines.append( '__shader__.push(%s);' %''.join(sub))
+										if chk.startswith('__glsl_inline_array'):
+											check_for_array = chk.split('(')[-1].split(',')[0]
+										sub.append(' + %s' %chk)
+
+								if check_for_array:
+									lines.append( 'if (%s instanceof Array) { __shader__.push(%s); } else{' %(check_for_array,''.join(sub)) )
+								elif lines[-1].endswith(' else{'):
+									lines.append( '__shader__.push(%s); } /*end else*/' %''.join(sub))									
+								else:
+									lines.append( '__shader__.push(%s);' %''.join(sub))
+
 							else:
 								lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
+
 						else:
 							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
 			self._glsl = False
@@ -310,6 +336,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = "\\n".join(__shader_header__)')
 				lines.append('	var shader = "\\n".join(__shader__)')
+				#lines.append('	console.log(shader)')
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
 				if gpu_return_types:
@@ -476,7 +503,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Call(self, node):
 		name = self.visit(node.func)
 		if name == 'glsl_inline_object':
-			return '`%s`' %self.visit(node.args[0])
+			return '`__glsl_inline_object(%s)`' %self.visit(node.args[0])
+		elif name == 'glsl_inline_array':
+			return '`__glsl_inline_array(%s, "%s")`' %(self.visit(node.args[0]), node.args[1].s)
+
 		elif name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
 
@@ -603,14 +633,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					fnode._local_vars.add( arg )
 			for arg in rem:
 				args.remove( arg )
-
 		out = []
-
 		if args:
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			out.append( 'var ' + ','.join([key.arg for key in node.keywords]) )
-
 		return ';'.join(out)
 
 	def _inline_code_helper(self, s):
