@@ -105,19 +105,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append('}) //end requirejs define')
 
 		if self._has_glsl:
-			#header.append( 'var __shader_header__ = ["float a[4]=float[4](0.1,0.2,0.3,0.4);"]' )
-			#header.append( 'var __shader_header__ = ["float a[4];a=1.1;"]' )
 			header.append( 'var __shader_header__ = []' )
-			header.append( 'var __shader__ = []' )
 
 		lines = header + lines
-		if False:
-			for line in lines:
-				assert isinstance(line, str)
-			return '\n'.join(lines)
-		else:
-			## fixed by Foxboron
-			return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
+		## fixed by Foxboron
+		return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
 
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
@@ -250,7 +242,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		args = self.visit(node.args)
 
 		if glsl:
-			self._has_glsl = True  ## writes `__shader__ = []` in header
+			self._has_glsl = True  ## triggers extras in header
 			lines = []
 			x = []
 			for i,arg in enumerate(args):
@@ -263,7 +255,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						x.append( 'float* %s' %arg )
 
 			if is_main:
-				lines.append( 'var __shader__ = [];')  ## dynamic
+				lines.append( 'var __shader__ = [];')  ## each call to the wrapper function recompiles the shader
 				lines.append( '__shader__.push("void main(%s) {");' %','.join(x) )  ## if shader failed to compile with error like "uniform float float" syntax error something likely went wrong here.
 			elif return_type:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
@@ -284,8 +276,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					for sub in self.visit(child).splitlines():
 						if is_main:
-							if '`' in sub:
+							if '`' in sub:  ## "`" runtime lookups
 								check_for_array = False
+								array_value = None
+								array_name = None
 
 								chunks = sub.split('`')
 								sub = []
@@ -296,14 +290,23 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 										else:
 											sub.append(' + "%s"'%chk)
 									else:
+										## this is a special case because: 
+										## . arrays need runtime info to be inserted into the shader,
+										## . some python syntax is wrapped with "`" back-quotes (inlines into shader)
 										if chk.startswith('__glsl_inline_array'):
-											check_for_array = chk.split('(')[-1].split(',')[0]
+											cargs = chk.split('(')[-1].split(')')[0]
+											array_value, array_name = cargs.split(',')
+											array_name = array_name.strip()[1:-1] ## strip quotes
+											check_for_array = array_value
+											## . inline the array with the same name into the current javascript scope,
+											##   this is required for "len(a)" and looping over arrays.
+											lines.append('%s = %s' %(array_name, array_value))
 										sub.append(' + %s' %chk)
 
 								if check_for_array:
-									lines.append( 'if (%s instanceof Array) { __shader__.push(%s); } else{' %(check_for_array,''.join(sub)) )
-								elif lines[-1].endswith(' else{'):
-									lines.append( '__shader__.push(%s); } /*end else*/' %''.join(sub))									
+									lines.append( 'if (%s instanceof Array) { __shader__.push(%s); } else {' %(check_for_array,''.join(sub)) )
+								elif lines[-1].endswith(' else {'):
+									lines.append( '__shader__.push(%s); }' %''.join(sub))									
 								else:
 									lines.append( '__shader__.push(%s);' %''.join(sub))
 
@@ -337,6 +340,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('	var header = "\\n".join(__shader_header__)')
 				lines.append('	var shader = "\\n".join(__shader__)')
 				#lines.append('	console.log(shader)')
+				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
 				if gpu_return_types:
@@ -502,7 +506,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
-		if name == 'glsl_inline_object':
+		if self._glsl and name == 'len':
+			assert isinstance(node.args[0], ast.Name)
+			#return '_len_%s' %node.args[0].id
+			#return '`%s.length`' %node.args[0].id
+			return '4'
+
+		elif name == 'glsl_inline_object':
 			return '`__glsl_inline_object(%s)`' %self.visit(node.args[0])
 		elif name == 'glsl_inline_array':
 			return '`__glsl_inline_array(%s, "%s")`' %(self.visit(node.args[0]), node.args[1].s)

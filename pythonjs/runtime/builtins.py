@@ -25,6 +25,8 @@ with lowlevel:
 		while i < ob.length:
 			a.push(';'+name+'['+i+']='+ob[i])
 			i += 1
+		## in WebGL GLSL, array.length() is not available, workaround: cache it here as `_len_NAME`
+		a.push( ';int _len_' + name + '=' +ob.length )
 		return ''.join(a)
 
 
