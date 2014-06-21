@@ -2418,6 +2418,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		threaded = self._with_webworker
 		jsfile = None
 
+		self._typedef_vars = dict()  ## clear typed variables: filled in below by @typedef or in visit_Assign
 		self._gpu_return_types = set()
 		gpu = False
 		gpu_main = False
@@ -2441,6 +2442,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				assert len(c.args) == 0 and len(c.keywords)
 				for kw in c.keywords:
 					assert isinstance( kw.value, Name)
+					self._typedef_vars[ kw.arg ] = kw.value.id
 					self._instances[ kw.arg ] = kw.value.id
 					self._func_typedefs[ kw.arg ] = kw.value.id
 					local_typedefs.append( '%s=%s' %(kw.arg, kw.value.id))

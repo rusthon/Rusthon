@@ -1,18 +1,19 @@
 """gpu test"""
 
 def main():
-	with glsl as myfunc:
-		def main(buffA, buffB, num):
-			float* buffA
-			float* buffB
-			float num
-			vec2 n = get_global_id()  ## WebCL API
-			float result = 0.0
-			for i in range(1000):
-				result = sqrt(result + A[n] + B[n] + float(i))
-			return result * num
+	@returns( array=[4,16])
+	@gpu.main
+	def myfunc(a, b, num):
+		float* a
+		float* b
+		float num
+		vec2 n = get_global_id()  ## WebCL API
+		float result = 0.0
+		for i in range(1000):
+			result = sqrt(result + a[n] + b[n] + float(i))
+		return result * num
 
-	A = [1,2,3]
-	B = [4,5,6]
-	res = myfunc( A, B, 2.0 )
+	A = [ 0.5 for x in range(64) ]
+	B = [ 0.25 for x in range(64) ]
+	res = myfunc( A, B, 0.1 )
 	print(res)

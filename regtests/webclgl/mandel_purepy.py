@@ -10,7 +10,7 @@ def pprint(arr, w):
 
 def main():
 
-	@returns( array=[32,32] )
+	@returns( array=[64,64] )
 	@typedef( x=float, y=float, tempX=float, i=int, runaway=int, c=vec2)
 	@gpu.main
 	def gpufunc():
@@ -30,7 +30,10 @@ def main():
 		return float(runaway) * 0.01
 
 	res = gpufunc()
+	print(res)
+	TestError( len(res)==64*64 )
+
 	#pprint(res, 32)
-	for row in res:
-		a = [ round(v,3) for v in row ]
-		print( a )
+	#for row in res:
+	#	a = [ round(v,3) for v in row ]
+	#	print( a )
