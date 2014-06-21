@@ -256,7 +256,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 			if is_main:
 				lines.append( 'var __shader__ = [];')  ## each call to the wrapper function recompiles the shader
-				lines.append( '__shader__.push("void main(%s) {");' %','.join(x) )  ## if shader failed to compile with error like "uniform float float" syntax error something likely went wrong here.
+				if x:
+					lines.append( '__shader__.push("void main(%s) {");' %','.join(x) )
+				else:
+					lines.append( '__shader__.push("void main( ) {");') ## WebCLGL parser requires the space in `main( )`
+
 			elif return_type:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
 			else:
