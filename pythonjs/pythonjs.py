@@ -317,8 +317,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append(';')
 
 			if is_main:
-				insert = lines
-				lines = []
+				#insert = lines
+				#lines = []
 
 				if not glsl_wrapper_name:
 					glsl_wrapper_name = node.name
@@ -328,9 +328,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					lines.append('function %s( __offset ) {' %glsl_wrapper_name )
 
-				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
+				lines.append('	__offset =  __offset || 1024*512')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
 
-				lines.extend( insert )
+				#lines.extend( insert )
 
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = "\\n".join(__shader_header__)')
