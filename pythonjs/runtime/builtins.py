@@ -15,62 +15,77 @@ JS('ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype
 JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
-with lowlevel:
-	def __glsl_inline_array(ob, name):
-		## normally it would be ok to just return `float name[n]`, and then in __glsl_inline_object
-		## return the literal array as `{a,b,c}`, but no static arrays are allowed in WebGL GLSL.
-		## note: only array types need to be dynamically typedef with fixed size given ##
-		a = ['float ' + name + '[' + ob.length + ']']
-		i = 0
-		while i < ob.length:
-			a.push(';'+name+'['+i+']='+ob[i])
-			i += 1
-		## in WebGL GLSL, array.length() is not available, workaround: cache it here as `_len_NAME`
-		a.push( ';int _len_' + name + '=' +ob.length )
-		return ''.join(a)
+with javascript:
+	def glsljit_runtime(header):
+		return new( GLSLJITRuntime(header) )
 
+	class GLSLJITRuntime:
+		def __init__(self, header):
+			self.header = header
+			self.shader = []
+			self.object_packagers = []
 
-	def __glsl_inline_object(ob, name):
-		if instanceof(ob,Array):
-			#return '{'+ob.toString()+'}'             ## no static arrays in WebGL GLSL
-			#return 'float['+ob.length+'](' + ob.toString() + ')'  ## this will not work either
-			print('ERROR: WebGL GLSL arrays can not be inlined in __glsl_inline_object')
-			return ''
-		else:
-			return ob
+		def push(self, s):
+			self.shader.push(s)
 
-	def __unpack_array2d(arr, dims):
-		w,h = dims
-		row = []
-		rows = [row]
-		for value in arr:
-			row.append(value)
-			if row.length >= w:
-				row = []
-				rows.append(row)
-		rows.pop()
-		if rows.length != h:
-			print('ERROR: __unpack_array2d, invalid height.')
-		return rows
+		def array(self, ob, name):
+			a = ['float ' + name + '[' + ob.length + ']']
+			i = 0
+			while i < ob.length:
+				a.push(';'+name+'['+i+']='+ob[i])
+				i += 1
+			## in WebGL GLSL, array.length() is not available, workaround: cache it here as `_len_NAME`, 
+			## but this fails to work with loops that require literals.
+			#a.push( ';int _len_' + name + '=' +ob.length )
+			self.shader.push( ''.join(a) )
 
-	def __unpack_vec4(arr, dims):
-		w,h = dims
-		rows = []
-		i=0
-		for y in range(h):
+		def object(self, ob, name):
+			for p in self.object_packagers:
+				cls, func = p
+				if instanceof(ob, cls):
+					return func(ob)
+
+		def unpack_array2d(self, arr, dims):
+			if typeof(dims)=='number':
+				return arr
+
+			w,h = dims
 			row = []
-			rows.append( row )
-			for x in range(w):
-				vec = []
-				for j in range(4):
-					vec.append( arr[i])
-					i += 1
-				row.append( vec )
+			rows = [row]
+			for value in arr:
+				row.append(value)
+				if row.length >= w:
+					row = []
+					rows.append(row)
+			rows.pop()
+			if rows.length != h:
+				print('ERROR: __unpack_array2d, invalid height.')
+			return rows
 
-		if rows.length != h:
-			print('ERROR: __unpack_vec4, invalid height.')
-		return rows
+		def unpack_vec4(self, arr, dims):
+			if typeof(dims)=='number':
+				w = dims
+				h = 1
+			else:
+				w,h = dims
+			rows = []
+			i=0
+			for y in range(h):
+				row = []
+				rows.append( row )
+				for x in range(w):
+					vec = []
+					for j in range(4):
+						vec.append( arr[i])
+						i += 1
+					row.append( vec )
 
+			if rows.length != h:
+				print('ERROR: __unpack_vec4, invalid height.')
+			return rows
+
+
+with lowlevel:
 
 	def __getattr__(ob, a ):
 		if ob.__getattr__:
@@ -625,6 +640,14 @@ def _setup_str_prototype():
 		@String.prototype.isdigit
 		def func():
 			digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+			for char in this:
+				if char in digits: pass
+				else: return False
+			return True
+
+		@String.prototype.isnumber
+		def func():
+			digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 			for char in this:
 				if char in digits: pass
 				else: return False

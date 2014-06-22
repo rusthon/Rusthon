@@ -1137,6 +1137,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			if self._with_glsl and self._in_gpu_main:
 				## _id_ is inserted into all function headers by pythonjs.py for glsl functions.
+				if not self._gpu_return_types:
+					raise SyntaxError( self.format_error('function return type unknown - required decorator `@returns(array/vec4=[w,h])`') )
 				if 'array' in self._gpu_return_types:
 					writer.write('out_float = %s' %self.visit(node.value))
 				if 'vec4' in self._gpu_return_types:
@@ -1428,10 +1430,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		node_value = self.visit(node.value)
 		if self._with_glsl:
-			if node_value not in self._typedef_vars:  ## dynamic var
-				return 'glsl_inline_object(%s.%s)' %(node_value, node.attr)
-			else:
-				return '%s.%s' %(node_value, node.attr)
+			#if node_value not in self._typedef_vars:  ## dynamic var  DEPRECATED
+			#	return 'glsl_inline(%s.%s)' %(node_value, node.attr)
+			#else:
+			return '%s.%s' %(node_value, node.attr)
 		elif self._with_dart or self._with_ll:
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_js:
@@ -1719,22 +1721,30 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				)
 				writer.write(code)
 
-		elif isinstance(target, Name):
+		elif isinstance(target, Name) and self._with_glsl:  ## assignment to variable
+			assert target.id in self._typedef_vars
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
-			######################### inserts glsl object at runtime ################################
-			if 'glsl_inline_object' in node_value:
-				if isinstance(node.value, ast.Attribute):
-					## this triggers special logic in pythonjs.py that will check if the object to
-					## inline is an array, and if so this will be injected into the shader,
-					## otherwise it will fallback to using glsl_inline_object.
-					## this is a workaround because WebGL GLSL is missing support for array literals.
-					writer.write('glsl_inline_array(%s.%s, "%s")' %(node.value.value.id, node.value.attr, target.id))
+			if node_value in self._typedef_vars:
+				writer.write('%s = %s' % (self.visit(target), self.visit(node.value)))
+
+			else:
+
+				## also assign variable in current javascript scope ##
+				if not isinstance(node.value, (ast.BinOp, ast.Call)):
+					if isinstance(node.value, ast.Subscript) and isinstance(node.value.slice, ast.Slice):
+						x = node_value.split('(')[-1].split(')')[0].split('[')[0]
+						writer.write('glsl_inline_push_js_assign("%s", %s.__getslice__(%s))'%(target.id, x, self.visit(node.value.slice)) )
+					else:
+						writer.write('glsl_inline_push_js_assign("%s", %s)'%(target.id, self.visit(node.value)) )
 				else:
-					pass
+					writer.write('%s = %s' % (target.id, self.visit(node.value)))
 
-			###########################################################################################
+			return None
 
+
+		elif isinstance(target, Name):  ## assignment to variable
+			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
 			if writer.is_at_global_level():
 				log('GLOBAL: %s : %s'%(target.id, node_value))

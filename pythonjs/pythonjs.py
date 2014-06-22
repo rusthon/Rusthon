@@ -201,6 +201,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				## __glsl_dynamic_typedef() is inserted just before the assignment.
 				pass
 			else:
+				self._typed_vars[ key.arg ] = key.value.id
 				lines.append( '%s %s' %(key.value.id, key.arg))
 
 		return ';'.join(lines)
@@ -255,11 +256,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						x.append( 'float* %s' %arg )
 
 			if is_main:
-				lines.append( 'var __shader__ = [];')  ## each call to the wrapper function recompiles the shader
+				lines.append( 'var glsljit = glsljit_runtime(__shader_header__);')  ## each call to the wrapper function recompiles the shader
 				if x:
-					lines.append( '__shader__.push("void main(%s) {");' %','.join(x) )
+					lines.append( 'glsljit.push("void main(%s) {");' %','.join(x) )
 				else:
-					lines.append( '__shader__.push("void main( ) {");') ## WebCLGL parser requires the space in `main( )`
+					lines.append( 'glsljit.push("void main( ) {");') ## WebCLGL parser requires the space in `main( )`
 
 			elif return_type:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
@@ -269,7 +270,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			self.push()
 			# `_id_` always write out an array of floats or array of vec4floats
 			if is_main:
-				lines.append( '__shader__.push("vec2 _id_ = get_global_id();");')
+				lines.append( 'glsljit.push("vec2 _id_ = get_global_id();");')
 			else:
 				lines.append( '__shader_header__.push("vec2 _id_ = get_global_id();");')
 
@@ -281,41 +282,27 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					for sub in self.visit(child).splitlines():
 						if is_main:
 							if '`' in sub:  ## "`" runtime lookups
-								check_for_array = False
-								array_value = None
-								array_name = None
 
 								chunks = sub.split('`')
+								if len(chunks) == 1:
+									raise RuntimeError(chunks)
 								sub = []
 								for ci,chk in enumerate(chunks):
 									if not ci%2:
+										assert '@' not in chk
 										if ci==0:
 											sub.append('"%s"'%chk)
 										else:
 											sub.append(' + "%s"'%chk)
+									elif chk.startswith('@'):
+										lines.append( chk[1:] )
 									else:
-										## this is a special case because: 
-										## . arrays need runtime info to be inserted into the shader,
-										## . some python syntax is wrapped with "`" back-quotes (inlines into shader)
-										if chk.startswith('__glsl_inline_array'):
-											cargs = chk.split('(')[-1].split(')')[0]
-											array_value, array_name = cargs.split(',')
-											array_name = array_name.strip()[1:-1] ## strip quotes
-											check_for_array = array_value
-											## . inline the array with the same name into the current javascript scope,
-											##   this is required for "len(a)" and looping over arrays.
-											lines.append('%s = %s' %(array_name, array_value))
 										sub.append(' + %s' %chk)
 
-								if check_for_array:
-									lines.append( 'if (%s instanceof Array) { __shader__.push(%s); } else {' %(check_for_array,''.join(sub)) )
-								elif lines[-1].endswith(' else {'):
-									lines.append( '__shader__.push(%s); }' %''.join(sub))									
-								else:
-									lines.append( '__shader__.push(%s);' %''.join(sub))
+								lines.append( 'glsljit.push(%s);' %''.join(sub))
 
 							else:
-								lines.append( '__shader__.push("%s");' %(self.indent()+sub) )
+								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
 
 						else:
 							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
@@ -323,13 +310,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			#buffer += '\n'.join(body)
 			self.pull()
 			if is_main:
-				lines.append('__shader__.push("%s}");' %self.indent())
+				lines.append('glsljit.push("%s}");' %self.indent())
 			else:
 				lines.append('__shader_header__.push("%s}");' %self.indent())
 
 			lines.append(';')
 
 			if is_main:
+				insert = lines
+				lines = []
+
 				if not glsl_wrapper_name:
 					glsl_wrapper_name = node.name
 
@@ -340,21 +330,30 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 				lines.append('	__offset =  __offset || 0')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
 
+				lines.extend( insert )
+
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = "\\n".join(__shader_header__)')
-				lines.append('	var shader = "\\n".join(__shader__)')
+				lines.append('	var shader = "\\n".join(glsljit.shader)')
 				#lines.append('	console.log(shader)')
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
 				if gpu_return_types:
 					if 'array' in gpu_return_types:
-						w,h = gpu_return_types['array'][1:-1].split(',')
+						if ',' in gpu_return_types['array']:
+							w,h = gpu_return_types['array'][1:-1].split(',')
+							lines.append('  var __return_length = %s * %s' %(w,h))
+						else:
+							lines.append('  var __return_length = %s' %gpu_return_types['array'])
 					elif 'vec4' in gpu_return_types:
-						w,h = gpu_return_types['vec4'][1:-1].split(',')
+						if ',' in gpu_return_types['vec4']:
+							w,h = gpu_return_types['vec4'][1:-1].split(',')
+							lines.append('  var __return_length_vec4 = %s * %s' %(w,h))
+						else:
+							lines.append('  var __return_length_vec4 = %s' %gpu_return_types['vec4'])
 					else:
 						raise NotImplementedError
-					lines.append('  var __return_length = %s * %s' %(w,h))
 				else:
 					lines.append('  var __return_length = 64')  ## minimum size is 64
 
@@ -385,11 +384,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					if 'array' in gpu_return_types and 'vec4' in gpu_return_types:
 						adim = gpu_return_types['array']
 						vdim = gpu_return_types['vec4']
-						lines.append('	return [__unpack_array2d(_raw_array_res, %s),__unpack_vec4(_raw_vec4_res, %s)]' %(adim, vdim))
+						lines.append('	return [glsljit.unpack_array2d(_raw_array_res, %s),glsljit.unpack_vec4(_raw_vec4_res, %s)]' %(adim, vdim))
 					elif 'vec4' in gpu_return_types:
-						lines.append('	return __unpack_vec4(_raw_vec4_res, %s)' %gpu_return_types['vec4'])
+						lines.append('	return glsljit.unpack_vec4(_raw_vec4_res, %s)' %gpu_return_types['vec4'])
 					else:
-						lines.append('	return __unpack_array2d(_raw_array_res, %s)' %gpu_return_types['array'])
+						lines.append('	return glsljit.unpack_array2d(_raw_array_res, %s)' %gpu_return_types['array'])
 
 				else:
 					lines.append('  var __return = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
@@ -449,7 +448,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
-			return self._visit_subscript_ellipsis( node )
+			if self._glsl:
+				return '%s[_id_]' % self.visit(node.value)
+			else:
+				return self._visit_subscript_ellipsis( node )
 		else:
 			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
@@ -482,6 +484,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
+		if self._glsl:
+			if name not in self._typed_vars:
+				return '`%s.%s`' % (name, attr)
+			else:
+				return '%s.%s' % (name, attr)
 		return '%s.%s' % (name, attr)
 
 	def visit_Print(self, node):
@@ -512,14 +519,29 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		name = self.visit(node.func)
 		if self._glsl and name == 'len':
 			assert isinstance(node.args[0], ast.Name)
-			#return '_len_%s' %node.args[0].id
-			#return '`%s.length`' %node.args[0].id
-			return '4'
+			#return '_len_%s' %node.args[0].id  ## this will not work with loops
+			return '`%s.length`' %node.args[0].id
 
-		elif name == 'glsl_inline_object':
-			return '`__glsl_inline_object(%s)`' %self.visit(node.args[0])
-		elif name == 'glsl_inline_array':
-			return '`__glsl_inline_array(%s, "%s")`' %(self.visit(node.args[0]), node.args[1].s)
+		elif name == 'glsl_inline_push_js_assign':
+			# '@' triggers a new line of generated code
+			n = node.args[0].s
+			if isinstance(node.args[1], ast.Attribute):  ## special case bypass visit_Attribute
+				v = '%s.%s' %(node.args[1].value.id, node.args[1].attr )
+			else:
+				v = self.visit(node.args[1])
+			## check if number is required because literal floats like `1.0` will get transformed to `1` by javascript toString
+			orelse = 'typeof(%s)=="object" ? glsljit.object(%s, "%s") : glsljit.push("%s="+%s+";")' %(n, n,n, n,n)
+			if v.isdigit() or (v.count('.')==1 and v.split('.')[0].isdigit() and v.split('.')[1].isdigit()):
+				if_number = ' if (typeof(%s)=="number") { glsljit.push("%s=%s;") } else {' %(n, n,v)
+				return '`@%s=%s; %s if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s}};`' %(n,v, if_number, n, n,n, orelse)
+			else:
+				return '`@%s=%s; if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s};`' %(n,v, n, n,n, orelse)
+
+		#elif name == 'glsl_inline':
+		#	return '`%s`' %self.visit(node.args[0])
+		#elif name == 'glsl_inline_array':
+		#	raise NotImplementedError
+		#	return '`__glsl_inline_array(%s, "%s")`' %(self.visit(node.args[0]), node.args[1].s)
 
 		elif name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
