@@ -29,15 +29,36 @@ with javascript:
 			self.shader.push(s)
 
 		def array(self, ob, name):
-			a = ['float ' + name + '[' + ob.length + ']']
-			i = 0
-			while i < ob.length:
-				a.push(';'+name+'['+i+']='+ob[i])
-				i += 1
-			## in WebGL GLSL, array.length() is not available, workaround: cache it here as `_len_NAME`, 
-			## but this fails to work with loops that require literals.
-			#a.push( ';int _len_' + name + '=' +ob.length )
-			self.shader.push( ''.join(a) )
+			if instanceof(ob[0], Array):
+				a = [] #'float ' + name + '[' + ob.length + ']']
+				i = 0
+				while i < ob.length:
+					subarr = ob[i]
+					subname = '%s_%s'%(name,i)
+					if a.length==0:
+						a.append('float ' + subname + '[' + subarr.length + ']')
+					else:
+						a.append(';float ' + subname + '[' + subarr.length + ']')
+					j = 0
+					while j < subarr.length:
+						v = subarr[j] + ''
+						if '.' not in v:
+							v += '.0'
+						a.push(';'+subname+'['+j+']='+v)
+						j += 1
+
+					i += 1
+
+				self.shader.push( ''.join(a) )
+
+			else:
+				a = ['float ' + name + '[' + ob.length + ']']
+				i = 0
+				while i < ob.length:
+					a.push(';'+name+'['+i+']='+ob[i])
+					i += 1
+
+				self.shader.push( ''.join(a) )
 
 		def object(self, ob, name):
 			for p in self.object_packagers:

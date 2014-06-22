@@ -289,17 +289,25 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 								sub = []
 								for ci,chk in enumerate(chunks):
 									if not ci%2:
-										assert '@' not in chk
+										if '@' in chk:
+											raise SyntaxError(chunks)
 										if ci==0:
-											sub.append('"%s"'%chk)
+											if chk:
+												sub.append('"%s"'%chk)
 										else:
-											sub.append(' + "%s"'%chk)
+											if chk:
+												if sub:
+													sub.append(' + "%s"'%chk)
+												else:
+													sub.append('"%s"'%chk)
+
 									elif chk.startswith('@'):
 										lines.append( chk[1:] )
 									else:
 										sub.append(' + %s' %chk)
 
-								lines.append( 'glsljit.push(%s);' %''.join(sub))
+								if sub:
+									lines.append( 'glsljit.push(%s);' %''.join(sub))
 
 							else:
 								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
@@ -335,7 +343,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = "\\n".join(__shader_header__)')
 				lines.append('	var shader = "\\n".join(glsljit.shader)')
-				#lines.append('	console.log(shader)')
+				lines.append('	console.log(shader)')
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
@@ -518,9 +526,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Call(self, node):
 		name = self.visit(node.func)
 		if self._glsl and name == 'len':
-			assert isinstance(node.args[0], ast.Name)
-			#return '_len_%s' %node.args[0].id  ## this will not work with loops
-			return '`%s.length`' %node.args[0].id
+			if isinstance(node.args[0], ast.Name):
+				return '`%s.length`' %node.args[0].id
+			elif isinstance(node.args[0], ast.Subscript):
+				s = node.args[0]
+				v = self.visit(s).replace('`', '')
+				return '`%s.length`' %v
 
 		elif name == 'glsl_inline_push_js_assign':
 			# '@' triggers a new line of generated code
@@ -876,8 +887,26 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		'''
 		if self._glsl:
 			target = self.visit(node.target)
-			iter = self.visit(node.iter.args[0])
-			lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
+
+			if isinstance(node.iter, ast.Call):  ## `for i in range(n):`
+				iter = self.visit(node.iter.args[0])
+				lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
+			elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
+				lines = ['for (int _iter=0; _iter < `%s.length`; _iter++) {' %node.iter.id ]
+				## capture the length of the subarray into the current javascript scope
+				lines.append( '`@var __len = %s[0].length;`' %node.iter.id)
+				## declare array with size ##
+				lines.append( 'float %s[`__len`];' %target)
+				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
+				## that checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
+				## this works because the function glsljit.array will unpack an array of arrays using the variable name with postfix "_n"
+				## note the extra for loop `_J` is required because the local subarray can not be assigned to `A_n`
+				lines.append( '`@for (var __j=0; __j<__len; __j++) {`')
+				lines.append(     '`@glsljit.push("if (_iter==" +__j+") { for (int _J=0; _J<"+__j+"; _J++) {%s[_J] = %s_"+__j+"[_J];} }");`' %(target, node.iter.id))
+				lines.append( '`@}`')
+			else:
+				raise SyntaxError(node.iter)
+
 			for b in node.body:
 				lines.append( self.visit(b) )
 			lines.append( '}' )
