@@ -309,7 +309,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 									elif chk.startswith('@'): ## special inline javascript.
 										lines.append( chk[1:] )
 									else:
-										sub.append(' + %s' %chk)
+										if sub:
+											sub.append(' + %s' %chk)
+										else:
+											sub.append(chk)
 
 								if sub:
 									lines.append( 'glsljit.push(%s);' %''.join(sub))
@@ -341,7 +344,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					lines.append('function %s( __offset ) {' %glsl_wrapper_name )
 
-				lines.append('	__offset =  __offset || 1024*512')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
+				lines.append('	__offset =  __offset || 1024')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
 
 				#lines.extend( insert )
 
@@ -908,8 +911,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 				lines = [
 					'`@var __length__ = %s.length;`' %iter,
-					#'`@var __struct_name__ = %s[0].__struct_name__;`' %iter
-					'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter
+					#'`@console.log("DEBUG iter: "+%s);`' %iter,
+					#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
+					'`@var __struct_name__ = %s[0].__struct_name__;`' %iter
+					##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
+					#'`@console.log("DEBUG sname: "+__struct_name__);`',
 				]
 
 				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )

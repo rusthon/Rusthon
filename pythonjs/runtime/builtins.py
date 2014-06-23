@@ -48,10 +48,10 @@ with javascript:
 			for key in ob.keys():
 				t = typeof( ob[key] )
 				if t=='object' and instanceof(ob[key], Array):
-					struct_type.push( 'A'+key+'_' )
+					struct_type.push( 'ARY_'+key )
 					arrays.push(key)
 				elif t=='number':
-					struct_type.push( 'N'+key+'_')
+					struct_type.push( 'NUM_'+key)
 					numbers.push(key)
 
 			struct_name = ''.join( struct_type )
@@ -61,14 +61,15 @@ with javascript:
 				for key in numbers:
 					member_list.append('float '+key+';')
 
-				members = ','.join(member_list)
+				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
+				print('new struct type')
+				print(code)
 				self.struct_types[ struct_name ] = {
 					'arrays' : arrays,
 					'numbers': numbers,
 					'code'   : code
 				}
-
 			return struct_name
 
 		def structure(self, ob, name):
@@ -85,7 +86,10 @@ with javascript:
 			stype = self.struct_types[ sname ]
 			args = []
 			for key in stype['numbers']:
-				args.push( ob[key] )
+				value = ob[key] + ''
+				if '.' not in value:
+					value += '.0'
+				args.push( value )
 			args = ','.join(args)
 			self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
 

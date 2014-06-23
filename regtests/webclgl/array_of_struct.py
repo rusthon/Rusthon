@@ -1,25 +1,41 @@
+'''array of structs'''
+from random import random
+
 class myclass:
-	def __init__(self, s):
-		self.s = s
-	def my_method(self):
-		return self.s
+	def __init__(self, a): self.a = a
+	def my_method(self): return self.a
+
+	def new_struct(self, g):
+		return {
+			'attr1' : 0.6 + g,
+			'attr2' : 0.4 + g
+		}
+
 
 	def run(self, w):
-		self.array = [ {'myattr':1.1} for x in range(w) ]
+		self.array = [ self.new_struct( x ) for x in range(w) ]
 
 		@returns( array=64 )
 		@gpu.main
 		def gpufunc():
-			struct* structs = self.array
+			struct* A = self.array
 			float b = self.my_method()
 
-			for structure in iter(structs):
-				b += structure.myattr
+			for s in iter(A):
+				b += s.attr1 + s.attr2
 			return b
 
 		return gpufunc()
 
 def main():
-	m = myclass( 0.1 )
+	f = 0.1234
+	m = myclass( f )
 	r = m.run(8)
 	print(r)
+	t = round(r[0]-64.0, 4)
+	print(t)
+	f = round(f, 4)
+	print(f)
+	ok = f==t
+	print('test passed: %s' %ok )
+	#TestError( f==t )
