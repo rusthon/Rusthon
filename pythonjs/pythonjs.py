@@ -284,7 +284,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 							if '`' in sub:  ## "`" runtime lookups
 
 								if '``' in sub:
-									raise SyntaxError(sub)
+									raise SyntaxError('inliner syntax error: %s'%sub)
 
 								sub = sub.replace('``', '')
 								chunks = sub.split('`')
@@ -305,7 +305,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 												else:
 													sub.append('"%s"'%chk)
 
-									elif chk.startswith('@'):
+									elif chk.startswith('@'): ## special inline javascript.
 										lines.append( chk[1:] )
 									else:
 										sub.append(' + %s' %chk)
@@ -904,24 +904,29 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				iter = self.visit(node.iter.args[0])
 				lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
 			elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
-				lines = ['for (int _iter=0; _iter < `%s.length`; _iter++) {' %node.iter.id ]
 				## capture the length of the subarray into the current javascript scope
-				lines.append( '`@var __len = %s[0].length;`' %node.iter.id)
+				## this is required to inline the lengths as constants into the GLSL for loops
+				lines.append( '`@var __length__ = %s[0].length;`' %node.iter.id)
+				## start the GLSL for loop - `__length__` is set above ##
+				lines = ['for (int _iter=0; _iter < `__length__`; _iter++) {' ]
+
 				## declare array with size ##
-				lines.append( 'float %s[`__len`];' %target)
+				lines.append( 'float %s[`__length__`];' %target)
+
 				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-				## that checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
+				lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
+				## below checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
+				lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { for (int _J=0; _J<" +__length__+ "; _J++) {%s[_J] = %s_" +__j+ "[_J];} }");`' %(target, node.iter.id))
+				lines.append( '`@}`')
 				## this works because the function glsljit.array will unpack an array of arrays using the variable name with postfix "_n"
 				## note the extra for loop `_J` is required because the local subarray can not be assigned to `A_n`
-				lines.append( '`@for (var __j=0; __j<__len; __j++) {`')
-				lines.append(     '`@glsljit.push("if (_iter==" +__j+") { for (int _J=0; _J<"+__j+"; _J++) {%s[_J] = %s_"+__j+"[_J];} }");`' %(target, node.iter.id))
-				lines.append( '`@}`')
+
 			else:
 				raise SyntaxError(node.iter)
 
 			for b in node.body:
 				lines.append( self.visit(b) )
-			lines.append( '}' )
+			lines.append( '}' )  ## end of for loop
 			return '\n'.join(lines)
 
 
