@@ -105,6 +105,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append('}) //end requirejs define')
 
 		if self._has_glsl:
+			#header.append( 'var __shader_header__ = ["struct MyStruct { float xxx; }; const MyStruct XX = MyStruct(1.1); MyStruct myarr[2]; myarr[0]= MyStruct(1.1);"]' )
 			header.append( 'var __shader_header__ = []' )
 
 		lines = header + lines
@@ -345,8 +346,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				#lines.extend( insert )
 
 				lines.append('  var __webclgl = new WebCLGL()')
-				lines.append('	var header = "\\n".join(__shader_header__)')
-				lines.append('	var shader = "\\n".join(glsljit.shader)')
+				lines.append('	var header = glsljit.compile_header()')
+				lines.append('	var shader = glsljit.compile_main()')
 				lines.append('	console.log(shader)')
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
@@ -900,17 +901,39 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if self._glsl:
 			target = self.visit(node.target)
 
-			if isinstance(node.iter, ast.Call):  ## `for i in range(n):`
+			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='iter':  ## `for i in iter(n):`
+				assert isinstance(node.iter.args[0], ast.Name)
+				iter = node.iter.args[0].id
+				self._typed_vars[target] = 'struct*'  ## this fixes attributes on structs
+
+				lines = [
+					'`@var __length__ = %s.length;`' %iter,
+					#'`@var __struct_name__ = %s[0].__struct_name__;`' %iter
+					'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter
+				]
+
+				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
+
+				## declare struct variable ##
+				lines.append( '`__struct_name__` %s;' %target)
+
+				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
+				lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
+				lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
+				lines.append( '`@}`')
+
+
+			elif isinstance(node.iter, ast.Call):  ## `for i in range(n):`
 				iter = self.visit(node.iter.args[0])
 				lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
 			elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
 				## capture the length of the subarray into the current javascript scope
 				## this is required to inline the lengths as constants into the GLSL for loops
-				lines.append( '`@var __length__ = %s[0].length;`' %node.iter.id)
+				lines = ['`@var __length__ = %s[0].length;`' %node.iter.id]
 				## start the GLSL for loop - `__length__` is set above ##
-				lines = ['for (int _iter=0; _iter < `__length__`; _iter++) {' ]
+				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
 
-				## declare array with size ##
+				## declare subarray with size ##
 				lines.append( 'float %s[`__length__`];' %target)
 
 				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,

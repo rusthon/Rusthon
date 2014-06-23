@@ -24,9 +24,70 @@ with javascript:
 			self.header = header
 			self.shader = []
 			self.object_packagers = []
+			self.struct_types = {}
+
+		def compile_header(self):
+			a = "\n".join(self.header)
+			b = []
+			for stype in self.struct_types.values():
+				b.push( stype['code'] )
+			b = '\n'.join(b)
+			return '\n'.join([a,b])
+
+		def compile_main(self):
+			return '\n'.join(self.shader)
 
 		def push(self, s):
 			self.shader.push(s)
+
+
+		def define_structure(self, ob):
+			arrays = []
+			numbers = []
+			struct_type = []
+			for key in ob.keys():
+				t = typeof( ob[key] )
+				if t=='object' and instanceof(ob[key], Array):
+					struct_type.push( 'A'+key+'_' )
+					arrays.push(key)
+				elif t=='number':
+					struct_type.push( 'N'+key+'_')
+					numbers.push(key)
+
+			struct_name = ''.join( struct_type )
+			ob.__struct_name__ = struct_name
+			if struct_name not in self.struct_types:
+				member_list = []
+				for key in numbers:
+					member_list.append('float '+key+';')
+
+				members = ','.join(member_list)
+				code = 'struct ' +struct_name+ ' {' +members+ '};'
+				self.struct_types[ struct_name ] = {
+					'arrays' : arrays,
+					'numbers': numbers,
+					'code'   : code
+				}
+
+			return struct_name
+
+		def structure(self, ob, name):
+			wrapper = None
+			if instanceof(ob, Object):
+				pass
+			elif ob.__class__ is dict:
+				wrapper = ob
+				ob = ob[...]
+
+			sname = self.define_structure(ob)
+			if wrapper:
+				wrapper.__struct_name__ = sname
+			stype = self.struct_types[ sname ]
+			args = []
+			for key in stype['numbers']:
+				args.push( ob[key] )
+			args = ','.join(args)
+			self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
 
 		def int16array(self, ob, name):
 			a = ['int ' + name + '[' + ob.length + ']']
@@ -59,6 +120,12 @@ with javascript:
 					i += 1
 
 				self.shader.push( ''.join(a) )
+
+			elif instanceof(ob[0], Object) or ob[0].__class__ is dict:
+				i = 0
+				while i < ob.length:
+					self.structure( ob[i], name+'_'+i)
+					i += 1
 
 			else:
 				a = ['float ' + name + '[' + ob.length + ']']
