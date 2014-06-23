@@ -533,12 +533,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
+
 		if self._glsl and isinstance(node.func, ast.Attribute):
 			return '`%s`' %self._visit_call_helper(node)
+
 		elif self._glsl and name == 'len':
 			if isinstance(node.args[0], ast.Name):
 				return '`%s.length`' %node.args[0].id
 			elif isinstance(node.args[0], ast.Subscript):
+				s = node.args[0]
+				v = self.visit(s).replace('`', '')
+				return '`%s.length`' %v
+
+			elif isinstance(node.args[0], ast.Attribute):  ## assume struct array attribute
 				s = node.args[0]
 				v = self.visit(s).replace('`', '')
 				return '`%s.length`' %v
@@ -913,9 +920,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					'`@var __length__ = %s.length;`' %iter,
 					#'`@console.log("DEBUG iter: "+%s);`' %iter,
 					#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
-					'`@var __struct_name__ = %s[0].__struct_name__;`' %iter
+					'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
 					##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
 					#'`@console.log("DEBUG sname: "+__struct_name__);`',
+					'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
 				]
 
 				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )

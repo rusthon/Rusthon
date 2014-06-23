@@ -9,10 +9,11 @@ micro language:
 	. GLSL standard types
 	. basic math ops and logic: if, elif, else, for i in range(n)
 	. list of lists iteration with dynamic size
+	. iterate over list of structs (dicts)
 
 	. define GPU `main` function with input arguments and subroutines
 		. `gpu.main` can take arguments typed as: int, float, and float*
-		. `gpu.main` returns an list of floats or vec4
+		. `gpu.main` returns a list of floats or vec4s
 
 	. stream input variables into shader from attributes or method calls:
 		. attribute: `float gpu_variable = self.cpu_variable`
@@ -226,6 +227,39 @@ class myclass:
 					b += subarray[j]
 			return b
 
+
+```
+
+list of dicts
+---------------
+Use the for-iter loop to iterate over a list of dicts `for s in iter(A):`
+Regular JavaScript objects and Python dicts are uploaded to the shader as GLSL structs.
+The struct type name and GLSL code are generated at runtime based on the contents of
+each dict.  A struct may contain: floats and array of floats attributes.
+
+```
+class myclass:
+
+	def new_struct(self, g):
+		return {
+			'attr1' : 0.6 + g,
+			'attr2' : 0.4 + g
+		}
+
+
+	def run(self, w):
+		self.array = [ self.new_struct( x ) for x in range(w) ]
+
+		@returns( array=64 )
+		@gpu.main
+		def gpufunc():
+			struct* A = self.array
+			float b = 0.0
+			for s in iter(A):
+				b += s.attr1 + s.attr2
+			return b
+
+		return gpufunc()
 
 ```
 

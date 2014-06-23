@@ -42,12 +42,14 @@ with javascript:
 
 
 		def define_structure(self, ob):
+			if Object.hasOwnProperty(ob,'__struct_name__'):
+				return ob.__struct_name__
 			arrays = []
 			numbers = []
 			struct_type = []
 			for key in ob.keys():
 				t = typeof( ob[key] )
-				if t=='object' and instanceof(ob[key], Array):
+				if t=='object' and instanceof(ob[key], Array) and ob[key].length and typeof(ob[key][0])=='number':
 					struct_type.push( 'ARY_'+key )
 					arrays.push(key)
 				elif t=='number':
@@ -60,6 +62,9 @@ with javascript:
 				member_list = []
 				for key in numbers:
 					member_list.append('float '+key+';')
+				for key in arrays:
+					arr = ob[key]
+					member_list.append('float '+key+'['+arr.length+'];')
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
@@ -90,6 +95,15 @@ with javascript:
 				if '.' not in value:
 					value += '.0'
 				args.push( value )
+
+			for key in stype['arrays']:
+				#args.push( '{'+ob[key].toString()+ '}')  ## this will not work
+				## arrays need to be assigned to a local variable before passing
+				## it to the struct constructor.
+				aname = '_'+key+name
+				self.array(ob[key], aname)
+				args.push( aname )
+
 			args = ','.join(args)
 			self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
 
@@ -132,10 +146,10 @@ with javascript:
 					i += 1
 
 			else:
-				a = ['float ' + name + '[' + ob.length + ']']
+				a = ['float ' + name + '[' + ob.length + '];']
 				i = 0
 				while i < ob.length:
-					a.push(';'+name+'['+i+']='+ob[i])
+					a.push(name+'['+i+']='+ob[i] + ';')
 					i += 1
 
 				self.shader.push( ''.join(a) )
