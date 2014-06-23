@@ -28,6 +28,15 @@ with javascript:
 		def push(self, s):
 			self.shader.push(s)
 
+		def int16array(self, ob, name):
+			a = ['int ' + name + '[' + ob.length + ']']
+			i = 0
+			while i < ob.length:
+				a.push(';'+name+'['+i+']='+ob[i])
+				i += 1
+
+			self.shader.push( ''.join(a) )
+
 		def array(self, ob, name):
 			if instanceof(ob[0], Array):
 				a = [] #'float ' + name + '[' + ob.length + ']']

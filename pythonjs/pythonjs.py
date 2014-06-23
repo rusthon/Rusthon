@@ -368,7 +368,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				for i,arg in enumerate(args):
 					lines.append('  if (%s instanceof Array) {' %arg)
 					#lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
-					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.length, "FLOAT", %s.scale || __offset)' %(arg,arg,arg))
+					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.dims || %s.length, "FLOAT", %s.scale || __offset)' %(arg,arg,arg,arg))
 					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
 					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
 					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
@@ -542,11 +542,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				v = self.visit(node.args[1])
 			## check if number is required because literal floats like `1.0` will get transformed to `1` by javascript toString
 			orelse = 'typeof(%s)=="object" ? glsljit.object(%s, "%s") : glsljit.push("%s="+%s+";")' %(n, n,n, n,n)
+
+			## if a constant number literal directly inline
 			if v.isdigit() or (v.count('.')==1 and v.split('.')[0].isdigit() and v.split('.')[1].isdigit()):
-				if_number = ' if (typeof(%s)=="number") { glsljit.push("%s=%s;") } else {' %(n, n,v)
-				return '`@%s=%s; %s if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s}};`' %(n,v, if_number, n, n,n, orelse)
+				#if_number = ' if (typeof(%s)=="number") { glsljit.push("%s=%s;") } else {' %(n, n,v)
+				#return '`@%s=%s; %s if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s}};`' %(n,v, if_number, n, n,n, orelse)
+				return '`@%s=%s; glsljit.push("%s=%s;");`' %(n,v, n,v)
 			else:
-				return '`@%s=%s; if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s};`' %(n,v, n, n,n, orelse)
+				return '`@%s=%s; if (%s instanceof Array) {glsljit.array(%s, "%s")} else { if (%s instanceof Int16Array) {glsljit.int16array(%s,"%s")} else {%s} };`' %(n,v, n, n,n,  n,n,n,  orelse)
 
 		#elif name == 'glsl_inline':
 		#	return '`%s`' %self.visit(node.args[0])
