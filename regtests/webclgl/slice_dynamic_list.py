@@ -1,9 +1,12 @@
-"""iterate over dynamic list"""
+"""slice and iterate over dynamic list"""
 from random import random
 
 class G:
 	def __init__(self, s):
 		self.arr1 = [ random() for i in range(s) ]
+
+	def func(self, x,y):
+		return x+y
 
 	def run(self, X):
 
@@ -11,7 +14,7 @@ class G:
 		@gpu.main
 		def gpufunc(x):
 			float x
-			float b = x * 0.5
+			float b = self.func(1.1, 2.1) #x * 0.5
 			float* a = self.arr1[ 4: ]
 			for i in range( len(a) ):
 				b += a[i]

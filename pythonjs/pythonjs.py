@@ -283,6 +283,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						if is_main:
 							if '`' in sub:  ## "`" runtime lookups
 
+								if '``' in sub:
+									raise SyntaxError(sub)
+
+								sub = sub.replace('``', '')
 								chunks = sub.split('`')
 								if len(chunks) == 1:
 									raise RuntimeError(chunks)
@@ -492,7 +496,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
-		if self._glsl:
+		if self._glsl and name not in ('self', 'this'):
 			if name not in self._typed_vars:
 				return '`%s.%s`' % (name, attr)
 			else:
@@ -525,7 +529,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
-		if self._glsl and name == 'len':
+		if self._glsl and isinstance(node.func, ast.Attribute):
+			return '`%s`' %self._visit_call_helper(node)
+		elif self._glsl and name == 'len':
 			if isinstance(node.args[0], ast.Name):
 				return '`%s.length`' %node.args[0].id
 			elif isinstance(node.args[0], ast.Subscript):
@@ -540,6 +546,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				v = '%s.%s' %(node.args[1].value.id, node.args[1].attr )
 			else:
 				v = self.visit(node.args[1])
+
+			v = v.replace('`', '')  ## this is known this entire expression is an external call.
+
 			## check if number is required because literal floats like `1.0` will get transformed to `1` by javascript toString
 			orelse = 'typeof(%s)=="object" ? glsljit.object(%s, "%s") : glsljit.push("%s="+%s+";")' %(n, n,n, n,n)
 
