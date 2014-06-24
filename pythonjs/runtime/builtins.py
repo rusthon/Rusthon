@@ -28,8 +28,12 @@ with javascript:
 
 		def compile_header(self):
 			a = []  ## insert structs at top of header
-			for stype in self.struct_types.values():
-				a.push( stype['code'] )
+			for sname in self.struct_types:
+				if sname == 'vec3':
+					pass
+				else:
+					a.push( self.struct_types[sname]['code'] )
+
 			a = '\n'.join(a)
 			## code in header could be methods that reference the struct types above.
 			b = "\n".join(self.header)
@@ -75,7 +79,8 @@ with javascript:
 					struct_type.push( 'S_'+key)
 					structs.push( key )
 					if ob[key].__struct_name__ not in self.struct_types:
-						self.define_structure( ob[key] )
+						if ob[key].__struct_name__ != 'vec3':
+							self.define_structure( ob[key] )
 
 			if struct_name is None:
 				#print('DEGUG: new struct name', ob.__struct_name__)
