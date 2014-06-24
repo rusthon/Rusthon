@@ -51,8 +51,10 @@ with javascript:
 					return struct_name
 
 			arrays = []
-			numbers = []
-			struct_type = []
+			floats = []
+			integers = []
+			struct_type = []  ## fallback for javascript objects
+
 			for key in ob.keys():
 				t = typeof( ob[key] )
 				if t=='object' and instanceof(ob[key], Array) and ob[key].length and typeof(ob[key][0])=='number':
@@ -60,18 +62,25 @@ with javascript:
 					arrays.push(key)
 				elif t=='number':
 					struct_type.push( 'NUM_'+key)
-					numbers.push(key)
+					floats.push(key)
+				elif instanceof(ob[key], Int16Array):
+					struct_type.push( 'INT_'+key)
+					if ob[key].length == 1:
+						integers.push(key)
+					else:
+						pass  ## TODO int16array
 
 			if struct_name is None:
-				print('DEGUG: new struct name', ob.__struct_name__)
-				print(ob)
+				#print('DEGUG: new struct name', ob.__struct_name__)
+				#print(ob)
 				struct_name = ''.join( struct_type )
 				ob.__struct_name__ = struct_name
-				print('XX', struct_name)
 
 			if struct_name not in self.struct_types:
 				member_list = []
-				for key in numbers:
+				for key in integers:
+					member_list.append('int '+key+';')
+				for key in floats:
 					member_list.append('float '+key+';')
 				for key in arrays:
 					arr = ob[key]
@@ -79,11 +88,13 @@ with javascript:
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
-				print('-------new struct type-------')
+				print('-------struct glsl code-------')
 				print(code)
+				print('------------------------------')
 				self.struct_types[ struct_name ] = {
 					'arrays' : arrays,
-					'numbers': numbers,
+					'floats' : floats,
+					'integers': integers,
 					'code'   : code
 				}
 			return struct_name
@@ -101,7 +112,11 @@ with javascript:
 				wrapper.__struct_name__ = sname
 			stype = self.struct_types[ sname ]
 			args = []
-			for key in stype['numbers']:
+
+			for key in stype['integers']:
+				args.push( ob[key][0]+'' )
+
+			for key in stype['floats']:
 				value = ob[key] + ''
 				if '.' not in value:
 					value += '.0'
@@ -639,6 +654,12 @@ def int(a):
 		if isNaN(a):
 			raise ValueError('not a number')
 		return a
+
+with javascript:
+	def int16(a):  ## used by glsljit when packing structs.
+		arr = new(Int16Array(1))
+		arr[0]=a
+		return arr
 
 def float(a):
 	with javascript:

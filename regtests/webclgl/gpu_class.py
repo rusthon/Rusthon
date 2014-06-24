@@ -15,20 +15,26 @@ class MyObject:
 	float def mymethod(self, x,y):
 		float x
 		float y
-		return self.subroutine(x,y) * self.attr1
+		if self.index == 0:
+			return -20.5
+		elif self.index == 0:
+			return 0.6
+		else:
+			return self.subroutine(x,y) * self.attr1
 
 
 	## here `self` is javascript's `this`
-	def __init__(self, a, b):
+	def __init__(self, a, b, i):
 		self.attr1 = a
 		self.attr2 = b
+		self.index = int16(i)
 
 
 
 
 class myclass:
 	def run(self, w):
-		self.array = [ MyObject( x, 1.1 ) for x in range(w) ]
+		self.array = [ MyObject( 1.1, 1.2, x ) for x in range(w) ]
 
 		@returns( array=64 )
 		@gpu.main
