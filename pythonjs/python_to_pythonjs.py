@@ -830,14 +830,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				class_decorators.append( decorator )
 
+		method_names = []  ## write back in order (required by GLSL)
 		methods = {}
 		class_vars = []
 
 		for item in node.body:
 			if isinstance(item, FunctionDef):
+				method_names.append(item.name)
 				methods[ item.name ] = item
 				if self.is_gpu_method( item ):
-					item.args.args[0].id = name  ## change self to the class name
+					item.args.args[0].id = name  ## change self to the class name, pythonjs.py changes it to 'ClassName self'
 				else:
 					item.args.args = item.args.args[1:]  ## remove self
 					finfo = inspect_function( item )
@@ -901,9 +903,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
 		writer.write('_PythonJS_UID += 1')
 
-		keys = methods.keys()
-		keys.sort()
-		for mname in keys:
+		#keys = methods.keys()
+		#keys.sort()
+		for mname in method_names:
 			method = methods[mname]
 			gpu_method = False
 			for dec in method.decorator_list:
@@ -913,8 +915,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			if gpu_method:
 				method.name = '%s_%s' %(name, method.name)
+				self._in_gpu_method = name  ## name of class
 				line = self.visit(method)
 				if line: writer.write( line )
+				self._in_gpu_method = None
 
 			else:
 
@@ -2072,13 +2076,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					raise SyntaxError( self.format_error(node) )
 
 		elif self._with_ll or name == 'inline' or self._with_glsl:
+			F = self.visit(node.func)
 			args = [self.visit(arg) for arg in node.args]
+			if hasattr(self, '_in_gpu_method') and self._in_gpu_method and isinstance(node.func, ast.Attribute):
+				F = '%s_%s' %(self._in_gpu_method, node.func.attr)
+				args.insert(0, 'self')
+
 			if node.keywords:
 				args.extend( [self.visit(x.value) for x in node.keywords] )
-				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+				return '%s(%s)' %( F, ','.join(args) )
 
 			else:
-				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+				return '%s(%s)' %( F, ','.join(args) )
 
 		elif self._with_js or self._with_dart:
 			args = list( map(self.visit, node.args) )
