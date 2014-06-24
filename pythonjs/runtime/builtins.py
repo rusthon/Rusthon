@@ -53,9 +53,11 @@ with javascript:
 			arrays = []
 			floats = []
 			integers = []
+			structs = []
 			struct_type = []  ## fallback for javascript objects
 
-			for key in ob.keys():
+			#for key in ob.keys():
+			for key in dir( ob ):
 				t = typeof( ob[key] )
 				if t=='object' and instanceof(ob[key], Array) and ob[key].length and typeof(ob[key][0])=='number':
 					struct_type.push( 'ARY_'+key )
@@ -69,6 +71,11 @@ with javascript:
 						integers.push(key)
 					else:
 						pass  ## TODO int16array
+				elif t=='object' and ob[key].__struct_name__:
+					struct_type.push( 'S_'+key)
+					structs.push( key )
+					if ob[key].__struct_name__ not in self.struct_types:
+						self.define_structure( ob[key] )
 
 			if struct_name is None:
 				#print('DEGUG: new struct name', ob.__struct_name__)
@@ -85,6 +92,9 @@ with javascript:
 				for key in arrays:
 					arr = ob[key]
 					member_list.append('float '+key+'['+arr.length+'];')
+				for key in structs:
+					subtype = ob[key].__struct_name__
+					member_list.append( subtype+' '+key+';')
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
@@ -95,6 +105,7 @@ with javascript:
 					'arrays' : arrays,
 					'floats' : floats,
 					'integers': integers,
+					'structs' : structs,
 					'code'   : code
 				}
 			return struct_name
@@ -128,6 +139,11 @@ with javascript:
 				## it to the struct constructor.
 				aname = '_'+key+name
 				self.array(ob[key], aname)
+				args.push( aname )
+
+			for key in stype['structs']:
+				aname = '_'+key+name
+				self.structure(ob[key], aname)
 				args.push( aname )
 
 			args = ','.join(args)
@@ -434,6 +450,13 @@ with javascript:
 		else:  ## PythonJS object instance ##
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.pop(key, _default)")
+
+
+	def dir(ob):
+		if instanceof(ob, Object):
+			return JS("Object.keys( ob )")
+		else:
+			return __object_keys__(ob)
 
 	def __object_keys__(ob):
 		'''

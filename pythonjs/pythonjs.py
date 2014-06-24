@@ -328,8 +328,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 							else:
 								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
 
-						else:
+
+						else:  ## subroutine or method
+							if '`' in sub: sub = sub.replace('`', '')
 							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
+
+
 			self._glsl = False
 			#buffer += '\n'.join(body)
 			self.pull()
