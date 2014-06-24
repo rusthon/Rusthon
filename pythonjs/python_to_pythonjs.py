@@ -807,22 +807,43 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		writer.pull()
 
+	def is_gpu_method(self, n):
+		for dec in n.decorator_list:
+			if isinstance(dec, Attribute) and isinstance(dec.value, Name) and dec.value.id == 'gpu':
+				if dec.attr == 'method':
+					return True
+
+
 	def _visit_js_classdef(self, node):
 		name = node.name
-		log('JavaScript-ClassDef: %s'%name)
 		self._js_classes[ name ] = node
 		self._in_js_class = True
+		class_decorators = []
+		gpu_object = False
+
+		for decorator in node.decorator_list:  ## class decorators
+			if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
+				if decorator.attr == 'object':
+					gpu_object = True
+				else:
+					raise SyntaxError( self.format_error('invalid gpu class decorator') )
+			else:
+				class_decorators.append( decorator )
 
 		methods = {}
 		class_vars = []
+
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
-				item.args.args = item.args.args[1:]  ## remove self
-				finfo = inspect_function( item )
-				for n in finfo['name_nodes']:
-					if n.id == 'self':
-						n.id = 'this'
+				if self.is_gpu_method( item ):
+					item.args.args[0].id = name  ## change self to the class name
+				else:
+					item.args.args = item.args.args[1:]  ## remove self
+					finfo = inspect_function( item )
+					for n in finfo['name_nodes']:
+						if n.id == 'self':
+							n.id = 'this'
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			else:
@@ -845,6 +866,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
 		if init:
+			tail = ''
+			if gpu_object:
+				tail = 'this.__struct_name__="%s"' %name
+
+
 			#for b in init.body:
 			#	line = self.visit(b)
 			#	if line: writer.write( line )
@@ -852,10 +878,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if hasattr(init, '_code'):  ## cached ##
 				code = init._code
 			elif args:
-				code = '%s.__init__(this, %s)'%(name, ','.join(args))
+				code = '%s.__init__(this, %s); %s'%(name, ','.join(args), tail)
 				init._code = code
 			else:
-				code = '%s.__init__(this)'%name
+				code = '%s.__init__(this);     %s'%(name, tail)
 				init._code = code
 
 			writer.write(code)
@@ -879,12 +905,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		keys.sort()
 		for mname in keys:
 			method = methods[mname]
-			writer.write('@%s.prototype'%name)
-			line = self.visit(method)
-			if line: writer.write( line )
-			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
-			f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-			writer.write('%s.%s = JS("%s")'%(name,mname,f))
+			gpu_method = False
+			for dec in method.decorator_list:
+				if isinstance(dec, Attribute) and isinstance(dec.value, Name) and dec.value.id == 'gpu':
+					if dec.attr == 'method':
+						gpu_method = True
+
+			if gpu_method:
+				method.name = '%s_%s' %(name, method.name)
+				line = self.visit(method)
+				if line: writer.write( line )
+
+			else:
+
+				writer.write('@%s.prototype'%name)
+				line = self.visit(method)
+				if line: writer.write( line )
+				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
+				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
+				writer.write('%s.%s = JS("%s")'%(name,mname,f))
 
 		for base in node.bases:
 			base = self.visit(base)
@@ -906,6 +945,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self.visit(item)  # this will output the code for the assign
 				writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
 
+		if gpu_object:
+			## TODO check class variables ##
+			writer.write('%s.prototype.__struct_name__ = "%s"' %(name,name))
 
 		## TODO support property decorators in javascript-mode ##
 		writer.write('%s.prototype.__properties__ = {}' %name)
@@ -923,7 +965,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return
 
 		name = node.name
-		log('ClassDef: %s'%name)
 		self._in_class = name
 		self._classes[ name ] = list()  ## method names
 		self._class_parents[ name ] = set()
@@ -933,19 +974,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._decorator_class_props[ name ] = self._decorator_properties
 		self._instances[ 'self' ] = name
 
+		self._injector = []  ## DEPRECATED
 		class_decorators = []
-		self._injector = []
-		for decorator in node.decorator_list:  ## class decorators
-			if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'pythonjs':
-				if decorator.attr == 'property_callbacks':
-					self._injector.append('set')
-				elif decorator.attr == 'init_callbacks':
-					self._injector.append('init')
-				else:
-					raise SyntaxError( 'unsupported pythonjs class decorator' )
+		gpu_object = False
 
+		for decorator in node.decorator_list:  ## class decorators
+			if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
+				if decorator.attr == 'object':
+					gpu_object = True
+				else:
+					raise SyntaxError( self.format_error('invalid gpu class decorator') )
 			else:
-				#raise SyntaxError( 'unsupported class decorator' )
 				class_decorators.append( decorator )
 
 		## always catch attributes ##
@@ -1025,9 +1064,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._in_class = False
 
 		writer.write('%s = __create_class__("%s", __%s_parents, __%s_attrs, __%s_properties)' % (name, name, name, name, name))
-		if 'init' in self._injector:
-			writer.write('%s.init_callbacks = JSArray()' %name)
-		self._injector = []
+
+		## DEPRECATED
+		#if 'init' in self._injector:
+		#	writer.write('%s.init_callbacks = JSArray()' %name)
+		#self._injector = []
 
 		for dec in class_decorators:
 			writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (name, self.visit(dec), name))
@@ -2433,6 +2474,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		gpu = False
 		gpu_main = False
 		gpu_vectorize = False
+		gpu_method = False
 		local_typedefs = []
 
 		## deprecated?
@@ -2487,8 +2529,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					gpu_vectorize = True
 				elif decorator.attr == 'main':
 					gpu_main = True
-				elif decorator.attr == 'typedef':
-					pass
+				elif decorator.attr == 'method':
+					gpu_method = True
 				else:
 					raise NotImplementedError(decorator)
 
@@ -2592,12 +2634,19 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		if gpu_vectorize:
 			writer.write('@gpu.vectorize')
+		if gpu_method:
+			writer.write('@gpu.method')
+
 		## force python variable scope, and pass user type information to second stage of translation.
 		## the dart backend can use this extra type information.
 		vars = []
 		local_typedef_names = set()
 		if not self._with_coffee:
-			local_vars, global_vars = retrieve_vars(node.body)
+			try:
+				local_vars, global_vars = retrieve_vars(node.body)
+			except SyntaxError as err:
+				raise SyntaxError( self.format_error(err) )
+
 			local_vars = local_vars-global_vars
 			if local_vars:
 				args_typedefs = []

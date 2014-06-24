@@ -27,11 +27,12 @@ with javascript:
 			self.struct_types = {}
 
 		def compile_header(self):
-			a = "\n".join(self.header)
-			b = []
+			a = []  ## insert structs at top of header
 			for stype in self.struct_types.values():
-				b.push( stype['code'] )
-			b = '\n'.join(b)
+				a.push( stype['code'] )
+			a = '\n'.join(a)
+			## code in header could be methods that reference the struct types above.
+			b = "\n".join(self.header)
 			return '\n'.join([a,b])
 
 		def compile_main(self):
@@ -42,8 +43,13 @@ with javascript:
 
 
 		def define_structure(self, ob):
-			if Object.hasOwnProperty(ob,'__struct_name__'):
-				return ob.__struct_name__
+			struct_name = None
+			##if Object.hasOwnProperty(ob,'__struct_name__'):  ## this is not right?
+			if ob.__struct_name__:
+				struct_name = ob.__struct_name__
+				if struct_name in self.struct_types:
+					return struct_name
+
 			arrays = []
 			numbers = []
 			struct_type = []
@@ -56,8 +62,13 @@ with javascript:
 					struct_type.push( 'NUM_'+key)
 					numbers.push(key)
 
-			struct_name = ''.join( struct_type )
-			ob.__struct_name__ = struct_name
+			if struct_name is None:
+				print('DEGUG: new struct name', ob.__struct_name__)
+				print(ob)
+				struct_name = ''.join( struct_type )
+				ob.__struct_name__ = struct_name
+				print('XX', struct_name)
+
 			if struct_name not in self.struct_types:
 				member_list = []
 				for key in numbers:
@@ -68,7 +79,7 @@ with javascript:
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
-				print('new struct type')
+				print('-------new struct type-------')
 				print(code)
 				self.struct_types[ struct_name ] = {
 					'arrays' : arrays,
