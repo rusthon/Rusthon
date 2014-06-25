@@ -303,9 +303,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if class_name:
 			#assert class_name in self._classes
 			if class_name not in self._classes:
-				log('ERROR: class name not in self._classes: %s'%class_name)
-				log('self._classes: %s'%self._classes)
-				raise RuntimeError('class name: %s - not found in self._classes - node:%s '%(class_name, instance))
+				#log('ERROR: class name not in self._classes: %s'%class_name)
+				#log('self._classes: %s'%self._classes)
+				#raise RuntimeError('class name: %s - not found in self._classes - node:%s '%(class_name, instance))
+				return None  ## TODO hook into self._typedef_vars
 
 			if class_name not in self._typedefs:
 				self._typedefs[ class_name ] = Typedef(
@@ -1464,7 +1465,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 	def visit_Attribute(self, node):
-		## in some cases the translator knows what type a node is and what attribute's it has, in those cases the call to `__get__` can be optimized away,
+
+		## TODO check if this is always safe.
 		if isinstance(node.value, Name):
 			typedef = self.get_typedef( instance=node.value )
 		elif hasattr(node.value, 'returns_type'):
@@ -1492,7 +1494,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif self._with_lua and self._in_assign_target:  ## this is required because lua has no support for inplace assignment ops like "+="
 			return '%s.%s' %(node_value, node.attr)
 
-		elif typedef and node.attr in typedef.attributes:
+		elif typedef and node.attr in typedef.attributes:  ## optimize away `__get__`
 			return '%s.%s' %(node_value, node.attr)
 
 		elif hasattr(node, 'lineno'):
@@ -1767,7 +1769,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write(code)
 
 		elif isinstance(target, Name) and self._with_glsl:  ## assignment to variable
-			assert target.id in self._typedef_vars
+			if target.id not in self._typedef_vars:
+				raise SyntaxError(self.format_error('untyped variable'))
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
 			if node_value in self._typedef_vars:
