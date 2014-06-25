@@ -1,10 +1,34 @@
 Introduction
 ------------
-PythonJS is a transpiler written in Python that converts Python into fast JavaScript.  It can be run with regular Python, or fully self-hosted within NodeJS using Empythoned.  PythonJS has been designed with speed and easy integration with existing JavaScript code in mind.
+PythonJS is a transpiler written in Python that converts Python into fast
+JavaScript.  It can be run with regular Python, or fully self-hosted within
+NodeJS using Empythoned.  PythonJS has been designed with speed and easy
+integration with existing JavaScript code in mind.
+
+
+Using translator.py Without Installing
+--------------------------------------
+To simply convert your python script into javascript, git clone this repo, and
+use translator.py located in the "pythonjs" directory.  You can give it a list
+of python files to translate at once.  It will output the translation to
+stdout.  The default output type is JavaScript.
+
+Usage::
+
+	translator.py [--dart|--coffee|--lua] file.py
+
+Example::
+
+	cd PythonJS/pythonjs
+	./translator.py myscript.py > myscript.js
+
+
 
 Installing
 -------------
-	npm install python-js
+```
+npm install python-js
+```
 
 NodeJS Quick Example
 --------------
@@ -69,20 +93,6 @@ GPU Translation
 A Python typed subset can be translated to a GLSL fragment shader to speed up math on large arrays.
 [GPU Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/gpu.md)
 
-
-
-translator.py
-------------
-To simply convert your python script into javascript, git clone this repo, and use translator.py located in the "pythonjs" directory.  You can give it a list of python files to translate at once.  It will output the translation to stdout.  The default output type is JavaScript.
-
-Usage::
-
-	translator.py [--dart|--coffee|--lua] file.py
-
-Example::
-
-	cd PythonJS/pythonjs
-	./translator.py myscript.py > myscript.js
 
 
 Supported Features
