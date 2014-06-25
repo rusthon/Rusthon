@@ -346,3 +346,31 @@ class myclass:
 		return gpufunc()
 
 ```
+
+external type conversion
+------------------------
+@gpu.object classes can also contain sub-structures and GLSL types: `vec3`.
+To define a sub structure call the `gpu.object(class, name)` function.
+The example below types THREE.js Vector3 as a GLSL `vec` type.
+
+```
+import three
+gpu.object( three.Vector3, 'vec3' )
+
+```
+
+Then when a `three.Vector3` is assigned to an attribute in the __init__ function of the @gpu.object
+class it will be inlined into the shader as a `vec3`.
+
+```
+@gpu.object
+class MyObject:
+	def __init__(self, x,y,z, a,b,c):
+		self.vec1 = new( three.Vector3(x,y,z) )
+		self.vec2 = new( three.Vector3(a,b,c) )
+
+	@gpu.method
+	float def mymethod(self):
+		return self.vec1.x + self.vec2.y
+
+```

@@ -16,6 +16,13 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with javascript:
+	def __gpu_object(cls, struct_name):
+		cls.prototype.__struct_name__ = struct_name
+	with lowlevel:
+		gpu = {
+			'object' : __gpu_object
+		}
+
 	def glsljit_runtime(header):
 		return new( GLSLJITRuntime(header) )
 

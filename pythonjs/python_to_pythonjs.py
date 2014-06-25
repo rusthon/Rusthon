@@ -425,23 +425,23 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_js:
-				a.append( '[%s,%s]'%(k,v) )
-			elif self._with_dart or self._with_ll:
+			if self._with_dart or self._with_ll:
 				a.append( '%s:%s'%(k,v) )
 				#if isinstance(node.keys[i], ast.Str):
 				#	a.append( '%s:%s'%(k,v) )
 				#else:
 				#	a.append( '"%s":%s'%(k,v) )
+			elif self._with_js:
+				a.append( '[%s,%s]'%(k,v) )
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## this allows non-string keys
 
-		if self._with_js:
-			b = ','.join( a )
-			return '__jsdict( [%s] )' %b
-		elif self._with_dart or self._with_ll:
+		if self._with_dart or self._with_ll:
 			b = ','.join( a )
 			return '{%s}' %b
+		elif self._with_js:
+			b = ','.join( a )
+			return '__jsdict( [%s] )' %b
 		else:
 			b = '[%s]' %', '.join(a)
 			return '__get__(dict, "__call__")([], {"js_object":%s})' %b
@@ -3460,7 +3460,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.pull()
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'lowlevel':
 			self._with_ll = True
-			map(self.visit, node.body)
+			#map(self.visit, node.body)
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
 			self._with_ll = False
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
 			self._with_js = True

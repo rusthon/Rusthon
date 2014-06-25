@@ -2,7 +2,8 @@
 import three
 
 #three.Vector3.prototype.__struct_name__='ThreeVec3'  ## this also works
-three.Vector3.prototype.__struct_name__='vec3'
+#three.Vector3.prototype.__struct_name__='vec3'
+gpu.object( three.Vector3, 'vec3' )
 
 @gpu.object
 class MyObject:
