@@ -8,6 +8,10 @@ from pythonjs_to_coffee import main as pythonjs_to_coffee
 from pythonjs_to_lua import main as pythonjs_to_lua
 from pythonjs_to_luajs import main as pythonjs_to_luajs
 
+cmdhelp = """\
+usage: translator.py [--dart|--coffee|--lua] file.py
+       translator.py --visjs file.py\
+"""
 
 def main(script):
     if '--visjs' in sys.argv:
@@ -50,6 +54,10 @@ def main(script):
         return code
 
 def command():
+    if '-h' in sys.argv or '--help' in sys.argv:
+        print(cmdhelp)
+        return
+
     scripts = []
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
