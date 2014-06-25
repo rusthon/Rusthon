@@ -19,7 +19,7 @@ Usage::
 
 Example::
 
-	cd PythonJS/pythonjs
+	cd pythonjs
 	./translator.py myscript.py > myscript.js
 
 
