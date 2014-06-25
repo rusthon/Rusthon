@@ -245,6 +245,8 @@ def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=Fals
         a = []
         for line in stdout.splitlines():
             if 'INFO:CONSOLE' in line:
+                line = line.replace('\\n', '\n')
+                line = line.replace('\\u003C', '<')
                 start = line.index('"')
                 end = line.rindex('"')
                 a.append( line[start+1:end] )

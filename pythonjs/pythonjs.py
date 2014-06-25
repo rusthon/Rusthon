@@ -215,6 +215,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		glsl_wrapper_name = False
 		gpu_return_types = {}
 		gpu_vectorize = False
+		gpu_method = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
@@ -239,7 +240,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					gpu_vectorize = True
 				elif decor.attr == 'main':
 					is_main = True
-
+				elif decor.attr == 'method':
+					gpu_method = True
 
 		args = self.visit(node.args)
 
@@ -253,8 +255,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					if arg in args_typedefs:
 						x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
+					elif gpu_method and i==0:
+						x.append( '%s self' %arg )
 					else:
-						x.append( 'float* %s' %arg )
+						#x.append( 'float* %s' %arg )  ## this could be a way to default to the struct.
+						raise SyntaxError('GLSL functions require a typedef: %s' %arg)
 
 			if is_main:
 				lines.append( 'var glsljit = glsljit_runtime(__shader_header__);')  ## each call to the wrapper function recompiles the shader
@@ -264,6 +269,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					lines.append( 'glsljit.push("void main( ) {");') ## WebCLGL parser requires the space in `main( )`
 
 			elif return_type:
+				#if gpu_method:
+				#	lines.append( '__shader_header__.push("%s %s(struct this, %s ) {");' %(return_type, node.name, ', '.join(x)) )
+				#else:
 				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
 			else:
 				lines.append( '__shader_header__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
@@ -320,8 +328,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 							else:
 								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
 
-						else:
+
+						else:  ## subroutine or method
+							if '`' in sub: sub = sub.replace('`', '')
 							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
+
+
 			self._glsl = False
 			#buffer += '\n'.join(body)
 			self.pull()
@@ -535,7 +547,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		name = self.visit(node.func)
 
 		if self._glsl and isinstance(node.func, ast.Attribute):
-			return '`%s`' %self._visit_call_helper(node)
+			if isinstance(node.func.value, ast.Name) and node.func.value.id in self._typed_vars:
+				args = ','.join( [self.visit(a) for a in node.args] )
+				return '`__struct_name__`_%s(%s, %s)' %(node.func.attr, node.func.value.id, args)
+			else:
+				return '`%s`' %self._visit_call_helper(node)
 
 		elif self._glsl and name == 'len':
 			if isinstance(node.args[0], ast.Name):

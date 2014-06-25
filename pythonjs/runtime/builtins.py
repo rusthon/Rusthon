@@ -16,6 +16,13 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with javascript:
+	def __gpu_object(cls, struct_name):
+		cls.prototype.__struct_name__ = struct_name
+	with lowlevel:
+		gpu = {
+			'object' : __gpu_object
+		}
+
 	def glsljit_runtime(header):
 		return new( GLSLJITRuntime(header) )
 
@@ -27,11 +34,16 @@ with javascript:
 			self.struct_types = {}
 
 		def compile_header(self):
-			a = "\n".join(self.header)
-			b = []
-			for stype in self.struct_types.values():
-				b.push( stype['code'] )
-			b = '\n'.join(b)
+			a = []  ## insert structs at top of header
+			for sname in self.struct_types:
+				if sname == 'vec3':
+					pass
+				else:
+					a.push( self.struct_types[sname]['code'] )
+
+			a = '\n'.join(a)
+			## code in header could be methods that reference the struct types above.
+			b = "\n".join(self.header)
 			return '\n'.join([a,b])
 
 		def compile_main(self):
@@ -42,37 +54,70 @@ with javascript:
 
 
 		def define_structure(self, ob):
-			if Object.hasOwnProperty(ob,'__struct_name__'):
-				return ob.__struct_name__
+			struct_name = None
+			##if Object.hasOwnProperty(ob,'__struct_name__'):  ## this is not right?
+			if ob.__struct_name__:
+				struct_name = ob.__struct_name__
+				if struct_name in self.struct_types:
+					return struct_name
+
 			arrays = []
-			numbers = []
-			struct_type = []
-			for key in ob.keys():
+			floats = []
+			integers = []
+			structs = []
+			struct_type = []  ## fallback for javascript objects
+
+			#for key in ob.keys():
+			for key in dir( ob ):
 				t = typeof( ob[key] )
 				if t=='object' and instanceof(ob[key], Array) and ob[key].length and typeof(ob[key][0])=='number':
 					struct_type.push( 'ARY_'+key )
 					arrays.push(key)
 				elif t=='number':
 					struct_type.push( 'NUM_'+key)
-					numbers.push(key)
+					floats.push(key)
+				elif instanceof(ob[key], Int16Array):
+					struct_type.push( 'INT_'+key)
+					if ob[key].length == 1:
+						integers.push(key)
+					else:
+						pass  ## TODO int16array
+				elif t=='object' and ob[key].__struct_name__:
+					struct_type.push( 'S_'+key)
+					structs.push( key )
+					if ob[key].__struct_name__ not in self.struct_types:
+						if ob[key].__struct_name__ != 'vec3':
+							self.define_structure( ob[key] )
 
-			struct_name = ''.join( struct_type )
-			ob.__struct_name__ = struct_name
+			if struct_name is None:
+				#print('DEGUG: new struct name', ob.__struct_name__)
+				#print(ob)
+				struct_name = ''.join( struct_type )
+				ob.__struct_name__ = struct_name
+
 			if struct_name not in self.struct_types:
 				member_list = []
-				for key in numbers:
+				for key in integers:
+					member_list.append('int '+key+';')
+				for key in floats:
 					member_list.append('float '+key+';')
 				for key in arrays:
 					arr = ob[key]
 					member_list.append('float '+key+'['+arr.length+'];')
+				for key in structs:
+					subtype = ob[key].__struct_name__
+					member_list.append( subtype+' '+key+';')
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
-				print('new struct type')
+				print('-------struct glsl code-------')
 				print(code)
+				print('------------------------------')
 				self.struct_types[ struct_name ] = {
 					'arrays' : arrays,
-					'numbers': numbers,
+					'floats' : floats,
+					'integers': integers,
+					'structs' : structs,
 					'code'   : code
 				}
 			return struct_name
@@ -90,7 +135,11 @@ with javascript:
 				wrapper.__struct_name__ = sname
 			stype = self.struct_types[ sname ]
 			args = []
-			for key in stype['numbers']:
+
+			for key in stype['integers']:
+				args.push( ob[key][0]+'' )
+
+			for key in stype['floats']:
 				value = ob[key] + ''
 				if '.' not in value:
 					value += '.0'
@@ -102,6 +151,11 @@ with javascript:
 				## it to the struct constructor.
 				aname = '_'+key+name
 				self.array(ob[key], aname)
+				args.push( aname )
+
+			for key in stype['structs']:
+				aname = '_'+key+name
+				self.structure(ob[key], aname)
 				args.push( aname )
 
 			args = ','.join(args)
@@ -409,6 +463,13 @@ with javascript:
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.pop(key, _default)")
 
+
+	def dir(ob):
+		if instanceof(ob, Object):
+			return JS("Object.keys( ob )")
+		else:
+			return __object_keys__(ob)
+
 	def __object_keys__(ob):
 		'''
 		notes:
@@ -628,6 +689,12 @@ def int(a):
 		if isNaN(a):
 			raise ValueError('not a number')
 		return a
+
+with javascript:
+	def int16(a):  ## used by glsljit when packing structs.
+		arr = new(Int16Array(1))
+		arr[0]=a
+		return arr
 
 def float(a):
 	with javascript:
