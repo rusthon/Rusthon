@@ -125,7 +125,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if self._line_number+1 < len(self._source):
 			lines.append( self._source[self._line_number+1] )
 
-		return 'line %s\n%s\n%s' %(self._line_number, '\n'.join(lines), node)
+		msg = 'line %s\n%s\n%s\n' %(self._line_number, '\n'.join(lines), node)
+		msg += 'Depth Stack:\n'
+		for l, n in enumerate(self._stack):
+			#msg += str(dir(n))
+			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
+                return msg
 
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
 
@@ -136,6 +141,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._line = None
 		self._line_number = 0
+		self._stack = []        ## current path to the root
 
 		self._direct_operators = set()  ## optimize "+" and "*" operator
 		self._with_ll = False   ## lowlevel
@@ -246,6 +252,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				pass
 			else:
 				self.visit(node)
+
+        def visit(self, node):
+		"""Visit a node."""
+		## modified code of visit() method from Python 2.7 stdlib
+		self._stack.append(node)
+		method = 'visit_' + node.__class__.__name__
+		visitor = getattr(self, method, self.generic_visit)
+		res = visitor(node)
+		self._stack.pop()
+		return res
 
 	def has_webworkers(self):
 		return len(self._webworker_functions.keys())
