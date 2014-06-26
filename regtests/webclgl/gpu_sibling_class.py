@@ -5,10 +5,10 @@ gpu.object( three.Vector3, 'vec3' )
 
 @gpu.object
 class Other:
-	@gpu.method
+	#@gpu.method
 	def __init__(self, a, b):
-		vec3 a
-		vec3 b
+		#vec3 a
+		#vec3 b
 		self.vecA = a
 		self.vecB = b
 
@@ -20,16 +20,18 @@ class Other:
 
 @gpu.object
 class MyObject:
-	@typedef( o=Other )
+	@typedef( ob=Other )
 	@gpu.method
 	float def mymethod(self, s):
 		float s
-		o = Other( self.v1, self.v2 )
-		return o.omethod(s)
+		#o = Other( self.v1, self.v2 )
+		#return o.omethod(s)
+		return self.ob.omethod(s)
 
 	def __init__(self, x,y,z):
 		self.v1 = new( three.Vector3(x,y,z) )
 		self.v2 = new( three.Vector3(x,y,z) )
+		self.ob = Other(self.v1, self.v2)
 
 
 class myclass:

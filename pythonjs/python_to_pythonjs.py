@@ -2082,8 +2082,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			F = self.visit(node.func)
 			args = [self.visit(arg) for arg in node.args]
 			if hasattr(self, '_in_gpu_method') and self._in_gpu_method and isinstance(node.func, ast.Attribute):
-				F = '%s_%s' %(self._in_gpu_method, node.func.attr)
-				args.insert(0, 'self')
+				fv = self.visit(node.func.value)
+				if fv == 'self':
+					clsname = self._in_gpu_method
+					args.insert(0, 'self')
+				else:
+					fvt = fv.split('.')[-1]
+					clsname = self._typedef_vars[ fvt ]
+					args.insert(0, fv)
+
+				F = '%s_%s' %(clsname, node.func.attr)
+
 
 			if node.keywords:
 				args.extend( [self.visit(x.value) for x in node.keywords] )
