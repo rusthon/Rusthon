@@ -10,7 +10,7 @@ gpu.object( three.Matrix4, 'mat4', 'elements')
 @gpu.object
 class MyObject:
 	@gpu.method
-	float def mymethod(self, s):
+	def mymethod(self, s) -> float:
 		float s
 		return (self.vec.x + self.vec.y + self.vec.z) * s
 

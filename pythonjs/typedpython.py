@@ -64,6 +64,19 @@ def transform_source( source, strip=False ):
 			pre = ''.join(pre)
 			output.append( indent + '@returns(%s)' %pre)
 			c = indent+'def '+c
+		elif c.strip().startswith('def ') and '->' in c:
+			c, rtype = c.split('->')
+			c += ':'
+			rtype = rtype.strip()[:-1]
+			indent = []
+			for char in c:
+				if char in __whitespace:
+					indent.append(char)
+				else:
+					break
+			indent = ''.join(indent)
+			output.append( indent + '@returns(%s)' %rtype)
+
 		output.append( c )
 
 	return '\n'.join(output)
