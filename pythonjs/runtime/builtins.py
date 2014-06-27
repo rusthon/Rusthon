@@ -32,11 +32,12 @@ with javascript:
 			self.shader = []
 			self.object_packagers = []
 			self.struct_types = {}
+			self.glsltypes = ['vec2', 'vec3', 'vec4', 'mat4', 'mat4x4']
 
 		def compile_header(self):
 			a = []  ## insert structs at top of header
 			for sname in self.struct_types:
-				if sname == 'vec3':
+				if sname in self.glsltypes:
 					pass
 				else:
 					a.push( self.struct_types[sname]['code'] )
@@ -67,8 +68,14 @@ with javascript:
 			structs = []
 			struct_type = []  ## fallback for javascript objects
 
+			if struct_name and struct_name in self.glsltypes and Object.hasOwnProperty.call(ob, 'elements'):
+				#ob = ob.elements
+				return struct_name
+
 			#for key in ob.keys():
 			for key in dir( ob ):
+				if key.length==1 and key in '0123456789':
+					raise RuntimeError(key)
 				t = typeof( ob[key] )
 				if t=='object' and instanceof(ob[key], Array) and ob[key].length and typeof(ob[key][0])=='number':
 					struct_type.push( 'ARY_'+key )
@@ -86,7 +93,9 @@ with javascript:
 					struct_type.push( 'S_'+key)
 					structs.push( key )
 					if ob[key].__struct_name__ not in self.struct_types:
-						if ob[key].__struct_name__ != 'vec3':
+						if ob[key].__struct_name__ in self.glsltypes:
+							pass
+						else:
 							self.define_structure( ob[key] )
 
 			if struct_name is None:
@@ -107,6 +116,9 @@ with javascript:
 				for key in structs:
 					subtype = ob[key].__struct_name__
 					member_list.append( subtype+' '+key+';')
+
+				if len(member_list)==0:
+					raise RuntimeError(struct_name)
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
@@ -133,30 +145,46 @@ with javascript:
 			sname = self.define_structure(ob)
 			if wrapper:
 				wrapper.__struct_name__ = sname
-			stype = self.struct_types[ sname ]
+
 			args = []
+			stype = self.struct_types[ sname ]
 
-			for key in stype['integers']:
-				args.push( ob[key][0]+'' )
+			# if stype is None:  ## TODO fix me
+			if sname not in self.struct_types:
+				if sname in self.glsltypes:
+					if sname == 'mat4' or sname == 'mat4x4':
 
-			for key in stype['floats']:
-				value = ob[key] + ''
-				if '.' not in value:
-					value += '.0'
-				args.push( value )
+						if Object.hasOwnProperty.call(ob, 'elements'):  ## THREE.js
+							for i in range(ob.elements.length):
+								value = ob.elements[i] +''
+								if '.' not in value: value += '.0'
+								args.push( value )
 
-			for key in stype['arrays']:
-				#args.push( '{'+ob[key].toString()+ '}')  ## this will not work
-				## arrays need to be assigned to a local variable before passing
-				## it to the struct constructor.
-				aname = '_'+key+name
-				self.array(ob[key], aname)
-				args.push( aname )
+				else:
+					raise RuntimeError('no method to pack structure: ' +sname)
 
-			for key in stype['structs']:
-				aname = '_'+key+name
-				self.structure(ob[key], aname)
-				args.push( aname )
+			if stype:
+				for key in stype['integers']:
+					args.push( ob[key][0]+'' )
+
+				for key in stype['floats']:
+					value = ob[key] + ''
+					if '.' not in value:
+						value += '.0'
+					args.push( value )
+
+				for key in stype['arrays']:
+					#args.push( '{'+ob[key].toString()+ '}')  ## this will not work
+					## arrays need to be assigned to a local variable before passing
+					## it to the struct constructor.
+					aname = '_'+key+name
+					self.array(ob[key], aname)
+					args.push( aname )
+
+				for key in stype['structs']:
+					aname = '_'+key+name
+					self.structure(ob[key], aname)
+					args.push( aname )
 
 			args = ','.join(args)
 			self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )

@@ -1,7 +1,10 @@
 types = ['str', 'list', 'dict']
 
-glsl_types = ['struct*', 'int*', 'float*', 'vec2', 'vec3', 'vec4']
+glsl_types = ['struct*', 'int*', 'float*', 'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4']
+glsl_xtypes = ['mat2x2', 'mat3x3', 'mat4x4']  ## others not supported in WebGLSL
+glsl_types.extend( glsl_xtypes )
 glsl_aliases = ['floatPOINTER', 'intPOINTER', 'structPOINTER']
+
 types.extend( glsl_types )
 types.extend( glsl_aliases )
 
