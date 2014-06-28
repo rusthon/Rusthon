@@ -17,6 +17,7 @@ from ast import NodeVisitor
 
 #import inline_function
 #import code_writer
+import typedpython
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
@@ -35,6 +36,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._glsl = False
 		self._has_glsl = False
 		self._typed_vars = dict()
+
+		## the helper function below _mat4_to_vec4 is invalid because something can only be indexed
+		## with a constant expression.  The GLSL compiler will throw this ERROR: 0:19: '[]' : Index expression must be constant"
+		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
+		self.glsl_runtime = ''
 
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
@@ -105,8 +111,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append('}) //end requirejs define')
 
 		if self._has_glsl:
-			#header.append( 'var __shader_header__ = ["struct MyStruct { float xxx; }; const MyStruct XX = MyStruct(1.1); MyStruct myarr[2]; myarr[0]= MyStruct(1.1);"]' )
-			header.append( 'var __shader_header__ = []' )
+			header.append( 'var __shader_header__ = ["%s"]'%self.glsl_runtime )
 
 		lines = header + lines
 		## fixed by Foxboron
@@ -234,6 +239,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 				else:
 					return_type = decor.args[0].id
+					if return_type in typedpython.glsl_types:
+						gpu_return_types[ return_type ] = True
 
 			elif isinstance(decor, Attribute) and isinstance(decor.value, Name) and decor.value.id == 'gpu':
 				if decor.attr == 'vectorize':
@@ -279,7 +286,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			self.push()
 			# `_id_` always write out an array of floats or array of vec4floats
 			if is_main:
-				lines.append( 'glsljit.push("vec2 _id_ = get_global_id();");')
+				lines.append( 'glsljit.push("vec2 _id_ = get_global_id(); int _FRAGMENT_ID_ = int(_id_.x + _id_.y);");')
 			else:
 				lines.append( '__shader_header__.push("vec2 _id_ = get_global_id();");')
 
@@ -331,14 +338,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 						else:  ## subroutine or method
 							if '`' in sub: sub = sub.replace('`', '')
-							lines.append( '__shader_header__.push("%s");' %(self.indent()+sub) )
+							lines.append( '__shader_header__.push("%s");' %sub )
 
 
 			self._glsl = False
-			#buffer += '\n'.join(body)
 			self.pull()
 			if is_main:
-				lines.append('glsljit.push("%s}");' %self.indent())
+				lines.append('glsljit.push("(1+1);");')  ## fixes WebCLGL 2.0 parser
+				lines.append('glsljit.push("}");')
 			else:
 				lines.append('__shader_header__.push("%s}");' %self.indent())
 
@@ -380,6 +387,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 							lines.append('  var __return_length_vec4 = %s * %s' %(w,h))
 						else:
 							lines.append('  var __return_length_vec4 = %s' %gpu_return_types['vec4'])
+
+					elif 'mat4' in gpu_return_types:
+						lines.append('  var __return_length = 64')  ## minimum size is 64
 					else:
 						raise NotImplementedError
 				else:
@@ -398,32 +408,35 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				#lines.append('	console.log("kernel.compile OK")')
 
 				if gpu_return_types:
-					if 'array' in gpu_return_types:
-						dim = gpu_return_types[ 'array' ]
-						lines.append('	var rbuffer_array = __webclgl.createBuffer(%s, "FLOAT", __offset)' %dim)
-						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_array)')
-						lines.append('  var _raw_array_res = __webclgl.enqueueReadBuffer_Float( rbuffer_array )')
-					else:
+					if 'vec4' in gpu_return_types:
 						dim = gpu_return_types[ 'vec4' ]
 						lines.append('	var rbuffer_vec4 = __webclgl.createBuffer(%s, "FLOAT4", __offset)' %dim)
 						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_vec4)')
-						lines.append('  var _raw_vec4_res = __webclgl.enqueueReadBuffer_Float4( rbuffer_vec4 )')
+						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer_vec4 )')
+						lines.append('	return glsljit.unpack_vec4(__res, %s)' %gpu_return_types['vec4'])
+					elif 'array' in gpu_return_types:
+						dim = gpu_return_types[ 'array' ]
+						lines.append('	var rbuffer_array = __webclgl.createBuffer(%s, "FLOAT", __offset)' %dim)
+						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_array)')
+						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float( rbuffer_array )')
+						lines.append('	return glsljit.unpack_array2d(__res, %s)' %gpu_return_types['array'])
 
-					if 'array' in gpu_return_types and 'vec4' in gpu_return_types:
-						adim = gpu_return_types['array']
-						vdim = gpu_return_types['vec4']
-						lines.append('	return [glsljit.unpack_array2d(_raw_array_res, %s),glsljit.unpack_vec4(_raw_vec4_res, %s)]' %(adim, vdim))
-					elif 'vec4' in gpu_return_types:
-						lines.append('	return glsljit.unpack_vec4(_raw_vec4_res, %s)' %gpu_return_types['vec4'])
+					elif 'mat4' in gpu_return_types:
+						lines.append('	var rbuffer = __webclgl.createBuffer([glsljit.matrices.length,4], "FLOAT4", __offset)')
+						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer)')
+						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer )')
+						lines.append('	return glsljit.unpack_mat4(__res)')
 					else:
-						lines.append('	return glsljit.unpack_array2d(_raw_array_res, %s)' %gpu_return_types['array'])
+						raise SyntaxError('invalid GPU return type: %s' %gpu_return_types)
 
 				else:
+					raise SyntaxError('GPU return type must be given')
 					lines.append('  var __return = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
 					lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, __return)')
 					lines.append('	return __webclgl.enqueueReadBuffer_Float( __return )')
 
 				lines.append('} // end of wrapper')
+				lines.append('%s.matrices = glsljit.matrices' %glsl_wrapper_name )
 
 
 			return '\n'.join(lines)
@@ -477,7 +490,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
 			if self._glsl:
-				return '%s[_id_]' % self.visit(node.value)
+				#return '%s[_id_]' % self.visit(node.value)
+				return '%s[_FRAGMENT_ID_]' % self.visit(node.value)
 			else:
 				return self._visit_subscript_ellipsis( node )
 		else:
@@ -565,6 +579,37 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				s = node.args[0]
 				v = self.visit(s).replace('`', '')
 				return '`%s.length`' %v
+
+		elif name == 'glsl_inline_assign_from_iterable':
+			sname = node.args[0].s
+			target = node.args[1].s
+			iter  = node.args[2].id
+			self._typed_vars[ target ] = sname
+
+
+			lines = [
+				'`@var __length__ = %s.length;`' %iter,
+				#'`@console.log("DEBUG iter: "+%s);`' %iter,
+				#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
+				#'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
+				##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
+				#'`@console.log("DEBUG sname: "+__struct_name__);`',
+				'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
+			]
+
+			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
+
+			## declare struct variable ##
+			lines.append( '%s %s;' %(sname, target))
+
+			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
+			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
+			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
+			lines.append( '`@}`')
+
+
+			lines.append( '}' )  ## end of for loop
+			return '\n'.join(lines)
 
 		elif name == 'glsl_inline_push_js_assign':
 			# '@' triggers a new line of generated code
@@ -828,9 +873,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return '==='
 
 	def visit_Compare(self, node):
-		comp = [ '(']
-		comp.append( self.visit(node.left) )
-		comp.append( ')' )
+		if self._glsl:
+			comp = [self.visit(node.left)]
+		else:
+			comp = [ '(']
+			comp.append( self.visit(node.left) )
+			comp.append( ')' )
 
 		for i in range( len(node.ops) ):
 			comp.append( self.visit(node.ops[i]) )

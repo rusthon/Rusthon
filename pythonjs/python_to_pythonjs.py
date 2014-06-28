@@ -1201,10 +1201,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				## _id_ is inserted into all function headers by pythonjs.py for glsl functions.
 				if not self._gpu_return_types:
 					raise SyntaxError( self.format_error('function return type unknown - required decorator `@returns(array/vec4=[w,h])`') )
+
+				## only one return type is allowed ##
 				if 'array' in self._gpu_return_types:
 					writer.write('out_float = %s' %self.visit(node.value))
-				if 'vec4' in self._gpu_return_types:
+				elif 'vec4' in self._gpu_return_types:
 					writer.write('out_float4 = %s' %self.visit(node.value))
+				elif 'mat4' in self._gpu_return_types:
+					nv = self.visit(node.value)
+					writer.write('inline("mat4 _res_ = %s;")' %nv)
+					a = 'vec4(_res_[3][0],_res_[3][1],_res_[3][2],_res_[3][3])'
+					writer.write('if int(mod(float(_FRAGMENT_ID_), 4.0))==0: out_float4 = %s'   % a)
+					a = 'vec4(_res_[2][0],_res_[2][1],_res_[2][2],_res_[2][3])'
+					writer.write('elif int(mod(float(_FRAGMENT_ID_), 3.0))==0: out_float4 = %s' % a)
+					a = 'vec4(_res_[1][0],_res_[1][1],_res_[1][2],_res_[1][3])'
+					writer.write('elif int(mod(float(_FRAGMENT_ID_), 2.0))==0: out_float4 = %s' % a)
+					a = 'vec4(_res_[0][0],_res_[0][1],_res_[0][2],_res_[0][3])'
+					writer.write('else: out_float4 = %s'%a)
+				else:
+					raise SyntaxError( self.format_error('invalid GPU return type: %s' %self._gpu_return_types) )
 
 			elif self._inline:
 				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
@@ -1792,6 +1807,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if node_value in self._typedef_vars:
 				writer.write('%s = %s' % (self.visit(target), self.visit(node.value)))
 
+			elif isinstance(node.value, ast.Subscript) and isinstance(node.value.slice, ast.Ellipsis):
+				writer.write('glsl_inline_assign_from_iterable("%s", "%s", %s)'%(self._typedef_vars[target.id], target.id, self.visit(node.value.value)) )
+
 			else:
 
 				## also assign variable in current javascript scope ##
@@ -2108,6 +2126,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					args.insert(0, fv)
 
 				F = '%s_%s' %(clsname, node.func.attr)
+
+			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._typedef_vars:
+				#raise RuntimeError(node.func.value.id)
+				clsname = self._typedef_vars[ node.func.value.id ]
+				F = '%s_%s' %(clsname, node.func.attr)
+				args.insert(0, node.func.value.id)
 
 
 			if node.keywords:
@@ -2559,6 +2583,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					assert len(decorator.args) == 1
 					assert isinstance( decorator.args[0], Name)
 					return_type = decorator.args[0].id
+					if return_type in typedpython.glsl_types:
+						self._gpu_return_types.add( return_type )
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
 				gpu = True

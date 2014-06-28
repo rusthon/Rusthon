@@ -33,6 +33,7 @@ with javascript:
 			self.object_packagers = []
 			self.struct_types = {}
 			self.glsltypes = ['vec2', 'vec3', 'vec4', 'mat4', 'mat4x4']
+			self.matrices = []
 
 		def compile_header(self):
 			a = []  ## insert structs at top of header
@@ -155,6 +156,7 @@ with javascript:
 					if sname == 'mat4' or sname == 'mat4x4':
 
 						if Object.hasOwnProperty.call(ob, 'elements'):  ## THREE.js
+							#self.matrices.push(ob.elements)
 							for i in range(ob.elements.length):
 								value = ob.elements[i] +''
 								if '.' not in value: value += '.0'
@@ -281,6 +283,14 @@ with javascript:
 				print('ERROR: __unpack_vec4, invalid height.')
 			return rows
 
+		def unpack_mat4(self, arr):
+			i = 0
+			for mat in self.matrices:
+				for j in range(16):
+					mat[j] = arr[i]
+					i += 1
+
+			return self.matrices
 
 with lowlevel:
 
