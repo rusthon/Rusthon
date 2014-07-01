@@ -354,6 +354,10 @@ class __faker__(object):
         return f
     def main(self, f):
         return f
+    def object(self, f):
+        return f
+    def method(self, f):
+        return f
 
 webworker = __faker__()
 glsl = __faker__()
@@ -361,6 +365,8 @@ gpu = __faker__()
 returns = __faker__()
 typedef = __faker__()
 vec2 = None
+
+def int16(a): return int(a)
 
 try:
     import numpy

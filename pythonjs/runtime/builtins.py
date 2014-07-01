@@ -16,8 +16,9 @@ JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.p
 JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with javascript:
-	def __gpu_object(cls, struct_name):
+	def __gpu_object(cls, struct_name, data_name):
 		cls.prototype.__struct_name__ = struct_name
+		cls.prototype.__struct_data__ = data_name
 	with lowlevel:
 		gpu = {
 			'object' : __gpu_object
@@ -32,7 +33,7 @@ with javascript:
 			self.shader = []
 			self.object_packagers = []
 			self.struct_types = {}
-			self.glsltypes = ['vec2', 'vec3', 'vec4', 'mat4', 'mat4x4']
+			self.glsltypes = ['vec2', 'vec3', 'vec4', 'mat4']
 			self.matrices = []
 
 		def compile_header(self):
@@ -74,8 +75,7 @@ with javascript:
 			structs = []
 			struct_type = []  ## fallback for javascript objects
 
-			if struct_name and struct_name in self.glsltypes and Object.hasOwnProperty.call(ob, 'elements'):
-				#ob = ob.elements
+			if struct_name and struct_name in self.glsltypes:
 				return struct_name
 
 			#for key in ob.keys():
@@ -158,14 +158,16 @@ with javascript:
 			# if stype is None:  ## TODO fix me
 			if sname not in self.struct_types:
 				if sname in self.glsltypes:
-					if sname == 'mat4' or sname == 'mat4x4':
+					if sname == 'mat4':
+						if ob.__struct_data__:
+							o = ob[ ob.__struct_data__ ]
+						else:
+							o = ob
 
-						if Object.hasOwnProperty.call(ob, 'elements'):  ## THREE.js
-							#self.matrices.push(ob.elements)
-							for i in range(ob.elements.length):
-								value = ob.elements[i] +''
-								if '.' not in value: value += '.0'
-								args.push( value )
+						for i in range(o.length):
+							value = o[i] +''
+							if '.' not in value: value += '.0'
+							args.push( value )
 
 				else:
 					raise RuntimeError('no method to pack structure: ' +sname)

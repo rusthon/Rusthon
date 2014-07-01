@@ -11,8 +11,8 @@ def main():
 	@gpu.main
 	def myfunc(a):
 		float* a
-		#return mysub( 1.1 * a[_id_], 2.2 )
-		return mysub( 1.1 * a[...], 2.2 )
+		vec2 id = get_global_id()
+		return mysub( 1.1 * a[id], 2.2 )
 
 
 	A = [1.3 for i in range(64)]

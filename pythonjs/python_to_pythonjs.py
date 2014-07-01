@@ -1034,11 +1034,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._classes[ name ].append( item.name )
 				item_name = item.name
 				item.original_name = item.name
-				item.name = '__%s_%s' % (name, item_name)
+
+				if self.is_gpu_method( item ):
+					item.name = '%s_%s' % (name, item_name)
+				else:
+					item.name = '__%s_%s' % (name, item_name)
 
 				self.visit(item)  # this will output the code for the function
 
-				if item_name in self._decorator_properties:
+				if item_name in self._decorator_properties or self.is_gpu_method( item ):
 					pass
 				else:
 					writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
