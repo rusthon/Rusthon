@@ -43,6 +43,11 @@ with javascript:
 				else:
 					a.push( self.struct_types[sname]['code'] )
 
+			## calls get_global_id, see WebCLGL API docs. ##
+			a.push('int matrix_index() { return int(get_global_id().y*%s.0); }' %self.matrices.length)
+			a.push('int matrix_row() { return int(get_global_id().x*4.0); }')  ## returns: 0, 1, 2, 3
+
+
 			a = '\n'.join(a)
 			## code in header could be methods that reference the struct types above.
 			b = "\n".join(self.header)
@@ -284,6 +289,8 @@ with javascript:
 			return rows
 
 		def unpack_mat4(self, arr):
+			print('unpack_mat4')
+			print(arr)
 			i = 0
 			for mat in self.matrices:
 				for j in range(16):

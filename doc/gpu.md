@@ -374,3 +374,31 @@ class MyObject:
 		return self.vec1.x + self.vec2.y
 
 ```
+
+array of mat4 input and output
+------------------------------
+
+The gpu.main function may also return `mat4`, an array of 4x4 float32 matrices, by using a `-> mat4` function return annotation. In this case the wrapper function will contain an attribute `return_matrices`,
+appending Float32Array buffers to this list will update their values when the wrapper is called.
+
+Within the shader you can get the current index of the matrix in `return_matrices` with ellipsis on an iterable.
+Below `A[...]` gets the current index in `gpufunc.return_matrices`.
+
+```
+class myclass:
+	def run(self, w):
+		self.array = [ MyObject( x+1.0 ) for x in range(w) ]
+
+		@typedef(o=MyObject)
+		@gpu.main
+		def gpufunc() -> mat4:
+			struct* A = self.array
+			o = A[...]
+			return o.mat
+
+		for ob in self.array:
+			gpufunc.return_matrices.append( ob.mat.elements )
+
+		return gpufunc()
+
+```

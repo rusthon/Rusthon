@@ -40,7 +40,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		## the helper function below _mat4_to_vec4 is invalid because something can only be indexed
 		## with a constant expression.  The GLSL compiler will throw this ERROR: 0:19: '[]' : Index expression must be constant"
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
-		self.glsl_runtime = ''
+		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
 	def indent(self): return '  ' * self._indent
 	def push(self): self._indent += 1
@@ -286,7 +286,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			self.push()
 			# `_id_` always write out an array of floats or array of vec4floats
 			if is_main:
-				lines.append( 'glsljit.push("vec2 _id_ = get_global_id(); int _FRAGMENT_ID_ = int(_id_.x + _id_.y);");')
+				#lines.append( 'glsljit.push("vec2 _id_ = get_global_id(); int _FRAGMENT_ID_ = int(_id_.x + _id_.y * 100.0);");')
+				pass
 			else:
 				lines.append( '__shader_header__.push("vec2 _id_ = get_global_id();");')
 
@@ -344,7 +345,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			self._glsl = False
 			self.pull()
 			if is_main:
-				lines.append('glsljit.push("(1+1);");')  ## fixes WebCLGL 2.0 parser
+				lines.append('glsljit.push(";(1+1);");')  ## fixes WebCLGL 2.0 parser
 				lines.append('glsljit.push("}");')
 			else:
 				lines.append('__shader_header__.push("%s}");' %self.indent())
@@ -422,7 +423,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						lines.append('	return glsljit.unpack_array2d(__res, %s)' %gpu_return_types['array'])
 
 					elif 'mat4' in gpu_return_types:
-						lines.append('	var rbuffer = __webclgl.createBuffer([glsljit.matrices.length,4], "FLOAT4", __offset)')
+						lines.append('	var rbuffer = __webclgl.createBuffer([4,glsljit.matrices.length], "FLOAT4", __offset)')
 						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer)')
 						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer )')
 						lines.append('	return glsljit.unpack_mat4(__res)')
@@ -436,7 +437,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					lines.append('	return __webclgl.enqueueReadBuffer_Float( __return )')
 
 				lines.append('} // end of wrapper')
-				lines.append('%s.matrices = glsljit.matrices' %glsl_wrapper_name )
+				lines.append('%s.return_matrices = glsljit.matrices' %glsl_wrapper_name )
 
 
 			return '\n'.join(lines)
@@ -491,7 +492,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if isinstance(node.slice, ast.Ellipsis):
 			if self._glsl:
 				#return '%s[_id_]' % self.visit(node.value)
-				return '%s[_FRAGMENT_ID_]' % self.visit(node.value)
+				return '%s[matrix_index()]' % self.visit(node.value)
 			else:
 				return self._visit_subscript_ellipsis( node )
 		else:
@@ -581,6 +582,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				return '`%s.length`' %v
 
 		elif name == 'glsl_inline_assign_from_iterable':
+			## the target must be declared without a typedef, because if declared first, it can not be redeclared,
+			## in the if-assignment block, the typedef is not given because `Iter_n` already has been typed beforehand.
 			sname = node.args[0].s
 			target = node.args[1].s
 			iter  = node.args[2].id
@@ -597,18 +600,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
 			]
 
-			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
+			#lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
 
 			## declare struct variable ##
-			lines.append( '%s %s;' %(sname, target))
+			#lines.append( '%s %s;' %(sname, target))
 
 			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
 			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
+			#lines.append(     '`@glsljit.push("if (OUTPUT_INDEX==" +__j+ ") { %s %s=%s_" +__j+ ";}");`' %(sname, target, iter))
+			lines.append(     '`@glsljit.push("if (matrix_index()==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
 			lines.append( '`@}`')
 
 
-			lines.append( '}' )  ## end of for loop
+			#lines.append( '}' )  ## end of for loop
 			return '\n'.join(lines)
 
 		elif name == 'glsl_inline_push_js_assign':

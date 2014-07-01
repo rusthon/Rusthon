@@ -10,16 +10,20 @@ class MyObject:
 		mat4 other
 		return self.mat * other
 
-	def __init__(self, x,y,z):
+	def __init__(self, x):
 		self.mat = new( three.Matrix4() )
 		print('THREE mat4')
-		print(self.mat)
+		print(dir(self.mat))
+		for i in range(16):
+			self.mat.elements[i] = i*10
+		self.mat.multiplyScalar(x)
+
 
 
 
 class myclass:
 	def run(self, w):
-		self.array = [ MyObject( 1.1, 1.2, 1.3 ) for x in range(w) ]
+		self.array = [ MyObject( x+1.0 ) for x in range(w) ]
 
 		@typedef(o=MyObject)
 		@gpu.main
@@ -31,15 +35,16 @@ class myclass:
 			#for s in iter(A):
 			#	b *= s.mymethod(c)
 
-			o = A[...]
-			return o.mymethod(b)
+			o = A[...]  ## gets the current index in gpufunc.return_matrices
+			return o.mat #.mymethod(b)
 
 		for ob in self.array:
-			gpufunc.matrices.append( ob.mat.elements )
+			gpufunc.return_matrices.append( ob.mat.elements )
 
 		return gpufunc()
 
 def main():
 	m = myclass()
-	r = m.run(16)
-	print(r)
+	r = m.run(8)
+	for a in r:
+		print(a)

@@ -1209,15 +1209,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					writer.write('out_float4 = %s' %self.visit(node.value))
 				elif 'mat4' in self._gpu_return_types:
 					nv = self.visit(node.value)
-					writer.write('inline("mat4 _res_ = %s;")' %nv)
-					a = 'vec4(_res_[3][0],_res_[3][1],_res_[3][2],_res_[3][3])'
-					writer.write('if int(mod(float(_FRAGMENT_ID_), 4.0))==0: out_float4 = %s'   % a)
-					a = 'vec4(_res_[2][0],_res_[2][1],_res_[2][2],_res_[2][3])'
-					writer.write('elif int(mod(float(_FRAGMENT_ID_), 3.0))==0: out_float4 = %s' % a)
-					a = 'vec4(_res_[1][0],_res_[1][1],_res_[1][2],_res_[1][3])'
-					writer.write('elif int(mod(float(_FRAGMENT_ID_), 2.0))==0: out_float4 = %s' % a)
-					a = 'vec4(_res_[0][0],_res_[0][1],_res_[0][2],_res_[0][3])'
-					writer.write('else: out_float4 = %s'%a)
+					writer.write('inline("mat4 _res_ = %s; int _row = matrix_row();")' %nv)
+
+					r0 = 'vec4(_res_[0][0],_res_[0][1],_res_[0][2],_res_[0][3])'
+					r1 = 'vec4(_res_[1][0],_res_[1][1],_res_[1][2],_res_[1][3])'
+					r2 = 'vec4(_res_[2][0],_res_[2][1],_res_[2][2],_res_[2][3])'
+					r3 = 'vec4(_res_[3][0],_res_[3][1],_res_[3][2],_res_[3][3])'
+
+					writer.write('if _row==0: out_float4 = %s'   % r0)
+					writer.write('elif _row==1: out_float4 = %s'%r1)
+					writer.write('elif _row==2: out_float4 = %s'%r2)
+					writer.write('else: out_float4 = %s'%r3)
+
 				else:
 					raise SyntaxError( self.format_error('invalid GPU return type: %s' %self._gpu_return_types) )
 

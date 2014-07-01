@@ -3,7 +3,7 @@
 
 def main():
 
-	@returns( vec4=[32,32] )
+	@returns( vec4=[2,32] )
 	@gpu.main
 	def gpufunc(x,y,z,w):
 		float x
