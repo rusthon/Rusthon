@@ -15,3 +15,5 @@ def main():
 
 	TestError( y <= b )
 	TestError( b >= y )
+
+## TODO check why this fails when used with translator.py directly (bad indent bug)

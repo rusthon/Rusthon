@@ -32,7 +32,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._webworker = webworker
 		self._exports = set()
 
-		self.special_decorators = set(['__typedef__', '__glsl__'])
+		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__'])
 		self._glsl = False
 		self._has_glsl = False
 		self._typed_vars = dict()
@@ -215,6 +215,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def _visit_function(self, node):
 		is_main = node.name == 'main'
+		is_pyfunc = False
 		return_type = None
 		glsl = False
 		glsl_wrapper_name = False
@@ -223,7 +224,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		gpu_method = False
 		args_typedefs = {}
 		for decor in node.decorator_list:
-			if isinstance(decor, ast.Name) and decor.id == '__glsl__':
+			if isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
+				is_pyfunc = True
+			elif isinstance(decor, ast.Name) and decor.id == '__glsl__':
 				glsl = True
 			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.value.id == '__glsl__':
 				glsl_wrapper_name = decor.attr
@@ -371,7 +374,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = glsljit.compile_header()')
 				lines.append('	var shader = glsljit.compile_main()')
-				lines.append('	console.log(shader)')
+				#lines.append('	console.log(shader)')
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
@@ -425,7 +428,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					elif 'mat4' in gpu_return_types:
 						lines.append('	var rbuffer = __webclgl.createBuffer([4,glsljit.matrices.length], "FLOAT4", __offset)')
 						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer)')
-						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer )')
+						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer )')  ## slow
 						lines.append('	return glsljit.unpack_mat4(__res)')
 					else:
 						raise SyntaxError('invalid GPU return type: %s' %gpu_return_types)
@@ -442,7 +445,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 			return '\n'.join(lines)
 
-		elif len(node.decorator_list)==1 and not ( isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id not in self.special_decorators ):
+		elif len(node.decorator_list)==1 and not (isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id in self.special_decorators ) and not (isinstance(node.decorator_list[0], ast.Name) and node.decorator_list[0].id in self.special_decorators):
 			dec = self.visit(node.decorator_list[0])
 			buffer = self.indent() + '%s.%s = function(%s) {\n' % (dec,node.name, ', '.join(args))
 
@@ -481,6 +484,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		buffer += '\n'.join(body)
 		self.pull()
 		buffer += '\n%s}\n' %self.indent()
+		if is_pyfunc:
+			buffer += ';%s.is_wrapper = true;' %node.name  ## TODO change to .__pyfunc__
 		return buffer
 
 	def _visit_subscript_ellipsis(self, node):
@@ -1086,6 +1091,7 @@ def generate_runtime():
 	return '\n'.join( lines )
 
 def main(script, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
+	#print(script)
 	tree = ast.parse( script )
 	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions ).visit(tree)
 

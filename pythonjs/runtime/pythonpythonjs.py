@@ -56,8 +56,13 @@ def __get__(object, attribute, error_message):
 		else:
 			raise AttributeError('undefined has no attribute: ' +attribute)
 
+	#if attribute == '__getitem__' and instanceof(object, Array):  ## NOT REQUIRED
+	#	## allows list comp on Array called from Python-mode ##
+	#	def wrapper(args,kwargs): return object[ args[0] ]
+	#	wrapper.is_wrapper = True
+	#	return wrapper
 	if attribute == '__call__':
-		if object.pythonscript_function or object.is_wrapper:  ## common case
+		if object.pythonscript_function or object.is_wrapper:  ## common case  - TODO replaced by __pyfunc__
 			return object
 		elif object.cached_wrapper:  ## rare case
 			return object.cached_wrapper
@@ -124,7 +129,7 @@ def __get__(object, attribute, error_message):
 	## attr can be null and will return, undefined will raise AttributeError ##		
 	if attr is not undefined:
 		if typeof(attr) == 'function':
-			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):
+			if JS("attr.pythonscript_function === undefined && attr.is_wrapper === undefined"):  ## TODO pythonscript_function will be replaced with __pyfunc__
 
 				## if there is a prototype with methods, then we can be sure that the user indends to call `new` on it,
 				## however rare, it is still possible that it is a constructor without a prototype of any length,

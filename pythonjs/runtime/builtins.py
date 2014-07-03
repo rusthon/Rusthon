@@ -63,7 +63,7 @@ with javascript:
 
 		def define_structure(self, ob):
 			struct_name = None
-			##if Object.hasOwnProperty(ob,'__struct_name__'):  ## this is not right?
+			#if Object.hasOwnProperty.call(ob,'__struct_name__'):
 			if ob.__struct_name__:
 				struct_name = ob.__struct_name__
 				if struct_name in self.struct_types:
@@ -128,9 +128,9 @@ with javascript:
 
 				members = ''.join(member_list)
 				code = 'struct ' +struct_name+ ' {' +members+ '};'
-				print('-------struct glsl code-------')
-				print(code)
-				print('------------------------------')
+				#print('-------struct glsl code-------')
+				#print(code)
+				#print('------------------------------')
 				self.struct_types[ struct_name ] = {
 					'arrays' : arrays,
 					'floats' : floats,
@@ -291,14 +291,11 @@ with javascript:
 			return rows
 
 		def unpack_mat4(self, arr):
-			print('unpack_mat4')
-			print(arr)
 			i = 0
 			for mat in self.matrices:
 				for j in range(16):
 					mat[j] = arr[i]
 					i += 1
-
 			return self.matrices
 
 with lowlevel:
@@ -652,7 +649,7 @@ with javascript:
 
 			return object
 
-		__call__.pythonscript_function = True
+		__call__.is_wrapper = True
 		klass.__call__ = __call__
 		return klass
 

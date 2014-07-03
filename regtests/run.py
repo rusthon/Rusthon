@@ -365,6 +365,7 @@ gpu = __faker__()
 returns = __faker__()
 typedef = __faker__()
 vec2 = None
+mat4 = None
 
 def int16(a): return int(a)
 

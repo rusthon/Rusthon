@@ -381,12 +381,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write( 'if __NODEJS__==True and typeof(Worker)=="undefined": Worker = require("workerjs")')
 
 			elif alias.asname:
-				writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
+				#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
+				writer.write( '''inline("var %s = require('%s')")''' %(alias.asname, alias.name.replace('__DASH__', '-')) )
 
 			elif '.' in alias.name:
 				raise NotImplementedError('import with dot not yet supported: line %s' % node.lineno)
 			else:
-				writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.name, alias.name) )
+				#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.name, alias.name) )
+				writer.write( '''inline("var %s = require('%s')")''' %(alias.name, alias.name) )
 
 	def visit_ImportFrom(self, node):
 		if self._with_dart:
@@ -1145,6 +1147,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		map(self.visit, node.body)
 		writer.pull()
 		map(self.visit, node.handlers)
+		if len(node.handlers)==0:
+			raise SyntaxError(self.format_error('no except handlers'))
 
 	def visit_Raise(self, node):
 		#if self._with_js or self._with_dart:
@@ -2693,6 +2697,49 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write('self.onmessage = onmessage' )
 
 
+
+		## force python variable scope, and pass user type information to second stage of translation.
+		## the dart backend can use this extra type information.
+		vars = []
+		local_typedef_names = set()
+		if not self._with_coffee:
+			try:
+				local_vars, global_vars = retrieve_vars(node.body)
+			except SyntaxError as err:
+				raise SyntaxError( self.format_error(err) )
+
+			local_vars = local_vars-global_vars
+			inlined_long = False
+			if local_vars:
+				args_typedefs = []
+				args = [ a.id for a in node.args.args ]
+
+				for v in local_vars:
+					usertype = None
+					if '=' in v:
+						t,n = v.split('=')  ## unpack type and name
+						if self._with_dart and t in typedpython.simd_types:
+							t = t[0].upper() + t[1:]
+						v = '%s=%s' %(n,t)  ## reverse
+						local_typedef_names.add( n )
+						if t == 'long' and inlined_long == False:
+							inlined_long = True
+							writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
+
+						if n in args:
+							args_typedefs.append( v )
+						else:
+							local_typedefs.append( v )
+					elif v in args or v in local_typedef_names: pass
+					else: vars.append( v )
+
+				if args_typedefs:
+					writer.write('@__typedef__(%s)' %','.join(args_typedefs))
+
+
+		if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
+			writer.write('@__pyfunction__')
+
 		if return_type or return_type_keywords:
 			if return_type_keywords and return_type:
 				kw = ['%s=%s' %(k,v) for k,v in return_type_keywords.items()]
@@ -2706,42 +2753,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('@gpu.vectorize')
 		if gpu_method:
 			writer.write('@gpu.method')
-
-		## force python variable scope, and pass user type information to second stage of translation.
-		## the dart backend can use this extra type information.
-		vars = []
-		local_typedef_names = set()
-		if not self._with_coffee:
-			try:
-				local_vars, global_vars = retrieve_vars(node.body)
-			except SyntaxError as err:
-				raise SyntaxError( self.format_error(err) )
-
-			local_vars = local_vars-global_vars
-			if local_vars:
-				args_typedefs = []
-				args = [ a.id for a in node.args.args ]
-
-				for v in local_vars:
-					usertype = None
-					if '=' in v:
-						t,n = v.split('=')  ## unpack type and name
-						if self._with_dart and t in typedpython.simd_types:
-							t = t[0].upper() + t[1:]
-						v = '%s=%s' %(n,t)  ## reverse
-						local_typedef_names.add( n )
-						if t == 'long':
-							writer.write('''inline("if (__NODEJS__==true) var long = require('long')")''')  ## this is ugly
-
-						if n in args:
-							args_typedefs.append( v )
-						else:
-							local_typedefs.append( v )
-					elif v in args or v in local_typedef_names: pass
-					else: vars.append( v )
-
-				if args_typedefs:
-					writer.write('@__typedef__(%s)' %','.join(args_typedefs))
 
 
 		if self._with_dart:
@@ -3087,8 +3098,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		writer.pull()  ## end function body
 
-		if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
-			writer.write('%s.pythonscript_function=True'%node.name)
+		#if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
+		#	writer.write('%s.pythonscript_function=True'%node.name)
 
 
 		if gpu:

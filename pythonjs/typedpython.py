@@ -76,6 +76,9 @@ def transform_source( source, strip=False ):
 					break
 			indent = ''.join(indent)
 			output.append( indent + '@returns(%s)' %rtype)
+		elif c.startswith('import ') and '-' in c:
+			c = c.replace('-', '__DASH__')
+
 
 		output.append( c )
 
