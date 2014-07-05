@@ -49,8 +49,17 @@ def transform_source( source, strip=False ):
 					a.append( char )
 			else:
 				a.append( char )
-
+		if not a:
+			continue
+		if a[-1]==';':
+			a.pop()
 		c = ''.join(a)
+		cs = c.strip()
+		if cs.startswith('//'):
+			continue
+		if cs.startswith('var '):
+			c = c.replace('var ', '')
+
 		if '= def ' in c:
 			x, c = c.split('= def ')
 			indent = []
@@ -78,6 +87,9 @@ def transform_source( source, strip=False ):
 			output.append( indent + '@returns(%s)' %rtype)
 		elif c.startswith('import ') and '-' in c:
 			c = c.replace('-', '__DASH__')
+		elif ' new ' in c:
+			c += ')' * c.count(' new ')
+			c = c.replace(' new ', ' new(')
 
 
 		output.append( c )
