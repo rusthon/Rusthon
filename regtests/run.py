@@ -204,6 +204,9 @@ def files():
                     benchmarks.append( dirpath + os.path.sep + filename )
                 else:
                     tests.append( dirpath + os.path.sep + filename )
+            elif 'html' in dirpath and filename.endswith(".html"):
+                    tests.append( dirpath + os.path.sep + filename )
+
     tests.extend( benchmarks )
     return tests
 
@@ -424,7 +427,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, multioutput=False):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -479,6 +482,9 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--lua')
     elif luajs:
         cmd.append( '--luajs')
+
+    if not requirejs:
+        cmd.append( '--no-wrapper' )
 
     stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
@@ -725,6 +731,45 @@ def run_luajs_node(content):
     return run_command("node %s.js" % tmpname)
 
 
+def run_html_test( filename, sum_errors ):
+    lines = open(filename, 'rb').read().decode('utf-8').splitlines()
+    filename = os.path.split(filename)[-1]
+    doc = []; script = None
+    for line in lines:
+        if line.strip().startswith('<script'):
+            if 'type="text/python"' in line:
+                doc.append( '<script type="text/javascript">')
+                script = list()
+            elif 'src=' in line and '~/' in line:  ## external javascripts installed in users home folder
+                x = line.split('src="')[-1].split('"')[0]
+                if os.path.isfile(os.path.expanduser(x)):
+
+                    doc.append( '<script type="text/javascript">' )
+                    doc.append( open(os.path.expanduser(x), 'rb').read().decode('utf-8') )
+                    doc.append( '</script>')
+            else:
+                doc.append( line )
+
+        elif line.strip() == '</script>':
+            if script:
+                open('/tmp/%s.js'%filename, 'wb').write( ('\n'.join(script)).encode('utf-8') )
+                js = translate_js( '/tmp/%s.js'%filename, requirejs=False )  ## inserts TestError and others
+                doc.append( js )
+            doc.append( line )
+            script = None
+
+        elif isinstance( script, list ):
+            script.append( line )
+
+        else:
+            doc.append( line )
+
+    html = '\n'.join(doc)
+    open('/tmp/%s.html'%filename, 'wb').write( html.encode('utf-8') )
+    ## non-blocking, TODO check for chrome extension that allows output of console.log to stdout
+    subprocess.check_call(['google-chrome', '--app=file:///tmp/%s.html'%filename])
+
+
 table_header = "%-12.12s %-28.28s"
 table_cell   = '%-6.6s'
 
@@ -736,6 +781,11 @@ def run_test_on(filename):
         f.close()
         print(table_header % (filename[2:-3], comment), end='')
     sum_errors = {}
+
+    if filename.endswith('.html'):
+        run_html_test( filename, sum_errors )
+        return sum_errors
+
     def display(function):
         global _test_description
         _test_description = function.__doc__

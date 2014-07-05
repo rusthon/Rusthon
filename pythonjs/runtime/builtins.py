@@ -1203,11 +1203,10 @@ def len(ob):
 			return ob.length
 		elif instanceof(ob, ArrayBuffer):
 			return ob.byteLength
-		elif instanceof(ob, Object):
+		elif ob.__len__:
+			return ob.__len__()
+		else: #elif instanceof(ob, Object):
 			return Object.keys(ob).length
-		else:
-			with python:
-				return ob.__len__()
 
 
 def next(obj):

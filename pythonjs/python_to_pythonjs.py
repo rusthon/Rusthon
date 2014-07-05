@@ -133,6 +133,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
                 return msg
 
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
+		if source.strip().startswith('<html'):
+			raise NotImplementedError('TODO translate from html file')
 
 		source = typedpython.transform_source( source )
 

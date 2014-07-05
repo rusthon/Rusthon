@@ -49,7 +49,10 @@ def main(script):
                     res[ jsfile ] = pythonjs_to_javascript( a[jsfile], webworker=jsfile != 'main' )
                 return res
             else:
-                code = pythonjs_to_javascript( a )
+                ## requirejs module is on by default, this wraps the code in a `define` function
+                ## and returns `__module__`
+                ## if --no-wrapper is used, then the raw javascript is returned.
+                code = pythonjs_to_javascript( a, requirejs='--no-wrapper' not in sys.argv )
 
         return code
 
