@@ -1,0 +1,320 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+<style>
+	html, body {
+		height: 100%;
+	}
+
+	body {
+		background-color: #050505;
+
+		background: rgb(43,45,48); /* Old browsers */
+		background: -moz-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%, rgba(0,0,0,1) 100%); /* FF3.6+ */
+		background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(43,45,48,1)), color-stop(100%,rgba(0,0,0,1))); /* Chrome,Safari4+ */
+		background: -webkit-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* Chrome10+,Safari5.1+ */
+		background: -o-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* Opera 12+ */
+		background: -ms-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* IE10+ */
+		background: radial-gradient(ellipse at center,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* W3C */
+
+		margin: 0;
+		font-family: Arial;
+		overflow: hidden;
+	}
+</style>
+	</head>
+	<body>
+		<script src="~/three.js/build/three.min.js"></script>
+
+		<script src="~/three.js/examples/js/controls/TrackballControls.js"></script>
+
+		<script src="~/three.js/examples/js/renderers/CSS3DRenderer.js"></script>
+
+		<script src="~/three.js/examples/js/postprocessing/RenderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/EffectComposer.js"></script>
+
+
+		<script src="~/three.js/examples/js/postprocessing/BloomPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/MaskPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/SavePass.js"></script>
+
+		<script src="~/three.js/examples/js/shaders/ConvolutionShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/CopyShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/FXAAShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/HorizontalTiltShiftShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/VerticalTiltShiftShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/VignetteShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/EdgeShader2.js"></script>
+
+		<script type="text/python">
+
+pythonjs.configure(javascript=True)
+
+class Element3D:
+	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
+		self.object = object = new THREE.CSS3DObject( element )
+		self.shadow = new THREE.CSS3DObject( element.cloneNode() )
+		self.element = element
+
+		x,y,z = position
+		self.object.position.set(x,y,z+1)
+		self.shadow.position.set(x,y,z)
+
+		x,y,z = scale
+		self.object.scale.set(x,y,z)
+		self.shadow.scale.set(x,y,z)
+
+		shadow_scene.add( self.shadow )
+		interact_scene.add( self.object )
+
+		if True:
+			geo = new THREE.BoxGeometry( 1, 1, 1 );
+			mat = new THREE.MeshBasicMaterial( color=0x000000, opacity=0 )
+			mat.blending = THREE.NoBlending
+			self.mask = r = new THREE.Mesh( geo, mat );
+			scene.add( r );
+			r.position.copy( object.position )
+			r.position.z -= 1
+
+			geo = new THREE.BoxGeometry( 0.7, 1, 20 );
+			mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
+			self.shaded_border = m = new THREE.Mesh( geo, mat );
+			r.add( m );
+			m.position.z -= 10
+			m.castShadow = true;
+			m.receiveShadow = true;
+
+			geo = new THREE.BoxGeometry( 1.1, 1.1, 1 );
+			mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
+			self.glowing_border = m = new THREE.Mesh( geo, mat );
+			r.add( m );
+			m.position.z -= 1
+
+
+			geo = new THREE.BoxGeometry( 0.2, 0.8, 10 );
+			mat = new THREE.MeshPhongMaterial( {'color': 0xffffff } );
+			self.right_bar = m = new THREE.Mesh( geo, mat );
+			r.add( m );
+			m.position.x -= 0.55
+			m.position.z -= 10
+			m.castShadow = true;
+
+			geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
+			mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
+			self.footer = m = new THREE.Mesh( geo, mat );
+			r.add( m );
+			m.position.y -= 0.6
+			m.position.z -= 10
+			m.castShadow = true;
+
+
+	def update(self):
+		if self.shadow.element.parentNode:
+			self.shadow.element.parentNode.removeChild( self.shadow.element )
+
+		self.mask.rotation.copy( self.object.rotation )
+		self.shadow.rotation.copy( self.object.rotation )
+
+		w = self.element.clientWidth * 0.01
+		h = self.element.clientHeight * 0.01
+
+		self.mask.scale.x = w*99
+		self.mask.scale.y = h*99
+
+		self.shadow.element = self.element.cloneNode()  ## this is just to display content
+
+
+camera = scene = renderer = None
+geometry = material = mesh = None
+scene2 = renderer2 = renderer3 = None
+controls = composer = None
+Elements = []
+
+init();
+animate();
+
+def init():
+	global camera, scene, scene2, scene3, renderer, renderer2, renderer3
+	global geometry, material, mesh
+	global controls, composer
+
+	SCREEN_WIDTH = window.innerWidth
+	SCREEN_HEIGHT = window.innerHeight
+
+	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.set( 200, 150, 800 );
+
+	controls = new THREE.TrackballControls( camera );
+
+	controls.rotateSpeed = 1.0;
+	controls.zoomSpeed = 1.2;
+	controls.panSpeed = 0.8;
+
+	controls.noZoom = false;
+	controls.noPan = false;
+
+	controls.staticMoving = false;
+	controls.dynamicDampingFactor = 0.3;
+
+	controls.keys = [ 65, 83, 68 ];
+
+	scene = new THREE.Scene();
+	scene3 = new THREE.Scene();
+
+	#light = new( THREE.PointLight() )
+	#light.position.set( 0, 360, 290 )
+	#scene.add( light )
+
+
+	geometry = new THREE.BoxGeometry( 800, 60, 3800 );
+	material = new THREE.MeshPhongMaterial( color=0x00ffff, transparent=true, opacity=0.17 );
+	mesh = new THREE.Mesh( geometry, material );
+	mesh.position.z = -400
+	#mesh.position.y = -300
+	scene.add( mesh );
+	mesh.receiveShadow = true;
+
+	renderer = new THREE.WebGLRenderer(alpha=True);
+	renderer.shadowMapEnabled = true
+	renderer.shadowMapType = THREE.PCFSoftShadowMap
+	renderer.shadowMapSoft = true
+
+	#renderer.physicallyBasedShading = true;
+
+	#renderer = new THREE.CanvasRenderer(alpha=True);
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	#document.body.appendChild( renderer.domElement );
+	renderer.domElement.style.position = 'absolute';
+	renderer.domElement.style.top = 0;
+	renderer.domElement.style.zIndex = 1;
+
+
+
+	light = new(
+		THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 )
+	)
+	light.position.set( 0, 1400, 400 )
+	light.target.position.set( 0, 0, 0 )
+
+	light.castShadow = True
+	light.shadowCameraNear = 400
+	light.shadowCameraFar = 1800
+	light.shadowCameraFov = 64
+	light.shadowCameraVisible = True
+
+	light.shadowBias = 0.0001
+	light.shadowDarkness = 0.4
+
+	light.shadowMapWidth = 512
+	light.shadowMapHeight = 512
+
+	scene.add( light );
+
+
+	//
+	renderer.sortObjects = false
+	renderer.autoClear = false
+
+	renderTarget = new(
+		THREE.WebGLRenderTarget(
+			SCREEN_WIDTH, 
+			SCREEN_HEIGHT, 
+			minFilter = THREE.LinearFilter, 
+			magFilter = THREE.LinearFilter, 
+			format = THREE.RGBAFormat,  ## RGBA format is required to composite over css3d render
+			stencilBuffer = false
+		)
+	)
+
+	effectFXAA = new(THREE.ShaderPass( THREE.FXAAShader ))
+
+	hblur = new(THREE.ShaderPass( THREE.HorizontalTiltShiftShader ))
+	vblur = new(THREE.ShaderPass( THREE.VerticalTiltShiftShader ))
+
+	bluriness = 1.7;
+	hblur.uniforms[ 'h' ].value = bluriness / SCREEN_WIDTH;
+	vblur.uniforms[ 'v' ].value = bluriness / SCREEN_HEIGHT;
+
+	hblur.uniforms[ 'r' ].value = 0.1
+	vblur.uniforms[ 'r' ].value = 0.1
+
+	effectFXAA.uniforms[ 'resolution' ].value.set( 1.0 / SCREEN_WIDTH, 1.0 / SCREEN_HEIGHT );
+
+	composer = new(THREE.EffectComposer( renderer, renderTarget ))
+
+	renderModel = new(THREE.RenderPass( scene, camera ))
+
+	vblur.renderToScreen = true;
+	composer.addPass( renderModel );
+	composer.addPass( hblur );
+	composer.addPass( vblur );
+
+
+	scene2 = new THREE.Scene();
+
+	def onclick(e):
+		this.parentNode.appendChild(document.createTextNode('hello world'))
+		this.parentNode.appendChild(document.createElement('br'))
+
+
+
+	for i in range(20):
+
+		var element = document.createElement( 'div' );
+		element.style.background = new THREE.Color( Math.random() * 0xffffff ).getStyle();
+		b = document.createElement('button')
+		b.appendChild(document.createTextNode('click me'))
+		b.onclick = onclick
+		element.appendChild(b)
+
+		x = Math.random() * 200 - 100;
+		y = Math.random() * 200 + 100;
+		z = Math.random() * 800 - 100;
+
+		e = Element3D( element, scene, scene2, scene3, [x,y,z], [1,1,1] )
+		Elements.append( e )
+
+
+	renderer2 = new THREE.CSS3DRenderer();
+	renderer2.setSize( window.innerWidth, window.innerHeight );
+	renderer2.domElement.style.position = 'absolute';
+	renderer2.domElement.style.top = 0;
+	renderer2.domElement.style.zIndex = 0;
+	document.body.appendChild( renderer2.domElement );
+
+	renderer3 = new THREE.CSS3DRenderer();
+	renderer3.setSize( window.innerWidth, window.innerHeight );
+	renderer3.domElement.style.position = 'absolute';
+	renderer3.domElement.style.top = 0;
+	renderer3.domElement.style.opacity = 0.01;
+	renderer3.domElement.style.zIndex=200;
+
+	document.body.appendChild( renderer2.domElement );
+	document.body.appendChild( renderer.domElement );
+	document.body.appendChild( renderer3.domElement );
+
+
+
+def animate():
+
+	requestAnimationFrame( animate );
+
+	controls.update();
+
+	for e in Elements:
+		e.object.rotation.z += 0.001
+		e.update()
+
+	renderer2.render( scene2, camera );
+
+	renderer.clear()
+	composer.render( scene, camera )
+
+	renderer3.render( scene3, camera );
+
+
+		</script>
+	</body>
+</html>
