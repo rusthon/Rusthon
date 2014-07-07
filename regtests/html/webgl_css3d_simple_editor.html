@@ -74,28 +74,11 @@ def create_textarea():
 	ta.setAttribute('class', 'focused alert alert-info')
 	return ta
 
-def create_select_dropdown( options ):
-	global __sid
-	__sid += 1
-	a = document.createElement('select')
-	a.setAttribute('id', '__sid'+__sid)
-	def f(): a.focus()  ## allows the enter key to display options
-	a.onclick = f
-
-	for opt in options:
-		o = document.createElement('option')
-		o.appendChild(document.createTextNode(opt))
-		a.appendChild(o)
-
-	return a
 
 class Element3D:
 	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
-		global __sid
-		images = element.getElementsByTagName('img')
-		for img in images:
-			img.setAttribute('id', '__sid'+__sid)
-			__sid += 1
+		## required for select dropdowns because `selectedIndex` is not updated by `e.cloneNode()` ##
+		self._sid = 0
 
 		self.object = object = new THREE.CSS3DObject( element )
 		self.position = object.position
@@ -112,6 +95,8 @@ class Element3D:
 		## below shadow_images holds a mapping of url and image, these must be inserted into the cloned dom each update.
 		self.shadow_images = {}
 
+		self.dropdown = None
+
 		x,y,z = position
 		self.object.position.set(x,y,z+1)
 		self.shadow.position.set(x,y,z)
@@ -123,52 +108,95 @@ class Element3D:
 		shadow_scene.add( self.shadow )
 		interact_scene.add( self.object )
 
-		if True:
-			geo = new THREE.BoxGeometry( 1, 1, 1 );
-			mat = new THREE.MeshBasicMaterial( color=0x000000, opacity=0 )
-			mat.blending = THREE.NoBlending
-			self.mask = r = new THREE.Mesh( geo, mat );
-			scene.add( r );
-			r.position.copy( object.position )
-			r.position.z -= 1
+		self.root = new THREE.Object3D()
+		scene.add( self.root )
 
-			geo = new THREE.BoxGeometry( 0.7, 1, 20 );
-			mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
-			self.shaded_border = m = new THREE.Mesh( geo, mat );
-			r.add( m );
-			m.position.z -= 12
-			m.castShadow = true;
-			m.receiveShadow = true;
+		self.create_windowframe()
 
-			geo = new THREE.BoxGeometry( 1.1, 1.1, 1 );
-			mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
-			self.glowing_border = m = new THREE.Mesh( geo, mat );
-			r.add( m );
-			m.position.z -= 2
-
-			geo = new THREE.BoxGeometry( 1.1, 1.1, 50 );
-			mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.28, 'blending':THREE.AdditiveBlending, 'wireframe':true } );
-			m = new THREE.Mesh( geo, mat );
-			r.add( m );
-			m.position.z -= 40
+	def display_dropdown(self, e, options):
+		if not self.dropdown:
+			self.create_dropdown( e, options )
 
 
-			geo = new THREE.BoxGeometry( 0.025, 0.5, 30 );
-			mat = new THREE.MeshPhongMaterial( {'color': 0xffffff } );
-			self.right_bar = m = new THREE.Mesh( geo, mat );
-			r.add( m );
-			m.position.y += 0.3
-			m.position.x -= 0.55
-			m.position.z -= 10
-			m.castShadow = true;
+	def create_dropdown(self, e, options):
 
-			geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
-			mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
-			self.footer = m = new THREE.Mesh( geo, mat );
-			r.add( m );
-			m.position.y -= 0.6
-			m.position.z -= 5
-			m.castShadow = true;
+		geo = new THREE.BoxGeometry( 1, 300, 10 );
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
+		self.dropdown = m = new THREE.Mesh( geo, mat );
+		self.root.add( m );
+		m.castShadow = true;
+		m.receiveShadow = true;
+		#br = e.getBoundingClientRect()
+		m.position.x = e.offsetLeft / 2
+		m.position.y -= 150 - e.offsetTop
+		m.position.z = 3
+		m.scale.x = e.clientWidth
+
+
+	def create_select_dropdown(self, options ):
+		self._sid += 1
+		a = document.createElement('select')
+		a.setAttribute('id', '_sid'+self._sid)
+
+		def onclick(e):
+			a.focus()  ## allows the enter key to display options
+			self.display_dropdown(a, options)
+		a.onclick = onclick.bind(self)
+
+		for opt in options:
+			o = document.createElement('option')
+			o.appendChild(document.createTextNode(opt))
+			a.appendChild(o)
+
+		return a
+
+
+	def create_windowframe(self):
+		geo = new THREE.BoxGeometry( 1, 1, 1 );
+		mat = new THREE.MeshBasicMaterial( color=0x000018, opacity=0 )
+		mat.blending = THREE.NoBlending
+		self.mask = r = new THREE.Mesh( geo, mat );
+		self.root.add( r );
+		#r.position.copy( self.object.position )
+		r.position.z -= 5
+
+		geo = new THREE.BoxGeometry( 0.7, 1, 20 );
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
+		self.shaded_border = m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.z -= 12
+		m.castShadow = true;
+		m.receiveShadow = true;
+
+		geo = new THREE.BoxGeometry( 1.1, 1.1, 1 );
+		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
+		self.glowing_border = m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.z -= 2
+
+		geo = new THREE.BoxGeometry( 1.1, 1.1, 50 );
+		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.28, 'blending':THREE.AdditiveBlending, 'wireframe':true } );
+		m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.z -= 40
+
+
+		geo = new THREE.BoxGeometry( 0.025, 0.5, 30 );
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff } );
+		self.right_bar = m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.y += 0.3
+		m.position.x -= 0.55
+		m.position.z -= 10
+		m.castShadow = true;
+
+		geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
+		mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
+		self.footer = m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.y -= 0.6
+		m.position.z -= 5
+		m.castShadow = true;
 
 
 	def update(self):
@@ -178,8 +206,8 @@ class Element3D:
 		if self.active and self.object.position.y < 300:
 			self.object.position.y += 10
 
-		self.mask.position.copy( self.object.position )
-		self.mask.rotation.copy( self.object.rotation )
+		self.root.position.copy( self.object.position )
+		self.root.rotation.copy( self.object.rotation )
 
 		self.shadow.position.copy( self.object.position )
 		self.shadow.rotation.copy( self.object.rotation )
@@ -220,6 +248,8 @@ class Element3D:
 				img.parentNode.replaceChild(lazy, img)
 			else:
 				self.shadow_images[ img.src ] = img
+
+
 
 
 camera = scene = renderer = None
@@ -304,9 +334,10 @@ def init():
 
 	scene.add( light );
 
-	light = new( THREE.PointLight(0xffffff, 2, 500) )
-	light.position.set( 10, 100, 300 )
-	scene.add( light )
+	global pointlight
+	pointlight = new( THREE.PointLight(0xffffff, 2, 500) )
+	pointlight.position.set( 10, 100, 300 )
+	scene.add( pointlight )
 
 
 	//
@@ -351,16 +382,17 @@ def init():
 	def onclick():
 		this.firstChild.nodeValue='run script'
 		this.setAttribute('class', 'btn btn-warning btn-small')
-		this.parentNode.appendChild(document.createTextNode(' mode:'))
-		this.parentNode.appendChild( create_select_dropdown(['javascript', 'python']) )
+		this.parentNode.appendChild(document.createTextNode(' [some title XXXXXXXXXXXXXX] mode:'))
+		this.parentNode.appendChild( this.element3D.create_select_dropdown(['javascript', 'python']) )
 		this.parentNode.appendChild(document.createElement('br'))
 
 		con = document.createElement('div')
 		this.parentNode.appendChild(con)
-		global ta
 		ta = create_textarea()
 		con.appendChild( ta )
 
+		pointlight.position.copy( this.element3D.object.position )
+		pointlight.position.z += 40
 		gizmo.attach( this.element3D.right_bar )
 		camera.smooth_target.copy( this.element3D.object.position )
 		camera.smooth_target.y = 300
