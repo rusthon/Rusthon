@@ -962,7 +962,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
 		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
 		out.append(
-			self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s)) ) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name)
+			self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_node_list(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
 		)
 
 

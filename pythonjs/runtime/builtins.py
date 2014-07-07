@@ -349,6 +349,11 @@ with lowlevel:
 
 
 with javascript:
+	def __is_node_list( ob ):
+		if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
+			if instanceof(ob, NodeList):
+				return True
+		return False
 
 	def __is_typed_array( ob ):
 		if instanceof( ob, Int8Array ) or instanceof( ob, Uint8Array ):

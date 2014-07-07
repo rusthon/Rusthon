@@ -61,110 +61,28 @@
 
 pythonjs.configure(javascript=True)
 
-class KeyboardInputHack:
-	def __init__(self):
-		self.element = None
-		window.addEventListener( 'keydown', self.on_keydown.bind(self), False )
-		window.addEventListener( 'keypress', self.on_keypress.bind(self), False )
-		self.reset()
 
-	def reset(self):
-		self.lines = []
-		self.x = 0
-		self.y = -1
+def create_textarea():
+	ta = document.createElement('textarea')
+	def func(): ta.focus()  ## this allows normal keyboard input
+	ta.onclick = func
+	return ta
 
-	def get_text(self):
-		lines = []
-		for line in self.lines:
-			lines.append( ''.join(line) )
-		return '\\n'.join(lines)
+__sid = 0
+def create_select_dropdown( options ):
+	global __sid
+	__sid += 1
+	a = document.createElement('select')
+	a.setAttribute('id', '__sid'+__sid)
+	def f(): a.focus()  ## allows the enter key to display options
+	a.onclick = f
 
-	def newline(self):
-		self.lines.append( [] )
-		self.y += 1
+	for opt in options:
+		o = document.createElement('option')
+		o.appendChild(document.createTextNode(opt))
+		a.appendChild(o)
 
-	def insert(self, char):
-		if char == '\\n' or len(self.lines)==0:
-			self.newline()
-		if char != '\\n':
-			self.lines[ self.y ].insert( self.x, char)
-		self.x += 1
-
-	def backspace(self):
-		if self.x==0:
-			self.lines.remove( self.y )
-		else:
-			self.x -= 1
-			self.lines[ self.y ].remove( self.x )
-
-	def move(self, d):
-		if d == 'L':
-			if self.x > 0:
-				self.x -= 1
-		elif d == 'R':
-			if self.x < len(self.lines[self.y]):
-				self.x += 1
-		elif d == 'U':
-			if self.y > 0:
-				self.y -= 1
-				m = len(self.lines[self.y])
-				if self.x > m:
-					self.x = m
-		elif d == 'D':
-			if self.y < len(self.lines):
-				self.y += 1
-				m = len(self.lines[self.y])
-				if self.x > m:
-					self.x = m
-
-	def on_keydown(self, e):
-		if e.ctrlKey:
-			return
-		elif e.keyCode == 38:
-			self.move('U')
-		elif e.keyCode == 37:
-			self.move('L')
-		elif e.keyCode == 40:
-			self.move('D')
-		elif e.keyCode == 39:
-			self.move('R')
-
-		elif e.keyCode == 9:  ## tab keydown
-			self.insert( '  ' )
-		elif e.keyCode == 8:  ## backspace
-			e.preventDefault()
-			self.backspace()
-		elif e.keyCode == 27: ## escape key
-			self.reset()
-
-	def on_keypress(self, e ):
-		if e.keyCode == 32:  ## space
-			self.insert(' ')
-		elif e.keyCode == 12: ## enter key
-			self.newline()
-		else:
-			s = String.fromCharCode(e.charCode)
-			self.insert( s )
-
-		#if self.element:
-		#	if self.element.tagName == 'TEXTAREA':
-		#		if self.element.firstChild:
-		#			self.element.removeChild( self.element.firstChild )
-		#		self.element.appendChild( document.createTextNode(self.get_text()) )
-		#	else:
-		#		self.element.setAttribute('value', self.get_text())
-
-
-	def create_textarea(self):
-		global ta
-		ta = document.createElement('textarea')
-		#def func(): self.element = ta
-		def func(): ta.focus()  ## this allows normal keyboard input
-		ta.onclick = func.bind(self)
-		return ta
-
-
-KeyboardInput = KeyboardInputHack()
+	return a
 
 class Element3D:
 	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
@@ -238,6 +156,15 @@ class Element3D:
 		self.mask.scale.y = h*99
 
 		self.shadow.element = self.element.cloneNode()  ## this is just to display content
+
+		a = self.element.getElementsByTagName('SELECT')
+		b = self.shadow.element.getElementsByTagName('SELECT')
+		c = {}
+		for sel in b:
+			c[ sel.getAttribute('id') ] = sel
+
+		for sel in a:
+			c[ sel.getAttribute('id') ].selectedIndex = sel.selectedIndex
 
 
 camera = scene = renderer = None
@@ -376,24 +303,11 @@ def init():
 		con.style.width = '300px'
 		con.style.height = '150px'
 		this.parentNode.appendChild(con)
-		ta = KeyboardInput.create_textarea()
+		ta = create_textarea()
 		con.appendChild( ta )
 
-		a = document.createElement('select')
-		con.appendChild(a)
-		def f():
-			a.focus()  ## allows the enter key to display options
-			#a.click()
-		a.onclick = f
-		global XX
-		XX = a
+		con.appendChild( create_select_dropdown(['option1', 'option2']) )
 
-		o = document.createElement('option')
-		o.appendChild(document.createTextNode('option1'))
-		a.appendChild(o)
-		o = document.createElement('option')
-		o.appendChild(document.createTextNode('option2'))
-		a.appendChild(o)
 
 	for i in range(20):
 
