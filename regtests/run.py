@@ -736,7 +736,16 @@ def run_html_test( filename, sum_errors ):
     filename = os.path.split(filename)[-1]
     doc = []; script = None
     for line in lines:
-        if line.strip().startswith('<script'):
+        if line.strip().startswith('<link') and 'stylesheet' in line and '~/' in line:
+            doc.append('<style>')
+            css = line.split('href=')[-1].split()[0][1:-1]
+            print('css', css)
+            assert css.startswith('~/')
+            assert css.endswith('.css')
+            assert os.path.isfile( os.path.expanduser(css) )
+            doc.append( open(os.path.expanduser(css), 'rb').read().decode('utf-8') )
+            doc.append('</style>')
+        elif line.strip().startswith('<script'):
             if 'type="text/python"' in line:
                 doc.append( '<script type="text/javascript">')
                 script = list()
