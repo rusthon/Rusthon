@@ -79,7 +79,8 @@ class Element3D:
 	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
 		## required for select dropdowns because `selectedIndex` is not updated by `e.cloneNode()` ##
 		self._sid = 0
-
+		self.interact_scene = interact_scene
+		self.shadow_scene = shadow_scene
 		self.object = object = new THREE.CSS3DObject( element )
 		self.position = object.position
 		self.rotation = object.rotation
@@ -116,20 +117,82 @@ class Element3D:
 	def display_dropdown(self, e, options):
 		if not self.dropdown:
 			self.create_dropdown( e, options )
+		else:
+			self.object.remove( self.dropdown )
+			self.shadow.remove( self.dropdown_clone )
+			self.root.remove( self._ddmesh1 )
+			self.root.remove( self._ddmesh2 )
+			self.dropdown = None
+
+	def hide_dropdown(self):  ## not working, three.js bug?
+		self.dropdown.visible = false
+		self.dropdown_clone.visible = false
 
 
 	def create_dropdown(self, e, options):
+		global sel
+		sel = document.createElement('select')
+		sel.setAttribute('multiple', 'multiple')
+		self._sid += 1
+		sel.setAttribute('id', '_sid'+self._sid)
+		for i,opt in enumerate(options):
+			o = document.createElement('option')
+			o.setAttribute('index', i)
+			o.appendChild( document.createTextNode(opt) )
+			sel.appendChild( o )
 
-		geo = new THREE.BoxGeometry( 1, 300, 10 );
-		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
-		self.dropdown = m = new THREE.Mesh( geo, mat );
+		##print('clientHeight', sel.clientHeight)
+		## sel.clientHeight can not be used here because the dom has not been updated,
+		## as a simple workaround guess height based on number of options,
+		## this needs to be done anyways because `sel` must be given a height in pixels,
+		## to force it to display all the options, and not display a scroll bar (which are not synced).
+		H = 18 * options.length
+		if H < 150: H = 150
+		sel.style.height = H #'100%'
+
+		## create dropdown css object and add it to self.object,
+		## this makes it part of the interactive scene,
+		## it is also needs its own shadow clone to be updated.
+		self.dropdown = new THREE.CSS3DObject( sel )
+		self.object.add( self.dropdown )
+		self.dropdown_clone = new THREE.CSS3DObject(sel.cloneNode())
+		self.shadow.add( self.dropdown_clone )
+
+		self.dropdown.position.x = e.offsetLeft / 2
+		self.dropdown.position.y -= (H/2) - e.offsetTop
+		self.dropdown.position.z += 20
+		self.dropdown_clone.position.copy( self.dropdown.position )
+		self.dropdown_clone.position.z -= 1
+
+		sel.focus()
+		def onclick(evt):
+			#sel.focus()  ## this triggers a bug that offsets the interactive layer
+			print(evt.toElement.getAttribute('index'))
+			e.selectedIndex = sel.selectedIndex = int(evt.toElement.getAttribute('index'))
+		sel.onclick = onclick
+
+
+
+		geo = new THREE.BoxGeometry( 1.1, H*1.1, 3 );
+		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
+		self._ddmesh1 = m = new THREE.Mesh( geo, mat );
 		self.root.add( m );
 		m.castShadow = true;
-		m.receiveShadow = true;
-		#br = e.getBoundingClientRect()
 		m.position.x = e.offsetLeft / 2
-		m.position.y -= 150 - e.offsetTop
-		m.position.z = 3
+		m.position.y -= (H/2) - e.offsetTop
+		m.position.y += 10
+		m.position.z = 1
+		m.scale.x = e.clientWidth
+
+		geo = new THREE.BoxGeometry( 1.07, H, 3 );
+		mat = new THREE.MeshBasicMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.48, 'blending':THREE.SubtractiveBlending } );
+		self._ddmesh2 = m = new THREE.Mesh( geo, mat );
+		self.root.add( m );
+		m.castShadow = true;
+		m.position.x = e.offsetLeft / 2
+		m.position.y -= (H/2) - e.offsetTop
+		m.position.y += 10
+		m.position.z = 15
 		m.scale.x = e.clientWidth
 
 
@@ -153,7 +216,7 @@ class Element3D:
 
 	def create_windowframe(self):
 		geo = new THREE.BoxGeometry( 1, 1, 1 );
-		mat = new THREE.MeshBasicMaterial( color=0x000018, opacity=0 )
+		mat = new THREE.MeshBasicMaterial( color=0x000000, opacity=0 )
 		mat.blending = THREE.NoBlending
 		self.mask = r = new THREE.Mesh( geo, mat );
 		self.root.add( r );
@@ -203,7 +266,7 @@ class Element3D:
 		if self.shadow.element.parentNode:
 			self.shadow.element.parentNode.removeChild( self.shadow.element )
 
-		if self.active and self.object.position.y < 300:
+		if self.active and self.object.position.y < 400:
 			self.object.position.y += 10
 
 		self.root.position.copy( self.object.position )
@@ -227,7 +290,9 @@ class Element3D:
 			c[ sel.getAttribute('id') ] = sel
 
 		for sel in a:
-			c[ sel.getAttribute('id') ].selectedIndex = sel.selectedIndex
+			clone = c[ sel.getAttribute('id') ]
+			clone.selectedIndex = sel.selectedIndex
+			#clone.scrollTop = sel.scrollTop  ## this will not work to sync scrollbars
 
 
 		a = self.element.getElementsByTagName('TEXTAREA')
@@ -379,11 +444,15 @@ def init():
 
 	scene2 = new THREE.Scene();
 
+	test_options = ['javascript', 'python']
+	for i in range(15):
+		test_options.append( 'some-option-'+i )
+
 	def onclick():
 		this.firstChild.nodeValue='run script'
 		this.setAttribute('class', 'btn btn-warning btn-small')
-		this.parentNode.appendChild(document.createTextNode(' [some title XXXXXXXXXXXXXX] mode:'))
-		this.parentNode.appendChild( this.element3D.create_select_dropdown(['javascript', 'python']) )
+		this.parentNode.appendChild(document.createTextNode(' mode:'))
+		this.parentNode.appendChild( this.element3D.create_select_dropdown(test_options) )
 		this.parentNode.appendChild(document.createElement('br'))
 
 		con = document.createElement('div')
@@ -438,7 +507,7 @@ def init():
 	renderer3.setSize( window.innerWidth, window.innerHeight );
 	renderer3.domElement.style.position = 'absolute';
 	renderer3.domElement.style.top = 0;
-	renderer3.domElement.style.opacity = 0.18;
+	renderer3.domElement.style.opacity = 0.28;
 	renderer3.domElement.style.zIndex=200;
 
 	document.body.appendChild( renderer2.domElement );
