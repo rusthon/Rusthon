@@ -15,6 +15,39 @@ def create_textarea():
 	ta.setAttribute('class', 'focused alert alert-info')
 	return ta
 
+def create_checkbox( checked ):
+	## no special hacks required for checkboxes ##
+	c = document.createElement('input')
+	c.setAttribute('type', 'checkbox')
+	if checked: c.setAttribute('checked', 'true')
+	return c
+
+def create_dropdown_button( name, options ):
+	div = document.createElement('div')
+	div.setAttribute('class', 'btn-group')
+
+	b = document.createElement('button')
+	b.setAttribute('class', 'btn dropdown-toggle')
+	b.setAttribute('data-toggle', 'dropdown')
+	caret = document.createElement('span')
+	caret.setAttribute('class', 'caret')
+	b.appendChild( document.createTextNode(name))
+	b.appendChild(caret)
+
+	## the darkstrap css fails to properly expand the options,
+	## TODO - fix darkstrap or convert this to a 3D dropdown.
+	ul = document.createElement('ul')
+	ul.setAttribute('class', 'dropdown-menu')
+	for opt in options:
+		li = document.createElement('li')
+		a = document.createElement('a')
+		a.appendChild( document.createTextNode(opt) )
+		li.appendChild( a )
+		ul.appendChild( li )
+
+	div.appendChild(b)
+	div.appendChild(ul)
+	return div
 
 CLICKABLES = []
 def _on_mouse_up(evt):
