@@ -133,12 +133,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
                 return msg
 
 	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
+		super(PythonToPythonJS, self).__init__()
+		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
+		self._with_lua = lua
+		self._with_coffee = coffee
+		self._with_dart = dart
+
 		if source.strip().startswith('<html'):
 			raise NotImplementedError('TODO translate from html file')
 
 		source = typedpython.transform_source( source )
 
-		super(PythonToPythonJS, self).__init__()
 		self.setup_inliner( writer )
 
 		self._line = None
@@ -147,9 +152,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._direct_operators = set()  ## optimize "+" and "*" operator
 		self._with_ll = False   ## lowlevel
-		self._with_lua = lua
-		self._with_coffee = coffee
-		self._with_dart = dart
 		self._with_js = False
 		self._in_lambda = False
 		self._in_while_test = False
@@ -179,9 +181,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._decorator_class_props = dict()
 		self._function_return_types = dict()
 		self._return_type = None
-		self._module = module
-		self._module_path = module_path  ## DEPRECATED
-		self._typedefs = dict()  ## class name : typedef  (not pickled)
+
+
+		self._module = module    ## DEPRECATED
+		self._typedefs = dict()  ## class name : typedef  (deprecated - part of the old static type finder)
 
 		self._globals = dict()
 		self._global_nodes = dict()
@@ -400,6 +403,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		else:
 			lib = ministdlib.JS
 
+		path = os.path.join( self._module_path, node.module+'.py')
+
 		if node.module == 'time' and node.names[0].name == 'sleep':
 			self._use_sleep = True
 		elif node.module == 'array' and node.names[0].name == 'array':
@@ -423,12 +428,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 
-		elif node.module.startswith('nodejs.'):  ## TODO - DEPRECATE
-			## this import syntax is now used to import NodeJS bindings see: PythonJS/nodejs/bindings
-			## the helper script (nodejs.py) checks for these import statements, and loads the binding,
-			pass
+		elif os.path.isfile(path):  
+			## user import `from mymodule import *` TODO support files from other folders
+			## this creates a sub-translator, because they share the same `writer` object (a global),
+			## there is no need to call `writer.write` here.
+			## note: the current pythonjs.configure mode here maybe different from the subcontext.
+			data = open(path, 'rb').read()
+			subtrans = PythonToPythonJS(
+				data, 
+				module_path=self._module_path
+			)
+			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
+
 		else:
-			raise SyntaxError( 'invalid import - %s' %node.module )
+			msg = 'invalid import - file not found: %s/%s.py'%(self._module_path,node.module)
+			raise SyntaxError( self.format_error(msg) )
 
 	def visit_Assert(self, node):
 		## hijacking "assert isinstance(a,A)" as a type system ##
@@ -3774,12 +3788,13 @@ def collect_generator_functions(node):
 
 
 
-def main(script, dart=False, coffee=False, lua=False):
+def main(script, dart=False, coffee=False, lua=False, module_path=None):
 	translator = PythonToPythonJS(
 		source = script, 
 		dart   = dart or '--dart' in sys.argv,
 		coffee = coffee,
-		lua    = lua
+		lua    = lua,
+		module_path = module_path
 	)
 
 	code = writer.getvalue()
@@ -3798,18 +3813,15 @@ def main(script, dart=False, coffee=False, lua=False):
 		return code
 
 
-def command():
-	module = None
+
+if __name__ == '__main__':
+	## if run directly prints source transformed to python-js-subset, this is just for debugging ##
 	scripts = []
 	if len(sys.argv) > 1:
 		argv = sys.argv[1:]
 		for i,arg in enumerate(argv):
 			if arg.endswith('.py'):
 				scripts.append( arg )
-				module = arg.split('.')[0]
-			elif i > 0:
-				if argv[i-1] == '--module':
-					module = arg
 
 	if len(scripts):
 		a = []
@@ -3822,12 +3834,7 @@ def command():
 
 	compiler = PythonToPythonJS(
 		source=data, 
-		module=module, 
 		dart='--dart' in sys.argv
 	)
 	output = writer.getvalue()
 	print( output )  ## pipe to stdout
-
-
-if __name__ == '__main__':
-	command()

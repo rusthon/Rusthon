@@ -47,12 +47,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def pull(self):
 		if self._indent > 0: self._indent -= 1
 
+	def visit_Global(self, node):
+		return '/*globals: %s */' %','.join(node.names)
 
 	def visit_Assign(self, node):
 		# XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
 		target = node.targets[0]
 		if isinstance(target, Tuple):
-			raise NotImplementedError
+			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
@@ -475,11 +477,17 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			if isinstance(child, Str):
 				continue
 
-			if isinstance(child, GeneratorType):  ## not tested
-				for sub in child:
-					body.append( self.indent()+self.visit(sub))
+			#if isinstance(child, GeneratorType):  ## not tested
+			#	for sub in child:
+			#		body.append( self.indent()+self.visit(sub))
+			#else:
+			v = self.visit(child)
+			if v is None:
+				msg = 'error in function: %s'%node.name
+				msg += '\n%s' %child
+				raise SyntaxError(msg)
 			else:
-				body.append( self.indent()+self.visit(child))
+				body.append( self.indent()+v)
 
 		buffer += '\n'.join(body)
 		self.pull()

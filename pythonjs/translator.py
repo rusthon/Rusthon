@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys, traceback, json
+import os, sys, traceback, json
 
 from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
@@ -13,20 +13,20 @@ usage: translator.py [--dart|--coffee|--lua] file.py
        translator.py --visjs file.py\
 """
 
-def main(script):
+def main(script, module_path=None):
     if '--visjs' in sys.argv:
         import python_to_visjs
         return python_to_visjs.main( script )
     else:
         code = ''
         if '--dart' in sys.argv:
-            a = python_to_pythonjs(script, dart=True)
+            a = python_to_pythonjs(script, dart=True, module_path=module_path)
             code = pythonjs_to_dart( a )
         elif '--coffee' in sys.argv:
-            a = python_to_pythonjs(script, coffee=True)
+            a = python_to_pythonjs(script, coffee=True, module_path=module_path)
             code = pythonjs_to_coffee( a )
         elif '--lua' in sys.argv:
-            a = python_to_pythonjs(script, lua=True)
+            a = python_to_pythonjs(script, lua=True, module_path=module_path)
             try: code = pythonjs_to_lua( a )
             except SyntaxError:
                 err = traceback.format_exc()
@@ -38,11 +38,11 @@ def main(script):
                 b = a.splitlines()[ lineno ]
                 sys.stderr.write( '\n'.join([err,b]) )
                 
-        elif '--luajs' in sys.argv:
-            a = python_to_pythonjs(script, lua=True)
+        elif '--luajs' in sys.argv:  ## converts back to javascript
+            a = python_to_pythonjs(script, lua=True, module_path=module_path)
             code = pythonjs_to_luajs( a )
         else:
-            a = python_to_pythonjs(script)
+            a = python_to_pythonjs(script, module_path=module_path)
             if isinstance(a, dict):
                 res = {}
                 for jsfile in a:
@@ -61,11 +61,14 @@ def command():
         print(cmdhelp)
         return
 
+    mpath = None
     scripts = []
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if arg.endswith('.py'):
                 scripts.append( arg )
+                if mpath is None:
+                    mpath = os.path.split(arg)[0]
 
     if len(scripts):
         a = []
@@ -75,7 +78,7 @@ def command():
     else:
         data = sys.stdin.read()
 
-    js = main(data)
+    js = main(data, module_path=mpath)
     if isinstance(js, dict):
         print( json.dumps(js) )
     else:

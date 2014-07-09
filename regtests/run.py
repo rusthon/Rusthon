@@ -192,21 +192,38 @@ else:
     display_errors = "2>/dev/null"
 
 def files():
-    """All the filenames of the regression tests"""
+    """returns all the filenames of the regression tests.
+    this also needs to copy all the original python files to /tmp
+    because `from xxx import *` syntax will trigger the translator
+    to read files from the same directory and insert them.
+    """
     tests = []
+    html_tests = []
     benchmarks = []
+    mods = []
     for dirpath, dirnames, filenames in os.walk('.'):
         if dirpath == '.':
             continue
         for filename in filenames:
+            a = dirpath + os.path.sep + filename
             if filename.endswith(".py"):
                 if 'bench' in dirpath:
-                    benchmarks.append( dirpath + os.path.sep + filename )
+                    benchmarks.append( a )
                 else:
-                    tests.append( dirpath + os.path.sep + filename )
-            elif 'html' in dirpath and filename.endswith(".html"):
-                    tests.append( dirpath + os.path.sep + filename )
+                    tests.append( a )
+            elif 'html' in dirpath:
+                if filename.endswith(".html"):
+                    html_tests.append( a )
+                elif filename.endswith('.py'):  ## these are modules
+                    mods.append( filename )
 
+    tmpdir = tempfile.gettempdir()
+    for mod in mods+tests:
+        data = open(mod,'rb').read()
+        name = os.path.split(mod)[-1]
+        open(os.path.join(tmpdir, name), 'wb').write( data )
+
+    tests.extend( html_tests )
     tests.extend( benchmarks )
     return tests
 
@@ -431,7 +448,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
-        'test-%s-js=%s-dart=%s-lua=%s' %(filename.split('/')[-1], javascript, dart, lua)
+        #'test-%s-js=%s-dart=%s-lua=%s' %(filename.split('/')[-1], javascript, dart, lua)
+        'regtest-%s'%filename.split('/')[-1]
     )
 
     output_name = "%s.py" % tmpname
