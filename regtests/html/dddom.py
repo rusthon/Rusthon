@@ -49,6 +49,7 @@ def create_dropdown_button( name, options ):
 	div.appendChild(ul)
 	return div
 
+
 CLICKABLES = []
 def _on_mouse_up(evt):
 	x = ( event.clientX / window.innerWidth ) * 2 - 1;
@@ -89,6 +90,8 @@ class Window3D:
 		## it still takes time before the clone will lazy load the image data,
 		## below shadow_images holds a mapping of url and image, these must be inserted into the cloned dom each update.
 		self.shadow_images = {}
+		self.clone_videos = {}
+		self._video_textures = []  ## list of : {texture, video, context}
 
 		self.dropdown = None
 		self._scrollbars = {}
@@ -108,6 +111,88 @@ class Window3D:
 		scene.add( self.root )
 
 		self.create_windowframe()
+
+	def create_video( self, mp4=None, ogv=None ):
+		self._sid += 1
+		id = '__vid'+self._sid
+		v = document.createElement('video')
+		v.setAttribute('id', id)
+		#v.setAttribute('autoplay', 'true')  ## this must not be set, otherwise the clone will also play
+		#v.setAttribute('style', "color: rgba(255, 255, 0, 1)")  ## this will not work
+		#v.setAttribute('style', "opacity: 2")  ## this will not work either
+
+		## for some reason play/pause can not be forced on the clone,
+		## this might have something to do with the clone always being reparented.
+		#def onclick_not_working(evt):
+		#	vclone = self.clone_videos[ id ]
+		#	print(vclone)
+		#	if vclone.paused:
+		#		print('playing...')
+		#		vclone.play()
+		#	else:
+		#		vclone.pause()
+		#		print('pause!')
+
+		def onclick(evt):
+			print('video clicked')
+			if v.paused:
+				print('playing...')
+				v.play()
+			else:
+				v.pause()
+				print('pause!')
+
+		v.onclick = onclick.bind(self)
+
+		def onmetaload(evt):
+			print('video metadata loaded...')
+
+			image = document.createElement( 'canvas' );
+			image.width = v.videoWidth;
+			image.height = v.videoHeight;
+
+			imageContext = image.getContext( '2d' );
+			imageContext.fillStyle = '#000000';
+			imageContext.fillRect( 0, 0, v.videoWidth, v.videoHeight );
+
+			texture = new THREE.Texture( image );
+			texture.minFilter = THREE.LinearFilter;
+			texture.magFilter = THREE.LinearFilter;
+
+			material = new THREE.MeshBasicMaterial( map=texture, overdraw=true )
+			#plane = new THREE.PlaneGeometry( v.videoWidth, v.videoHeight, 4, 4 );
+			plane = new THREE.PlaneGeometry( 1, 1, 4, 4 );
+			mesh = new THREE.Mesh( plane, material );
+			H = v.videoHeight
+			X = v.offsetLeft / 2
+			Y = ((self.element.clientHeight-H) / 2) - v.offsetTop
+			#mesh.position.x = v.offsetLeft  ## TODO
+			mesh.position.y = Y
+			mesh.position.z = 1
+			mesh.scale.x = v.videoWidth
+			mesh.scale.y = v.videoHeight
+
+			self.root.add( mesh )
+
+
+			self._video_textures.append( {'texture':texture, 'video':v, 'context':imageContext, 'image':image} )
+
+
+		v.addEventListener('loadedmetadata', onmetaload.bind(self), false)
+
+		if mp4:
+			s = document.createElement('source')
+			s.setAttribute('src', mp4)
+			s.setAttribute('type', 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"')
+			v.appendChild( s )
+		if ogv:
+			s = document.createElement('source')
+			s.setAttribute('src', ogv)
+			s.setAttribute('type', 'video/ogg; codecs="theora, vorbis"')
+			v.appendChild( s )
+
+		return v
+
 
 	def display_dropdown(self, e, options):
 		if not self.dropdown:
@@ -352,3 +437,22 @@ class Window3D:
 				img.parentNode.replaceChild(lazy, img)
 			else:
 				self.shadow_images[ img.src ] = img
+
+		## this is still required because when the video lazy loads it sets
+		## the proper size for the clone.
+		videos = self.shadow.element.getElementsByTagName('VIDEO')
+		for vid in videos:
+			id = vid.getAttribute('id')
+			if id in self.clone_videos:
+				lazy = self.clone_videos[ id ]
+				vid.parentNode.replaceChild(lazy, vid)
+			else:
+				#vid.setAttribute('autoplay', 'true')  ## no help
+				#vid.play()                            ## no help
+				self.clone_videos[ id ] = vid
+
+		for d in self._video_textures:
+			video = d['video']
+			if video.readyState == video.HAVE_ENOUGH_DATA:
+				d['context'].drawImage( video, 0, 0 )
+				d['texture'].needsUpdate = True
