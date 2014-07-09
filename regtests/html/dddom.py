@@ -93,13 +93,11 @@ class Window3D:
 		## as a simple workaround guess height based on number of options,
 		## this needs to be done anyways because `sel` must be given a height in pixels,
 		## to force it to display all the options, and not display a scroll bar (which are not synced).
-		#H = 18 * options.length
-		H = 2 * options.length
-		if H < 150: H = 150
-		#if H > self.element.clientHeight:
-		#	H = self.element.clientHeight
-
-		sel.style.height = H #'100%'
+		H = 12 * options.length
+		#if H < 150: H = 150
+		sel.style.height = int(H * 0.95)
+		X = e.offsetLeft / 2
+		Y = ((self.element.clientHeight-H) / 2) - (e.offsetHeight + e.offsetTop)
 
 		## create dropdown css object and add it to self.object,
 		## this makes it part of the interactive scene,
@@ -109,9 +107,8 @@ class Window3D:
 		self.dropdown_clone = new THREE.CSS3DObject(sel.cloneNode())
 		self.shadow.add( self.dropdown_clone )
 
-		self.dropdown.position.x = e.offsetLeft / 2
-		#self.dropdown.position.y += H/2
-		#self.dropdown.position.y -= 10 #e.offsetHeight
+		self.dropdown.position.x = X
+		self.dropdown.position.y = Y
 		self.dropdown.position.z += 20
 		self.dropdown_clone.position.copy( self.dropdown.position )
 		self.dropdown_clone.position.z -= 1
@@ -133,8 +130,8 @@ class Window3D:
 		self._ddmesh1 = m = new THREE.Mesh( geo, mat );
 		self.root.add( m );
 		m.castShadow = true;
-		m.position.x = e.offsetLeft / 2
-		m.position.y -= (H/2) - e.offsetTop
+		m.position.x = X
+		m.position.y = Y
 		m.position.y += 10
 		m.position.z = 1
 		m.scale.x = e.clientWidth
@@ -144,8 +141,8 @@ class Window3D:
 		self._ddmesh2 = m = new THREE.Mesh( geo, mat );
 		self.root.add( m );
 		m.castShadow = true;
-		m.position.x = e.offsetLeft / 2
-		m.position.y -= (H/2) - e.offsetTop
+		m.position.x = X
+		m.position.y = Y
 		m.position.y += 10
 		m.position.z = 15
 		m.scale.x = e.clientWidth
