@@ -99,11 +99,11 @@ def init():
 
 
 
-	geometry = new THREE.BoxGeometry( 800, 60, 3800 );
+	geometry = new THREE.BoxGeometry( 800, 400, 3800 );
 	material = new THREE.MeshPhongMaterial( color=0xc1c1c1, transparent=true, opacity=0.27 );
 	mesh = new THREE.Mesh( geometry, material );
 	mesh.position.z = -400
-	#mesh.position.y = -300
+	mesh.position.y = -220
 	scene.add( mesh );
 	mesh.receiveShadow = true;
 
@@ -129,7 +129,7 @@ def init():
 
 	light.castShadow = True
 	light.shadowCameraNear = 400
-	light.shadowCameraFar = 1800
+	light.shadowCameraFar = 1900
 	light.shadowCameraFov = 64
 	light.shadowCameraVisible = True
 
@@ -233,7 +233,7 @@ def init():
 		y = Math.random() * 200 + 100;
 		z = Math.random() * 1800 - 1000;
 
-		e = Element3D( element, scene, scene2, scene3, [x,y,z], [1,1,1] )
+		e = Window3D( element, scene, scene2, scene3, [x,y,z], [1,1,1] )
 		Elements.append( e )
 		b.element3D = e
 

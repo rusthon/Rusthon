@@ -16,6 +16,26 @@ def create_textarea():
 	return ta
 
 
+CLICKABLES = []
+def _on_mouse_up(evt):
+	x = ( event.clientX / window.innerWidth ) * 2 - 1;
+	y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	vector = new THREE.Vector3( x, y, 0.5 );
+	projector = new THREE.Projector();
+	projector.unprojectVector( vector, camera );
+	raycaster = new THREE.Raycaster( camera.position, vector.sub( camera.position ).normalize() );
+	intersects = raycaster.intersectObjects( CLICKABLES );
+	#if intersects.length > 0:
+	#	ob = intersects[0].object
+	for inter in intersects:
+		ob = inter.object
+		print(ob)
+		if hasattr(ob, 'onclick'):
+			ob.onclick( inter )
+
+
+document.addEventListener('mouseup', _on_mouse_up, false)
+
 class Window3D:
 	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
 		## required for select dropdowns because `selectedIndex` is not updated by `e.cloneNode()` ##
@@ -204,6 +224,10 @@ class Window3D:
 		m.position.x -= 0.55
 		m.position.z -= 10
 		m.castShadow = true;
+		CLICKABLES.append( m )
+		def spin(inter):
+			self.spin90()
+		m.onclick = spin.bind(self)
 
 		geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
 		mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
@@ -212,7 +236,35 @@ class Window3D:
 		m.position.y -= 0.6
 		m.position.z -= 5
 		m.castShadow = true;
+		CLICKABLES.append( m )
+		def expand(inter):
+			self.expand()
+		m.onclick = expand.bind(self)
 
+		geo = new THREE.BoxGeometry( 0.2, 0.1, 10 );
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffff00 } );
+		self.minimize_object = m = new THREE.Mesh( geo, mat );
+		r.add( m );
+		m.position.y += 0.8
+		m.position.x += 0.45
+		m.position.z -= 2
+		m.castShadow = true;
+		CLICKABLES.append( m )
+		def collaspe(inter):
+			self.collaspe()
+		m.onclick = collaspe.bind(self)
+
+	def collaspe(self):
+		self.active = False
+		self.object.rotation.x = -Math.PI / 2
+		self.object.position.y = 0
+
+	def expand(self):
+		self.active = True
+		self.object.rotation.x = 0
+
+	def spin90(self):
+		self.object.rotation.y += Math.PI / 2
 
 	def update(self):
 		if self.shadow.element.parentNode:
