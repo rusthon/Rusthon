@@ -16,7 +16,7 @@ def create_textarea():
 	return ta
 
 
-class Element3D:
+class Window3D:
 	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
 		## required for select dropdowns because `selectedIndex` is not updated by `e.cloneNode()` ##
 		self._sid = 0
@@ -38,6 +38,7 @@ class Element3D:
 		self.shadow_images = {}
 
 		self.dropdown = None
+		self._scrollbars = {}
 
 		x,y,z = position
 		self.object.position.set(x,y,z+1)
@@ -71,11 +72,16 @@ class Element3D:
 
 
 	def create_dropdown(self, e, options):
-		global sel
+		#global sel, g
+		#g = e
 		sel = document.createElement('select')
 		sel.setAttribute('multiple', 'multiple')
 		self._sid += 1
-		sel.setAttribute('id', '_sid'+self._sid)
+		id = '_sid'+self._sid
+		sel.setAttribute('id', id)
+		self._scrollbars[ id ] = 0
+
+
 		for i,opt in enumerate(options):
 			o = document.createElement('option')
 			o.setAttribute('index', i)
@@ -87,8 +93,12 @@ class Element3D:
 		## as a simple workaround guess height based on number of options,
 		## this needs to be done anyways because `sel` must be given a height in pixels,
 		## to force it to display all the options, and not display a scroll bar (which are not synced).
-		H = 18 * options.length
+		#H = 18 * options.length
+		H = 2 * options.length
 		if H < 150: H = 150
+		#if H > self.element.clientHeight:
+		#	H = self.element.clientHeight
+
 		sel.style.height = H #'100%'
 
 		## create dropdown css object and add it to self.object,
@@ -100,19 +110,23 @@ class Element3D:
 		self.shadow.add( self.dropdown_clone )
 
 		self.dropdown.position.x = e.offsetLeft / 2
-		self.dropdown.position.y -= (H/2) - e.offsetTop
+		#self.dropdown.position.y += H/2
+		#self.dropdown.position.y -= 10 #e.offsetHeight
 		self.dropdown.position.z += 20
 		self.dropdown_clone.position.copy( self.dropdown.position )
 		self.dropdown_clone.position.z -= 1
 
-		sel.focus()
+		sel.focus()  # required?
+
 		def onclick(evt):
 			#sel.focus()  ## this triggers a bug that offsets the interactive layer
 			print(evt.toElement.getAttribute('index'))
 			e.selectedIndex = sel.selectedIndex = int(evt.toElement.getAttribute('index'))
 		sel.onclick = onclick
 
-
+		def onscroll(evt):  ## this hack is required to capture the scroll position
+			self.dropdown_clone.element.scrollTop = sel.scrollTop
+		sel.onscroll = onscroll.bind(self)
 
 		geo = new THREE.BoxGeometry( 1.1, H*1.1, 3 );
 		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
@@ -231,9 +245,11 @@ class Element3D:
 			c[ sel.getAttribute('id') ] = sel
 
 		for sel in a:
-			clone = c[ sel.getAttribute('id') ]
+			id = sel.getAttribute('id')
+			clone = c[ id ]
 			clone.selectedIndex = sel.selectedIndex
-			#clone.scrollTop = sel.scrollTop  ## this will not work to sync scrollbars
+			if sel.scrollTop:  ## select `multiple` type boxes. (note: self.dropdown is not updated here)
+				clone.scrollTop = sel.scrollTop
 
 
 		a = self.element.getElementsByTagName('TEXTAREA')
