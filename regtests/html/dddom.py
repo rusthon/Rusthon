@@ -92,6 +92,7 @@ class Window3D:
 		self.shadow_images = {}
 		self.clone_videos = {}
 		self._video_textures = []  ## list of : {texture, video, context}
+		self.clone_iframes = {}    ## this will not work, iframes are not lazy in the same way as images and videos.
 
 		self.dropdown = None
 		self._scrollbars = {}
@@ -111,6 +112,29 @@ class Window3D:
 		scene.add( self.root )
 
 		self.create_windowframe()
+
+	def create_iframe( self, url, element ):
+		## this currently only renders on the top layer transparent layer,
+		## to make iframes visible the top layer needs to become semi-transparent of opaque.
+		## `element` is the DOM element that will have its opacity adjusted on mouse enter/leave
+		iframe = document.createElement('iframe')
+		iframe.setAttribute('src', url)
+		iframe.style.width = '100%'
+		iframe.style.height = '100%'
+		self._sid += 1
+		id = '__fid'+self._sid
+		iframe.setAttribute('id', id)
+
+		def f1(evt):
+			print('mouse enter')
+			element.style.opacity = 0.8
+		def f2(evt):
+			print('mouse leave')
+			element.style.opacity = 0.2
+		iframe.onmouseenter = f1
+		iframe.onmouseleave = f2
+
+		return iframe
 
 	def create_video( self, mp4=None, ogv=None ):
 		self._sid += 1
@@ -303,6 +327,10 @@ class Window3D:
 
 		return a
 
+	def hide_windowframe(self):
+		self.mask.visible = False
+		self.shaded_border.visible = False
+		self.glowing_border.visible = False
 
 	def create_windowframe(self):
 		geo = new THREE.BoxGeometry( 1, 1, 1 );
@@ -427,6 +455,40 @@ class Window3D:
 
 		for sel in a:
 			c[ sel.getAttribute('id') ].value = sel.value
+
+
+		## insert lazy loading iframes into shadow dom ##
+		## it appears that this will not work, because when an iframe is reparented,
+		## it triggers a reload of the iframe, there might be a way to cheat around this,
+		## (possible workaround: block dom clone update until iframe has fully loaded)
+		## but it would be better to have a different solution anyways that only single
+		## renders the iframe - workaround: on mouse enter/leave adjust opacity of top css3d layer.
+		if False:
+			iframes = self.shadow.element.getElementsByTagName('IFRAME')
+			for frame in iframes:
+				#if frame.src in self.clone_iframes:
+				#	lazy = self.clone_iframes[ frame.src ]
+				#	frame.parentNode.replaceChild(lazy, frame)
+				if frame.getAttribute('srcHACK') in self.clone_iframes:
+					#lazy = self.clone_iframes[ frame.getAttribute('srcHACK') ]
+					#frame.parentNode.replaceChild(lazy, frame)
+					pass
+				else:
+					#self.clone_iframes[ frame.src ] = frame
+					iframe = document.createElement('iframe')
+					#iframe.setAttribute('src', frame.src)
+					#iframe.setAttribute('src', frame.getAttribute('srcHACK'))
+					#iframe.src = 'file://'+frame.getAttribute('srcHACK')
+					iframe.setAttribute('src','http://localhost:8000/')
+					iframe.style.width = '100%'
+					iframe.style.height = '100%'
+					iframe.style.zIndex = 100
+					#self.clone_iframes[ frame.src ] = iframe
+					self.clone_iframes[ frame.getAttribute('srcHACK') ] = iframe
+					print('new iframe---')
+					print(iframe)
+
+
 
 
 		## insert lazy loading images into shadow dom ##

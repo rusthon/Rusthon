@@ -274,8 +274,8 @@ def init():
 	renderer3.setSize( window.innerWidth, window.innerHeight );
 	renderer3.domElement.style.position = 'absolute';
 	renderer3.domElement.style.top = 0;
-	renderer3.domElement.style.opacity = 0.18;
-	renderer3.domElement.style.zIndex=200;
+	renderer3.domElement.style.opacity = 0.1;
+	renderer3.domElement.style.zIndex=4;
 
 	document.body.appendChild( renderer2.domElement );
 	document.body.appendChild( renderer.domElement );
@@ -289,7 +289,11 @@ def handle_drop_event(files, container, element3D):
 		## for simple testing we will fake it here.
 		file.path = '/home/brett/Desktop/'+file.name
 
-		if file.path.endswith('.css'):
+		if file.path.endswith('.html'):
+			iframe = element3D.create_iframe( file.path, renderer3.domElement )
+			container.appendChild(iframe)
+
+		elif file.path.endswith('.css'):
 			print( 'TODO css' )
 		elif file.path.endswith('.js'):
 			print( 'TODO js' )
@@ -300,7 +304,6 @@ def handle_drop_event(files, container, element3D):
 			img = document.createElement('img')
 			img.setAttribute('src', file.path)
 			img.setAttribute('class', 'well img-rounded')
-			#img.setAttribute('width', '50%')
 			li.appendChild( img )
 
 
