@@ -53,6 +53,8 @@
 		<script src="~/three.js/examples/js/shaders/VignetteShader.js"></script>
 		<script src="~/three.js/examples/js/shaders/EdgeShader2.js"></script>
 
+		<script src="~/three.js/examples/js/loaders/ColladaLoader.js"></script>
+
 		<script type="text/python">
 
 pythonjs.configure(javascript=True)
@@ -220,7 +222,7 @@ def init():
 		pointlight.position.z += 40
 		gizmo.attach( this.element3D.right_bar )
 		camera.smooth_target.copy( this.element3D.object.position )
-		camera.smooth_target.y = 300
+		camera.smooth_target.y = 400
 		this.element3D.active=True
 
 
@@ -291,7 +293,28 @@ def handle_drop_event(files, container, element3D):
 		## for simple testing we will fake it here.
 		file.path = '/home/brett/Desktop/'+file.name
 
-		if file.path.endswith('.html'):
+		if file.path.endswith('.dae'):
+			loader = new THREE.ColladaLoader();
+			loader.options.convertUpAxis = true;
+			#def on_load(collada):
+			#	print(collada)
+			#	element3D.root.add( collada.scene )
+			#loader.load( 'http://localhost:8000'+file.path, on_load )
+	
+			def onload(evt):
+				print(evt.target.result)
+				parser = new DOMParser()
+				collada = loader.parse( parser.parseFromString(evt.target.result, "application/xml") )
+				print(collada.scene)
+				collada.scene.scale.set(0.1, 0.1, 0.1)
+				collada.scene.position.set(0, -20, 40)
+				element3D.root.add( collada.scene )
+
+			reader = new FileReader()
+			reader.onload = onload
+			reader.readAsText( file )
+
+		elif file.path.endswith('.html'):
 			iframe = element3D.create_iframe( file.path, renderer3.domElement )
 			container.appendChild(iframe)
 

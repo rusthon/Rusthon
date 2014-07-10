@@ -84,6 +84,7 @@ class Window3D:
 		self.shadow = new THREE.CSS3DObject( element.cloneNode() )
 		self.element = element
 		self.active = False
+		self.collasped = False
 
 		## shadow_images is required because every frame the entire dom is cloned to be rendered under webgl layer,
 		## image data is lazy loaded, so even if the image is shown on the top interactive layer and cloned,
@@ -372,9 +373,9 @@ class Window3D:
 		m.position.z -= 10
 		m.castShadow = true;
 		CLICKABLES.append( m )
-		def spin(inter):
-			self.spin90()
-		m.onclick = spin.bind(self)
+		def expand(inter):
+			self.expand()
+		m.onclick = expand.bind(self)
 
 		geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
 		mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
@@ -384,9 +385,14 @@ class Window3D:
 		m.position.z -= 5
 		m.castShadow = true;
 		CLICKABLES.append( m )
-		def expand(inter):
-			self.expand()
-		m.onclick = expand.bind(self)
+
+		def spin(inter):
+			if self.collasped:
+				self.expand()
+			else:
+				self.spin90()
+				self.object.position.x = -200
+		m.onclick = spin.bind(self)
 
 		geo = new THREE.BoxGeometry( 0.2, 0.1, 10 );
 		mat = new THREE.MeshPhongMaterial( {'color': 0xffff00 } );
@@ -402,11 +408,13 @@ class Window3D:
 		m.onclick = collaspe.bind(self)
 
 	def collaspe(self):
+		self.collasped = True
 		self.active = False
 		self.object.rotation.x = -Math.PI / 2
 		self.object.position.y = 0
 
 	def expand(self):
+		self.collasped = False
 		self.active = True
 		self.object.rotation.x = 0
 
