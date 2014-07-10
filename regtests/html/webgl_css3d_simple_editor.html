@@ -228,7 +228,9 @@ def init():
 			print(evt)
 			evt.preventDefault()
 			if evt.dataTransfer.files.length==0:
-				alert('error on file drop')
+				url = evt.dataTransfer.getData("text/plain")
+				iframe = this.element3D.create_iframe( url, renderer3.domElement )
+				container.appendChild(iframe)
 			else:
 				handle_drop_event(evt.dataTransfer.files, this.parentNode, this.element3D)
 

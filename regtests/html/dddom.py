@@ -121,6 +121,7 @@ class Window3D:
 		iframe.setAttribute('src', url)
 		iframe.style.width = '100%'
 		iframe.style.height = '100%'
+		iframe.style.border = 0
 		self._sid += 1
 		id = '__fid'+self._sid
 		iframe.setAttribute('id', id)
@@ -456,6 +457,11 @@ class Window3D:
 		for sel in a:
 			c[ sel.getAttribute('id') ].value = sel.value
 
+
+		## do not load iframes in the clone ##
+		iframes = self.shadow.element.getElementsByTagName('IFRAME')
+		for iframe in iframes:
+			iframe.src = None
 
 		## insert lazy loading iframes into shadow dom ##
 		## it appears that this will not work, because when an iframe is reparented,
