@@ -199,7 +199,8 @@ def init():
 		this.parentNode.appendChild( document.createTextNode('mycheckbox:') )
 		this.parentNode.appendChild( create_checkbox(true) )
 
-		this.parentNode.appendChild( create_dropdown_button('drop-button'), ['my-opt1', 'my-opt2', 'my-opt3'] )
+		## TODO fix drop down button
+		#this.parentNode.appendChild( create_dropdown_button('drop-button'), ['my-opt1', 'my-opt2', 'my-opt3'] )
 
 		this.parentNode.appendChild(document.createElement('br'))
 
@@ -208,13 +209,31 @@ def init():
 		ta = create_textarea()
 		con.appendChild( ta )
 
+
+		#video = this.element3D.create_video(
+		#	mp4='/home/brett/three.js/examples/textures/sintel.mp4',
+		#	ogv='/home/brett/three.js/examples/textures/sintel.ogv'
+		#)
+		#this.parentNode.appendChild(video)
+
 		pointlight.position.copy( this.element3D.object.position )
 		pointlight.position.z += 40
 		gizmo.attach( this.element3D.right_bar )
 		camera.smooth_target.copy( this.element3D.object.position )
 		camera.smooth_target.y = 300
-		print(camera.smooth_target)
 		this.element3D.active=True
+
+
+		def ondrop(evt):
+			print(evt)
+			evt.preventDefault()
+			if evt.dataTransfer.files.length==0:
+				alert('error on file drop')
+			else:
+				handle_drop_event(evt.dataTransfer.files, this.parentNode, this.element3D)
+
+		this.parentNode.ondrop = ondrop.bind(this)
+		this.parentNode.ondragover = lambda evt: evt.preventDefault()
 
 		## helper variables for eval ##
 		container = con
@@ -228,7 +247,6 @@ def init():
 
 		var element = document.createElement( 'div' );
 		element.setAttribute('class', 'well')
-		#element.style.background = new THREE.Color( Math.random() * 0xffffff ).getStyle();
 		b = document.createElement('button')
 		b.appendChild(document.createTextNode('click me'))
 		b.setAttribute('class', 'btn btn-inverse btn-small')
@@ -239,9 +257,10 @@ def init():
 		y = Math.random() * 200 + 100;
 		z = Math.random() * 1800 - 1000;
 
+		## the Window3D instance is set as this.element3D ##
 		e = Window3D( element, scene, scene2, scene3, [x,y,z], [1,1,1] )
-		Elements.append( e )
 		b.element3D = e
+		Elements.append( e )
 
 
 	renderer2 = new THREE.CSS3DRenderer();
@@ -255,14 +274,70 @@ def init():
 	renderer3.setSize( window.innerWidth, window.innerHeight );
 	renderer3.domElement.style.position = 'absolute';
 	renderer3.domElement.style.top = 0;
-	renderer3.domElement.style.opacity = 0.08;
+	renderer3.domElement.style.opacity = 0.18;
 	renderer3.domElement.style.zIndex=200;
 
 	document.body.appendChild( renderer2.domElement );
 	document.body.appendChild( renderer.domElement );
 	document.body.appendChild( renderer3.domElement );
 
+def handle_drop_event(files, container, element3D):
+	images = []
+	videos = []
+	for file in files:
+		## note: `file.path` is only available in NodeWebkit,
+		## for simple testing we will fake it here.
+		file.path = '/home/brett/Desktop/'+file.name
 
+		if file.path.endswith('.css'):
+			print( 'TODO css' )
+		elif file.path.endswith('.js'):
+			print( 'TODO js' )
+		elif file.path.endswith('.jpg') or file.path.endswith('.png'):
+
+			li = document.createElement('li')
+			images.append(li)
+			img = document.createElement('img')
+			img.setAttribute('src', file.path)
+			img.setAttribute('class', 'well img-rounded')
+			#img.setAttribute('width', '50%')
+			li.appendChild( img )
+
+
+		elif file.path.endswith('.mp4'):
+			li = document.createElement('li')
+			video = element3D.create_video( mp4=file.path )
+			li.appendChild( video )
+			videos.append( li )
+
+		elif file.path.endswith('.ogv'):
+			#li = document.createElement('li')
+			video = element3D.create_video( ogv=file.path )
+			container.appendChild(video)
+			#li.appendChild( video )
+			#videos.append( li )
+
+		elif file.path.endswith('.py'):
+			def on_load(event):
+				contents = event.target.result
+				py_body_editor.setValue( contents )
+
+			Reader.onload = on_load
+			Reader.readAsText( file )
+
+	if images:
+		print('loading images')
+		ul = document.createElement('ul')
+		container.appendChild(ul)
+		for li in images:
+			ul.appendChild(li)
+
+	if videos:
+		print('loading videos')
+		ul = document.createElement('ul')
+		container.appendChild(ul)
+		for li in videos:
+			ul.appendChild(li)
 
 def animate():
 

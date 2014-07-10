@@ -349,10 +349,12 @@ with lowlevel:
 
 
 with javascript:
-	def __is_node_list( ob ):
+	def __is_some_array( ob ):
 		if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
-			if instanceof(ob, NodeList):
-				return True
+			dom_array_types = [ NodeList, FileList, ClientRectList, DOMStringList, DataTransferItemList, HTMLCollection, HTMLAllCollection, SVGElementInstanceList, SVGNumberList, SVGTransformList]
+			for t in dom_array_types:
+				if instanceof(ob, t):
+					return True
 		return False
 
 	def __is_typed_array( ob ):
