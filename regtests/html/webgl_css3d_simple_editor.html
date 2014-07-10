@@ -21,6 +21,15 @@
 		overflow: hidden;
 
 	}
+
+    .pp-slider { width: 150px; float:left;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -o-user-select: none; user-select: none; height: 30px; }
+    .pp-slider .pp-slider-scale { background-color: #aaa; height: 1px; border-bottom: 1px solid #efefef; width: 120px; margin-top: 6px; float: left; }
+    .pp-slider .pp-slider-scale .pp-slider-button { width: 12px; border-radius: 2px; border: 1px solid #adadad; height: 26px; position: relative; top: -7px; left: 0px; background-color: #efefef; cursor: pointer; }
+    .pp-slider .pp-slider-scale .pp-slider-button .pp-slider-divies { border-left: 1px solid #adadad; border-right: 1px solid #adadad; position: relative; left: 3px; top: 3px; width: 4px; height: 10px; }
+    .pp-slider .pp-slider-scale .pp-slider-button:hover { border-color: #777; background-color: #eee;  }
+    .pp-slider .pp-slider-scale .pp-slider-tooltip { width: 24px; height: 20px; position: relative; top: -5px; left: 0px; text-align: center; font-size: 10px; color: #aaa; }
+    .pp-slider .pp-slider-min { float: left; width: 15px; color: #aaa; font-size: 10px; }
+    .pp-slider .pp-slider-max { float: left; width: 15px; color: #aaa; font-size: 10px; text-align: right; }
 </style>
 
 <script src="~/js/jquery/jquery-latest.js"></script>
@@ -55,7 +64,125 @@
 
 		<script src="~/three.js/examples/js/loaders/ColladaLoader.js"></script>
 
-		<script type="text/python">
+<script>
+// from: http://jsfiddle.net/LucP/BPdKR/2/
+(function ($) {
+
+    var PPSliderClass = function (el, opts) {
+        var element = $(el);
+        var options = opts;
+        var isMouseDown = false;
+        var currentVal = 0;
+
+        element.wrap('<div/>')
+        var container = $(el).parent();
+
+        container.addClass('pp-slider');
+        container.addClass('clearfix');
+
+        container.append('<div class="pp-slider-min">-</div><div class="pp-slider-scale"><div class="pp-slider-button"><div class="pp-slider-divies"></div></div><div class="pp-slider-tooltip"></div></div><div class="pp-slider-max">+</div>');
+        
+        if (typeof(options) != 'undefined' && typeof(options.hideTooltip) != 'undefined' && options.hideTooltip == true)
+        {
+          container.find('.pp-slider-tooltip').hide();
+        }
+
+        if (typeof(options.width) != 'undefined')
+        {
+          container.css('width',(options.width+'px'));
+        }
+        container.find('.pp-slider-scale').css('width',(container.width()-30)+'px');
+
+        var startSlide = function (e) {            
+          
+          isMouseDown = true;
+          var pos = getMousePosition(e);
+          startMouseX = pos.x;
+          
+          lastElemLeft = ($(this).offset().left - $(this).parent().offset().left);
+          updatePosition(e);
+
+          return false;
+        };
+        
+        var getMousePosition = function (e) {
+          //container.animate({ scrollTop: rowHeight }, options.scrollSpeed, 'linear', ScrollComplete());
+          var posx = 0;
+          var posy = 0;
+
+          if (!e) var e = window.event;
+
+          if (e.pageX || e.pageY) {
+            posx = e.pageX;
+            posy = e.pageY;
+          }
+          else if (e.clientX || e.clientY) {
+            posx = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+            posy = e.clientY + document.body.scrollTop  + document.documentElement.scrollTop;
+          }
+
+          return { 'x': posx, 'y': posy };
+        };
+
+        var updatePosition = function (e) {
+          var pos = getMousePosition(e);
+
+          var spanX = (pos.x - startMouseX);
+
+          var newPos = (lastElemLeft + spanX)
+          var upperBound = (container.find('.pp-slider-scale').width()-container.find('.pp-slider-button').width());
+          newPos = Math.max(0,newPos);
+          newPos = Math.min(newPos,upperBound);
+          currentVal = Math.round((newPos/upperBound)*100,0);
+
+          container.find('.pp-slider-button').css("left", newPos);
+          container.find('.pp-slider-tooltip').html(currentVal+'%');
+          container.find('.pp-slider-tooltip').css('left', newPos-6);
+        };
+
+        var moving = function (e) {
+          if(isMouseDown){
+            updatePosition(e);
+            return false;
+          }
+        };
+
+        var dropCallback = function (e) {
+          isMouseDown = false;
+          element.val(currentVal);
+          if(typeof element.options != 'undefined' && typeof element.options.onChanged == 'function'){
+            element.options.onChanged.call(this, null);
+          }
+
+        };
+
+        container.find('.pp-slider-button').bind('mousedown',startSlide);
+
+        $(document).mousemove(function(e) { moving(e); });
+        $(document).mouseup(function(e){ dropCallback(e); });
+        
+    };
+
+    /*******************************************************************************************************/
+
+    $.fn.PPSlider = function (options) {
+        var opts = $.extend({}, $.fn.PPSlider.defaults, options);
+
+        return this.each(function () {
+            new PPSliderClass($(this), opts);
+        });
+    }
+
+    $.fn.PPSlider.defaults = {
+        width: 150
+    };
+
+
+})(jQuery);
+</script>
+
+
+<script type="text/python">
 
 pythonjs.configure(javascript=True)
 from random import random
@@ -211,6 +338,13 @@ def init():
 		ta = create_textarea()
 		con.appendChild( ta )
 
+		slider = document.createElement('input')
+		slider.setAttribute('type', 'hidden')
+		slider.setAttribute('value', '40')
+		slider.setAttribute('id', 'myslider')
+		con.appendChild( slider )
+		$("#myslider").PPSlider( width=300 )
+
 
 		#video = this.element3D.create_video(
 		#	mp4='/home/brett/three.js/examples/textures/sintel.mp4',
@@ -240,8 +374,10 @@ def init():
 		this.parentNode.ondragover = lambda evt: evt.preventDefault()
 
 		## helper variables for eval ##
-		container = con
-		object = this.element3D
+		self = {
+			'container':con,
+			'window': this.element3D
+		}
 		def click2(evt):
 			eval( ta.value )
 		this.onclick = click2
@@ -257,7 +393,7 @@ def init():
 		b.onclick = onclick
 		element.appendChild(b)
 
-		x = Math.random() * 400 - 100;
+		x = Math.random() * 800 - 200;
 		y = Math.random() * 200 + 100;
 		z = Math.random() * 1800 - 1000;
 
@@ -306,9 +442,10 @@ def handle_drop_event(files, container, element3D):
 				parser = new DOMParser()
 				collada = loader.parse( parser.parseFromString(evt.target.result, "application/xml") )
 				print(collada.scene)
-				collada.scene.scale.set(0.1, 0.1, 0.1)
-				collada.scene.position.set(0, -20, 40)
+				collada.scene.scale.set(0.25, 0.25, 0.25)
+				collada.scene.position.set(0, -100, 200)
 				element3D.root.add( collada.scene )
+				element3D.collada = collada.scene
 
 			reader = new FileReader()
 			reader.onload = onload

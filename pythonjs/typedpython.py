@@ -91,6 +91,10 @@ def transform_source( source, strip=False ):
 			c += ')' * c.count(' new ')
 			c = c.replace(' new ', ' new(')
 
+		## jquery ##
+		if '$(' in c:
+			## TODO ensure this is not inside quoted text
+			c = c.replace('$(', '__DOLLAR__(')
 
 		output.append( c )
 

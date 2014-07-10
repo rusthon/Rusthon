@@ -110,6 +110,20 @@ Supported Features
 	regular and lambda functions
 	function calls with *args and **kwargs
 
+####HTML DOM: for item in iterable
+	NodeList
+	FileList
+	ClientRectList
+	DOMSettableTokenList
+	DOMStringList
+	DataTransferItemList
+	HTMLCollection
+	HTMLAllCollection
+	SVGElementInstanceList
+	SVGNumberList
+	SVGTransformList
+
+
 ####Operator Overloading
 
 	__getattr__

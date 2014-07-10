@@ -706,7 +706,6 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#	return_id = self.inline_function( node )
 		#	code = self.writer.getvalue()
 		#	return '\n'.join([code, return_id])
-
 		else:
 			return self._visit_call_helper(node)
 
@@ -716,7 +715,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			args = ', '.join([e for e in args if e])
 		else:
 			args = ''
-		return '%s(%s)' % (self.visit(node.func), args)
+		fname = self.visit(node.func)
+		if fname=='__DOLLAR__': fname = '$'
+		return '%s(%s)' % (fname, args)
 
 	def inline_helper_remap_names(self, remap):
 		return "var %s;" %','.join(remap.values())
