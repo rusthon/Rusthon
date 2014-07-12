@@ -5,27 +5,17 @@ JavaScript.  It can be run with regular Python, or fully self-hosted within
 NodeJS using Empythoned.  PythonJS has been designed with speed and easy
 integration with existing JavaScript code in mind.
 
-
-Using translator.py Without Installing
---------------------------------------
-To simply convert your python script into javascript, git clone this repo, and
-use translator.py located in the "pythonjs" directory.  You can give it a list
-of python files to translate at once.  It will output the translation to
-stdout.  The default output type is JavaScript.
-
-Usage::
-
-	translator.py [--dart|--coffee|--lua] file.py
-
-Example::
-
-	cd pythonjs
-	./translator.py myscript.py > myscript.js
+To convert your python scripts into javascript, you have two options:
+1. install NodeJS, python-js package, and write a build script.
+2. or install Python2 and use translator.py from this repo directly.
 
 
-
-Installing
+1. Installing NodeJS Package
 -------------
+You can quickly get started with the stable version of PythonJS by installing the NodeJS package,
+and writing a build script in javascript to compile your python scripts to javascript.
+(Python2.7 is not required)
+
 ```
 npm install python-js
 ```
@@ -41,26 +31,58 @@ eval( pythonjs.runtime.javascript + jscode );
 
 ```
 
-JavaScript API
-----------
-```
-var pythonjs, output;
-pythonjs = require('python-js');
-output = pythonjs.translator.to_javascript( input );
-output = pythonjs.translator.to_javascript_module( input );
-output = pythonjs.translator.to_dart( input );
-output = pythonjs.translator.to_coffee( input );
-output = pythonjs.translator.to_lua( input );
-
-pythonjs.runtime.javascript // runtime required by translator output
-
-```
 
 Example Projects
 ----------------
+The example projects below, require the NodeJS python-js package.
+
 [https://github.com/PythonJS/pythonjs-demo-server-nodejs](https://github.com/PythonJS/pythonjs-demo-server-nodejs)
 
 [https://github.com/PythonJS/pypubjs](https://github.com/PythonJS/pypubjs)
+
+
+
+2. translator.py
+--------------------------------------
+If you want to run the latest version of the translator, you will need to install
+Python2.7 and git clone this repo.  (the NodeJS package above is not required)
+Then, to translate your python script, directly run the `translator.py` script in the "pythonjs" directory.  You can give it a list of python files to translate at once.  
+It will output the translation to stdout.  The default output type is JavaScript.  
+
+Usage::
+
+	translator.py [--dart|--coffee|--lua|--no-wrapper] file.py
+
+Example::
+
+	cd pythonjs
+	./translator.py myscript.py > myscript.js
+
+
+Extra Python Syntax
+-------------------
+
+PythonJS supports all the normal Python syntax you already know, and has been extended to support some extra JavaScript syntax.
+
+1. it is ok to have `var ` before a variable name in an assignment.
+```
+	var x = 1
+```
+
+2. 'new' can be used to create a new JavaScript object
+```
+	a = new SomeObject()
+```
+
+3. `$` can be used to call a function like jquery
+```
+	$(selector).something( {'param1':1, 'param2':2} )
+```
+
+4. External Javascript functions that use an object as the last argument for optional named arguments, can be called with Python style keyword names instead.
+```
+	$(selector).something( param1=1, param2=2 )
+```
 
 
 Speed
@@ -137,6 +159,7 @@ Supported Features
 
 ####builtins
 
+	dir
 	type
 	hasattr
 	getattr
