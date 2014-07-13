@@ -125,7 +125,7 @@ A Python typed subset can be translated to a GLSL fragment shader to speed up ma
 Supported Features
 ================
 
-####Language
+####Language Overview
 	
 	classes
 	multiple inheritance
@@ -136,6 +136,19 @@ Supported Features
 	yield (generator functions)
 	regular and lambda functions
 	function calls with *args and **kwargs
+
+####Language Keywords
+
+	global, nonlocal
+	while, for, continue, break
+	if, elif, else
+	try, except, raise
+	def, lambda
+	new, class
+	from, import, as
+	pass, assert
+	and, or, is, in, not
+	return, yield
 
 ####HTML DOM: for item in iterable
 	NodeList

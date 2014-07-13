@@ -28,6 +28,7 @@ def __setup_slider_class( $ ):
 		container.find('.pp-slider-scale').css('width',(container.width()-30)+'px');
 
 		def startSlide(e):
+			nonlocal isMouseDown, startMouseX, lastElemLeft
 			isMouseDown = true;
 			var pos = getMousePosition(e);
 			startMouseX = pos.x;		  
@@ -68,7 +69,8 @@ def __setup_slider_class( $ ):
 				return False
 
 		def dropCallback(e):
-			isMouseDown = false;
+			nonlocal isMouseDown
+			isMouseDown = False
 			element.val(currentVal);
 			if typeof(options.onChanged) == 'function':
 				options.onChanged.call(this, null);

@@ -73,7 +73,7 @@ def transform_source( source, strip=False ):
 			pre = ''.join(pre)
 			output.append( indent + '@returns(%s)' %pre)
 			c = indent+'def '+c
-		elif c.strip().startswith('def ') and '->' in c:
+		elif c.strip().startswith('def ') and '->' in c:  ## python3 syntax
 			c, rtype = c.split('->')
 			c += ':'
 			rtype = rtype.strip()[:-1]
@@ -99,6 +99,9 @@ def transform_source( source, strip=False ):
 			c = c.replace('$', '__DOLLAR__')
 		if '$.' in c:
 			c = c.replace('$.', '__DOLLAR__.')
+
+		if c.strip().startswith('nonlocal '):  ## Python3 syntax
+			c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global
 
 		output.append( c )
 
