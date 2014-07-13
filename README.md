@@ -84,6 +84,11 @@ PythonJS supports all the normal Python syntax you already know, and has been ex
 	$(selector).something( param1=1, param2=2 )
 ```
 
+5. `$` can be used as a funtion parameter, and attributes can be get/set on `$`.
+```
+def setup_my_jquery_class( $ ):
+	$.fn.someclass = myclass_init
+```
 
 Speed
 ---------------

@@ -92,9 +92,13 @@ def transform_source( source, strip=False ):
 			c = c.replace(' new ', ' new(')
 
 		## jquery ##
+		## TODO ensure this is not inside quoted text
 		if '$(' in c:
-			## TODO ensure this is not inside quoted text
 			c = c.replace('$(', '__DOLLAR__(')
+		if '$' in c and 'def ' in c:  ## $ as function parameter
+			c = c.replace('$', '__DOLLAR__')
+		if '$.' in c:
+			c = c.replace('$.', '__DOLLAR__.')
 
 		output.append( c )
 
