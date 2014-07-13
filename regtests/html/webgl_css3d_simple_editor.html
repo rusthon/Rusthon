@@ -72,7 +72,7 @@
         var element = $(el);
         var options = opts;
         var isMouseDown = false;
-        var currentVal = 0;
+        var currentVal = opts.value || 0;
 
         element.wrap('<div/>')
         var container = $(el).parent();
@@ -134,6 +134,7 @@
           newPos = Math.max(0,newPos);
           newPos = Math.min(newPos,upperBound);
           currentVal = Math.round((newPos/upperBound)*100,0);
+          if (typeof options.onInput == 'function') { options.onInput(currentVal)}
 
           container.find('.pp-slider-button').css("left", newPos);
           container.find('.pp-slider-tooltip').html(currentVal+'%');
@@ -150,8 +151,8 @@
         var dropCallback = function (e) {
           isMouseDown = false;
           element.val(currentVal);
-          if(typeof element.options != 'undefined' && typeof element.options.onChanged == 'function'){
-            element.options.onChanged.call(this, null);
+          if(typeof options.onChanged == 'function'){
+            options.onChanged.call(this, null);
           }
 
         };
@@ -160,6 +161,8 @@
 
         $(document).mousemove(function(e) { moving(e); });
         $(document).mouseup(function(e){ dropCallback(e); });
+
+        container.find('.pp-slider-button').css("left", currentVal);
         
     };
 
@@ -174,7 +177,7 @@
     }
 
     $.fn.PPSlider.defaults = {
-        width: 150
+        width: 100
     };
 
 
@@ -338,20 +341,6 @@ def init():
 		ta = create_textarea()
 		con.appendChild( ta )
 
-		slider = document.createElement('input')
-		slider.setAttribute('type', 'hidden')
-		slider.setAttribute('value', '40')
-		slider.setAttribute('id', 'myslider')
-		con.appendChild( slider )
-		$("#myslider").PPSlider( width=300 )
-
-
-		#video = this.element3D.create_video(
-		#	mp4='/home/brett/three.js/examples/textures/sintel.mp4',
-		#	ogv='/home/brett/three.js/examples/textures/sintel.ogv'
-		#)
-		#this.parentNode.appendChild(video)
-
 		pointlight.position.copy( this.element3D.object.position )
 		pointlight.position.z += 40
 		gizmo.attach( this.element3D.right_bar )
@@ -438,7 +427,7 @@ def handle_drop_event(files, container, element3D):
 			#loader.load( 'http://localhost:8000'+file.path, on_load )
 	
 			def onload(evt):
-				print(evt.target.result)
+				global slider
 				parser = new DOMParser()
 				collada = loader.parse( parser.parseFromString(evt.target.result, "application/xml") )
 				print(collada.scene)
@@ -446,6 +435,49 @@ def handle_drop_event(files, container, element3D):
 				collada.scene.position.set(0, -100, 200)
 				element3D.root.add( collada.scene )
 				element3D.collada = collada.scene
+
+				global X 
+				X = collada.scene
+				for model in collada.scene.children:
+					print(model)
+					div = document.createElement('div')
+					div.setAttribute('class', 'well')
+					container.appendChild( div )
+					h3 = document.createElement('h3')
+					h3.appendChild( document.createTextNode(model.name) )
+					div.appendChild( h3 )
+
+					if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
+						print(model.material)
+						slider = document.createElement('input')
+						## the native slider looks different on each platform,
+						## and it is not clickable, because the camera controls preventDefault?
+						## however, if focused the keyboard arrow keys, can still change the slider values.
+						## to be safe, instead of using a native slider, we use the custom jquery/css slider.
+						##slider.setAttribute('type', 'range')  ## do not use native slider
+						#slider.setAttribute('min', 0)
+						#slider.setAttribute('max', 100)
+						#slider.setAttribute('step', 1)
+						#slider.setAttribute('value', 100)
+
+						slider.setAttribute('type', 'hidden')
+						sid = 'slider-'+model.name
+						slider.setAttribute('id', sid)
+						div.appendChild( slider )
+
+						def onchange(val):
+							model.material.opacity = val * 0.01
+						#slider.oninput = onchange
+						#slider.onchange = onchange
+
+						$("#"+sid).PPSlider( width=300, onInput=onchange, value=100 )
+
+						def onclick(e):
+							print('slider clicked')
+							slider.focus()
+						slider.onclick = onclick
+
+
 
 			reader = new FileReader()
 			reader.onload = onload
