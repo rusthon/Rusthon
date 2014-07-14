@@ -1,6 +1,10 @@
+# PythonJS WebGL/CSS3D Hybrid Toolkit
+# by Brett Hartshorn - copyright 2014
+# You may destribute this file using the "New BSD" or MIT license
+# requires: Twitter Bootstrap and jQuery
+
 pythonjs.configure(javascript=True)
 
-#(function ($) {
 def __setup_slider_class( $ ):
 
 	def PPSliderClass(el, opts):
@@ -100,6 +104,63 @@ def __setup_slider_class( $ ):
 __setup_slider_class( jQuery )
 
 __sid = 0
+
+class TabMenuWrapper:
+	## provides a workaround for bootstrap failing to update the active page when a tab is clicked
+	def __init__(self):
+		self.root = document.createElement('div')
+		self.root.setAttribute('class', 'tabbable tabs-left')
+		self.tabs = document.createElement('ul')
+		self.tabs.setAttribute('class', 'nav nav-tabs')
+		self.root.appendChild( self.tabs )
+		#container.appendChild( menu )
+
+		self.pages_container = document.createElement('div')
+		self.pages_container.setAttribute('class', 'tab-content')
+		self.root.appendChild( self.pages_container )
+
+		self._tab_pages = []
+
+
+	def add_tab(self, tabname):
+
+		tab = document.createElement('li')
+		taba = document.createElement('a')
+		#taba.setAttribute('href', '#'+tabid)  ## not required
+		taba.setAttribute('data-toggle', 'tab')
+
+		tab.appendChild( taba )
+		self.tabs.appendChild( tab )
+		taba.appendChild( document.createTextNode(tabname) )
+
+
+		page = document.createElement('div')
+		a = 'tab-pane'
+		if len(self._tab_pages)==0: a += ' active'
+		page.setAttribute('class', a)
+
+		#page.setAttribute('id', tabid)  ## not required
+
+		self.pages_container.appendChild( page )
+		self._tab_pages.append( page )
+
+		## TODO force page to be full size, or sync scroll bars
+		page.style.width = '100%'  ## this fails to force the window to resize
+		page.style.height = '100%'
+
+		_tab_pages = self._tab_pages
+		def clicktab():
+			for other in _tab_pages:
+				other.setAttribute('class', 'tab-pane')
+			this._tab_page.setAttribute('class', 'tab-pane active')
+
+		taba._tab_page = page
+		taba.onclick = clicktab
+
+		return page
+
+def create_tab_menu():
+	return TabMenuWrapper()
 
 
 def create_slider(value, onchange=None, width=200):
