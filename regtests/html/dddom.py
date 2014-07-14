@@ -107,7 +107,8 @@ __sid = 0
 
 class TabMenuWrapper:
 	## provides a workaround for bootstrap failing to update the active page when a tab is clicked
-	def __init__(self):
+	def __init__(self, manager):
+		self.manager = manager
 		self.root = document.createElement('div')
 		self.root.setAttribute('class', 'tabbable tabs-left')
 		self.tabs = document.createElement('ul')
@@ -116,8 +117,27 @@ class TabMenuWrapper:
 		#container.appendChild( menu )
 
 		self.pages_container = document.createElement('div')
+		self.pages_container.id = '_' + manager.newid()  ## scroll bars will show on this div
 		self.pages_container.setAttribute('class', 'tab-content')
 		self.root.appendChild( self.pages_container )
+
+		## setting the tab page container to 100% width and height breaks twitter-bootstrap
+		#self.pages_container.style.width = '100%'
+		#self.pages_container.style.height = '100%'
+		## for some reason, bootstrap appears to do something "funky" on the tab-content div,
+		## `scrollTop` can be read on the source tab-content div, but not written to the clone.
+
+		## this cheat will not work either, scrollTop on the clone is readonly and zero ##
+		#def onscroll(evt):
+		#	print(this.scrollTop)
+		#	if this._clone:
+		#		print(this._clone)
+		#		this._clone.scrollTop = this.scrollTop
+		#self.pages_container.onscroll = onscroll
+
+		## workaround to disable scrollbars
+		self.pages_container.style.overflow = 'hidden'
+
 
 		self._tab_pages = []
 
@@ -139,7 +159,7 @@ class TabMenuWrapper:
 		if len(self._tab_pages)==0: a += ' active'
 		page.setAttribute('class', a)
 
-		#page.setAttribute('id', tabid)  ## not required
+		#page.setAttribute('id', self.manager.newid() )  ## required to sync scrollbars
 
 		self.pages_container.appendChild( page )
 		self._tab_pages.append( page )
@@ -159,8 +179,6 @@ class TabMenuWrapper:
 
 		return page
 
-def create_tab_menu():
-	return TabMenuWrapper()
 
 
 def create_slider(value, onchange=None, width=200):
@@ -298,6 +316,14 @@ class Window3D:
 		scene.add( self.root )
 
 		self.create_windowframe()
+
+	def newid(self):
+		self._sid += 1
+		return self._sid
+
+	def create_tab_menu(self):
+		return TabMenuWrapper( self )
+
 
 	def create_iframe( self, url, element ):
 		## this currently only renders on the top layer transparent layer,
@@ -626,6 +652,24 @@ class Window3D:
 		self.mask.scale.y = h*99
 
 		self.shadow.element = self.element.cloneNode()  ## this is just to display content
+
+		## sync scrollbars of any div with an id,
+		## note: this will not work with tab-content div's.
+		a = self.element.getElementsByTagName('DIV')
+		b = self.shadow.element.getElementsByTagName('DIV')
+		c = {}
+		for d in b:
+			if not d.id: continue
+			c[ d.id ] = d
+
+		for d in a:
+			if not d.id: continue
+			clone = c[ d.id ]
+			#d._clone = clone ## no help for tab-content
+			if d.scrollTop:
+				clone.scrollTop = d.scrollTop
+
+		################################################
 
 		a = self.element.getElementsByTagName('SELECT')
 		b = self.shadow.element.getElementsByTagName('SELECT')

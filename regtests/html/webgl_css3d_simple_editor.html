@@ -316,7 +316,7 @@ def handle_drop_event(files, container, element3D):
 				element3D.root.add( collada.scene )
 				element3D.collada = collada.scene
 
-				menu = create_tab_menu()
+				menu = element3D.create_tab_menu()
 				container.appendChild( menu.root )
 
 
@@ -326,6 +326,7 @@ def handle_drop_event(files, container, element3D):
 					div = document.createElement('div')
 					div.setAttribute('class', 'well')
 					page.appendChild( div )
+					#div.id = element3D.newid()
 
 					h3 = document.createElement('h3')
 					h3.appendChild( document.createTextNode(model.name) )
