@@ -308,7 +308,6 @@ def handle_drop_event(files, container, element3D):
 			#loader.load( 'http://localhost:8000'+file.path, on_load )
 	
 			def onload(evt):
-				global slider
 				parser = new DOMParser()
 				collada = loader.parse( parser.parseFromString(evt.target.result, "application/xml") )
 				print(collada.scene)
@@ -317,8 +316,6 @@ def handle_drop_event(files, container, element3D):
 				element3D.root.add( collada.scene )
 				element3D.collada = collada.scene
 
-				global X 
-				X = collada.scene
 				for model in collada.scene.children:
 					print(model)
 					div = document.createElement('div')
@@ -330,35 +327,10 @@ def handle_drop_event(files, container, element3D):
 
 					if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
 						print(model.material)
-						slider = document.createElement('input')
-						## the native slider looks different on each platform,
-						## and it is not clickable, because the camera controls preventDefault?
-						## however, if focused the keyboard arrow keys, can still change the slider values.
-						## to be safe, instead of using a native slider, we use the custom jquery/css slider.
-						##slider.setAttribute('type', 'range')  ## do not use native slider
-						#slider.setAttribute('min', 0)
-						#slider.setAttribute('max', 100)
-						#slider.setAttribute('step', 1)
-						#slider.setAttribute('value', 100)
-
-						slider.setAttribute('type', 'hidden')
-						sid = 'slider-'+model.name
-						slider.setAttribute('id', sid)
-						div.appendChild( slider )
-
-						def onchange(val):
-							model.material.opacity = val * 0.01
-						#slider.oninput = onchange
-						#slider.onchange = onchange
-
-						$("#"+sid).PPSlider( width=300, onInput=onchange, value=100 )
-
-						def onclick(e):
-							print('slider clicked')
-							slider.focus()
-						slider.onclick = onclick
-
-
+						ui = gen_material_ui(model, div)
+						print('ui')
+						print(ui)
+						#div.appendChild( ui )
 
 			reader = new FileReader()
 			reader.onload = onload
@@ -416,6 +388,15 @@ def handle_drop_event(files, container, element3D):
 		container.appendChild(ul)
 		for li in videos:
 			ul.appendChild(li)
+
+
+def gen_material_ui(model, parent):
+	print('gen material ui')
+	print(model)
+	def onchange(val):
+		model.material.opacity = val
+	slider = create_slider( model.material.opacity, parent=parent, onchange=onchange )
+	return slider
 
 def animate():
 

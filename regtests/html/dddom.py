@@ -7,7 +7,7 @@ def __setup_slider_class( $ ):
 		var element = $(el);
 		var options = opts;
 		var isMouseDown = false;
-		var currentVal = opts.value or 0;
+		var currentVal = 0;
 
 		element.wrap('<div/>')
 		var container = $(el).parent();
@@ -61,7 +61,7 @@ def __setup_slider_class( $ ):
 			container.find('.pp-slider-tooltip').html(currentVal+'%');
 			container.find('.pp-slider-tooltip').css('left', newPos-6);
 			if typeof(options.onInput) == 'function':
-				options.onInput(currentVal)
+				options.onInput( newPos/upperBound )
 
 		def moving(e):
 			if isMouseDown:
@@ -80,7 +80,12 @@ def __setup_slider_class( $ ):
 		$(document).mousemove( lambda e: moving(e) )
 		$(document).mouseup( lambda e: dropCallback(e) )
 
-		container.find('.pp-slider-button').css("left", currentVal);
+		if options.value:
+			w = container.find('.pp-slider-scale').width()-container.find('.pp-slider-button').width()
+			container.find('.pp-slider-button').css(
+				"left",
+				w * options.value
+			)
 		
 
 	def __init__(options):
@@ -89,15 +94,42 @@ def __setup_slider_class( $ ):
 	$.fn.PPSlider = __init__
 
 	$.fn.PPSlider.defaults = {
-		'width': 100
+		'width': 300
 	};
 
-#})(jQuery);
 __setup_slider_class( jQuery )
 
-
-
 __sid = 0
+
+
+def create_slider(value, parent=None, onchange=None, width=200):
+	global __sid
+	__sid += 1
+	id = '__sid'+__sid
+	slider = document.createElement('input')
+	parent.appendChild( slider )
+	slider.setAttribute('id', id)
+	## the native slider looks different on each platform,
+	## and it is not clickable, because the camera controls preventDefault?
+	## however, if focused the keyboard arrow keys, can still change the slider values.
+	## to be safe, instead of using a native slider, we use the custom jquery/css slider.
+	##slider.setAttribute('type', 'range')  ## do not use native slider
+	#slider.setAttribute('min', 0)
+	#slider.setAttribute('max', 100)
+	#slider.setAttribute('step', 1)
+	#slider.setAttribute('value', 100)
+
+	slider.setAttribute('type', 'hidden')
+	## note: jquery will not throw an error if the selector is invalid,
+	## note: before the selector below can work, it needs to be appended
+	## to a parent DOM node, what is the jquery workaround to this?
+	$("#"+id).PPSlider( width=300, onInput=onchange, value=value )
+	## this will not work
+	#$('*', slider).PPSlider( width=300, onInput=onchange, value=value )
+
+	slider.onclick = lambda : slider.focus()
+
+	return slider
 
 def create_textarea():
 	global __sid
