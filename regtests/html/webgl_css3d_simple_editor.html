@@ -316,19 +316,64 @@ def handle_drop_event(files, container, element3D):
 				element3D.root.add( collada.scene )
 				element3D.collada = collada.scene
 
-				for model in collada.scene.children:
+				menu = document.createElement('div')
+				menu.setAttribute('class', 'tabbable tabs-left')
+				tabs = document.createElement('ul')
+				tabs.setAttribute('class', 'nav nav-tabs')
+				menu.appendChild( tabs )
+				container.appendChild( menu )
+
+				tabcontent = document.createElement('div')
+				tabcontent.setAttribute('class', 'tab-content')
+				menu.appendChild( tabcontent )
+
+				_tab_pages = []
+
+				for i,model in enumerate(collada.scene.children):
 					print(model)
-					div = document.createElement('div')
-					div.setAttribute('class', 'well')
-					container.appendChild( div )
+
+					tabid = model.name
+					tab = document.createElement('li')
+					taba = document.createElement('a')
+					taba.setAttribute('href', '#'+tabid)
+					taba.setAttribute('data-toggle', 'tab')
+
+					#taba.onclick = lambda : this.focus()
+
+					tab.appendChild( taba )
+					tabs.appendChild( tab )
+					taba.appendChild( document.createTextNode(model.name) )
+
+
+					page = document.createElement('div')
+					if i==0:
+						page.setAttribute('class', 'tab-pane active')
+					else:
+						page.setAttribute('class', 'tab-pane')
+					page.setAttribute('id', tabid)
+					tabcontent.appendChild( page )
+					_tab_pages.append( page )
+
+					## TODO force page to be full size, or sync scroll bars
+					page.style.width = '100%'  ## this fails to force the window to resize
+					page.style.height = '100%'
+
+					def clicktab():
+						for other in _tab_pages:
+							other.setAttribute('class', 'tab-pane')
+						this._tab_page.setAttribute('class', 'tab-pane active')
+
+					taba._tab_page = page
+					taba.onclick = clicktab
+
 					h3 = document.createElement('h3')
 					h3.appendChild( document.createTextNode(model.name) )
-					div.appendChild( h3 )
+					page.appendChild( h3 )
 
 					if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
 						print(model.material)
 						ui = gen_material_ui(model)
-						div.appendChild( ui )
+						page.appendChild( ui )
 
 			reader = new FileReader()
 			reader.onload = onload
