@@ -327,10 +327,8 @@ def handle_drop_event(files, container, element3D):
 
 					if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
 						print(model.material)
-						ui = gen_material_ui(model, div)
-						print('ui')
-						print(ui)
-						#div.appendChild( ui )
+						ui = gen_material_ui(model)
+						div.appendChild( ui )
 
 			reader = new FileReader()
 			reader.onload = onload
@@ -390,12 +388,11 @@ def handle_drop_event(files, container, element3D):
 			ul.appendChild(li)
 
 
-def gen_material_ui(model, parent):
+def gen_material_ui(model):
 	print('gen material ui')
-	print(model)
 	def onchange(val):
 		model.material.opacity = val
-	slider = create_slider( model.material.opacity, parent=parent, onchange=onchange )
+	slider = create_slider( model.material.opacity, onchange=onchange )
 	return slider
 
 def animate():

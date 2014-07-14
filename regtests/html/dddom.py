@@ -10,7 +10,7 @@ def __setup_slider_class( $ ):
 		var currentVal = 0;
 
 		element.wrap('<div/>')
-		var container = $(el).parent();
+		var container = $(el).parent();  ## this requires that the slider html element has a parent
 
 		container.addClass('pp-slider');
 		container.addClass('clearfix');
@@ -102,13 +102,9 @@ __setup_slider_class( jQuery )
 __sid = 0
 
 
-def create_slider(value, parent=None, onchange=None, width=200):
-	global __sid
-	__sid += 1
-	id = '__sid'+__sid
+def create_slider(value, onchange=None, width=200):
 	slider = document.createElement('input')
-	parent.appendChild( slider )
-	slider.setAttribute('id', id)
+
 	## the native slider looks different on each platform,
 	## and it is not clickable, because the camera controls preventDefault?
 	## however, if focused the keyboard arrow keys, can still change the slider values.
@@ -120,16 +116,15 @@ def create_slider(value, parent=None, onchange=None, width=200):
 	#slider.setAttribute('value', 100)
 
 	slider.setAttribute('type', 'hidden')
-	## note: jquery will not throw an error if the selector is invalid,
-	## note: before the selector below can work, it needs to be appended
-	## to a parent DOM node, what is the jquery workaround to this?
-	$("#"+id).PPSlider( width=300, onInput=onchange, value=value )
-	## this will not work
-	#$('*', slider).PPSlider( width=300, onInput=onchange, value=value )
+	#$("#"+id).PPSlider( width=300, onInput=onchange, value=value )
+
+	div = document.createElement('div')  ## a parent container is required
+	div.appendChild( slider )
+	$( slider ).PPSlider( width=300, onInput=onchange, value=value )
 
 	slider.onclick = lambda : slider.focus()
 
-	return slider
+	return div
 
 def create_textarea():
 	global __sid
