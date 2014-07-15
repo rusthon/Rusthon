@@ -197,7 +197,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._js_classes = dict()
 		self._in_js_class = False
 		self._in_assign_target = False
-		self._with_runtime_exceptions = False
+		self._with_runtime_exceptions = True  ## this is only used in full python mode.
 
 		self._iter_ids = 0
 		self._addop_ids = 0

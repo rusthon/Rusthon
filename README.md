@@ -313,4 +313,73 @@ irc freenode::
 	#pythonjs
 
 
-![bitdeli](https://d2weczhvl823v0.cloudfront.net/PythonJS/pythonjs/trend.png)
+pythonjs.configure
+------------------
+The special function call `pythonjs.configure` can be inserted anywhere in your code to turn off an on dynamic
+features of the language.
+
+If the option `direct_keys` is True then dictionary key lookups are done directly (faster),
+objects can not be used as keys, only strings and numbers can then be used as dictionary keys.
+
+The option `direct_operator` controls operator overloading for a given operator: '+', '*'.
+If '+' is declared a direct operator then `__add__` overload methods are not called,
+the operands are always assumed to be compatible with javascript addition.
+
+The option `runtime_exceptions` if False disables extra runtime checking of expressions and assignments,
+note this is always False in javascript mode.
+
+```
+pythonjs.configure(
+	javascript=True/False,          ## default False
+	runtime_exceptions=True/False,  ## default True
+	direct_keys=True/False,         ## default False
+	direct_operator=string          ## default 'None'
+)
+```
+
+Gotchas
+---------
+1. The calling context of `this` must be taken into account when using fast javascript mode, code that comes after: `pythonjs.configure(javascript=True)` or is inside a `with javascript:` block.  When in javascript mode, passing a method as a callback, or setting it as an attribute on another object, requires you call `f.bind(self)` to ensure that `self` within the method points to the class instance.  This is not required when using classes defined normal mode, because the `this` calling context is automatically managed.
+
+```
+class A:
+	def method(self):
+		print(self)
+
+a = A()
+
+with javascript:
+	class B:
+		def method(self):
+			print(self)
+
+	b = B()
+	a.b_method1 = b.method
+	a.b_method2 = b.method.bind(b)
+
+	a.method()     ## OK: prints a
+	a.b_method1()  ## FAILS: prints a, should have printed b
+	a.b_method2()  ## OK: prints b
+
+	b.a_method = a.method
+	b.a_method()   ## OK: prints a
+
+```
+
+2. When using direct operators, builtins are also affected.  List + list will no longer return a new array of items from both lists.  String * N will no longer return the string multipled by the number.
+
+```
+a = [1,2] + [3,4]  ## OK: a is [1,2,3,4]
+pythonjs.configure(direct_operator="+")
+b = [1,2] + [3,4]  ## FAILS
+
+c = "HI" * 2  ## OK: c is "HIHI"
+pythonjs.configure(direct_operator="*")
+d = "HI" * 2  ## FAILS
+
+```
+
+3. The syntax `from mymodule import *` allows you to import another python script from the same folder,
+but both mymodule and the parent will share the same namespace, mymodule can use global variables defined in the parent.
+
+
