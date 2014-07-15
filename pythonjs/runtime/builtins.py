@@ -351,7 +351,10 @@ with lowlevel:
 with javascript:
 	def __is_some_array( ob ):
 		if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
-			dom_array_types = [ NodeList, FileList, ClientRectList, DOMStringList, DataTransferItemList, HTMLCollection, HTMLAllCollection, SVGElementInstanceList, SVGNumberList, SVGTransformList]
+			dom_array_types = [ NodeList, FileList, ClientRectList, DOMStringList, HTMLCollection, HTMLAllCollection, SVGElementInstanceList, SVGNumberList, SVGTransformList]
+			if typeof(DataTransferItemList) == 'function':  ## missing in NodeWebkit
+				dom_array_types.append( DataTransferItemList )
+
 			for t in dom_array_types:
 				if instanceof(ob, t):
 					return True
