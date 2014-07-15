@@ -2266,12 +2266,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
 				if node.keywords:
-					kwargs = [ '%s=%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
+					kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
 					if args:
 						a = ','.join(args)
-						return 'new( %s(%s, %s) )' %( self.visit(node.func), a, ','.join(kwargs) )
+						return 'new( %s(%s, {%s}) )' %( self.visit(node.func), a, ','.join(kwargs) )
 					else:
-						return 'new( %s(%s) )' %( self.visit(node.func), ','.join(kwargs) )
+						return 'new( %s({%s}) )' %( self.visit(node.func), ','.join(kwargs) )
 
 				else:
 					a = ','.join(args)
