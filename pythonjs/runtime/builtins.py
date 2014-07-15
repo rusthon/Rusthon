@@ -752,10 +752,17 @@ with javascript:
 
 def float(a):
 	with javascript:
-		a = Number(a)
-		if isNaN(a):
-			raise ValueError('not a number')
-		return a
+		if typeof(a)=='string':
+			if a.lower()=='nan':
+				return NaN
+			elif a.lower()=='inf':
+				return Infinity
+
+		b = Number(a)
+		if isNaN(b):
+			## invalid strings also convert to NaN, throw error ##
+			raise ValueError('can not convert to float: '+a)
+		return b
 
 def round(a, places):
 	with javascript:

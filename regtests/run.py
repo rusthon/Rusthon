@@ -361,9 +361,12 @@ def TestWarning(file, line, result, test):
 """
 
 _python_only_extra_header = """
-import threading
-threading.start_webworker = lambda f,a: threading._start_new_thread(f,a)
-threading.start_new_thread = threading._start_new_thread
+try:
+    import threading
+    threading.start_webworker = lambda f,a: threading._start_new_thread(f,a)
+    threading.start_new_thread = threading._start_new_thread
+except ImportError:
+    pass
 
 class __faker__(object):
     def __enter__(self, *args): pass
@@ -391,8 +394,14 @@ def int16(a): return int(a)
 
 try:
     import numpy
-except:
-    import numpypy as numpy
+except ImportError:
+    try:
+        import numpypy as numpy
+    except ImportError:
+        pass
+
+from math import isnan as isNaN
+
 
 """
 
