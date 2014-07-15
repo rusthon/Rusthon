@@ -1100,8 +1100,35 @@ def generate_runtime():
 	return '\n'.join( lines )
 
 def main(script, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
-	#print(script)
-	tree = ast.parse( script )
+	try:
+		tree = ast.parse( script )
+	except SyntaxError:
+		import traceback
+		err = traceback.format_exc()
+		sys.stderr.write( err )
+		sys.stderr.write( '\n--------------error in second stage translation--------------\n' )
+
+		lineno = 0
+		for line in err.splitlines():
+			if "<unknown>" in line:
+				lineno = int(line.split()[-1])
+
+
+		lines = script.splitlines()
+		if lineno > 10:
+			for i in range(lineno-5, lineno+5):
+				sys.stderr.write( 'line %s->'%i )
+				sys.stderr.write( lines[i] )
+				if i==lineno-1:
+					sys.stderr.write('  <<SyntaxError>>')
+				sys.stderr.write( '\n' )
+
+		else:
+			sys.stderr.write( lines[lineno] )
+			sys.stderr.write( '\n' )
+
+		sys.exit(1)
+
 	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions ).visit(tree)
 
 
