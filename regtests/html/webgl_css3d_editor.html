@@ -1,0 +1,82 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+
+
+<link href='~/js/css/bootstrap.css' rel='stylesheet' />
+<link href='~/js/css/darkstrap.css' rel='stylesheet' />
+
+<style>
+	body {
+		background: rgb(43,45,48); /* Old browsers */
+		background: -moz-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%, rgba(0,0,0,1) 100%); /* FF3.6+ */
+		background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,rgba(43,45,48,1)), color-stop(100%,rgba(0,0,0,1))); /* Chrome,Safari4+ */
+		background: -webkit-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* Chrome10+,Safari5.1+ */
+		background: -o-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* Opera 12+ */
+		background: -ms-radial-gradient(center, ellipse cover,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* IE10+ */
+		background: radial-gradient(ellipse at center,  rgba(43,45,48,1) 0%,rgba(0,0,0,1) 100%); /* W3C */
+
+		margin: 0;
+		font-family: Arial;
+		overflow: hidden;
+
+	}
+
+    .pp-slider { width: 150px; float:left;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -o-user-select: none; user-select: none; height: 30px; }
+    .pp-slider .pp-slider-scale { background-color: #aaa; height: 1px; border-bottom: 1px solid #efefef; width: 120px; margin-top: 6px; float: left; }
+    .pp-slider .pp-slider-scale .pp-slider-button { width: 12px; border-radius: 2px; border: 1px solid #adadad; height: 26px; position: relative; top: -7px; left: 0px; background-color: #efefef; cursor: pointer; }
+    .pp-slider .pp-slider-scale .pp-slider-button .pp-slider-divies { border-left: 1px solid #adadad; border-right: 1px solid #adadad; position: relative; left: 3px; top: 3px; width: 4px; height: 10px; }
+    .pp-slider .pp-slider-scale .pp-slider-button:hover { border-color: #777; background-color: #eee;  }
+    .pp-slider .pp-slider-scale .pp-slider-tooltip { width: 24px; height: 20px; position: relative; top: -5px; left: 0px; text-align: center; font-size: 10px; color: #aaa; }
+    .pp-slider .pp-slider-min { float: left; width: 15px; color: #aaa; font-size: 10px; }
+    .pp-slider .pp-slider-max { float: left; width: 15px; color: #aaa; font-size: 10px; text-align: right; }
+</style>
+
+<script src="~/js/jquery/jquery-latest.js"></script>
+<script src="~/js/bootstrap/bootstrap.min.js"></script>
+
+	</head>
+	<body>
+		<script src="~/three.js/build/three.min.js"></script>
+
+		<script src="~/three.js/examples/js/controls/TrackballControls.js"></script>
+		<script src="~/three.js/examples/js/controls/TransformControls.js"></script>
+
+		<script src="~/three.js/examples/js/renderers/CSS3DRenderer.js"></script>
+
+		<script src="~/three.js/examples/js/postprocessing/RenderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/EffectComposer.js"></script>
+
+
+		<script src="~/three.js/examples/js/postprocessing/BloomPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/ShaderPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/MaskPass.js"></script>
+		<script src="~/three.js/examples/js/postprocessing/SavePass.js"></script>
+
+		<script src="~/three.js/examples/js/shaders/ConvolutionShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/CopyShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/FXAAShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/HorizontalTiltShiftShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/VerticalTiltShiftShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/VignetteShader.js"></script>
+		<script src="~/three.js/examples/js/shaders/EdgeShader2.js"></script>
+
+		<script src="~/three.js/examples/js/loaders/ColladaLoader.js"></script>
+
+
+
+<script type="text/python">
+
+pythonjs.configure(javascript=True)
+from random import random
+from threepy import *
+
+engine = threepy.Engine()
+a = engine.Editor( position=[0,0,0] )
+#a = engine.create_editor( position=[0,0,0] )
+engine.run()
+
+</script>
+</body>
+</html>

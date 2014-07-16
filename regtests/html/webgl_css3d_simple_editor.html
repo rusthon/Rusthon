@@ -91,6 +91,7 @@ def init():
 
 	camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.set( 200, 150, 800 );
+	selectman = SelectManager( camera )
 
 	controls = new THREE.TrackballControls( camera );
 	camera.smooth_target = controls.target.clone()
