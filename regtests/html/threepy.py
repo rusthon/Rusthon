@@ -50,9 +50,70 @@ class Editor( Window3D ):
 
 
 
-	def _gen_ui_multi(self, arr): pass
 
-	def _gen_ui_single(self, o): pass
+
+	def _gen_material_ui(self, model):
+		print(model.material)
+		div = document.createElement('div')
+
+		## Material.js
+		faceopts = ['FrontSide', 'BackSide', 'DoubleSide']
+		div.appendChild(document.createTextNode(' face direction:'))
+		dd = self.create_select_dropdown(faceopts)
+		div.appendChild( dd )
+		div.appendChild( document.createElement('br') )
+		def onchange(evt):
+			opt = faceopts[this.selectedIndex]
+			print(opt)
+			model.material.side = eval('THREE.'+opt)
+		dd.onchange = onchange
+
+		blendopts = ['NormalBlending', 'AdditiveBlending', 'SubtractiveBlending', 'NoBlending']
+		div.appendChild(document.createTextNode(' blending:'))
+		dd = self.create_select_dropdown(blendopts)
+		div.appendChild( dd )
+		div.appendChild( document.createElement('br') )
+		def change_blending(evt):
+			opt = blendopts[this.selectedIndex]
+			print(opt)
+			model.material.blending = eval('THREE.'+opt)
+		dd.onchange = change_blending
+
+
+
+		def change_opacity(val):
+			model.material.opacity = val
+		slider = create_slider( model.material.opacity, onchange=change_opacity )
+		div.appendChild( document.createTextNode('opacity:') )
+		div.appendChild( slider )
+
+		## MeshBasicMaterial.js
+
+
+		## MeshPhongMaterial.js
+
+		return div
+
+
+	def _gen_ui_single(self, model):
+		div = document.createElement('div')
+		div.setAttribute('class', 'well')
+		h3 = document.createElement('h3')
+		h3.appendChild( document.createTextNode(model.name) )
+		div.appendChild( h3 )
+
+		if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
+			ui = self._gen_material_ui(model)
+			div.appendChild( ui )
+		return div
+
+	def _gen_ui_multi(self, arr):
+		menu = self.create_tab_menu()
+		for i,model in enumerate(arr):
+			page = menu.add_tab( model.name )
+			div = self._gen_ui_single( model )
+			page.appendChild( div )
+		return menu.root
 
 	def _gen_ui(self, o):
 
@@ -87,32 +148,13 @@ class Editor( Window3D ):
 					print(collada.scene)
 					collada.scene.scale.set(0.25, 0.25, 0.25)
 					collada.scene.position.set(0, -100, 200)
-					element3D.root.add( collada.scene )
-					element3D.collada = collada.scene
+					self.root.add( collada.scene )
+					self.collada = collada.scene
 
-					menu = element3D.create_tab_menu()
-					container.appendChild( menu.root )
-
-
-					for i,model in enumerate(collada.scene.children):
-						print(model)
-						page = menu.add_tab( model.name )
-						div = document.createElement('div')
-						div.setAttribute('class', 'well')
-						page.appendChild( div )
-						#div.id = element3D.newid()
-
-						h3 = document.createElement('h3')
-						h3.appendChild( document.createTextNode(model.name) )
-						div.appendChild( h3 )
-
-						if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
-							print(model.material)
-							ui = gen_material_ui(model)
-							div.appendChild( ui )
+					self.element.appendChild( self._gen_ui(collada.scene.children) )
 
 				reader = new FileReader()
-				reader.onload = onload
+				reader.onload = onload.bind(self)
 				reader.readAsText( file )
 
 			elif file.path.endswith('.html'):
@@ -320,13 +362,6 @@ class Engine:
 		document.body.appendChild( renderer3.domElement );
 
 
-
-	def gen_material_ui(model):
-		print('gen material ui')
-		def onchange(val):
-			model.material.opacity = val
-		slider = create_slider( model.material.opacity, onchange=onchange )
-		return slider
 
 	def animate(self):
 		requestAnimationFrame( self.animate.bind(self) );

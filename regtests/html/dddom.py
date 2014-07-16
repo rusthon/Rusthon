@@ -473,7 +473,7 @@ class Window3D:
 		## this needs to be done anyways because `sel` must be given a height in pixels,
 		## to force it to display all the options, and not display a scroll bar (which are not synced).
 		H = 12 * options.length
-		#if H < 150: H = 150
+		if H < 100: H = 100
 		sel.style.height = int(H * 0.95)
 		X = e.offsetLeft / 2
 		Y = ((self.element.clientHeight-H) / 2) - (e.offsetHeight + e.offsetTop)
@@ -494,10 +494,19 @@ class Window3D:
 
 		sel.focus()  # required?
 
+		## this is used to capture a click on the dropdown popup, and copy selectedIndex
+		## from the clone to the source, and if the source has an onchange callback, call it.
 		def onclick(evt):
 			#sel.focus()  ## this triggers a bug that offsets the interactive layer
 			print(evt.toElement.getAttribute('index'))
 			e.selectedIndex = sel.selectedIndex = int(evt.toElement.getAttribute('index'))
+			## setting `selectedIndex` on the source e will not trigger its `onchange` callback to fire,
+			## so call onchange directly.  Note that the event `evt` from the clone is passed the source
+			## as the first argument. end-user code inside e.onchange should not modify elements referenced in the event.
+			## note that the calling context is set to the source by `e.onchange(evt)` so it is safe to use `this`
+			## inside of onchange.
+			if e.onchange:
+				e.onchange( evt )
 		sel.onclick = onclick
 
 		def onscroll(evt):  ## this hack is required to capture the scroll position
