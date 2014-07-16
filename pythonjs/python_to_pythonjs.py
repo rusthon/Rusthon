@@ -2274,8 +2274,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						return 'new( %s(%s, {%s}) )' %( self.visit(node.func), a, ','.join(kwargs) )
 					else:
 						return 'new( %s({%s}) )' %( self.visit(node.func), ','.join(kwargs) )
-
 				else:
+					if node.kwargs:
+						args.append( self.visit(node.kwargs) )
+
 					a = ','.join(args)
 					return 'new( %s(%s) )' %( self.visit(node.func), a )
 
