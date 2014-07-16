@@ -79,18 +79,81 @@ class Editor( Window3D ):
 			model.material.blending = eval('THREE.'+opt)
 		dd.onchange = change_blending
 
-
-
 		def change_opacity(val):
 			model.material.opacity = val
 		slider = create_slider( model.material.opacity, onchange=change_opacity )
 		div.appendChild( document.createTextNode('opacity:') )
 		div.appendChild( slider )
 
+		div.appendChild( document.createElement('br') )
+
+		def change_wireframe(evt): model.material.wireframe = this.checked
+		div.appendChild(document.createTextNode(' wireframe:'))
+		checkbox = create_checkbox( model.material.wireframe, onchange=change_wireframe )
+		#checkbox.onchange = change_wireframe
+		div.appendChild( checkbox )
+
+		div.appendChild( document.createElement('br') )
+
 		## MeshBasicMaterial.js
+		div.appendChild(document.createTextNode(' diffuse:'))
+		input = document.createElement('input')
+		input.setAttribute('type', 'color')
+		input.style.width=64; input.style.height=32
+		div.appendChild( input )
+		def change_diffuse(evt):
+			hex = int( '0x'+this.value[1:] )
+			model.material.color.setHex( hex )
+			print(model.material.color)
+		## oninput fails, can only get update after use has picked color
+		input.onchange = change_diffuse
 
 
 		## MeshPhongMaterial.js
+		if hasattr(model.material, 'ambient'):
+			div.appendChild(document.createTextNode(' ambient:'))
+			input = document.createElement('input')
+			input.setAttribute('type', 'color')
+			input.style.width=64; input.style.height=32
+			div.appendChild( input )
+			def change_ambient(evt):
+				hex = int( '0x'+this.value[1:] )
+				model.material.ambient.setHex( hex )
+				print(model.material.ambient)
+			input.onchange = change_ambient
+
+		if hasattr(model.material, 'emissive'):
+			div.appendChild(document.createTextNode(' emissive:'))
+			input = document.createElement('input')
+			input.setAttribute('type', 'color')
+			input.style.width=64; input.style.height=32
+			div.appendChild( input )
+			def change_emissive(evt):
+				hex = int( '0x'+this.value[1:] )
+				model.material.emissive.setHex( hex )
+				print(model.material.emissive)
+			input.onchange = change_emissive
+
+		if hasattr(model.material, 'specular'):
+			div.appendChild( document.createElement('br') )
+
+			div.appendChild(document.createTextNode(' specular:'))
+			input = document.createElement('input')
+			input.setAttribute('type', 'color')
+			input.style.width=64; input.style.height=32
+			div.appendChild( input )
+			def change_specular(evt):
+				hex = int( '0x'+this.value[1:] )
+				model.material.specular.setHex( hex )
+				print(model.material.specular)
+			input.onchange = change_specular
+
+			def change_shininess(val):
+				model.material.shininess = val * 100
+			slider = create_slider( model.material.shininess*0.01, onchange=change_shininess )
+			div.appendChild( document.createTextNode(' shininess:') )
+			div.appendChild( slider )
+
 
 		return div
 

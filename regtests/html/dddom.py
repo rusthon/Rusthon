@@ -218,11 +218,12 @@ def create_textarea():
 	ta.setAttribute('class', 'focused alert alert-info')
 	return ta
 
-def create_checkbox( checked ):
+def create_checkbox( checked, onchange=None ):
 	## no special hacks required for checkboxes ##
 	c = document.createElement('input')
 	c.setAttribute('type', 'checkbox')
 	if checked: c.setAttribute('checked', 'true')
+	if onchange: c.onchange = onchange
 	return c
 
 def create_dropdown_button( name, options ):
