@@ -892,6 +892,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if init:
 			args = [self.visit(arg) for arg in init.args.args]
 			node._cached_init = init
+			if init.args.kwarg:
+				args.append( init.args.kwarg )
 
 		else:
 			args = []
