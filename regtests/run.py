@@ -158,14 +158,19 @@ node_runnable = runnable("node --help")
 ## download https://github.com/rogerwang/node-webkit/releases/tag/nw-v0.9.2
 ## and extract to your home directory.
 nodewebkit_runnable = False
-nodewebkit = os.path.expanduser('~/node-webkit-v0.9.2-linux-x64/nw')
+
+
+nodewebkit = os.path.expanduser('~/node-webkit-v0.10.0-rc1-linux-x64/nw')
 if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 else:
-    nodewebkit = os.path.expanduser('~/node-webkit-v0.9.1-linux-x64/nw')
+    nodewebkit = os.path.expanduser('~/node-webkit-v0.9.2-linux-x64/nw')
     if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
     else:
-        nodewebkit = os.path.expanduser('~/node-webkit-v0.8.4-linux-x64/nw')
+        nodewebkit = os.path.expanduser('~/node-webkit-v0.9.1-linux-x64/nw')
         if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
+        else:
+            nodewebkit = os.path.expanduser('~/node-webkit-v0.8.4-linux-x64/nw')
+            if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
 if not show_details or '--no-nodewebkit' in sys.argv:
     nodewebkit_runnable = False
@@ -804,7 +809,8 @@ def run_html_test( filename, sum_errors ):
     open('/tmp/%s.html'%filename, 'wb').write( html.encode('utf-8') )
     if '--nodewebkit' in sys.argv:
         ## nodewebkit can bypass all cross origin browser-side security
-        write("/tmp/package.json", '{"name":"test", "main":"%s.html"}' %filename)
+        cfg = '{"name":"test", "main":"%s.html", "window":{"width":1200, "height":700}}' %filename
+        write("/tmp/package.json", cfg)
         run_command("%s /tmp" %nodewebkit, nodewebkit_workaround=True)
 
     else:

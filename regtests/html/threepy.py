@@ -34,8 +34,7 @@ class Editor( Window3D ):
 			evt.preventDefault()
 			if evt.dataTransfer.files.length==0:
 				url = evt.dataTransfer.getData("text/plain")
-				iframe = self.create_iframe( url, self.engine.renderer3.domElement )
-				self.element.appendChild(iframe)
+				self.open_iframe(url)
 			else:
 				self.handle_drop_event(evt.dataTransfer.files)
 
@@ -47,7 +46,9 @@ class Editor( Window3D ):
 			eval( ta.value )
 		b.onclick = onclick.bind(self)
 
-
+	def open_iframe(self, url):
+		iframe = self.create_iframe( url, self.engine.renderer3.domElement )
+		self.element.appendChild(iframe)
 
 	def _gen_material_ui(self, model):
 		print(model.material)
@@ -247,6 +248,10 @@ class Editor( Window3D ):
 
 
 	def handle_drop_event(self, files):
+		self.engine.pointlight1.position.copy( self.position )
+		self.engine.pointlight1.position.z += 40
+		self.engine.gizmo.attach( self.right_bar )
+
 		images = []
 		videos = []
 		for file in files:
@@ -279,13 +284,13 @@ class Editor( Window3D ):
 
 			elif file.path.endswith('.html'):
 				iframe = element3D.create_iframe( file.path, renderer3.domElement )
-				container.appendChild(iframe)
+				self.element.appendChild(iframe)
 
 			elif file.path.endswith('.css'):
 				print( 'TODO css' )
 			elif file.path.endswith('.js'):
 				print( 'TODO js' )
-			elif file.path.endswith('.jpg') or file.path.endswith('.png'):
+			elif file.path.endswith('.jpg') or file.path.endswith('.png') or file.path.endswith('.gif'):
 
 				li = document.createElement('li')
 				images.append(li)
@@ -297,14 +302,15 @@ class Editor( Window3D ):
 
 			elif file.path.endswith('.mp4'):
 				li = document.createElement('li')
-				video = element3D.create_video( mp4=file.path )
+				video = self.create_video( mp4=file.path )
 				li.appendChild( video )
 				videos.append( li )
 
+			## note, nodewebkit is missing libffmpegsumo, then it only plays ogv videos
 			elif file.path.endswith('.ogv'):
 				#li = document.createElement('li')
-				video = element3D.create_video( ogv=file.path )
-				container.appendChild(video)
+				video = self.create_video( ogv=file.path )
+				self.element.appendChild(video)
 				#li.appendChild( video )
 				#videos.append( li )
 
@@ -319,32 +325,24 @@ class Editor( Window3D ):
 		if images:
 			print('loading images')
 			ul = document.createElement('ul')
-			container.appendChild(ul)
+			self.element.appendChild(ul)
 			for li in images:
 				ul.appendChild(li)
 
 		if videos:
 			print('loading videos')
 			ul = document.createElement('ul')
-			container.appendChild(ul)
+			self.element.appendChild(ul)
 			for li in videos:
 				ul.appendChild(li)
 
-if False:
-	camera = scene = renderer = None
-	geometry = material = mesh = None
-	scene2 = renderer2 = renderer3 = None
-	controls = gizmo = composer = None
-	Elements = []
+
 
 class Engine:
 	def Editor(self, **kw):
 		e = Editor(self, **kw)
 		self.windows.append( e )
 		return e
-
-	#def create_editor(self, position=None):
-	#	return Editor(self, position=position)
 
 
 	def __init__(self):

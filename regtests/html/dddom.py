@@ -355,7 +355,7 @@ class Window3D:
 
 	def create_iframe( self, url, element ):
 		## this currently only renders on the top layer transparent layer,
-		## to make iframes visible the top layer needs to become semi-transparent of opaque.
+		## to make iframes visible the top layer needs to become semi-transparent or opaque.
 		## `element` is the DOM element that will have its opacity adjusted on mouse enter/leave
 		iframe = document.createElement('iframe')
 		iframe.setAttribute('src', url)
@@ -635,6 +635,7 @@ class Window3D:
 		CLICKABLES.append( m )
 
 		def clickfooter(inter):
+			self.active = True
 			if self.collasped:
 				self.expand()
 		m.onclick = clickfooter.bind(self)

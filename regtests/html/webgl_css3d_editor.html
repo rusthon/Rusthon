@@ -73,7 +73,24 @@ from random import random
 from threepy import *
 
 engine = threepy.Engine()
-a = engine.Editor( position=[0,250,0] )
+
+for i in range(10):
+	a = engine.Editor( position=[(random()*600)-100, 250*random(), (random()*400)+(i*250)-800] )
+	if random() > 0.8:
+		a.rotation.y = Math.PI/2
+		a.position.x = -300
+	else:
+		a.rotation.y = random() * random()
+
+geometry = new THREE.BoxGeometry( 800, 400, 3800 );
+material = new THREE.MeshPhongMaterial( color=0xc1c1c1 )
+mesh = new THREE.Mesh( geometry, material );
+mesh.position.z = -400
+mesh.position.y = -280
+engine.scene.add( mesh );
+mesh.receiveShadow = true;
+
+
 engine.run()
 
 </script>
