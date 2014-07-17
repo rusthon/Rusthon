@@ -802,16 +802,23 @@ def run_html_test( filename, sum_errors ):
 
     html = '\n'.join(doc)
     open('/tmp/%s.html'%filename, 'wb').write( html.encode('utf-8') )
-    ## chrome-extension that won't force you to close your browser windows when deving: `Allow-Control-Allow-Origin:*`
-    cmd = [
-        'google-chrome', 
-        '--app=file:///tmp/%s.html'%filename,
-        '--allow-file-access-from-files',  ## only takes affect if chrome is closed
-        '--allow-file-access',             ## only takes affect if chrome is closed
-        '--disable-web-security'           ## only takes affect if chrome is closed
-    ]
-    ## non-blocking, TODO check for chrome extension that allows output of console.log to stdout
-    subprocess.check_call(cmd)
+    if '--nodewebkit' in sys.argv:
+        ## nodewebkit can bypass all cross origin browser-side security
+        write("/tmp/package.json", '{"name":"test", "main":"%s.html"}' %filename)
+        run_command("%s /tmp" %nodewebkit, nodewebkit_workaround=True)
+
+    else:
+        ## chrome-extension that won't force you to close your browser windows when deving: `Allow-Control-Allow-Origin:*`
+        ## this still fails with iframes that do not allow cross origin.
+        cmd = [
+            'google-chrome', 
+            '--app=file:///tmp/%s.html'%filename,
+            '--allow-file-access-from-files',  ## only takes affect if chrome is closed
+            '--allow-file-access',             ## only takes affect if chrome is closed
+            '--disable-web-security'           ## only takes affect if chrome is closed
+        ]
+        ## non-blocking, TODO check for chrome extension that allows output of console.log to stdout
+        subprocess.check_call(cmd)
 
 
 table_header = "%-12.12s %-28.28s"

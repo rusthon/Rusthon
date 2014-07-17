@@ -354,12 +354,13 @@ class Engine:
 		SCREEN_HEIGHT = window.innerHeight
 
 		self.camera = camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 10000 );
-		camera.position.set( 200, 150, 800 );
+		camera.position.set( 200, 250, 800 );
 
 		self._selectman = SelectManager(self.camera)
 
 		self.controls = controls = new THREE.TrackballControls( camera );
 		camera.smooth_target = controls.target.clone()
+		camera.smooth_target.y = 300
 
 		controls.rotateSpeed = 1.0;
 		controls.zoomSpeed = 1.2;
@@ -494,7 +495,8 @@ class Engine:
 		self.renderer3.render( self.scene3, self.camera )
 
 	def run(self):
-		self.animate()
+		#self.animate()
+		setTimeout(self.animate.bind(self), 1000)
 
 threepy = {
 	'Engine' : lambda : Engine(),

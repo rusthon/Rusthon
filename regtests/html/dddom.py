@@ -685,7 +685,8 @@ class Window3D:
 		self.mask.scale.x = w*99
 		self.mask.scale.y = h*99
 
-		self.shadow.element = self.element.cloneNode()  ## this is just to display content
+		## this is just to display content, cloneNode(true) ensures deep copy
+		self.shadow.element = self.element.cloneNode(true)
 
 		## sync scrollbars of any div with an id,
 		## note: this will not work with tab-content div's.
