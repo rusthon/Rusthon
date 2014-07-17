@@ -349,13 +349,24 @@ with lowlevel:
 
 
 with javascript:
-	def __is_some_array( ob ):
-		if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
-			dom_array_types = [ NodeList, FileList, ClientRectList, DOMStringList, HTMLCollection, HTMLAllCollection, SVGElementInstanceList, SVGNumberList, SVGTransformList]
-			if typeof(DataTransferItemList) == 'function':  ## missing in NodeWebkit
-				dom_array_types.append( DataTransferItemList )
+	__dom_array_types__ = []
+	if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
+		## minimal dom array types common to allow browsers ##
+		__dom_array_types__ = [ NodeList, FileList, DOMStringList, HTMLCollection, SVGNumberList, SVGTransformList]
 
-			for t in dom_array_types:
+		## extra dom array types ##
+		if typeof(DataTransferItemList) == 'function':  ## missing in NodeWebkit
+			__dom_array_types__.push( DataTransferItemList )
+		if typeof(HTMLAllCollection) == 'function':     ## missing in Firefox
+			__dom_array_types__.push( HTMLAllCollection )
+		if typeof(SVGElementInstanceList) == 'function':## missing in Firefox
+			__dom_array_types__.push( SVGElementInstanceList )
+		if typeof(ClientRectList) == 'function':        ## missing in Firefox-trunk
+			__dom_array_types__.push( ClientRectList )
+
+	def __is_some_array( ob ):
+		if __dom_array_types__.length > 0:
+			for t in __dom_array_types__:
 				if instanceof(ob, t):
 					return True
 		return False
