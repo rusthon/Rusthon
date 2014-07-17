@@ -49,9 +49,6 @@ class Editor( Window3D ):
 
 
 
-
-
-
 	def _gen_material_ui(self, model):
 		print(model.material)
 		div = document.createElement('div')
@@ -79,6 +76,18 @@ class Editor( Window3D ):
 			model.material.blending = eval('THREE.'+opt)
 		dd.onchange = change_blending
 
+		def change_wireframe(evt): model.material.wireframe = this.checked
+		div.appendChild(document.createTextNode(' wireframe:'))
+		checkbox = create_checkbox( model.material.wireframe, onchange=change_wireframe )
+		div.appendChild( checkbox )
+
+		def change_wireframe_width(val): model.material.wireframeLinewidth = val * 10
+		slider = create_slider( model.material.wireframeLinewidth*0.1, onchange=change_wireframe_width )
+		div.appendChild( slider )
+
+		div.appendChild( document.createElement('br') )
+
+
 		def change_opacity(val):
 			model.material.opacity = val
 		slider = create_slider( model.material.opacity, onchange=change_opacity )
@@ -87,20 +96,17 @@ class Editor( Window3D ):
 
 		div.appendChild( document.createElement('br') )
 
-		def change_wireframe(evt): model.material.wireframe = this.checked
-		div.appendChild(document.createTextNode(' wireframe:'))
-		checkbox = create_checkbox( model.material.wireframe, onchange=change_wireframe )
-		#checkbox.onchange = change_wireframe
-		div.appendChild( checkbox )
 
-		div.appendChild( document.createElement('br') )
+		well = document.createElement('div')
+		well.setAttribute('class', 'well')
+		div.appendChild( well )
 
 		## MeshBasicMaterial.js
-		div.appendChild(document.createTextNode(' diffuse:'))
+		well.appendChild(document.createTextNode(' diffuse:'))
 		input = document.createElement('input')
 		input.setAttribute('type', 'color')
 		input.style.width=64; input.style.height=32
-		div.appendChild( input )
+		well.appendChild( input )
 		def change_diffuse(evt):
 			hex = int( '0x'+this.value[1:] )
 			model.material.color.setHex( hex )
@@ -111,11 +117,11 @@ class Editor( Window3D ):
 
 		## MeshPhongMaterial.js
 		if hasattr(model.material, 'ambient'):
-			div.appendChild(document.createTextNode(' ambient:'))
+			well.appendChild(document.createTextNode(' ambient:'))
 			input = document.createElement('input')
 			input.setAttribute('type', 'color')
 			input.style.width=64; input.style.height=32
-			div.appendChild( input )
+			well.appendChild( input )
 			def change_ambient(evt):
 				hex = int( '0x'+this.value[1:] )
 				model.material.ambient.setHex( hex )
@@ -123,11 +129,11 @@ class Editor( Window3D ):
 			input.onchange = change_ambient
 
 		if hasattr(model.material, 'emissive'):
-			div.appendChild(document.createTextNode(' emissive:'))
+			well.appendChild(document.createTextNode(' emissive:'))
 			input = document.createElement('input')
 			input.setAttribute('type', 'color')
 			input.style.width=64; input.style.height=32
-			div.appendChild( input )
+			well.appendChild( input )
 			def change_emissive(evt):
 				hex = int( '0x'+this.value[1:] )
 				model.material.emissive.setHex( hex )
@@ -135,9 +141,16 @@ class Editor( Window3D ):
 			input.onchange = change_emissive
 
 		if hasattr(model.material, 'specular'):
-			div.appendChild( document.createElement('br') )
+			#div.appendChild( document.createElement('br') )
 
 			div.appendChild(document.createTextNode(' specular:'))
+
+			def change_shininess(val):
+				model.material.shininess = val * 100
+			slider = create_slider( model.material.shininess*0.01, onchange=change_shininess )
+			#div.appendChild( document.createTextNode(' shininess:') )
+			div.appendChild( slider )
+
 			input = document.createElement('input')
 			input.setAttribute('type', 'color')
 			input.style.width=64; input.style.height=32
@@ -148,11 +161,6 @@ class Editor( Window3D ):
 				print(model.material.specular)
 			input.onchange = change_specular
 
-			def change_shininess(val):
-				model.material.shininess = val * 100
-			slider = create_slider( model.material.shininess*0.01, onchange=change_shininess )
-			div.appendChild( document.createTextNode(' shininess:') )
-			div.appendChild( slider )
 
 
 		return div
@@ -161,9 +169,58 @@ class Editor( Window3D ):
 	def _gen_ui_single(self, model):
 		div = document.createElement('div')
 		div.setAttribute('class', 'well')
-		h3 = document.createElement('h3')
-		h3.appendChild( document.createTextNode(model.name) )
-		div.appendChild( h3 )
+		#h3 = document.createElement('h3')
+		#h3.appendChild( document.createTextNode(model.name) )
+		#div.appendChild( h3 )
+
+		div.appendChild( document.createTextNode(' position:') )
+
+		def set_pos_x(evt): model.position.x = this.value
+		input = create_float_input( model.position.x, onchange=set_pos_x)
+		div.appendChild( input )
+
+		def set_pos_y(evt): model.position.y = this.value
+		input = create_float_input( model.position.y, onchange=set_pos_y)
+		div.appendChild( input )
+
+		def set_pos_z(evt): model.position.z = this.value
+		input = create_float_input( model.position.z, onchange=set_pos_z)
+		div.appendChild( input )
+
+		div.appendChild( document.createElement('br') )
+
+		div.appendChild( document.createTextNode(' rotation:') )
+
+		def set_rot_x(evt): model.rotation.x = this.value
+		input = create_float_input( model.rotation.x, onchange=set_rot_x)
+		div.appendChild( input )
+
+		def set_rot_y(evt): model.rotation.y = this.value
+		input = create_float_input( model.rotation.y, onchange=set_rot_y)
+		div.appendChild( input )
+
+		def set_rot_z(evt): model.rotation.z = this.value
+		input = create_float_input( model.rotation.z, onchange=set_rot_z)
+		div.appendChild( input )
+
+		div.appendChild( document.createElement('br') )
+
+		div.appendChild( document.createTextNode(' scale:') )
+
+		def set_scale_x(evt): model.scale.x = this.value
+		input = create_float_input( model.scale.x, onchange=set_scale_x)
+		div.appendChild( input )
+
+		def set_scale_y(evt): model.scale.y = this.value
+		input = create_float_input( model.scale.y, onchange=set_scale_y)
+		div.appendChild( input )
+
+		def set_scale_z(evt): model.scale.z = this.value
+		input = create_float_input( model.scale.z, onchange=set_scale_z)
+		div.appendChild( input )
+
+
+
 
 		if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
 			ui = self._gen_material_ui(model)
@@ -320,15 +377,6 @@ class Engine:
 		self.scene3 = scene3 = new THREE.Scene();
 
 
-
-		geometry = new THREE.BoxGeometry( 800, 400, 3800 );
-		material = new THREE.MeshPhongMaterial( color=0xc1c1c1, transparent=true, opacity=0.27 );
-		mesh = new THREE.Mesh( geometry, material );
-		mesh.position.z = -400
-		mesh.position.y = -220
-		scene.add( mesh );
-		mesh.receiveShadow = true;
-
 		self.renderer = renderer = new THREE.WebGLRenderer(alpha=True);
 		renderer.shadowMapEnabled = true
 		renderer.shadowMapType = THREE.PCFSoftShadowMap
@@ -363,8 +411,12 @@ class Engine:
 
 		scene.add( light );
 
-		self.pointlight = pointlight = new( THREE.PointLight(0xffffff, 2, 500) )
+		self.pointlight1 = pointlight = new( THREE.PointLight(0xffffff, 2, 500) )
 		pointlight.position.set( 10, 100, 300 )
+		scene.add( pointlight )
+
+		self.pointlight2 = pointlight = new( THREE.PointLight(0xffffff, 2, 500) )
+		pointlight.position.set( -10, -100, 200 )
 		scene.add( pointlight )
 
 		renderer.sortObjects = false

@@ -199,7 +199,7 @@ def create_slider(value, onchange=None, width=200):
 
 	div = document.createElement('div')  ## a parent container is required
 	div.appendChild( slider )
-	$( slider ).PPSlider( width=300, onInput=onchange, value=value )
+	$( slider ).PPSlider( width=width, onInput=onchange, value=value )
 
 	slider.onclick = lambda : slider.focus()
 
@@ -225,6 +225,29 @@ def create_checkbox( checked, onchange=None ):
 	if checked: c.setAttribute('checked', 'true')
 	if onchange: c.onchange = onchange
 	return c
+
+def create_number_input(value, step=1, onchange=None):
+	input = document.createElement('input')
+	input.setAttribute('type', 'number')
+	input.setAttribute('step', step)
+	input.value = value
+	input.style.width = 64
+	input.style.height = 32
+	input.onclick = lambda : this.focus()
+	if onchange: input.onchange = onchange
+	return input
+
+def create_float_input(value, step=0.01, onchange=None):
+	input = document.createElement('input')
+	input.setAttribute('type', 'number')
+	input.setAttribute('step', step)
+	input.value = value
+	input.style.width = 64
+	input.style.height = 32
+	input.onclick = lambda : this.focus()
+	if onchange: input.onchange = onchange
+	return input
+
 
 def create_dropdown_button( name, options ):
 	div = document.createElement('div')
@@ -611,13 +634,10 @@ class Window3D:
 		m.castShadow = true;
 		CLICKABLES.append( m )
 
-		def spin(inter):
+		def clickfooter(inter):
 			if self.collasped:
 				self.expand()
-			else:
-				self.spin90()
-				self.object.position.x = -200
-		m.onclick = spin.bind(self)
+		m.onclick = clickfooter.bind(self)
 
 		geo = new THREE.BoxGeometry( 0.2, 0.1, 10 );
 		mat = new THREE.MeshPhongMaterial( {'color': 0xffff00 } );
