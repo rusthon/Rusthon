@@ -1,0 +1,136 @@
+<html>
+<head>
+<script src="~/three.js/build/three.min.js"></script>
+
+<script type="text/python">
+
+Meshes = []
+ren = None
+scn = None
+cam = None
+
+def avg2( a, b ):
+	x = a.x + b.x
+	y = a.y + b.y
+	z = a.z + b.z
+	return new THREE.Vector3(x/2, y/2, z/2)
+
+def avg4( a, b, c, d ):
+	x = a.x + b.x + c.x + d.x
+	y = a.y + b.y + c.y + d.y
+	z = a.z + b.z + c.z + d.z
+	return new THREE.Vector3(x/4, y/4, z/4)
+
+class CatmullClark:
+	def id(self, a,b):
+		v1 = Math.min(a,b)
+		v2 = Math.max(a,b)
+		return v1+':'+v2
+
+	def __init__(self, geo):
+		self.geom = geo
+		geo.computeCentroids()
+		self.edge_faces = edge_faces = {}
+		for face in geo.faces:
+			id1 = self.id(face.a, face.b)
+			id2 = self.id(face.b, face.c)
+			id3 = self.id(face.c, face.a)
+			if id1 not in edge_faces:
+				edge_faces[id1] = []
+			if id2 not in edge_faces:
+				edge_faces[id2] = []
+			if id3 not in edge_faces:
+				edge_faces[id3] = []
+
+			edge_faces[id1].append( face )
+			edge_faces[id2].append( face )
+			edge_faces[id3].append( face )
+
+		print(edge_faces)
+
+		fgeo = new THREE.Geometry()
+		egeo = new THREE.Geometry()
+
+		for face in geo.faces:
+			print(face)
+			id = self.id(face.a, face.b); edge = edge_faces[id]
+			print(edge)
+			e1 = avg4( geo.vertices[face.a], geo.vertices[face.b], edge[0].centroid, edge[1].centroid )
+
+			id = self.id(face.b,face.c); edge = edge_faces[id]
+			print(edge)
+			e2 = avg4( geo.vertices[face.b], geo.vertices[face.c], edge[0].centroid, edge[1].centroid )
+
+			id = self.id(face.c, face.a); edge = edge_faces[id]
+			print(edge)
+			e3 = avg4( geo.vertices[face.c], geo.vertices[face.a], edge[0].centroid, edge[1].centroid )
+
+			egeo.vertices.append(e1)
+			egeo.vertices.append(e2)
+			egeo.vertices.append(e3)
+
+			fgeo.vertices.append( face.centroid )
+
+		pmat = new THREE.ParticleSystemMaterial( size=2, color=0x0000ff )
+		p = new THREE.ParticleSystem( egeo, pmat )
+		mesh.add( p )
+
+		pmat = new THREE.ParticleSystemMaterial( size=1, color=0xff0000 )
+		p = new THREE.ParticleSystem( fgeo, pmat )
+		mesh.add( p )
+
+def main():
+	global ren, scn, cam, mesh
+
+	div = document.createElement( 'div' )
+	document.body.appendChild(div)
+	print(div)
+
+	width = 640; height = 320
+	scn = new( THREE.Scene() )
+	print(scn)
+	cam = new( THREE.PerspectiveCamera( 45, width/height, 0.01, 10000) )
+	print(cam)
+	cam.position.z = 60
+	cam.position.x = 5
+
+	ren = new( THREE.WebGLRenderer() )
+	print(ren)
+	ren.setSize( width, height )
+	#ren.setClearColor( 0.5, 0.5, 0.5 )
+
+	div.appendChild( ren.domElement )
+
+	light = new( THREE.PointLight() )
+	light.position.set( 0, 100, 90 )
+	scn.add( light )
+	print(light)
+
+	geo = new THREE.BoxGeometry( 20,20,20 )
+	mat = new THREE.MeshLambertMaterial( wireframe=True )
+	mesh = new THREE.Mesh( geo, mat )
+	scn.add( mesh )
+	Meshes.append( mesh )
+
+	CatmullClark( geo )
+
+	animate()
+
+def animate():
+	requestAnimationFrame( animate )
+	for m in Meshes:
+		m.rotation.x = m.rotation.x + 0.01
+		m.rotation.y = m.rotation.y + 0.02
+		x = m.quaternion.x
+		y = m.quaternion.y
+		z = m.quaternion.z
+		m.material.color.setRGB( 1,y,z )
+
+	ren.render( scn, cam )
+
+</script>
+
+</head>
+<body onload="main()">
+</body>
+</html>
