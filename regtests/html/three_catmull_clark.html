@@ -1,13 +1,22 @@
 <html>
 <head>
 <script src="~/three.js/build/three.min.js"></script>
+<script src="~/three.js/examples/js/controls/TrackballControls.js"></script>
 
 <script type="text/python">
 
-Meshes = []
 ren = None
 scn = None
 cam = None
+
+def avg( arr ):
+	n = arr.length
+	x = []; y = []; z = []
+	for v in arr:
+		x.push( v.x )
+		y.push( v.y )
+		z.push( v.z )
+	return new THREE.Vector3( sum(x)/n, sum(y)/n, sum(z)/n )
 
 def avg2( a, b ):
 	x = a.x + b.x
@@ -22,6 +31,11 @@ def avg4( a, b, c, d ):
 	return new THREE.Vector3(x/4, y/4, z/4)
 
 class CatmullClark:
+	'''
+	http://www.rorydriscoll.com/2008/08/01/catmull-clark-subdivision-the-basics/
+
+	'''
+
 	def id(self, a,b):
 		v1 = Math.min(a,b)
 		v2 = Math.max(a,b)
@@ -30,6 +44,10 @@ class CatmullClark:
 	def __init__(self, geo):
 		self.geom = geo
 		geo.computeCentroids()
+
+		# R is the average of the surrounding edge midpoints
+		r = [ [] for i in range(geo.vertices.length) ]
+
 		self.edge_faces = edge_faces = {}
 		for face in geo.faces:
 			id1 = self.id(face.a, face.b)
@@ -46,23 +64,40 @@ class CatmullClark:
 			edge_faces[id2].append( face )
 			edge_faces[id3].append( face )
 
-		print(edge_faces)
+			mid = avg2( geo.vertices[face.a], geo.vertices[face.b] )
+			r[ face.a ].push( mid )
+			r[ face.b ].push( mid )
+
+			mid = avg2( geo.vertices[face.b], geo.vertices[face.c] )
+			r[ face.b ].push( mid )
+			r[ face.c ].push( mid )
+
+			mid = avg2( geo.vertices[face.c], geo.vertices[face.a] )
+			r[ face.c ].push( mid )
+			r[ face.a ].push( mid )
+
+
+		R = []
+		for a in r:
+			print(a)
+			R.push( avg(a) )
 
 		fgeo = new THREE.Geometry()
 		egeo = new THREE.Geometry()
+		rgeo = new THREE.Geometry()
 
+		sgeo = new THREE.Geometry()
+
+		edgeverts = []
+		i = 0
 		for face in geo.faces:
-			print(face)
 			id = self.id(face.a, face.b); edge = edge_faces[id]
-			print(edge)
 			e1 = avg4( geo.vertices[face.a], geo.vertices[face.b], edge[0].centroid, edge[1].centroid )
 
 			id = self.id(face.b,face.c); edge = edge_faces[id]
-			print(edge)
 			e2 = avg4( geo.vertices[face.b], geo.vertices[face.c], edge[0].centroid, edge[1].centroid )
 
 			id = self.id(face.c, face.a); edge = edge_faces[id]
-			print(edge)
 			e3 = avg4( geo.vertices[face.c], geo.vertices[face.a], edge[0].centroid, edge[1].centroid )
 
 			egeo.vertices.append(e1)
@@ -71,46 +106,72 @@ class CatmullClark:
 
 			fgeo.vertices.append( face.centroid )
 
+			rgeo.vertices.push( R[face.a] )
+			rgeo.vertices.push( R[face.b] )
+			rgeo.vertices.push( R[face.c] )
+
+
+
+			sgeo.vertices.append(e1)
+			sgeo.vertices.append(e2)
+			sgeo.vertices.append(e3)
+			sgeo.faces.push( new THREE.Face3(i,i+1,i+2) )
+
+			sgeo.vertices.push( R[face.a] )
+			sgeo.vertices.push( R[face.b] )
+			sgeo.vertices.push( R[face.c] )
+
+			sgeo.faces.push( new THREE.Face3(i+3,i,i+2) )
+			sgeo.faces.push( new THREE.Face3(i+4,i+1,i) )
+			sgeo.faces.push( new THREE.Face3(i+5,i+2,i+1) )
+
+
+			i += 6
+
+
+
 		pmat = new THREE.ParticleSystemMaterial( size=2, color=0x0000ff )
 		p = new THREE.ParticleSystem( egeo, pmat )
 		mesh.add( p )
 
-		pmat = new THREE.ParticleSystemMaterial( size=1, color=0xff0000 )
-		p = new THREE.ParticleSystem( fgeo, pmat )
+		pmat = new THREE.ParticleSystemMaterial( size=1.5, color=0xffff00 )
+		p = new THREE.ParticleSystem( rgeo, pmat )
 		mesh.add( p )
 
+		pmat = new THREE.ParticleSystemMaterial( size=1, color=0xff0000 )
+		p = new THREE.ParticleSystem( fgeo, pmat )
+		#mesh.add( p )
+
+		mat = new THREE.MeshBasicMaterial( color=0x00ff00, wireframe=True, wireframeLinewidth=3 )
+		mesh.add( new THREE.Mesh( sgeo, mat ) )
+
+
 def main():
-	global ren, scn, cam, mesh
+	global ren, scn, cam, mesh, controls
 
 	div = document.createElement( 'div' )
 	document.body.appendChild(div)
-	print(div)
 
-	width = 640; height = 320
+	width = window.innerWidth-20; height = window.innerHeight-20
 	scn = new( THREE.Scene() )
-	print(scn)
 	cam = new( THREE.PerspectiveCamera( 45, width/height, 0.01, 10000) )
-	print(cam)
 	cam.position.z = 60
 	cam.position.x = 5
+	controls = new THREE.TrackballControls( cam )
 
 	ren = new( THREE.WebGLRenderer() )
-	print(ren)
 	ren.setSize( width, height )
-	#ren.setClearColor( 0.5, 0.5, 0.5 )
 
 	div.appendChild( ren.domElement )
 
-	light = new( THREE.PointLight() )
+	light = new( THREE.PointLight(20) )
 	light.position.set( 0, 100, 90 )
 	scn.add( light )
-	print(light)
 
 	geo = new THREE.BoxGeometry( 20,20,20 )
-	mat = new THREE.MeshLambertMaterial( wireframe=True )
+	mat = new THREE.MeshBasicMaterial( wireframe=True )
 	mesh = new THREE.Mesh( geo, mat )
 	scn.add( mesh )
-	Meshes.append( mesh )
 
 	CatmullClark( geo )
 
@@ -118,14 +179,7 @@ def main():
 
 def animate():
 	requestAnimationFrame( animate )
-	for m in Meshes:
-		m.rotation.x = m.rotation.x + 0.01
-		m.rotation.y = m.rotation.y + 0.02
-		x = m.quaternion.x
-		y = m.quaternion.y
-		z = m.quaternion.z
-		m.material.color.setRGB( 1,y,z )
-
+	controls.update()
 	ren.render( scn, cam )
 
 </script>
