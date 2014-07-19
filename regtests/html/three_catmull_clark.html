@@ -4,6 +4,7 @@
 <script src="~/three.js/examples/js/controls/TrackballControls.js"></script>
 
 <script type="text/python">
+pythonjs.configure(javascript=True)
 
 ren = None
 scn = None
@@ -41,9 +42,12 @@ class CatmullClark:
 		v2 = Math.max(a,b)
 		return v1+':'+v2
 
-	def __init__(self, geo):
-		self.geom = geo
+	def __init__(self, geo, parent=None):
+		self.input_geom = geo
 		geo.computeCentroids()
+
+		# Q is the average of the surrounding face points
+		q = [ [] for i in range(geo.vertices.length) ]
 
 		# R is the average of the surrounding edge midpoints
 		r = [ [] for i in range(geo.vertices.length) ]
@@ -76,11 +80,20 @@ class CatmullClark:
 			r[ face.c ].push( mid )
 			r[ face.a ].push( mid )
 
+			q[ face.a ].push( face.centroid )
+			q[ face.b ].push( face.centroid )
+			q[ face.c ].push( face.centroid )
 
+
+		# 0.5  from the surrounding edge midpoints `R`, 
 		R = []
 		for a in r:
-			print(a)
-			R.push( avg(a) )
+			R.push( avg(a).multiplyScalar(0.5) )
+
+		# 0.25 weight from the average of surrounding face-points `Q`, 
+		Q = []
+		for u in q:
+			Q.push( avg(u).multiplyScalar(0.25) )
 
 		fgeo = new THREE.Geometry()
 		egeo = new THREE.Geometry()
@@ -106,20 +119,25 @@ class CatmullClark:
 
 			fgeo.vertices.append( face.centroid )
 
-			rgeo.vertices.push( R[face.a] )
-			rgeo.vertices.push( R[face.b] )
-			rgeo.vertices.push( R[face.c] )
-
-
-
 			sgeo.vertices.append(e1)
 			sgeo.vertices.append(e2)
 			sgeo.vertices.append(e3)
 			sgeo.faces.push( new THREE.Face3(i,i+1,i+2) )
 
-			sgeo.vertices.push( R[face.a] )
-			sgeo.vertices.push( R[face.b] )
-			sgeo.vertices.push( R[face.c] )
+
+			# 0.25 from the original control-point.
+
+			vpoint = R[face.a].clone().add( Q[face.a] ).clone().add( geo.vertices[face.a].clone().multiplyScalar(0.25) )
+			sgeo.vertices.push( vpoint )
+			rgeo.vertices.push( vpoint )
+
+			vpoint = R[face.b].clone().add( Q[face.b] ).clone().add( geo.vertices[face.b].clone().multiplyScalar(0.25) )
+			sgeo.vertices.push( vpoint )
+			rgeo.vertices.push( vpoint )
+
+			vpoint = R[face.c].clone().add( Q[face.c] ).clone().add( geo.vertices[face.c].clone().multiplyScalar(0.25) )
+			sgeo.vertices.push( vpoint )
+			rgeo.vertices.push( vpoint )
 
 			sgeo.faces.push( new THREE.Face3(i+3,i,i+2) )
 			sgeo.faces.push( new THREE.Face3(i+4,i+1,i) )
@@ -130,21 +148,27 @@ class CatmullClark:
 
 
 
-		pmat = new THREE.ParticleSystemMaterial( size=2, color=0x0000ff )
+		pmat = new THREE.ParticleSystemMaterial( size=1, color=0x0000ff )
 		p = new THREE.ParticleSystem( egeo, pmat )
-		mesh.add( p )
+		parent.add( p )
 
-		pmat = new THREE.ParticleSystemMaterial( size=1.5, color=0xffff00 )
+		pmat = new THREE.ParticleSystemMaterial( size=0.5, color=0xffff00 )
 		p = new THREE.ParticleSystem( rgeo, pmat )
-		mesh.add( p )
+		parent.add( p )
 
-		pmat = new THREE.ParticleSystemMaterial( size=1, color=0xff0000 )
+		pmat = new THREE.ParticleSystemMaterial( size=0.4, color=0xff0000 )
 		p = new THREE.ParticleSystem( fgeo, pmat )
-		#mesh.add( p )
+		parent.add( p )
 
-		mat = new THREE.MeshBasicMaterial( color=0x00ff00, wireframe=True, wireframeLinewidth=3 )
-		mesh.add( new THREE.Mesh( sgeo, mat ) )
-
+		sgeo.mergeVertices()
+		#sgeo.computeCentroids();
+		sgeo.computeFaceNormals();
+		sgeo.computeVertexNormals()
+		mat = new THREE.MeshLambertMaterial( color=0x00ff00, wireframe=false, wireframeLinewidth=3 )
+		self.mesh = new THREE.Mesh( sgeo, mat )
+		parent.add( self.mesh )
+		self.output_geom = sgeo
+		self.mesh = mesh
 
 def main():
 	global ren, scn, cam, mesh, controls
@@ -164,7 +188,7 @@ def main():
 
 	div.appendChild( ren.domElement )
 
-	light = new( THREE.PointLight(20) )
+	light = new( THREE.PointLight(0xffffff, 2, 500) )
 	light.position.set( 0, 100, 90 )
 	scn.add( light )
 
@@ -173,7 +197,9 @@ def main():
 	mesh = new THREE.Mesh( geo, mat )
 	scn.add( mesh )
 
-	CatmullClark( geo )
+	ss1 = CatmullClark( geo, parent=mesh )
+	ss2 = CatmullClark( ss1.output_geom, parent=scn )
+	ss2.mesh.position.x += 30
 
 	animate()
 
