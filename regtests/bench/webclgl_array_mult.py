@@ -2,18 +2,19 @@
 from time import time
 from random import random
 
+ARRAY_SIZE = 1024*1024*4
+
+@returns( array=ARRAY_SIZE )
+@gpu.main
+def myfunc(A, B, C, D):
+	float* A
+	float* B
+	float* C
+	float* D
+	vec2 n = get_global_id()  ## WebCL API
+	return A[n] * B[n] * C[n] * D[n]
+
 def main():
-	ARRAY_SIZE = 1024*1024*4
-
-	with glsl as myfunc:
-		def main(A, B, C, D):
-			float* A
-			float* B
-			float* C
-			float* D
-			vec2 n = get_global_id()  ## WebCL API
-			return A[n] * B[n] * C[n] * D[n]
-
 
 	a = [ random() for i in range(ARRAY_SIZE)]
 	b = [ random() for i in range(ARRAY_SIZE)]
