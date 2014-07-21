@@ -99,6 +99,13 @@ def setup_my_jquery_class( $ ):
 	$.fn.someclass = myclass_init
 ```
 
+6. `->` can be used to as a special attribute operator for passing methods that will automatically bind
+the method's `this` calling context.  This enables you to pass methods as callbacks to other objects,
+and not have to write `a.some_method.bind(a)`
+```
+	b.set_callback( a->some_method )
+```
+
 Speed
 ---------------
 PythonJS gives you the option to optimize your program for speed with a new syntax for static typing, in some cases this results in code that is 20X faster.
@@ -349,6 +356,7 @@ pythonjs.configure(
 Gotchas
 ---------
 1. The calling context of `this` must be taken into account when using fast javascript mode, code that comes after: `pythonjs.configure(javascript=True)` or is inside a `with javascript:` block.  When in javascript mode, passing a method as a callback, or setting it as an attribute on another object, requires you call `f.bind(self)` to ensure that `self` within the method points to the class instance.  This is not required when using classes defined normal mode, because the `this` calling context is automatically managed.
+Note: you can use the special `->` syntax in place of the attribute operator `.` to call `bind` automatically.
 
 ```
 class A:
@@ -365,10 +373,12 @@ with javascript:
 	b = B()
 	a.b_method1 = b.method
 	a.b_method2 = b.method.bind(b)
+	a.b_method3 = b->method
 
 	a.method()     ## OK: prints a
 	a.b_method1()  ## FAILS: prints a, should have printed b
 	a.b_method2()  ## OK: prints b
+	a.b_method3()  ## OK: prints b
 
 	b.a_method = a.method
 	b.a_method()   ## OK: prints a

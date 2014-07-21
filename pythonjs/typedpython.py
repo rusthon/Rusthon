@@ -91,6 +91,12 @@ def transform_source( source, strip=False ):
 			c += ')' * c.count(' new ')
 			c = c.replace(' new ', ' new(')
 
+		if '->' in c:
+			a,b = c.split('->')
+			this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
+			method_name = b.split()[0].split('(')[0]
+			c = c.replace('->'+method_name, '.'+method_name+'.bind(%s)'%this_name)
+
 		## jquery ##
 		## TODO ensure this is not inside quoted text
 		if '$(' in c:
@@ -117,6 +123,11 @@ int def xxx(): pass
 if True:
 	float* def Y():
 		pass
+
+A.callback = B->method
+A.do_something( x,y,z, B->method )
+A.do_something( x,y,z, callback=B->method )
+
 '''
 
 if __name__ == '__main__':
