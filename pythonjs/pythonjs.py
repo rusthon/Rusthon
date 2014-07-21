@@ -1101,9 +1101,34 @@ def generate_runtime():
 	]
 	return '\n'.join( lines )
 
-def main(script, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
+def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
+	head = []
+	tail = []
+	script = False
+	if source.strip().startswith('<html'):
+		lines = source.splitlines()
+		for line in lines:
+			if line.strip().startswith('<script') and 'type="text/python"' in line:
+				head.append( '<script type="text/javascript">')
+				script = list()
+			elif line.strip() == '</script>':
+				if script:
+					source = '\n'.join(script)
+				script = True
+				tail.append( '</script>')
+
+			elif isinstance( script, list ):
+				script.append( line )
+
+			elif script is True:
+				tail.append( line )
+
+			else:
+				head.append( line )
+
+
 	try:
-		tree = ast.parse( script )
+		tree = ast.parse( source )
 	except SyntaxError:
 		import traceback
 		err = traceback.format_exc()
@@ -1116,7 +1141,7 @@ def main(script, requirejs=True, insert_runtime=True, webworker=False, function_
 				lineno = int(line.split()[-1])
 
 
-		lines = script.splitlines()
+		lines = source.splitlines()
 		if lineno > 10:
 			for i in range(lineno-5, lineno+5):
 				sys.stderr.write( 'line %s->'%i )
@@ -1131,7 +1156,14 @@ def main(script, requirejs=True, insert_runtime=True, webworker=False, function_
 
 		sys.exit(1)
 
-	return JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions ).visit(tree)
+	gen = JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions )
+	output = gen.visit(tree)
+	if head:
+		head.append( output )
+		head.extend( tail )
+		output = '\n'.join( head )
+
+	return output
 
 
 def command():

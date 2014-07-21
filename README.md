@@ -48,15 +48,18 @@ If you want to run the latest version of the translator, you will need to instal
 Python2.7 and git clone this repo.  (the NodeJS package above is not required)
 Then, to translate your python script, directly run the `translator.py` script in the "pythonjs" directory.  You can give it a list of python files to translate at once.  
 It will output the translation to stdout.  The default output type is JavaScript.  
+An html file can also be used as input, python code inside a script tag: `<script type="text/python">`
+will be converted into JavaScript.
 
 Usage::
 
 	translator.py [--dart|--coffee|--lua|--no-wrapper] file.py
 
-Example::
+Examples::
 
 	cd pythonjs
 	./translator.py myscript.py > myscript.js
+	./translator.py myapp.html > app.html
 
 
 Extra Python Syntax

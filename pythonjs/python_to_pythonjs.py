@@ -139,8 +139,27 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_coffee = coffee
 		self._with_dart = dart
 
+		self._html_tail = []; script = False
 		if source.strip().startswith('<html'):
-			raise NotImplementedError('TODO translate from html file')
+			lines = source.splitlines()
+			for line in lines:
+				if line.strip().startswith('<script') and 'type="text/python"' in line:
+					writer.write( '<script type="text/python">')
+					script = list()
+				elif line.strip() == '</script>':
+					if script:
+						source = '\n'.join(script)
+					script = True
+					self._html_tail.append( '</script>')
+
+				elif isinstance( script, list ):
+					script.append( line )
+
+				elif script is True:
+					self._html_tail.append( line )
+
+				else:
+					writer.write( line )
 
 		source = typedpython.transform_source( source )
 
@@ -257,6 +276,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				pass
 			else:
 				self.visit(node)
+
+		if self._html_tail:
+			for line in self._html_tail:
+				writer.write(line)
 
         def visit(self, node):
 		"""Visit a node."""

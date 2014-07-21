@@ -65,7 +65,7 @@ def command():
     scripts = []
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
-            if arg.endswith('.py'):
+            if arg.endswith('.py') or arg.endswith('.html'):
                 scripts.append( arg )
                 if mpath is None:
                     mpath = os.path.split(arg)[0]
