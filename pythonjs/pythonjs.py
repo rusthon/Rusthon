@@ -376,7 +376,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = glsljit.compile_header()')
 				lines.append('	var shader = glsljit.compile_main()')
-				#lines.append('	console.log(shader)')
+				lines.append('	console.log(header)')
+				lines.append('	console.log("-----------")')
+				lines.append('	console.log(shader)')
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 

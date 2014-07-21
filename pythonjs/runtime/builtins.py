@@ -48,6 +48,18 @@ with javascript:
 			a.push('int matrix_index() { return int(get_global_id().y*%s.0); }' %self.matrices.length)
 			a.push('int matrix_row() { return int(get_global_id().x*4.0); }')  ## returns: 0, 1, 2, 3
 
+			## first class array error, can not return an array, even when the size is known ##
+			#a.push('float[3] floatN( float a, float b, float c) { float f[3]; f[0]=a; f[1]=b; f[2]=b; return f; }')
+
+			## these could be generated for each array size to reduce the mess in main,
+			## TODO it would be better to upload them as uniforms.
+			#a.push('void floatN( float f[3], float a, float b, float c) { f[0]=a; f[1]=b; f[2]=b; }')
+
+			## the array can be declared in the header, but not filled with data here.
+			#a.push('float XXX[3];')
+			#a.push('floatN( XXX, 1.1, 2.2, 3.3 );')
+			#a.push('XXX[0]=1.1;')
+
 
 			a = '\n'.join(a)
 			## code in header could be methods that reference the struct types above.
@@ -172,7 +184,11 @@ with javascript:
 				else:
 					raise RuntimeError('no method to pack structure: ' +sname)
 
+			has_arrays = False
 			if stype:
+				if stype['arrays'].length > 0:
+					has_arrays = True
+
 				for key in stype['integers']:
 					args.push( ob[key][0]+'' )
 
@@ -196,7 +212,11 @@ with javascript:
 					args.push( aname )
 
 			args = ','.join(args)
-			self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
+			if has_arrays:
+				self.shader.push( sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
+			else:
+				self.header.push( 'const ' + sname + ' ' +name+ '=' +sname+ '(' +args+ ');' )
+			return stype
 
 		def int16array(self, ob, name):
 			a = ['int ' + name + '[' + ob.length + ']']
