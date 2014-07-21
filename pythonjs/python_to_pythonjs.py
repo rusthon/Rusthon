@@ -2540,10 +2540,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
-		#if self._with_js:  ## TODO is it better to return a normal lambda
-		#	return """JS('(function (%s) {return %s})')""" %(','.join(args), self.visit(node.body))
-		#else:
-		if hasattr(node, 'keep_as_lambda'):
+
+		##'__INLINE_FUNCTION__' from typedpython.py
+
+		if hasattr(node, 'keep_as_lambda') or args and args[0]=='__INLINE_FUNCTION__':
+			## TODO lambda keyword args
 			self._in_lambda = True
 			a = '(lambda %s: %s)' %(','.join(args), self.visit(node.body))
 			self._in_lambda = False

@@ -19,6 +19,11 @@ from ast import NodeVisitor
 #import code_writer
 import typedpython
 
+class SwapNode( RuntimeError ):
+	def __init__(self, node):
+		self.node = node
+		RuntimeError.__init__(self)
+
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
 		#writer = code_writer.Writer()
@@ -31,6 +36,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._insert_runtime = insert_runtime
 		self._webworker = webworker
 		self._exports = set()
+		self._inline_lambda = False
 
 		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__'])
 		self._glsl = False
@@ -178,7 +184,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
-		return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
+		if args and args[0]=='__INLINE_FUNCTION__':
+			self._inline_lambda = True
+			return ''   ## skip node, the next function contains the real def
+		else:
+			return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
 
 
 
@@ -475,15 +485,24 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		self.push()
 		body = list()
-		for child in node.body:
+		next = None
+		for i,child in enumerate(node.body):
 			if isinstance(child, Str):
 				continue
+			elif next:
+				next = None
+				continue
 
-			#if isinstance(child, GeneratorType):  ## not tested
-			#	for sub in child:
-			#		body.append( self.indent()+self.visit(sub))
-			#else:
-			v = self.visit(child)
+			try:
+				v = self.visit(child)
+			except SwapNode as error:
+				error.node.__class__ = ast.FunctionDef
+				next = node.body[i+1]
+				assert isinstance(next, ast.FunctionDef)
+				error.node.__dict__ = next.__dict__
+				v = self.visit(child)
+
+
 			if v is None:
 				msg = 'error in function: %s'%node.name
 				msg += '\n%s' %child
@@ -494,7 +513,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		buffer += '\n'.join(body)
 		self.pull()
 		buffer += '\n%s}\n' %self.indent()
-		if is_pyfunc:
+		if self._inline_lambda:
+			self._inline_lambda = False
+		elif is_pyfunc:
 			buffer += ';%s.is_wrapper = true;' %node.name  ## TODO change to .__pyfunc__
 		return buffer
 
@@ -963,6 +984,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
+			if self._inline_lambda:
+				raise SwapNode( node.values[i] )  ## caller catches this, changes the node to a function
 			a.append( '%s:%s'%(k,v) )
 		b = ','.join( a )
 		return '{ %s }' %b

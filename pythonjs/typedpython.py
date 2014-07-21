@@ -122,7 +122,13 @@ def transform_source( source, strip=False ):
 
 		output.append( c )
 		if type(output_post) is str:
-			output.append(output_post)
+			indent = 0
+			for u in output[-1]:
+				if u == ' ' or u == '\t':
+					indent += 1
+				else:
+					break
+			output.append( ('\t'*indent)+output_post)
 			output_post = True
 		elif output_post == True:
 			if output[-1].strip()==')':
