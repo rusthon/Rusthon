@@ -2162,7 +2162,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._direct_operators.add( kw.value.s )
 
 				else:
-					raise SyntaxError( self.format_error(node) )
+					raise SyntaxError( self.format_error('invalid keyword option') )
 
 		elif self._with_ll or name == 'inline' or self._with_glsl:
 			F = self.visit(node.func)

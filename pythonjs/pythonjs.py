@@ -498,8 +498,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			except SwapNode as error:
 				error.node.__class__ = ast.FunctionDef
 				next = node.body[i+1]
-				assert isinstance(next, ast.FunctionDef)
+				if not isinstance(next, ast.FunctionDef):
+					raise SyntaxError('inline def is only allowed in javascript mode')
 				error.node.__dict__ = next.__dict__
+				error.node.name = ''
 				v = self.visit(child)
 
 

@@ -102,6 +102,8 @@ def transform_source( source, strip=False ):
 
 		## callback=def .. inline function ##
 		if '=def ' in c or '= def ' in c:
+			if 'def (' in c:
+				c = c.replace('def (', 'def __NAMELESS__(')
 			d = '=def '
 			c, tail = c.split(d)
 			#name = c.split(d)[-1].split('(')[0]
@@ -136,7 +138,6 @@ def transform_source( source, strip=False ):
 				output_post = None
 
 	r = '\n'.join(output)
-	print(r)
 	return r
 
 
@@ -154,6 +155,9 @@ A.callback = B->method
 A.do_something( x,y,z, B->method )
 A.do_something( x,y,z, callback=B->method )
 A.do_something( x,y,z, callback=def cb(x):
+	return x+y
+)
+A.do_something( x,y,z, callback=def (x,y,z):
 	return x+y
 )
 

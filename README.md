@@ -73,37 +73,46 @@ Extra Python Syntax
 
 PythonJS supports all the normal Python syntax you already know, and has been extended to support some extra JavaScript syntax.
 
-1. it is ok to have `var ` before a variable name in an assignment.
+. it is ok to have `var ` before a variable name in an assignment.
 ```
 	var x = 1
 ```
 
-2. 'new' can be used to create a new JavaScript object
+. 'new' can be used to create a new JavaScript object
 ```
 	a = new SomeObject()
 ```
 
-3. `$` can be used to call a function like jquery
+. `$` can be used to call a function like jquery
 ```
 	$(selector).something( {'param1':1, 'param2':2} )
 ```
 
-4. External Javascript functions that use an object as the last argument for optional named arguments, can be called with Python style keyword names instead.
+. External Javascript functions that use an object as the last argument for optional named arguments, can be called with Python style keyword names instead.
 ```
 	$(selector).something( param1=1, param2=2 )
 ```
 
-5. `$` can be used as a funtion parameter, and attributes can be get/set on `$`.
+. `$` can be used as a funtion parameter, and attributes can be get/set on `$`.
 ```
 def setup_my_jquery_class( $ ):
 	$.fn.someclass = myclass_init
 ```
 
-6. `->` can be used to as a special attribute operator for passing methods that will automatically bind
+. `->` can be used to as a special attribute operator for passing methods that will automatically bind
 the method's `this` calling context.  This enables you to pass methods as callbacks to other objects,
 and not have to write `a.some_method.bind(a)`
 ```
 	b.set_callback( a->some_method )
+```
+
+. in a function call, as a keyword argument, define callbacks inline with def
+```
+a.func( callback=def (x,y,z):
+	x += y
+	return x - z
+
+)
 ```
 
 Speed
