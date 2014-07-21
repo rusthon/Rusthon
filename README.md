@@ -1,11 +1,17 @@
 Introduction
 ------------
-PythonJS is a transpiler written in Python that converts Python into fast
+PythonJS is a transpiler written in Python that converts a superset of Python into fast
 JavaScript.  It can be run with regular Python, or fully self-hosted within
-NodeJS using Empythoned.  PythonJS has been designed with speed and easy
-integration with existing JavaScript code in mind.
+NodeJS using Empythoned. PythonJS extends the Python language with new keywords, syntax,
+and optional static typing, to increase performance and allow seamless
+integration with existing JavaScript libraries.
 
-To convert your python scripts into javascript, you have two options:
+We are not trying to shoehorn Python as defined by the BDFL into JavaScript,
+our goal is to design something better than JavaScript so you can write larger
+and more complex programs in a Python-like language.
+
+
+To get started, you have two options:
 1. install NodeJS, python-js package, and write a build script.
 2. or install Python2 and use translator.py from this repo directly.
 
