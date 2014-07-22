@@ -45,8 +45,8 @@ def transform_source( source, strip=False ):
 						if a[-1]=='*':
 							a.pop()
 							a.append('POINTER')
-						a.append('=')
-						a.append( char )
+						a.append('=\t\t\t\t')
+						#a.append( char )
 				else:
 					a.append( char )
 			else:
@@ -62,8 +62,8 @@ def transform_source( source, strip=False ):
 		if cs.startswith('var '):
 			c = c.replace('var ', '')
 
-		if '= def ' in c:
-			x, c = c.split('= def ')
+		if '=\t\t\t\tdef ' in c:
+			x, c = c.split('=\t\t\t\tdef ')
 			indent = []
 			pre = []
 			for char in x:
@@ -101,14 +101,35 @@ def transform_source( source, strip=False ):
 			c = c.replace('->'+method_name, '.'+method_name+'.bind(%s)'%this_name)
 
 		## callback=def .. inline function ##
-		if '=def ' in c or '= def ' in c:
+		if '=def ' in c or '= def ' in c or ': def ' in c or ':def ' in c:
+			if '=def ' in  c:
+				d = '=def '
+			elif '= def ' in c:
+				d = '= def '
+			elif ': def ' in c:
+				d = ': def '
+			elif ':def ' in c:
+				d = ':def '
+
 			if 'def (' in c:
 				c = c.replace('def (', 'def __NAMELESS__(')
-			d = '=def '
 			c, tail = c.split(d)
 			#name = c.split(d)[-1].split('(')[0]
-			c += '=lambda __INLINE_FUNCTION__: %s )' %tail.strip().split(':')[0]
-			output_post = 'def %s'%tail
+			if d.startswith('='):
+				if '(' in c:
+					c += '=lambda __INLINE_FUNCTION__: %s )' %tail.strip().split(':')[0]
+				else:
+					c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
+				output_post = 'def %s'%tail
+			else:
+				c += ':lambda __INLINE_FUNCTION__: %s,' %tail.strip().split(':')[0]
+				output.append( c )
+				if output_post:
+					if output_post[-1][-1]==',':
+						output_post[-1] = output_post[-1][:-1]
+				else: output_post = list()
+				c = 'def %s'%tail
+
 
 		## jquery ##
 		## TODO ensure this is not inside quoted text
@@ -122,7 +143,11 @@ def transform_source( source, strip=False ):
 		if c.strip().startswith('nonlocal '):  ## Python3 syntax
 			c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global
 
-		output.append( c )
+		if type(output_post) is list:
+			output_post.append( c )
+		else:
+			output.append( c )
+
 		if type(output_post) is str:
 			indent = 0
 			for u in output[-1]:
@@ -135,6 +160,11 @@ def transform_source( source, strip=False ):
 		elif output_post == True:
 			if output[-1].strip()==')':
 				output.pop()
+				output_post = None
+		elif type(output_post) is list:
+			if output_post[-1].strip().endswith('}'):
+				output.append( output_post.pop() )
+				output.extend( output_post )
 				output_post = None
 
 	r = '\n'.join(output)
@@ -160,6 +190,20 @@ A.do_something( x,y,z, callback=def cb(x):
 A.do_something( x,y,z, callback=def (x,y,z):
 	return x+y
 )
+a = {
+	'cb1': def (x,y):
+		return x+y
+}
+
+b = {
+	'cb1': def (x,y):
+		return x+y,
+	'cb2': def (x,y):
+		return x+y
+}
+
+c=def (x,y):
+	return x+y
 
 '''
 
