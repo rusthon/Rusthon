@@ -106,13 +106,25 @@ and not have to write `a.some_method.bind(a)`
 	b.set_callback( a->some_method )
 ```
 
-. in a function call, as a keyword argument, define callbacks inline with def
+. in a function call, inline functions can be given as keyword arguments
 ```
-a.func( callback=def (x,y,z):
-	x += y
-	return x - z
-
+a.func(
+	callback1=def (x,y,z):
+		x += y
+		return x - z,
+	callback2= def (x, y):
+		return x * y
 )
+```
+
+. inline functions can be used inside a dict literal
+```
+a = {
+	'cb1' : def (x):
+		return x,
+	'cb2' : def (y):
+		return y
+}
 ```
 
 Speed

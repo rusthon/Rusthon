@@ -62,6 +62,13 @@ def transform_source( source, strip=False ):
 		if cs.startswith('var '):
 			c = c.replace('var ', '')
 
+		if '= function(' in c:
+			k = '= function('
+			a,b = c.split(k)
+			output.append( '@func_expression(%s)' %a.strip())
+			c = 'def __NAMELESS__(' + b
+
+
 		if '=\t\t\t\tdef ' in c:
 			x, c = c.split('=\t\t\t\tdef ')
 			indent = []
@@ -114,13 +121,27 @@ def transform_source( source, strip=False ):
 			if 'def (' in c:
 				c = c.replace('def (', 'def __NAMELESS__(')
 			c, tail = c.split(d)
-			#name = c.split(d)[-1].split('(')[0]
+
+			#if d.startswith('='):
+			#	if '(' in c:
+			#		c += '=lambda __INLINE_FUNCTION__: %s )' %tail.strip().split(':')[0]
+			#	else:
+			#		c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
+			#	output_post = 'def %s'%tail
+
 			if d.startswith('='):
-				if '(' in c:
-					c += '=lambda __INLINE_FUNCTION__: %s )' %tail.strip().split(':')[0]
-				else:
-					c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
-				output_post = 'def %s'%tail
+				c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
+
+				if output_post:
+					if output_post[-1][-1]==',':
+						output_post[-1] = output_post[-1][:-1]
+						output[-1] += ','
+				else: output_post = list()
+
+				output.append( c )
+
+				c = 'def %s'%tail
+
 			else:
 				c += ':lambda __INLINE_FUNCTION__: %s,' %tail.strip().split(':')[0]
 				output.append( c )
@@ -148,7 +169,7 @@ def transform_source( source, strip=False ):
 		else:
 			output.append( c )
 
-		if type(output_post) is str:
+		if type(output_post) is str:  ## DEPRECATED
 			indent = 0
 			for u in output[-1]:
 				if u == ' ' or u == '\t':
@@ -157,14 +178,14 @@ def transform_source( source, strip=False ):
 					break
 			output.append( ('\t'*indent)+output_post)
 			output_post = True
-		elif output_post == True:
+		elif output_post == True:  ## DEPRECATED
 			if output[-1].strip()==')':
 				output.pop()
 				output_post = None
+
 		elif type(output_post) is list:
-			if output_post[-1].strip().endswith('}'):
+			if output_post[-1].strip().endswith( ('}',')') ):
 				output.append( output_post.pop() )
-				#output.extend( output_post )
 				indent = 0
 				for u in output[-1]:
 					if u == ' ' or u == '\t':
@@ -211,8 +232,15 @@ def xxx():
 			return x+y
 	}
 
-c = def (x,y):
+X.func( cb1=def ():
+		return 1,
+	cb2=def ():
+		return 2
+)
+
+c = function(x,y):
 	return x+y
+
 
 '''
 
