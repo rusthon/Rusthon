@@ -19,7 +19,7 @@ from ast import NodeVisitor
 #import code_writer
 import typedpython
 
-class SwapNode( RuntimeError ):
+class SwapLambda( RuntimeError ):
 	def __init__(self, node):
 		self.node = node
 		RuntimeError.__init__(self)
@@ -143,11 +143,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		a = []
 		for elt in node.elts:
 			b = self.visit(elt)
-			if b is None:
-				raise SyntaxError(elt)
+			if b is None: raise SyntaxError(elt)
 			a.append( b )
-			#if self._inline_lambda == True:
-			#	raise SwapNode( elt )
 		return '[%s]' % ', '.join(a)
 
 
@@ -196,7 +193,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if args and args[0]=='__INLINE_FUNCTION__':
 			self._inline_lambda = True
 			#return '<LambdaError>'   ## skip node, the next function contains the real def
-			raise SwapNode( node )
+			raise SwapLambda( node )
 		else:
 			return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
 
@@ -497,22 +494,21 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		body = list()
 		next = None
 		for i,child in enumerate(node.body):
-			if isinstance(child, Str):
-				continue
-			elif next:
-				next = None
+			if isinstance(child, Str) or hasattr(child, 'SKIP'):
 				continue
 
-			try:
-				v = self.visit(child)
-			except SwapNode as error:
-				error.node.__class__ = ast.FunctionDef
-				next = node.body[i+1]
-				if not isinstance(next, ast.FunctionDef):
-					raise SyntaxError('inline def is only allowed in javascript mode')
-				error.node.__dict__ = next.__dict__
-				error.node.name = ''
-				v = self.visit(child)
+			#try:
+			#	v = self.visit(child)
+			#except SwapLambda as error:
+			#	error.node.__class__ = ast.FunctionDef
+			#	next = node.body[i+1]
+			#	if not isinstance(next, ast.FunctionDef):
+			#		raise SyntaxError('inline def is only allowed in javascript mode')
+			#	error.node.__dict__ = next.__dict__
+			#	error.node.name = ''
+			#	v = self.visit(child)
+
+			v = self.try_and_catch_swap_lambda(child, node.body)
 
 
 			if v is None:
@@ -530,6 +526,29 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		elif is_pyfunc:
 			buffer += ';%s.is_wrapper = true;' %node.name  ## TODO change to .__pyfunc__
 		return buffer
+
+	def try_and_catch_swap_lambda(self, child, body):
+		try:
+			return self.visit(child)
+		except SwapLambda as e:
+
+			next = None
+			for i in range( body.index(child), len(body) ):
+				n = body[ i ]
+				if isinstance(n, ast.FunctionDef):
+					if hasattr(n, 'SKIP'):
+						continue
+					else:
+						next = n
+						break
+			assert next
+			next.SKIP = True
+			e.node.__class__ = ast.FunctionDef
+			e.node.__dict__ = next.__dict__
+			e.node.name = ''
+			return self.try_and_catch_swap_lambda( child, body )
+
+
 
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
@@ -996,8 +1015,6 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
-			#if self._inline_lambda:
-			#	raise SwapNode( node.values[i] )  ## caller catches this, changes the node to a function
 			a.append( '%s:%s'%(k,v) )
 		b = ','.join( a )
 		return '{ %s }' %b
