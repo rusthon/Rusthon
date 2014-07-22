@@ -164,7 +164,16 @@ def transform_source( source, strip=False ):
 		elif type(output_post) is list:
 			if output_post[-1].strip().endswith('}'):
 				output.append( output_post.pop() )
-				output.extend( output_post )
+				#output.extend( output_post )
+				indent = 0
+				for u in output[-1]:
+					if u == ' ' or u == '\t':
+						indent += 1
+					else:
+						break
+				for ln in output_post:
+					output.append( ('\t'*indent)+ln )
+
 				output_post = None
 
 	r = '\n'.join(output)
@@ -194,15 +203,15 @@ a = {
 	'cb1': def (x,y):
 		return x+y
 }
+def xxx():
+	b = {
+		'cb1': def (x,y):
+			return x+y,
+		'cb2': def (x,y):
+			return x+y
+	}
 
-b = {
-	'cb1': def (x,y):
-		return x+y,
-	'cb2': def (x,y):
-		return x+y
-}
-
-c=def (x,y):
+c = def (x,y):
 	return x+y
 
 '''

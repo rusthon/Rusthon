@@ -140,7 +140,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return '[%s]' % ', '.join(map(self.visit, node.elts))
 
 	def visit_List(self, node):
-		return '[%s]' % ', '.join(map(self.visit, node.elts))
+		a = []
+		for elt in node.elts:
+			b = self.visit(elt)
+			if b is None:
+				raise SyntaxError(elt)
+			a.append( b )
+			#if self._inline_lambda == True:
+			#	raise SwapNode( elt )
+		return '[%s]' % ', '.join(a)
+
 
 	def visit_TryExcept(self, node):
 		out = []
@@ -186,7 +195,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		args = [self.visit(a) for a in node.args.args]
 		if args and args[0]=='__INLINE_FUNCTION__':
 			self._inline_lambda = True
-			return ''   ## skip node, the next function contains the real def
+			#return '<LambdaError>'   ## skip node, the next function contains the real def
+			raise SwapNode( node )
 		else:
 			return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
 
@@ -986,8 +996,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		for i in range( len(node.keys) ):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
-			if self._inline_lambda:
-				raise SwapNode( node.values[i] )  ## caller catches this, changes the node to a function
+			#if self._inline_lambda:
+			#	raise SwapNode( node.values[i] )  ## caller catches this, changes the node to a function
 			a.append( '%s:%s'%(k,v) )
 		b = ','.join( a )
 		return '{ %s }' %b
