@@ -2592,6 +2592,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		gpu_vectorize = False
 		gpu_method = False
 		local_typedefs = []
+		func_expr = None
 
 		## deprecated?
 		self._cached_property = None
@@ -2604,6 +2605,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			log('@decorator: %s' %decorator)
 			if isinstance(decorator, Name) and decorator.id == 'gpu':
 				gpu = True
+
+			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
+				assert len(decorator.args)==1
+				func_expr = self.visit(decorator.args[0])
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
 				c = decorator
@@ -2779,6 +2784,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 				if args_typedefs:
 					writer.write('@__typedef__(%s)' %','.join(args_typedefs))
+
+		if func_expr:
+			writer.write('@expression(%s)' %func_expr)
 
 
 		if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:

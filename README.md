@@ -139,6 +139,11 @@ a = {}
 b = a['somekey'] except KeyError: 'my-default'
 ```
 
+. function expressions
+```
+F = function(x):
+	return x
+```
 
 Speed
 ---------------

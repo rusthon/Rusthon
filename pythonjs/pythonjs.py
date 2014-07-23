@@ -38,7 +38,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._exports = set()
 		self._inline_lambda = False
 
-		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__'])
+		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__', 'expression'])
 		self._glsl = False
 		self._has_glsl = False
 		self._typed_vars = dict()
@@ -242,8 +242,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		gpu_vectorize = False
 		gpu_method = False
 		args_typedefs = {}
+		func_expr = False
+
 		for decor in node.decorator_list:
-			if isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
+			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
+				assert len(decor.args)==1
+				func_expr = True
+				node.name = self.visit(decor.args[0])
+
+			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
 			elif isinstance(decor, ast.Name) and decor.id == '__glsl__':
 				glsl = True
@@ -473,10 +480,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		elif len(self._function_stack) == 1:
 			## this style will not make function global to the eval context in NodeJS ##
 			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
-			## this is required for eval to be able to work in NodeJS, note there is no var keyword.
 
-			if self._func_expressions:
-				buffer = self.indent() + '%s = function(%s) {\n' % (node.name, ', '.join(args))
+			## note if there is no var keyword and this function is at the global level,
+			## then it should be callable from eval in NodeJS - this is not correct.
+			## infact, var should always be used with function expressions.
+
+			if self._func_expressions or func_expr:
+				buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
 			else:
 				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
 
@@ -485,7 +495,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		else:
 
-			if self._func_expressions:
+			if self._func_expressions or func_expr:
 				buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
 			else:
 				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))

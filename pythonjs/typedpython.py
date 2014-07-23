@@ -65,7 +65,7 @@ def transform_source( source, strip=False ):
 		if '= function(' in c:
 			k = '= function('
 			a,b = c.split(k)
-			output.append( '@func_expression(%s)' %a.strip())
+			output.append( '@expression(%s)' %a.strip())
 			c = 'def __NAMELESS__(' + b
 
 		if ' except ' in c:  ## PEP 463 - exception expressions
