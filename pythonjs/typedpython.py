@@ -71,9 +71,17 @@ def transform_source( source, strip=False ):
 		if ' except ' in c:  ## PEP 463 - exception expressions
 			s = c.split(' except ')
 			if len(s) == 2 and '=' in s[0]:
-				output.append('try: %s' %s[0])
+				indent = []
+				for char in s[0]:
+					if char in __whitespace:
+						indent.append( char )
+					else:
+						break
+				indent = ''.join(indent)
+				s0 = s[0].strip()
+				output.append('%stry: %s' %(indent, s0) )
 				exception, default = s[1].split(':')
-				output.append('except %s: %s=%s' %( exception, s[0].split('=')[0], default) )
+				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
 		if '=\t\t\t\tdef ' in c:
@@ -247,8 +255,8 @@ X.func( cb1=def ():
 
 c = function(x,y):
 	return x+y
-
-d = a[ 'somekey' ] except KeyError: 'mydefault'
+if True:
+	d = a[ 'somekey' ] except KeyError: 'mydefault'
 
 '''
 
