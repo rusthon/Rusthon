@@ -68,6 +68,13 @@ def transform_source( source, strip=False ):
 			output.append( '@func_expression(%s)' %a.strip())
 			c = 'def __NAMELESS__(' + b
 
+		if ' except ' in c:  ## PEP 463 - exception expressions
+			s = c.split(' except ')
+			if len(s) == 2 and '=' in s[0]:
+				output.append('try: %s' %s[0])
+				exception, default = s[1].split(':')
+				output.append('except %s: %s=%s' %( exception, s[0].split('=')[0], default) )
+				c = ''
 
 		if '=\t\t\t\tdef ' in c:
 			x, c = c.split('=\t\t\t\tdef ')
@@ -241,6 +248,7 @@ X.func( cb1=def ():
 c = function(x,y):
 	return x+y
 
+d = a[ 'somekey' ] except KeyError: 'mydefault'
 
 '''
 

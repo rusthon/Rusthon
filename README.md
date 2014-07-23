@@ -127,6 +127,13 @@ a = {
 }
 ```
 
+. exception expressions (PEP 463)
+```
+a = {}
+b = a['somekey'] except KeyError: 'my-default'
+```
+
+
 Speed
 ---------------
 PythonJS gives you the option to optimize your program for speed with a new syntax for static typing, in some cases this results in code that is 20X faster.
