@@ -59,7 +59,7 @@ will be converted into JavaScript.
 
 Usage::
 
-	translator.py [--dart|--coffee|--lua|--no-wrapper] file.py
+	translator.py [--help|--dart|--coffee|--lua|--no-wrapper|--analyzer] file.py
 
 Examples::
 
@@ -67,6 +67,12 @@ Examples::
 	./translator.py myscript.py > myscript.js
 	./translator.py myapp.html > app.html
 
+The option `--no-wrapper` will output the raw JavaScript, by default the output is wrapped as a requirejs module.
+
+The option `--analyzer` requires the Dart SDK is installed to your home directory: `~/dart-sdk`,
+if this option is used then your script is also translated using the dart backend and fed to
+`dartanalyzer` which will perform static analysis of your code.  Dartanalyzer is able to catch many types of errors, like: missing functions, invalid names, calling a function with the wrong argument types.  The quality of the analysis will depend on how much type information can be
+inferred from your code, combined with the variables you have manually typed.  If dartanalyzer detects an error in your code, translation will abort, and debugging information is printed.
 
 Extra Python Syntax
 -------------------
