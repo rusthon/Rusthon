@@ -319,6 +319,18 @@ with javascript:
 			return self.matrices
 
 with lowlevel:
+	def __tuple_key__(arr):
+		return JSON.stringify( arr )  ## this quotes strings, and should be fast
+		#r = []
+		#i = 0
+		#while i < arr.length:
+		#	item = arr[i]
+		#	t = typeof(item)
+		#	if t=='string':
+		#		r.append( "'"+item+"'")
+		#	else:
+		#		r.append( item )
+		#	i += 1
 
 	def __getattr__(ob, a ):
 		if ob.__getattr__:
@@ -1452,8 +1464,9 @@ class dict:
 		'''
 		__dict = self[...]
 		if instanceof(key, Array):
-			if key.length > 0 and typeof( key[0] ) == 'string':
-				key = "'" + key.join("'") + "'"
+			#if key.length > 0 and typeof( key[0] ) == 'string':
+			#	key = "'" + key.join("'") + "'"
+			key = JSON.stringify( key )
 			return inline('__dict[key]')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
@@ -1474,8 +1487,9 @@ class dict:
 			## using an Array as key converts it to a string
 			## check first item of array, if it is a string, the items must be quoted
 			## so that numeric and string items are different.
-			if key.length > 0 and typeof( key[0] ) == 'string':
-				key = "'" + key.join("'") + "'"
+			#if key.length > 0 and typeof( key[0] ) == 'string':
+			#	key = "'" + key.join("'") + "'"
+			key = JSON.stringify( key )
 			inline( '__dict[key] = value')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			if JS("key.__uid__ === undefined"):
