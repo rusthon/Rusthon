@@ -449,3 +449,5 @@ b = ("1","2","3")
 D = { a: 'hello', b: 'world' }
 D[ a ] == 'hello'  ## OK
 D[ b ] == 'world'  ## OK
+
+5. AttributeError and KeyError are only raised in default python mode.

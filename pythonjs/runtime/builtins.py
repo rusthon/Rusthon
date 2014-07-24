@@ -319,18 +319,6 @@ with javascript:
 			return self.matrices
 
 with lowlevel:
-	def __tuple_key__(arr):
-		return JSON.stringify( arr )  ## this quotes strings, and should be fast
-		#r = []
-		#i = 0
-		#while i < arr.length:
-		#	item = arr[i]
-		#	t = typeof(item)
-		#	if t=='string':
-		#		r.append( "'"+item+"'")
-		#	else:
-		#		r.append( item )
-		#	i += 1
 
 	def __getattr__(ob, a ):
 		if ob.__getattr__:
@@ -1382,7 +1370,23 @@ def list(a):
 			raise TypeError
 
 
-
+with javascript:
+	def __tuple_key__(arr):
+		r = []
+		i = 0
+		while i < arr.length:
+			item = arr[i]
+			t = typeof(item)
+			if t=='string':
+				r.append( "'"+item+"'")
+			elif instanceof(item, Array):
+				r.append( __tuple_key__(item) )
+			elif t=='object':
+				r.append( item.__uid__ )
+			else:
+				r.append( item )
+			i += 1
+		return r.join(',')
 
 class dict:
 	# http://stackoverflow.com/questions/10892322/javascript-hashtable-use-object-key
@@ -1469,33 +1473,36 @@ class dict:
 		note: `"4"` and `4` are the same key in javascript, is there a sane way to workaround this,
 		that can remain compatible with external javascript?
 		'''
-		__dict = self[...]
-		if instanceof(key, Array):
-			key = JSON.stringify( key )
-		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
-			# Test undefined because it can be in the dict
-			if JS("key.__uid__ && key.__uid__ in __dict"):
-				return JS('__dict[key.__uid__]')
+		with javascript:
+			__dict = self[...]
+			if instanceof(key, Array):
+				#key = JSON.stringify( key )  ## fails on objects with circular references ##
+				key = __tuple_key__(key)
+			elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+				# Test undefined because it can be in the dict
+				if JS("key.__uid__ && key.__uid__ in __dict"):
+					return JS('__dict[key.__uid__]')
+				raise KeyError(key)
+
+			if __dict and JS("key in __dict"):
+				return JS('__dict[key]')
+
 			raise KeyError(key)
 
-		if __dict and JS("key in __dict"):
-			return JS('__dict[key]')
-
-		raise KeyError(key)
-
 	def __setitem__(self, key, value):
-		__dict = self[...]
-		if instanceof(key, Array):
-			## JSON.stringify will properly quote string elements ##
-			key = JSON.stringify( key )
-			inline( '__dict[key] = value')
-		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
-			if JS("key.__uid__ === undefined"):
-				# "￼" is needed so that integers can also be used as keys #
-				JS(u"key.__uid__ = '￼' + _PythonJS_UID++")
-			JS('__dict[key.__uid__] = value')
-		else:
-			JS('__dict[key] = value')
+		with javascript:
+			__dict = self[...]
+			if instanceof(key, Array):
+				#key = JSON.stringify( key ) ## fails on objects with circular references ##
+				key = __tuple_key__(key)
+				inline( '__dict[key] = value')
+			elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+				if JS("key.__uid__ === undefined"):
+					# "￼" is needed so that integers can also be used as keys #
+					JS(u"key.__uid__ = '￼' + _PythonJS_UID++")
+				JS('__dict[key.__uid__] = value')
+			else:
+				JS('__dict[key] = value')
 
 	def keys(self):
 		with javascript:
