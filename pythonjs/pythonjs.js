@@ -2942,6 +2942,9 @@ var __dict___getitem__ = function(args, kwargs) {
   "\n		notes:\n			. '4' and 4 are the same key\n			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,\n			  that is why below we return the key in self if __dict is undefined.\n		";
   __dict = self["$wrapped"];
   if (__test_if_true__(key instanceof Array)) {
+    if (__test_if_true__(( __get__(key, "length", "missing attribute `length` - line 1221: if key.length > 0 and typeof( key[0] ) == 'string':") ) > 0 && ( typeof(((key instanceof Array) ? key[0] : __get__(key, "__getitem__", "line 1221: if key.length > 0 and typeof( key[0] ) == 'string':")([0], __NULL_OBJECT__))) ) == "string")) {
+      key = (("'" + __get__(__get__(key, "join", "missing attribute `join` - line 1222: key = \"'\" + key.join(\"'\") + \"'\""), "__call__")(["'"], __NULL_OBJECT__)) + "'");
+    }
     return __dict[key];
   } else {
     if (__test_if_true__(typeof(key) === 'object' || typeof(key) === 'function')) {
@@ -2974,6 +2977,9 @@ var __dict___setitem__ = function(args, kwargs) {
   var value = __args__['value'];
   __dict = self["$wrapped"];
   if (__test_if_true__(key instanceof Array)) {
+    if (__test_if_true__(( __get__(key, "length", "missing attribute `length` - line 1240: if key.length > 0 and typeof( key[0] ) == 'string':") ) > 0 && ( typeof(((key instanceof Array) ? key[0] : __get__(key, "__getitem__", "line 1240: if key.length > 0 and typeof( key[0] ) == 'string':")([0], __NULL_OBJECT__))) ) == "string")) {
+      key = (("'" + __get__(__get__(key, "join", "missing attribute `join` - line 1241: key = \"'\" + key.join(\"'\") + \"'\""), "__call__")(["'"], __NULL_OBJECT__)) + "'");
+    }
     __dict[key] = value;
   } else {
     if (__test_if_true__(typeof(key) === 'object' || typeof(key) === 'function')) {
@@ -3207,7 +3213,7 @@ var __array___init__ = function(args, kwargs) {
   var initializer = __args__['initializer'];
   var little_endian = __args__['little_endian'];
   self.typecode = typecode;
-  self.itemsize = __get__(__get__(self, "typecodes", "missing attribute `typecodes` - line 1380: self.itemsize = self.typecodes[ typecode ]"), "__getitem__", "line 1380: self.itemsize = self.typecodes[ typecode ]")([typecode], __NULL_OBJECT__);
+  self.itemsize = __get__(__get__(self, "typecodes", "missing attribute `typecodes` - line 1387: self.itemsize = self.typecodes[ typecode ]"), "__getitem__", "line 1387: self.itemsize = self.typecodes[ typecode ]")([typecode], __NULL_OBJECT__);
   self.little_endian = little_endian;
   if (__test_if_true__(initializer)) {
     self.length = len([initializer], __NULL_OBJECT__);
@@ -3231,7 +3237,7 @@ var __array___init__ = function(args, kwargs) {
   buff = new ArrayBuffer(size);
   self.dataview = new DataView(buff);
   self.buffer = buff;
-  __get__(__get__(self, "fromlist", "missing attribute `fromlist` - line 1401: self.fromlist( initializer )"), "__call__")([initializer], __NULL_OBJECT__);
+  __get__(__get__(self, "fromlist", "missing attribute `fromlist` - line 1408: self.fromlist( initializer )"), "__call__")([initializer], __NULL_OBJECT__);
 }
 ;__array___init__.is_wrapper = true;
 __array_attrs.__init__ = __array___init__;
@@ -3264,7 +3270,7 @@ var __array___contains__ = function(args, kwargs) {
   __args__ = __getargs__("__array___contains__", __sig__, args, kwargs);
   var self = __args__['self'];
   var value = __args__['value'];
-  arr = __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1407: arr = self.to_array()"), "__call__")();
+  arr = __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1414: arr = self.to_array()"), "__call__")();
   if (( arr.indexOf(value) ) == -1) {
     return false;
   } else {
@@ -3289,7 +3295,7 @@ var __array___getitem__ = function(args, kwargs) {
   step = self.itemsize;
   offset = (step * index);
   dataview = self.dataview;
-  func_name = ("get" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1415: func_name = 'get'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1415: func_name = 'get'+self.typecode_names[ self.typecode ]")([self.typecode], __NULL_OBJECT__));
+  func_name = ("get" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1422: func_name = 'get'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1422: func_name = 'get'+self.typecode_names[ self.typecode ]")([self.typecode], __NULL_OBJECT__));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     value = func(offset);
@@ -3327,7 +3333,7 @@ var __array___setitem__ = function(args, kwargs) {
   }
   offset = (step * index);
   dataview = self.dataview;
-  func_name = ("set" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1431: func_name = 'set'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1431: func_name = 'set'+self.typecode_names[ self.typecode ]")([self.typecode], __NULL_OBJECT__));
+  func_name = ("set" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1438: func_name = 'set'+self.typecode_names[ self.typecode ]"), "__getitem__", "line 1438: func_name = 'set'+self.typecode_names[ self.typecode ]")([self.typecode], __NULL_OBJECT__));
   func = dataview[func_name].bind(dataview);
   if (( offset ) < self.bytes) {
     if (( self.typecode ) == "float8") {
@@ -3395,13 +3401,13 @@ var __array_fromlist = function(args, kwargs) {
   typecode = self.typecode;
   size = (length * step);
   dataview = self.dataview;
-  func_name = ("set" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1451: func_name = 'set'+self.typecode_names[ typecode ]"), "__getitem__", "line 1451: func_name = 'set'+self.typecode_names[ typecode ]")([typecode], __NULL_OBJECT__));
+  func_name = ("set" + __get__(__get__(self, "typecode_names", "missing attribute `typecode_names` - line 1458: func_name = 'set'+self.typecode_names[ typecode ]"), "__getitem__", "line 1458: func_name = 'set'+self.typecode_names[ typecode ]")([typecode], __NULL_OBJECT__));
   func = dataview[func_name].bind(dataview);
   if (( size ) <= self.bytes) {
     i = 0;
     offset = 0;
     while (( i ) < length) {
-      item = ((lst instanceof Array) ? lst[i] : __get__(lst, "__getitem__", "line 1456: item = lst[i]")([i], __NULL_OBJECT__));
+      item = ((lst instanceof Array) ? lst[i] : __get__(lst, "__getitem__", "line 1463: item = lst[i]")([i], __NULL_OBJECT__));
       if (( typecode ) == "float8") {
         item *= self._norm_set;
       } else {
@@ -3459,7 +3465,7 @@ var __array_append = function(args, kwargs) {
   var self = __args__['self'];
   var value = __args__['value'];
   length = self.length;
-  __get__(__get__(self, "resize", "missing attribute `resize` - line 1479: self.resize( self.length + 1 )"), "__call__")([(self.length + 1)], __NULL_OBJECT__);
+  __get__(__get__(self, "resize", "missing attribute `resize` - line 1486: self.resize( self.length + 1 )"), "__call__")([(self.length + 1)], __NULL_OBJECT__);
   __get__(__get__(self, "__setitem__"), "__call__")([length, value], {});
 }
 ;__array_append.is_wrapper = true;
@@ -3478,12 +3484,12 @@ var __array_extend = function(args, kwargs) {
   var self = __args__['self'];
   var lst = __args__['lst'];
   var value,__iterator__54;
-  __iterator__54 = __get__(__get__(lst, "__iter__", "no iterator - line 1482: for value in lst:"), "__call__")([], __NULL_OBJECT__);
+  __iterator__54 = __get__(__get__(lst, "__iter__", "no iterator - line 1489: for value in lst:"), "__call__")([], __NULL_OBJECT__);
   var __next__54;
   __next__54 = __get__(__iterator__54, "next");
   while (( __iterator__54.index ) < __iterator__54.length) {
     value = __next__54();
-    __get__(__get__(self, "append", "missing attribute `append` - line 1483: self.append( value )"), "__call__")([value], __NULL_OBJECT__);
+    __get__(__get__(self, "append", "missing attribute `append` - line 1490: self.append( value )"), "__call__")([value], __NULL_OBJECT__);
   }
 }
 ;__array_extend.is_wrapper = true;
@@ -3523,7 +3529,7 @@ var __array_to_list = function(args, kwargs) {
   }
   __args__ = __getargs__("__array_to_list", __sig__, args, kwargs);
   var self = __args__['self'];
-  return __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1493: return self.to_array()"), "__call__")();
+  return __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1500: return self.to_array()"), "__call__")();
 }
 ;__array_to_list.is_wrapper = true;
 __array_attrs.to_list = __array_to_list;
@@ -3540,9 +3546,9 @@ var __array_to_ascii = function(args, kwargs) {
   __args__ = __getargs__("__array_to_ascii", __sig__, args, kwargs);
   var self = __args__['self'];
   string = "";
-  arr = __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1496: arr = self.to_array()"), "__call__")();
+  arr = __get__(__get__(self, "to_array", "missing attribute `to_array` - line 1503: arr = self.to_array()"), "__call__")();
   i = 0;
-  length = __get__(arr, "length", "missing attribute `length` - line 1497: i = 0; length = arr.length");
+  length = __get__(arr, "length", "missing attribute `length` - line 1504: i = 0; length = arr.length");
   while (( i ) < length) {
     var num = arr[i];
     var char = String.fromCharCode(num);

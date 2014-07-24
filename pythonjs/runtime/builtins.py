@@ -1452,6 +1452,8 @@ class dict:
 		'''
 		__dict = self[...]
 		if instanceof(key, Array):
+			if key.length > 0 and typeof( key[0] ) == 'string':
+				key = "'" + key.join("'") + "'"
 			return inline('__dict[key]')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
@@ -1468,7 +1470,12 @@ class dict:
 
 	def __setitem__(self, key, value):
 		__dict = self[...]
-		if instanceof(key, Array):  ## using an Array as key converts it to a string
+		if instanceof(key, Array):
+			## using an Array as key converts it to a string
+			## check first item of array, if it is a string, the items must be quoted
+			## so that numeric and string items are different.
+			if key.length > 0 and typeof( key[0] ) == 'string':
+				key = "'" + key.join("'") + "'"
 			inline( '__dict[key] = value')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			if JS("key.__uid__ === undefined"):
