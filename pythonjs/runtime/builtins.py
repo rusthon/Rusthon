@@ -9,11 +9,11 @@ pythonjs.configure( direct_keys=True )
 
 _PythonJS_UID = 0
 
-JS('IndexError = function(msg) {this.message = msg || "";}; IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
-JS('KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
-JS('ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
-JS('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
-JS('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
+inline('IndexError = function(msg) {this.message = msg || "";}; IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
+inline('KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')
+inline('ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
+inline('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
+inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 with javascript:
 	def __gpu_object(cls, struct_name, data_name):
@@ -1451,7 +1451,9 @@ class dict:
 			  that is why below we return the key in self if __dict is undefined.
 		'''
 		__dict = self[...]
-		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+		if instanceof(key, Array):
+			return inline('__dict[key]')
+		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
 			if JS("key.__uid__ && key.__uid__ in __dict"):
 				return JS('__dict[key.__uid__]')
@@ -1466,7 +1468,9 @@ class dict:
 
 	def __setitem__(self, key, value):
 		__dict = self[...]
-		if JS("typeof(key) === 'object' || typeof(key) === 'function'"):
+		if instanceof(key, Array):  ## using an Array as key converts it to a string
+			inline( '__dict[key] = value')
+		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			if JS("key.__uid__ === undefined"):
 				# "￼" is needed so that integers can also be
 				# used as keys

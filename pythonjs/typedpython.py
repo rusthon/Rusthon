@@ -51,14 +51,23 @@ def transform_source( source, strip=False ):
 					a.append( char )
 			else:
 				a.append( char )
+
 		if not a:
 			continue
+
+
 		if a[-1]==';':
 			a.pop()
 		c = ''.join(a)
 		cs = c.strip()
+
 		if cs.startswith('//'):
 			continue
+		elif cs.startswith('inline('):
+			output.append(c)
+			continue
+
+
 		if cs.startswith('var '):
 			c = c.replace('var ', '')
 
