@@ -1633,7 +1633,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			else:  ## ------------------ javascript mode ------------------------
 				s = self.visit(node.slice)
-				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
+				#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
+				check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
+				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
 
 		elif isinstance(node.slice, ast.Slice):
 			return '__get__(%s, "__getslice__")([%s], __NULL_OBJECT__)' % (

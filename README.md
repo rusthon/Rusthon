@@ -440,24 +440,12 @@ d = "HI" * 2  ## FAILS
 3. The syntax `from mymodule import *` allows you to import another python script from the same folder,
 but both mymodule and the parent will share the same namespace, mymodule can use global variables defined in the parent.
 
-4. Using tuples as keys in a dict in javascript mode breaks with strings that are numbers
+4. Using tuples as keys in a dict is allowed, the tuple may contain other tuples, objects, and a mix of numbers or strings.
+Note that tuples in PythonJS are actually JavaScript arrays, so if you modify the contents of the tuple, it would no
+longer be the same key in a dict.
 ```
-pythonjs.configure( javascript=True )
 a = (1,2,3)
 b = ("1","2","3")
 D = { a: 'hello', b: 'world' }
-D[ a ] == 'hello'  ## FAILS
+D[ a ] == 'hello'  ## OK
 D[ b ] == 'world'  ## OK
-```
-The example above works in the default Python mode, because when using a tuple as a key, its first item will be checked if it is a string, and if so then generate a key that is
-different from a tuple of numeric elements.  This logic assumes that all following keys
-are also strings, so the following breaks even in the default Python mode, because all
-the items in `b` are treated as strings and `a` contains the same values as strings.
-
-```
-a = ("1", "2", "3")
-b = ("1", 2, 3)
-D = {a:100, b:200}
-D[ a ] == 100  ## FAILS - value is 200
-D[ b ] == 200  ## OK
-```

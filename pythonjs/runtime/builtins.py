@@ -482,13 +482,17 @@ with javascript:
 		d = JS("{}")
 		for item in items:
 			key = item[0]
-			if key.__uid__:
+			if instanceof(key, Array):
+				key = JSON.stringify(key)
+			elif key.__uid__:
 				key = key.__uid__
 			d[ key ] = item[1]
 		return d
 
 	def __jsdict_get(ob, key, default_value):
 		if instanceof(ob, Object):
+			if instanceof(key, Array):
+				key = JSON.stringify(key)
 			if JS("key in ob"): return ob[key]
 			return default_value
 		else:  ## PythonJS object instance ##
@@ -500,6 +504,8 @@ with javascript:
 
 	def __jsdict_set(ob, key, value):
 		if instanceof(ob, Object):
+			if instanceof(key, Array):
+				key = JSON.stringify(key)
 			ob[ key ] = value
 		else:  ## PythonJS object instance ##
 			## this works because instances from PythonJS are created using Object.create(null) ##
@@ -507,6 +513,9 @@ with javascript:
 
 	def __jsdict_keys(ob):
 		if instanceof(ob, Object):
+			## in the case of tuple keys this would return stringified JSON instead of the original arrays,
+			## TODO, should this loop over the keys and convert the json strings back to objects?
+			## but then how would we know if a given string was json... special prefix character?
 			return JS("Object.keys( ob )")
 		else:  ## PythonJS object instance ##
 			## this works because instances from PythonJS are created using Object.create(null) ##
@@ -1457,25 +1466,18 @@ class dict:
 
 	def __getitem__(self, key):
 		'''
-		notes:
-			. '4' and 4 are the same key
-			. it is possible that the translator mistakes a javascript-object for a dict and inlines this function,
-			  that is why below we return the key in self if __dict is undefined.
+		note: `"4"` and `4` are the same key in javascript, is there a sane way to workaround this,
+		that can remain compatible with external javascript?
 		'''
 		__dict = self[...]
 		if instanceof(key, Array):
-			#if key.length > 0 and typeof( key[0] ) == 'string':
-			#	key = "'" + key.join("'") + "'"
 			key = JSON.stringify( key )
-			return inline('__dict[key]')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			# Test undefined because it can be in the dict
 			if JS("key.__uid__ && key.__uid__ in __dict"):
 				return JS('__dict[key.__uid__]')
 			raise KeyError(key)
 
-		# Tested after in order to not convert functions to strings.
-		# The slow down is negligible
 		if __dict and JS("key in __dict"):
 			return JS('__dict[key]')
 
@@ -1484,17 +1486,12 @@ class dict:
 	def __setitem__(self, key, value):
 		__dict = self[...]
 		if instanceof(key, Array):
-			## using an Array as key converts it to a string
-			## check first item of array, if it is a string, the items must be quoted
-			## so that numeric and string items are different.
-			#if key.length > 0 and typeof( key[0] ) == 'string':
-			#	key = "'" + key.join("'") + "'"
+			## JSON.stringify will properly quote string elements ##
 			key = JSON.stringify( key )
 			inline( '__dict[key] = value')
 		elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 			if JS("key.__uid__ === undefined"):
-				# "￼" is needed so that integers can also be
-				# used as keys
+				# "￼" is needed so that integers can also be used as keys #
 				JS(u"key.__uid__ = '￼' + _PythonJS_UID++")
 			JS('__dict[key.__uid__] = value')
 		else:
