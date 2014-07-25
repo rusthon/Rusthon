@@ -449,12 +449,15 @@ b = ("1","2","3")
 D = { a: 'hello', b: 'world' }
 D[ a ] == 'hello'  ## OK
 D[ b ] == 'world'  ## OK
+```
 
 5. AttributeError and KeyError are only raised in javascript mode when inside a block that catches those errors.
 In the default python mode these errors will always be thrown, and halt the program.
 ```
 pythonjs.configure(javascript=True)
 a = {}
-b = a['xxx']   # this will not throw any error
+# this will not throw any error
+b = a['xxx']
+# this works as expected, "b" will be set to "my-default"
 b = a['xxx'] except KeyError: 'my-default'
 ```
