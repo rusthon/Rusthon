@@ -15,6 +15,14 @@ inline('ValueError = function(msg) {this.message = msg || "";}; ValueError.proto
 inline('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
 inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
+with lowlevel:
+	def __getfast__(ob, attr):
+		v = ob[ attr ]
+		if v is undefined:
+			raise AttributeError(attr)
+		else:
+			return v
+
 with javascript:
 	def __gpu_object(cls, struct_name, data_name):
 		cls.prototype.__struct_name__ = struct_name

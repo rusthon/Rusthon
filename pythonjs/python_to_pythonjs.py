@@ -1579,13 +1579,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_dart or self._with_ll:
 			return '%s.%s' %(node_value, node.attr)
+
 		elif self._with_js:
-			return '%s.%s' %(node_value, node.attr)
-			## TODO pythonjs.configure to allow this
-			#if self._in_assign_target or not isinstance(node.attr, str):
-			#	return '%s.%s' %(node_value, node.attr)
-			#else:
-			#	return '__ternary_operator__(%s.%s is not undefined, %s.%s, __getattr__(%s, "%s"))' %(node_value, node.attr, node_value, node.attr, node_value, node.attr)
+			if self._in_catch_exception == 'AttributeError':
+				return '__getfast__(%s, "%s")' % (node_value, node.attr)
+			else:
+				return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_lua and self._in_assign_target:  ## this is required because lua has no support for inplace assignment ops like "+="
 			return '%s.%s' %(node_value, node.attr)
