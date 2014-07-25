@@ -165,6 +165,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self.setup_inliner( writer )
 
+		self._in_catch_exception = False
+
 		self._line = None
 		self._line_number = 0
 		self._stack = []        ## current path to the root
@@ -194,8 +196,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._class_attributes = dict()
 		self._catch_attributes = None
 		self._typedef_vars = dict()
+
 		#self._names = set() ## not used?
+		## inferred class instances, TODO regtests to confirm that this never breaks ##
 		self._instances = dict()  ## instance name : class name
+
 		self._decorator_properties = dict()
 		self._decorator_class_props = dict()
 		self._function_return_types = dict()
@@ -1183,13 +1188,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.pull()
 
 	def visit_TryExcept(self, node):
+		if len(node.handlers)==0:
+			raise SyntaxError(self.format_error('no except handlers'))
+
+		## by default in js-mode some expections will not be raised,
+		## this allows those cases to throw proper errors.
+		if node.handlers[0].type:
+			self._in_catch_exception = self.visit(node.handlers[0].type)
+		else:
+			self._in_catch_exception = None
+
 		writer.write('try:')
 		writer.push()
 		map(self.visit, node.body)
 		writer.pull()
 		map(self.visit, node.handlers)
-		if len(node.handlers)==0:
-			raise SyntaxError(self.format_error('no except handlers'))
 
 	def visit_Raise(self, node):
 		#if self._with_js or self._with_dart:
@@ -1625,17 +1638,26 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 
-			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.BinOp):
-				return '%s[ %s ]' %(name, self.visit(node.slice))
-
-			elif self._with_direct_keys:
-				return '%s[ %s ]' %(name, self.visit(node.slice))
-
 			else:  ## ------------------ javascript mode ------------------------
-				s = self.visit(node.slice)
-				#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
-				check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
-				return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
+				if self._in_catch_exception == 'KeyError':
+					value = self.visit(node.value)
+					slice = self.visit(node.slice)
+					return '__get__(%s, "__getitem__")([%s], __NULL_OBJECT__)' % (value, slice)
+
+				elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.BinOp):
+					## TODO keep this optimization? in js mode `a[x+y]` is assumed to a direct key,
+					## it would be safer to check if one of the operands is a number literal,
+					## in that case it is safe to assume that this is a direct key.
+					return '%s[ %s ]' %(name, self.visit(node.slice))
+
+				elif self._with_direct_keys:
+					return '%s[ %s ]' %(name, self.visit(node.slice))
+
+				else:
+					s = self.visit(node.slice)
+					#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
+					check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
+					return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
 
 		elif isinstance(node.slice, ast.Slice):
 			return '__get__(%s, "__getslice__")([%s], __NULL_OBJECT__)' % (

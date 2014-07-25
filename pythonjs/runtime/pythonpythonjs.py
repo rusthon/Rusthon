@@ -333,7 +333,14 @@ def __get__(object, attribute, error_message):
 
 	## getting/setting from a normal JavaScript Object ##
 	if attribute == '__getitem__':
-		def wrapper(args,kwargs): return object[ args[0] ]
+		## TODO, should object be checked if it really is an object here?
+		## new rule: if value to return is `undefined` throw KeyError,
+		## this could be a problem with some external js libraries but should be rare,
+		## because most libraries will initalize keys to `null`
+		def wrapper(args,kwargs):
+			v = object[ args[0] ]
+			if v is undefined:
+				raise KeyError( args[0] )
 		wrapper.is_wrapper = True
 		return wrapper
 	elif attribute == '__setitem__':

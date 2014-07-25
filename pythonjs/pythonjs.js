@@ -355,7 +355,10 @@ var __get__ = function(object, attribute, error_message) {
   }
   if (( attribute ) == "__getitem__") {
         var wrapper = function(args, kwargs) {
-      return object[args[0]];
+      v = object[args[0]];
+      if (( v ) === undefined) {
+        throw new KeyError(args[0]);
+      }
     }
 
     wrapper.is_wrapper = true;
