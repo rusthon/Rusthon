@@ -455,11 +455,6 @@ In the default python mode these errors will always be thrown, and halt the prog
 ```
 pythonjs.configure(javascript=True)
 a = {}
-
-# this will not throw any error
-b = a['xxx']   
-
-# this will throw KeyError, and when caught `b` is set to "my-default"
+b = a['xxx']   # this will not throw any error
 b = a['xxx'] except KeyError: 'my-default'
-
 ```
