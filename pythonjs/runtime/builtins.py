@@ -1410,11 +1410,12 @@ class dict:
 		elif js_object:
 			ob = js_object
 			if instanceof(ob, Array):
-				for o in ob:
-					if instanceof(o, Array):
-						self.__setitem__( o[0], o[1] )
-					else:
-						self.__setitem__( o['key'], o['value'] )
+				with lowlevel:
+					for o in ob:
+						if instanceof(o, Array):
+							self.__setitem__( o[0], o[1] )
+						else:
+							self.__setitem__( o['key'], o['value'] )
 			elif isinstance(ob, dict):
 				for key in ob.keys():
 					value = ob[ key ]

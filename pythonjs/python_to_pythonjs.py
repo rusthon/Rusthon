@@ -2373,7 +2373,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 							a = ( self.visit(node.func),self.visit(node.func), self.visit(node.starargs), ','.join(kwargs) )
 							return '%s.apply(%s, [].extend(%s).append({%s}) )' %a
 						else:
-							return '%s({%s})' %( self.visit(node.func), ','.join(kwargs) )
+							func_name = self.visit(node.func)
+							if func_name == 'dict':
+								return '{%s}' %','.join(kwargs)
+							else:
+								return '%s({%s})' %( func_name, ','.join(kwargs) )
 
 				else:
 					if node.starargs:

@@ -394,6 +394,13 @@ pythonjs.configure(
 
 Gotchas
 ---------
+0. in a dictionary number keys will be converted to strings.
+In the example below the key `100` and `"100"` are the same key.
+```
+a = {"100": 'X'}
+a[ 100 ] = 'Y'
+```
+
 1. The calling context of `this` must be taken into account when using fast javascript mode, code that comes after: `pythonjs.configure(javascript=True)` or is inside a `with javascript:` block.  When in javascript mode, passing a method as a callback, or setting it as an attribute on another object, requires you call `f.bind(self)` to ensure that `self` within the method points to the class instance.  This is not required when using classes defined normal mode, because the `this` calling context is automatically managed.
 Note: you can use the special `->` syntax in place of the attribute operator `.` to call `bind` automatically.
 
