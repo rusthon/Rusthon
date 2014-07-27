@@ -189,6 +189,8 @@ luajit_runnable = runnable( "luajit -v" ) and '--luajit' in sys.argv
 lua2js = os.path.abspath( '../external/lua.js/lua2js' )
 luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 
+go_runnable = runnable( 'go version')
+
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -458,7 +460,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -490,6 +492,9 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         ]
         content = '\n'.join( source )
 
+    elif go:
+        content = patch_python(filename, backend='GO')
+
     else:
         content = patch_python(filename)
 
@@ -514,6 +519,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--lua')
     elif luajs:
         cmd.append( '--luajs')
+    elif go:
+        cmd.append( '--go' )
 
     if not requirejs:
         cmd.append( '--no-wrapper' )
@@ -763,6 +770,17 @@ def run_luajs_node(content):
     return run_command("node %s.js" % tmpname)
 
 
+def run_pythonjs_go_test(dummy_filename):
+    """PythonJS (Go backend)"""
+    return run_if_no_error(run_go)
+
+def run_go(content):
+    """compile and run go program"""
+    #builtins = read(os.path.join("../external/lua.js", "lua.js"))
+    write("%s.go" % tmpname, content)
+    return run_command("go build %s.go" % tmpname)
+
+
 def run_html_test( filename, sum_errors ):
     lines = open(filename, 'rb').read().decode('utf-8').splitlines()
     filename = os.path.split(filename)[-1]
@@ -926,6 +944,11 @@ def run_test_on(filename):
             js = translate_js(filename, lua=True)
             display(run_pythonjs_lua_test_on_luajit)
 
+        if go_runnable:
+            js = translate_js(filename, go=True)
+            display(run_pythonjs_go_test)
+
+
     print()
     return sum_errors
 
@@ -976,6 +999,10 @@ def run():
         if luajit_runnable:
             headers.append("Lua\nJIT")
         
+        if go_runnable:
+            headers.append("Go\n-")
+
+
         print(table_header % ("", "Regtest run on")
               + ''.join(table_cell % i.split('\n')[0]
                         for i in headers)

@@ -63,7 +63,7 @@ def transform_source( source, strip=False ):
 
 		if cs.startswith('//'):
 			continue
-		elif cs.startswith('inline('):
+		elif cs.startswith('inline(') or cs.startswith('JS('):
 			output.append(c)
 			continue
 

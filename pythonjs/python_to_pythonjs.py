@@ -132,12 +132,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
                 return msg
 
-	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False):
+	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False, go=False):
 		super(PythonToPythonJS, self).__init__()
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
+		self._with_go = go
 
 		self._html_tail = []; script = False
 		if source.strip().startswith('<html'):
@@ -1708,7 +1709,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
-		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		lineno = node.lineno
@@ -2019,7 +2020,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._line_number = node.lineno
 			self._line = src
 
-		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua)
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		if use_runtime_errors:
@@ -3851,12 +3852,13 @@ def collect_generator_functions(node):
 
 
 
-def main(script, dart=False, coffee=False, lua=False, module_path=None):
+def main(script, dart=False, coffee=False, lua=False, go=False, module_path=None):
 	translator = PythonToPythonJS(
 		source = script, 
 		dart   = dart or '--dart' in sys.argv,
 		coffee = coffee,
 		lua    = lua,
+		go     = go,
 		module_path = module_path
 	)
 

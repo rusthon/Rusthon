@@ -7,9 +7,10 @@ from pythonjs_to_dart import main as pythonjs_to_dart
 from pythonjs_to_coffee import main as pythonjs_to_coffee
 from pythonjs_to_lua import main as pythonjs_to_lua
 from pythonjs_to_luajs import main as pythonjs_to_luajs
+from pythonjs_to_go import main as pythonjs_to_go
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--visjs|--no-wrapper|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -23,7 +24,10 @@ def main(script, module_path=None):
 	else:
 		code = ''
 		res = None
-		if '--dart' in sys.argv:
+		if '--go' in sys.argv:
+			a = python_to_pythonjs(script, go=True, module_path=module_path)
+			code = pythonjs_to_go( a )
+		elif '--dart' in sys.argv:
 			a = python_to_pythonjs(script, dart=True, module_path=module_path)
 			code = pythonjs_to_dart( a )
 		elif '--coffee' in sys.argv:
