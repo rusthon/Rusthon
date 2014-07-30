@@ -1410,12 +1410,12 @@ class dict:
 		elif js_object:
 			ob = js_object
 			if instanceof(ob, Array):
-				with lowlevel:
-					for o in ob:
-						if instanceof(o, Array):
-							self.__setitem__( o[0], o[1] )
-						else:
-							self.__setitem__( o['key'], o['value'] )
+				#with lowlevel:
+				for o in ob:
+					if instanceof(o, Array):
+						self.__setitem__( o[0], o[1] )
+					else:
+						self.__setitem__( o['key'], o['value'] )
 			elif isinstance(ob, dict):
 				for key in ob.keys():
 					value = ob[ key ]
@@ -1484,6 +1484,7 @@ class dict:
 		'''
 		with javascript:
 			__dict = self[...]
+			err = False
 			if instanceof(key, Array):
 				#key = JSON.stringify( key )  ## fails on objects with circular references ##
 				key = __tuple_key__(key)
@@ -1491,12 +1492,18 @@ class dict:
 				# Test undefined because it can be in the dict
 				if JS("key.__uid__ && key.__uid__ in __dict"):
 					return JS('__dict[key.__uid__]')
-				raise KeyError(key)
+				else:
+					err = True
 
 			if __dict and JS("key in __dict"):
 				return JS('__dict[key]')
+			else:
+				err = True
 
-			raise KeyError(key)
+			if err:
+				msg = "missing key: %s" %key
+				msg += "\n  - dict keys: %s" %inline('Object.keys(__dict)')
+				raise KeyError(msg)
 
 	def __setitem__(self, key, value):
 		with javascript:

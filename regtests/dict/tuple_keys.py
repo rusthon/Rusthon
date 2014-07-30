@@ -26,3 +26,9 @@ def main():
 	TestError( D2[aa]=='hello' )
 	TestError( D2[bb]=='world' )
 	TestError( D2[ab]=='XXX')
+
+	r = { s:1, a:aa }
+	r2 = {}
+	for x in [ s, a ]:
+		r2[ x ] = r[ x ]
+	TestError( r[s] is r2[s] )

@@ -1797,7 +1797,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				elif self._with_direct_keys:
 					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
 				else:
-					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' % (self.visit(target.value), s, s, self.visit(node.value))
+					check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
+					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' %(self.visit(target.value), s, check_array, self.visit(node.value))
 
 			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
 				code = '%s[%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
@@ -2893,7 +2894,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 		else:
-			writer.write('def %s(args, kwargs):' % node.name)
+			if len(node.args.defaults) or node.args.kwarg or len(node.args.args) or node.args.vararg:
+				writer.write('def %s(args, kwargs):' % node.name)
+			else:
+				writer.write('def %s():' % node.name)
+
 		writer.push()
 
 		## write local typedefs and var scope ##
