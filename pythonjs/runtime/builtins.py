@@ -1390,6 +1390,8 @@ with javascript:
 			elif instanceof(item, Array):
 				r.append( __tuple_key__(item) )
 			elif t=='object':
+				if item.__uid__ is undefined:
+					raise KeyError(item)
 				r.append( item.__uid__ )
 			else:
 				r.append( item )
@@ -1410,12 +1412,15 @@ class dict:
 		elif js_object:
 			ob = js_object
 			if instanceof(ob, Array):
-				#with lowlevel:
 				for o in ob:
-					if instanceof(o, Array):
-						self.__setitem__( o[0], o[1] )
-					else:
-						self.__setitem__( o['key'], o['value'] )
+					with lowlevel:
+						if instanceof(o, Array):
+							k= o[0]; v= o[1]
+						else:
+							k= o['key']; v= o['value']
+
+					self.__setitem__( k,v )
+
 			elif isinstance(ob, dict):
 				for key in ob.keys():
 					value = ob[ key ]
@@ -1501,16 +1506,22 @@ class dict:
 				err = True
 
 			if err:
-				msg = "missing key: %s" %key
-				msg += "\n  - dict keys: %s" %inline('Object.keys(__dict)')
-				raise KeyError(msg)
+				msg = "missing key: %s -\n" %key
+				raise KeyError(__dict.keys())
 
 	def __setitem__(self, key, value):
 		with javascript:
+			if key is undefined:
+				raise KeyError('undefined is invalid key type')
+			if key is null:
+				raise KeyError('null is invalid key type')
+
 			__dict = self[...]
 			if instanceof(key, Array):
 				#key = JSON.stringify( key ) ## fails on objects with circular references ##
 				key = __tuple_key__(key)
+				if key is undefined:
+					raise KeyError('undefined is invalid key type (tuple)')
 				inline( '__dict[key] = value')
 			elif JS("typeof(key) === 'object' || typeof(key) === 'function'"):
 				if JS("key.__uid__ === undefined"):
@@ -1521,7 +1532,7 @@ class dict:
 				JS('__dict[key] = value')
 
 	def keys(self):
-		with javascript:
+		with lowlevel:
 			return Object.keys( self[...] )
 
 	def pop(self, key, d=None):
