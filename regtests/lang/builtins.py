@@ -14,4 +14,9 @@ def main():
 	#print(r)
 	TestError( str(r) == '1.12' )
 
+	r = round( 100.001, 2)
+	TestError( r == 100 )
+
+	i = int( 100.1 )
+	TestError( i == 100 )
 
