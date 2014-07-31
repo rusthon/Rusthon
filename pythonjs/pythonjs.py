@@ -338,9 +338,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 									raise RuntimeError(chunks)
 								sub = []
 								for ci,chk in enumerate(chunks):
+									#if not chk.startswith('@'): ## special inline javascript.
+									#	chk = '```'+chk+'```'
+									#chk = chk.replace('$', '```')
+
 									if not ci%2:
 										if '@' in chk:
 											raise SyntaxError(chunks)
+
 										if ci==0:
 											if chk:
 												sub.append('"%s"'%chk)
@@ -363,6 +368,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 									lines.append( 'glsljit.push(%s);' %''.join(sub))
 
 							else:
+								sub = sub.replace('$', '```')
 								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
 
 
@@ -400,9 +406,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append('  var __webclgl = new WebCLGL()')
 				lines.append('	var header = glsljit.compile_header()')
 				lines.append('	var shader = glsljit.compile_main()')
-				lines.append('	console.log(header)')
+
+				#lines.append('	console.log(header)')
 				lines.append('	console.log("-----------")')
 				lines.append('	console.log(shader)')
+
 				## create the webCLGL kernel, compiles GLSL source 
 				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
 
@@ -1072,6 +1080,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
 				]
 
+				##TODO## lines.append('$')  ## optimizes webclgl parser
+
 				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
 
 				## declare struct variable ##
@@ -1081,6 +1091,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
 				lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
 				lines.append( '`@}`')
+
+				##TODO## lines.append('$')  ## optimizes webclgl parser
 
 
 			elif isinstance(node.iter, ast.Call):  ## `for i in range(n):`

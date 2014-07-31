@@ -20,3 +20,9 @@ def main():
 	i = int( 100.1 )
 	TestError( i == 100 )
 
+	r = round( 5.49 )
+	TestError( r == 5 )
+
+	r = round( 5.49, 1 )
+	TestError( r == 5.5 )
+

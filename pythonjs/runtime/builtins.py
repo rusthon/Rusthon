@@ -812,17 +812,16 @@ def float(a):
 			raise ValueError('can not convert to float: '+a)
 		return b
 
-def round(a, places):
+def round(a, places=0):
 	with javascript:
 		b = '' + a
 		if b.indexOf('.') == -1:
 			return a
 		else:
-			c = b.split('.')
-			x = c[0]
-			y = c[1].substring(0, places)
-			return parseFloat( x+'.'+y )
-
+			## this could return NaN with large numbers and large places,
+			## TODO check for NaN and instead fallback to `a.toFixed(places)`
+			p = Math.pow(10, places)
+			return Math.round(a * p) / p
 
 def str(s):
 	return ''+s
@@ -1419,7 +1418,10 @@ class dict:
 						else:
 							k= o['key']; v= o['value']
 
-					self.__setitem__( k,v )
+					try:
+						self.__setitem__( k,v )
+					except KeyError:
+						raise KeyError('error in dict init, bad key')
 
 			elif isinstance(ob, dict):
 				for key in ob.keys():
