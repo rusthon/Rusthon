@@ -10,4 +10,8 @@ def main():
 	n = float('NaN')
 	TestError( isNaN(n)==True )
 
+	r = round( 1.1234, 2)
+	#print(r)
+	TestError( str(r) == '1.12' )
+
 
