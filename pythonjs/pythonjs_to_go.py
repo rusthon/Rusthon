@@ -15,6 +15,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 		#self._classes = dict()
 		#self._class_props = dict()
 
+	def visit_Print(self, node):
+		r = [ 'fmt.Print(%s);' %self.visit(e) for e in node.values]
+		return ''.join(r)
+
+
 	def visit_Module(self, node):
 		header = [
 			'package main',
@@ -63,9 +68,20 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		out = []
 		for v in args:
-			out.append( self.indent() + 'var ' + v)
+			out.append( self.indent() + 'var ' + v + ' int')
 
-		return '\n'.join(out)
+		#return '\n'.join(out)
+		return ''
+
+	def visit_Assign(self, node):
+		target = node.targets[0]
+		if isinstance(target, ast.Tuple):
+			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
+		else:
+			target = self.visit(target)
+			value = self.visit(node.value)
+			code = 'var %s = %s;' % (target, value)
+			return code
 
 
 def main(script):

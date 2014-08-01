@@ -142,9 +142,13 @@ if os.path.isfile( os.path.expanduser('~/pypy-1.9/bin/pypy') ) and '--old-pypy' 
     old_pypy_runnable = True
     old_pypy_exe = os.path.expanduser('~/pypy-1.9/bin/pypy')
 
-webclgl = None
-if os.path.isfile( os.path.expanduser('~/webclgl/WebCLGL_2.0.Min.class.js') ):
-    webclgl = open( os.path.expanduser('~/webclgl/WebCLGL_2.0.Min.class.js'), 'rb').read().decode('utf-8')
+webclgl = []
+if os.path.isdir( os.path.expanduser('~/webclgl') ):
+    #webclgl.append( open( os.path.expanduser('~/webclgl/WebCLGL_2.0.Min.class.js'), 'rb').read().decode('utf-8') )
+    webclgl.append( open( os.path.expanduser('~/webclgl/WebCLGLUtils.class.js'), 'rb').read().decode('utf-8') )
+    webclgl.append( open( os.path.expanduser('~/webclgl/WebCLGLBuffer.class.js'), 'rb').read().decode('utf-8') )
+    webclgl.append( open( os.path.expanduser('~/webclgl/WebCLGLKernel.class.js'), 'rb').read().decode('utf-8') )
+    webclgl.append( open( os.path.expanduser('~/webclgl/WebCLGL.class.js'), 'rb').read().decode('utf-8') )
 
 ## rhino is not run by default because it simply freezes up on maximum callstack errors
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
@@ -432,10 +436,11 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
     #            out.append( line )
     #    code = '\n'.join( out )
     a = [
-        _patch_header, 
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
     ]
+    if backend != 'GO':
+        a.append(_patch_header)
 
     if python != 'PYTHONJS':
         code = typedpython.transform_source( code, strip=True )
@@ -693,9 +698,10 @@ def run_js_nodewebkit(content):
 
     html = ['<html>']
     if webclgl:
-        html.append('<script>')
-        html.append( webclgl )
-        html.append('</script>')
+        for data in webclgl:
+            html.append('<script>')
+            html.append( data )
+            html.append('</script>')
 
     html.append('<script>')
     html.extend( lines )
@@ -776,9 +782,12 @@ def run_pythonjs_go_test(dummy_filename):
 
 def run_go(content):
     """compile and run go program"""
-    #builtins = read(os.path.join("../external/lua.js", "lua.js"))
     write("%s.go" % tmpname, content)
-    return run_command("go build %s.go" % tmpname)
+    errors = run_command("go build %s.go" % tmpname)
+    if errors:
+        return errors
+    else:
+        return run_command( tmpname)
 
 
 def run_html_test( filename, sum_errors ):
