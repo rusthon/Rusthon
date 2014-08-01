@@ -891,6 +891,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return '"%s"' % s
 
 	def visit_BinOp(self, node):
+		if isinstance(node.op, ast.Eq):
+			raise SyntaxError('xx-')
 		left = self.visit(node.left)
 		op = self.visit(node.op)
 		right = self.visit(node.right)
@@ -965,20 +967,32 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def visit_Compare(self, node):
 		if self._glsl:
 			comp = [self.visit(node.left)]
+		elif isinstance(node.ops[0], ast.Eq):
+			left = self.visit(node.left)
+			right = self.visit(node.comparators[0])
+			return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
+		elif isinstance(node.ops[0], ast.NotEq):
+			left = self.visit(node.left)
+			right = self.visit(node.comparators[0])
+			return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)
+
 		else:
 			comp = [ '(']
 			comp.append( self.visit(node.left) )
 			comp.append( ')' )
 
-		for i in range( len(node.ops) ):
-			comp.append( self.visit(node.ops[i]) )
+			for i in range( len(node.ops) ):
+				comp.append( self.visit(node.ops[i]) )
 
-			if isinstance(node.comparators[i], ast.BinOp):
-				comp.append('(')
-				comp.append( self.visit(node.comparators[i]) )
-				comp.append(')')
-			else:
-				comp.append( self.visit(node.comparators[i]) )
+				if isinstance(node.ops[i], ast.Eq):
+					raise SyntaxError('TODO')
+
+				elif isinstance(node.comparators[i], ast.BinOp):
+					comp.append('(')
+					comp.append( self.visit(node.comparators[i]) )
+					comp.append(')')
+				else:
+					comp.append( self.visit(node.comparators[i]) )
 
 		return ' '.join( comp )
 
