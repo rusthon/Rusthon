@@ -129,9 +129,9 @@ def transform_source( source, strip=False ):
 		## golang
 		if '<-' in c:
 			if '=' in c:
-				c = c.replace('<-', '') + '.__go__receive__()'
+				c = c.replace('<-', '') + '.__go__receive__'
 			else:
-				c = c.replace('<-', '=') + '.__go__send__()'
+				c = c.replace('<-', '=') + '.__go__send__'
 
 
 		## X.method.bind(X) shortcut `->`
@@ -207,7 +207,7 @@ def transform_source( source, strip=False ):
 					if len(arg.split()) == 2:
 						chan, arg = arg.split()
 					if chan:
-						output.append('%s@typedef.chan(%s=%s)' %(indent, arg,typedef))
+						output.append('%s@typedef_chan(%s=%s)' %(indent, arg,typedef))
 					else:
 						output.append('%s@typedef(%s=%s)' %(indent, arg,typedef))
 					args.append(arg)
@@ -307,9 +307,9 @@ c = function(x,y):
 if True:
 	d = a[ 'somekey' ] except KeyError: 'mydefault'
 
-## <- becomes a.__go__send__()
+## <- becomes a.__go__send__
 g <- a
-## = <- becomes b.__go__receive__()
+## = <- becomes b.__go__receive__
 g = <- b
 
 def wrapper(a:int, chan c:int):

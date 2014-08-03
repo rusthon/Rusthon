@@ -1578,7 +1578,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#	return 'glsl_inline(%s.%s)' %(node_value, node.attr)
 			#else:
 			return '%s.%s' %(node_value, node.attr)
-		elif self._with_dart or self._with_ll:
+		elif self._with_dart or self._with_ll or self._with_go:
 			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
@@ -2621,6 +2621,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		gpu_vectorize = False
 		gpu_method = False
 		local_typedefs = []
+		typedef_chans = []
 		func_expr = None
 
 		## deprecated?
@@ -2639,7 +2640,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				assert len(decorator.args)==1
 				func_expr = self.visit(decorator.args[0])
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'typedef':
+			elif isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
 				c = decorator
 				assert len(c.args) == 0 and len(c.keywords)
 				for kw in c.keywords:
@@ -2648,6 +2649,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					self._instances[ kw.arg ] = kw.value.id
 					self._func_typedefs[ kw.arg ] = kw.value.id
 					local_typedefs.append( '%s=%s' %(kw.arg, kw.value.id))
+					if decorator.func.id=='typedef_chan':
+						typedef_chans.append( kw.arg )
 
 
 			elif isinstance(decorator, Name) and decorator.id == 'inline':

@@ -77,6 +77,14 @@ class GoGenerator( pythonjs.JSGenerator ):
 		target = node.targets[0]
 		if isinstance(target, ast.Tuple):
 			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
+		elif isinstance(node.value, ast.Attribute) and node.value.attr in ('__go__send__','__go__receive__'):
+			target = self.visit(target)
+			value = self.visit(node.value.value)
+			if node.value.attr == '__go__send__':
+				return 'var %s <- %s;' % (target, value)
+			else:
+				return 'var %s = <-%s;' % (target, value)
+
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
