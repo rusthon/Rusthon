@@ -778,6 +778,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#	return_id = self.inline_function( node )
 		#	code = self.writer.getvalue()
 		#	return '\n'.join([code, return_id])
+		elif name.split('.')[-1] == '__go__receive__':
+			raise SyntaxError('__go__receive__')
+
 		else:
 			return self._visit_call_helper(node)
 

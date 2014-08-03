@@ -124,6 +124,16 @@ def transform_source( source, strip=False ):
 			c += ')' * c.count(' new ')
 			c = c.replace(' new ', ' new(')
 
+
+
+		## golang
+		if '<-' in c:
+			if '=' in c:
+				c = c.replace('<-', '') + '.__go__receive__()'
+			else:
+				c = c.replace('<-', '=') + '.__go__send__()'
+
+
 		## X.method.bind(X) shortcut `->`
 		if '->' in c:
 			a,b = c.split('->')
@@ -174,6 +184,36 @@ def transform_source( source, strip=False ):
 						output_post[-1] = output_post[-1][:-1]
 				else: output_post = list()
 				c = 'def %s'%tail
+
+
+		## python3 annotations
+		if 'def ' in c and c.count(':') > 1:
+			indent = 0
+			for u in c:
+				if u == ' ' or u == '\t':
+					indent += 1
+				else:
+					break
+			indent = '\t'*indent
+
+			head, tail = c.split('(')
+			args = []
+			tail, tailend = tail.split(')')
+			for x in tail.split(','):
+				y = x #x.split(')')[0]
+				if ':' in y:
+					arg, typedef = y.split(':')
+					chan = False
+					if len(arg.split()) == 2:
+						chan, arg = arg.split()
+					if chan:
+						output.append('%s@typedef.chan(%s=%s)' %(indent, arg,typedef))
+					else:
+						output.append('%s@typedef(%s=%s)' %(indent, arg,typedef))
+					args.append(arg)
+				else:
+					args.append(x)
+			c = head +'(' + ','.join(args) + ')'+tailend
 
 
 		## jquery ##
@@ -266,6 +306,15 @@ c = function(x,y):
 	return x+y
 if True:
 	d = a[ 'somekey' ] except KeyError: 'mydefault'
+
+## <- becomes a.__go__send__()
+g <- a
+## = <- becomes b.__go__receive__()
+g = <- b
+
+def wrapper(a:int, chan c:int):
+	result = longCalculation(a)
+	c <- result
 
 '''
 
