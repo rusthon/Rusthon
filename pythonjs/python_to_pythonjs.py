@@ -2066,6 +2066,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		name = self.visit(node.func)
+		if name in typedpython.GO_SPECIAL_CALLS:
+			name = typedpython.GO_SPECIAL_CALLS[ name ]
+			return '%s( %s )' %(name, self.visit(node.args[0]))
 
 		if self._with_rpc:
 			if not self._with_rpc_name:
@@ -2514,7 +2517,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			elif hasattr(node,'constant') or name in self._builtin_functions:
 				if args and kwargs:
-					return '%s([%s], {%s})' %(args, kwargs)
+					return '%s([%s], {%s})' %(name, args, kwargs)
 				elif args:
 					return '%s([%s], __NULL_OBJECT__)' %(name,args)
 				elif kwargs:
@@ -2998,19 +3001,19 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			# First check the arguments are well formed 
 			# ie. that this function is not a callback of javascript code
 
+			if not self._with_go:
+				writer.write("""if instanceof(args,Array) and Object.prototype.toString.call(kwargs) == '[object Object]' and arguments.length==2:""")
+				writer.push()
+				writer.write('pass')  # do nothing if it's not called from javascript
+				writer.pull()
 
-			writer.write("""if instanceof(args,Array) and Object.prototype.toString.call(kwargs) == '[object Object]' and arguments.length==2:""")
-			writer.push()
-			writer.write('pass')  # do nothing if it's not called from javascript
-			writer.pull()
-
-			writer.write('else:')
-			writer.push()
-			# If it's the case, move use ``arguments`` to ``args`` 
-			writer.write('args = Array.prototype.slice.call(arguments, 0, __sig__.args.length)')
-			# This means you can't pass keyword argument from javascript but we already knew that
-			writer.write('kwargs = JSObject()')
-			writer.pull()
+				writer.write('else:')
+				writer.push()
+				# If it's the case, move use ``arguments`` to ``args`` 
+				writer.write('args = Array.prototype.slice.call(arguments, 0, __sig__.args.length)')
+				# This means you can't pass keyword argument from javascript but we already knew that
+				writer.write('kwargs = JSObject()')
+				writer.pull()
 
 
 
@@ -3665,7 +3668,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._with_js = True
 			writer.write('with %s:' %self.visit(node.context_expr))
 			self._with_js = restore
-			
+
 			writer.push()
 			for b in node.body:
 				a = self.visit(b)

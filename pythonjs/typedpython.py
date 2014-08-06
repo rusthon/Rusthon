@@ -21,6 +21,11 @@ types.extend( vector_types )
 
 __whitespace = [' ', '\t']
 
+GO_SPECIAL_CALLS = {
+	'go'         : '__go__',
+	'go.channel' : '__gomake__',
+}
+
 def transform_source( source, strip=False ):
 	output = []
 	output_post = None
@@ -142,9 +147,12 @@ def transform_source( source, strip=False ):
 
 		if '<-' in c:
 			if '=' in c:
-				c = c.replace('<-', '') + '.__go__receive__'
+				c = c.replace('<-', '__go__receive__<<')
 			else:
-				c = c.replace('<-', '=') + '.__go__send__'
+				## keeping `=` allows for compatible transform to stacklessPython API,
+				## this is not used now because it is not required by the Go backend.
+				c = c.replace('<-', '= __go__send__<<')
+				#c = c.replace('<-', '<<__go__send__<<')
 
 
 		## X.method.bind(X) shortcut `->`
@@ -320,9 +328,9 @@ c = function(x,y):
 if True:
 	d = a[ 'somekey' ] except KeyError: 'mydefault'
 
-## <- becomes a.__go__send__
+## <- becomes __go__send__<<a
 g <- a
-## = <- becomes b.__go__receive__
+## = <- becomes __go__receive__<<b
 g = <- b
 
 def wrapper(a:int, chan c:int):

@@ -672,10 +672,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 			raise SyntaxError( args )
 
+	def _visit_call_helper_go( self, node ):
+		raise NotImplementedError('go call')
+
+
 	def visit_Call(self, node):
 		name = self.visit(node.func)
+		if name in typedpython.GO_SPECIAL_CALLS.values():
+			return self._visit_call_helper_go( node )
 
-		if self._glsl and isinstance(node.func, ast.Attribute):
+		elif self._glsl and isinstance(node.func, ast.Attribute):
 			if isinstance(node.func.value, ast.Name) and node.func.value.id in self._typed_vars:
 				args = ','.join( [self.visit(a) for a in node.args] )
 				return '`__struct_name__`_%s(%s, %s)' %(node.func.attr, node.func.value.id, args)
@@ -923,11 +929,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return '"%s"' % s
 
 	def visit_BinOp(self, node):
-		if isinstance(node.op, ast.Eq):
-			raise SyntaxError('xx-')
 		left = self.visit(node.left)
 		op = self.visit(node.op)
 		right = self.visit(node.right)
+
+		if left in ('__go__receive__', '__go__send__') and op == '<<':
+			return '<- %s' %right
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'

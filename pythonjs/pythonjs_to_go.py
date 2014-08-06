@@ -44,6 +44,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 		lines = header + lines
 		return '\n'.join( lines )
 
+	def _visit_call_helper_go(self, node):
+		name = self.visit(node.func)
+		if name == '__go__':
+			return 'go %s' %self.visit(node.args[0])
+		elif name == '__gomake__':
+			return 'make(%s)' %self.visit(node.args[0])
+		else:
+			return SyntaxError('invalid special go call')
+
 	def visit_FunctionDef(self, node):
 		args = self.visit(node.args)
 		out = []
@@ -76,14 +85,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_Assign(self, node):
 		target = node.targets[0]
 		if isinstance(target, ast.Tuple):
-			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
-		elif isinstance(node.value, ast.Attribute) and node.value.attr in ('__go__send__','__go__receive__'):
+			raise NotImplementedError('TODO')
+
+		elif isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			target = self.visit(target)
-			value = self.visit(node.value.value)
-			if node.value.attr == '__go__send__':
-				return 'var %s <- %s;' % (target, value)
-			else:
-				return 'var %s = <-%s;' % (target, value)
+			value = self.visit(node.value.right)
+			return 'var %s <- %s;' % (target, value)
 
 		else:
 			target = self.visit(target)
