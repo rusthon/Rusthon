@@ -345,6 +345,12 @@ switch a.f():
 	default:
 		break
 
+select:
+	case x = <- a:
+		y += x
+	case x = <- b:
+		y += x
+
 '''
 
 if __name__ == '__main__':

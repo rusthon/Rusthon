@@ -92,14 +92,21 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		is_switch = False
 		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__default__':
 			r.append('default:')
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__select__':
-			r.append('select:')
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == '__select__':
+			r.append('select {')
+			is_switch = True
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
 				raise SyntaxError( self.visit(node.context_expr))
 
+			if len(node.context_expr.args):
+				a = self.visit(node.context_expr.args[0])
+			else:
+				assert len(node.context_expr.keywords)
+				a = '%s = %s' %(node.context_expr.keywords[0].arg, self.visit(node.context_expr.keywords[0].value))
+
 			if node.context_expr.func.id == '__case__':
-				r.append('case %s:' %self.visit(node.context_expr.args[0]))
+				r.append('case %s:' %a)
 			elif node.context_expr.func.id == '__switch__':
 				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
 				is_switch = True

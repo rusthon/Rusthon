@@ -3666,7 +3666,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			restore = self._with_js
 			self._with_js = True
-			writer.write('with %s:' %self.visit(node.context_expr))
+			if node.context_expr.keywords:
+				assert len(node.context_expr.keywords)==1
+				k = node.context_expr.keywords[0].arg
+				v = self.visit(node.context_expr.keywords[0].value)
+				a = 'with %s(%s=%s):' %( self.visit(node.context_expr.func), k,v )
+				writer.write(a)
+			else:
+				writer.write('with %s:' %self.visit(node.context_expr))
+
+
 			self._with_js = restore
 
 			writer.push()
