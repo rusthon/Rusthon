@@ -145,6 +145,19 @@ F = function(x):
 	return x
 ```
 
+. switch
+```
+switch a == b:
+	case True:
+		x = z
+	case False:
+		y = z
+	default:
+		break
+
+```
+
+
 Speed
 ---------------
 PythonJS gives you the option to optimize your program for speed with a new syntax for static typing, in some cases this results in code that is 20X faster.

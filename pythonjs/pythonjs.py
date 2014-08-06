@@ -87,6 +87,35 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			a = '%s %s= %s;' %(target, op, value)
 		return a
 
+	def visit_With(self, node):
+		r = []
+		is_switch = False
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__default__':
+			r.append('default:')
+		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__select__':
+			r.append('select:')
+		elif isinstance( node.context_expr, ast.Call ):
+			if not isinstance(node.context_expr.func, ast.Name):
+				raise SyntaxError( self.visit(node.context_expr))
+
+			if node.context_expr.func.id == '__case__':
+				r.append('case %s:' %self.visit(node.context_expr.args[0]))
+			elif node.context_expr.func.id == '__switch__':
+				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
+				is_switch = True
+			else:
+				raise SyntaxError( 'invalid use of with')
+
+
+		for b in node.body:
+			a = self.visit(b)
+			if a: r.append(a)
+
+		if is_switch:
+			r.append('}')
+
+		return '\n'.join(r)
+
 	def visit_Module(self, node):
 		header = []
 		lines = []

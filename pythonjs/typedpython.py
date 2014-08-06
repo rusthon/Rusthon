@@ -127,6 +127,19 @@ def transform_source( source, strip=False ):
 
 
 		## golang
+
+		if c.strip().startswith('switch '):
+			c = c.replace('switch ', 'with __switch__(').replace(':', '):')
+
+		if c.strip().startswith('default:'):
+			c = c.replace('default:', 'with __default__:')
+
+		if c.strip().startswith('select:'):
+			c = c.replace('select:', 'with __select__:')
+
+		if c.strip().startswith('case ') and c.strip().endswith(':'):
+			c = c.replace('case ', 'with __case__(').replace(':', '):')
+
 		if '<-' in c:
 			if '=' in c:
 				c = c.replace('<-', '') + '.__go__receive__'
@@ -315,6 +328,14 @@ g = <- b
 def wrapper(a:int, chan c:int):
 	result = longCalculation(a)
 	c <- result
+
+switch a.f():
+	case 1:
+		print(x)
+	case 2:
+		print(y)
+	default:
+		break
 
 '''
 

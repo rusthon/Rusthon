@@ -3651,9 +3651,31 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			map(self.visit, node.body)
 			self._with_inline = False
 
-		else:
-			raise SyntaxError('improper use of "with" statement')
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id in EXTRA_WITH_TYPES:
+			writer.write('with %s:' %self.visit(node.context_expr))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
 
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id in EXTRA_WITH_TYPES:
+
+			restore = self._with_js
+			self._with_js = True
+			writer.write('with %s:' %self.visit(node.context_expr))
+			self._with_js = restore
+			
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
+
+		else:
+			raise SyntaxError('invalid use of "with" statement')
+
+EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
 
 class GeneratorFunctionTransformer( PythonToPythonJS ):
 	'''
