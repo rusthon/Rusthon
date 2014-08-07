@@ -32,6 +32,9 @@ def transform_source( source, strip=False ):
 
 	for line in source.splitlines():
 		a = []
+		hit_go_typedef = False
+		gotype = None
+
 		for i,char in enumerate(line):
 			nextchar = None
 			j = i+1
@@ -40,7 +43,31 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if a and char in __whitespace:
+			if a and char==']' and j==i+1 and nextchar in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+				assert '[' in a
+				gotype = []
+				b = a.pop()
+				while b != '[':
+					gotype.append(b)
+					b = a.pop()
+				gotype.reverse()
+				gotype = ''.join(gotype)
+				if not gotype:
+					a.append('__go__array__(')
+				elif gotype.isdigit():
+					a.append('__go__arrayfixed__(%s,' %gotype)
+				else:
+					a.append('__go__map__(%s,' %gotype)
+				hit_go_typedef = True
+
+			elif hit_go_typedef and char=='(':
+				a.append(')<<(')
+				hit_go_typedef = False
+			elif hit_go_typedef and char=='{':
+				a.append(')<<{')
+				hit_go_typedef = False
+
+			elif a and char in __whitespace:
 				b = ''.join(a)
 				b = b.strip()
 				if b in types and nextchar != '=':
@@ -351,6 +378,19 @@ select:
 	case x = <- b:
 		y += x
 
+## in go becomes: []string{x,y,z}
+## becomes: __go__array__(string) << (x,y,z)
+a = []string(x,y,z)
+
+## in go becomes: [3]int{x,y,z}
+## becomes: __go__arrayfixed__(3, string) << (x,y,z)
+a = [3]int(x,y,z)
+
+## in go becomes: map[string]int{x,y,z}
+## becomes: __go__map__(string, int) << {'x':x, 'y':y, 'z':z}
+a = [string]int{
+	"x":x, "y":y, "z":z
+}
 '''
 
 if __name__ == '__main__':
