@@ -371,6 +371,13 @@ def TestWarning(file, line, result, test):
         print(file + ":" + str(line) + " Warning fail " + test)
 """
 
+_patch_header_go = """# -*- coding: utf-8 -*-
+def TestError(file:string, line:int, result:bool, test:string):
+    if result == False:
+        print(file + ":" + str(line) + " Error fail " + test)
+"""
+
+
 _python_only_extra_header = """
 try:
     import threading
@@ -439,7 +446,9 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
     ]
-    if backend != 'GO':
+    if backend == 'GO':
+        a.append(_patch_header_go)
+    else:
         a.append(_patch_header)
 
     if python != 'PYTHONJS':

@@ -22,6 +22,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_Expr(self, node):
 		return self.visit(node.value)
 
+	def visit_Import(self, node):
+		r = [alias.name for alias in node.names]
+		if r:
+			return 'import "%s"' %';'.join(r)
+		else:
+			return ''
 
 	def visit_Module(self, node):
 		header = [
