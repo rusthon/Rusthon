@@ -2,7 +2,7 @@
 # PythonJS to Go Translator
 # by Brett Hartshorn - copyright 2014
 # License: "New BSD"
-import sys
+import os, sys
 import ast
 import pythonjs
 
@@ -27,14 +27,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 		]
 		lines = []
 
-
-		if self._insert_runtime:
-			dirname = os.path.dirname(os.path.abspath(__file__))
-			runtime = open( os.path.join(dirname, 'pythonjs.js') ).read()
-			lines.append( runtime )  #.replace('\n', ';') )
-
 		for b in node.body:
 			line = self.visit(b)
+			if line == ';':
+				raise SyntaxError(b)
 			if line: lines.append( line )
 			else:
 				#raise b
@@ -98,8 +94,25 @@ class GoGenerator( pythonjs.JSGenerator ):
 			code = 'var %s = %s;' % (target, value)
 			return code
 
+	def visit_While(self, node):
+		body = [ 'for %s {' %self.visit(node.test)]
+		self.push()
+		for line in list( map(self.visit, node.body) ):
+			body.append( self.indent()+line )
+		self.pull()
+		body.append( self.indent() + '}' )
+		return '\n'.join( body )
 
-def main(script):
+	def _inline_code_helper(self, s):
+		return s
+
+def main(script, insert_runtime=True):
+	if insert_runtime:
+		dirname = os.path.dirname(os.path.abspath(__file__))
+		dirname = os.path.join(dirname, 'runtime')
+		runtime = open( os.path.join(dirname, 'go_builtins.py') ).read()
+		script = runtime + '\n' + script
+
 	tree = ast.parse(script)
 	return GoGenerator().visit(tree)
 

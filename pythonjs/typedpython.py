@@ -57,6 +57,8 @@ def transform_source( source, strip=False ):
 				elif gotype.isdigit():
 					a.append('__go__arrayfixed__(%s,' %gotype)
 				else:
+					assert ''.join(a[-3:])=='map'
+					a.pop(); a.pop(); a.pop()
 					a.append('__go__map__(%s,' %gotype)
 				hit_go_typedef = True
 
@@ -388,7 +390,7 @@ a = [3]int(x,y,z)
 
 ## in go becomes: map[string]int{x,y,z}
 ## becomes: __go__map__(string, int) << {'x':x, 'y':y, 'z':z}
-a = [string]int{
+a = map[string]int{
 	"x":x, "y":y, "z":z
 }
 '''

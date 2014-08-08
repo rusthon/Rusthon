@@ -166,7 +166,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		s = self.visit(node.value)
 		if s.strip() and not s.endswith(';'):
 			s += ';'
-		return s
+		if s==';': return ''
+		else: return s
 
 
 	def visit_In(self, node):
@@ -574,7 +575,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		buffer += '\n'.join(body)
 		self.pull()
-		buffer += '\n%s}\n' %self.indent()
+		buffer += '\n%s}' %self.indent()
 		if self._inline_lambda:
 			self._inline_lambda = False
 		elif is_pyfunc:
@@ -907,6 +908,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return ';'.join(out)
 
 	def _inline_code_helper(self, s):
+		## TODO, should newline be changed here?
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
 		if s.strip().startswith('#'): s = '/*%s*/'%s
 		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
@@ -940,8 +942,24 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		op = self.visit(node.op)
 		right = self.visit(node.right)
 
-		if left in ('__go__receive__', '__go__send__') and op == '<<':
-			return '<- %s' %right
+		if op == '<<':
+			if left in ('__go__receive__', '__go__send__'):
+				return '<- %s' %right
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__'):
+				if node.left.func.id == '__go__map__':
+					key_type = self.visit(node.left.args[0])
+					value_type = self.visit(node.left.args[1])
+					return 'map[%s]%s%s' %(key_type, value_type, right)
+				else:
+					if not right.startswith('{') and not right.endswith('}'):
+						right = '{%s}' %right[1:-1]
+
+					if node.left.func.id == '__go__array__':
+						return '[]%s%s' %(self.visit(node.left.args[0]), right)
+					elif node.left.func.id == '__go__arrayfixed__':
+						asize = self.visit(node.left.args[0])
+						atype = self.visit(node.left.args[1])
+						return '[%s]%s%s' %(asize, atype, right)
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'

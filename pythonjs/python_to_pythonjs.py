@@ -489,7 +489,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_dart or self._with_ll:
+			if self._with_dart or self._with_ll or self._with_go:
 				a.append( '%s:%s'%(k,v) )
 				#if isinstance(node.keys[i], ast.Str):
 				#	a.append( '%s:%s'%(k,v) )
@@ -500,7 +500,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## this allows non-string keys
 
-		if self._with_dart or self._with_ll:
+		if self._with_dart or self._with_ll or self._with_go:
 			b = ','.join( a )
 			return '{%s}' %b
 		elif self._with_js:
@@ -2220,6 +2220,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			else:
 				return '%s(%s)' %( F, ','.join(args) )
+
+		elif self._with_go:
+			args = list( map(self.visit, node.args) )
+			if node.keywords:
+				args.extend( [self.visit(x.value) for x in node.keywords] )
+			return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
 			args = list( map(self.visit, node.args) )

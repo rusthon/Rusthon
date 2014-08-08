@@ -893,7 +893,7 @@ def run_test_on(filename):
         if show_details:
             print('-'*77)
 
-    if 'requirejs' not in filename:
+    if 'requirejs' not in filename and not filename.startswith('./go/'):
         display(run_python_test_on)
         display(run_python3_test_on)
         if pypy_runnable:
@@ -902,21 +902,22 @@ def run_test_on(filename):
             display(run_old_pypy_test_on)
 
     global js
-    js = translate_js(
-        filename, 
-        javascript=False, 
-        multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker'))
-    )
-    if rhino_runnable:
-        display(run_pythonjs_test_on)
-    if node_runnable:
-        display(run_pythonjs_test_on_node)
+    if not filename.startswith('./go/'):
+        js = translate_js(
+            filename, 
+            javascript=False, 
+            multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker'))
+        )
+        if rhino_runnable:
+            display(run_pythonjs_test_on)
+        if node_runnable:
+            display(run_pythonjs_test_on_node)
 
-    if nodewebkit_runnable:
-        display(run_pythonjs_test_on_nodewebkit)
+        if nodewebkit_runnable:
+            display(run_pythonjs_test_on_nodewebkit)
 
 
-    if '--no-javascript-mode' not in sys.argv:
+    if '--no-javascript-mode' not in sys.argv and not filename.startswith('./go/'):
         js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
         if rhino_runnable:
             display(run_pythonjsjs_test_on)
