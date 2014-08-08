@@ -1612,7 +1612,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
-		elif self._with_ll or self._with_glsl:
+		elif self._with_ll or self._with_glsl or self._with_go:
 			return '%s[%s]' %(name, self.visit(node.slice))
 
 		elif self._with_js or self._with_dart:
@@ -3311,6 +3311,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('break')
 
 	def visit_For(self, node):
+		if node.orelse:
+			raise SyntaxError( self.format_error('the syntax for/else is deprecated') )
 
 		if self._cache_for_body_calls:  ## TODO add option for this
 			for n in node.body:
@@ -3557,6 +3559,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						self._call_ids += 1
 
 		if node.orelse:
+			raise SyntaxError( self.format_error('the syntax while/else is deprecated'))
 			self._in_loop_with_else = True
 			writer.write('var(__break__)')
 			writer.write('__break__ = False')

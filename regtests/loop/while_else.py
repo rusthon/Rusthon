@@ -1,5 +1,5 @@
 '''
-while else loop
+while else loop (DEPRECATED)
 '''
 
 def main():

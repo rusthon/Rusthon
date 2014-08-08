@@ -1,15 +1,15 @@
 Introduction
 ------------
-PythonJS is a transpiler written in Python that converts a superset of Python into fast
-JavaScript.  It can be run with regular Python, or fully self-hosted within
-NodeJS using Empythoned. PythonJS extends the Python language with new keywords, syntax,
-and optional static typing, to increase performance and allow seamless
-integration with existing JavaScript libraries.
+PythonJS is a transpiler written in Python that converts a python like language into fast
+JavaScript.  With a few exceptions, the PythonJS language is a superset of Python that is extended to support new syntax inspired by JavaScript and Go.
 
-We are not trying to shoehorn Python as defined by the BDFL into JavaScript,
-our goal is to design something better than JavaScript so you can write larger
-and more complex programs in a Python-like language.
+[Syntax Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/syntax.md)
 
+
+Getting Started
+===============
+PythonJS can be run with regular Python, or fully self-hosted within
+NodeJS using Empythoned. 
 
 To get started, you have two options:
 1. install NodeJS, python-js package, and write a build script.
@@ -74,88 +74,6 @@ if this option is used then your script is also translated using the dart backen
 `dartanalyzer` which will perform static analysis of your code.  Dartanalyzer is able to catch many types of errors, like: missing functions, invalid names, calling a function with the wrong argument types.  The quality of the analysis will depend on how much type information can be
 inferred from your code, combined with the variables you have manually typed.  If dartanalyzer detects an error in your code, translation will abort, and debugging information is printed.
 
-Extra Python Syntax
--------------------
-
-PythonJS supports all the normal Python syntax you already know, and has been extended to support some extra JavaScript syntax.
-
-. it is ok to have `var ` before a variable name in an assignment.
-```
-	var x = 1
-```
-
-. 'new' can be used to create a new JavaScript object
-```
-	a = new SomeObject()
-```
-
-. `$` can be used to call a function like jquery
-```
-	$(selector).something( {'param1':1, 'param2':2} )
-```
-
-. External Javascript functions that use an object as the last argument for optional named arguments, can be called with Python style keyword names instead.
-```
-	$(selector).something( param1=1, param2=2 )
-```
-
-. `$` can be used as a funtion parameter, and attributes can be get/set on `$`.
-```
-def setup_my_jquery_class( $ ):
-	$.fn.someclass = myclass_init
-```
-
-. `->` can be used to as a special attribute operator for passing methods that will automatically bind
-the method's `this` calling context.  This enables you to pass methods as callbacks to other objects,
-and not have to write `a.some_method.bind(a)`
-```
-	b.set_callback( a->some_method )
-```
-
-. in a function call, inline functions can be given as keyword arguments
-```
-a.func(
-	callback1=def (x,y,z):
-		x += y
-		return x - z,
-	callback2= def (x, y):
-		return x * y
-)
-```
-
-. inline functions can be used inside a dict literal
-```
-a = {
-	'cb1' : def (x):
-		return x,
-	'cb2' : def (y):
-		return y
-}
-```
-
-. exception expressions (PEP 463)
-```
-a = {}
-b = a['somekey'] except KeyError: 'my-default'
-```
-
-. function expressions
-```
-F = function(x):
-	return x
-```
-
-. switch
-```
-switch a == b:
-	case True:
-		x = z
-	case False:
-		y = z
-	default:
-		break
-
-```
 
 
 Speed

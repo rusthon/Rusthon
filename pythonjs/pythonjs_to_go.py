@@ -19,6 +19,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 		r = [ 'fmt.Print(%s);' %self.visit(e) for e in node.values]
 		return ''.join(r)
 
+	def visit_Expr(self, node):
+		return self.visit(node.value)
+
 
 	def visit_Module(self, node):
 		header = [
@@ -29,12 +32,14 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		for b in node.body:
 			line = self.visit(b)
-			if line == ';':
-				raise SyntaxError(b)
-			if line: lines.append( line )
+			if line:
+				for sub in line.splitlines():
+					if sub==';':
+						raise SyntaxError(line)
+					else:
+						lines.append( sub )
 			else:
-				#raise b
-				pass
+				raise SyntaxError(line)
 
 
 		lines = header + lines
