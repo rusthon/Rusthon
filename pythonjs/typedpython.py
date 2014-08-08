@@ -393,6 +393,11 @@ a = [3]int(x,y,z)
 a = map[string]int{
 	"x":x, "y":y, "z":z
 }
+
+def f(a:int, b:int, c:int) ->int:
+	return a+b+c
+
+
 '''
 
 if __name__ == '__main__':

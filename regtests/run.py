@@ -783,11 +783,11 @@ def run_pythonjs_go_test(dummy_filename):
 def run_go(content):
     """compile and run go program"""
     write("%s.go" % tmpname, content)
-    errors = run_command("go build %s.go" % tmpname)
+    errors = run_command("go build -o /tmp/regtest-go %s.go" % tmpname)
     if errors:
         return errors
     else:
-        return run_command( tmpname)
+        return run_command( '/tmp/regtest-go' )
 
 
 def run_html_test( filename, sum_errors ):

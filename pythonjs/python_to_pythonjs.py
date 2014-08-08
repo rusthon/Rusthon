@@ -1403,6 +1403,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif op == '**':
 			return 'Math.pow(%s,%s)' %(left, right)
 
+		elif self._with_go:
+			pass
+
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
@@ -2660,6 +2663,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					local_typedefs.append( '%s=%s' %(kw.arg, kw.value.id))
 					if decorator.func.id=='typedef_chan':
 						typedef_chans.append( kw.arg )
+					else:
+						writer.write('@__typedef__(%s=%s)' %(kw.arg, kw.value.id))
 
 
 			elif isinstance(decorator, Name) and decorator.id == 'inline':
@@ -2789,7 +2794,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 
 		## force python variable scope, and pass user type information to second stage of translation.
-		## the dart backend can use this extra type information.
+		## the dart backend can use this extra type information for speed and debugging.
+		## the Go and GLSL backends require this extra type information.
 		vars = []
 		local_typedef_names = set()
 		if not self._with_coffee:
@@ -2877,7 +2883,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript or self._with_ll or self._with_glsl:
+		elif self._with_js or javascript or self._with_ll or self._with_glsl or self._with_go:
 
 			if self._with_glsl:
 				writer.write('@__glsl__')
@@ -2921,7 +2927,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		writer.write('var(%s)' %a)
 
 		#####################################################################
-		if self._with_dart or self._with_glsl:
+		if self._with_dart or self._with_glsl or self._with_go:
 			pass
 
 		elif self._with_js or javascript or self._with_ll:

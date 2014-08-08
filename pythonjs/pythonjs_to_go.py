@@ -16,7 +16,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		#self._class_props = dict()
 
 	def visit_Print(self, node):
-		r = [ 'fmt.Print(%s);' %self.visit(e) for e in node.values]
+		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
 		return ''.join(r)
 
 	def visit_Expr(self, node):
@@ -32,6 +32,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		for b in node.body:
 			line = self.visit(b)
+
 			if line:
 				for sub in line.splitlines():
 					if sub==';':
@@ -45,6 +46,24 @@ class GoGenerator( pythonjs.JSGenerator ):
 		lines = header + lines
 		return '\n'.join( lines )
 
+
+	def visit_Compare(self, node):
+		comp = [ '(']
+		comp.append( self.visit(node.left) )
+		comp.append( ')' )
+
+		for i in range( len(node.ops) ):
+			comp.append( self.visit(node.ops[i]) )
+
+			if isinstance(node.comparators[i], ast.BinOp):
+				comp.append('(')
+				comp.append( self.visit(node.comparators[i]) )
+				comp.append(')')
+			else:
+				comp.append( self.visit(node.comparators[i]) )
+
+		return ' '.join( comp )
+
 	def _visit_call_helper_go(self, node):
 		name = self.visit(node.func)
 		if name == '__go__':
@@ -55,9 +74,57 @@ class GoGenerator( pythonjs.JSGenerator ):
 			return SyntaxError('invalid special go call')
 
 	def visit_FunctionDef(self, node):
-		args = self.visit(node.args)
+		args_typedefs = {}
+		return_type = None
+		for decor in node.decorator_list:
+			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+				for key in decor.keywords:
+					args_typedefs[ key.arg ] = key.value.id
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
+				if decor.keywords:
+					raise SyntaxError('invalid go return type')
+				else:
+					return_type = decor.args[0].id
+
+
+		#args = self.visit(node.args)
+		args = []
+		oargs = []
+		offset = len(node.args.args) - len(node.args.defaults)
+		varargs = False
+		varargs_name = None
+		for i, arg in enumerate(node.args.args):
+			a = arg.id
+			if a in args_typedefs:
+				#a = '%s %s' %(args_typedefs[a], a)
+				a = '%s %s' %(a, args_typedefs[a])
+			else:
+				err = 'error in function: %s' %node.name
+				err += '\n  missing typedef: %s' %arg.id
+				raise SyntaxError(err)
+
+			dindex = i - offset
+			if a.startswith('__variable_args__'): ## TODO support go `...` varargs
+				varargs_name = a.split('__')[-1]
+				varargs = ['_vararg_%s'%n for n in range(16) ]
+				args.append( '[%s]'%','.join(varargs) )
+
+			elif dindex >= 0 and node.args.defaults:
+				default_value = self.visit( node.args.defaults[dindex] )
+				oargs.append( '%s:%s' %(a, default_value) )
+			else:
+				args.append( a )
+
+		if oargs:
+			#args.append( '[%s]' % ','.join(oargs) )
+			args.append( '{%s}' % ','.join(oargs) )
+
+		####
 		out = []
-		out.append( self.indent() + 'func %s(%s) {\n' % (node.name, ', '.join(args)) )
+		if return_type:
+			out.append( self.indent() + 'func %s(%s) %s {\n' % (node.name, ', '.join(args), return_type) )
+		else:
+			out.append( self.indent() + 'func %s(%s) {\n' % (node.name, ', '.join(args)) )
 		self.push()
 		for b in node.body:
 			v = self.visit(b)
@@ -119,7 +186,12 @@ def main(script, insert_runtime=True):
 		script = runtime + '\n' + script
 
 	tree = ast.parse(script)
-	return GoGenerator().visit(tree)
+	try:
+		return GoGenerator().visit(tree)
+	except SyntaxError as err:
+		sys.stderr.write(script)
+		raise err
+
 
 
 def command():
