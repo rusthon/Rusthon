@@ -1778,6 +1778,23 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if isinstance(node.value, ast.Lambda):
 			self.visit(node.value)  ## writes function def
 			writer.write('%s = __lambda__' %self.visit(target))
+		elif isinstance(node.value, ast.List) and self._with_go:
+			guess_type = None
+			for elt in node.value.elts:
+				if isinstance(elt, ast.Num):
+					if isinstance(elt.n, int):
+						guess_type = 'int'
+					else:
+						guess_type = 'float64'
+				elif isinstance(elt, ast.Str):
+					guess_type = 'string'
+
+			if guess_type:
+				t = self.visit(target)
+				v = self.visit(node.value)
+				writer.write('%s = __go__array__(%s) << %s' %(t, guess_type, v))
+			else:
+				raise SyntaxError(self.format_error('can not determine type of array'))
 
 		elif isinstance(target, Subscript):
 			name = self.visit(target.value)  ## target.value may have "returns_type" after being visited

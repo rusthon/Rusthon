@@ -43,7 +43,7 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if a and char==']' and j==i+1 and nextchar in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+			if a and char==']' and j==i+1 and nextchar!=None and nextchar in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
 				gotype = []
 				b = a.pop()
