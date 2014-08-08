@@ -21,3 +21,14 @@ def main():
 	#	b = True
 	#TestError( b == True )
 
+	b = 0
+	for i in range(10):
+		b += 1
+	TestError( b == 10 )
+
+	c = ''
+	d = 0
+	for i,v in enumerate(arr):
+		c += v
+		d += i
+	TestError( c == 'abc' )

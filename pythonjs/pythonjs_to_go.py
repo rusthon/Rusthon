@@ -77,9 +77,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			iter = self.visit(node.iter.args[0])
 
 			if node.iter.func.id == 'range':
-				lines.append('for _,%s := range %s {' %(target, iter))
+				lines.append('for %s := 0; %s < %s; %s++ {' %(target, target, iter, target))
 			elif node.iter.func.id == 'enumerate':
-				lines.append('for %s,%s := range %s {')
+				idx = self.visit(node.target.elts[0])
+				tar = self.visit(node.target.elts[1])
+				lines.append('for %s,%s := range %s {' %(idx,tar, iter))
 
 			else:
 				raise SyntaxError('invalid for loop - bad iterator')
