@@ -3350,7 +3350,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						c.constant = True
 						self._call_ids += 1
 
-		if self._with_glsl:
+		if self._with_glsl or self._with_go:
 			writer.write( 'for %s in %s:' %(self.visit(node.target), self.visit(node.iter)) )
 			writer.push()
 			map(self.visit, node.body)

@@ -70,6 +70,33 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		return ' '.join( comp )
 
+	def visit_For(self, node):
+		target = self.visit(node.target)
+		lines = []
+		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name):
+			iter = self.visit(node.iter.args[0])
+
+			if node.iter.func.id == 'range':
+				lines.append('for _,%s := range %s {' %(target, iter))
+			elif node.iter.func.id == 'enumerate':
+				lines.append('for %s,%s := range %s {')
+
+			else:
+				raise SyntaxError('invalid for loop - bad iterator')
+
+
+		else:
+			iter = self.visit( node.iter )
+			lines.append('for _,%s := range %s {' %(target, iter))
+
+		self.push()
+		for b in node.body:
+			lines.append( self.indent()+self.visit(b) )
+		self.pull()
+		lines.append( self.indent()+'}' )  ## end of for loop
+		return '\n'.join(lines)
+
+
 	def _visit_call_helper_go(self, node):
 		name = self.visit(node.func)
 		if name == '__go__':
