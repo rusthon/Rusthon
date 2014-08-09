@@ -14,6 +14,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 		#self._classes = dict()
 		#self._class_props = dict()
+		self._vars = set()
 
 	def visit_Print(self, node):
 		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
@@ -113,7 +114,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 		else:
 			return SyntaxError('invalid special go call')
 
-	def visit_FunctionDef(self, node):
+	def _visit_function(self, node):
+		if self._function_stack[0] is node:
+			self._vars = set()
+
 		args_typedefs = {}
 		return_type = None
 		for decor in node.decorator_list:
@@ -183,9 +187,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 			for key in node.keywords:
 				args.append( key.arg )
 
-		out = []
-		for v in args:
-			out.append( self.indent() + 'var ' + v + ' int')
+		for name in args:
+			if name not in self._vars:
+				self._vars.add( name )
+
+		#out = []
+		#for v in args:
+		#	out.append( self.indent() + 'var ' + v + ' int')
 
 		#return '\n'.join(out)
 		return ''
@@ -200,11 +208,21 @@ class GoGenerator( pythonjs.JSGenerator ):
 			value = self.visit(node.value.right)
 			return 'var %s <- %s;' % (target, value)
 
+		elif not self._function_stack:
+			target = self.visit(target)
+			value = self.visit(node.value)
+			return 'var %s = %s;' % (target, value)
+
+		elif isinstance(node.targets[0], ast.Name) and target.id in self._vars:
+			target = self.visit(target)
+			value = self.visit(node.value)
+			self._vars.remove( target )
+			return '%s := %s;' % (target, value)
+
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
-			code = 'var %s = %s;' % (target, value)
-			return code
+			return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):
 		body = [ 'for %s {' %self.visit(node.test)]
