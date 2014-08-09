@@ -1778,6 +1778,37 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if isinstance(node.value, ast.Lambda):
 			self.visit(node.value)  ## writes function def
 			writer.write('%s = __lambda__' %self.visit(target))
+
+		elif isinstance(node.value, ast.Dict) and self._with_go:
+			key_type = None
+			val_type = None
+
+			for i in range( len(node.value.keys) ):
+				k = node.value.keys[ i ]
+				v = node.value.values[i]
+				if isinstance(k, ast.Str):
+					key_type = 'string'
+				elif isinstance(k, ast.Num):
+					key_type = 'int'
+
+				if isinstance(v, ast.Str):
+					val_type = 'string'
+				elif isinstance(v, ast.Num):
+					if isinstance(v.n, int):
+						val_type = 'int'
+					else:
+						val_type = 'float64'
+
+			if not key_type:
+				raise SyntaxError(  self.format_error('can not determine dict key type')  )
+			if not val_type:
+				raise SyntaxError(  self.format_error('can not determine dict value type')  )
+
+			t = self.visit(target)
+			v = self.visit(node.value)
+			writer.write('%s = __go__map__(%s, %s) << %s' %(t, key_type, val_type, v))
+
+
 		elif isinstance(node.value, ast.List) and self._with_go:
 			guess_type = None
 			for elt in node.value.elts:

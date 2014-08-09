@@ -16,11 +16,6 @@ def main():
 		z += v
 	TestError( z == 'abc' )
 
-	#b = False
-	#if 'a' in arr:
-	#	b = True
-	#TestError( b == True )
-
 	b = 0
 	for i in range(10):
 		b += 1
@@ -32,3 +27,8 @@ def main():
 		c += v
 		d += i
 	TestError( c == 'abc' )
+
+	e = 0
+	for i in range( len(arr) ):
+		e += 1
+	TestError( e == 3 )
