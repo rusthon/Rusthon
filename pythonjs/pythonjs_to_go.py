@@ -86,6 +86,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			else:
 				raise SyntaxError('invalid for loop - bad iterator')
 
+		elif isinstance(node.target, ast.List) or isinstance(node.target, ast.Tuple):
+			iter = self.visit( node.iter )
+			key = self.visit(node.target.elts[0])
+			val = self.visit(node.target.elts[1])
+			lines.append('for %s,%s := range %s {' %(key,val, iter))
 
 		else:
 			iter = self.visit( node.iter )
