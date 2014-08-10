@@ -2275,7 +2275,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif self._with_go:
 			args = list( map(self.visit, node.args) )
 			if node.keywords:
-				args.extend( [self.visit(x.value) for x in node.keywords] )
+				args.extend( ['%s=%s'%(x.arg,self.visit(x.value)) for x in node.keywords] )
 			return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
@@ -2927,6 +2927,24 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 				args.append('__variable_args__%s' %node.args.vararg)
 
+			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
+
+		elif self._with_go:
+
+			if node.args.vararg:
+				raise SyntaxError( 'TODO go backend, variable arguments (*args)' )
+
+
+			args = []
+			offset = len(node.args.args) - len(node.args.defaults)
+			for i, arg in enumerate(node.args.args):
+				a = arg.id
+				dindex = i - offset
+				if dindex >= 0 and node.args.defaults:
+					default = self.visit(node.args.defaults[dindex])
+					args.append( '%s=%s' %(a, default))
+				else:
+					args.append( a )
 
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 

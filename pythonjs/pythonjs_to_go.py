@@ -15,6 +15,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		#self._classes = dict()
 		#self._class_props = dict()
 		self._vars = set()
+		self._kwargs_type_ = dict()
 
 	def visit_Print(self, node):
 		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
@@ -49,6 +50,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			else:
 				raise SyntaxError(line)
 
+		lines.append('type _kwargs_type_ struct {')
+		for name in self._kwargs_type_:
+			type = self._kwargs_type_[name]
+			lines.append( '  %s %s' %(name,type))
+		lines.append('}')
 
 		lines = header + lines
 		return '\n'.join( lines )
@@ -105,6 +111,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(lines)
 
 
+	def _visit_call_helper(self, node):
+		if node.args:
+			args = [self.visit(e) for e in node.args]
+			args = ', '.join([e for e in args if e])
+		else:
+			args = ''
+		fname = self.visit(node.func)
+		if fname=='__DOLLAR__': fname = '$'
+
+		if node.keywords:
+			if args: args += ','
+			args += '_kwargs_type_{'
+			args += ','.join( ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords] )
+			args += '}'
+
+		return '%s(%s)' % (fname, args)
+
 	def _visit_call_helper_go(self, node):
 		name = self.visit(node.func)
 		if name == '__go__':
@@ -138,30 +161,33 @@ class GoGenerator( pythonjs.JSGenerator ):
 		varargs = False
 		varargs_name = None
 		for i, arg in enumerate(node.args.args):
-			a = arg.id
-			if a in args_typedefs:
-				#a = '%s %s' %(args_typedefs[a], a)
-				a = '%s %s' %(a, args_typedefs[a])
-			else:
+			arg_name = arg.id
+			if arg_name not in args_typedefs:
 				err = 'error in function: %s' %node.name
 				err += '\n  missing typedef: %s' %arg.id
 				raise SyntaxError(err)
 
+			arg_type = args_typedefs[arg_name]
+			a = '%s %s' %(arg_name, arg_type)
 			dindex = i - offset
+
 			if a.startswith('__variable_args__'): ## TODO support go `...` varargs
-				varargs_name = a.split('__')[-1]
-				varargs = ['_vararg_%s'%n for n in range(16) ]
-				args.append( '[%s]'%','.join(varargs) )
+				#varargs_name = a.split('__')[-1]
+				#varargs = ['_vararg_%s'%n for n in range(16) ]
+				#args.append( '[%s]'%','.join(varargs) )
+				raise SyntaxError('TODO *args')
 
 			elif dindex >= 0 and node.args.defaults:
 				default_value = self.visit( node.args.defaults[dindex] )
-				oargs.append( '%s:%s' %(a, default_value) )
+				self._kwargs_type_[ arg_name ] = arg_type
+				oargs.append( (arg_name, default_value) )
 			else:
 				args.append( a )
 
 		if oargs:
 			#args.append( '[%s]' % ','.join(oargs) )
-			args.append( '{%s}' % ','.join(oargs) )
+			#args.append( '{%s}' % ','.join(oargs) )
+			args.append( '__kwargs _kwargs_type_')
 
 		####
 		out = []
@@ -170,6 +196,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 		else:
 			out.append( self.indent() + 'func %s(%s) {\n' % (node.name, ', '.join(args)) )
 		self.push()
+
+		if oargs:
+			for n,v in oargs:
+				out.append('%s := __kwargs.%s | %s' %(n,n,v))
+
 		for b in node.body:
 			v = self.visit(b)
 			if v:
