@@ -252,6 +252,9 @@ def transform_source( source, strip=False ):
 			for x in tail.split(','):
 				y = x #x.split(')')[0]
 				if ':' in y:
+					kw = None
+					if '=' in y:
+						y, kw = y.split('=')
 					arg, typedef = y.split(':')
 					chan = False
 					if len(arg.split()) == 2:
@@ -260,6 +263,8 @@ def transform_source( source, strip=False ):
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg,typedef))
 					else:
 						output.append('%s@typedef(%s=%s)' %(indent, arg,typedef))
+					if kw:
+						arg += '=' + kw
 					args.append(arg)
 				else:
 					args.append(x)
@@ -397,6 +402,8 @@ a = map[string]int{
 def f(a:int, b:int, c:int) ->int:
 	return a+b+c
 
+def f(a:int=100, b:int=100) ->int:
+	return a+b
 
 '''
 
