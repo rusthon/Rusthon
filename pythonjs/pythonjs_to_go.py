@@ -54,6 +54,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for name in self._kwargs_type_:
 			type = self._kwargs_type_[name]
 			lines.append( '  %s %s' %(name,type))
+			lines.append( '  __use__%s bool' %name)
 		lines.append('}')
 
 		lines = header + lines
@@ -123,7 +124,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 		if node.keywords:
 			if args: args += ','
 			args += '_kwargs_type_{'
-			args += ','.join( ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords] )
+			x = ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords]
+			x.extend( ['__use__%s:true' %kw.arg for kw in node.keywords] )
+			args += ','.join( x )
 			args += '}'
 
 		return '%s(%s)' % (fname, args)
@@ -199,7 +202,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		if oargs:
 			for n,v in oargs:
-				out.append('%s := __kwargs.%s | %s' %(n,n,v))
+				out.append('%s := %s' %(n,v))
+				out.append('if __kwargs.__use__%s {' %n )
+				out.append( '  %s = __kwargs.%s' %(n,n))
+				out.append('}')
+				#out.append('} else { %s := %s }' %(n,v))
 
 		for b in node.body:
 			v = self.visit(b)
