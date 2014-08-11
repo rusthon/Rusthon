@@ -44,7 +44,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 			out.append('%s %s' %(name, sdef[name]))
 		out.append('}')
 
-		out.append( 'func new_%s() *%s {' %(node.name, node.name))
+		out.append( 'func __new__%s() *%s {' %(node.name, node.name))
 		out.append( '  ob := %s{}' %node.name )
 		out.append( '  ob.__init__()')
 		out.append( '  return &ob')
