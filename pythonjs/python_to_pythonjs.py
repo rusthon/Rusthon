@@ -1888,7 +1888,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 			#####################################
 
-			if self._with_js or self._with_dart:
+			if self._with_js or self._with_dart or self._with_go:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 			elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
 				setter = typedef.properties[ target.attr ]['set']

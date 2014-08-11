@@ -11,5 +11,5 @@ class A:
 		self.y = 2
 
 def main():
-	a = A()
+	a = new_A()
 	print( a.x )
