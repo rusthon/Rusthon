@@ -853,7 +853,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		## constructor
 		if init:
 			methods.pop( '__init__' )
-			init.name = node.name
+			if not self._with_go:
+				init.name = node.name
 			self.visit(init)
 
 		## methods
@@ -1027,7 +1028,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._in_js_class = False
 
 	def visit_ClassDef(self, node):
-		if self._with_dart:
+		if self._with_dart or self._with_go:
 			self._visit_dart_classdef(node)
 			return
 		elif self._with_js:

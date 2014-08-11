@@ -53,6 +53,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def pull(self):
 		if self._indent > 0: self._indent -= 1
 
+	def visit_ClassDef(self, node):
+		raise NotImplementedError(node)
+
+
 	def visit_Global(self, node):
 		return '/*globals: %s */' %','.join(node.names)
 

@@ -12,10 +12,40 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
-		#self._classes = dict()
-		#self._class_props = dict()
+
+		self._class_stack = list()
+		self._classes = dict()
+		self._class_props = dict()
+
 		self._vars = set()
 		self._kwargs_type_ = dict()
+
+	def visit_ClassDef(self, node):
+		self._class_stack.append( node )
+		node._parents = set()
+		out = []
+		props = set()
+		bases = set()
+		base_classes = set()
+
+		self._classes[ node.name ] = node
+		self._class_props[ node.name ] = props
+		for decor in node.decorator_list:  ## class decorators
+			if isinstance(decor, ast.Call):
+				props.update( [self.visit(a) for a in decor.args] )
+
+		out.append( 'type %s struct {' %node.name)
+		for name in props:
+			out.append('%s int' %name)
+
+		out.append('}')
+
+		for b in node.body:
+			out.append( self.visit(b) )
+
+		self._class_stack.pop()
+		return '\n'.join(out)
+
 
 	def visit_Print(self, node):
 		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
@@ -48,7 +78,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 					else:
 						lines.append( sub )
 			else:
-				raise SyntaxError(line)
+				raise SyntaxError(b)
 
 		lines.append('type _kwargs_type_ struct {')
 		for name in self._kwargs_type_:
@@ -167,12 +197,17 @@ class GoGenerator( pythonjs.JSGenerator ):
 		offset = len(node.args.args) - len(node.args.defaults)
 		varargs = False
 		varargs_name = None
+		is_method = False
 		for i, arg in enumerate(node.args.args):
 			arg_name = arg.id
 			if arg_name not in args_typedefs:
-				err = 'error in function: %s' %node.name
-				err += '\n  missing typedef: %s' %arg.id
-				raise SyntaxError(err)
+				if arg_name=='self':
+					is_method = True
+					continue
+				else:
+					err = 'error in function: %s' %node.name
+					err += '\n  missing typedef: %s' %arg.id
+					raise SyntaxError(err)
 
 			arg_type = args_typedefs[arg_name]
 			a = '%s %s' %(arg_name, arg_type)
@@ -202,11 +237,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 			args.append( '%s ...%s' %(starargs, args_typedefs[starargs]))
 
 		####
+		if is_method:
+			assert self._class_stack
+			method = '(self *%s)  ' %self._class_stack[-1].name
+		else:
+			method = ''
 		out = []
 		if return_type:
-			out.append( self.indent() + 'func %s(%s) %s {\n' % (node.name, ', '.join(args), return_type) )
+			out.append( self.indent() + 'func %s%s(%s) %s {\n' % (method, node.name, ', '.join(args), return_type) )
 		else:
-			out.append( self.indent() + 'func %s(%s) {\n' % (node.name, ', '.join(args)) )
+			out.append( self.indent() + 'func %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
@@ -283,6 +323,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def _inline_code_helper(self, s):
 		return s
 
+
+
+
+
 def main(script, insert_runtime=True):
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
@@ -291,6 +335,7 @@ def main(script, insert_runtime=True):
 		script = runtime + '\n' + script
 
 	tree = ast.parse(script)
+	#return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)
 	except SyntaxError as err:
