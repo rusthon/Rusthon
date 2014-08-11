@@ -24,6 +24,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._class_stack.append( node )
 		node._parents = set()
 		out = []
+		sdef = dict()
 		props = set()
 		bases = set()
 		base_classes = set()
@@ -32,11 +33,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._class_props[ node.name ] = props
 		for decor in node.decorator_list:  ## class decorators
 			if isinstance(decor, ast.Call):
-				props.update( [self.visit(a) for a in decor.args] )
+				assert decor.func.id=='__struct__'
+				#props.update( [self.visit(a) for a in decor.args] )
+				for kw in decor.keywords:
+					props.add( kw.arg )
+					sdef[ kw.arg ] = kw.value.id
 
 		out.append( 'type %s struct {' %node.name)
-		for name in props:
-			out.append('%s int' %name)
+		for name in sdef:
+			out.append('%s %s' %(name, sdef[name]))
 
 		out.append('}')
 

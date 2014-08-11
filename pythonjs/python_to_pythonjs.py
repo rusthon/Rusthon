@@ -813,6 +813,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		methods = {}
 		method_list = []  ## getter/setters can have the same name
 		props = set()
+		struct_types = dict()
+
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				methods[ item.name ] = item
@@ -830,7 +832,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					if n.id == 'self':
 						n.id = 'this'
 
-		if props:
+			elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Dict):
+				sdef = []
+				for i in range( len(item.value.keys) ):
+					k = self.visit( item.value.keys[ i ] )
+					v = self.visit( item.value.values[i] )
+					sdef.append( '%s=%s'%(k,v) )
+
+				writer.write('@__struct__(%s)' %','.join(sdef))
+
+		if self._with_go:
+			pass
+		elif props:
 			writer.write('@properties(%s)'%','.join(props))
 			for dec in node.decorator_list:
 				writer.write('@%s'%self.visit(dec))
