@@ -129,6 +129,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 			args += ','.join( x )
 			args += '}'
 
+		if node.starargs:
+			if args: args += ','
+			args += '%s...' %self.visit(node.starargs)
+
 		return '%s(%s)' % (fname, args)
 
 	def _visit_call_helper_go(self, node):
@@ -191,6 +195,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			#args.append( '[%s]' % ','.join(oargs) )
 			#args.append( '{%s}' % ','.join(oargs) )
 			args.append( '__kwargs _kwargs_type_')
+
+		if node.args.vararg:
+			starargs = node.args.vararg
+			assert starargs in args_typedefs
+			args.append( '%s ...%s' %(starargs, args_typedefs[starargs]))
 
 		####
 		out = []

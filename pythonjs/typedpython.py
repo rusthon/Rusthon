@@ -259,10 +259,15 @@ def transform_source( source, strip=False ):
 					chan = False
 					if len(arg.split()) == 2:
 						chan, arg = arg.split()
-					if chan:
-						output.append('%s@typedef_chan(%s=%s)' %(indent, arg,typedef))
+					if '*' in arg:
+						arg_name = arg.split('*')[-1]
 					else:
-						output.append('%s@typedef(%s=%s)' %(indent, arg,typedef))
+						arg_name = arg
+
+					if chan:
+						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
+					else:
+						output.append('%s@typedef(%s=%s)' %(indent, arg_name, typedef))
 					if kw:
 						arg += '=' + kw
 					args.append(arg)
@@ -403,6 +408,9 @@ def f(a:int, b:int, c:int) ->int:
 	return a+b+c
 
 def f(a:int=100, b:int=100) ->int:
+	return a+b
+
+def f(*args:int, **kwargs:int) ->int:
 	return a+b
 
 '''
