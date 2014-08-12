@@ -44,14 +44,26 @@ class GoGenerator( pythonjs.JSGenerator ):
 			out.append('%s %s' %(name, sdef[name]))
 		out.append('}')
 
-		out.append( 'func __new__%s() *%s {' %(node.name, node.name))
-		out.append( '  ob := %s{}' %node.name )
-		out.append( '  ob.__init__()')
-		out.append( '  return &ob')
-		out.append('}')
+
+		init = None
 
 		for b in node.body:
 			out.append( self.visit(b) )
+			assert isinstance(b, ast.FunctionDef)
+			if b.name == '__init__':
+				init = b
+
+		if init:
+
+			out.append( 'func __new__%s( %s ) *%s {' %(node.name, init._args_signature, node.name))
+			out.append( '  ob := %s{}' %node.name )
+			out.append( '  ob.__init__(%s)' %','.join(init._arg_names))
+			out.append( '  return &ob')
+			out.append('}')
+
+		else:
+			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
+
 
 		self._class_stack.pop()
 		return '\n'.join(out)
@@ -201,7 +213,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 					return_type = decor.args[0].id
 
 
-		#args = self.visit(node.args)
+		node._arg_names = []
 		args = []
 		oargs = []
 		offset = len(node.args.args) - len(node.args.defaults)
@@ -210,8 +222,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 		is_method = False
 		for i, arg in enumerate(node.args.args):
 			arg_name = arg.id
+
 			if arg_name not in args_typedefs:
 				if arg_name=='self':
+					assert i==0
 					is_method = True
 					continue
 				else:
@@ -235,16 +249,21 @@ class GoGenerator( pythonjs.JSGenerator ):
 				oargs.append( (arg_name, default_value) )
 			else:
 				args.append( a )
+				node._arg_names.append( arg_name )
 
 		if oargs:
 			#args.append( '[%s]' % ','.join(oargs) )
 			#args.append( '{%s}' % ','.join(oargs) )
 			args.append( '__kwargs _kwargs_type_')
+			node._arg_names.append( '__kwargs' )
 
 		if node.args.vararg:
 			starargs = node.args.vararg
 			assert starargs in args_typedefs
 			args.append( '%s ...%s' %(starargs, args_typedefs[starargs]))
+			node._arg_names.append( starargs )
+
+		node._args_signature = ','.join(args)
 
 		####
 		if is_method:
