@@ -628,10 +628,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return self.visit(node.value)
 
 	def visit_Slice(self, node):
-		#print(node.lower)
-		#print(node.upper)
-		#print(node.step)
-		raise SyntaxError(node)  ## slicing not allowed here at js level
+		raise SyntaxError('list slice')  ## slicing not allowed here at js level
 
 	def visit_arguments(self, node):
 		out = []

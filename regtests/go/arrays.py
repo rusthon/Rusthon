@@ -2,8 +2,12 @@
 
 def main():
 	a = []int(1,2,3)
-	print( a[0] )
+	TestError( a[0]==1 )
+	TestError( len(a)==3 )
 
 	b = [2]int(100,200)
-	print( b[0] )
-	print( b[1] )
+	TestError( b[0]==100 )
+	TestError( b[1]==200 )
+
+	c = a[:2]
+	TestError( len(c)==2 )

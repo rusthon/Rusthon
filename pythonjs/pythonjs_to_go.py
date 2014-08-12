@@ -69,6 +69,25 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(out)
 
 
+	def visit_Slice(self, node):
+		lower = upper = step = None
+		if node.lower:
+			lower = self.visit(node.lower)
+		if node.upper:
+			upper = self.visit(node.upper)
+		if node.step:
+			step = self.visit(node.step)
+
+		if lower and upper:
+			return '%s:%s' %(lower,upper)
+		elif upper:
+			return ':%s' %upper
+		elif lower:
+			return '%s:'%lower
+		else:
+			raise SyntaxError('TODO slice')
+
+
 	def visit_Print(self, node):
 		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
 		return ''.join(r)

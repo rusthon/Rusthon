@@ -1708,7 +1708,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				return fallback
 
 	def visit_Slice(self, node):
-		if self._with_dart:
+		if self._with_go:
+			lower = upper = step = None
+		elif self._with_dart:
 			lower = upper = step = 'null'
 		elif self._with_js:
 			lower = upper = step = 'undefined'
@@ -1720,7 +1722,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			upper = self.visit(node.upper)
 		if node.step:
 			step = self.visit(node.step)
-		return "%s, %s, %s" % (lower, upper, step)
+
+		if self._with_go:
+			if lower and upper:
+				return '%s:%s' %(lower,upper)
+			elif upper:
+				return ':%s' %upper
+			elif lower:
+				return '%s:'%lower
+		else:
+			return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
 		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
