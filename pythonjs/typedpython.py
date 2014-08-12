@@ -246,9 +246,18 @@ def transform_source( source, strip=False ):
 					break
 			indent = '\t'*indent
 
-			head, tail = c.split('(')
+			#head, tail = c.split('(')
+			head = c[ : c.index('(') ]
+			tail = c[ c.index('(')+1 : ]
 			args = []
-			tail, tailend = tail.split(')')
+			#tail, tailend = tail.split(')')
+			tailend = tail[ tail.rindex(')')+1 : ]
+			tail = tail[ : tail.rindex(')') ]
+
+			#print(head)
+			#print(tail)
+			#raise RuntimeError
+
 			for x in tail.split(','):
 				y = x #x.split(')')[0]
 				if ':' in y:
@@ -371,6 +380,9 @@ if True:
 g <- a
 ## = <- becomes __go__receive__<<b
 g = <- b
+
+def call_method( cb:func(int)(int) ) ->int:
+	return cb(3)
 
 def wrapper(a:int, chan c:int):
 	result = longCalculation(a)

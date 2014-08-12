@@ -1328,7 +1328,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		op = self.visit(node.op)
 		right = self.visit(node.right)
 
-		if self._with_glsl:
+		if self._with_glsl or self._with_go:
 			return '(%s %s %s)' % (left, op, right)
 
 		elif op == '|':
@@ -1416,9 +1416,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		elif op == '**':
 			return 'Math.pow(%s,%s)' %(left, right)
-
-		elif self._with_go:
-			pass
 
 		elif op == '+' and not self._with_dart:
 			if '+' in self._direct_operators:
@@ -2724,15 +2721,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				c = decorator
 				assert len(c.args) == 0 and len(c.keywords)
 				for kw in c.keywords:
-					assert isinstance( kw.value, Name)
-					self._typedef_vars[ kw.arg ] = kw.value.id
-					self._instances[ kw.arg ] = kw.value.id
-					self._func_typedefs[ kw.arg ] = kw.value.id
-					local_typedefs.append( '%s=%s' %(kw.arg, kw.value.id))
+					#assert isinstance( kw.value, Name)
+					kwval = self.visit(kw.value)
+					self._typedef_vars[ kw.arg ] = kwval
+					self._instances[ kw.arg ] = kwval
+					self._func_typedefs[ kw.arg ] = kwval
+					local_typedefs.append( '%s=%s' %(kw.arg, kwval))
 					if decorator.func.id=='typedef_chan':
 						typedef_chans.append( kw.arg )
 					else:
-						writer.write('@__typedef__(%s=%s)' %(kw.arg, kw.value.id))
+						writer.write('@__typedef__(%s=%s)' %(kw.arg, kwval))
 
 
 			elif isinstance(decorator, Name) and decorator.id == 'inline':

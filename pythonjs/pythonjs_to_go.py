@@ -205,7 +205,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
-					args_typedefs[ key.arg ] = key.value.id
+					#args_typedefs[ key.arg ] = key.value.id
+					args_typedefs[ key.arg ] = self.visit(key.value)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				if decor.keywords:
 					raise SyntaxError('invalid go return type')
