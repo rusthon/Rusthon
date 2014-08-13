@@ -1,7 +1,7 @@
 """inline def"""
 
 def test( callback1=None, callback2=None ):
-	return {'cb1', callback1, 'cb2': callback2 }
+	return {'cb1': callback1, 'cb2': callback2 }
 
 def main():
 	o = test( callback1=def (x,y):
