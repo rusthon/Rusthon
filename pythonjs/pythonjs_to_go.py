@@ -184,13 +184,18 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 	def _visit_call_helper(self, node):
+		fname = self.visit(node.func)
+		if fname=='__DOLLAR__': fname = '$'
+		elif fname == 'range':
+			assert len(node.args)
+			fname += str(len(node.args))
+
+
 		if node.args:
 			args = [self.visit(e) for e in node.args]
 			args = ', '.join([e for e in args if e])
 		else:
 			args = ''
-		fname = self.visit(node.func)
-		if fname=='__DOLLAR__': fname = '$'
 
 		if node.keywords:
 			if args: args += ','

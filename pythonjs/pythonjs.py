@@ -1082,7 +1082,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_BoolOp(self, node):
 		op = self.visit(node.op)
-		return op.join( [self.visit(v) for v in node.values] )
+		return '('+ op.join( [self.visit(v) for v in node.values] ) +')'
 
 	def visit_If(self, node):
 		out = []
@@ -1282,6 +1282,7 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 
 	try:
 		tree = ast.parse( source )
+		#raise SyntaxError(source)
 	except SyntaxError:
 		import traceback
 		err = traceback.format_exc()

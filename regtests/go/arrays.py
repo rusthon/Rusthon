@@ -11,3 +11,12 @@ def main():
 
 	c = a[:2]
 	TestError( len(c)==2 )
+
+	d = range(10)
+	TestError(len(d)==10)
+
+	#e = range(2,10)
+	#TestError(len(e)==8)
+
+	#f = range(2,10, 2)
+	#TestError(len(f)==4)

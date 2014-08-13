@@ -657,6 +657,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		#return ' not in '
 		raise RuntimeError('"not in" is only allowed in if-test: see method - visit_Compare')
 
+	## TODO check if the default visit_Compare always works ##
+	#def visit_Compare(self, node):
+	#	raise NotImplementedError( node )
+
+
 	def visit_AugAssign(self, node):
 		self._in_assign_target = True
 		target = self.visit( node.target )
@@ -1169,7 +1174,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def visit_BoolOp(self, node):
 		op = self.visit(node.op)
-		return op.join( [self.visit(v) for v in node.values] )
+		#raise SyntaxError(op)
+		return '('+ op.join( [self.visit(v) for v in node.values] ) + ')'
 
 	def visit_If(self, node):
 		if self._with_dart and writer.is_at_global_level():
@@ -2103,7 +2109,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		line = self.visit(node.value)
 		if line:
-			writer.write(line)
+			#writer.write('('+line+')')
+			writer.write( line )
 		elif use_runtime_errors:
 			writer.write('pass')
 
