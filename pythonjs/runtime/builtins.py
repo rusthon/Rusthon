@@ -23,7 +23,13 @@ with lowlevel:
 		else:
 			return v
 
+
 with javascript:
+	def __wrap_function__(f):
+		f.is_wrapper = True
+		return f
+
+
 	def __gpu_object(cls, struct_name, data_name):
 		cls.prototype.__struct_name__ = struct_name
 		cls.prototype.__struct_data__ = data_name

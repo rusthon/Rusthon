@@ -275,6 +275,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def _visit_function(self, node):
 		is_main = node.name == 'main'
+		is_annon = node.name == ''
 		is_pyfunc = False
 		return_type = None
 		glsl = False
@@ -580,11 +581,17 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		buffer += '\n'.join(body)
 		self.pull()
 		buffer += '\n%s}' %self.indent()
-		if self._inline_lambda:
-			self._inline_lambda = False
+		#if self._inline_lambda:
+		#	self._inline_lambda = False
+		if is_annon:
+			buffer = '__wrap_function__(' + buffer + ')'
 		elif is_pyfunc:
-			buffer += ';%s.is_wrapper = true;' %node.name  ## TODO change to .__pyfunc__
-		return buffer
+			## TODO change .is_wrapper to .__pyfunc__
+			buffer += ';%s.is_wrapper = true;' %node.name
+		else:
+			buffer += '\n'
+
+		return self.indent() + buffer
 
 	def try_and_catch_swap_lambda(self, child, body):
 		try:
