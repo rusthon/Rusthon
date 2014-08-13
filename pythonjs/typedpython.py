@@ -111,9 +111,9 @@ def transform_source( source, strip=False ):
 			output.append( '@expression(%s)' %a.strip())
 			c = 'def __NAMELESS__(' + b
 
-		if ' except ' in c:  ## PEP 463 - exception expressions
+		if ' except ' in c and ':' in c:  ## PEP 463 - exception expressions
 			s = c.split(' except ')
-			if len(s) == 2 and '=' in s[0]:
+			if len(s) == 2 and '=' in s[0] and ':' in s[1]:
 				indent = []
 				for char in s[0]:
 					if char in __whitespace:
