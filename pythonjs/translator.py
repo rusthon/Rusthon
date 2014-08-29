@@ -51,6 +51,7 @@ def main(script, module_path=None):
 			code = pythonjs_to_luajs( a )
 		else:
 			a = python_to_pythonjs(script, module_path=module_path)
+
 			if isinstance(a, dict):
 				res = {}
 				for jsfile in a:

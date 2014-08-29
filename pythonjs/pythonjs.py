@@ -1265,6 +1265,7 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 	head = []
 	tail = []
 	script = False
+	osource = source
 	if source.strip().startswith('<html'):
 		lines = source.splitlines()
 		for line in lines:
@@ -1272,10 +1273,14 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 				head.append( '<script type="text/javascript">')
 				script = list()
 			elif line.strip() == '</script>':
-				if script:
+				if type(script) is list:
 					source = '\n'.join(script)
-				script = True
-				tail.append( '</script>')
+					script = True
+					tail.append( '</script>')
+				elif script is True:
+					tail.append( '</script>')
+				else:
+					head.append( '</script>')
 
 			elif isinstance( script, list ):
 				script.append( line )
@@ -1313,6 +1318,10 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 
 		else:
 			sys.stderr.write( lines[lineno] )
+			sys.stderr.write( '\n' )
+
+		if '--debug' in sys.argv:
+			sys.stderr.write( osource )
 			sys.stderr.write( '\n' )
 
 		sys.exit(1)

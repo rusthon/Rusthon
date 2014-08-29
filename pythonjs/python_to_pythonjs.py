@@ -144,14 +144,41 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if source.strip().startswith('<html'):
 			lines = source.splitlines()
 			for line in lines:
-				if line.strip().startswith('<script') and 'type="text/python"' in line:
-					writer.write( '<script type="text/python">')
-					script = list()
+				if line.strip().startswith('<script'):
+					if 'type="text/python"' in line:
+						writer.write( '<script type="text/python">')
+						script = list()
+					elif 'src=' in line and '~/' in line:  ## external javascripts installed in users home folder
+						x = line.split('src="')[-1].split('"')[0]
+						if os.path.isfile(os.path.expanduser(x)):
+							o = []
+							o.append( '<script type="text/javascript">' )
+							if x.lower().endswith('.coffee'):
+								import subprocess
+								proc = subprocess.Popen(
+									['coffee','--bare', '--print', os.path.expanduser(x)], 
+									stdout=subprocess.PIPE
+								)
+								o.append( proc.stdout.read() )
+							else:
+								o.append( open(os.path.expanduser(x), 'rb').read() )
+							o.append( '</script>')
+							if script is True:
+								self._html_tail.extend( o )
+							else:
+								for y in o:
+									writer.write(y)
+
+					else:
+						writer.write(line)
+
 				elif line.strip() == '</script>':
-					if script:
+					if type(script) is list and len(script):
 						source = '\n'.join(script)
-					script = True
-					self._html_tail.append( '</script>')
+						script = True
+						self._html_tail.append( '</script>')
+					else:
+						writer.write( line )
 
 				elif isinstance( script, list ):
 					script.append( line )
@@ -174,7 +201,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._direct_operators = set()  ## optimize "+" and "*" operator
 		self._with_ll = False   ## lowlevel
-		self._with_js = False
+		self._with_js = True
 		self._in_lambda = False
 		self._in_while_test = False
 		self._use_threading = False
@@ -272,8 +299,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._source = source.splitlines()
 
 
+		if '--debug' in sys.argv:
+			try:
+				tree = ast.parse( source )
+			except:
+				raise SyntaxError(source)
+		else:
+			tree = ast.parse( source )
 
-		tree = parse( source )  ## ast.parse
 		self._generator_function_nodes = collect_generator_functions( tree )
 
 		for node in tree.body:
