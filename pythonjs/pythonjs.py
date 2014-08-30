@@ -919,7 +919,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		## TODO, should newline be changed here?
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
 		if s.strip().startswith('#'): s = '/*%s*/'%s
-		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
+		if '__new__>>' in s:  ## fixes inline `JS("new XXX")`
+			s = s.replace('__new__>>', ' new ')
+		elif '"' in s or "'" in s:  ## can not trust direct-replace hacks
 			pass
 		else:
 			if ' or ' in s:
