@@ -950,7 +950,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		op = self.visit(node.op)
 		right = self.visit(node.right)
 
-		if op == '<<':
+		if op == '>>' and left == '__new__':
+			return ' new %s' %right
+
+		elif op == '<<':
 			if left in ('__go__receive__', '__go__send__'):
 				return '<- %s' %right
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__'):

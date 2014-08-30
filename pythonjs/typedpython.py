@@ -155,8 +155,9 @@ def transform_source( source, strip=False ):
 		elif c.startswith('import ') and '-' in c:
 			c = c.replace('-', '__DASH__')
 		elif ' new ' in c:
-			c += ')' * c.count(' new ')
-			c = c.replace(' new ', ' new(')
+			#c += ')' * c.count(' new ')
+			#c = c.replace(' new ', ' new(')
+			c = c.replace(' new ', ' __new__>>')
 
 
 
