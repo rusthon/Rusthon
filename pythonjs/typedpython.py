@@ -154,11 +154,11 @@ def transform_source( source, strip=False ):
 			output.append( indent + '@returns(%s)' %rtype)
 		elif c.startswith('import ') and '-' in c:
 			c = c.replace('-', '__DASH__')
-		elif ' new ' in c:
-			#c += ')' * c.count(' new ')
-			#c = c.replace(' new ', ' new(')
-			c = c.replace(' new ', ' __new__>>')
 
+		if ' new ' in c:
+			c = c.replace(' new ', ' __new__>>')
+		if '\tnew ' in c:
+			c = c.replace('\tnew ', ' __new__>>')
 
 
 		## golang
