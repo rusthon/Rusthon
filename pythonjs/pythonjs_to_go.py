@@ -217,20 +217,26 @@ class GoGenerator( pythonjs.JSGenerator ):
 			return 'go %s' %self.visit(node.args[0])
 		elif name == '__gomake__':
 			return 'make(%s)' %self.visit(node.args[0])
+		elif name == '__go_make_chan__':
+			return 'make(chan %s)' %self.visit(node.args[0])
 		else:
-			return SyntaxError('invalid special go call')
+			raise SyntaxError('invalid special go call')
 
 	def _visit_function(self, node):
 		if self._function_stack[0] is node:
 			self._vars = set()
 
 		args_typedefs = {}
+		chan_args_typedefs = {}
 		return_type = None
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
 					#args_typedefs[ key.arg ] = key.value.id
 					args_typedefs[ key.arg ] = self.visit(key.value)
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
+				for key in decor.keywords:
+					chan_args_typedefs[ key.arg ] = self.visit(key.value)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				if decor.keywords:
 					raise SyntaxError('invalid go return type')
@@ -248,7 +254,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for i, arg in enumerate(node.args.args):
 			arg_name = arg.id
 
-			if arg_name not in args_typedefs:
+			if arg_name not in args_typedefs.keys()+chan_args_typedefs.keys():
 				if arg_name=='self':
 					assert i==0
 					is_method = True
@@ -258,8 +264,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 					err += '\n  missing typedef: %s' %arg.id
 					raise SyntaxError(err)
 
-			arg_type = args_typedefs[arg_name]
-			a = '%s %s' %(arg_name, arg_type)
+			if arg_name in args_typedefs:
+				arg_type = args_typedefs[arg_name]
+				a = '%s %s' %(arg_name, arg_type)
+			else:
+				arg_type = chan_args_typedefs[arg_name]
+				a = '%s chan %s' %(arg_name, arg_type)
+
 			dindex = i - offset
 
 			if a.startswith('__variable_args__'): ## TODO support go `...` varargs
@@ -347,7 +358,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		elif isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			target = self.visit(target)
 			value = self.visit(node.value.right)
-			return 'var %s <- %s;' % (target, value)
+			return '%s <- %s;' % (target, value)
 
 		elif not self._function_stack:
 			target = self.visit(target)

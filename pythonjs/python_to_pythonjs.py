@@ -2780,6 +2780,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					local_typedefs.append( '%s=%s' %(kw.arg, kwval))
 					if decorator.func.id=='typedef_chan':
 						typedef_chans.append( kw.arg )
+						writer.write('@__typedef_chan__(%s=%s)' %(kw.arg, kwval))
 					else:
 						writer.write('@__typedef__(%s=%s)' %(kw.arg, kwval))
 

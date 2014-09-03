@@ -23,7 +23,7 @@ __whitespace = [' ', '\t']
 
 GO_SPECIAL_CALLS = {
 	'go'         : '__go__',
-	'go.channel' : '__gomake__',
+	'go.channel' : '__go_make_chan__',
 }
 
 def transform_source( source, strip=False ):
@@ -267,8 +267,9 @@ def transform_source( source, strip=False ):
 						y, kw = y.split('=')
 					arg, typedef = y.split(':')
 					chan = False
-					if len(arg.split()) == 2:
-						chan, arg = arg.split()
+					if len(typedef.strip().split()) == 2:
+						chan = True
+						typedef = typedef.strip().split()[-1]
 					if '*' in arg:
 						arg_name = arg.split('*')[-1]
 					else:
@@ -385,7 +386,7 @@ g = <- b
 def call_method( cb:func(int)(int) ) ->int:
 	return cb(3)
 
-def wrapper(a:int, chan c:int):
+def wrapper(a:int, c:chan int):
 	result = longCalculation(a)
 	c <- result
 
