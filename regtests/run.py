@@ -194,6 +194,7 @@ lua2js = os.path.abspath( '../external/lua.js/lua2js' )
 luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 
 go_runnable = runnable( 'go version')
+gopherjs_runnable = runnable( 'gopherjs')
 
 assert rhino_runnable or node_runnable
 
@@ -474,7 +475,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -506,7 +507,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         ]
         content = '\n'.join( source )
 
-    elif go:
+    elif go or gopherjs:
         content = patch_python(filename, backend='GO')
 
     else:
@@ -535,6 +536,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--luajs')
     elif go:
         cmd.append( '--go' )
+    elif gopherjs:
+        cmd.append( '--gopherjs' )
 
     if not requirejs:
         cmd.append( '--no-wrapper' )
@@ -799,6 +802,15 @@ def run_go(content):
         return run_command( '/tmp/regtest-go' )
 
 
+def run_pythonjs_gopherjs_test(dummy_filename):
+    """PythonJS (Gopherjs)"""
+    return run_if_no_error(run_gopherjs_node)
+
+def run_gopherjs_node(content):
+    """Run Gopherjs using Node"""
+    write("%s.js" % tmpname, content)
+    return run_command("node %s.js" % tmpname)
+
 def run_html_test( filename, sum_errors ):
     lines = open(filename, 'rb').read().decode('utf-8').splitlines()
     filename = os.path.split(filename)[-1]
@@ -967,6 +979,9 @@ def run_test_on(filename):
             js = translate_js(filename, go=True)
             display(run_pythonjs_go_test)
 
+        if gopherjs_runnable:
+            js = translate_js(filename, gopherjs=True)
+            display(run_pythonjs_gopherjs_test)
 
     print()
     return sum_errors

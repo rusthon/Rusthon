@@ -27,6 +27,19 @@ def main(script, module_path=None):
 		if '--go' in sys.argv:
 			a = python_to_pythonjs(script, go=True, module_path=module_path)
 			code = pythonjs_to_go( a )
+		elif '--gopherjs' in sys.argv:
+			a = python_to_pythonjs(script, go=True, module_path=module_path)
+			code = pythonjs_to_go( a )
+
+			exe = os.path.expanduser('~/go/bin/gopherjs')
+			if not os.path.isfile(exe):
+				raise RuntimeError('gopherjs not installed to ~/go/bin/gopherjs')
+			import subprocess
+			path = '/tmp/gopherjs-input.go'
+			open(path, 'wb').write(code)
+			subprocess.check_call([exe, 'build', path], cwd='/tmp')
+			code = open('/tmp/gopherjs-input.js', 'rb').read()
+
 		elif '--dart' in sys.argv:
 			a = python_to_pythonjs(script, dart=True, module_path=module_path)
 			code = pythonjs_to_dart( a )
