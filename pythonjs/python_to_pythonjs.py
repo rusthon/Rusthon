@@ -2107,7 +2107,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
 
 	def visit_Print(self, node):
-		writer.write('print %s' % ', '.join(map(self.visit, node.values)))
+		writer.write('print(%s)' % ', '.join(map(self.visit, node.values)))
 
 	def visit_Str(self, node):
 		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\0', '\\0')

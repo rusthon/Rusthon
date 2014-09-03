@@ -18,6 +18,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._class_props = dict()
 
 		self._vars = set()
+		self._known_vars = set()
 		self._kwargs_type_ = dict()
 
 	def visit_ClassDef(self, node):
@@ -89,7 +90,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 	def visit_Print(self, node):
-		r = [ 'fmt.Println(%s);' %self.visit(e) for e in node.values]
+		r = []
+		for e in node.values:
+			s = self.visit(e)
+			if isinstance(e, ast.List):
+				r.append('fmt.Println(%s);' %s[1:-1])
+			else:
+				r.append('fmt.Println(%s);' %s)
 		return ''.join(r)
 
 	def visit_Expr(self, node):
@@ -225,6 +232,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def _visit_function(self, node):
 		if self._function_stack[0] is node:
 			self._vars = set()
+			self._known_vars = set()
 
 		args_typedefs = {}
 		chan_args_typedefs = {}
@@ -350,6 +358,47 @@ class GoGenerator( pythonjs.JSGenerator ):
 		#return '\n'.join(out)
 		return ''
 
+	def visit_With(self, node):
+		r = []
+		is_switch = False
+		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
+			r.append('default:')
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
+			r.append('select {')
+			is_switch = True
+		elif isinstance( node.context_expr, ast.Call ):
+			if not isinstance(node.context_expr.func, ast.Name):
+				raise SyntaxError( self.visit(node.context_expr))
+
+			if len(node.context_expr.args):
+				a = self.visit(node.context_expr.args[0])
+			else:
+				assert len(node.context_expr.keywords)
+				## need to catch if this is a new variable ##
+				name = node.context_expr.keywords[0].arg
+				if name not in self._known_vars:
+					a = '%s := %s' %(name, self.visit(node.context_expr.keywords[0].value))
+				else:
+					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
+
+			if node.context_expr.func.id == '__case__':
+				r.append('case %s:' %a)
+			elif node.context_expr.func.id == '__switch__':
+				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
+				is_switch = True
+			else:
+				raise SyntaxError( 'invalid use of with')
+
+
+		for b in node.body:
+			a = self.visit(b)
+			if a: r.append(a)
+
+		if is_switch:
+			r.append('}')
+
+		return '\n'.join(r)
+
 	def visit_Assign(self, node):
 		target = node.targets[0]
 		if isinstance(target, ast.Tuple):
@@ -369,15 +418,22 @@ class GoGenerator( pythonjs.JSGenerator ):
 			target = self.visit(target)
 			value = self.visit(node.value)
 			self._vars.remove( target )
+			self._known_vars.add( target )
 			return '%s := %s;' % (target, value)
 
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
+
+			#if '<-' in value:
+			#	raise RuntimeError(target+value)
+
 			return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):
-		body = [ 'for %s {' %self.visit(node.test)]
+		cond = self.visit(node.test)
+		if cond == 'true' or cond == '1': cond = ''
+		body = [ 'for %s {' %cond]
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
@@ -393,6 +449,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 def main(script, insert_runtime=True):
+
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')
