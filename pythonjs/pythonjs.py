@@ -25,7 +25,7 @@ class SwapLambda( RuntimeError ):
 		RuntimeError.__init__(self)
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
+	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
 		self._func_expressions = function_expressions
@@ -1266,7 +1266,7 @@ def generate_runtime():
 	]
 	return '\n'.join( lines )
 
-def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=False):
+def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True):
 	head = []
 	tail = []
 	script = False
