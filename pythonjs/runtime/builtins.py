@@ -1030,10 +1030,11 @@ def _setup_array_prototype():
 
 		@Array.prototype.__getslice__
 		def func(start, stop, step):
-			arr = [] #new(Array(this.length))
+			arr = []
 
 			start = start | 0
-			stop = stop | this.length
+			if stop is undefined:
+				stop = this.length
 
 			if start < 0:
 				start = this.length + start
@@ -1878,7 +1879,7 @@ class file:
 		path = self.path
 		with javascript:
 			if binary or self.binary:
-				return _fs.readFileSync( path )
+				return _fs.readFileSync( path, encoding=None )
 			else:
 				return _fs.readFileSync( path, {'encoding':'utf8'} )
 
@@ -1887,8 +1888,18 @@ class file:
 		path = self.path
 		with javascript:
 			if binary or self.binary:
-				_fs.writeFileSync( path, data )
+				binary = binary or self.binary
+				if binary == 'base64':  ## TODO: fixme, something bad in this if test
+					#print('write base64 data')
+					buff = new Buffer(data, 'base64')
+					_fs.writeFileSync( path, buff, {'encoding':None})
+
+				else:
+					#print('write binary data')
+					#print(binary)
+					_fs.writeFileSync( path, data, {'encoding':None})
 			else:
+				#print('write utf8 data')
 				_fs.writeFileSync( path, data, {'encoding':'utf8'} )
 
 	def close(self):
