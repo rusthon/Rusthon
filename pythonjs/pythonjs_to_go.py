@@ -24,6 +24,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_ClassDef(self, node):
 		self._class_stack.append( node )
 		node._parents = set()
+		node._struct_def = dict()
 		out = []
 		sdef = dict()
 		props = set()
@@ -61,7 +62,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 					props.add( kw.arg )
 					sdef[ kw.arg ] = kw.value.id
 
+		node._struct_def.update( sdef )
 		out.append( 'type %s struct {' %node.name)
+		if base_classes:
+			for bnode in base_classes:
+				## Go only needs the name of the parent struct and all its items are inserted automatically ##
+				out.append('%s' %bnode.name)
+
 		for name in sdef:
 			out.append('%s %s' %(name, sdef[name]))
 		out.append('}')
@@ -76,7 +83,25 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if b.name == '__init__':
 				init = b
 
-		if init:
+
+		parent_init = None
+		if base_classes:
+			for bnode in base_classes:
+				for b in bnode.body:
+					if isinstance(b, ast.FunctionDef):
+						if b.name in method_names:
+							continue
+						if b.name == '__init__':
+							parent_init = {'class':bnode, 'init':b}
+							#continue
+						out.append( self.visit(b) )
+
+		if init or parent_init:
+			if parent_init:
+				classname = parent_init['class'].name
+				init = parent_init['init']
+			else:
+				classname = node.name
 
 			out.append( 'func __new__%s( %s ) *%s {' %(node.name, init._args_signature, node.name))
 			out.append( '  ob := %s{}' %node.name )
@@ -86,21 +111,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		else:
 			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
-
-
-		if base_classes:
-			for bnode in base_classes:
-				for b in bnode.body:
-					if isinstance(b, ast.FunctionDef):
-						if b.name == '__init__': continue
-						if b.name in method_names: continue
-						out.append( self.visit(b) )
-						#args = [self.visit(a) for a in b.args.args][1:]
-						#args = ','.join(args)
-						#if args:
-						#	out.append(self.indent()+ '%s(%s) { return %s.__%s(this,%s); }'%(b.name, args, bnode.name, b.name, args) )
-						#else:
-						#	out.append(self.indent()+ '%s() { return %s.__%s(this); }'%(b.name, bnode.name, b.name) )
 
 
 		self._class_stack.pop()
