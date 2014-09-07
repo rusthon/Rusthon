@@ -604,7 +604,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		a = ['get%s'%i for i in range(length)]
 		writer.write('var( %s )' %','.join(a) )
 
-		writer.write('%s = JSArray()'%cname)
+		if self._with_go:
+			assert node.go_listcomp_type
+			writer.write('%s = __go__array__(%s)' %(cname, node.go_listcomp_type))
+		else:
+			writer.write('%s = JSArray()'%cname)
 
 		generators = list( node.generators )
 		generators.reverse()
@@ -661,6 +665,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
 				elif self._with_lua:
 					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
+				elif self._with_go:
+					writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
 				else:
 					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 				writer.pull()
@@ -670,6 +676,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
 				elif self._with_lua:
 					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
+				elif self._with_go:
+					writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
 				else:
 					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 		if self._with_lua:
@@ -1365,10 +1373,25 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
 		op = self.visit(node.op)
+
+		is_go_listcomp = False
+		if self._with_go:
+			if op == '<<':
+				if isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='__go__array__':
+					if isinstance(node.right, ast.GeneratorExp):
+						is_go_listcomp = True
+						node.right.go_listcomp_type = node.left.args[0].id
+
+
 		right = self.visit(node.right)
 
-		if self._with_glsl or self._with_go:
+		if self._with_glsl:
 			return '(%s %s %s)' % (left, op, right)
+		elif self._with_go:
+			if is_go_listcomp:
+				return right
+			else:
+				return '(%s %s %s)' % (left, op, right)
 
 		elif op == '|':
 			if isinstance(node.right, Str):

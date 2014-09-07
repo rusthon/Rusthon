@@ -155,3 +155,10 @@ To make a new Go channel call `go.channel(type)`, this is the same as in Go call
 ```
 	c = go.channel(int)
 ```
+
+list comprehensions
+-------------------
+
+```
+	a = []int(x for x in range(3))
+```

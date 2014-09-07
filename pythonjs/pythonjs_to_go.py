@@ -273,8 +273,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 			return 'make(%s)' %self.visit(node.args[0])
 		elif name == '__go_make_chan__':
 			return 'make(chan %s)' %self.visit(node.args[0])
+		elif name == '__go__array__':
+			return '[]%s{}' %self.visit(node.args[0])
 		else:
-			raise SyntaxError('invalid special go call')
+			raise SyntaxError(name)
 
 	def _visit_function(self, node):
 		if self._function_stack[0] is node:

@@ -24,6 +24,7 @@ __whitespace = [' ', '\t']
 GO_SPECIAL_CALLS = {
 	'go'         : '__go__',
 	'go.channel' : '__go_make_chan__',
+	'go.array'   : '__go__array__'
 }
 
 def transform_source( source, strip=False ):
@@ -426,6 +427,8 @@ def f(a:int=100, b:int=100) ->int:
 
 def f(*args:int, **kwargs:int) ->int:
 	return a+b
+
+a = []int(x for x in range(3))
 
 '''
 
