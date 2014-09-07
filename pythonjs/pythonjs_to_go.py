@@ -32,6 +32,27 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		self._classes[ node.name ] = node
 		self._class_props[ node.name ] = props
+
+
+		for base in node.bases:
+			n = self.visit(base)
+			if n == 'object':
+				continue
+			node._parents.add( n )
+
+			bases.add( n )
+			if n in self._class_props:
+				props.update( self._class_props[n] )
+				base_classes.add( self._classes[n] )
+			#else:  ## special case - subclassing a builtin like `list`
+			#	continue
+
+			for p in self._classes[ n ]._parents:
+				bases.add( p )
+				props.update( self._class_props[p] )
+				base_classes.add( self._classes[p] )
+
+
 		for decor in node.decorator_list:  ## class decorators
 			if isinstance(decor, ast.Call):
 				assert decor.func.id=='__struct__'
@@ -47,10 +68,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 		init = None
-
+		method_names = set()
 		for b in node.body:
-			out.append( self.visit(b) )
 			assert isinstance(b, ast.FunctionDef)
+			method_names.add( b.name )
+			out.append( self.visit(b) )
 			if b.name == '__init__':
 				init = b
 
@@ -64,6 +86,21 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		else:
 			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
+
+
+		if base_classes:
+			for bnode in base_classes:
+				for b in bnode.body:
+					if isinstance(b, ast.FunctionDef):
+						if b.name == '__init__': continue
+						if b.name in method_names: continue
+						out.append( self.visit(b) )
+						#args = [self.visit(a) for a in b.args.args][1:]
+						#args = ','.join(args)
+						#if args:
+						#	out.append(self.indent()+ '%s(%s) { return %s.__%s(this,%s); }'%(b.name, args, bnode.name, b.name, args) )
+						#else:
+						#	out.append(self.indent()+ '%s() { return %s.__%s(this); }'%(b.name, bnode.name, b.name) )
 
 
 		self._class_stack.pop()
@@ -443,6 +480,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 	def _inline_code_helper(self, s):
 		return s
+		#return 'js.Global.Call("eval", "%s")' %s ## TODO inline JS()
 
 
 

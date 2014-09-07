@@ -15,11 +15,9 @@ class C( A, B ):
 		a += self.bar()
 		return a
 
-	## extend foo ##
+	## override foo ##
 	def foo(self) -> int:
-		a = A.foo(self)
-		a += 100
-		return a
+		return 100
 
 def main():
 	a = A()
@@ -28,7 +26,7 @@ def main():
 	TestError( b.bar()==2 )
 
 	c = C()
-	TestError( c.foo()==101 )
+	TestError( c.foo()==100 )
 	TestError( c.bar()==2 )
 
-	TestError( c.call_foo_bar()==103 )
+	TestError( c.call_foo_bar()==102 )
