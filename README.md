@@ -1,9 +1,16 @@
 Introduction
 ------------
 PythonJS is a transpiler written in Python that converts a python like language into fast
-JavaScript.  With a few exceptions, the PythonJS language is a superset of Python that is extended to support new syntax inspired by JavaScript and Go.
+JavaScript.  It also includes experimental backends that translate to: Dart, Lua, CoffeeScript, and Go.
 
 [Syntax Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/syntax.md)
+
+
+Go backend
+----------
+The Go backend uses a fully typed subset of Python, mixed with extra syntax inspired by Golang to output Go programs that can be compiled to native executeables, or translated to JavaScript using GopherJS.
+
+[Syntax Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/go_syntax.md)
 
 
 Getting Started
@@ -59,7 +66,7 @@ will be converted into JavaScript.
 
 Usage::
 
-	translator.py [--help|--dart|--coffee|--lua|--no-wrapper|--analyzer] file.py
+	translator.py [--help|--go|--dart|--coffee|--lua|--no-wrapper|--analyzer] file.py
 
 Examples::
 
