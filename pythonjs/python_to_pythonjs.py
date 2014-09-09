@@ -3874,38 +3874,15 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 
 	'''
 	def __init__(self, node, compiler=None):
-		self._with_ll = False
-		self._with_js = False
-		self._with_dart = False
-		self._with_coffee = False
-		self._with_lua = False
-		self._with_rpc = None
-		self._with_rpc_name = None
-		self._with_inline = False
-		self._in_while_test = False
-		self._in_lambda = False
+		assert '_stack' in dir(compiler)
+		#self.__dict___ = compiler.__dict__  ## share all state
+		for name in dir(compiler):
+			if name not in dir(self):
+				setattr(self, name, (getattr(compiler, name)))
 
-		if compiler._with_dart:  ## TODO
-			self._with_dart = True
-		elif compiler._with_coffee:
-			self._with_coffee = True
-		elif compiler._with_lua:
-			self._with_lua = True
-		else:
-			self._with_js = True
-
-		self._typedef_vars = compiler._typedef_vars
-		self._direct_operators = compiler._direct_operators
-		self._builtin_functions = compiler._builtin_functions
-		self._js_classes = compiler._js_classes
-		self._global_functions = compiler._global_functions
-		self._addop_ids = compiler._addop_ids
-		self._cache_for_body_calls = False
-		self._source = compiler._source
-		self._instances = dict()
 		self._head_yield = False
 		self.visit( node )
-		compiler._addop_ids = self._addop_ids
+		compiler._addop_ids = self._addop_ids ## note: need to keep id index insync
 
 	def visit_Yield(self, node):
 		if self._in_head:
