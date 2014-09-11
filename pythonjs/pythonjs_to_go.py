@@ -212,11 +212,20 @@ class GoGenerator( pythonjs.JSGenerator ):
 		target = self.visit(node.target)
 		lines = []
 		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name):
-			iter = self.visit(node.iter.args[0])
 
 			if node.iter.func.id == 'range':
-				lines.append('for %s := 0; %s < %s; %s++ {' %(target, target, iter, target))
+				if len(node.iter.args)==1:
+					iter = self.visit(node.iter.args[0])
+					lines.append('for %s := 0; %s < %s; %s++ {' %(target, target, iter, target))
+				elif len(node.iter.args)==2:
+					start = self.visit(node.iter.args[0])
+					iter = self.visit(node.iter.args[1])
+					lines.append('for %s := %s; %s < %s; %s++ {' %(target, start, target, iter, target))
+				else:
+					raise SyntaxError('invalid for range loop')
+
 			elif node.iter.func.id == 'enumerate':
+				iter = self.visit(node.iter.args[0])
 				idx = self.visit(node.target.elts[0])
 				tar = self.visit(node.target.elts[1])
 				lines.append('for %s,%s := range %s {' %(idx,tar, iter))
@@ -275,7 +284,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 		if name == '__go__':
 			return 'go %s' %self.visit(node.args[0])
 		elif name == '__go_make__':
-			return 'make(%s)' %self.visit(node.args[0])
+			if len(node.args)==2:
+				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
+			elif len(node.args)==3:
+				return 'make(%s, %s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]), self.visit(node.args[1]))
+			else:
+				raise SyntaxError('go make requires 2 or 3 arguments')
 		elif name == '__go_make_chan__':
 			return 'make(chan %s)' %self.visit(node.args[0])
 		elif name == '__go__array__':
@@ -287,6 +301,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 				return '[]%s{}' %a
 		else:
 			raise SyntaxError(name)
+
+	def visit_Return(self, node):
+		if isinstance(node.value, ast.Tuple):
+			return 'return %s' % ', '.join(map(self.visit, node.value.elts))
+		if node.value:
+			return 'return %s' % self.visit(node.value)
+		return 'return'
 
 	def _visit_function(self, node):
 		if self._function_stack[0] is node:
@@ -517,7 +538,7 @@ def main(script, insert_runtime=True):
 		script = runtime + '\n' + script
 
 	tree = ast.parse(script)
-	return GoGenerator().visit(tree)
+	#return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)
 	except SyntaxError as err:

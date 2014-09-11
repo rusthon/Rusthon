@@ -1923,7 +1923,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif isinstance(target.slice, ast.Slice):
 				code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 
-			elif self._with_dart or self._with_ll or self._with_glsl:
+			elif self._with_dart or self._with_ll or self._with_glsl or self._with_go:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
@@ -2206,7 +2206,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		name = self.visit(node.func)
 		if name in typedpython.GO_SPECIAL_CALLS:
 			name = typedpython.GO_SPECIAL_CALLS[ name ]
-			return '%s( %s )' %(name, self.visit(node.args[0]))
+			args = [self.visit(e) for e in node.args ]
+			return '%s( %s )' %(name, ','.join(args))
 
 		if self._with_rpc:
 			if not self._with_rpc_name:
