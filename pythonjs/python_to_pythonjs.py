@@ -299,10 +299,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				self._source = source.splitlines()
 
 
-		if '--debug' in sys.argv:
+		if '--debug--' in sys.argv:
 			try:
 				tree = ast.parse( source )
-			except:
+			except SyntaxError:
 				raise SyntaxError(source)
 		else:
 			tree = ast.parse( source )

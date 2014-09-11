@@ -962,6 +962,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				if node.left.func.id == '__go__map__':
 					key_type = self.visit(node.left.args[0])
 					value_type = self.visit(node.left.args[1])
+					if value_type == 'interface': value_type = 'interface{}'
 					return 'map[%s]%s%s' %(key_type, value_type, right)
 				else:
 					if not right.startswith('{') and not right.endswith('}'):
@@ -973,6 +974,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
 						return '[%s]%s%s' %(asize, atype, right)
+			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
+				return '[]%s' %self.visit(node.right)
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'

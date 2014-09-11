@@ -21,6 +21,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._known_vars = set()
 		self._kwargs_type_ = dict()
 
+		self._imports = []
+
 	def visit_ClassDef(self, node):
 		self._class_stack.append( node )
 		node._parents = set()
@@ -152,9 +154,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		if r:
-			return 'import("%s")' %';'.join(r)
-		else:
-			return ''
+			for name in r:
+				self._imports.append('import("%s");' %name)
+		return ''
 
 	def visit_Module(self, node):
 		header = [
@@ -173,7 +175,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 					else:
 						lines.append( sub )
 			else:
-				raise SyntaxError(b)
+				if isinstance(b, ast.Import):
+					pass
+				else:
+					raise SyntaxError(b)
 
 		lines.append('type _kwargs_type_ struct {')
 		for name in self._kwargs_type_:
@@ -182,7 +187,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 			lines.append( '  __use__%s bool' %name)
 		lines.append('}')
 
-		lines = header + lines
+		lines = header + self._imports + lines
 		return '\n'.join( lines )
 
 
@@ -269,12 +274,17 @@ class GoGenerator( pythonjs.JSGenerator ):
 		name = self.visit(node.func)
 		if name == '__go__':
 			return 'go %s' %self.visit(node.args[0])
-		elif name == '__gomake__':
+		elif name == '__go_make__':
 			return 'make(%s)' %self.visit(node.args[0])
 		elif name == '__go_make_chan__':
 			return 'make(chan %s)' %self.visit(node.args[0])
 		elif name == '__go__array__':
-			return '[]%s{}' %self.visit(node.args[0])
+			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
+				a = self.visit(node.args[0].left)
+				return '[]%s' %a
+			else:
+				a = self.visit(node.args[0])
+				return '[]%s{}' %a
 		else:
 			raise SyntaxError(name)
 
@@ -507,7 +517,7 @@ def main(script, insert_runtime=True):
 		script = runtime + '\n' + script
 
 	tree = ast.parse(script)
-	#return GoGenerator().visit(tree)
+	return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)
 	except SyntaxError as err:

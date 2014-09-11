@@ -24,7 +24,8 @@ __whitespace = [' ', '\t']
 GO_SPECIAL_CALLS = {
 	'go'         : '__go__',
 	'go.channel' : '__go_make_chan__',
-	'go.array'   : '__go__array__'
+	'go.array'   : '__go__array__',
+	'go.make'    : '__go_make__'
 }
 
 def transform_source( source, strip=False ):
@@ -73,7 +74,8 @@ def transform_source( source, strip=False ):
 				a.append(')<<{')
 				hit_go_typedef = False
 			elif hit_go_typedef and char==',':
-				a.append('),')
+				#a.append(', type=True),')  ## this breaks function annotations that splits on ','
+				a.append('<<typedef),')
 				hit_go_typedef = False
 
 
@@ -270,12 +272,9 @@ def transform_source( source, strip=False ):
 			tailend = tail[ tail.rindex(')')+1 : ]
 			tail = tail[ : tail.rindex(')') ]
 
-			#print(head)
-			#print(tail)
-			#raise RuntimeError
 
 			for x in tail.split(','):
-				y = x #x.split(')')[0]
+				y = x
 				if ':' in y:
 					kw = None
 					if '=' in y:
@@ -445,6 +444,9 @@ def f(*args:int, **kwargs:int) ->int:
 a = []int(x for x in range(3))
 
 y = go.make([]float64, 1000)
+
+def plot(id:string, latency:[]float64, xlabel:string, title:string ):
+	pass
 
 '''
 
