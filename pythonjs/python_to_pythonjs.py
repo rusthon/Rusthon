@@ -424,7 +424,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		tornado = ['tornado', 'tornado.web', 'tornado.ioloop']
 
 		for alias in node.names:
-			if alias.name in tornado:
+			if self._with_go:
+				writer.write('import %s' %alias.name)
+			elif alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
 			elif alias.name == 'tempfile':
 				pass  ## pythonjs/fakelibs/tempfile.py

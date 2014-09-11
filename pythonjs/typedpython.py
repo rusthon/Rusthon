@@ -44,7 +44,7 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if a and char==']' and j==i+1 and nextchar!=None and nextchar in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+			if a and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
 				gotype = []
 				b = a.pop()
@@ -54,7 +54,10 @@ def transform_source( source, strip=False ):
 				gotype.reverse()
 				gotype = ''.join(gotype)
 				if not gotype:
-					a.append('__go__array__(')
+					if nextchar=='[':
+						a.append('__go__array__<<')
+					else:
+						a.append('__go__array__(')
 				elif gotype.isdigit():
 					a.append('__go__arrayfixed__(%s,' %gotype)
 				else:
@@ -69,6 +72,10 @@ def transform_source( source, strip=False ):
 			elif hit_go_typedef and char=='{':
 				a.append(')<<{')
 				hit_go_typedef = False
+			elif hit_go_typedef and char==',':
+				a.append('),')
+				hit_go_typedef = False
+
 
 			elif a and char in __whitespace:
 				b = ''.join(a)
@@ -153,8 +160,15 @@ def transform_source( source, strip=False ):
 					break
 			indent = ''.join(indent)
 			output.append( indent + '@returns(%s)' %rtype)
-		elif c.startswith('import ') and '-' in c:
-			c = c.replace('-', '__DASH__')
+
+		if c.startswith('import '):
+			if '-' in c:
+				c = c.replace('-', '__DASH__')
+			if '/' in c:
+				c = c.replace('/', '__SLASH__')
+			if '"' in c:
+				c = c.replace('"', '')
+
 
 		if ' new ' in c:
 			c = c.replace(' new ', ' __new__>>')
@@ -429,6 +443,8 @@ def f(*args:int, **kwargs:int) ->int:
 	return a+b
 
 a = []int(x for x in range(3))
+
+y = go.make([]float64, 1000)
 
 '''
 

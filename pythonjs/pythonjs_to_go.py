@@ -150,9 +150,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return self.visit(node.value)
 
 	def visit_Import(self, node):
-		r = [alias.name for alias in node.names]
+		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		if r:
-			return 'import "%s"' %';'.join(r)
+			return 'import("%s")' %';'.join(r)
 		else:
 			return ''
 
