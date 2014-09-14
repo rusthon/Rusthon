@@ -464,6 +464,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			lib = ministdlib.DART
 		elif self._with_lua:
 			lib = ministdlib.LUA
+		elif self._with_go:
+			lib = ministdlib.GO
 		else:
 			lib = ministdlib.JS
 

@@ -81,7 +81,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for b in node.body:
 			assert isinstance(b, ast.FunctionDef)
 			method_names.add( b.name )
-			out.append( self.visit(b) )
+			#out.append( self.visit(b) )
 			if b.name == '__init__':
 				init = b
 
@@ -92,11 +92,21 @@ class GoGenerator( pythonjs.JSGenerator ):
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
 						if b.name in method_names:
+							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
+							n = b.name
+							b.name = '%s_%s'%(bnode.name, b.name)
+							out.append( self.visit(b) )
+							b.name = n
 							continue
 						if b.name == '__init__':
 							parent_init = {'class':bnode, 'init':b}
 							#continue
 						out.append( self.visit(b) )
+
+
+		for b in node.body:
+			assert isinstance(b, ast.FunctionDef)
+			out.append( self.visit(b) )
 
 		if init or parent_init:
 			if parent_init:
@@ -114,9 +124,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 		else:
 			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
 
-
+		self.catch_call = set()
 		self._class_stack.pop()
 		return '\n'.join(out)
+
+
+	def _visit_call_special( self, node ):
+		fname = self.visit(node.func)
+		assert fname in self.catch_call
+		assert len(self._class_stack)
+		if len(node.args):
+			if isinstance(node.args[0], ast.Name) and node.args[0].id == 'self':
+				node.args.remove( node.args[0] )
+
+		#name = '_%s_' %self._class_stack[-1].name
+		name = 'self.'
+		name += fname.replace('.', '_')
+		return self._visit_call_helper(node, force_name=name)
 
 
 	def visit_Slice(self, node):
@@ -161,7 +185,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_Module(self, node):
 		header = [
 			'package main',
-			'import "fmt"'
+			'import "fmt"',
+			#'import "time"'
 		]
 		lines = []
 
@@ -251,8 +276,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(lines)
 
 
-	def _visit_call_helper(self, node):
-		fname = self.visit(node.func)
+	def _visit_call_helper(self, node, force_name=None):
+		fname = force_name or self.visit(node.func)
 		if fname=='__DOLLAR__': fname = '$'
 		elif fname == 'range':
 			assert len(node.args)

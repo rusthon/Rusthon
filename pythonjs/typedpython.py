@@ -53,7 +53,7 @@ def transform_source( source, strip=False ):
 					gotype.append(b)
 					b = a.pop()
 				gotype.reverse()
-				gotype = ''.join(gotype)
+				gotype = ''.join(gotype).strip()  ## fixes spaces inside brackets `[ 1 ]string()`
 				if not gotype:
 					if nextchar=='[':
 						a.append('__go__array__<<')
@@ -77,14 +77,30 @@ def transform_source( source, strip=False ):
 				#a.append(', type=True),')  ## this breaks function annotations that splits on ','
 				a.append('<<typedef),')
 				hit_go_typedef = False
+			elif hit_go_typedef and char in (' ', '\t'):
+				aa = []
+				for xx in a:
+					if xx == '__go__array__(':
+						aa.append('__go__array__[')
+					else:
+						aa.append( xx )
+				a = aa
+				a.append(']=\t\t\t\t')
+				hit_go_typedef = False
 
 
 			elif a and char in __whitespace:
 				b = ''.join(a)
 				b = b.strip()
-				if b in types and nextchar != '=':
+				is_class_type = b.startswith('class:') and len(b.split(':'))==2
+				if (b in types or is_class_type) and nextchar != '=':
 					if strip:
 						a = a[ : -len(b) ]
+					elif is_class_type:
+						cls = b.split(':')[-1]
+						a = a[ : -len('class:')-len(cls)]
+						a.append('__go__class__[%s]=\t\t\t\t' %cls)
+
 					else:
 						if a[-1]=='*':
 							a.pop()
@@ -424,7 +440,7 @@ a = []string(x,y,z)
 
 ## in go becomes: [3]int{x,y,z}
 ## becomes: __go__arrayfixed__(3, string) << (x,y,z)
-a = [3]int(x,y,z)
+a = [ 3 ]int(x,y,z)
 
 ## in go becomes: map[string]int{x,y,z}
 ## becomes: __go__map__(string, int) << {'x':x, 'y':y, 'z':z}
@@ -447,6 +463,13 @@ y = go.make([]float64, 1000)
 
 def plot(id:string, latency:[]float64, xlabel:string, title:string ):
 	pass
+
+class A:
+	def __init__(self):
+		int 		self.x = 1
+		[]int		self.y = []int()
+		class:ABS     self.z = A()
+		[]A     self.z = A()
 
 '''
 

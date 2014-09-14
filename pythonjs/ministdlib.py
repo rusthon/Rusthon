@@ -56,3 +56,9 @@ JS = {
 		'dirname' : "function dirname(s) { return s.slice(0, s.lastIndexOf('/')+1)}; var os = {'path':{'dirname':dirname}}"
 	}
 }
+
+GO = {
+	'time': {
+		'clock': 'func clock() float64 { return float64(time.Now().Unix()); }'
+	},
+}

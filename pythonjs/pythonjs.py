@@ -37,6 +37,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self._webworker = webworker
 		self._exports = set()
 		self._inline_lambda = False
+		self.catch_call = set()  ## subclasses can use this to catch special calls
 
 		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__', 'expression'])
 		self._glsl = False
@@ -691,11 +692,17 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def _visit_call_helper_go( self, node ):
 		raise NotImplementedError('go call')
 
+	def _visit_call_special( self, node ):
+		raise NotImplementedError('special call')
+
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
 		if name in typedpython.GO_SPECIAL_CALLS.values():
 			return self._visit_call_helper_go( node )
+
+		elif name in self.catch_call:
+			return self._visit_call_special( node )
 
 		elif self._glsl and isinstance(node.func, ast.Attribute):
 			if isinstance(node.func.value, ast.Name) and node.func.value.id in self._typed_vars:
