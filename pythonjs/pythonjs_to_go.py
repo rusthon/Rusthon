@@ -64,7 +64,22 @@ class GoGenerator( pythonjs.JSGenerator ):
 					props.add( kw.arg )
 					sdef[ kw.arg ] = kw.value.id
 
+
+		init = None
+		method_names = set()
+		for b in node.body:
+			if isinstance(b, ast.FunctionDef):
+				method_names.add( b.name )
+				if b.name == '__init__':
+					init = b
+			elif isinstance(b, ast.Expr) and isinstance(b.value, ast.Dict):
+				for i in range( len(b.value.keys) ):
+					k = self.visit( b.value.keys[ i ] )
+					v = self.visit( b.value.values[i] )
+					sdef[k] = v
+
 		node._struct_def.update( sdef )
+
 		out.append( 'type %s struct {' %node.name)
 		if base_classes:
 			for bnode in base_classes:
@@ -74,16 +89,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for name in sdef:
 			out.append('%s %s' %(name, sdef[name]))
 		out.append('}')
-
-
-		init = None
-		method_names = set()
-		for b in node.body:
-			assert isinstance(b, ast.FunctionDef)
-			method_names.add( b.name )
-			#out.append( self.visit(b) )
-			if b.name == '__init__':
-				init = b
 
 
 		parent_init = None
@@ -105,8 +110,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 		for b in node.body:
-			assert isinstance(b, ast.FunctionDef)
-			out.append( self.visit(b) )
+			if isinstance(b, ast.FunctionDef):
+				out.append( self.visit(b) )
 
 		if init or parent_init:
 			if parent_init:
@@ -186,7 +191,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 		header = [
 			'package main',
 			'import "fmt"',
-			#'import "time"'
 		]
 		lines = []
 
@@ -562,7 +566,12 @@ def main(script, insert_runtime=True):
 		runtime = open( os.path.join(dirname, 'go_builtins.py') ).read()
 		script = runtime + '\n' + script
 
-	tree = ast.parse(script)
+	try:
+		tree = ast.parse(script)
+	except SyntaxError as err:
+		sys.stderr.write(script)
+		raise err
+
 	#return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)

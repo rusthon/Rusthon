@@ -33,8 +33,11 @@ def retrieve_vars(body):
 		#		local_vars.add( c.id )
 		if isinstance(n, ast.Assign):
 			user_typedef = None
-			#targets = list(n.targets)
-			#targets.reverse()
+			self_typedef = None
+			if len(n.targets) == 2:
+				if isinstance(n.targets[1], ast.Attribute) and isinstance(n.targets[1].value, ast.Name) and n.targets[1].value.id=='self':
+					continue
+
 			for i,u in enumerate(n.targets):
 				if isinstance(u, ast.Name):
 					if i==0:
@@ -43,6 +46,7 @@ def retrieve_vars(body):
 						else:
 							local_vars.add( u.id )
 					elif user_typedef:
+						#raise SyntaxError(user_typedef + u.id)
 						local_vars.add( '%s=%s' %(user_typedef, u.id) )
 						user_typedef = None
 					else:
@@ -65,12 +69,19 @@ def retrieve_vars(body):
 
 			if user_typedef:  ## `int x`
 				if  isinstance(n.value, ast.Name):
-					local_vars.add( '%s=%s' %(user_typedef, n.value.id))
+					x = '%s=%s' %(user_typedef, n.value.id)
+					#raise SyntaxError(x)
+					#if len(n.targets)==2: raise SyntaxError(n.targets)
+					local_vars.add( x )
 				elif isinstance(n.value, ast.Num):
-					local_vars.add( '%s=%s' %(user_typedef, n.value.n))
+					x = '%s=%s' %(user_typedef, n.value.n)
+					#if len(n.targets)==2: raise SyntaxError(n.targets)
+					local_vars.add( x )
 				else:
-					raise SyntaxError(n.value)
-
+					#raise SyntaxError(n.targets)
+					#raise SyntaxError(n.value.func.value.id)
+					#raise SyntaxError(user_typedef)
+					pass
 
 		elif isinstance(n, ast.Global):
 			global_vars.update( n.names )

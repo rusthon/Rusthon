@@ -59,6 +59,7 @@ JS = {
 
 GO = {
 	'time': {
+		REQUIRES : ['time'],
 		'clock': 'func clock() float64 { return float64(time.Now().Unix()); }'
 	},
 }

@@ -218,6 +218,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._gpu_return_types = set() ## 'array' or float32, or array of 'vec4' float32's.
 
 		self._source = source.splitlines()
+		self._class_stack = list()
 		self._classes = dict()    ## class name : [method names]
 		self._class_parents = dict()  ## class name : parents
 		self._instance_attributes = dict()  ## class name : [attribute names]
@@ -857,8 +858,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def _visit_dart_classdef(self, node):
 		name = node.name
-		log('Dart-ClassDef: %s'%name)
+		node._struct_vars = dict()
 		self._js_classes[ name ] = node
+		self._class_stack.append( node )
 
 		methods = {}
 		method_list = []  ## getter/setters can have the same name
@@ -933,7 +935,16 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if not init and not method_list:
 			writer.write( 'pass' )
 
+
+		if node._struct_vars:
+			writer.write('{')
+			for k in node._struct_vars:
+				v = node._struct_vars[k]
+				writer.write('  %s : %s,' %(k,v))
+			writer.write('}')
+
 		writer.pull()
+		self._class_stack.pop()
 
 	def is_gpu_method(self, n):
 		for dec in n.decorator_list:
@@ -1825,11 +1836,23 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					return None
 				else:
 					targets = targets[1:]
+
+			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
+				self._class_stack[-1]._struct_vars[ 'self.'+targets[1].attr ] = target.id
+				if target.id == 'long' and isinstance(node.value, ast.Num):
+					## requires long library ##
+					writer.write('%s = long.fromString("%s")' %(targets[1].value.id, self.visit(node.value)))
+					return None
+				else:
+					targets = targets[1:]
+
 			elif len(targets)==1 and isinstance(node.value, ast.Name) and target.id in typedpython.types:
 				self._typedef_vars[ node.value.id ] = target.id
 				return None
 			else:
-				raise SyntaxError( self.format_error(targets) )
+				xxx = self.visit(target) + ':' + self.visit(targets[1])
+				#raise SyntaxError( self.format_error(targets) )
+				raise SyntaxError( self.format_error(xxx) )
 
 		elif self._with_rpc_name and isinstance(target, Attribute) and isinstance(target.value, Name) and target.value.id == self._with_rpc_name:
 			writer.write('__rpc_set__(%s, "%s", %s)' %(self._with_rpc, target.attr, self.visit(node.value)))
