@@ -1,7 +1,35 @@
-PythonJS Go Syntax
+Gython Syntax
 ===============
 
 PythonJS supports a fully typed subset of Python with extra syntax to support the Golang backend.
+
+
+General Features
+================
+	
+	go static types
+	go channel syntax
+	classes
+	multiple inheritance
+	list comprehensions
+	yield (generator functions)  TODO
+	regular and lambda functions  TODO nested functions
+	function calls with keywords and defaults
+
+Language Keywords
+=================
+
+	global, nonlocal
+	while, for, continue, break
+	if, elif, else
+	try, except, raise
+	def, lambda
+	new, class
+	from, import, as
+	pass, assert
+	and, or, is, in, not
+	return, yield
+
 
 
 select
@@ -162,3 +190,5 @@ list comprehensions
 ```
 	a = []int(x for x in range(3))
 ```
+
+

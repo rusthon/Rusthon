@@ -5,7 +5,7 @@ Gython is a transpiler written in Python that converts a python like language in
 [Syntax Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/go_syntax.md)
 
 
-Getting Started
+Installing
 ===============
 
 
@@ -26,31 +26,54 @@ Example::
 	./gython.py myscript.py > myscript.go
 
 
+Getting Started
+===============
+Gython supports classes and multiple inheritance, with method overrides and calling the parent class methods.
 
-Supported Features
-================
+```
+	class A:
+		def foo(self) -> int:
+			return 1
 
-####Language Overview
-	
-	go static types
-	go channel syntax
-	classes
-	multiple inheritance
-	list comprehensions
-	yield (generator functions)  TODO
-	regular and lambda functions  TODO nested functions
-	function calls with keywords and defaults
+	class B:
+		def bar(self) -> int:
+			return 2
 
-####Language Keywords
+	class C( A, B ):
+		def call_foo_bar(self) -> int:
+			a = self.foo()
+			a += self.bar()
+			return a
 
-	global, nonlocal
-	while, for, continue, break
-	if, elif, else
-	try, except, raise
-	def, lambda
-	new, class
-	from, import, as
-	pass, assert
-	and, or, is, in, not
-	return, yield
+		def foo(self) -> int:
+			a = A.foo(self)
+			a += 100
+			return a
 
+```
+
+Gython supports list comprehensions.
+Below is an array of integers.
+
+```
+	a = []int(x for x in range(3))
+```
+
+Gython supports Go's send data to channel syntax
+
+```
+	a = go.channel( int )
+	a <- 1
+
+```
+
+Gython supports Go's typed maps.
+
+```
+	a = map[string]int{
+		'x': 1,
+		'y': 2,
+		'z': 3,
+	}
+
+```
