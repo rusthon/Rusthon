@@ -6,6 +6,32 @@ import strconv
 
 inline("""
 
+func myappend(self []int, x int) ([]int){
+	return append(self, x)
+}
+
+func __test_if_true__(v interface{}) bool {
+	switch v.(type) {
+		case nil:
+			return false
+		case int:
+			i,_ := v.(int)
+			return i != 0
+		case float64:
+			i,_ := v.(int)
+			return i != 0.0
+		case bool:
+			b,_ := v.(bool)
+			return b
+		case string:
+			s,_ := v.(string)
+			return s != ""
+		default:
+			return false
+
+	}
+}
+
 func str(v interface{}) string {
 	switch v.(type) {
 		case nil:

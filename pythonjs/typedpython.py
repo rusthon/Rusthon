@@ -93,13 +93,19 @@ def transform_source( source, strip=False ):
 				b = ''.join(a)
 				b = b.strip()
 				is_class_type = b.startswith('class:') and len(b.split(':'))==2
-				if (b in types or is_class_type) and nextchar != '=':
+				is_pointer = b.startswith('*')
+				if (b in types or is_class_type or is_pointer) and nextchar != '=':
 					if strip:
 						a = a[ : -len(b) ]
 					elif is_class_type:
 						cls = b.split(':')[-1]
 						a = a[ : -len('class:')-len(cls)]
 						a.append('__go__class__[%s]=\t\t\t\t' %cls)
+
+					elif is_pointer:
+						cls = b.split('*')[-1]
+						a = a[ : -len('*')-len(cls)]
+						a.append('__go__pointer__[%s]=\t\t\t\t' %cls)
 
 					else:
 						if a[-1]=='*':
@@ -153,7 +159,7 @@ def transform_source( source, strip=False ):
 				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
-		if '=\t\t\t\tdef ' in c:
+		if '=\t\t\t\tdef ' in c:  ## todo deprecate
 			x, c = c.split('=\t\t\t\tdef ')
 			indent = []
 			pre = []
@@ -169,7 +175,10 @@ def transform_source( source, strip=False ):
 		elif c.strip().startswith('def ') and '->' in c:  ## python3 syntax
 			c, rtype = c.split('->')
 			c += ':'
-			rtype = rtype.strip()[:-1]
+			rtype = rtype.strip()[:-1].strip()
+			if rtype.startswith('*'):
+				rtype = '"%s"' %rtype
+
 			indent = []
 			for char in c:
 				if char in __whitespace:
@@ -304,6 +313,9 @@ def transform_source( source, strip=False ):
 						arg_name = arg.split('*')[-1]
 					else:
 						arg_name = arg
+
+					if typedef.startswith('*'):
+						typedef = '"%s"' %typedef.strip()
 
 					if chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
@@ -464,6 +476,9 @@ y = go.make([]float64, 1000)
 def plot(id:string, latency:[]float64, xlabel:string, title:string ):
 	pass
 
+def f( x:*ABC ) -> *XXX:
+	pass
+
 class A:
 	def __init__(self):
 		int 		self.x = 1
@@ -471,6 +486,9 @@ class A:
 		class:ABS     self.z = A()
 		[]A     self.z = A()
 		bool    self.b = xxx()
+		*ABS     self.z = A()
+		#[]*A     self.z = A()   ## this is ugly
+
 
 '''
 

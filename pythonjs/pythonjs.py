@@ -962,28 +962,6 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if op == '>>' and left == '__new__':
 			return ' new %s' %right
 
-		elif op == '<<':
-			if left in ('__go__receive__', '__go__send__'):
-				return '<- %s' %right
-			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__'):
-				if node.left.func.id == '__go__map__':
-					key_type = self.visit(node.left.args[0])
-					value_type = self.visit(node.left.args[1])
-					if value_type == 'interface': value_type = 'interface{}'
-					return 'map[%s]%s%s' %(key_type, value_type, right)
-				else:
-					if not right.startswith('{') and not right.endswith('}'):
-						right = '{%s}' %right[1:-1]
-
-					if node.left.func.id == '__go__array__':
-						return '[]%s%s' %(self.visit(node.left.args[0]), right)
-					elif node.left.func.id == '__go__arrayfixed__':
-						asize = self.visit(node.left.args[0])
-						atype = self.visit(node.left.args[1])
-						return '[%s]%s%s' %(asize, atype, right)
-			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
-				return '[]%s' %self.visit(node.right)
-
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'
 		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':

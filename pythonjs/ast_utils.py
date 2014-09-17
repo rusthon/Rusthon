@@ -123,8 +123,12 @@ def inspect_function( node ):
 			c = decorator
 			assert len(c.args) == 0 and len(c.keywords)
 			for kw in c.keywords:
-				assert isinstance( kw.value, ast.Name)
-				typedefs[ kw.arg ] = kw.value.id
+				if isinstance( kw.value, ast.Name):
+					typedefs[ kw.arg ] = kw.value.id
+				elif isinstance( kw.value, ast.Str):
+					typedefs[ kw.arg ] = '"%s"' %kw.value.s
+				else:
+					raise SyntaxError(kw.value)
 
 	info = {
 		'locals':local_vars, 

@@ -4,6 +4,8 @@ def main():
 	a = []int(1,2,3)
 	TestError( a[0]==1 )
 	TestError( len(a)==3 )
+	a.append( 4 )
+	TestError( len(a)==4 )
 
 	b = [2]int(100,200)
 	TestError( b[0]==100 )

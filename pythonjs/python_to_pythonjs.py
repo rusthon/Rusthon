@@ -765,7 +765,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				attr = node.target.attr
 				target = '%s.%s' %(name, attr)
 
-			if self._with_dart:
+			if self._with_go:
+				a = '%s /= %s' %(target, self.visit(node.value))
+
+			elif self._with_dart:
 				a = '%s = (%s/%s).floor()' %(target, target, self.visit(node.value))
 			else:
 				a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
@@ -1318,7 +1321,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif node.id == 'False':
 				return 'false'
 			elif node.id == 'None':
-				if self._with_dart:
+				if self._with_go:
+					return 'nil'
+				elif self._with_dart:
 					return 'null'
 				else:
 					return 'null'
@@ -1403,6 +1408,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if self._with_glsl:
 			return '(%s %s %s)' % (left, op, right)
 		elif self._with_go:
+			if op == '//': op = '/'
 			if is_go_listcomp:
 				return right
 			else:
@@ -1838,7 +1844,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					targets = targets[1:]
 
 			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
-				self._class_stack[-1]._struct_vars[ 'self.'+targets[1].attr ] = target.id
+				self._class_stack[-1]._struct_vars[ targets[1].attr ] = target.id
 				if target.id == 'long' and isinstance(node.value, ast.Num):
 					## requires long library ##
 					writer.write('%s = long.fromString("%s")' %(targets[1].value.id, self.visit(node.value)))
@@ -1853,6 +1859,33 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				xxx = self.visit(target) + ':' + self.visit(targets[1])
 				#raise SyntaxError( self.format_error(targets) )
 				raise SyntaxError( self.format_error(xxx) )
+
+		elif self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__'):
+			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
+				if target.value.id == '__go__array__':
+					self._class_stack[-1]._struct_vars[ targets[1].attr ] = '__go__array__(%s<<typedef)' %self.visit(target.slice)
+				elif target.value.id == '__go__class__':
+					self._class_stack[-1]._struct_vars[ targets[1].attr ] = self.visit(target.slice)
+				elif target.value.id == '__go__pointer__':
+					self._class_stack[-1]._struct_vars[ targets[1].attr ] = '"*%s"' %self.visit(target.slice)
+
+			elif target.value.id == '__go__class__':
+				#self._class_stack[-1]._struct_vars[ targets[1].attr ] = self.visit(target.slice)
+				raise SyntaxError(self.visit(target))
+			elif target.value.id == '__go__pointer__':
+				if len(targets)==2:
+					writer.write(
+						'inline("var %s *%s;")' %(self.visit(targets[1]), self.visit(target.slice))
+					)
+				else:
+					writer.write(
+						'inline("var %s *%s;")' %(self.visit(node.value), self.visit(target.slice))
+					)
+			else:
+				raise SyntaxError(self.visit(target))
+
+			targets = targets[1:]
+
 
 		elif self._with_rpc_name and isinstance(target, Attribute) and isinstance(target.value, Name) and target.value.id == self._with_rpc_name:
 			writer.write('__rpc_set__(%s, "%s", %s)' %(self._with_rpc, target.attr, self.visit(node.value)))
@@ -2856,8 +2889,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 				else:
 					assert len(decorator.args) == 1
-					assert isinstance( decorator.args[0], Name)
-					return_type = decorator.args[0].id
+					if isinstance( decorator.args[0], Name):
+						return_type = decorator.args[0].id
+					elif isinstance(decorator.args[0], ast.Str):
+						return_type = '"%s"' %decorator.args[0].s
+					else:
+						raise SyntaxError('invalid @returns argument')
+
+
 					if return_type in typedpython.glsl_types:
 						self._gpu_return_types.add( return_type )
 

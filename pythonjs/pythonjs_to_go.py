@@ -6,7 +6,7 @@ import os, sys
 import ast
 import pythonjs
 
-
+go_types = 'bool string int float64'.split()
 
 class GoGenerator( pythonjs.JSGenerator ):
 
@@ -22,6 +22,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._kwargs_type_ = dict()
 
 		self._imports = []
+
+	def visit_Is(self, node):
+		return '=='
+	def visit_IsNot(self, node):
+		return '!='
+
+
+	def visit_Name(self, node):
+		if node.id == 'None':
+			return 'nil'
+		elif node.id == 'True':
+			return 'true'
+		elif node.id == 'False':
+			return 'false'
+		#elif node.id == 'null':
+		#	return 'nil'
+		return node.id
 
 	def visit_ClassDef(self, node):
 		self._class_stack.append( node )
@@ -75,7 +92,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 			elif isinstance(b, ast.Expr) and isinstance(b.value, ast.Dict):
 				for i in range( len(b.value.keys) ):
 					k = self.visit( b.value.keys[ i ] )
-					v = self.visit( b.value.values[i] )
+					if isinstance(b.value.values[i], ast.Str):
+						v = b.value.values[i].s
+					else:
+						v = self.visit( b.value.values[i] )
 					sdef[k] = v
 
 		node._struct_def.update( sdef )
@@ -282,6 +302,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)
+		is_append = False
+		if fname.endswith('.append'):
+			is_append = True
+			fname = fname.split('.append')[0]
+
 		if fname=='__DOLLAR__': fname = '$'
 		elif fname == 'range':
 			assert len(node.args)
@@ -306,7 +331,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if args: args += ','
 			args += '%s...' %self.visit(node.starargs)
 
-		return '%s(%s)' % (fname, args)
+		if is_append:
+			return '%s = append(%s,%s)' % (fname, fname, args)
+
+		else:
+			return '%s(%s)' % (fname, args)
 
 	def _visit_call_helper_go(self, node):
 		name = self.visit(node.func)
@@ -324,12 +353,61 @@ class GoGenerator( pythonjs.JSGenerator ):
 		elif name == '__go__array__':
 			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
 				a = self.visit(node.args[0].left)
-				return '[]%s' %a
+				if a in go_types:
+					return '[]%s' %a
+				else:
+					return '[]*%s' %a
+
 			else:
 				a = self.visit(node.args[0])
-				return '[]%s{}' %a
+				if a in go_types:
+					return '[]%s{}' %a
+				else:
+					return '[]*%s{}' %a
 		else:
 			raise SyntaxError(name)
+
+
+	def visit_BinOp(self, node):
+		left = self.visit(node.left)
+		op = self.visit(node.op)
+		right = self.visit(node.right)
+
+		if op == '>>' and left == '__new__':
+			return ' new %s' %right
+
+		elif op == '<<':
+			if left in ('__go__receive__', '__go__send__'):
+				return '<- %s' %right
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__'):
+				if node.left.func.id == '__go__map__':
+					key_type = self.visit(node.left.args[0])
+					value_type = self.visit(node.left.args[1])
+					if value_type == 'interface': value_type = 'interface{}'
+					return 'map[%s]%s%s' %(key_type, value_type, right)
+				else:
+					if not right.startswith('{') and not right.endswith('}'):
+						right = '{%s}' %right[1:-1]
+
+					if node.left.func.id == '__go__array__':
+						T = self.visit(node.left.args[0])
+						if T in go_types:
+							return '[]%s%s' %(T, right)
+						else:
+							return '[]*%s%s' %(T, right)
+					elif node.left.func.id == '__go__arrayfixed__':
+						asize = self.visit(node.left.args[0])
+						atype = self.visit(node.left.args[1])
+						return '[%s]%s%s' %(asize, atype, right)
+			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
+				return '[]%s' %self.visit(node.right)
+
+		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
+			left += '[_id_]'
+		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':
+			right += '[_id_]'
+
+		return '(%s %s %s)' % (left, op, right)
 
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
@@ -349,16 +427,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
-					#args_typedefs[ key.arg ] = key.value.id
-					args_typedefs[ key.arg ] = self.visit(key.value)
+					if isinstance( key.value, ast.Str):
+						args_typedefs[ key.arg ] = key.value.s
+					else:
+						args_typedefs[ key.arg ] = self.visit(key.value)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
 					chan_args_typedefs[ key.arg ] = self.visit(key.value)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				if decor.keywords:
 					raise SyntaxError('invalid go return type')
-				else:
+				elif isinstance(decor.args[0], ast.Name):
 					return_type = decor.args[0].id
+				else:
+					return_type = decor.args[0].s
+
+				if return_type == 'self':
+					return_type = '*' + self._class_stack[-1].name
 
 
 		node._arg_names = []
@@ -572,6 +657,7 @@ def main(script, insert_runtime=True):
 		sys.stderr.write(script)
 		raise err
 
+	#raise RuntimeError(script)
 	#return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)
