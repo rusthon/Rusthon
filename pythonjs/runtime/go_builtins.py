@@ -10,6 +10,11 @@ func myappend(self []int, x int) ([]int){
 	return append(self, x)
 }
 
+func ord(x string) int {
+	r := []rune(x)
+	return int(r[0])
+}
+
 func __test_if_true__(v interface{}) bool {
 	switch v.(type) {
 		case nil:

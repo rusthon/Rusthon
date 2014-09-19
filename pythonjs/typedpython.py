@@ -36,8 +36,12 @@ def transform_source( source, strip=False ):
 		a = []
 		hit_go_typedef = False
 		gotype = None
+		isindef = False
 
 		for i,char in enumerate(line):
+			if isindef is False and len(a) and ''.join(a).strip().startswith('def '):
+				isindef = True
+
 			nextchar = None
 			j = i+1
 			while j < len(line):
@@ -45,7 +49,8 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if a and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+			## go array and map syntax ##
+			if not isindef and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
 				gotype = []
 				b = a.pop()
@@ -314,7 +319,7 @@ def transform_source( source, strip=False ):
 					else:
 						arg_name = arg
 
-					if typedef.startswith('*'):
+					if typedef.startswith('*') or typedef.startswith('[]'):
 						typedef = '"%s"' %typedef.strip()
 
 					if chan:
@@ -489,6 +494,8 @@ class A:
 		*ABS     self.z = A()
 		#[]*A     self.z = A()   ## this is ugly
 
+def listpass( a:[]int ):
+	pass
 
 '''
 

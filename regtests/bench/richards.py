@@ -157,6 +157,8 @@ class TaskWorkArea(object):
 	def __init__(self):
 		#[]Task      self.taskTab = [None] * TASKTABSIZE
 		[]Task      self.taskTab  = []Task()
+		for i in range(TASKTABSIZE):
+			self.taskTab.append(None)
 		*Task  self.taskList = None
 
 		int self.holdCount = 0

@@ -11,7 +11,12 @@ def main():
 		pass
 
 	start = clock()
-	a = 0
-	for i in range(10000000):
-		a = 1 + 2
+	a = -1000000
+	for i in range(1000000):
+		for j in range(100):
+			a = 1 + 2
 	print(clock()-start)
+
+	# in Go a variable must be used for something, or the compiler will throw an error,
+	# here just print 'a' to pass the benchmark.
+	print('#', a)
