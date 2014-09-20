@@ -319,8 +319,10 @@ def transform_source( source, strip=False ):
 					else:
 						arg_name = arg
 
-					if typedef.startswith('*') or typedef.startswith('[]'):
+					if typedef.startswith('*'):
 						typedef = '"%s"' %typedef.strip()
+					elif typedef.startswith('[]'):
+						typedef = '"*%s"' %typedef.strip()
 
 					if chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))

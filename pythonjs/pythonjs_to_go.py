@@ -168,6 +168,24 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return self._visit_call_helper(node, force_name=name)
 
 
+	def _visit_subscript_ellipsis(self, node):
+		name = self.visit(node.value)
+		#return '%s["$wrapped"]' %name
+		raise NotImplementedError
+
+
+	def visit_Subscript(self, node):
+		if isinstance(node.slice, ast.Ellipsis):
+			if self._glsl:
+				#return '%s[_id_]' % self.visit(node.value)
+				return '%s[matrix_index()]' % self.visit(node.value)
+			else:
+				return self._visit_subscript_ellipsis( node )
+		else:
+			## deference pointer and then index
+			return '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+
+
 	def visit_Slice(self, node):
 		lower = upper = step = None
 		if node.lower:
@@ -305,12 +323,14 @@ class GoGenerator( pythonjs.JSGenerator ):
 		is_append = False
 		if fname.endswith('.append'):
 			is_append = True
-			fname = fname.split('.append')[0]
+			arr = fname.split('.append')[0]
 
 		if fname=='__DOLLAR__': fname = '$'
 		elif fname == 'range':
 			assert len(node.args)
 			fname += str(len(node.args))
+		elif fname == 'len':
+			return 'len(*%s)' %self.visit(node.args[0])
 
 
 		if node.args:
@@ -332,7 +352,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 			args += '%s...' %self.visit(node.starargs)
 
 		if is_append:
-			return '%s = append(%s,%s)' % (fname, fname, args)
+			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
+			return '__%s := append(*%s,%s); *%s = __%s;' % (arr, arr, args, arr, arr)
 
 		else:
 			return '%s(%s)' % (fname, args)
@@ -354,9 +375,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
 				a = self.visit(node.args[0].left)
 				if a in go_types:
-					return '[]%s' %a
+					return '*[]%s' %a
 				else:
-					return '[]*%s' %a
+					return '*[]*%s' %a
 
 			else:
 				a = self.visit(node.args[0])
@@ -392,15 +413,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
 						if T in go_types:
-							return '[]%s%s' %(T, right)
+							return '&[]%s%s' %(T, right)
 						else:
-							return '[]*%s%s' %(T, right)
+							return '&[]*%s%s' %(T, right)
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
-						return '[%s]%s%s' %(asize, atype, right)
+						return '&[%s]%s%s' %(asize, atype, right)
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
-				return '[]%s' %self.visit(node.right)
+				return '*[]%s' %self.visit(node.right)
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'
