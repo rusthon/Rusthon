@@ -298,8 +298,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 				tar = self.visit(node.target.elts[1])
 				lines.append('for %s,%s := range %s {' %(idx,tar, iter))
 
-			else:
-				raise SyntaxError('invalid for loop - bad iterator')
+			else: ## generator function
+				gfunc = node.iter.func.id
+				gargs = ','.join( [self.visit(e) for e in node.iter.args] )
+				lines.append('__gen%s := __new__%s(%s)' %(gfunc,gfunc, gargs))
+				lines.append('for __gen%s.__done__ != 1 {' %gfunc)
+				lines.append('	%s := __gen%s.next()' %(self.visit(node.target), gfunc))
 
 		elif isinstance(node.target, ast.List) or isinstance(node.target, ast.Tuple):
 			iter = self.visit( node.iter )

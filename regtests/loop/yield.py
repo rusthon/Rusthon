@@ -8,6 +8,7 @@ def fib(n:int) -> int:
 	int c = 0
 
 	for x in range(n):
+		#print('looping')
 		yield a
 		c = b
 		b = a+b
@@ -18,6 +19,7 @@ def fib(n:int) -> int:
 def main():
 	arr = []int()
 	for n in fib(20):
+		#print(n)
 		arr.append( n )
 
 	TestError( arr[0]==0 )

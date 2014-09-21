@@ -3955,8 +3955,12 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 
 	def visit_Yield(self, node):
 		if self._in_head:
-			writer.write('this.__head_yield = %s'%self.visit(node.value))
-			writer.write('this.__head_returned = 0')
+			if self._with_go:
+				writer.write('self.__head_yield = %s'%self.visit(node.value))
+				writer.write('self.__head_returned = 0')
+			else:
+				writer.write('this.__head_yield = %s'%self.visit(node.value))
+				writer.write('this.__head_returned = 0')
 			self._head_yield = True
 		else:
 			writer.write('__yield_return__ = %s'%self.visit(node.value))
@@ -3983,10 +3987,17 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 
 		typedefs = dict()
 		stypes = dict()  ## go struct
-
+		return_type = None
 		for decorator in reversed(node.decorator_list):
+			if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
+				if decorator.keywords:
+					raise SyntaxError('invalid go return type')
+				elif isinstance(decorator.args[0], ast.Name):
+					return_type = decorator.args[0].id
+				else:
+					return_type = decorator.args[0].s
 
-			if isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
+			elif isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
 				c = decorator
 				assert len(c.args) == 0 and len(c.keywords)
 				for kw in c.keywords:
@@ -4003,6 +4014,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 						typedefs[ kw.arg ] = kwval
 						stypes[ kw.arg ] = kwval
 
+		assert return_type
 		args = [a.id for a in node.args.args]
 
 		for name in typedefs:
@@ -4059,8 +4071,11 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		writer.write('}')
 
 		## iterator function `next`
+		writer.write('@returns(%s)' %return_type)
 		writer.write('def next(self):')
 		writer.push()
+
+		writer.write('inline("var __yield_return__ %s")' %return_type)
 
 		if self._head_yield:
 			writer.write('if self.__head_returned == 0:')

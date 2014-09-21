@@ -77,3 +77,36 @@ Gython supports Go's typed maps.
 	}
 
 ```
+
+Array and maps are always passed as pointers in a function call, this way the called function can modify the array or map inplace.
+In the example below `a` is typed as an array of integers `[]int`, but it is actually retyped when transformed into Go as `*[]int`
+```
+def myfunc( a:[]int ):
+	a.append( 100 )
+
+x = []int()
+myfunc( x )
+
+```
+
+Simple Generator Functions
+==========================
+Gython supports generator functions with a single for loop that yields from its main body.
+The generator function can also yield once before the loop, and once after.
+```
+def fib(n:int) -> int:
+	int a = 0
+	int b = 1
+	int c = 0
+	for x in range(n):
+		yield a
+		c = b
+		b = a+b
+		a = c
+	yield -1
+
+def main():
+	arr = []int()
+	for n in fib(20):
+		arr.append( n )
+```
