@@ -323,6 +323,8 @@ def transform_source( source, strip=False ):
 						typedef = '"%s"' %typedef.strip()
 					elif typedef.startswith('[]'):
 						typedef = '"*%s"' %typedef.strip()
+					elif typedef.startswith('map['):
+						typedef = '"*%s"' %typedef.strip()
 
 					if chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
@@ -497,6 +499,9 @@ class A:
 		#[]*A     self.z = A()   ## this is ugly
 
 def listpass( a:[]int ):
+	pass
+
+def mappass( a:map[string]int ):
 	pass
 
 '''

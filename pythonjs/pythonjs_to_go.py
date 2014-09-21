@@ -22,6 +22,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._kwargs_type_ = dict()
 
 		self._imports = []
+		self._ids = 0
 
 	def visit_Is(self, node):
 		return '=='
@@ -353,7 +354,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		if is_append:
 			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
-			return '__%s := append(*%s,%s); *%s = __%s;' % (arr, arr, args, arr, arr)
+			id = self._ids
+			self._ids += 1
+			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, args, arr, id)
 
 		else:
 			return '%s(%s)' % (fname, args)
@@ -405,7 +408,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 					key_type = self.visit(node.left.args[0])
 					value_type = self.visit(node.left.args[1])
 					if value_type == 'interface': value_type = 'interface{}'
-					return 'map[%s]%s%s' %(key_type, value_type, right)
+					return '&map[%s]%s%s' %(key_type, value_type, right)
 				else:
 					if not right.startswith('{') and not right.endswith('}'):
 						right = '{%s}' %right[1:-1]
