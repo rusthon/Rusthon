@@ -1843,7 +1843,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				else:
 					targets = targets[1:]
 
-			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
+			elif len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
 				self._class_stack[-1]._struct_vars[ targets[1].attr ] = target.id
 				if target.id == 'long' and isinstance(node.value, ast.Num):
 					## requires long library ##
@@ -1855,9 +1855,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			elif len(targets)==1 and isinstance(node.value, ast.Name) and target.id in typedpython.types:
 				self._typedef_vars[ node.value.id ] = target.id
 				return None
+			elif isinstance(target, ast.Name) and target.id in typedpython.types:
+				raise SyntaxError( self.format_error(target.id) )
 			else:
-				xxx = self.visit(target) + ':' + self.visit(targets[1])
-				#raise SyntaxError( self.format_error(targets) )
+				#xxx = self.visit(target) + ':' + self.visit(targets[1])
+				xxx = self.visit(target) + ':' + self.visit(node.value)
+				raise SyntaxError( self.format_error(targets) )
 				raise SyntaxError( self.format_error(xxx) )
 
 		elif self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__'):
@@ -2802,7 +2805,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		global writer
 
 		if node in self._generator_function_nodes:
-			log('generator function: %s'%node.name)
 			self._generator_functions.add( node.name )
 			if '--native-yield' in sys.argv:
 				raise NotImplementedError  ## TODO
@@ -2848,7 +2850,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(decorator, Name) and decorator.id == 'gpu':
 				gpu = True
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
+			elif isinstance(decorator, Call) and decorator.func.id == 'expression':  ## js function expressions are now the default
 				assert len(decorator.args)==1
 				func_expr = self.visit(decorator.args[0])
 
@@ -3960,9 +3962,142 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 			writer.write('__yield_return__ = %s'%self.visit(node.value))
 
 	def visit_Name(self, node):
-		return 'this.%s' %node.id
+		## this hack should be replaced to support globals
+		if self._with_go:
+			return 'self.%s' %node.id
+		else:
+			return 'this.%s' %node.id
+
 
 	def visit_FunctionDef(self, node):
+		if self._with_go:
+			self._visit_genfunc_go(node)
+		else:
+			self._visit_genfunc_js(node)
+
+
+	def _visit_genfunc_go(self, node):
+		writer.write('class %s:' %node.name)
+		writer.push()  ## push class
+
+
+		typedefs = dict()
+		stypes = dict()  ## go struct
+
+		for decorator in reversed(node.decorator_list):
+
+			if isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
+				c = decorator
+				assert len(c.args) == 0 and len(c.keywords)
+				for kw in c.keywords:
+					#assert isinstance( kw.value, Name)
+					kwval = kw.value.id
+					#self._typedef_vars[ kw.arg ] = kwval
+					#self._instances[ kw.arg ] = kwval
+					#self._func_typedefs[ kw.arg ] = kwval
+					#local_typedefs.append( '%s=%s' %(kw.arg, kwval))
+					if decorator.func.id=='typedef_chan':
+						#typedef_chans.append( kw.arg )
+						writer.write('@__typedef_chan__(%s=%s)' %(kw.arg, kwval))
+					else:
+						typedefs[ kw.arg ] = kwval
+						stypes[ kw.arg ] = kwval
+
+		args = [a.id for a in node.args.args]
+
+		for name in typedefs:
+			kwval = typedefs[name]
+			writer.write('@__typedef__(%s=%s)' %(name, kwval))
+
+		writer.write('def __init__(self, %s):' %','.join(args))
+		writer.push()
+		for arg in args:
+			assert arg in typedefs
+			writer.write('self.%s = %s'%(arg,arg))
+
+		self._in_head = True
+		loop_node = None
+		tail_yield = []
+		for b in node.body:
+			if loop_node:
+				tail_yield.append( b )
+
+			elif isinstance(b, ast.For):
+				iter_start = '0'
+				iter = b.iter
+				if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
+					if len(iter.args) == 2:
+						iter_start = self.visit(iter.args[0])
+						iter_end = self.visit(iter.args[1])
+					else:
+						iter_end = self.visit(iter.args[0])
+				else:
+					iter_end = self.visit(iter)
+
+				writer.write('self.__iter_start = %s'%iter_start)
+				writer.write('self.__iter_index = %s'%iter_start)
+				writer.write('self.__iter_end = %s'%iter_end)
+				writer.write('self.__done__ = 0')
+				loop_node = b
+				self._in_head = False
+
+			else:
+				if isinstance(b, ast.Assign) and isinstance(b.targets[0], ast.Name) and len(b.targets)==2:  ## typed local
+					stypes[ b.targets[1].id ] = b.targets[0].id
+				self.visit(b)
+
+		writer.pull()  ## end of init
+
+		## write typedef go struct ##
+
+		for intype in '__iter_start __iter_index __iter_end __done__'.split():
+			stypes[ intype ] = 'int'
+
+		writer.write('{')
+		for n in stypes:
+			writer.write( '%s : %s,' %(n, stypes[n]))
+		writer.write('}')
+
+		## iterator function `next`
+		writer.write('def next(self):')
+		writer.push()
+
+		if self._head_yield:
+			writer.write('if self.__head_returned == 0:')
+			writer.push()
+			writer.write('self.__head_returned = 1')
+			writer.write('return self.__head_yield')
+			writer.pull()
+			writer.write('elif self.__iter_index < self.__iter_end:')
+
+		else:
+			writer.write('if self.__iter_index < self.__iter_end:')
+
+		writer.push()
+		for b in loop_node.body:
+			self.visit(b)
+
+		writer.write('self.__iter_index += 1')
+
+		if not tail_yield:
+			writer.write('if self.__iter_index == self.__iter_end: self.__done__ = 1')
+
+		writer.write('return __yield_return__')
+		writer.pull()
+		writer.write('else:')
+		writer.push()
+		writer.write('self.__done__ = 1')
+		if tail_yield:
+			for b in tail_yield:
+				self.visit(b)
+			writer.write('return __yield_return__')
+		writer.pull()
+
+		writer.pull()  ## end of next
+		writer.pull()  ## pull class
+
+
+	def _visit_genfunc_js(self, node):
 		args = [a.id for a in node.args.args]
 		writer.write('def %s(%s):' %(node.name, ','.join(args)))
 		writer.push()

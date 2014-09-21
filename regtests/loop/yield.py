@@ -2,15 +2,21 @@
 generator function
 '''
 
-def fib(n):
-	a, b = 0, 1
+def fib(n:int) -> int:
+	int a = 0
+	int b = 1
+	int c = 0
+
 	for x in range(n):
 		yield a
-		a,b = b, a+b
-	yield 'world'
+		c = b
+		b = a+b
+		a = c
+
+	yield -1  ## signals end
 
 def main():
-	arr = []
+	arr = []int()
 	for n in fib(20):
 		arr.append( n )
 
