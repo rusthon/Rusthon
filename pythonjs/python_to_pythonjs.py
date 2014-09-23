@@ -587,6 +587,50 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		return self.visit_ListComp(node)
 
 	_comp_id = 0
+
+	def visit_DictComp(self, node):
+		'''
+		node.key is key name
+		node.value is value
+		'''
+		#raise SyntaxError(self.visit(node.key))  ## key, value, generators
+
+		node.returns_type = 'dict'
+
+		if len(self._comprehensions) == 0:
+			comps = collect_dict_comprehensions( node )
+			for i,cnode in enumerate(comps):
+				cname = '__comp__%s' % self._comp_id
+				self._comp_id += 1
+				cnode._comp_name = cname
+				self._comprehensions.append( cnode )
+
+
+		cname = node._comp_name
+		writer.write('var(%s)'%cname)
+
+		length = len( node.generators )
+		a = ['idx%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['iter%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+		a = ['get%s'%i for i in range(length)]
+		writer.write('var( %s )' %','.join(a) )
+
+		if self._with_go:
+			assert node.go_dictcomp_type
+			writer.write('%s = __go__map__(%s)' %(cname, node.go_dictcomp_type))
+		else:
+			writer.write('%s = []'%cname)
+
+		generators = list( node.generators )
+		generators.reverse()
+		self._gen_comp( generators, node )
+
+		self._comprehensions.remove( node )
+		return cname
+
+
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
 
@@ -626,7 +670,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 	def _gen_comp(self, generators, node):
 		gen = generators.pop()
-		#if len(gen.ifs): raise NotImplementedError  ## TODO
 		id = len(generators) + self._comprehensions.index( node )
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
@@ -635,7 +678,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if isinstance(gen.iter, ast.Call) and isinstance(gen.iter.func, ast.Name) and gen.iter.func.id in ('range', 'xrange'):
 			is_range = True
 
-			#writer.write('iter%s = __get__(len, "__call__")([%s], JSObject())' %(id, self.visit(gen.iter.args[0])) )
 			writer.write('iter%s = %s' %(id, self.visit(gen.iter.args[0])) )
 			writer.write('while idx%s < iter%s:' %(id,id) )
 			writer.push()
@@ -4201,6 +4243,26 @@ def collect_calls(node):
 	return calls
 
 
+class CollectDictComprehensions(NodeVisitor):
+	_comps_ = []
+	def visit_GeneratorExp(self,node):
+		self._comps_.append( node )		
+		self.visit( node.elt )
+		for gen in node.generators:
+			self.visit( gen.iter )
+			self.visit( gen.target )
+	def visit_DictComp(self, node):
+		self._comps_.append( node )
+		self.visit( node.key )
+		self.visit( node.value )
+		for gen in node.generators:
+			self.visit( gen.iter )
+			self.visit( gen.target )
+
+def collect_dict_comprehensions(node):
+	CollectDictComprehensions._comps_ = comps = []
+	CollectDictComprehensions().visit( node )
+	return comps
 
 
 class CollectComprehensions(NodeVisitor):
