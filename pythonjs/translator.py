@@ -10,7 +10,7 @@ from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -74,7 +74,8 @@ def main(script, module_path=None):
 				## requirejs module is on by default, this wraps the code in a `define` function
 				## and returns `__module__`
 				## if --no-wrapper is used, then the raw javascript is returned.
-				code = pythonjs_to_javascript( a, requirejs='--no-wrapper' not in sys.argv )
+				## by default the pythonjs runtime is inserted, this can be disabled with `--no-runtime`
+				code = pythonjs_to_javascript( a, requirejs='--no-wrapper' not in sys.argv, insert_runtime='--no-runtime' not in sys.argv )
 
 		if '--analyze' in sys.argv:
 			dartanalyzer = os.path.expanduser('~/dart-sdk/bin/dartanalyzer')
