@@ -14,7 +14,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 
 		self._class_stack = list()
-		self._classes = dict()
+		self._classes = dict()		## name : node
 		self._class_props = dict()
 
 		self._vars = set()
@@ -45,6 +45,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._class_stack.append( node )
 		node._parents = set()
 		node._struct_def = dict()
+		node._subclasses = set()  ## required for generics generator
 		out = []
 		sdef = dict()
 		props = set()
@@ -72,6 +73,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 				bases.add( p )
 				props.update( self._class_props[p] )
 				base_classes.add( self._classes[p] )
+
+			self._classes[ n ]._subclasses.add( node.name )
 
 
 		for decor in node.decorator_list:  ## class decorators
@@ -452,6 +455,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		args_typedefs = {}
 		chan_args_typedefs = {}
 		return_type = None
+		generics = set()
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
@@ -459,6 +463,14 @@ class GoGenerator( pythonjs.JSGenerator ):
 						args_typedefs[ key.arg ] = key.value.s
 					else:
 						args_typedefs[ key.arg ] = self.visit(key.value)
+
+					## check for super classes - generics ##
+					if args_typedefs[ key.arg ] in self._classes:
+						classname = args_typedefs[ key.arg ]
+						generics.add( classname ) # switch v.(type) for each
+						generics = generics.union( self._classes[classname]._subclasses )
+						args_typedefs[ key.arg ] = 'interface{}'
+
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
 					chan_args_typedefs[ key.arg ] = self.visit(key.value)
@@ -474,7 +486,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 					return_type = '*' + self._class_stack[-1].name
 
 
-		node._arg_names = []
+		node._arg_names = args_names = []
 		args = []
 		oargs = []
 		offset = len(node.args.args) - len(node.args.defaults)
@@ -496,7 +508,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
-				a = '%s %s' %(arg_name, arg_type)
+				if i==0 and generics:
+					a = '__gen__ %s' %arg_type
+				else:
+					a = '%s %s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
 				a = '%s chan %s' %(arg_name, arg_type)
@@ -552,10 +567,25 @@ class GoGenerator( pythonjs.JSGenerator ):
 				out.append('}')
 				#out.append('} else { %s := %s }' %(n,v))
 
-		for b in node.body:
-			v = self.visit(b)
-			if v:
-				out.append( self.indent() + v )
+		if generics:
+			out.append(self.indent() + 'switch __gen__.(type) {')
+			self.push()
+			for gt in generics:
+				out.append(self.indent() + 'case *%s:' %gt)
+				self.push()
+				out.append(self.indent() + '%s,_ := __gen__.(%s)' %(args_names[0],gt) )
+				for b in node.body:
+					v = self.visit(b)
+					if v: out.append( self.indent() + v )
+				self.pull()
+			self.pull()
+			out.append('}')
+			out.append('return -1')
+
+		else:
+			for b in node.body:
+				v = self.visit(b)
+				if v: out.append( self.indent() + v )
 
 		self.pull()
 		out.append( self.indent()+'}' )
