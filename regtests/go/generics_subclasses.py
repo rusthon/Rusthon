@@ -16,7 +16,7 @@ class B(A):
 class C(A):
 
 	def method1(self) ->int:
-		return self.x + 100
+		return self.x + 200
 
 
 def my_generic( g:A ) ->int:
@@ -28,10 +28,10 @@ def main():
 	c = C( 100 )
 
 	x = my_generic( a )
-	print( x )
+	TestError(a.x == x )
 
 	y = my_generic( b )
-	print( y )
+	TestError( y==200 )
 
 	z = my_generic( c )
-	print( z )
+	TestError( z==300 )

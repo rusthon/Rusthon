@@ -110,3 +110,49 @@ def main():
 	for n in fib(20):
 		arr.append( n )
 ```
+
+Generic High Order Functions
+==========================
+Gython supports generic functions, where the first argument can be an instance of different subclasses.
+All the subclasses must share the same common base class.  In the function definition the first argument
+is typed with the name of the common base class.  In the function below `my_generic`, the first argument `g`
+is typed with the common base class: `def my_generic( a:A )`
+
+
+```
+class A:
+	def __init__(self, x:int):
+		int self.x = x
+
+	def method1(self) -> int:
+		return self.x
+
+class B(A):
+
+	def method1(self) ->int:
+		return self.x * 2
+
+class C(A):
+
+	def method1(self) ->int:
+		return self.x + 200
+
+
+def my_generic( g:A ) ->int:
+	return g.method1()
+
+def main():
+	a = A( 100 )
+	b = B( 100 )
+	c = C( 100 )
+
+	x = my_generic( a )
+	a.x == x
+
+	y = my_generic( b )
+	y==200
+
+	z = my_generic( c )
+	z==300
+
+```

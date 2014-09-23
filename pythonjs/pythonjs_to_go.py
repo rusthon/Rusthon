@@ -573,14 +573,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 			for gt in generics:
 				out.append(self.indent() + 'case *%s:' %gt)
 				self.push()
-				out.append(self.indent() + '%s,_ := __gen__.(%s)' %(args_names[0],gt) )
+				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(args_names[0],gt) )
 				for b in node.body:
 					v = self.visit(b)
 					if v: out.append( self.indent() + v )
 				self.pull()
 			self.pull()
 			out.append('}')
-			out.append('return -1')
+			if return_type == 'int':
+				out.append('return 0')
+			elif return_type == 'float':
+				out.append('return 0.0')
+			elif return_type == 'string':
+				out.append('return ""')
+			elif return_type == 'bool':
+				out.append('return false')
+			elif return_type:
+				raise NotImplementedError('TODO other generator function return types')
 
 		else:
 			for b in node.body:
