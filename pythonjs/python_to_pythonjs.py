@@ -621,7 +621,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			assert node.go_dictcomp_type
 			writer.write('%s = __go__map__(%s)' %(cname, node.go_dictcomp_type))
 		else:
-			writer.write('%s = []'%cname)
+			writer.write('%s = {}'%cname)
 
 		generators = list( node.generators )
 		generators.reverse()
@@ -706,27 +706,13 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					test.append( self.visit(compare) )
 
 				writer.write('if %s:' %' and '.join(test))
-
 				writer.push()
-				if self._with_dart:
-					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
-				elif self._with_lua:
-					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
-				elif self._with_go:
-					writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
-				else:
-					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
+				self._gen_comp_helper(cname, node)
 				writer.pull()
-			else:
 
-				if self._with_dart:
-					writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
-				elif self._with_lua:
-					writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
-				elif self._with_go:
-					writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
-				else:
-					writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
+			else:
+				self._gen_comp_helper(cname, node)
+
 		if self._with_lua:
 			writer.write('idx%s = idx%s + 1' %(id,id) )
 		else:
@@ -736,7 +722,24 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if self._with_lua:  ## convert to list
 			writer.write('%s = list.__call__({},{pointer:%s, length:idx%s})' %(cname, cname, id))
 
+	def _gen_comp_helper(self, cname, node):
+		if isinstance(node, ast.DictComp):
+			key = self.visit(node.key)
+			val = self.visit(node.value)
+			if self._with_go:
+				writer.write('%s[ %s ] = %s' %(cname, key, val) )
+			else:
+				writer.write('%s[ %s ] = %s' %(cname, key, val) )
 
+		else:
+			if self._with_dart:
+				writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
+			elif self._with_lua:
+				writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
+			elif self._with_go:
+				writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
+			else:
+				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 
 	def visit_In(self, node):
 		return ' in '
