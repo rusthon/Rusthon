@@ -504,6 +504,8 @@ def listpass( a:[]int ):
 def mappass( a:map[string]int ):
 	pass
 
+m = map[int]string{ a:'xxx' for a in range(10)}
+
 '''
 
 if __name__ == '__main__':
