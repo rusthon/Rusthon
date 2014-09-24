@@ -132,13 +132,14 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
                 return msg
 
-	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False, go=False):
+	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False):
 		super(PythonToPythonJS, self).__init__()
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_go = go
+		self._fast_js = fast_javascript
 
 		self._html_tail = []; script = False
 		if source.strip().startswith('<html'):
@@ -199,7 +200,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._line_number = 0
 		self._stack = []        ## current path to the root
 
-		self._direct_operators = set()  ## optimize "+" and "*" operator
+		## optimize "+" and "*" operator
+		if fast_javascript:
+			self._direct_operators = set( ['+', '*'] )
+		else:
+			self._direct_operators = set()
+
 		self._with_ll = False   ## lowlevel
 		self._with_js = True
 		self._in_lambda = False
@@ -211,7 +217,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_webworker = False
 		self._with_rpc = None
 		self._with_rpc_name = None
-		self._with_direct_keys = False
+		self._with_direct_keys = fast_javascript
 
 		self._with_glsl = False
 		self._in_gpu_main = False
@@ -503,7 +509,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			data = open(path, 'rb').read()
 			subtrans = PythonToPythonJS(
 				data, 
-				module_path=self._module_path
+				module_path     = self._module_path,
+				fast_javascript = self._fast_js
 			)
 			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
 
@@ -1297,7 +1304,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		elif isinstance(node.test, ast.List):
 			writer.write('if %s.length:' % self.visit(node.test))
 
-		elif self._with_ll or self._with_glsl:
+		elif self._with_ll or self._with_glsl or self._fast_js:
 			writer.write('if %s:' % self.visit(node.test))
 		elif isinstance(node.test, ast.Compare):
 			writer.write('if %s:' % self.visit(node.test))
@@ -4330,14 +4337,16 @@ def collect_generator_functions(node):
 
 
 
-def main(script, dart=False, coffee=False, lua=False, go=False, module_path=None):
+def main(script, dart=False, coffee=False, lua=False, go=False, module_path=None, fast_javascript=False):
+	assert fast_javascript
 	translator = PythonToPythonJS(
 		source = script, 
-		dart   = dart or '--dart' in sys.argv,
+		dart   = dart,
 		coffee = coffee,
 		lua    = lua,
 		go     = go,
-		module_path = module_path
+		module_path = module_path,
+		fast_javascript = fast_javascript
 	)
 
 	code = writer.getvalue()

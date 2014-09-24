@@ -10,7 +10,7 @@ from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -63,7 +63,11 @@ def main(script, module_path=None):
 			a = python_to_pythonjs(script, lua=True, module_path=module_path)
 			code = pythonjs_to_luajs( a )
 		else:
-			a = python_to_pythonjs(script, module_path=module_path)
+			a = python_to_pythonjs(
+				script, 
+				module_path=module_path,
+				fast_javascript = '--fast-javascript' in sys.argv
+			)
 
 			if isinstance(a, dict):
 				res = {}
@@ -75,7 +79,12 @@ def main(script, module_path=None):
 				## and returns `__module__`
 				## if --no-wrapper is used, then the raw javascript is returned.
 				## by default the pythonjs runtime is inserted, this can be disabled with `--no-runtime`
-				code = pythonjs_to_javascript( a, requirejs='--no-wrapper' not in sys.argv, insert_runtime='--no-runtime' not in sys.argv )
+				code = pythonjs_to_javascript(
+					a, 
+					requirejs='--no-wrapper' not in sys.argv, 
+					insert_runtime='--no-runtime' not in sys.argv,
+					fast_javascript = '--fast-javascript' in sys.argv
+				)
 
 		if '--analyze' in sys.argv:
 			dartanalyzer = os.path.expanduser('~/dart-sdk/bin/dartanalyzer')

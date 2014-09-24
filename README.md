@@ -52,21 +52,6 @@ Gython supports classes and multiple inheritance, with method overrides and call
 
 ```
 
-Gython supports list comprehensions.
-Below is an array of integers.
-
-```
-	a = []int(x for x in range(3))
-```
-
-Gython supports Go's send data to channel syntax
-
-```
-	a = go.channel( int )
-	a <- 1
-
-```
-
 Gython supports Go's typed maps.
 
 ```
@@ -77,6 +62,24 @@ Gython supports Go's typed maps.
 	}
 
 ```
+
+Gython supports array and map comprehensions.
+Below is an array of integers, and a map of strings with integer keys.
+
+```
+	a = []int(x for x in range(3))
+	b = map[int]string{ i:'xxx' for i in range(10) }
+```
+
+Gython supports Go's send data to channel syntax
+
+```
+	a = go.channel( int )
+	a <- 1
+
+```
+
+
 
 Array and maps are always passed as pointers in a function call, this way the called function can modify the array or map inplace.
 In the example below `a` is typed as an array of integers `[]int`, but it is actually retyped when transformed into Go as `*[]int`

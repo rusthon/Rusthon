@@ -25,9 +25,10 @@ class SwapLambda( RuntimeError ):
 		RuntimeError.__init__(self)
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True):
+	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
+		self._fast_js = fast_javascript
 		self._func_expressions = function_expressions
 		self._indent = 0
 		self._global_functions = {}
@@ -96,10 +97,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		r = []
 		is_switch = False
 		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__default__':
-			r.append('default:')
+			r.append(self.indent()+'default:')
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == '__select__':
 			r.append('select {')
 			is_switch = True
+			self.push()
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
 				raise SyntaxError( self.visit(node.context_expr))
@@ -111,19 +113,21 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				a = '%s = %s' %(node.context_expr.keywords[0].arg, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
-				r.append('case %s:' %a)
+				r.append(self.indent()+'case %s:' %a)
 			elif node.context_expr.func.id == '__switch__':
 				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
 				is_switch = True
 			else:
 				raise SyntaxError( 'invalid use of with')
 
-
+		self.push()
 		for b in node.body:
 			a = self.visit(b)
-			if a: r.append(a)
+			if a: r.append(self.indent()+a)
+		self.pull()
 
 		if is_switch:
+			self.pull()
 			r.append('}')
 
 		return '\n'.join(r)
@@ -537,9 +541,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			## infact, var should always be used with function expressions.
 
 			if self._func_expressions or func_expr:
-				buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+				buffer = 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
 			else:
-				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
+				buffer = 'function %s(%s) {\n' % (node.name, ', '.join(args))
 
 			if self._requirejs and node.name not in self._exports:
 				self._exports.add( node.name )
@@ -547,9 +551,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 
 			if self._func_expressions or func_expr:
-				buffer = self.indent() + 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+				buffer = 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
 			else:
-				buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
+				buffer = 'function %s(%s) {\n' % (node.name, ', '.join(args))
 
 		self.push()
 		body = list()
@@ -1031,15 +1035,21 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_Compare(self, node):
 		if self._glsl:
-			comp = [self.visit(node.left)]
+			return self.visit(node.left)
 		elif isinstance(node.ops[0], ast.Eq):
 			left = self.visit(node.left)
 			right = self.visit(node.comparators[0])
-			return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
+			if self._fast_js:
+				return '(%s===%s)' %(left, right)
+			else:
+				return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
 		elif isinstance(node.ops[0], ast.NotEq):
 			left = self.visit(node.left)
 			right = self.visit(node.comparators[0])
-			return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)
+			if self._fast_js:
+				return '(%s!==%s)' %(left, right)
+			else:
+				return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)
 
 		else:
 			comp = [ '(']
@@ -1059,7 +1069,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					comp.append( self.visit(node.comparators[i]) )
 
-		return ' '.join( comp )
+			return ' '.join( comp )
 
 	def visit_Not(self, node):
 		return '!'
@@ -1254,7 +1264,7 @@ def generate_runtime():
 	]
 	return '\n'.join( lines )
 
-def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True):
+def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False):
 	head = []
 	tail = []
 	script = False
@@ -1319,7 +1329,13 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 
 		sys.exit(1)
 
-	gen = JSGenerator( requirejs=requirejs, insert_runtime=insert_runtime, webworker=webworker, function_expressions=function_expressions )
+	gen = JSGenerator(
+		requirejs=requirejs, 
+		insert_runtime=insert_runtime, 
+		webworker=webworker, 
+		function_expressions=function_expressions,
+		fast_javascript = fast_javascript
+	)
 	output = gen.visit(tree)
 	if head:
 		head.append( output )
