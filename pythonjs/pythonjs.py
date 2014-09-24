@@ -1096,7 +1096,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 	def visit_If(self, node):
 		out = []
-		out.append( 'if (%s) {' %self.visit(node.test) )
+		test = self.visit(node.test)
+		if test.startswith('(') and test.endswith(')'):
+			out.append( 'if %s {' %test )
+		else:
+			out.append( 'if (%s) {' %test )
+
 		self.push()
 
 		for line in list(map(self.visit, node.body)):
@@ -1255,12 +1260,25 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return 'break;'
 
 
+def generate_minimal_runtime():
+	from python_to_pythonjs import main as py2pyjs
+	a = py2pyjs(
+		open('runtime/builtins_core.py', 'rb').read(),
+		module_path = 'runtime',
+		fast_javascript = True
+	)
+	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
 def generate_runtime():
 	from python_to_pythonjs import main as py2pyjs
+	builtins = py2pyjs(
+		open('runtime/builtins.py', 'rb').read(),
+		module_path = 'runtime',
+		fast_javascript = True
+	)
 	lines = [
-		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True ), ## lowlevel pythonjs
-		main( py2pyjs(open('runtime/builtins.py', 'rb').read()), requirejs=False, insert_runtime=False, function_expressions=True )
+		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True ), ## lowlevel pythonjs
+		main( builtins, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 	]
 	return '\n'.join( lines )
 
@@ -1368,5 +1386,9 @@ if __name__ == '__main__':
 	if '--runtime' in sys.argv:
 		print('creating new runtime: pythonjs.js')
 		open('pythonjs.js', 'wb').write( generate_runtime() )
+	elif '--miniruntime' in sys.argv:
+		print('creating new runtime: pythonjs-minimal.js')
+		open('pythonjs-minimal.js', 'wb').write( generate_minimal_runtime() )
+
 	else:
 		command()

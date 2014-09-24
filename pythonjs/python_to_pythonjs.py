@@ -476,7 +476,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		else:
 			lib = ministdlib.JS
 
-		path = os.path.join( self._module_path, node.module+'.py')
+		if self._module_path:
+			path = os.path.join( self._module_path, node.module+'.py')
+		else:
+			path = os.path.join( './', node.module+'.py')
 
 		if node.module == 'time' and node.names[0].name == 'sleep':
 			self._use_sleep = True
@@ -515,7 +518,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
 
 		else:
-			msg = 'invalid import - file not found: %s/%s.py'%(self._module_path,node.module)
+			msg = 'invalid import - file not found: %s'%path
 			raise SyntaxError( self.format_error(msg) )
 
 	def visit_Assert(self, node):
@@ -1088,17 +1091,21 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		else:
 			writer.write('pass')
 
-		## `self.__class__` pointer ##
-		writer.write('this.__class__ = %s' %name)
 
-		## instance UID ##
-		writer.write('this.__uid__ = "￼" + _PythonJS_UID')
-		writer.write('_PythonJS_UID += 1')
+		## `self.__class__` pointer ##
+		writer.write('this.__class__ = %s' %name)  ## isinstance runtime builtin requires this
+
+		if not self._fast_js:
+			## instance UID ##
+			writer.write('this.__uid__ = "￼" + _PythonJS_UID')
+			writer.write('_PythonJS_UID += 1')
 
 		writer.pull()
-		## class UID ##
-		writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
-		writer.write('_PythonJS_UID += 1')
+
+		if not self._fast_js:
+			## class UID ##
+			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
+			writer.write('_PythonJS_UID += 1')
 
 		#keys = methods.keys()
 		#keys.sort()
@@ -1151,8 +1158,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('%s.prototype.__struct_name__ = "%s"' %(name,name))
 
 		## TODO support property decorators in javascript-mode ##
-		writer.write('%s.prototype.__properties__ = {}' %name)
-		writer.write('%s.prototype.__unbound_methods__ = {}' %name)
+		#writer.write('%s.prototype.__properties__ = {}' %name)
+		#writer.write('%s.prototype.__unbound_methods__ = {}' %name)
 
 
 		self._in_js_class = False
@@ -2228,11 +2235,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('%s = %s' % (','.join(elts), self.visit(node.value)))
 
 		else:  # it's a Tuple
-			id = self.identifier
-			self.identifier += 1
-			r = '__r_%s' % id
-			writer.write('var(%s)' % r)
-			writer.write('%s = %s' % (r, self.visit(node.value)))
+
+			if isinstance(node.value, ast.Name):
+				r = node.value.id
+			else:
+				id = self.identifier
+				self.identifier += 1
+				r = '__r_%s' % id
+				writer.write('var(%s)' % r)
+				writer.write('%s = %s' % (r, self.visit(node.value)))
+
+
 			for i, target in enumerate(target.elts):
 				if isinstance(target, Attribute):
 					code = '__set__(%s, "%s", %s[%s])' % (
@@ -2843,7 +2856,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		##'__INLINE_FUNCTION__' from typedpython.py
 
-		if hasattr(node, 'keep_as_lambda') or args and args[0]=='__INLINE_FUNCTION__':
+		if hasattr(node, 'keep_as_lambda') or (args and args[0]=='__INLINE_FUNCTION__'):
 			## TODO lambda keyword args
 			self._in_lambda = True
 			a = '(lambda %s: %s)' %(','.join(args), self.visit(node.body))
@@ -4338,7 +4351,6 @@ def collect_generator_functions(node):
 
 
 def main(script, dart=False, coffee=False, lua=False, go=False, module_path=None, fast_javascript=False):
-	assert fast_javascript
 	translator = PythonToPythonJS(
 		source = script, 
 		dart   = dart,

@@ -52,7 +52,10 @@ def transform_source( source, strip=False ):
 			## go array and map syntax ##
 			if not isindef and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
+				hit_go_typedef = True
+
 				gotype = []
+				restore = list(a)
 				b = a.pop()
 				while b != '[':
 					gotype.append(b)
@@ -66,11 +69,13 @@ def transform_source( source, strip=False ):
 						a.append('__go__array__(')
 				elif gotype.isdigit():
 					a.append('__go__arrayfixed__(%s,' %gotype)
-				else:
-					assert ''.join(a[-3:])=='map'
+				elif ''.join(a[-3:])=='map':
 					a.pop(); a.pop(); a.pop()
 					a.append('__go__map__(%s,' %gotype)
-				hit_go_typedef = True
+				else:
+					hit_go_typedef = False
+					restore.append(char)
+					a = restore
 
 			elif hit_go_typedef and char=='(':
 				a.append(')<<(')
@@ -505,6 +510,8 @@ def mappass( a:map[string]int ):
 	pass
 
 m = map[int]string{ a:'xxx' for a in range(10)}
+
+a = xxx[x][y]
 
 '''
 
