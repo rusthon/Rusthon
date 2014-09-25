@@ -1099,10 +1099,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.write('pass')
 
 
-		## `self.__class__` pointer ##
-		writer.write('this.__class__ = %s' %name)  ## isinstance runtime builtin requires this
 
 		if not self._fast_js:
+			## `self.__class__` pointer ##
+			writer.write('this.__class__ = %s' %name)  ## isinstance runtime builtin requires this
+
 			## instance UID ##
 			writer.write('this.__uid__ = "￼" + _PythonJS_UID')
 			writer.write('_PythonJS_UID += 1')
@@ -1137,8 +1138,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				line = self.visit(method)
 				if line: writer.write( line )
 				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
-				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-				writer.write('%s.%s = JS("%s")'%(name,mname,f))
+
+				if not self._fast_js:
+					## allows subclass method to extend the parent's method by calling the parent by class name,
+					## `MyParentClass.some_method(self)`
+					f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
+					writer.write('%s.%s = JS("%s")'%(name,mname,f))
 
 		for base in node.bases:
 			base = self.visit(base)
@@ -1174,7 +1179,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	def visit_ClassDef(self, node):
 		#raise SyntaxError( self._modules )
 		if self._modules:
-			writer.write('__new_module__(%s)' %node.name)
+			writer.write('__new_module__(%s)' %node.name) ## triggers a new file in final stage of translation.
+
 		if self._with_dart or self._with_go:
 			self._visit_dart_classdef(node)
 			return
@@ -3247,21 +3253,27 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		elif self._with_js or javascript or self._with_ll:
 			if node.args.defaults:
-				kwargs_name = node.args.kwarg or '_kwargs_'
-				lines = [ 'if (!( %s instanceof Object )) {' %kwargs_name ]
-				a = ','.join( ['%s: arguments[%s]' %(arg.id, i) for i,arg in enumerate(node.args.args)] )
-				lines.append( 'var %s = {%s}' %(kwargs_name, a))
-				lines.append( '}')
-				for a in lines:
-					writer.write("JS('''%s''')" %a)
+				if not self._fast_js:
+					## this trys to recover when called in a bad way,
+					## however, this could be dangerous because the program
+					## should fail if a function is called this badly.
+					kwargs_name = node.args.kwarg or '_kwargs_'
+					lines = [ 'if (!( %s instanceof Object )) {' %kwargs_name ]
+					a = ','.join( ['%s: arguments[%s]' %(arg.id, i) for i,arg in enumerate(node.args.args)] )
+					lines.append( 'var %s = {%s}' %(kwargs_name, a))
+					lines.append( '}')
+					for a in lines:
+						writer.write("JS('''%s''')" %a)
 
 				offset = len(node.args.args) - len(node.args.defaults)
 				for i, arg in enumerate(node.args.args):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
-						a = (kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id)
-						b = "if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}" %a
+						#a = (kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id)
+						#b = "if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}" %a
+						a = (arg.id, kwargs_name, kwargs_name,arg.id, default_value, kwargs_name, arg.id)
+						b = "var %s	= (%s === undefined || %s.%s === undefined) ? %s : %s.%s" %a
 						c = "JS('''%s''')" %b
 						writer.write( c )
 
@@ -3639,8 +3651,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			for n in node.body:
 				calls = collect_calls(n)
 				for c in calls:
-					log('--call: %s' %c)
-					log('------: %s' %c.func)
 					if isinstance(c.func, ast.Name):  ## these are constant for sure
 						i = self._call_ids
 						writer.write( '''JS('var __call__%s = __get__(%s,"__call__")')''' %(i,self.visit(c.func)) )

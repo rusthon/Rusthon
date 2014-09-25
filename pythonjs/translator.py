@@ -10,7 +10,7 @@ from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--modules|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--modules|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -85,6 +85,7 @@ def main(script, module_path=None):
 					requirejs='--no-wrapper' not in sys.argv, 
 					insert_runtime='--no-runtime' not in sys.argv,
 					fast_javascript = '--fast-javascript' in sys.argv,
+					fast_loops      = '--fast-loops' in sys.argv
 				)
 				if isinstance(code, dict):
 					assert '--modules' in sys.argv

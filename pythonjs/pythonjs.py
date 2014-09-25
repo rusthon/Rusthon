@@ -25,10 +25,11 @@ class SwapLambda( RuntimeError ):
 		RuntimeError.__init__(self)
 
 class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False):
+	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
 		#writer = code_writer.Writer()
 		#self.setup_inliner( writer )
 		self._fast_js = fast_javascript
+		self._fast_loops = fast_loops
 		self._func_expressions = function_expressions
 		self._indent = 0
 		self._global_functions = {}
@@ -50,7 +51,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
 		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
-	def indent(self): return '  ' * self._indent
+	def indent(self): return '\t' * self._indent
 	def push(self): self._indent += 1
 	def pull(self):
 		if self._indent > 0: self._indent -= 1
@@ -302,6 +303,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 
 	def _visit_function(self, node):
+		comments = []
+		body = []
+
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
 		is_pyfunc = False
@@ -553,7 +557,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		elif len(node.decorator_list)==1 and not (isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id in self.special_decorators ) and not (isinstance(node.decorator_list[0], ast.Name) and node.decorator_list[0].id in self.special_decorators):
 			dec = self.visit(node.decorator_list[0])
-			buffer = self.indent() + '%s.%s = function(%s) {\n' % (dec,node.name, ', '.join(args))
+			fdef = '%s.%s = function(%s)' % (dec,node.name, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
 			## this style will not make function global to the eval context in NodeJS ##
@@ -564,9 +568,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			## infact, var should always be used with function expressions.
 
 			if self._func_expressions or func_expr:
-				buffer = 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+				fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
 			else:
-				buffer = 'function %s(%s) {\n' % (node.name, ', '.join(args))
+				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
+
 
 			if self._requirejs and node.name not in self._exports:
 				self._exports.add( node.name )
@@ -574,15 +579,20 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 
 			if self._func_expressions or func_expr:
-				buffer = 'var %s = function(%s) {\n' % (node.name, ', '.join(args))
+				fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
 			else:
-				buffer = 'function %s(%s) {\n' % (node.name, ', '.join(args))
+				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
+		body.append( fdef )
+
+		body.append( self.indent() + '{' )
 		self.push()
-		body = list()
 		next = None
 		for i,child in enumerate(node.body):
 			if isinstance(child, Str) or hasattr(child, 'SKIP'):
+				continue
+			elif isinstance(child, ast.Expr) and isinstance(child.value, ast.Str):
+				comments.append('/* %s */' %child.value.s.strip() )
 				continue
 
 			#try:
@@ -606,9 +616,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			else:
 				body.append( self.indent()+v)
 
-		buffer += '\n'.join(body)
+		#buffer += '\n'.join(body)
 		self.pull()
-		buffer += '\n%s}' %self.indent()
+		#buffer += '\n%s}' %self.indent()
+
+		body.append( self.indent() + '}' )
+
+		buffer = '\n'.join( comments + body )
+
 		#if self._inline_lambda:
 		#	self._inline_lambda = False
 		if is_annon:
@@ -967,7 +982,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return s
 
 	def visit_While(self, node):
-		body = [ 'while (%s) {' %self.visit(node.test)]
+		body = [ 'while (%s)' %self.visit(node.test), self.indent()+'{']
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
@@ -1121,9 +1136,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		out = []
 		test = self.visit(node.test)
 		if test.startswith('(') and test.endswith(')'):
-			out.append( 'if %s {' %test )
+			out.append( 'if %s' %test )
 		else:
-			out.append( 'if (%s) {' %test )
+			out.append( 'if (%s)' %test )
+		out.append( self.indent() + '{' )
 
 		self.push()
 
@@ -1159,9 +1175,72 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		## support "for key in JSObject" ##
 		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
 		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
-		out.append(
-			self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_some_array(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
-		)
+		if not self._fast_loops:
+			out.append(
+				self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_some_array(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
+			)
+
+	def _visit_for_glsl(self, node):
+		target = self.visit(node.target)
+
+		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='iter':  ## `for i in iter(n):`
+			assert isinstance(node.iter.args[0], ast.Name)
+			iter = node.iter.args[0].id
+			self._typed_vars[target] = 'struct*'  ## this fixes attributes on structs
+
+			lines = [
+				'`@var __length__ = %s.length;`' %iter,
+				#'`@console.log("DEBUG iter: "+%s);`' %iter,
+				#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
+				'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
+				##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
+				#'`@console.log("DEBUG sname: "+__struct_name__);`',
+				'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
+			]
+
+			##TODO## lines.append('$')  ## optimizes webclgl parser
+
+			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
+
+			## declare struct variable ##
+			lines.append( '`__struct_name__` %s;' %target)
+
+			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
+			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
+			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
+			lines.append( '`@}`')
+
+			##TODO## lines.append('$')  ## optimizes webclgl parser
+
+
+		elif isinstance(node.iter, ast.Call):  ## `for i in range(n):`
+			iter = self.visit(node.iter.args[0])
+			lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
+		elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
+			## capture the length of the subarray into the current javascript scope
+			## this is required to inline the lengths as constants into the GLSL for loops
+			lines = ['`@var __length__ = %s[0].length;`' %node.iter.id]
+			## start the GLSL for loop - `__length__` is set above ##
+			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
+
+			## declare subarray with size ##
+			lines.append( 'float %s[`__length__`];' %target)
+
+			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
+			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
+			## below checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
+			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { for (int _J=0; _J<" +__length__+ "; _J++) {%s[_J] = %s_" +__j+ "[_J];} }");`' %(target, node.iter.id))
+			lines.append( '`@}`')
+			## this works because the function glsljit.array will unpack an array of arrays using the variable name with postfix "_n"
+			## note the extra for loop `_J` is required because the local subarray can not be assigned to `A_n`
+
+		else:
+			raise SyntaxError(node.iter)
+
+		for b in node.body:
+			lines.append( self.visit(b) )
+		lines.append( '}' )  ## end of for loop
+		return '\n'.join(lines)
 
 
 	_iter_id = 0
@@ -1180,95 +1259,36 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		'''
 		if self._glsl:
-			target = self.visit(node.target)
-
-			if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='iter':  ## `for i in iter(n):`
-				assert isinstance(node.iter.args[0], ast.Name)
-				iter = node.iter.args[0].id
-				self._typed_vars[target] = 'struct*'  ## this fixes attributes on structs
-
-				lines = [
-					'`@var __length__ = %s.length;`' %iter,
-					#'`@console.log("DEBUG iter: "+%s);`' %iter,
-					#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
-					'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
-					##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
-					#'`@console.log("DEBUG sname: "+__struct_name__);`',
-					'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
-				]
-
-				##TODO## lines.append('$')  ## optimizes webclgl parser
-
-				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
-
-				## declare struct variable ##
-				lines.append( '`__struct_name__` %s;' %target)
-
-				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-				lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-				lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
-				lines.append( '`@}`')
-
-				##TODO## lines.append('$')  ## optimizes webclgl parser
-
-
-			elif isinstance(node.iter, ast.Call):  ## `for i in range(n):`
-				iter = self.visit(node.iter.args[0])
-				lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
-			elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
-				## capture the length of the subarray into the current javascript scope
-				## this is required to inline the lengths as constants into the GLSL for loops
-				lines = ['`@var __length__ = %s[0].length;`' %node.iter.id]
-				## start the GLSL for loop - `__length__` is set above ##
-				lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
-
-				## declare subarray with size ##
-				lines.append( 'float %s[`__length__`];' %target)
-
-				## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-				lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-				## below checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
-				lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { for (int _J=0; _J<" +__length__+ "; _J++) {%s[_J] = %s_" +__j+ "[_J];} }");`' %(target, node.iter.id))
-				lines.append( '`@}`')
-				## this works because the function glsljit.array will unpack an array of arrays using the variable name with postfix "_n"
-				## note the extra for loop `_J` is required because the local subarray can not be assigned to `A_n`
-
-			else:
-				raise SyntaxError(node.iter)
-
-			for b in node.body:
-				lines.append( self.visit(b) )
-			lines.append( '}' )  ## end of for loop
-			return '\n'.join(lines)
-
-
-		self._iter_id += 1
-		iname = '__iter%s' %self._iter_id
-		index = '__idx%s' %self._iter_id
+			return self._visit_for_glsl( node )
 
 		target = node.target.id
 		iter = self.visit(node.iter) # iter is the python iterator
 
 		out = []
-		out.append( self.indent() + 'var %s = %s;' % (iname, iter) )
-		#out.append( self.indent() + 'var %s = 0;' % index )
+		body = []
+
+		self._iter_id += 1
+		index = '__i%s' %self._iter_id
+		if not self._fast_loops:
+			iname = '__iter%s' %self._iter_id
+			out.append( self.indent() + 'var %s = %s;' % (iname, iter) )
+		else:
+			iname = iter
 
 		self._visit_for_prep_iter_helper(node, out, iname)
 
-		out.append( self.indent() + 'for (var %s=0; %s < %s.length; %s++) {' % (index, index, iname, index) )
+		if self._fast_loops:
+			out.append( 'for (var %s=0; %s < %s.length; %s++)' % (index, index, iname, index) )
+			out.append( self.indent() + '{' )
+
+		else:
+			out.append( self.indent() + 'for (var %s=0; %s < %s.length; %s++) {' % (index, index, iname, index) )
 		self.push()
 
-		body = []
-		# backup iterator and affect value of the next element to the target
-		#pre = 'var backup = %s; %s = iter[%s];' % (target, target, target)
 		body.append( self.indent() + 'var %s = %s[ %s ];' %(target, iname, index) )
 
 		for line in list(map(self.visit, node.body)):
 			body.append( self.indent() + line )
-
-		# replace the replace target with the javascript iterator
-		#post = '%s = backup;' % target
-		#body.append( self.indent() + post )
 
 		self.pull()
 		out.extend( body )
@@ -1305,7 +1325,7 @@ def generate_runtime():
 	]
 	return '\n'.join( lines )
 
-def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False):
+def main(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
 	head = []
 	tail = []
 	script = False
@@ -1375,7 +1395,8 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 		insert_runtime=insert_runtime, 
 		webworker=webworker, 
 		function_expressions=function_expressions,
-		fast_javascript = fast_javascript
+		fast_javascript = fast_javascript,
+		fast_loops      = fast_loops
 	)
 	output = gen.visit(tree)
 
