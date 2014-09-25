@@ -1154,8 +1154,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		self.pull()
 
 		if orelse:
-			out.append( self.indent() + '} else {')
+			out.append( self.indent() + '}')
+			out.append( self.indent() + 'else')
+			out.append( self.indent() + '{')
 			out.extend( orelse )
+
 		out.append( self.indent() + '}' )
 
 		return '\n'.join( out )
@@ -1167,7 +1170,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			k = self.visit( node.keys[ i ] )
 			v = self.visit( node.values[i] )
 			a.append( '%s:%s'%(k,v) )
-		b = ','.join( a )
+		b = ', '.join( a )
 		return '{ %s }' %b
 
 

@@ -132,7 +132,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
                 return msg
 
-	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False, ):
+	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
 		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
@@ -142,6 +142,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._with_go = go
 		self._with_gojs = False
 		self._fast_js = fast_javascript
+		self._strict_mode = pure_javascript
 
 		self._html_tail = []; script = False
 		if source.strip().startswith('<html'):
@@ -516,6 +517,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				module_path     = self._module_path,
 				fast_javascript = self._fast_js,
 				modules         = self._modules,
+				pure_javascript = self._strict_mode,
 			)
 			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
 
@@ -2569,27 +2571,47 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))
 
 				elif anode.attr == 'keys' and not args:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `keys` is not allowed without arguments') )
+
 					return '__jsdict_keys(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'values' and not args:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `values` is not allowed without arguments') )
 					return '__jsdict_values(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'items' and not args:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `items` is not allowed without arguments') )
+
 					return '__jsdict_items(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'pop':
 					if args:
 						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 					else:
-						return '__jsdict_pop(%s)' %self.visit(anode.value)
+						if self._strict_mode:
+							return '%s.pop()' %self.visit(anode.value)
+						else:
+							return '__jsdict_pop(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'split' and not args:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `split` is not allowed without arguments') )
+
 					return '__split_method(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'sort' and not args:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `sort` is not allowed without arguments') )
+
 					return '__sort_method(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'replace' and len(node.args)==2:
+					if self._strict_mode:
+						raise SyntaxError( self.format_error('method `replace` is not allowed...') )
+
 					return '__replace_method(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				else:
@@ -3266,14 +3288,31 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 						writer.write("JS('''%s''')" %a)
 
 				offset = len(node.args.args) - len(node.args.defaults)
+
+				maxlen = 0
+				maxlen2 = 0
+				for i, arg in enumerate(node.args.args):
+					dindex = i - offset
+					if dindex >= 0:
+						dval = self.visit( node.args.defaults[dindex] )
+
+						if len(arg.id) > maxlen:
+							maxlen = len(arg.id)
+
+						if len(dval) > maxlen2:
+							maxlen2 = len(dval)
+
+
 				for i, arg in enumerate(node.args.args):
 					dindex = i - offset
 					if dindex >= 0:
 						default_value = self.visit( node.args.defaults[dindex] )
 						#a = (kwargs_name, kwargs_name, arg.id, arg.id, default_value, arg.id, kwargs_name, arg.id)
 						#b = "if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}" %a
-						a = (arg.id, kwargs_name, kwargs_name,arg.id, default_value, kwargs_name, arg.id)
-						b = "var %s	= (%s === undefined || %s.%s === undefined) ? %s : %s.%s" %a
+						spaces = ' ' * (maxlen - len(arg.id))
+						spaces2 = ' ' * (maxlen2 - len(default_value))
+						a = (arg.id, spaces, kwargs_name, kwargs_name,arg.id, spaces, default_value, spaces2, kwargs_name, arg.id)
+						b = "var %s %s= (%s === undefined || %s.%s === undefined)%s?\t%s %s: %s.%s" %a
 						c = "JS('''%s''')" %b
 						writer.write( c )
 
