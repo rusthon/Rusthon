@@ -132,15 +132,27 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		return '\n'.join(r)
 
-	def visit_Module(self, node):
+	def _new_module(self, name='main.js'):
 		header = []
-		lines = []
-
 		if self._requirejs and not self._webworker:
 			header.extend([
 				'define( function(){',
 				'__module__ = {}'
 			])
+
+		return {
+			'name'   : name,
+			'header' : header,
+			'lines'  : []
+		}
+
+	def visit_Module(self, node):
+		modules = []
+
+		mod = self._new_module()
+		modules.append( mod )
+		lines = mod['lines']
+		header = mod['header']
 
 
 		if self._insert_runtime:
@@ -149,11 +161,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			lines.append( runtime )  #.replace('\n', ';') )
 
 		for b in node.body:
-			line = self.visit(b)
-			if line: lines.append( line )
+			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id == '__new_module__':
+				mod = self._new_module( '%s.js' %b.value.args[0].id )
+				modules.append( mod )
+				lines = mod['lines']
+				header = mod['header']
+
 			else:
-				#raise b
-				pass
+				line = self.visit(b)
+				if line: lines.append( line )
 
 		if self._requirejs and not self._webworker:
 			for name in self._exports:
@@ -166,9 +182,16 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if self._has_glsl:
 			header.append( 'var __shader_header__ = ["%s"]'%self.glsl_runtime )
 
-		lines = header + lines
-		## fixed by Foxboron
-		return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
+		if len(modules) == 1:
+			lines = header + lines
+			## fixed by Foxboron
+			return '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
+		else:
+			d = {}
+			for mod in modules:
+				lines = mod['header'] + mod['lines']
+				d[ mod['name'] ] = '\n'.join(l if isinstance(l,str) else l.encode("utf-8") for l in lines)
+			return d
 
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
@@ -1355,7 +1378,8 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 		fast_javascript = fast_javascript
 	)
 	output = gen.visit(tree)
-	if head:
+
+	if head and not isinstance(output, dict):
 		head.append( output )
 		head.extend( tail )
 		output = '\n'.join( head )

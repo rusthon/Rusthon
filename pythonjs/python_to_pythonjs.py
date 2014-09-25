@@ -132,13 +132,15 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
                 return msg
 
-	def __init__(self, source=None, module=None, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False):
-		super(PythonToPythonJS, self).__init__()
+	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False, ):
+		#super(PythonToPythonJS, self).__init__()
+		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_go = go
+		self._with_gojs = False
 		self._fast_js = fast_javascript
 
 		self._html_tail = []; script = False
@@ -242,7 +244,6 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._return_type = None
 
 
-		self._module = module    ## DEPRECATED
 		self._typedefs = dict()  ## class name : typedef  (deprecated - part of the old static type finder)
 
 		self._globals = dict()
@@ -327,7 +328,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			for line in self._html_tail:
 				writer.write(line)
 
-        def visit(self, node):
+	def visit(self, node):
 		"""Visit a node."""
 		## modified code of visit() method from Python 2.7 stdlib
 		self._stack.append(node)
@@ -513,7 +514,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			subtrans = PythonToPythonJS(
 				data, 
 				module_path     = self._module_path,
-				fast_javascript = self._fast_js
+				fast_javascript = self._fast_js,
+				modules         = self._modules,
 			)
 			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
 
@@ -537,7 +539,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_dart or self._with_ll or self._with_go:
+			if self._with_dart or self._with_ll or self._with_go or self._fast_js:
 				a.append( '%s:%s'%(k,v) )
 				#if isinstance(node.keys[i], ast.Str):
 				#	a.append( '%s:%s'%(k,v) )
@@ -548,7 +550,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			else:
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## this allows non-string keys
 
-		if self._with_dart or self._with_ll or self._with_go:
+
+		if self._with_dart or self._with_ll or self._with_go or self._fast_js:
 			b = ','.join( a )
 			return '{%s}' %b
 		elif self._with_js:
@@ -676,7 +679,11 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._comprehensions.remove( node )
 		#return '__get__(list, "__call__")([], {pointer:%s})' %cname
-		return cname
+
+		if self._with_go:
+			return 'go.addr(%s)' %cname
+		else:
+			return cname
 
 
 	def _gen_comp(self, generators, node):
@@ -1165,6 +1172,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		self._in_js_class = False
 
 	def visit_ClassDef(self, node):
+		#raise SyntaxError( self._modules )
+		if self._modules:
+			writer.write('__new_module__(%s)' %node.name)
 		if self._with_dart or self._with_go:
 			self._visit_dart_classdef(node)
 			return
@@ -1739,7 +1749,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#else:
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_dart or self._with_ll or self._with_go:
-			return '%s.%s' %(node_value, node.attr)
+			if self._with_gojs:
+				return '%s.Get("%s")' %(node_value, node.attr)
+			else:
+				return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
 			if self._in_catch_exception == 'AttributeError':
@@ -2085,7 +2098,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#####################################
 
 			if self._with_js or self._with_dart or self._with_go:
-				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
+				if self._with_gojs:
+					writer.write( '%s.Set("%s", %s)' %(target_value, target.attr, self.visit(node.value)) )
+				else:
+					writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 			elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
 				setter = typedef.properties[ target.attr ]['set']
 				writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
@@ -2500,7 +2516,10 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(node.func, Name) and node.func.id in self._js_classes:
 				return '__new__%s(%s)' %( self.visit(node.func), ','.join(args) )
 			else:
-				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+				if self._with_gojs:
+					return '.Call(%s,%s)' %( self.visit(node.func), ','.join(args) )
+				else:
+					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
 			args = list( map(self.visit, node.args) )
@@ -3995,10 +4014,18 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 				if a: writer.write(a)
 			writer.pull()
 
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
+			self._with_gojs = True
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			self._with_gojs = False
+
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 
 EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
+
 
 class GeneratorFunctionTransformer( PythonToPythonJS ):
 	'''
@@ -4350,15 +4377,10 @@ def collect_generator_functions(node):
 
 
 
-def main(script, dart=False, coffee=False, lua=False, go=False, module_path=None, fast_javascript=False):
+def main(script, **kwargs):
 	translator = PythonToPythonJS(
 		source = script, 
-		dart   = dart,
-		coffee = coffee,
-		lua    = lua,
-		go     = go,
-		module_path = module_path,
-		fast_javascript = fast_javascript
+		**kwargs
 	)
 
 	code = writer.getvalue()

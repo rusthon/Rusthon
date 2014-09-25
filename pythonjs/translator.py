@@ -10,7 +10,7 @@ from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--modules|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -66,7 +66,8 @@ def main(script, module_path=None):
 			a = python_to_pythonjs(
 				script, 
 				module_path=module_path,
-				fast_javascript = '--fast-javascript' in sys.argv
+				fast_javascript = '--fast-javascript' in sys.argv,
+				modules  = '--modules' in sys.argv,
 			)
 
 			if isinstance(a, dict):
@@ -83,8 +84,18 @@ def main(script, module_path=None):
 					a, 
 					requirejs='--no-wrapper' not in sys.argv, 
 					insert_runtime='--no-runtime' not in sys.argv,
-					fast_javascript = '--fast-javascript' in sys.argv
+					fast_javascript = '--fast-javascript' in sys.argv,
 				)
+				if isinstance(code, dict):
+					assert '--modules' in sys.argv
+					path = 'build'
+					if os.path.isdir(path):
+						for name in code:
+							open( os.path.join(path,name), 'wb' ).write( code[name] )
+						return 'modules written to: ' + path
+					else:
+						raise RuntimeError('the option --modules requires a folder named "build" in your current directory')
+
 
 		if '--analyze' in sys.argv:
 			dartanalyzer = os.path.expanduser('~/dart-sdk/bin/dartanalyzer')

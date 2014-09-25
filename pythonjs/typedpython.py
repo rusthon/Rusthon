@@ -1,3 +1,6 @@
+# _*_ coding: utf-8 _*_
+
+
 types = ['str', 'list', 'dict', 'bool']
 
 glsl_types = ['struct*', 'int*', 'float*', 'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4']
@@ -25,8 +28,22 @@ GO_SPECIAL_CALLS = {
 	'go'         : '__go__',
 	'go.channel' : '__go_make_chan__',
 	'go.array'   : '__go__array__',
-	'go.make'    : '__go_make__'
+	'go.make'    : '__go_make__',
+	'go.addr'    : '__go__addr__'
 }
+
+OPERATORS = {
+	'left' : {
+		u'⟦' : '__getitem__',
+		u'⟪' : '__getpeer__',
+		u'⟅' : '__getserver__',
+		u'⎨' : '__getclient__'
+	},
+	'right' : [u'⟧', u'⟫', u'⟆', u'⎬'],
+}
+
+
+
 
 def transform_source( source, strip=False ):
 	output = []
@@ -49,8 +66,12 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
+			if not isindef and len(a) and char in OPERATORS['left'] and j==i+1:
+				a.append( '<<__op_left__(u"%s")<<' %char)
+			elif not isindef and len(a) and char in OPERATORS['right']:
+				a.append('<<__op_right__(u"%s")' % char )
 			## go array and map syntax ##
-			if not isindef and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+			elif not isindef and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
 				hit_go_typedef = True
 
@@ -392,7 +413,7 @@ def transform_source( source, strip=False ):
 	return r
 
 
-test = '''
+test = u'''
 int a = 1
 float b = 1.1
 str c = "hi"
@@ -512,6 +533,8 @@ def mappass( a:map[string]int ):
 m = map[int]string{ a:'xxx' for a in range(10)}
 
 a = xxx[x][y]
+a = xxx⎨Z⎬
+a = xxx ⎨Z⎬⎨zzzz⎬
 
 '''
 
