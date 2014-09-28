@@ -55,6 +55,7 @@ def transform_source( source, strip=False ):
 
 		a = []
 		hit_go_typedef = False
+		hit_go_funcdef = False
 		gotype = None
 		isindef = False
 
@@ -100,7 +101,7 @@ def transform_source( source, strip=False ):
 						restore.append(char)
 						a = restore
 
-				elif ''.join(a[-3:])=='map':
+				elif ''.join(a[-3:])=='map' and gotype != 'func':
 					a.pop(); a.pop(); a.pop()
 					a.append('__go__map__(%s,' %gotype)
 				else:
@@ -108,8 +109,16 @@ def transform_source( source, strip=False ):
 					restore.append(char)
 					a = restore
 
+			elif hit_go_funcdef and char==')' and ')' in ''.join(a).split('func(')[-1]:
+				hit_go_funcdef = False
+				a.append('))<<')
+
 			elif hit_go_typedef and char=='(':
-				a.append(')<<(')
+				if ''.join(a).endswith('func'):
+					hit_go_funcdef = True
+					a.append( '(' )
+				else:
+					a.append(')<<(')
 				hit_go_typedef = False
 			elif hit_go_typedef and char=='{':
 				a.append(')<<{')
@@ -545,6 +554,9 @@ m = map[int]string{ a:'xxx' for a in range(10)}
 a = xxx[x][y]
 a = xxx⎨Z⎬
 a = xxx ⎨Z⎬⎨zzzz⎬
+
+functions = map[string]func(int)(int){}
+
 
 '''
 
