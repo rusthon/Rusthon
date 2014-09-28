@@ -8,11 +8,47 @@ import pythonjs
 
 go_types = 'bool string int float64'.split()
 
+def transform_gopherjs( node ):
+	gt = GopherjsTransformer()
+	gt.visit( node )
+	return node
+
+class GopherjsTransformer( ast.NodeVisitor ):
+	#def visit_Assign(self, node):
+	#	writer.write( '%s.Set("%s", %s)' %(target_value, target.attr, self.visit(node.value)) )
+
+
+	def visit_Attribute(self, node):
+		#return '%s.Get("%s")' %(self.visit(node.value), node.attr)
+		args = [ ast.Str(node.attr) ]
+		f = ast.Call( ast.Name('Get', None), args, [], None, None )
+		node.__dict__ = f.__dict__
+
+	def visit_Call(self, node):
+		#if isinstance(self._stack[-2], ast.Expr):
+		#	pass
+		#else:
+		#	raise SyntaxError( self._stack )
+		if isinstance(node.func, ast.Attribute):
+			args = [ ast.Str(node.func.attr) ]
+			args.extend( node.args )
+			#f = ast.Call( ast.Name('Call', None), args, node.keywords, node.starargs, node.kwargs )
+			#raise SyntaxError(node)
+
+			f = ast.Call( ast.Name('__js_global_get_'+node.func.value.id, None), args, node.keywords, node.starargs, node.kwargs )
+
+			#x = ast.Attribute( ast.Name('js',None), 'Global', None )
+			#a = ast.Call( ast.Name('__js_global_get_',None), [ast.Str(node.func.value.id)], [], None, None )
+
+			node.__dict__ = f.__dict__
+
+
 class GoGenerator( pythonjs.JSGenerator ):
 
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 
+		self._with_gojs = False
 		self._class_stack = list()
 		self._classes = dict()		## name : node
 		self._class_props = dict()
@@ -29,6 +65,33 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_IsNot(self, node):
 		return '!='
 
+	def visit_If(self, node):
+		out = []
+		test = self.visit(node.test)
+		if test.startswith('(') and test.endswith(')'):
+			out.append( 'if %s {' %test )
+		else:
+			out.append( 'if (%s) {' %test )
+
+		self.push()
+
+		for line in list(map(self.visit, node.body)):
+			if line is None: continue
+			out.append( self.indent() + line )
+
+		orelse = []
+		for line in list(map(self.visit, node.orelse)):
+			orelse.append( self.indent() + line )
+
+		self.pull()
+
+		if orelse:
+			out.append( self.indent() + '} else {')
+			out.extend( orelse )
+
+		out.append( self.indent() + '}' )
+
+		return '\n'.join( out )
 
 	def visit_Name(self, node):
 		if node.id == 'None':
@@ -339,6 +402,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 			fname += str(len(node.args))
 		elif fname == 'len':
 			return 'len(*%s)' %self.visit(node.args[0])
+		#elif fname.startswith('__js_global_get_'):
+		#	gname = fname.split('_')[-1]
+		#	fname = 'js.Global.Get("%s").Call' %gname
 
 
 		if node.args:
@@ -364,6 +430,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 			id = self._ids
 			self._ids += 1
 			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, args, arr, id)
+
+		elif self._with_gojs:
+			if isinstance(node.func, ast.Attribute):
+				fname = node.func.attr
+				obname = self.visit(node.func.value)
+				return 'Get("%s").Call("%s",%s)' % (obname, fname, args)
+
+			else:
+				return 'Call("%s",%s)' % (fname, args)
 
 		else:
 			return '%s(%s)' % (fname, args)
@@ -395,6 +470,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 					return '[]%s{}' %a
 				else:
 					return '[]*%s{}' %a
+		elif name == '__go__addr__':
+			return '&%s' %self.visit(node.args[0])
 		else:
 			raise SyntaxError(name)
 
@@ -622,7 +699,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_With(self, node):
 		r = []
 		is_switch = False
-		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
+		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
+			#transform_gopherjs( node )
+			self._with_gojs = True
+			for b in node.body:
+				a = self.visit(b)
+				if a: r.append(a)
+			self._with_gojs = False
+			return '\n'.join(r)
+
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
 			r.append('default:')
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
 			r.append('select {')
@@ -649,6 +735,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 				is_switch = True
 			else:
 				raise SyntaxError( 'invalid use of with')
+		else:
+			raise SyntaxError( 'invalid use of with')
 
 
 		for b in node.body:
@@ -661,34 +749,29 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(r)
 
 	def visit_Assign(self, node):
-		target = node.targets[0]
-		if isinstance(target, ast.Tuple):
+		if isinstance(node.targets[0], ast.Tuple):
 			raise NotImplementedError('TODO')
 
-		elif isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
-			target = self.visit(target)
+		target = self.visit( node.targets[0] )
+
+		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
 			return '%s <- %s;' % (target, value)
 
 		elif not self._function_stack:
-			target = self.visit(target)
 			value = self.visit(node.value)
 			return 'var %s = %s;' % (target, value)
 
-		elif isinstance(node.targets[0], ast.Name) and target.id in self._vars:
-			target = self.visit(target)
+		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
 			value = self.visit(node.value)
 			self._vars.remove( target )
 			self._known_vars.add( target )
 			return '%s := %s;' % (target, value)
 
 		else:
-			target = self.visit(target)
 			value = self.visit(node.value)
-
 			#if '<-' in value:
 			#	raise RuntimeError(target+value)
-
 			return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):
@@ -725,7 +808,7 @@ def main(script, insert_runtime=True):
 		raise err
 
 	#raise RuntimeError(script)
-	#return GoGenerator().visit(tree)
+	return GoGenerator().visit(tree)
 	try:
 		return GoGenerator().visit(tree)
 	except SyntaxError as err:

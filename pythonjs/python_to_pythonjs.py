@@ -112,10 +112,21 @@ class Typedef(object):
 				if res:
 					return res
 
-class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
+class NodeVisitorBase( ast.NodeVisitor ):
+	def __init__(self):
+		self._line = None
+		self._line_number = 0
+		self._stack = []        ## current path to the root
 
-	identifier = 0
-	_func_typedefs = ()
+	def visit(self, node):
+		"""Visit a node."""
+		## modified code of visit() method from Python 2.7 stdlib
+		self._stack.append(node)
+		method = 'visit_' + node.__class__.__name__
+		visitor = getattr(self, method, self.generic_visit)
+		res = visitor(node)
+		self._stack.pop()
+		return res
 
 	def format_error(self, node):
 		lines = []
@@ -132,8 +143,17 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
                 return msg
 
+
+class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
+
+	identifier = 0
+	_func_typedefs = ()
+
+
+
 	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
+		NodeVisitorBase.__init__(self)
 		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
@@ -199,9 +219,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		self._in_catch_exception = False
 
-		self._line = None
-		self._line_number = 0
-		self._stack = []        ## current path to the root
+
 
 		## optimize "+" and "*" operator
 		if fast_javascript:
@@ -329,15 +347,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			for line in self._html_tail:
 				writer.write(line)
 
-	def visit(self, node):
-		"""Visit a node."""
-		## modified code of visit() method from Python 2.7 stdlib
-		self._stack.append(node)
-		method = 'visit_' + node.__class__.__name__
-		visitor = getattr(self, method, self.generic_visit)
-		res = visitor(node)
-		self._stack.pop()
-		return res
+
 
 	def has_webworkers(self):
 		return len(self._webworker_functions.keys())
@@ -650,16 +660,19 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
 
-		if len(self._comprehensions) == 0:
+		if len(self._comprehensions) == 0 and False:
 			comps = collect_comprehensions( node )
+			assert comps
 			for i,cnode in enumerate(comps):
 				cname = '__comp__%s' % self._comp_id
 				self._comp_id += 1
 				cnode._comp_name = cname
 				self._comprehensions.append( cnode )
 
-		cname = node._comp_name
-		writer.write('var(%s)'%cname)
+		#cname = node._comp_name
+		#writer.write('var(%s)'%cname)
+
+		writer.write('var(__comp__%s)'%self._comp_id)
 
 		length = len( node.generators )
 		a = ['idx%s'%i for i in range(length)]
@@ -671,7 +684,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 
 		if self._with_go:
 			assert node.go_listcomp_type
-			writer.write('%s = __go__array__(%s)' %(cname, node.go_listcomp_type))
+			writer.write('__comp__%s = __go__array__(%s)' %(self._comp_id, node.go_listcomp_type))
 		else:
 			writer.write('%s = JSArray()'%cname)
 
@@ -679,18 +692,22 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		generators.reverse()
 		self._gen_comp( generators, node )
 
-		self._comprehensions.remove( node )
+		if node in self._comprehensions:
+			self._comprehensions.remove( node )
 		#return '__get__(list, "__call__")([], {pointer:%s})' %cname
 
 		if self._with_go:
-			return 'go.addr(%s)' %cname
+			return '__go__addr__(__comp__%s)' %self._comp_id
 		else:
-			return cname
+			return '__comp__%s' %self._comp_id
 
 
 	def _gen_comp(self, generators, node):
+		self._comp_id += 1
+		id = self._comp_id
+
 		gen = generators.pop()
-		id = len(generators) + self._comprehensions.index( node )
+		#id = len(generators) + self._comprehensions.index( node )
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
 
@@ -719,7 +736,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		if generators:
 			self._gen_comp( generators, node )
 		else:
-			cname = node._comp_name #self._comprehensions[-1]
+			#cname = node._comp_name #self._comprehensions[-1]
+			cname = '__comp__%s' % self._comp_id
+
 			if len(gen.ifs):
 				test = []
 				for compare in gen.ifs:
@@ -1089,10 +1108,12 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if hasattr(init, '_code'):  ## cached ##
 				code = init._code
 			elif args:
-				code = '%s.__init__(this, %s); %s'%(name, ','.join(args), tail)
+				#code = '%s.__init__(this, %s); %s'%(name, ','.join(args), tail)
+				code = 'this.__init__(%s); %s'%(', '.join(args), tail)
 				init._code = code
 			else:
-				code = '%s.__init__(this);     %s'%(name, tail)
+				#code = '%s.__init__(this);     %s'%(name, tail)
+				code = 'this.__init__();     %s' % tail
 				init._code = code
 
 			writer.write(code)
@@ -1757,10 +1778,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#else:
 			return '%s.%s' %(node_value, node.attr)
 		elif self._with_dart or self._with_ll or self._with_go:
-			if self._with_gojs:
-				return '%s.Get("%s")' %(node_value, node.attr)
-			else:
-				return '%s.%s' %(node_value, node.attr)
+			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
 			if self._in_catch_exception == 'AttributeError':
@@ -2106,10 +2124,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			#####################################
 
 			if self._with_js or self._with_dart or self._with_go:
-				if self._with_gojs:
-					writer.write( '%s.Set("%s", %s)' %(target_value, target.attr, self.visit(node.value)) )
-				else:
-					writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
+				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
+
 			elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
 				setter = typedef.properties[ target.attr ]['set']
 				writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
@@ -2524,10 +2540,7 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			if isinstance(node.func, Name) and node.func.id in self._js_classes:
 				return '__new__%s(%s)' %( self.visit(node.func), ','.join(args) )
 			else:
-				if self._with_gojs:
-					return '.Call(%s,%s)' %( self.visit(node.func), ','.join(args) )
-				else:
-					return '%s(%s)' %( self.visit(node.func), ','.join(args) )
+				return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
 			args = list( map(self.visit, node.args) )
@@ -4064,6 +4077,9 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 			writer.pull()
 
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
+			raise SyntaxError('deprecated')
+			transform_gopherjs( node )
+
 			self._with_gojs = True
 			for b in node.body:
 				a = self.visit(b)
@@ -4073,7 +4089,8 @@ class PythonToPythonJS(NodeVisitor, inline_function.Inliner):
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 
-EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
+EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__', 'gojs')
+
 
 
 class GeneratorFunctionTransformer( PythonToPythonJS ):

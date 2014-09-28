@@ -50,6 +50,9 @@ def transform_source( source, strip=False ):
 	output_post = None
 
 	for line in source.splitlines():
+		if line.strip().startswith('#'):
+			continue
+
 		a = []
 		hit_go_typedef = False
 		gotype = None
@@ -89,7 +92,14 @@ def transform_source( source, strip=False ):
 					else:
 						a.append('__go__array__(')
 				elif gotype.isdigit():
-					a.append('__go__arrayfixed__(%s,' %gotype)
+					p = ''.join(a).split()[-1].strip()
+					if p.startswith('[') or p.startswith('='):
+						a.append('__go__arrayfixed__(%s,' %gotype)
+					else:
+						hit_go_typedef = False
+						restore.append(char)
+						a = restore
+
 				elif ''.join(a[-3:])=='map':
 					a.pop(); a.pop(); a.pop()
 					a.append('__go__map__(%s,' %gotype)
@@ -528,7 +538,7 @@ def listpass( a:[]int ):
 	pass
 
 def mappass( a:map[string]int ):
-	pass
+	return ConvertDataUnits[unit_type][unit][1][0]
 
 m = map[int]string{ a:'xxx' for a in range(10)}
 
