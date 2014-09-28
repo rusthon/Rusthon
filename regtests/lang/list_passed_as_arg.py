@@ -10,3 +10,7 @@ def main():
 	TestError( a[0]==1 )
 	f( a )
 	TestError( len(a)==4 )
+
+	b = []int( x for x in range(9) )
+	f( b )
+	TestError( len(b)==10 )

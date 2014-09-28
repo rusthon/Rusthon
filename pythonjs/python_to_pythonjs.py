@@ -626,9 +626,9 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			comps = collect_dict_comprehensions( node )
 			for i,cnode in enumerate(comps):
 				cname = '__comp__%s' % self._comp_id
-				self._comp_id += 1
 				cnode._comp_name = cname
 				self._comprehensions.append( cnode )
+				self._comp_id += 1
 
 
 		cname = node._comp_name
@@ -660,21 +660,20 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
 
-		if len(self._comprehensions) == 0 and False:
+		if len(self._comprehensions) == 0 or True:
 			comps = collect_comprehensions( node )
 			assert comps
 			for i,cnode in enumerate(comps):
 				cname = '__comp__%s' % self._comp_id
-				self._comp_id += 1
 				cnode._comp_name = cname
 				self._comprehensions.append( cnode )
+				self._comp_id += 1
 
-		#cname = node._comp_name
-		#writer.write('var(%s)'%cname)
+		cname = node._comp_name
+		writer.write('var(%s)'%cname)
+		#writer.write('var(__comp__%s)'%self._comp_id)
 
-		writer.write('var(__comp__%s)'%self._comp_id)
-
-		length = len( node.generators )
+		length = len( node.generators ) + (len(self._comprehensions)-1)
 		a = ['idx%s'%i for i in range(length)]
 		writer.write('var( %s )' %','.join(a) )
 		a = ['iter%s'%i for i in range(length)]
@@ -684,7 +683,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 		if self._with_go:
 			assert node.go_listcomp_type
-			writer.write('__comp__%s = __go__array__(%s)' %(self._comp_id, node.go_listcomp_type))
+			#writer.write('__comp__%s = __go__array__(%s)' %(self._comp_id, node.go_listcomp_type))
+			writer.write('%s = __go__array__(%s)' %(cname, node.go_listcomp_type))
 		else:
 			writer.write('%s = JSArray()'%cname)
 
@@ -692,22 +692,23 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		generators.reverse()
 		self._gen_comp( generators, node )
 
-		if node in self._comprehensions:
-			self._comprehensions.remove( node )
-		#return '__get__(list, "__call__")([], {pointer:%s})' %cname
+		#if node in self._comprehensions:
+		#	self._comprehensions.remove( node )
 
 		if self._with_go:
-			return '__go__addr__(__comp__%s)' %self._comp_id
+			#return '__go__addr__(__comp__%s)' %self._comp_id
+			return '__go__addr__(%s)' %cname
 		else:
-			return '__comp__%s' %self._comp_id
+			#return '__comp__%s' %self._comp_id
+			cname
 
 
 	def _gen_comp(self, generators, node):
-		self._comp_id += 1
-		id = self._comp_id
+		#self._comp_id += 1
+		#id = self._comp_id
 
 		gen = generators.pop()
-		#id = len(generators) + self._comprehensions.index( node )
+		id = len(generators) + self._comprehensions.index( node )
 		assert isinstance(gen.target, Name)
 		writer.write('idx%s = 0'%id)
 
@@ -736,8 +737,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		if generators:
 			self._gen_comp( generators, node )
 		else:
-			#cname = node._comp_name #self._comprehensions[-1]
-			cname = '__comp__%s' % self._comp_id
+			cname = node._comp_name #self._comprehensions[-1]
+			#cname = '__comp__%s' % self._comp_id
 
 			if len(gen.ifs):
 				test = []
