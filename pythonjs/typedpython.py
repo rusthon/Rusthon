@@ -556,7 +556,7 @@ a = xxx⎨Z⎬
 a = xxx ⎨Z⎬⎨zzzz⎬
 
 functions = map[string]func(int)(int){}
-
+[]int a = go( f() for f in funtions )
 
 '''
 

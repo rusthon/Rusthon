@@ -1503,7 +1503,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 						node.right.go_listcomp_type = node.left.args[0].id
 					elif node.left.func.id=='__go__map__':
 						is_go_listcomp = True
-						node.right.go_dictcomp_type =  ( node.left.args[0].id, node.left.args[1].id )
+						if isinstance(node.left.args[1], ast.Call):
+							node.right.go_dictcomp_type =  ( node.left.args[0].id, self.visit(node.left.args[1]) )
+						else:
+							node.right.go_dictcomp_type =  ( node.left.args[0].id, node.left.args[1].id )
 
 
 		right = self.visit(node.right)
@@ -1987,6 +1990,12 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 					writer.write(
 						'inline("var %s *%s;")' %(self.visit(node.value), self.visit(target.slice))
 					)
+
+			elif target.value.id == '__go__array__':
+				if isinstance(node.value, ast.Call) and len(node.value.args) and isinstance(node.value.args[0], ast.GeneratorExp ):
+					node.value.args[0].go_listcomp_type = self.visit(target.slice)
+				else:
+					raise SyntaxError( 'only a variable created by a generator expressions needs an array typedef')
 			else:
 				raise SyntaxError(self.visit(target))
 
