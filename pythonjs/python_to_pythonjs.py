@@ -700,7 +700,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			return '__go__addr__(%s)' %cname
 		else:
 			#return '__comp__%s' %self._comp_id
-			cname
+			return cname
 
 
 	def _gen_comp(self, generators, node):
@@ -722,6 +722,13 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 			writer.write('var(%s)'%gen.target.id)
 			writer.write('%s=idx%s' %(gen.target.id, id) )
+
+		elif self._with_js:  ## only works with arrays in javascript mode
+			writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
+			writer.write('while idx%s < iter%s.length:' %(id,id) )
+			writer.push()
+			writer.write('var(%s)'%gen.target.id)
+			writer.write('%s=iter%s[idx%s]' %(gen.target.id, id,id) )
 
 		else:
 			writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
