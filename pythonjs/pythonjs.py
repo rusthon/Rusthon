@@ -1002,6 +1002,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		right = self.visit(node.right)
 
 		if op == '>>' and left == '__new__':
+
+			## this can happen because python_to_pythonjs.py will catch when a new class instance is created
+			## (when it knows that class name) and replace it with `new(MyClass())`; but this can cause a problem
+			## if later the user changes that part of their code into a module, and loads it as a javascript module,
+			## they may update their code to call `new MyClass`, and then later go back to the python library.
+			## the following hack prevents `new new`
+			if isinstance(node.right, ast.Call) and isinstance(node.right.func, ast.Name) and node.right.func.id=='new':
+				right = self.visit(node.right.args[0])
+
 			return ' new %s' %right
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
