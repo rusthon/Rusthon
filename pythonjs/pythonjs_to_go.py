@@ -487,8 +487,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 		elif op == '<<':
 			if left in ('__go__receive__', '__go__send__'):
 				return '<- %s' %right
-			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__'):
-				if node.left.func.id == '__go__map__':
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__'):
+				if node.left.func.id == '__go__func__':
+					raise SyntaxError('TODO - go.func')
+				elif node.left.func.id == '__go__map__':
 					key_type = self.visit(node.left.args[0])
 					value_type = self.visit(node.left.args[1])
 					if value_type == 'interface': value_type = 'interface{}'

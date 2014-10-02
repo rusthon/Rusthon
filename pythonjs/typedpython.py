@@ -29,7 +29,8 @@ GO_SPECIAL_CALLS = {
 	'go.channel' : '__go_make_chan__',
 	'go.array'   : '__go__array__',
 	'go.make'    : '__go_make__',
-	'go.addr'    : '__go__addr__'
+	'go.addr'    : '__go__addr__',
+	'go.func'    : '__go__func__',
 }
 
 OPERATORS = {
@@ -144,7 +145,8 @@ def transform_source( source, strip=False ):
 				b = b.strip()
 				is_class_type = b.startswith('class:') and len(b.split(':'))==2
 				is_pointer = b.startswith('*')
-				if (b in types or is_class_type or is_pointer) and nextchar != '=':
+				is_func = b.startswith('func(')
+				if (b in types or is_class_type or is_pointer or is_func) and nextchar != '=':
 					if strip:
 						a = a[ : -len(b) ]
 					elif is_class_type:
@@ -156,13 +158,18 @@ def transform_source( source, strip=False ):
 						cls = b.split('*')[-1]
 						a = a[ : -len('*')-len(cls)]
 						a.append('__go__pointer__[%s]=\t\t\t\t' %cls)
-
+					elif is_func:
+						u = ''.join(a)
+						u = u.replace('func(', '__go__func__["func(')
+						u += '"]=\t\t\t\t'
+						a = [w for w in u]
 					else:
 						if a[-1]=='*':
 							a.pop()
 							a.append('POINTER')
 						a.append('=\t\t\t\t')
 						#a.append( char )
+
 				else:
 					a.append( char )
 			else:
@@ -370,6 +377,8 @@ def transform_source( source, strip=False ):
 						typedef = '"*%s"' %typedef.strip()
 					elif typedef.startswith('map['):
 						typedef = '"*%s"' %typedef.strip()
+					elif typedef.startswith('func('):
+						typedef = '"%s"' %typedef.strip()
 
 					if chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
