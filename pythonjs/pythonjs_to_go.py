@@ -508,7 +508,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
-						return '&[%s]%s%s' %(asize, atype, right)
+						if atype not in go_types:
+							if right != '{}': raise SyntaxError('todo init array of objects with args')
+							return '&make([]*%s, %s)' %(atype, asize)
+						else:
+							return '&[%s]%s%s' %(asize, atype, right)
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
 				return '*[]%s' %self.visit(node.right)
 
@@ -678,7 +682,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 			elif return_type == 'bool':
 				out.append('return false')
 			elif return_type:
-				raise NotImplementedError('TODO other generator function return types')
+				#raise NotImplementedError('TODO other generic function return types', return_type)
+				out.append('return %s' %(return_type.replace('*','&')+'{}'))
 
 		else:
 			for b in node.body:
@@ -784,7 +789,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 			value = self.visit(node.value)
 			#if '<-' in value:
 			#	raise RuntimeError(target+value)
-			return '%s = %s;' % (target, value)
+			if value.startswith('&make('):
+				#raise SyntaxError(value)
+				v = value[1:]
+				return '_tmp := %s; %s = &_tmp;' %(v, target)
+			else:
+				return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):
 		cond = self.visit(node.test)
