@@ -1016,6 +1016,12 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			if not self._with_go:
 				init.name = node.name
 			self.visit(init)
+			for item in init.body:
+				if isinstance(item, ast.Assign) and isinstance(item.targets[0], ast.Attribute):
+					if isinstance(item.targets[0].value, ast.Name) and item.targets[0].value.id=='self':
+						attr = item.targets[0].attr
+						if attr not in node._struct_vars:
+							node._struct_vars[ attr ] = 'interface'
 
 		## methods
 		for method in method_list:

@@ -146,7 +146,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 				#props.update( [self.visit(a) for a in decor.args] )
 				for kw in decor.keywords:
 					props.add( kw.arg )
-					sdef[ kw.arg ] = kw.value.id
+					T = kw.value.id
+					if T == 'interface': T = 'interface{}'
+					sdef[ kw.arg ] = T
 
 
 		init = None
@@ -163,20 +165,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 						v = b.value.values[i].s
 					else:
 						v = self.visit( b.value.values[i] )
+					if v == 'interface': v = 'interface{}'
 					sdef[k] = v
 
 		node._struct_def.update( sdef )
-
-		out.append( 'type %s struct {' %node.name)
-		if base_classes:
-			for bnode in base_classes:
-				## Go only needs the name of the parent struct and all its items are inserted automatically ##
-				out.append('%s' %bnode.name)
-
-		for name in sdef:
-			out.append('%s %s' %(name, sdef[name]))
-		out.append('}')
-
 
 		parent_init = None
 		if base_classes:
@@ -194,6 +186,17 @@ class GoGenerator( pythonjs.JSGenerator ):
 							parent_init = {'class':bnode, 'init':b}
 							#continue
 						out.append( self.visit(b) )
+
+
+		out.append( 'type %s struct {' %node.name)
+		if base_classes:
+			for bnode in base_classes:
+				## Go only needs the name of the parent struct and all its items are inserted automatically ##
+				out.append('%s' %bnode.name)
+
+		for name in sdef:
+			out.append('%s %s' %(name, sdef[name]))
+		out.append('}')
 
 
 		for b in node.body:
@@ -215,6 +218,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		else:
 			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
+
+
+
 
 		self.catch_call = set()
 		self._class_stack.pop()
@@ -553,10 +559,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 					## check for super classes - generics ##
 					if args_typedefs[ key.arg ] in self._classes:
-						classname = args_typedefs[ key.arg ]
-						generics.add( classname ) # switch v.(type) for each
-						generics = generics.union( self._classes[classname]._subclasses )
-						args_typedefs[ key.arg ] = 'interface{}'
+						if node.name=='__init__':
+							#raise SyntaxError('generic in init')
+							args_typedefs[ key.arg ] = 'interface{}'
+							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
+						else:
+							classname = args_typedefs[ key.arg ]
+							generics.add( classname ) # switch v.(type) for each
+							generics = generics.union( self._classes[classname]._subclasses )
+							args_typedefs[ key.arg ] = 'interface{}'
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
@@ -595,7 +606,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
-				if i==0 and generics:
+				if generics and (i==0 or (is_method and i==1)):
 					a = '__gen__ %s' %arg_type
 				else:
 					a = '%s %s' %(arg_name, arg_type)
