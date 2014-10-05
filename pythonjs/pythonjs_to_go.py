@@ -549,6 +549,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		chan_args_typedefs = {}
 		return_type = None
 		generics = set()
+		args_generics = dict()
+
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				for key in decor.keywords:
@@ -570,6 +572,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 							generics.add( classname ) # switch v.(type) for each
 							generics = generics.union( self._classes[classname]._subclasses )
 							args_typedefs[ key.arg ] = 'interface{}'
+							args_generics[ key.arg ] = classname
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
@@ -608,7 +611,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
-				if generics and (i==0 or (is_method and i==1)):
+				#if generics and (i==0 or (is_method and i==1)):
+				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
 				else:
 					a = '%s %s' %(arg_name, arg_type)
@@ -632,6 +636,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				args.append( a )
 				node._arg_names.append( arg_name )
 
+		##############################################
 		if oargs:
 			#args.append( '[%s]' % ','.join(oargs) )
 			#args.append( '{%s}' % ','.join(oargs) )
@@ -674,15 +679,20 @@ class GoGenerator( pythonjs.JSGenerator ):
 				#out.append('} else { %s := %s }' %(n,v))
 
 		if generics:
+			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
 			out.append(self.indent() + 'switch __gen__.(type) {')
 			self.push()
 			for gt in generics:
 				out.append(self.indent() + 'case *%s:' %gt)
 				self.push()
-				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(args_names[0],gt) )
+				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )
 				for b in node.body:
 					v = self.visit(b)
-					if v: out.append( self.indent() + v )
+					if v:
+						if v.strip().startswith('return ') and '*'+gt != return_type:
+							v += '.(%s) // this works?' %return_type
+							v = v.replace(gname, '__gen__') ## TODO - fix - this breaks easily
+						out.append( self.indent() + v )
 				self.pull()
 			self.pull()
 			out.append('}')
