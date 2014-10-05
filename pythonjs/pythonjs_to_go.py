@@ -560,7 +560,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 					## check for super classes - generics ##
 					if args_typedefs[ key.arg ] in self._classes:
 						if node.name=='__init__':
-							#raise SyntaxError('generic in init')
+							## generics type switch is not possible in __init__ because
+							## it is used to generate the type struct, where types are static.
+							## as a workaround generics passed to init always become `interface{}`
 							args_typedefs[ key.arg ] = 'interface{}'
 							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
 						else:
