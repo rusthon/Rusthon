@@ -2,25 +2,21 @@
 simple class
 '''
 class A:
-	{
-		x:int,
-		y:int,
-		z:int,
-	}
 	def __init__(self, x:int, y:int, z:int=1):
-		self.x = x
-		self.y = y
-		self.z = z
+		int self.x = x
+		int self.y = y
+		int self.z = z
 
 	def mymethod(self, m:int) -> int:
 		return self.x * m
 
 class B(A):
-	{
-		w:string
-	}
+	def __init__(self, s:string):
+		string self.w = s
+		int    self.x = 1
 
 	def method2(self, v:string) ->string:
+		print(self.x)
 		self.w = v
 		return self.w
 
@@ -39,5 +35,5 @@ def main():
 	c = call_method( a.mymethod, 4 )
 	print( c )
 
-	x = B(1,2,z=3)
+	x = B('testing...')
 	print( x.method2('hello world') )

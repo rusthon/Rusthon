@@ -1,7 +1,7 @@
 # _*_ coding: utf-8 _*_
 
 
-types = ['str', 'list', 'dict', 'bool']
+types = ['string', 'str', 'list', 'dict', 'bool']
 
 glsl_types = ['struct*', 'int*', 'float*', 'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4']
 glsl_xtypes = ['mat2x2', 'mat3x3', 'mat4x4']  ## others not supported in WebGLSL

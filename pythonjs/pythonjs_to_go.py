@@ -193,6 +193,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 			for bnode in base_classes:
 				## Go only needs the name of the parent struct and all its items are inserted automatically ##
 				out.append('%s' %bnode.name)
+				## Go allows multiple a variable to redefined by the sub-struct,
+				## but this can throw an error: `invalid operation: ambiguous selector`
+				## removing the duplicate name here fixes that error.
+				for key in bnode._struct_def.keys():
+					if key in sdef:
+						sdef.pop(key)
 
 		for name in sdef:
 			out.append('%s %s' %(name, sdef[name]))
