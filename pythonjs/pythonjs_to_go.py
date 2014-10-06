@@ -408,6 +408,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 			fname += str(len(node.args))
 		elif fname == 'len':
 			return 'len(*%s)' %self.visit(node.args[0])
+		elif fname == 'go.type_assert':
+			type = self.visit(node.args[1])
+			if type == 'self':
+				type = '*' + self._class_stack[-1].name
+			else:
+				type = '*' + type
+			return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
 		#elif fname.startswith('__js_global_get_'):
 		#	gname = fname.split('_')[-1]
 		#	fname = 'js.Global.Get("%s").Call' %gname
@@ -689,10 +696,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 				for b in node.body:
 					v = self.visit(b)
 					if v:
+						## TODO - fix - this breaks easily
 						if v.strip().startswith('return ') and '*'+gt != return_type:
-							v += '.(%s) // this works?' %return_type
-							v = v.replace(gname, '__gen__') ## TODO - fix - this breaks easily
+							if gname in v and v.strip() != 'return self':
+								if '(' not in v:
+									v += '.(%s)' %return_type
+									#if v.split('return ')[-1].strip()==gname:
+									v = v.replace(gname, '__gen__')
+
 						out.append( self.indent() + v )
+
 				self.pull()
 			self.pull()
 			out.append('}')
