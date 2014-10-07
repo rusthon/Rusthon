@@ -40,6 +40,9 @@ def main():
 	b = B()
 	c = C()
 
+	TestError(a.x == a.bar() )
+	TestError(a.x == a.foo(a,false).bar() )
+
 	x = my_generic( a )
 	TestError(a.x == x )
 
@@ -52,10 +55,22 @@ def main():
 	TestError( b.z==1 )
 	TestError( c.z==100 )
 
-	x = my_generic( b.foo(c, false) )
-	TestError(a.x == x )
-	x = my_generic( b.foo(c, true) )
-	TestError(a.x == 200 )
+	w = b.bar()
+	print(w)
 
-	y = my_generic( c.foo(b, true) )
-	TestError( y==11 )
+
+	## all of below breaks  ##
+
+	bb = b.foo(c, false)
+	w = bb.bar()
+	print(w)
+
+	w = my_generic( b.foo(c, false) )  ## calls B.bar()
+	print(w)
+	TestError( w == y )
+
+	w = my_generic( b.foo(c, true) )   ## calls C.bar()
+	TestError( w == z )
+
+	w = my_generic( c.foo(b, true) )   ## calls B.bar()
+	TestError( w==y )

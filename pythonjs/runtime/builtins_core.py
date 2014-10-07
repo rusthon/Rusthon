@@ -272,7 +272,7 @@ with javascript:
 					arr.append( Object.prototype.toString.call(item) )
 			return ''.join(arr)
 		else:
-			return fmt.replace('%s', args)
+			return inline("fmt.replace('%s', args)")
 
 
 

@@ -57,7 +57,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._known_vars = set()
 		self._kwargs_type_ = dict()
 
-		self._imports = []
+		self._imports = set()
 		self._ids = 0
 
 	def visit_Is(self, node):
@@ -301,7 +301,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		if r:
 			for name in r:
-				self._imports.append('import("%s");' %name)
+				self._imports.add('import("%s");' %name)
 		return ''
 
 	def visit_Module(self, node):
@@ -333,7 +333,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 			lines.append( '  __use__%s bool' %name)
 		lines.append('}')
 
-		lines = header + self._imports + lines
+		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
 
 
@@ -702,7 +702,18 @@ class GoGenerator( pythonjs.JSGenerator ):
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
 			out.append(self.indent() + 'switch __gen__.(type) {')
 			self.push()
-			for gt in generics:
+			gsorted = list(generics)
+			gsorted.sort()
+			gsorted.reverse()
+			#for gt in generics:
+			## this fails with a struct returned from a super method that returns self,
+			## the generic function will fail with a nil struct, while it still works when passed the instance directly.
+			for gt in gsorted:
+				assert gt in self._classes
+				#if node.name in self._classes[gt]._subclasses:
+				if len(self._classes[gt]._parents) == 0:
+					if return_type=='*'+gt or not is_method: pass
+					else: continue
 				out.append(self.indent() + 'case *%s:' %gt)
 				self.push()
 				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )
@@ -722,6 +733,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 				self.pull()
 			self.pull()
 			out.append('}')
+			out.append('fmt.Println("Generics RuntimeError - type not in type switch")')
+			#out.append('fmt.Println(__gen__)')
+
 			if return_type == 'int':
 				out.append('return 0')
 			elif return_type == 'float':
@@ -879,7 +893,9 @@ def main(script, insert_runtime=True):
 		raise err
 
 	#raise RuntimeError(script)
-	return GoGenerator().visit(tree)
+	g = GoGenerator()
+	g.visit(tree) # first pass gathers classes
+	return g.visit(tree)
 	try:
 		return GoGenerator().visit(tree)
 	except SyntaxError as err:
