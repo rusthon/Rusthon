@@ -417,10 +417,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 		elif fname == 'go.type_assert':
 			type = self.visit(node.args[1])
 			if type == 'self':
-				type = '*' + self._class_stack[-1].name
+				type = '&' + self._class_stack[-1].name
 			else:
 				type = '*' + type
-			return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
+			#return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
+			return '%s(*%s)' %(type, self.visit(node.args[0]) )
+
+
 		#elif fname.startswith('__js_global_get_'):
 		#	gname = fname.split('_')[-1]
 		#	fname = 'js.Global.Get("%s").Call' %gname
@@ -546,7 +549,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 		if isinstance(node.value, ast.Tuple):
 			return 'return %s' % ', '.join(map(self.visit, node.value.elts))
 		if node.value:
-			return 'return %s' % self.visit(node.value)
+			v = self.visit(node.value)
+			if v.startswith('&'):
+				return '_hack := %s; return &_hack' %v[1:]
+			else:
+				return 'return %s' % v
 		return 'return'
 
 	def _visit_function(self, node):
