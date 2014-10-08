@@ -106,9 +106,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 	def visit_ClassDef(self, node):
 		self._class_stack.append( node )
-		node._parents = set()
-		node._struct_def = dict()
-		node._subclasses = set()  ## required for generics generator
+		if not hasattr(node, '_parents'):  ## only setup on the first pass
+			node._parents = set()
+			node._struct_def = dict()
+			node._subclasses = set()  ## required for generics generator
 		out = []
 		sdef = dict()
 		props = set()
@@ -711,9 +712,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 			for gt in gsorted:
 				assert gt in self._classes
 				#if node.name in self._classes[gt]._subclasses:
-				if len(self._classes[gt]._parents) == 0:
+				#if len(self._classes[gt]._parents) == 0:
+
+				## if in super class ##
+				if self._class_stack and len(self._classes[self._class_stack[-1].name]._parents) == 0:
 					if return_type=='*'+gt or not is_method: pass
 					else: continue
+				elif len(self._classes[gt]._parents) == 0: ## or if the generic is the super class skip it.
+					if return_type=='*'+gt or not is_method: pass
+					else: continue
+
 				out.append(self.indent() + 'case *%s:' %gt)
 				self.push()
 				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )

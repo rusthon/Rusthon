@@ -56,17 +56,25 @@ def main():
 	TestError( c.z==100 )
 
 	w = b.bar()
-	print(w)
+	#print(w)
 
-
-	## all of below breaks  ##
-
-	bb = b.foo(c, false)
+	bb = b.foo(b, false)
 	w = bb.bar()
-	print(w)
+	TestError(w==y)
+
+	cc = c.foo(b, false)
+	w = cc.bar()
+	#print(w)
+	TestError(w==z)
+
+	#bb = c.foo(b, true)  ## reassignment to bb type of B should be allowed, because this works at runtime, but goc throws an error.
+	d = c.foo(b, true)
+	w = d.bar()
+	#print(w)
+	TestError(w==y)
 
 	w = my_generic( b.foo(c, false) )  ## calls B.bar()
-	print(w)
+	#print(w)
 	TestError( w == y )
 
 	w = my_generic( b.foo(c, true) )   ## calls C.bar()
