@@ -449,7 +449,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		if node.starargs:
 			if args: args += ','
-			args += '%s...' %self.visit(node.starargs)
+			args += '*%s...' %self.visit(node.starargs)
 
 		if is_append:
 			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
@@ -646,13 +646,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			dindex = i - offset
 
-			if a.startswith('__variable_args__'): ## TODO support go `...` varargs
-				#varargs_name = a.split('__')[-1]
-				#varargs = ['_vararg_%s'%n for n in range(16) ]
-				#args.append( '[%s]'%','.join(varargs) )
-				raise SyntaxError('TODO *args')
 
-			elif dindex >= 0 and node.args.defaults:
+			if dindex >= 0 and node.args.defaults:
 				default_value = self.visit( node.args.defaults[dindex] )
 				self._kwargs_type_[ arg_name ] = arg_type
 				oargs.append( (arg_name, default_value) )
@@ -667,10 +662,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			args.append( '__kwargs _kwargs_type_')
 			node._arg_names.append( '__kwargs' )
 
+		starargs = None
 		if node.args.vararg:
 			starargs = node.args.vararg
 			assert starargs in args_typedefs
-			args.append( '%s ...%s' %(starargs, args_typedefs[starargs]))
+			args.append( '__vargs__ ...%s' %args_typedefs[starargs])
 			node._arg_names.append( starargs )
 
 		node._args_signature = ','.join(args)
@@ -701,6 +697,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 				out.append( '  %s = __kwargs.%s' %(n,n))
 				out.append('}')
 				#out.append('} else { %s := %s }' %(n,v))
+
+		if starargs:
+			out.append('%s := &__vargs__' %starargs)
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
