@@ -375,7 +375,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				iter = self.visit(node.iter.args[0])
 				idx = self.visit(node.target.elts[0])
 				tar = self.visit(node.target.elts[1])
-				lines.append('for %s,%s := range %s {' %(idx,tar, iter))
+				lines.append('for %s,%s := range *%s {' %(idx,tar, iter))
 
 			else: ## generator function
 				gfunc = node.iter.func.id
