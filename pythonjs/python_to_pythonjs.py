@@ -1515,8 +1515,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 						is_go_listcomp = True
 						node.right.go_listcomp_type = node.left.args[0].id
 					elif node.left.func.id=='__go__map__':
-						is_go_listcomp = True
-						if isinstance(node.left.args[1], ast.Call):
+						if isinstance(node.left.args[1], ast.Call):  ## map comprehension
+							is_go_listcomp = True
 							node.right.go_dictcomp_type =  ( node.left.args[0].id, self.visit(node.left.args[1]) )
 						else:
 							node.right.go_dictcomp_type =  ( node.left.args[0].id, node.left.args[1].id )

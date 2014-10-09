@@ -907,7 +907,6 @@ def main(script, insert_runtime=True):
 		sys.stderr.write(script)
 		raise err
 
-	#raise RuntimeError(script)
 	g = GoGenerator()
 	g.visit(tree) # first pass gathers classes
 	return g.visit(tree)

@@ -517,11 +517,7 @@ a = []string(x,y,z)
 ## becomes: __go__arrayfixed__(3, string) << (x,y,z)
 a = [ 3 ]int(x,y,z)
 
-## in go becomes: map[string]int{x,y,z}
-## becomes: __go__map__(string, int) << {'x':x, 'y':y, 'z':z}
-a = map[string]int{
-	"x":x, "y":y, "z":z
-}
+
 
 def f(a:int, b:int, c:int) ->int:
 	return a+b+c
@@ -566,6 +562,14 @@ a = xxx ⎨Z⎬⎨zzzz⎬
 
 functions = map[string]func(int)(int){}
 []int a = go( f() for f in funtions )
+
+## in go becomes: map[string]int{x,y,z}
+## becomes: __go__map__(string, int) << {'x':x, 'y':y, 'z':z}
+a = map[string]int{
+	"x":x, 
+	"y":y, 
+	"z":z
+}
 
 '''
 
