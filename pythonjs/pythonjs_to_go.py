@@ -200,6 +200,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 		out.append( 'type %s struct {' %node.name)
+		if len(node._parents)==0:
+			out.append('__object__')
+
 		if base_classes:
 			for bnode in base_classes:
 				## Go only needs the name of the parent struct and all its items are inserted automatically ##
@@ -234,6 +237,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 			out.append( 'func __new__%s( %s ) *%s {' %(node.name, init._args_signature, node.name))
 			out.append( '  ob := %s{}' %node.name )
 			out.append( '  ob.__init__(%s)' %','.join(init._arg_names))
+			## used by generics to workaround the problem that a super method that returns `self`,
+			## may infact return wrong subclass type, because a struct to return that is not of type
+			## self will be cast to self - while this is ok if just reading attributes from it,
+			## it fails with method calls, because the casting operation on the struct changes it's
+			## method pointers.  by storing the class name on the instance, it can be used in a generics
+			## type switch to get to the real class and call the right methods.
+			out.append( '  ob.__class__ = "%s"' %node.name)
 			out.append( '  return &ob')
 			out.append('}')
 
@@ -717,7 +727,24 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
-			out.append(self.indent() + 'switch __gen__.(type) {')
+
+			#panic: runtime error: invalid memory address or nil pointer dereference
+			#[signal 0xb code=0x1 addr=0x0 pc=0x402440]
+			##out.append(self.indent() + '__type__ := __gen__.(object).getclassname()')
+
+
+			out.append(self.indent() + '__type__ := ""')
+			out.append(self.indent() + '__super__, __ok__ := __gen__.(object)')
+			out.append('fmt.Println("address:", &__super__)')
+			out.append('if __ok__ { __type__ = __super__.getclassname();')
+			out.append('} else { fmt.Println("Gython RuntimeError - invalid pointer or object is not in struct"); }')
+
+
+			#out.append(self.indent() + '__type__ := __object__(&__gen__).__class__')
+			#out.append(self.indent() + 'switch __gen__.(type) {')
+			out.append('fmt.Println("class name: ", __type__)')
+			out.append(self.indent() + 'switch __type__ {')
+
 			self.push()
 			gsorted = list(generics)
 			gsorted.sort()
@@ -738,9 +765,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 					if return_type=='*'+gt or not is_method: pass
 					else: continue
 
-				out.append(self.indent() + 'case *%s:' %gt)
+				######out.append(self.indent() + 'case *%s:' %gt)
+				out.append(self.indent() + 'case "%s":' %gt)
 				self.push()
-				out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )
+
+				#out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )  ## can not depend on the struct type, because subclasses are unions.
+				out.append(self.indent() + '%s,__ok__ := __gen__.(*%s)' %(gname,gt) )  ## can not depend on the struct type, because subclasses are unions.
+
+				out.append('if __ok__ {')
+
 				for b in node.body:
 					v = self.visit(b)
 					if v:
@@ -753,6 +786,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 									v = v.replace(gname, '__gen__')
 
 						out.append( self.indent() + v )
+
+				out.append('} else { fmt.Println("Gython RuntimeError - invalid pointer", %s); fmt.Println(__super__); fmt.Println(__gen__);}' %gname)
+
 
 				self.pull()
 			self.pull()

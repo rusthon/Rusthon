@@ -6,8 +6,16 @@ import strconv
 
 inline("""
 
-func myappend(self []int, x int) ([]int){
-	return append(self, x)
+type __object__ struct {
+	__class__ string
+}
+
+type object interface{
+	getclassname() string
+}
+
+func (self __object__) getclassname() string {
+	return self.__class__
 }
 
 func ord(x string) int {
