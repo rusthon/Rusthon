@@ -388,11 +388,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			iter = self.visit( node.iter )
 			key = self.visit(node.target.elts[0])
 			val = self.visit(node.target.elts[1])
-			lines.append('for %s,%s := range %s {' %(key,val, iter))
+			lines.append('for %s,%s := range *%s {' %(key,val, iter))
 
 		else:
 			iter = self.visit( node.iter )
-			lines.append('for _,%s := range %s {' %(target, iter))
+			lines.append('for _,%s := range *%s {' %(target, iter))
 
 		self.push()
 		for b in node.body:
