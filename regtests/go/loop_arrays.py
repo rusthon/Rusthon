@@ -32,3 +32,11 @@ def main():
 	for i in range( len(arr) ):
 		e += 1
 	TestError( e == 3 )
+
+	s = a[:2]
+	TestError( len(s)==2 )
+	e = 0
+	for i in s:
+		e += i
+	TestError( e == 3 )
+		

@@ -263,7 +263,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 				return self._visit_subscript_ellipsis( node )
 		else:
 			## deference pointer and then index
-			return '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+			if isinstance(node.slice, ast.Slice):
+				return '__slice_hack__((*%s)[%s])' % (self.visit(node.value), self.visit(node.slice))
+			else:
+				return '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 
 
 	def visit_Slice(self, node):

@@ -59,29 +59,34 @@ func str(v interface{}) string {
 	}
 }
 
-func range1( x int ) []int {
+func range1( x int ) *[]int {
 	arr := make([]int, x)
 	for i := 0; i < x; i++ {
 		arr[i]=i
 	}
-	return arr
+	return &arr
 }
 
-func range2( start int, stop int ) []int {
+func range2( start int, stop int ) *[]int {
 	arr := make([]int, stop-start)
 	for i := start; i < stop; i++ {
 		arr[i]=i
 	}
-	return arr
+	return &arr
 }
 
-func range3( start int, stop int, step int ) []int {
+func range3( start int, stop int, step int ) *[]int {
 	arr := make([]int, stop-start)
 	for i := start; i < stop; i+=step {
 		arr[i]=i
 	}
-	return arr
+	return &arr
 }
+
+func __slice_hack__( arr []int ) *[]int {
+	return &arr
+}
+
 
 """)
 
