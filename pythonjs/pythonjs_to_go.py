@@ -264,7 +264,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		else:
 			## deference pointer and then index
 			if isinstance(node.slice, ast.Slice):
-				return '__slice_hack__((*%s)[%s])' % (self.visit(node.value), self.visit(node.slice))
+				return '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
 				return '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 
@@ -857,7 +857,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 			value = self.visit(node.value)
 			self._vars.remove( target )
 			self._known_vars.add( target )
-			return '%s := %s;' % (target, value)
+			if value.startswith('&(*') and '[' in value and ']' in value:  ## slice hack
+				v = value[1:]
+				return '_tmp := %s; %s := &_tmp;' %(v, target)
+
+			else:
+				return '%s := %s;' % (target, value)
 
 		else:
 			value = self.visit(node.value)

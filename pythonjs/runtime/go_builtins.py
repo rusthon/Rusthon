@@ -83,10 +83,6 @@ func range3( start int, stop int, step int ) *[]int {
 	return &arr
 }
 
-func __slice_hack__( arr []int ) *[]int {
-	return &arr
-}
-
 
 """)
 
