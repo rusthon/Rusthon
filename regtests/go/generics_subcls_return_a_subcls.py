@@ -21,15 +21,18 @@ class B(A):
 		int self.z = 1
 
 	def bar(self) ->int:
+		print('calling B.bar')
 		return self.x + self.z
 
 class C(A):
 	def __init__(self):
 		A.__init__(self, 100)
 		int self.z = 100
+		int self.w = 1
 
 	def bar(self) ->int:
-		return self.x + self.z
+		print('calling C.bar')
+		return self.x + self.z + self.w
 
 
 def my_generic( g:A ) ->int:
@@ -50,7 +53,7 @@ def main():
 	TestError( y==11 )
 
 	z = my_generic( c )
-	TestError( z==200 )
+	TestError( z==201 )
 
 	TestError( b.z==1 )
 	TestError( c.z==100 )
@@ -62,15 +65,21 @@ def main():
 	w = bb.bar()
 	TestError(w==y)
 
-	cc = c.foo(b, false)
-	w = cc.bar()
-	#print(w)
+	print('testing C returned from B.foo')
+	w = b.foo(c, true).bar()
+	print(b.foo(c, true).w)
 	TestError(w==z)
 
-	#bb = c.foo(b, true)  ## reassignment to bb type of B should be allowed, because this works at runtime, but goc throws an error.
+
+	cc = c.foo(b, false)
+	w = cc.bar()
+	TestError(w==z)
+
+	## reassignment to bb type of *B should be allowed, because this works at runtime, but goc throws an error,
+	## because it thinks that c.foo can only return *C
+	#bb = c.foo(b, true)
 	d = c.foo(b, true)
 	w = d.bar()
-	#print(w)
 	TestError(w==y)
 
 	w = my_generic( b.foo(c, false) )  ## calls B.bar()
@@ -78,7 +87,15 @@ def main():
 	TestError( w == y )
 
 	w = my_generic( b.foo(c, true) )   ## calls C.bar()
+	print(w)
 	TestError( w == z )
 
-	w = my_generic( c.foo(b, true) )   ## calls B.bar()
+	print('testing B returned from C.foo')
+	u = c.foo(b, true)
+	print(u.x)
+	print(u.z)
+	print(u.w)
+	w = my_generic( u )   ## calls B.bar()
+	print(w)
+	print(y)
 	TestError( w==y )

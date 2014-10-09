@@ -110,6 +110,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 			node._parents = set()
 			node._struct_def = dict()
 			node._subclasses = set()  ## required for generics generator
+			## subclasses must be a struct union so that Go can convert between struct types
+			node._subclasses_union = dict()
+
 		out = []
 		sdef = dict()
 		props = set()
@@ -170,6 +173,13 @@ class GoGenerator( pythonjs.JSGenerator ):
 					sdef[k] = v
 
 		node._struct_def.update( sdef )
+		unionstruct = dict()
+		unionstruct.update( sdef )
+		for pname in node._parents:
+			parent = self._classes[ pname ]
+			parent._subclasses_union.update( sdef )        ## first pass
+			unionstruct.update( parent._subclasses_union ) ## second pass
+
 
 		parent_init = None
 		if base_classes:
@@ -198,11 +208,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 				## but this can throw an error: `invalid operation: ambiguous selector`
 				## removing the duplicate name here fixes that error.
 				for key in bnode._struct_def.keys():
-					if key in sdef:
-						sdef.pop(key)
+					#if key in sdef:
+					#	sdef.pop(key)
+					if key in unionstruct:
+						unionstruct.pop(key)
 
-		for name in sdef:
-			out.append('%s %s' %(name, sdef[name]))
+		#for name in sdef:
+		#	out.append('%s %s' %(name, sdef[name]))
+		for name in unionstruct:
+			out.append('%s %s' %(name, unionstruct[name]))
 		out.append('}')
 
 
