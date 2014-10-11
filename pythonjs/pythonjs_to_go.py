@@ -8,6 +8,8 @@ import pythonjs
 
 go_types = 'bool string int float64'.split()
 
+class GenerateGenericSwitch( SyntaxError ): pass
+
 def transform_gopherjs( node ):
 	gt = GopherjsTransformer()
 	gt.visit( node )
@@ -51,6 +53,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._with_gojs = False
 		self._class_stack = list()
 		self._classes = dict()		## name : node
+		#	node._parents = set()
+		#	node._struct_def = dict()
+		#	node._subclasses = set()  ## required for generics generator
+		#	## subclasses must be a struct union so that Go can convert between struct types
+		#	node._subclasses_union = dict()
+		self.method_returns_multiple_subclasses = dict() # class name : method name that can return multiple subclass types
 		self._class_props = dict()
 
 		self._vars = set()
@@ -59,6 +67,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		self._imports = set()
 		self._ids = 0
+		self._known_instances = dict()
+		self._scope_stack = list()
 
 	def visit_Is(self, node):
 		return '=='
@@ -104,6 +114,24 @@ class GoGenerator( pythonjs.JSGenerator ):
 		#	return 'nil'
 		return node.id
 
+	def get_subclasses( self, C ):
+		'''
+		returns all sibling subclasses, C can be a subclass or the base class
+		'''
+		subclasses = set()
+		self._collect_subclasses(C, subclasses)
+		return subclasses
+
+	def _collect_subclasses(self, C, subclasses):
+		node = self._classes[ C ]
+		if len(node._parents)==0:
+			for sub in node._subclasses:
+				subclasses.add( sub )
+		else:
+			for parent in node._parents:
+				self._collect_subclasses(parent, subclasses)
+
+
 	def visit_ClassDef(self, node):
 		self._class_stack.append( node )
 		if not hasattr(node, '_parents'):  ## only setup on the first pass
@@ -121,6 +149,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		self._classes[ node.name ] = node
 		self._class_props[ node.name ] = props
+		if node.name not in self.method_returns_multiple_subclasses:
+			self.method_returns_multiple_subclasses[ node.name ] = set()
 
 
 		for base in node.bases:
@@ -436,8 +466,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		if fname=='__DOLLAR__': fname = '$'
-		elif fname == 'range':
+		#if fname=='__DOLLAR__': fname = '$'
+		if fname == 'range':
 			assert len(node.args)
 			fname += str(len(node.args))
 		elif fname == 'len':
@@ -450,11 +480,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 				type = '*' + type
 			#return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
 			return '%s(*%s)' %(type, self.visit(node.args[0]) )
-
-
-		#elif fname.startswith('__js_global_get_'):
-		#	gname = fname.split('_')[-1]
-		#	fname = 'js.Global.Get("%s").Call' %gname
 
 
 		if node.args:
@@ -491,6 +516,20 @@ class GoGenerator( pythonjs.JSGenerator ):
 				return 'Call("%s",%s)' % (fname, args)
 
 		else:
+
+			if isinstance(node.func, ast.Attribute) and False:
+				if isinstance(node.func.value, ast.Name):
+					varname = node.func.value.id
+					if varname in self._known_vars:
+						#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
+
+
+
+						cname = self._known_instances[varname]
+						if node.func.attr in self.method_returns_multiple_subclasses[ cname ]:
+							raise SyntaxError('%s(%s)' % (fname, args))
+
+
 			return '%s(%s)' % (fname, args)
 
 	def _visit_call_helper_go(self, node):
@@ -598,6 +637,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return_type = None
 		generics = set()
 		args_generics = dict()
+		returns_self = False
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
@@ -635,7 +675,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 				if return_type == 'self':
 					return_type = '*' + self._class_stack[-1].name
-
+					returns_self = True
+					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 
 		node._arg_names = args_names = []
 		args = []
@@ -779,11 +820,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 					if v:
 						## TODO - fix - this breaks easily
 						if v.strip().startswith('return ') and '*'+gt != return_type:
-							if gname in v and v.strip() != 'return self':
+							if gname in v and v.strip() != 'return self' and returns_self:
 								if '(' not in v:
 									v += '.(%s)' %return_type
 									#if v.split('return ')[-1].strip()==gname:
 									v = v.replace(gname, '__gen__')
+									self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 
 						out.append( self.indent() + v )
 
@@ -809,13 +851,77 @@ class GoGenerator( pythonjs.JSGenerator ):
 				out.append('return %s' %(return_type.replace('*','&')+'{}'))
 
 		else:
-			for b in node.body:
-				v = self.visit(b)
-				if v: out.append( self.indent() + v )
+			body = node.body[:]
+			body.reverse()
+			self._scope_stack.append( (self._vars, self._known_vars))
+			self.generate_generic_branches( body, out, self._vars, self._known_vars )
+			#for b in node.body:
+
+
 
 		self.pull()
 		out.append( self.indent()+'}' )
 		return '\n'.join(out)
+
+	def generate_generic_branches(self, body, out, force_vars, force_used_vars):
+		force_vars, force_used_vars = self._scope_stack[-1]
+		self._vars = force_vars
+		self._known_vars = force_used_vars
+
+		out.append('/*force vars: %s*/' %self._vars)
+		out.append('/*force used: %s*/' %self._known_vars)
+
+		prev_vars = None
+		prev_used = None
+		vars = None
+		used = None
+		while len(body):
+			prev_vars = vars
+			prev_used = used
+			vars = set(self._vars)
+			used = set(self._known_vars)
+
+
+			b = body.pop()
+			try:
+				self._scope_stack.append( (vars, used))
+				v = self.visit(b)
+				if v: out.append( self.indent() + v )
+				self._scope_stack.pop()
+			except GenerateGenericSwitch as err:
+				#raise SyntaxError(prev_vars)
+				out.append('/* GenerateGenericSwitch */')
+				out.append('/*vars: %s*/' %self._vars)
+				out.append('/*used: %s*/' %self._known_vars)
+				out.append('/*prev vars: %s*/' %prev_vars)
+				out.append('/*prev used: %s*/' %prev_used)
+
+
+
+				G = err[0]
+				out.append(self.indent()+'__subclass__ := %s' %G['value'])
+				out.append(self.indent()+'switch __subclass__.__class__ {')
+				self.push()
+
+				subclasses = self.get_subclasses( G['class'] )
+				for sub in subclasses:
+					#self._vars = prev_vars
+					#self._known_vars = prev_used
+
+
+					out.append(self.indent()+'case "%s":' %sub)
+					self.push()
+					#out.append(self.indent()+'%s := __subclass__.(*%s)' %(G['target'], sub)) ## error not an interface
+					out.append(self.indent()+'%s := %s(*__subclass__)' %(G['target'], sub))
+
+					self.generate_generic_branches( body[:], out, prev_vars, prev_used )
+
+					self.pull()
+				self.pull()
+				out.append(self.indent()+'}')
+				self._scope_stack.append( (prev_vars, prev_used))
+				return #self._scope_stack.pop()
+
 
 	def _visit_call_helper_var(self, node):
 		args = [ self.visit(a) for a in node.args ]
@@ -909,6 +1015,26 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if value.startswith('&(*') and '[' in value and ']' in value:  ## slice hack
 				v = value[1:]
 				return '_tmp := %s; %s := &_tmp;' %(v, target)
+
+			elif isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
+				varname = node.value.func.value.id
+				if varname in self._known_vars:
+					#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
+					cname = self._known_instances[varname]
+					if node.value.func.attr in self.method_returns_multiple_subclasses[ cname ]:
+						self._known_instances[target] = cname
+						#raise SyntaxError('xxxxxxxxx %s - %s' % (self.visit(node.value), target ) )
+						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
+				return '%s := %s;' % (target, value)
+
+
+			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
+				if node.value.func.id in self._classes:
+					#raise SyntaxError(value+' in classes')
+					self._known_instances[ target ] = node.value.func.id
+					return '%s := __new__%s;' %(target, value)
+				else:
+					return '%s := %s;' % (target, value)
 
 			else:
 				return '%s := %s;' % (target, value)
