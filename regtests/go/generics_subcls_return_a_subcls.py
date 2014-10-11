@@ -6,14 +6,19 @@ class A:
 		int self.x = x
 		int self.z = 0
 
-	def bar(self) -> int:
-		return self.x
 
-	def foo( self, o:A, s:bool ) -> self:
+	def some_subclass( self, o:A, s:bool ) -> self:
 		if s:
+			## forces the return type to be self, if the result from this method is an assignment
+			## then a switch is generated, and the function body is put into each case,
+			## this allow methods to work on the returned instance.
 			return go.type_assert(o, self)
 		else:
 			return self
+
+	def bar(self) -> int:
+		return self.x
+
 
 class B(A):
 	def __init__(self):
@@ -21,7 +26,8 @@ class B(A):
 		int self.z = 1
 
 	def bar(self) ->int:
-		print('calling B.bar')
+		#print('calling B.bar')
+		#print(self.__class__)
 		return self.x + self.z
 
 class C(A):
@@ -31,12 +37,14 @@ class C(A):
 		int self.w = 1
 
 	def bar(self) ->int:
-		print('calling C.bar')
+		#print('calling C.bar')
+		#print(self.__class__)
 		return self.x + self.z + self.w
 
 
 def my_generic( g:A ) ->int:
 	return g.bar()
+
 
 def main():
 	a = A( 1000 )
@@ -44,7 +52,6 @@ def main():
 	c = C()
 
 	TestError(a.x == a.bar() )
-	TestError(a.x == a.foo(a,false).bar() )
 
 	x = my_generic( a )
 	TestError(a.x == x )
@@ -58,44 +65,45 @@ def main():
 	TestError( b.z==1 )
 	TestError( c.z==100 )
 
-	w = b.bar()
-	#print(w)
 
-	bb = b.foo(b, false)
+	## calling a method that has returns multiple subclasses with the result assigned to variable
+	## will generate a switch that enables methods
+	w = 0
+	## tests returning self
+	bb = b.some_subclass(b, false)
 	w = bb.bar()
 	TestError(w==y)
-
-	print('testing C returned from B.foo')
-	w = b.foo(c, true).bar()
-	print(b.foo(c, true).w)
-	TestError(w==z)
-
-
-	cc = c.foo(b, false)
+	cc = c.some_subclass(b, false)
 	w = cc.bar()
 	TestError(w==z)
 
-	## reassignment to bb type of *B should be allowed, because this works at runtime, but goc throws an error,
-	## because it thinks that c.foo can only return *C
-	#bb = c.foo(b, true)
-	d = c.foo(b, true)
-	w = d.bar()
+
+	## tests returning the other subclass type
+	ccc = b.some_subclass(c, true)
+	w = ccc.bar()
+	TestError(w==z)
+	bbb = c.some_subclass(b, true)
+	w = bbb.bar()
 	TestError(w==y)
 
-	w = my_generic( b.foo(c, false) )  ## calls B.bar()
+
+	## Gotchas ##
+
+	## calls B.bar(), my_generic still works when b returns self,
+	## if C is returned, then my_generic breaks.
+	w = my_generic( b.some_subclass(c, false) )
 	#print(w)
 	TestError( w == y )
 
-	w = my_generic( b.foo(c, true) )   ## calls C.bar()
-	print(w)
-	TestError( w == z )
 
-	print('testing B returned from C.foo')
-	u = c.foo(b, true)
-	print(u.x)
-	print(u.z)
-	print(u.w)
-	w = my_generic( u )   ## calls B.bar()
-	print(w)
-	print(y)
-	TestError( w==y )
+	## reassignment to bb type of *B should be allowed, because this works at runtime, but goc throws an error,
+	## because it thinks that c.some_subclass can only return *C, and `bb` above got retyped as *B.
+	#bb = c.some_subclass(b, true)
+	d = c.some_subclass(b, true)
+	w = d.bar()
+	TestError(w==y)
+
+
+
+
+	print('----------no panics----------')

@@ -776,15 +776,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			out.append(self.indent() + '__type__ := ""')
 			out.append(self.indent() + '__super__, __ok__ := __gen__.(object)')
-			out.append('fmt.Println("address:", &__super__)')
 			out.append('if __ok__ { __type__ = __super__.getclassname();')
 			out.append('} else { fmt.Println("Gython RuntimeError - invalid pointer or object is not in struct"); }')
-
-
-			#out.append(self.indent() + '__type__ := __object__(&__gen__).__class__')
-			#out.append(self.indent() + 'switch __gen__.(type) {')
-			out.append('fmt.Println("class name: ", __type__)')
 			out.append(self.indent() + 'switch __type__ {')
+			#out.append(self.indent() + 'switch __gen__.(type) {')  ## this is not always correct
+			#out.append('fmt.Println("class name: ", __type__)')
 
 			self.push()
 			gsorted = list(generics)
@@ -1016,7 +1012,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				v = value[1:]
 				return '_tmp := %s; %s := &_tmp;' %(v, target)
 
-			elif isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
+			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
 				if varname in self._known_vars:
 					#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
