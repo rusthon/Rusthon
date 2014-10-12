@@ -60,13 +60,13 @@ def main():
 	TestError( y==11 )
 
 	z = my_generic( c )
+	##z = my_generic( b.some_subclass(c,true) )  ## todo fixme
 	TestError( z==201 )
-
 
 
 	## calling a method that has returns multiple subclasses with the result assigned to variable
 	## will generate a switch that enables methods
-	#w = 0
+
 	## tests returning self
 	bb = b.some_subclass(b, false)
 	w = bb.bar()
@@ -76,5 +76,13 @@ def main():
 	TestError(w==z)
 
 
+	## tests returning other
+	ccc = b.some_subclass(c, true)
+	w = ccc.bar()
+	TestError(w==z)
+	bbb = c.some_subclass(b, true)
+	w = bbb.bar()
+	TestError(w==y)
+	TestError( my_generic(bbb)==y)
 
-	print('----------no panics----------')
+

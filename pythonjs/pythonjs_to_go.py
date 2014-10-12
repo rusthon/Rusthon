@@ -776,8 +776,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			out.append(self.indent() + '__type__ := ""')
 			out.append(self.indent() + '__super__, __ok__ := __gen__.(object)')
-			out.append('if __ok__ { __type__ = __super__.getclassname();')
-			out.append('} else { fmt.Println("Gython RuntimeError - invalid pointer or object is not in struct"); }')
+			out.append(self.indent() + 'if __ok__ { __type__ = __super__.getclassname();')
+			out.append(self.indent() + '} else { fmt.Println("Gython RuntimeError - struct must implement the `object` interface"); }')
 			out.append(self.indent() + 'switch __type__ {')
 			#out.append(self.indent() + 'switch __gen__.(type) {')  ## this is not always correct
 			#out.append('fmt.Println("class name: ", __type__)')
@@ -809,7 +809,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				#out.append(self.indent() + '%s,_ := __gen__.(*%s)' %(gname,gt) )  ## can not depend on the struct type, because subclasses are unions.
 				out.append(self.indent() + '%s,__ok__ := __gen__.(*%s)' %(gname,gt) )  ## can not depend on the struct type, because subclasses are unions.
 
-				out.append('if __ok__ {')
+				out.append(self.indent() + 'if __ok__ {')
 
 				for b in node.body:
 					v = self.visit(b)
@@ -825,26 +825,26 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 						out.append( self.indent() + v )
 
-				out.append('} else { fmt.Println("Gython RuntimeError - invalid pointer", %s); fmt.Println(__super__); fmt.Println(__gen__);}' %gname)
+				out.append(self.indent() + '} else { fmt.Println("Generics RuntimeError - generic argument is not a pointer to a struct", %s); fmt.Println("struct: ",__gen__);}' %gname)
 
 
 				self.pull()
 			self.pull()
-			out.append('}')
-			out.append('fmt.Println("Generics RuntimeError - type not in type switch")')
+			out.append(self.indent() + '}')
+			out.append(self.indent() + 'fmt.Println("Generics RuntimeError - failed to convert type to:", __type__)')
 			#out.append('fmt.Println(__gen__)')
 
 			if return_type == 'int':
-				out.append('return 0')
+				out.append(self.indent() + 'return 0')
 			elif return_type == 'float':
-				out.append('return 0.0')
+				out.append(self.indent() + 'return 0.0')
 			elif return_type == 'string':
-				out.append('return ""')
+				out.append(self.indent() + 'return ""')
 			elif return_type == 'bool':
-				out.append('return false')
+				out.append(self.indent() + 'return false')
 			elif return_type:
 				#raise NotImplementedError('TODO other generic function return types', return_type)
-				out.append('return %s' %(return_type.replace('*','&')+'{}'))
+				out.append(self.indent() + 'return %s' %(return_type.replace('*','&')+'{}'))
 
 		else:
 			body = node.body[:]
@@ -921,7 +921,9 @@ class GoGenerator( pythonjs.JSGenerator ):
 					out.append(self.indent()+'case "%s":' %sub)
 					self.push()
 					#out.append(self.indent()+'%s := __subclass__.(*%s)' %(G['target'], sub)) ## error not an interface
-					out.append(self.indent()+'%s := %s(*__subclass__)' %(G['target'], sub))
+					#out.append(self.indent()+'%s := %s(*__subclass__)' %(G['target'], sub))
+					out.append(self.indent()+'__addr := %s(*__subclass__)' %sub)
+					out.append(self.indent()+'%s := &__addr' %G['target'])
 
 					pv, pu = self._scope_stack[-1]
 					self.generate_generic_branches( body[:], out, pv, pu )
