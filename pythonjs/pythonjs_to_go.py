@@ -849,9 +849,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 		else:
 			body = node.body[:]
 			body.reverse()
-			self._scope_stack.append( (self._vars, self._known_vars))
+			#self._scope_stack.append( (self._vars, self._known_vars))
 			self.generate_generic_branches( body, out, self._vars, self._known_vars )
 			#for b in node.body:
+		self._scope_stack = []
 
 
 
@@ -860,38 +861,50 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(out)
 
 	def generate_generic_branches(self, body, out, force_vars, force_used_vars):
-		force_vars, force_used_vars = self._scope_stack[-1]
-		self._vars = force_vars
-		self._known_vars = force_used_vars
+		#out.append('/* GenerateGeneric */')
+		#out.append('/*vars: %s*/' %self._vars)
+		#out.append('/*used: %s*/' %self._known_vars)
 
-		out.append('/*force vars: %s*/' %self._vars)
-		out.append('/*force used: %s*/' %self._known_vars)
+		#force_vars, force_used_vars = self._scope_stack[-1]
+		self._vars = set(force_vars)
+		self._known_vars = set(force_used_vars)
+
+		#out.append('/*force vars: %s*/' %force_vars)
+		#out.append('/*force used: %s*/' %force_used_vars)
 
 		prev_vars = None
 		prev_used = None
 		vars = None
 		used = None
+
+		vars = set(self._vars)
+		used = set(self._known_vars)
+
+		#out.append('/*Sstack len: %s*/' %len(self._scope_stack))
+		#if self._scope_stack:
+		#	out.append('/*stack: %s - %s*/' %self._scope_stack[-1])
+		#	out.append('/*STAK: %s */' %self._scope_stack)
+
+
 		while len(body):
 			prev_vars = vars
 			prev_used = used
-			vars = set(self._vars)
-			used = set(self._known_vars)
-
 
 			b = body.pop()
 			try:
-				self._scope_stack.append( (vars, used))
 				v = self.visit(b)
 				if v: out.append( self.indent() + v )
-				self._scope_stack.pop()
 			except GenerateGenericSwitch as err:
-				#raise SyntaxError(prev_vars)
-				out.append('/* GenerateGenericSwitch */')
-				out.append('/*vars: %s*/' %self._vars)
-				out.append('/*used: %s*/' %self._known_vars)
-				out.append('/*prev vars: %s*/' %prev_vars)
-				out.append('/*prev used: %s*/' %prev_used)
+				self._scope_stack.append( (set(self._vars), set(self._known_vars)))
 
+				#out.append('/* 		GenerateGenericSwitch */')
+				#out.append('/*	vars: %s*/' %self._vars)
+				#out.append('/*	used: %s*/' %self._known_vars)
+				#out.append('/*	prev vars: %s*/' %prev_vars)
+				#out.append('/*	prev used: %s*/' %prev_used)
+				#out.append('/*	stack: %s - %s*/' %self._scope_stack[-1])
+				#out.append('/*	stack len: %s*/' %len(self._scope_stack))
+				#out.append('/*	stack: %s*/' %self._scope_stack)
 
 
 				G = err[0]
@@ -910,13 +923,15 @@ class GoGenerator( pythonjs.JSGenerator ):
 					#out.append(self.indent()+'%s := __subclass__.(*%s)' %(G['target'], sub)) ## error not an interface
 					out.append(self.indent()+'%s := %s(*__subclass__)' %(G['target'], sub))
 
-					self.generate_generic_branches( body[:], out, prev_vars, prev_used )
+					pv, pu = self._scope_stack[-1]
+					self.generate_generic_branches( body[:], out, pv, pu )
 
 					self.pull()
+				self._scope_stack.pop()
+
 				self.pull()
 				out.append(self.indent()+'}')
-				self._scope_stack.append( (prev_vars, prev_used))
-				return #self._scope_stack.pop()
+				return
 
 
 	def _visit_call_helper_var(self, node):
