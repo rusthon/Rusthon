@@ -68,6 +68,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._imports = set()
 		self._ids = 0
 		self._known_instances = dict()
+		self._known_arrays    = dict()
 		self._scope_stack = list()
 
 	def visit_Is(self, node):
@@ -504,7 +505,20 @@ class GoGenerator( pythonjs.JSGenerator ):
 			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
 			id = self._ids
 			self._ids += 1
-			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, args, arr, id)
+			item = args
+
+			if item in self._known_instances:
+				classname = self._known_instances[ item ]
+				#raise SyntaxError( self._known_instances[item] )
+				#if arr in self._known_vars:
+				#	raise SyntaxError('kow')
+				if arr in self._known_arrays and classname != self._known_arrays[arr]:
+					#raise SyntaxError( self._known_arrays[arr])
+					item = '%s(*%s)' %(self._known_arrays[arr], item)
+					r = '__addr%s := %s;' %(id,item)
+					return r + '__%s := append(*%s,&__addr%s); *%s = __%s;' % (id, arr, id, arr, id)
+
+			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, item, arr, id)
 
 		elif self._with_gojs:
 			if isinstance(node.func, ast.Attribute):
@@ -551,7 +565,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				if a in go_types:
 					return '*[]%s' %a
 				else:
-					return '*[]*%s' %a
+					return '*[]*%s' %a  ## todo - self._catch_assignment_array_of_obs = true
 
 			else:
 				a = self.visit(node.args[0])
@@ -593,6 +607,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 						if T in go_types:
 							return '&[]%s%s' %(T, right)
 						else:
+							self._catch_assignment = {'class':T}  ## visit_Assign catches this
 							return '&[]*%s%s' %(T, right)
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
@@ -1008,8 +1023,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(r)
 
 	def visit_Assign(self, node):
-		if isinstance(node.targets[0], ast.Tuple):
-			raise NotImplementedError('TODO')
+		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')
+		self._catch_assignment = False
 
 		target = self.visit( node.targets[0] )
 
@@ -1025,6 +1040,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 			value = self.visit(node.value)
 			self._vars.remove( target )
 			self._known_vars.add( target )
+
+			if value.startswith('&[]*') and self._catch_assignment:
+				self._known_arrays[ target ] = self._catch_assignment['class']
+
+
 			if value.startswith('&(*') and '[' in value and ']' in value:  ## slice hack
 				v = value[1:]
 				return '_tmp := %s; %s := &_tmp;' %(v, target)
@@ -1061,6 +1081,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 				v = value[1:]
 				return '_tmp := %s; %s = &_tmp;' %(v, target)
 			else:
+				#if value.startswith('&[]*') and self._catch_assignment:
+				#	raise SyntaxError(value)
 				return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):

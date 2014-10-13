@@ -68,7 +68,7 @@ def main():
 
 	## calling a method that has returns multiple subclasses with the result assigned to variable
 	## will generate a switch that enables methods
-	w = 0
+	#w = 0
 	## tests returning self
 	bb = b.some_subclass(b, false)
 	w = bb.bar()

@@ -46,7 +46,7 @@ def my_generic( g:A ) ->int:
 	return g.bar()
 
 
-def main():
+def mainx():
 	a = A( 1000 )
 	b = B()
 	c = C()
@@ -86,3 +86,22 @@ def main():
 	TestError( my_generic(bbb)==y)
 
 
+def main():
+	a = A( 1000 )
+	b = B()
+	c = C()
+
+	## tests returning self
+	bb = b.some_subclass(b, false)
+	w = bb.bar()
+
+	cc = c.some_subclass(b, false)
+	w = cc.bar()
+
+
+	## tests returning other
+	ccc = b.some_subclass(c, true)
+	w = ccc.bar()
+
+	bbb = c.some_subclass(b, true)
+	w = bbb.bar()
