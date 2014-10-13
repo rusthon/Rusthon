@@ -478,7 +478,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if type == 'self':
 				type = '&' + self._class_stack[-1].name
 			else:
-				type = '*' + type
+				type = '*' + type  ## TODO tests - should this be &
 			#return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
 			return '%s(*%s)' %(type, self.visit(node.args[0]) )
 
@@ -789,10 +789,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 			##out.append(self.indent() + '__type__ := __gen__.(object).getclassname()')
 
 
-			out.append(self.indent() + '__type__ := ""')
+			out.append(self.indent() + '__type__ := "INVALID"')
 			out.append(self.indent() + '__super__, __ok__ := __gen__.(object)')
+
+			#out.append(self.indent() + '__type__ = __super__.getclassname();')        ## TODO FIX ME
+			#out.append(self.indent() + 'fmt.Println(__type__); ')
+			#out.append(self.indent() + 'if __type__=="" { fmt.Println(__gen__.(object).__class__); }')
+
 			out.append(self.indent() + 'if __ok__ { __type__ = __super__.getclassname();')
 			out.append(self.indent() + '} else { fmt.Println("Gython RuntimeError - struct must implement the `object` interface"); }')
+
 			out.append(self.indent() + 'switch __type__ {')
 			#out.append(self.indent() + 'switch __gen__.(type) {')  ## this is not always correct
 			#out.append('fmt.Println("class name: ", __type__)')
@@ -846,7 +852,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 				self.pull()
 			self.pull()
 			out.append(self.indent() + '}')
-			out.append(self.indent() + 'fmt.Println("Generics RuntimeError - failed to convert type to:", __type__)')
+			out.append(self.indent() + 'fmt.Println("Generics RuntimeError - failed to convert type to:", __type__, __gen__)')
 			#out.append('fmt.Println(__gen__)')
 
 			if return_type == 'int':
@@ -1034,7 +1040,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		elif not self._function_stack:
 			value = self.visit(node.value)
-			return 'var %s = %s;' % (target, value)
+			#return 'var %s = %s;' % (target, value)
+			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:
+				value = '__new__' + value
+				return 'var %s *%s = %s;' % (target, node.value.func.id, value)
+			else:
+				return 'var %s = %s;' % (target, value)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
 			value = self.visit(node.value)
