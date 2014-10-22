@@ -667,16 +667,21 @@ class GoGenerator( pythonjs.JSGenerator ):
 				## and will not allow the alternate case.
 				## case struct pointer:  invalid type assertion: __unknown__.(*A) (non-interface type *A on left)
 				## case empty interface: cannot convert __unknown__ (type interface {}) to type B: need type assertion
+				#out = [
+				#	'__unknown__ := %s' %G['value'],
+				#	'switch reflect.TypeOf(__unknown__).Kind() {',
+				#	' case reflect.Interface:',
+				#	'    __addr := __unknown__.(*%s)' %type,
+				#	'    return __addr',
+				#	' case reflect.Ptr:',
+				#	'    __addr := %s(__unknown__)' %type,
+				#	'    return __addr',
+				#	'}'
+				#]
+
 				out = [
-					'__unknown__ := %s' %G['value'],
-					'switch reflect.TypeOf(__unknown__).Kind() {',
-					' case reflect.Interface:',
-					'    __addr := __unknown__.(*%s)' %type,
-					'    return __addr',
-					' case reflect.Ptr:',
-					'    __addr := %s(__unknown__)' %type,
-					'    return __addr',
-					'}'
+					'__addr := %s( %s )' %(type, G['value']),
+					'return __addr',
 				]
 
 				return '\n'.join(out)
