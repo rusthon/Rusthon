@@ -9,6 +9,7 @@ import pythonjs
 go_types = 'bool string int float64'.split()
 
 class GenerateGenericSwitch( SyntaxError ): pass
+class GenerateTypeAssert( SyntaxError ): pass
 
 def transform_gopherjs( node ):
 	gt = GopherjsTransformer()
@@ -70,6 +71,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._known_instances = dict()
 		self._known_arrays    = dict()
 		self._scope_stack = list()
+
+		self.interfaces = dict()
 
 	def visit_Is(self, node):
 		return '=='
@@ -152,6 +155,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._class_props[ node.name ] = props
 		if node.name not in self.method_returns_multiple_subclasses:
 			self.method_returns_multiple_subclasses[ node.name ] = set()
+		
+		self.interfaces[ node.name ] = set()
 
 
 		for base in node.bases:
@@ -202,6 +207,11 @@ class GoGenerator( pythonjs.JSGenerator ):
 						v = self.visit( b.value.values[i] )
 					if v == 'interface': v = 'interface{}'
 					sdef[k] = v
+
+		for k in sdef:
+			v = sdef[k]
+			if v=='interface{}':
+				self.interfaces[node.name].add(k)
 
 		node._struct_def.update( sdef )
 		unionstruct = dict()
@@ -367,6 +377,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		header = [
 			'package main',
 			'import "fmt"',
+			'import "reflect"'
 		]
 		lines = []
 
@@ -474,13 +485,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 		elif fname == 'len':
 			return 'len(*%s)' %self.visit(node.args[0])
 		elif fname == 'go.type_assert':
+			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])
+			raise GenerateTypeAssert( {'type':type, 'value':val} )
+			## below is deprecated
 			if type == 'self':
-				type = '&' + self._class_stack[-1].name
+				## todo how to better mark interfaces, runtime type switch?
+				if '.' in type and type.split('.')[0]=='self' and type.split('.')[-1] in self.interfaces[self._class_stack[-1].name]:
+					val += '.(%s)' %self._class_stack[-1].name
+					return '&%s(%s)' %(type, val )
+				else:
+					type = '&' + self._class_stack[-1].name
 			else:
 				type = '*' + type  ## TODO tests - should this be &
 			#return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
-			return '%s(*%s)' %(type, self.visit(node.args[0]) )
+
+
+			return '%s(*%s)' %(type, val )
 
 
 		if node.args:
@@ -631,7 +652,37 @@ class GoGenerator( pythonjs.JSGenerator ):
 		if isinstance(node.value, ast.Tuple):
 			return 'return %s' % ', '.join(map(self.visit, node.value.elts))
 		if node.value:
-			v = self.visit(node.value)
+			try:
+				v = self.visit(node.value)
+			except GenerateTypeAssert as err:
+				G = err[0]
+				type = G['type']
+				if type == 'self':
+					type = self._class_stack[-1].name
+
+
+				## This hack using reflect will not work for either case where the value
+				## maybe an empty interface, or a pointer to a struct, because it is known
+				## to the Go compiler if the value is an interface or pointer to struct,
+				## and will not allow the alternate case.
+				## case struct pointer:  invalid type assertion: __unknown__.(*A) (non-interface type *A on left)
+				## case empty interface: cannot convert __unknown__ (type interface {}) to type B: need type assertion
+				out = [
+					'__unknown__ := %s' %G['value'],
+					'switch reflect.TypeOf(__unknown__).Kind() {',
+					' case reflect.Interface:',
+					'    __addr := __unknown__.(*%s)' %type,
+					'    return __addr',
+					' case reflect.Ptr:',
+					'    __addr := %s(__unknown__)' %type,
+					'    return __addr',
+					'}'
+				]
+
+				return '\n'.join(out)
+
+
+
 			if v.startswith('&'):
 				return '_hack := %s; return &_hack' %v[1:]
 			else:
@@ -1131,12 +1182,26 @@ def main(script, insert_runtime=True):
 
 	g = GoGenerator()
 	g.visit(tree) # first pass gathers classes
-	return g.visit(tree)
-	try:
-		return GoGenerator().visit(tree)
-	except SyntaxError as err:
-		sys.stderr.write(script)
-		raise err
+	pass2 = g.visit(tree)
+
+	exe = os.path.expanduser('~/go/bin/go')
+	if not os.path.isfile(exe):
+		raise RuntimeError('go not found in ~/go/bin/go')
+
+	## TODO - parse output of build, checking for `need type assertion`, 
+	## and swap interface logic with struct conversion logic in pass3.
+	path = '/tmp/pass2.go'
+	open(path, 'wb').write( pass2 )
+	import subprocess
+	subprocess.check_call([exe, 'build', path], cwd='/tmp')
+
+	return pass2
+
+	#try:
+	#	return GoGenerator().visit(tree)
+	#except SyntaxError as err:
+	#	sys.stderr.write(script)
+	#	raise err
 
 
 
