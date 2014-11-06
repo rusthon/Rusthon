@@ -729,6 +729,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		args_typedefs = {}
 		chan_args_typedefs = {}
 		return_type = None
+		generic_base_class = None
 		generics = set()
 		args_generics = dict()
 		returns_self = False
@@ -751,6 +752,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
 						else:
 							classname = args_typedefs[ key.arg ]
+							generic_base_class = classname
 							generics.add( classname ) # switch v.(type) for each
 							generics = generics.union( self._classes[classname]._subclasses )
 							args_typedefs[ key.arg ] = 'interface{}'
@@ -925,9 +927,39 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 						out.append( self.indent() + v )
 
-				out.append(self.indent() + '} else { fmt.Println("Generics RuntimeError - generic argument is not a pointer to a struct", %s); fmt.Println("struct: ",__gen__);}' %gname)
+				out.append(self.indent() + '} else {' )
+				if generic_base_class == gt:
+					out.append(' fmt.Println("Generics RuntimeError - generic argument is not a pointer to a struct", %s);' %gname)
+					out.append(' fmt.Println("struct: ",__gen__);' )
+				else:
+					# __gen__.(C).foo();
+					# this fails because the go compiler thinks that __gen__ is *B, when infact its *C
+					# panic: interface conversion: interface is *main.B, not *main.C,
+					# workaround: switch on type go thinks it is, and then recast to the real type.
+					# s := C( *__gen__.(*B) )
+					self.push()
+					out.append( self.indent() + 'switch __gen__.(type) {' )
+					self.push()
+					for gt2 in gsorted:
+						if gt2 != gt:
+							out.append(self.indent() + 'case *%s:' %gt2)
+							self.push()
+							if gt2 == generic_base_class:
+								## TODO panic here
+								out.append(' fmt.Println("Generics RuntimeError - can not cast base class to a subclass type", %s);' %gname)
+							else:
+								out.append(self.indent() + '%s := %s( *__gen__.(*%s) )' %(gname, gt, gt2) )
+								for b2 in node.body:
+									v = self.visit(b2)
+									if v:
+										out.append( self.indent() + v )
 
+							self.pull()
 
+					self.pull()
+					out.append(self.indent() + '}')
+					self.pull()
+				out.append(self.indent() + '}')
 				self.pull()
 			self.pull()
 			out.append(self.indent() + '}')
