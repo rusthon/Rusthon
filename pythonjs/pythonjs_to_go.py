@@ -916,19 +916,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 				for b in node.body:
 					v = self.visit(b)
 					if v:
-						## TODO - fix - this breaks easily
-						if v.strip().startswith('return ') and '*'+gt != return_type:
-							if gname in v and v.strip() != 'return self' and returns_self:
-								if '(' not in v:
-									v += '.(%s)' %return_type
-									#if v.split('return ')[-1].strip()==gname:
-									v = v.replace(gname, '__gen__')
-									self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
-
+						if returns_self:
+							v = self._hack_return(v, return_type, gname, gt, node)
 						out.append( self.indent() + v )
 
 				out.append(self.indent() + '} else {' )
-				if generic_base_class == gt:
+				if generic_base_class == gt or returns_self:
 					out.append(' fmt.Println("Generics RuntimeError - generic argument is not a pointer to a struct", %s);' %gname)
 					out.append(' fmt.Println("struct: ",__gen__);' )
 				else:
@@ -952,6 +945,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 								for b2 in node.body:
 									v = self.visit(b2)
 									if v:
+										#if returns_self:
+										#	v = self._hack_return(v, return_type, gname, gt, node)
 										out.append( self.indent() + v )
 
 							self.pull()
@@ -993,6 +988,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self.pull()
 		out.append( self.indent()+'}' )
 		return '\n'.join(out)
+
+	def _hack_return(self, v, return_type, gname, gt, node):
+		## TODO - fix - this breaks easily
+		if v.strip().startswith('return ') and '*'+gt != return_type:
+			if gname in v and v.strip() != 'return self':
+				if '(' not in v:
+					v += '.(%s)' %return_type
+					v = v.replace(gname, '__gen__')
+					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
+		return v
 
 	def generate_generic_branches(self, body, out, force_vars, force_used_vars):
 		#out.append('/* GenerateGeneric */')
@@ -1044,8 +1049,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 				if 'target' not in G:
 					if isinstance(b, ast.Assign):
 						G['target'] = self.visit(b.targets[0])
-				else:
-					raise SyntaxError('no target to generate generic switch')
+					else:
+						raise SyntaxError('no target to generate generic switch')
 
 
 				out.append(self.indent()+'__subclass__ := %s' %G['value'])
