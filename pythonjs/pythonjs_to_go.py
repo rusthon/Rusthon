@@ -931,8 +931,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 				self.pull()
 			self.pull()
 			out.append(self.indent() + '}')
-			out.append(self.indent() + 'fmt.Println("Generics RuntimeError - failed to convert type to:", __type__, __gen__)')
-			#out.append('fmt.Println(__gen__)')
+
+			## this only helps with debugging when the generic function is expected to return something
+			if return_type:
+				out.append(self.indent() + 'fmt.Println("Generics RuntimeError - failed to convert type to:", __type__, __gen__)')
 
 			if return_type == 'int':
 				out.append(self.indent() + 'return 0')

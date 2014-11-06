@@ -56,7 +56,7 @@ def main():
     #ccc = go.type_assert( cc, C )
     #print(ccc.foo())
 
-    print('testing generic')
+    print('----testing generic----')
     for subclass in barr:
         print('subclass in bar:', subclass)
         my_generic(subclass)
