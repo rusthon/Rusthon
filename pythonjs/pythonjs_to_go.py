@@ -73,6 +73,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._scope_stack = list()
 
 		self.interfaces = dict()
+		self.uids = 0
+		self.unodes = dict()
+
+	def uid(self):
+		self.uids += 1
+		return self.uids
 
 	def visit_Is(self, node):
 		return '=='
@@ -289,8 +295,12 @@ class GoGenerator( pythonjs.JSGenerator ):
 			out.append('}')
 
 		else:
-			out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
-
+			#out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
+			out.append( 'func __new__%s() *%s {' %(node.name, node.name))
+			out.append( '  ob := %s{}' %node.name )
+			out.append( '  ob.__class__ = "%s"' %node.name)
+			out.append( '  return &ob')
+			out.append('}')
 
 
 
@@ -313,25 +323,25 @@ class GoGenerator( pythonjs.JSGenerator ):
 		return self._visit_call_helper(node, force_name=name)
 
 
-	def _visit_subscript_ellipsis(self, node):
-		name = self.visit(node.value)
-		#return '%s["$wrapped"]' %name
-		raise NotImplementedError
-
-
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
-			if self._glsl:
-				#return '%s[_id_]' % self.visit(node.value)
-				return '%s[matrix_index()]' % self.visit(node.value)
-			else:
-				return self._visit_subscript_ellipsis( node )
+			raise NotImplementedError( 'ellipsis')
 		else:
 			## deference pointer and then index
 			if isinstance(node.slice, ast.Slice):
-				return '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+				r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
-				return '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+				r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+
+			if isinstance(node.value, ast.Name) and node.value.id in self._known_arrays:
+				target = node.value.id
+				#value = self.visit( node.value )
+				cname = self._known_arrays[target]
+				#raise GenerateGenericSwitch( {'target':target, 'value':r, 'class':cname} )
+				raise GenerateGenericSwitch( {'value':r, 'class':cname} )
+
+			return r
+
 
 
 	def visit_Slice(self, node):
@@ -377,7 +387,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		header = [
 			'package main',
 			'import "fmt"',
-			'import "reflect"'
+			#'import "reflect"'
 		]
 		lines = []
 
@@ -679,10 +689,23 @@ class GoGenerator( pythonjs.JSGenerator ):
 				#	'}'
 				#]
 
-				out = [
-					'__addr := %s( %s )' %(type, G['value']),
-					'return __addr',
-				]
+				if not hasattr(node.value, 'uid'):
+					node.value.uid = self.uid()
+
+				id = '__magic__%s' % node.value.uid
+				if id not in self.unodes: self.unodes[ id ] = node.value
+
+				if hasattr(node.value, 'is_struct_pointer'):
+
+					out = [
+						'%s := %s( *%s )' %(id, type, G['value']),
+						'return &%s' %id,
+					]
+				else:
+					out = [
+						'%s := %s.( *%s )' %(id, G['value'], type),
+						'return %s' %id,
+					]
 
 				return '\n'.join(out)
 
@@ -983,8 +1006,14 @@ class GoGenerator( pythonjs.JSGenerator ):
 				#out.append('/*	stack len: %s*/' %len(self._scope_stack))
 				#out.append('/*	stack: %s*/' %self._scope_stack)
 
-
 				G = err[0]
+				if 'target' not in G:
+					if isinstance(b, ast.Assign):
+						G['target'] = self.visit(b.targets[0])
+				else:
+					raise SyntaxError('no target to generate generic switch')
+
+
 				out.append(self.indent()+'__subclass__ := %s' %G['value'])
 				out.append(self.indent()+'switch __subclass__.__class__ {')
 				self.push()
@@ -1193,20 +1222,30 @@ def main(script, insert_runtime=True):
 	if not os.path.isfile(exe):
 		raise RuntimeError('go not found in ~/go/bin/go')
 
-	## TODO - parse output of build, checking for `need type assertion`, 
-	## and swap interface logic with struct conversion logic in pass3.
+	## this hack runs the code generated in the second pass into the Go compiler to check for errors,
+	## where an interface could not be type asserted, because Go found that the variable was not an interface,
+	## parsing the errors from `go build` and matching the magic ids, in self.unodes on the node is set
+	## `is_struct_pointer`, this triggers different code to be generated in the 3rd pass.
+	## the Gython translator also has the same type information as Go, but it is simpler to use this hack.
+	import subprocess
+	pass2lines = pass2.splitlines()
 	path = '/tmp/pass2.go'
 	open(path, 'wb').write( pass2 )
-	import subprocess
-	subprocess.check_call([exe, 'build', path], cwd='/tmp')
+	p = subprocess.Popen([exe, 'build', path], cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	errors = p.stderr.read().splitlines()
+	if len(errors):
+		for line in errors:
+			if 'invalid type assertion' in line:
+				if 'non-interface type' in line:
+					lineno = int( line.split(':')[1] )
+					src = pass2lines[ lineno-1 ]
+					assert '__magic__' in src
+					id = src.strip().split()[0]
+					g.unodes[id].is_struct_pointer = True
+				else:
+					raise SyntaxError(line)
 
-	return pass2
-
-	#try:
-	#	return GoGenerator().visit(tree)
-	#except SyntaxError as err:
-	#	sys.stderr.write(script)
-	#	raise err
+	return g.visit(tree) ## pass3
 
 
 

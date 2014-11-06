@@ -18,6 +18,8 @@ func (self __object__) getclassname() string {
 	return self.__class__
 }
 
+
+
 func ord(x string) int {
 	r := []rune(x)
 	return int(r[0])
