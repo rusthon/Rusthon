@@ -8,9 +8,10 @@ from pythonjs_to_coffee import main as pythonjs_to_coffee
 from pythonjs_to_lua import main as pythonjs_to_lua
 from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
+from pythonjs_to_rust import main as pythonjs_to_rust
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--rust|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -24,7 +25,10 @@ def main(script, module_path=None):
 	else:
 		code = ''
 		res = None
-		if '--go' in sys.argv:
+		if '--rust' in sys.argv:
+			a = python_to_pythonjs(script, rust=True, module_path=module_path)
+			code = pythonjs_to_rust( a )
+		elif '--go' in sys.argv:
 			a = python_to_pythonjs(script, go=True, module_path=module_path)
 			code = pythonjs_to_go( a )
 		elif '--gopherjs' in sys.argv:

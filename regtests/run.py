@@ -196,6 +196,8 @@ luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 go_runnable = runnable( 'go version')
 gopherjs_runnable = runnable( 'gopherjs')
 
+rust_runnable = runnable( 'rustc --help')
+
 assert rhino_runnable or node_runnable
 
 if show_details:
@@ -447,7 +449,7 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
     ]
-    if backend == 'GO':
+    if backend == 'GO' or backend == 'RUST':
         a.append(_patch_header_go)
     else:
         a.append(_patch_header)
@@ -475,7 +477,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -510,6 +512,9 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     elif go or gopherjs:
         content = patch_python(filename, backend='GO')
 
+    elif rust:
+        content = patch_python(filename, backend='RUST')
+
     else:
         content = patch_python(filename)
 
@@ -538,6 +543,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--go' )
     elif gopherjs:
         cmd.append( '--gopherjs' )
+    elif rust:
+        cmd.append( '--rust' )
 
     if not requirejs:
         cmd.append( '--no-wrapper' )
@@ -811,6 +818,21 @@ def run_gopherjs_node(content):
     write("%s.js" % tmpname, content)
     return run_command("node %s.js" % tmpname)
 
+
+def run_pythonjs_rust_test(dummy_filename):
+    """Rusthon"""
+    return run_if_no_error(run_go)
+
+def run_rust(content):
+    """compile and run go program"""
+    write("%s.rs" % tmpname, content)
+    errors = run_command("rustc -o /tmp/regtest-rust %s.rs" % tmpname)
+    if errors:
+        return errors
+    else:
+        return run_command( '/tmp/regtest-rust' )
+
+
 def run_html_test( filename, sum_errors ):
     lines = open(filename, 'rb').read().decode('utf-8').splitlines()
     filename = os.path.split(filename)[-1]
@@ -983,6 +1005,11 @@ def run_test_on(filename):
             js = translate_js(filename, gopherjs=True)
             display(run_pythonjs_gopherjs_test)
 
+        if rust_runnable:
+            js = translate_js(filename, rust=True)
+            display(run_pythonjs_rust_test)
+
+
     print()
     return sum_errors
 
@@ -1035,6 +1062,9 @@ def run():
         
         if go_runnable:
             headers.append("Go\n-")
+
+        if rust_runnable:
+            headers.append("Rust\n-")
 
 
         print(table_header % ("", "Regtest run on")

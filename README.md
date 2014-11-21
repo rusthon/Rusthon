@@ -1,6 +1,6 @@
 Introduction
 ------------
-Gython is a transpiler written in Python that converts a python like language into Go.
+Rusthon is a transpiler written in Python that converts a python like language into Rust.
 
 [Syntax Documentation](https://github.com/PythonJS/PythonJS/blob/master/doc/go_syntax.md)
 
@@ -9,26 +9,26 @@ Installing
 ===============
 
 
-gython.py
+rusthon.py
 --------------------------------------
-Install Python2.7 and git clone this repo, in the toplevel is the build script `gython.py`.  
+Install Python2.7 and git clone this repo, in the toplevel is the build script `rusthon.py`.  
 Running gython.py from the command line and passing it one or more python scripts outputs
 the Go translation to stdout.
 
 Usage::
 
-	gython.py file.py
+	rusthon.py file.py
 
 Example::
 
-	git clone https://github.com/gython/Gython.git
-	cd Gython
-	./gython.py myscript.py > myscript.go
+	git clone https://github.com/rusthon/Rusthon.git
+	cd Rusthon
+	./rusthon.py myscript.py > myscript.rust
 
 
 Getting Started
 ===============
-Gython supports classes and multiple inheritance, with method overrides and calling the parent class methods.
+Rusthon supports classes and multiple inheritance, with method overrides and calling the parent class methods.
 
 ```
 	class A:
@@ -52,7 +52,7 @@ Gython supports classes and multiple inheritance, with method overrides and call
 
 ```
 
-Gython supports Go's typed maps.
+Rusthon supports typed maps.
 
 ```
 	a = map[string]int{
@@ -63,20 +63,12 @@ Gython supports Go's typed maps.
 
 ```
 
-Gython supports array and map comprehensions.
+Rusthon supports array and map comprehensions.
 Below is an array of integers, and a map of strings with integer keys.
 
 ```
 	a = []int(x for x in range(3))
 	b = map[int]string{ i:'xxx' for i in range(10) }
-```
-
-Gython supports Go's send data to channel syntax
-
-```
-	a = go.channel( int )
-	a <- 1
-
 ```
 
 
@@ -94,7 +86,7 @@ myfunc( x )
 
 Simple Generator Functions
 ==========================
-Gython supports generator functions with a single for loop that yields from its main body.
+Rusthon supports generator functions with a single for loop that yields from its main body.
 The generator function can also yield once before the loop, and once after.
 ```
 def fib(n:int) -> int:
@@ -116,7 +108,7 @@ def main():
 
 Generic High Order Functions
 ==========================
-Gython supports generic functions, where the first argument can be an instance of different subclasses.
+Rusthon supports generic functions, where the first argument can be an instance of different subclasses.
 All the subclasses must share the same common base class.  In the function definition the first argument
 is typed with the name of the common base class.  In the function below `my_generic`, the first argument `g`
 is typed with the common base class: `def my_generic( a:A )`

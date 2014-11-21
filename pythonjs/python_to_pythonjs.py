@@ -151,7 +151,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 
 
-	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, fast_javascript=False, pure_javascript=False):
+	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, rust=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
 		NodeVisitorBase.__init__(self)
 		self._modules = modules          ## split into mutiple files by class
@@ -159,8 +159,9 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
-		self._with_go = go
+		self._with_go = go or rust
 		self._with_gojs = False
+		self._with_rust = rust
 		self._fast_js = fast_javascript
 		self._strict_mode = pure_javascript
 
