@@ -571,6 +571,10 @@ a = map[string]int{
 	"z":z
 }
 
+def f():
+    return [[0]]
+print f()[0][0]
+
 '''
 
 if __name__ == '__main__':
