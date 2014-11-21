@@ -821,12 +821,14 @@ def run_gopherjs_node(content):
 
 def run_pythonjs_rust_test(dummy_filename):
     """Rusthon"""
-    return run_if_no_error(run_go)
+    return run_if_no_error(run_rust)
 
 def run_rust(content):
     """compile and run go program"""
     write("%s.rs" % tmpname, content)
-    errors = run_command("rustc -o /tmp/regtest-rust %s.rs" % tmpname)
+    #errors = run_command("rustc -o /tmp/regtest-rust %s.rs" % tmpname)
+    subprocess.check_call(['rustc', '--crate-name', 'regtest', '-o', '/tmp/regtest-rust',  '%s.rs' % tmpname] )
+    errors = False
     if errors:
         return errors
     else:

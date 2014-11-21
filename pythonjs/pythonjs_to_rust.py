@@ -323,6 +323,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Module(self, node):
 		header = [
+			'#[allow(unused_parens)]',
+			'#[allow(non_camel_case_types)]',
+			'#[allow(dead_code)]',
+			'#[allow(non_snake_case)]',
 		]
 		lines = []
 
@@ -737,6 +741,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
 				else:
+					if arg_type == 'string':
+						arg_type = 'String'
 					a = '%s:%s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
@@ -1107,6 +1113,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
 			else:
 				return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
+				#return 'static %s : string = String::from_str(%s);' % (target, value)  ## TODO other types (`let` will not work at global scope)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
 			value = self.visit(node.value)
@@ -1210,19 +1217,10 @@ def main(script, insert_runtime=True):
 	p = subprocess.Popen([exe, path], cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	errors = p.stderr.read().splitlines()
 	if len(errors):
-		raise SyntaxError(errors)
 		for line in errors:
-			if 'invalid type assertion' in line:
-				if 'non-interface type' in line:
-					lineno = int( line.split(':')[1] )
-					src = pass2lines[ lineno-1 ]
-					assert '__magic__' in src
-					id = src.strip().split()[0]
-					g.unodes[id].is_struct_pointer = True
-				else:
-					raise SyntaxError(line)
+			if 'error:' in line:
+				raise SyntaxError(line)
 
-	#return g.visit(tree) ## pass3
 	return pass2
 
 

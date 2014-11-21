@@ -7,7 +7,8 @@ inline("""
 
 /* Rusthon builtins */
 
-type string = str;
+type string = &'static str;
+//type string = String;
 
 """)
 
