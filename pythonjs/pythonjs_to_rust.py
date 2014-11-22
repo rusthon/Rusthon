@@ -345,13 +345,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError(b)
 
-		if False:  ## TODO
-			lines.append('type _kwargs_type_ struct {')
-			for name in self._kwargs_type_:
-				type = self._kwargs_type_[name]
-				lines.append( '  %s %s' %(name,type))
-				lines.append( '  __use__%s bool' %name)
-			lines.append('}')
+		lines.append('type _kwargs_type_ = struct {')
+		for name in self._kwargs_type_:
+			type = self._kwargs_type_[name]
+			lines.append( '  %s %s' %(name,type))
+			lines.append( '  __use__%s bool' %name)
+		lines.append('}')
 
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
@@ -763,7 +762,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if oargs:
 			#args.append( '[%s]' % ','.join(oargs) )
 			#args.append( '{%s}' % ','.join(oargs) )
-			args.append( '__kwargs _kwargs_type_')
+			args.append( '__kwargs : _kwargs_type_')
 			node._arg_names.append( '__kwargs' )
 
 		starargs = None
@@ -784,20 +783,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		out = []
 		if is_closure:
 			if return_type:
-				out.append( self.indent() + '%s := func (%s) %s {\n' % (node.name, ', '.join(args), return_type) )
+				out.append( self.indent() + '%s := func (%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
 				out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
-				out.append( self.indent() + 'fn %s%s(%s) %s {\n' % (method, node.name, ', '.join(args), return_type) )
+				out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
 			else:
 				out.append( self.indent() + 'fn %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
 			for n,v in oargs:
-				out.append('%s := %s' %(n,v))
-				out.append('if __kwargs.__use__%s {' %n )
+				out.append('let %s = %s;' %(n,v))
+				out.append('if __kwargs.__use__%s == true {' %n )
 				out.append( '  %s = __kwargs.%s' %(n,n))
 				out.append('}')
 				#out.append('} else { %s := %s }' %(n,v))
