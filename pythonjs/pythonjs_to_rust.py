@@ -333,11 +333,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Module(self, node):
 		header = [
+			'#![allow(unknown_features)]',
 			'#![feature(slicing_syntax)]',
-			'#![feature(unused_parens)]',
-			'#![feature(non_camel_case_types)]',
-			'#![feature(dead_code)]',
-			'#![feature(non_snake_case)]',
+			'#![allow(unused_parens)]',
+			'#![allow(non_camel_case_types)]',
+			'#![allow(dead_code)]',
+			'#![allow(non_snake_case)]',
 		]
 		lines = []
 
@@ -448,7 +449,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			assert len(node.args)
 			fname += str(len(node.args))
 		elif fname == 'len':
-			return 'len(*%s)' %self.visit(node.args[0])
+			return '%s.len()' %self.visit(node.args[0])
 		elif fname == 'go.type_assert':
 			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])
