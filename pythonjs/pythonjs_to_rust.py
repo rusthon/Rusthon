@@ -333,10 +333,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Module(self, node):
 		header = [
-			'#[allow(unused_parens)]',
-			'#[allow(non_camel_case_types)]',
-			'#[allow(dead_code)]',
-			'#[allow(non_snake_case)]',
+			'#![feature(slicing_syntax)]',
+			'#![feature(unused_parens)]',
+			'#![feature(non_camel_case_types)]',
+			'#![feature(dead_code)]',
+			'#![feature(non_snake_case)]',
 		]
 		lines = []
 
