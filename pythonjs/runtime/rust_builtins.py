@@ -9,6 +9,7 @@ inline("""
 
 type string = &'static str;
 //type string = String;
+type __type__int = Vec<int>;
 
 """)
 

@@ -283,6 +283,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def visit_Slice(self, node):
+		# http://doc.rust-lang.org/std/slice/
+		#![feature(slicing_syntax)]
+
 		lower = upper = step = None
 		if node.lower:
 			lower = self.visit(node.lower)
@@ -292,11 +295,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			step = self.visit(node.step)
 
 		if lower and upper:
-			return '%s:%s' %(lower,upper)
+			return '%s..%s' %(lower,upper)
 		elif upper:
-			return ':%s' %upper
+			return '0..%s' %upper
 		elif lower:
-			return '%s:'%lower
+			return '%s..'%lower
 		else:
 			raise SyntaxError('TODO slice')
 
@@ -311,8 +314,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				r.append('println!("{}", %s);' %s)
 		return ''.join(r)
 
+	#def visit_Expr(self, node):
+	#	return self.visit(node.value)
 	def visit_Expr(self, node):
-		return self.visit(node.value)
+		# XXX: this is UGLY
+		s = self.visit(node.value)
+		if s.strip() and not s.endswith(';'):
+			s += ';'
+		if s==';': return ''
+		else: return s
 
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
@@ -336,7 +346,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if line:
 				for sub in line.splitlines():
 					if sub==';':
-						raise SyntaxError(line)
+						#raise SyntaxError('bad semicolon')
+						pass
 					else:
 						lines.append( sub )
 			else:
@@ -345,12 +356,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError(b)
 
-		lines.append('type _kwargs_type_ = struct {')
-		for name in self._kwargs_type_:
-			type = self._kwargs_type_[name]
-			lines.append( '  %s %s' %(name,type))
-			lines.append( '  __use__%s bool' %name)
-		lines.append('}')
+		if len(self._kwargs_type_.keys())==0:
+			lines.append('struct _kwargs_type_;')
+		else:
+			lines.append('struct _kwargs_type_ {')
+			for name in self._kwargs_type_:
+				type = self._kwargs_type_[name]
+				lines.append( '  %s %s' %(name,type))
+				lines.append( '  __use__%s bool' %name)
+			lines.append('}')
 
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
@@ -472,7 +486,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args: args += ','
 			args += '*%s...' %self.visit(node.starargs)
 
-		if is_append:
+		if is_append and False:
 			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
 			id = self._ids
 			self._ids += 1
@@ -570,16 +584,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if value_type == 'interface': value_type = 'interface{}'
 					return '&map[%s]%s%s' %(key_type, value_type, right)
 				else:
-					if not right.startswith('{') and not right.endswith('}'):
-						right = '{%s}' %right[1:-1]
+					if not right.startswith('(') and not right.endswith(')'):
+						right = '( %s )' %right[1:-1]
 
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
 						if T in go_types:
-							return '&[]%s%s' %(T, right)
+							#return '&vec!%s%s' %(T, right)
+							return '&vec!%s' %right
 						else:
 							self._catch_assignment = {'class':T}  ## visit_Assign catches this
 							return '&[]*%s%s' %(T, right)
+
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
@@ -587,7 +603,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							if right != '{}': raise SyntaxError('todo init array of objects with args')
 							return '&make([]*%s, %s)' %(atype, asize)
 						else:
-							return '&[%s]%s%s' %(asize, atype, right)
+							#return '&[%s]%s%s' %(asize, atype, right)
+							return '&vec!%s' %right
+
+
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
 				return '*[]%s' %self.visit(node.right)
 
@@ -600,7 +619,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
-			return 'return %s' % ', '.join(map(self.visit, node.value.elts))
+			return 'return %s;' % ', '.join(map(self.visit, node.value.elts))
 		if node.value:
 			try:
 				v = self.visit(node.value)
@@ -654,8 +673,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if v.startswith('&'):
 				return '_hack := %s; return &_hack' %v[1:]
 			else:
-				return 'return %s' % v
-		return 'return'
+				return 'return %s;' % v
+		return 'return;'
 
 	def _visit_function(self, node):
 		is_closure = False
@@ -769,7 +788,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if node.args.vararg:
 			starargs = node.args.vararg
 			assert starargs in args_typedefs
-			args.append( '__vargs__ ...%s' %args_typedefs[starargs])
+			args.append( '__vargs__ : Vec<%s>' %args_typedefs[starargs])
 			node._arg_names.append( starargs )
 
 		node._args_signature = ','.join(args)
@@ -802,7 +821,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				#out.append('} else { %s := %s }' %(n,v))
 
 		if starargs:
-			out.append('%s := &__vargs__' %starargs)
+			out.append('let %s = &__vargs__;' %starargs)
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
@@ -1070,7 +1089,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## need to catch if this is a new variable ##
 				name = node.context_expr.keywords[0].arg
 				if name not in self._known_vars:
-					a = '%s := %s' %(name, self.visit(node.context_expr.keywords[0].value))
+					a = 'let %s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 				else:
 					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
@@ -1123,9 +1142,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				self._known_arrays[ target ] = self._catch_assignment['class']
 
 
-			if value.startswith('&(*') and '[' in value and ']' in value:  ## slice hack
-				v = value[1:]
-				return '_tmp := %s; %s := &_tmp;' %(v, target)
+			#if value.startswith('&(*') and '[' in value and ']' in value:  ## Go slice hack
+			#	v = value[1:]
+			#	return '_tmp := %s; %s := &_tmp;' %(v, target)
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
@@ -1136,19 +1155,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						self._known_instances[target] = cname
 						#raise SyntaxError('xxxxxxxxx %s - %s' % (self.visit(node.value), target ) )
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
-				return '%s := %s;' % (target, value)
+				return 'let %s = %s;' % (target, value)
 
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
 				if node.value.func.id in self._classes:
 					#raise SyntaxError(value+' in classes')
 					self._known_instances[ target ] = node.value.func.id
-					return '%s := __new__%s;' %(target, value)
+					return 'let %s = __new__%s;' %(target, value)
 				else:
-					return '%s := %s;' % (target, value)
+					return 'let %s = %s;' % (target, value)
 
 			else:
-				return '%s := %s;' % (target, value)
+				return 'let %s = %s;' % (target, value)
 
 		else:
 			value = self.visit(node.value)
