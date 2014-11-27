@@ -16,10 +16,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs_to_go.GoGenerator.__init__(self, requirejs=False, insert_runtime=False)
+		self._globals = {
+			'string' : set()
+		}
+
+	def visit_Str(self, node):
+		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
+		#return '"%s"' % s
+		if self._function_stack: return '"%s".to_string()' % s
+		else: return '"%s"' % s
 
 
 	def visit_Is(self, node):
 		return '=='
+
 	def visit_IsNot(self, node):
 		return '!='
 
@@ -50,6 +60,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		out.append( self.indent() + '}' )
 
 		return '\n'.join( out )
+
+	## can not assume that all numbers are signed integers
+	#def visit_Num(self, node):
+	#	if type(node.n) is int: return str(node.n) + 'i'
+	#	else: return str(node.n)
+
+	def visit_Index(self, node):
+		if isinstance(node.value, ast.Num):
+			return str(node.value.n)
+		else:
+			return self.visit(node.value)
+
 
 	def visit_Name(self, node):
 		if node.id == 'None':
@@ -368,6 +390,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				lines.append( '  __use__%s bool' %name)
 			lines.append('}')
 
+		lines.append('mod rusthon {')
+		## copy string globals into rusthon module
+		lines.append('}')
+
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
 
@@ -488,24 +514,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args: args += ','
 			args += '*%s...' %self.visit(node.starargs)
 
-		if is_append and False:
-			## deference pointer as first arg to append, assign to temp variable, then set the pointer to the new array.
-			id = self._ids
-			self._ids += 1
+		if is_append:
 			item = args
-
-			if item in self._known_instances:
-				classname = self._known_instances[ item ]
-				#raise SyntaxError( self._known_instances[item] )
-				#if arr in self._known_vars:
-				#	raise SyntaxError('kow')
-				if arr in self._known_arrays and classname != self._known_arrays[arr]:
-					#raise SyntaxError( self._known_arrays[arr])
-					item = '%s(*%s)' %(self._known_arrays[arr], item)
-					r = '__addr%s := %s;' %(id,item)
-					return r + '__%s := append(*%s,&__addr%s); *%s = __%s;' % (id, arr, id, arr, id)
-
-			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, item, arr, id)
+			#if item in self._known_instances:
+			#	classname = self._known_instances[ item ]
+			#	if arr in self._known_arrays and classname != self._known_arrays[arr]:
+			return '%s.push( %s )' %(arr, item)
 
 		elif self._with_gojs:
 			if isinstance(node.func, ast.Attribute):
@@ -586,14 +600,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if value_type == 'interface': value_type = 'interface{}'
 					return '&map[%s]%s%s' %(key_type, value_type, right)
 				else:
-					if not right.startswith('(') and not right.endswith(')'):
-						right = '( %s )' %right[1:-1]
+					right = []
+					for elt in node.right.elts:
+						if isinstance(elt, ast.Num):
+							right.append( str(elt.n)+'i' )
+						else:
+							right.append( self.visit(elt) )
+					right = '(%s)' %','.join(right)
 
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
 						if T in go_types:
 							#return '&vec!%s%s' %(T, right)
-							return '&vec!%s' %right
+							return '&mut vec!%s' %right
 						else:
 							self._catch_assignment = {'class':T}  ## visit_Assign catches this
 							return '&[]*%s%s' %(T, right)
@@ -761,8 +780,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
 				else:
+
 					if arg_type == 'string':
-						arg_type = 'String'
+						arg_type = 'String'  ## standard string type in rust
+
 					a = '%s:%s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
@@ -1132,6 +1153,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				value = '__new__' + value
 				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
 			else:
+				self._globals['string'].add( target )
 				return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
 				#return 'static %s : string = String::from_str(%s);' % (target, value)  ## TODO other types (`let` will not work at global scope)
 

@@ -333,7 +333,7 @@ def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=Fals
 
 _benchmark = None
 def start_benchmark( name ):
-    print('starting benchmark:', name)
+    if not show_details: print('starting benchmark:', name)
     global _benchmark
     _benchmark = [
         'font=Helvetica',

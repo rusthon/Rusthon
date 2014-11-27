@@ -2564,9 +2564,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			if node.starargs:
 				args.append('*%s' %self.visit(node.starargs))
 
-			#if isinstance(node.func, Name) and node.func.id in self._js_classes:  ## TODO moving to pythonjs_to_go
-			#	return '__new__%s(%s)' %( self.visit(node.func), ','.join(args) )
-			#else:
 			return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
 		elif self._with_js or self._with_dart:
