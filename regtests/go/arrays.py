@@ -16,9 +16,11 @@ def main():
 
 	d = range(10)
 	TestError(len(d)==10)
+	d.append(99)
+	TestError(len(d)==11)
 
-	#e = range(2,10)
-	#TestError(len(e)==8)
+	e = range(2,10)
+	TestError(len(e)==8)
 
 	#f = range(2,10, 2)
 	#TestError(len(f)==4)

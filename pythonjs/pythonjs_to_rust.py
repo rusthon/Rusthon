@@ -361,6 +361,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(non_camel_case_types)]',
 			'#![allow(dead_code)]',
 			'#![allow(non_snake_case)]',
+			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
 		]
 		lines = []
 
@@ -452,7 +453,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		else:
 			iter = self.visit( node.iter )
-			lines.append('for _,%s := range *%s {' %(target, iter))
+			lines.append('for &%s in %s.iter() {' %(target, iter))
 
 		self.push()
 		for b in node.body:
@@ -471,9 +472,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if fname=='str':
 			return '%s.to_string()' %self.visit(node.args[0])
-		elif fname == 'range':
+
+		elif fname == 'range':  ## TODO - some syntax for mutable
 			assert len(node.args)
+			fname = '&mut ' + fname
 			fname += str(len(node.args))
+
 		elif fname == 'len':
 			return '%s.len()' %self.visit(node.args[0])
 		elif fname == 'go.type_assert':
@@ -1191,7 +1195,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'let %s = %s;' % (target, value)
 
 			else:
-				return 'let %s = %s;' % (target, value)
+				return 'let mut %s = %s;' % (target, value)
 
 		else:
 			value = self.visit(node.value)
