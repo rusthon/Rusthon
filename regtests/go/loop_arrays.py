@@ -23,6 +23,12 @@ def main():
 		b += 1
 	TestError( b == 10 )
 
+	b2 = 0
+	for i in range(5, 10):
+		b2 += 1
+	TestError( b2 == 5 )
+
+
 	#c = ''
 	#d = 0
 	#for i,v in enumerate(arr):
