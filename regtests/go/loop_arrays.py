@@ -10,11 +10,13 @@ def main():
 		y += x
 	TestError( y==6 )
 
-	#z = ''
-	#arr = ['a', 'b', 'c']
-	#for v in arr:
-	#	z += v
-	#TestError( z == 'abc' )
+	z = ''
+	arr = ['a', 'b', 'c']
+	for v in arr:
+		z += v
+		#z.push_str(v)
+		#z = z + v
+	TestError( z == 'abc' )
 
 	#b = 0
 	#for i in range(10):

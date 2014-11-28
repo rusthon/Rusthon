@@ -452,8 +452,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			lines.append('for %s,%s := range *%s {' %(key,val, iter))
 
 		else:
+
+			if not hasattr(node.iter, 'uid'):
+				## in the first rustc pass we assume regular references using `&X`,
+				## for loops over an array of String's requires the other type using just `X` or `ref X`
+				node.iter.uid = self.uid()
+				node.iter.is_ref = True
+				self.unodes[ node.iter.uid ] = node.iter
+
+
 			iter = self.visit( node.iter )
-			lines.append('for &%s in %s.iter() {' %(target, iter))
+			if node.iter.is_ref:
+				lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
+			else:
+				lines.append('for %s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
 
 		self.push()
 		for b in node.body:
@@ -518,7 +530,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args: args += ','
 			args += '*%s...' %self.visit(node.starargs)
 
-		if is_append:
+		if is_append: ## this is a bad rule, it is better the user must call `push` instead of `append`
 			item = args
 			#if item in self._known_instances:
 			#	classname = self._known_instances[ item ]
@@ -706,6 +718,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if self._function_stack[0] is node:
 			self._vars = set()
 			self._known_vars = set()
+			self._known_strings = set()
 		elif len(self._function_stack) > 1:
 			## do not clear self._vars and _known_vars inside of closure
 			is_closure = True
@@ -1140,6 +1153,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		return '\n'.join(r)
 
+	def visit_AugAssign(self, node):
+		## n++ and n-- are slightly faster than n+=1 and n-=1
+		target = self.visit(node.target)
+		op = self.visit(node.op)
+		value = self.visit(node.value)
+
+		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings:
+			return '%s.push_str(%s.as_slice())' %(target, value)
+
+		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
+			a = '%s ++;' %target
+		if op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
+			a = '%s --;' %target
+		else:
+			a = '%s %s= %s;' %(target, op, value)
+		return a
+
 	def visit_Assign(self, node):
 		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')
 		self._catch_assignment = False
@@ -1165,6 +1195,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			value = self.visit(node.value)
 			self._vars.remove( target )
 			self._known_vars.add( target )
+
+			if isinstance(node.value, ast.Str):  ## catch strings for `+=` hack
+				self._known_strings.add( target )
 
 			if value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
@@ -1251,11 +1284,10 @@ def main(script, insert_runtime=True):
 	if not os.path.isfile(exe):
 		raise RuntimeError('rustc not found in /usr/local/bin')
 
-	## this hack runs the code generated in the second pass into the Go compiler to check for errors,
-	## where an interface could not be type asserted, because Go found that the variable was not an interface,
-	## parsing the errors from `go build` and matching the magic ids, in self.unodes on the node is set
-	## `is_struct_pointer`, this triggers different code to be generated in the 3rd pass.
-	## the Gython translator also has the same type information as Go, but it is simpler to use this hack.
+	## this hack runs the code generated in the second pass into the Rust compiler to check for errors,
+	## in some cases Rusthon may not always track the types inside an array, or other types, and so it
+	## it starts off by generating some dumb code that works most of the time.  If it will not pass the
+	## Rust compiler, stdout is parsed to check for errors and a magic ID that links to a ast Node.
 	import subprocess
 	pass2lines = pass2.splitlines()
 	path = '/tmp/pass2.rs'
@@ -1263,11 +1295,21 @@ def main(script, insert_runtime=True):
 	p = subprocess.Popen([exe, path], cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	errors = p.stderr.read().splitlines()
 	if len(errors):
+		hiterr = False
 		for line in errors:
 			if 'error:' in line:
-				raise SyntaxError(line)
+				hiterr = True
+			elif hiterr:
+				hiterr = False
+				if '//magic:' in line:
+					uid = int( line.split('//magic:')[-1] )
+					g.unodes[ uid ].is_ref = False
 
-	return pass2
+				else:
+					raise SyntaxError(line)
+	pass3 = g.visit(tree)
+	open('/tmp/pass3.rs', 'wb').write( pass3 )
+	return pass3
 
 
 
