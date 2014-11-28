@@ -362,6 +362,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(dead_code)]',
 			'#![allow(non_snake_case)]',
 			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
+			'#![allow(unused_variables)]',
 		]
 		lines = []
 
@@ -424,7 +425,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if node.iter.func.id == 'range':
 				if len(node.iter.args)==1:
 					iter = self.visit(node.iter.args[0])
-					lines.append('for %s := 0; %s < %s; %s++ {' %(target, target, iter, target))
+					lines.append('for %s in range(0u, %s) {' %(target, iter))
 				elif len(node.iter.args)==2:
 					start = self.visit(node.iter.args[0])
 					iter = self.visit(node.iter.args[1])
@@ -1199,6 +1200,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(node.value, ast.Str):  ## catch strings for `+=` hack
 				self._known_strings.add( target )
 
+			elif isinstance(node.value, ast.Num):
+				if type(node.value.n) is int:
+					value += 'i'
+
+			#################################################################
 			if value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
 
