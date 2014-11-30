@@ -401,9 +401,17 @@ def transform_source( source, strip=False ):
 						y, kw = y.split('=')
 					arg, typedef = y.split(':')
 					chan = False
-					if len(typedef.strip().split()) == 2:
-						chan = True
-						typedef = typedef.strip().split()[-1]
+					rust_type = False
+					if len(typedef.strip().split()) >= 2:
+						parts = typedef.strip().split()
+						if 'chan' in parts:
+							chan = True
+						else:
+							rust_type = ' '.join(parts[:-1])
+
+						#typedef = typedef.strip().split()[-1]
+						typedef = parts[-1]
+
 					if '*' in arg:
 						arg_name = arg.split('*')[-1]
 					else:
@@ -418,10 +426,13 @@ def transform_source( source, strip=False ):
 					elif typedef.startswith('func('):
 						typedef = '"%s"' %typedef.strip()
 
-					if chan:
+					if rust_type:
+						output.append('%s@typedef_rust(%s, %s, "%s")' %(indent, arg_name, typedef, rust_type))
+					elif chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
 					else:
 						output.append('%s@typedef(%s=%s)' %(indent, arg_name, typedef))
+
 					if kw:
 						arg += '=' + kw
 					args.append(arg)
@@ -628,6 +639,10 @@ f(x as uint)
 let x : Vec<(uint, Y<int>)> = range(0,1).map().collect()
 let i
 i = &**x
+
+def f(a:&mut int) ->int:
+	return a
+
 '''
 
 if __name__ == '__main__':
