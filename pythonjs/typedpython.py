@@ -75,12 +75,15 @@ def transform_source( source, strip=False ):
 			if char == '(' and nextchar in ('&','@'):
 				inline_wrap = True
 				a.append('(inline("')
-			elif char == ')' and inline_wrap:
+			elif char in '),' and inline_wrap:
 				inline_wrap = False
 				for u,_ in enumerate(a):
 					if _=='@':
 						a[u] = 'ref '
-				a.append('"))')
+				if char == ')':
+					a.append('"))')
+				else:
+					a.append('"),')
 
 			elif not isindef and len(a) and char in OPERATORS['left'] and j==i+1:
 				a.append( '<<__op_left__(u"%s")<<' %char)
@@ -596,10 +599,10 @@ a = []string(x,y,z)
 a = [ 3 ]int(x,y,z)
 
 ## Rust
-## inline('&mut *x')
+## f(inline('&mut *x'))
 f(&mut *x)
-## inline('ref mut *x')
-f(@mut *x)
+## f(inline('ref mut *x'), y.z())
+f(@mut *x, y.z())
 ## f(x << __as__ << uint)
 f(x as uint)
 
