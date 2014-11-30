@@ -205,6 +205,12 @@ def transform_source( source, strip=False ):
 		if cs.startswith('var '):
 			c = c.replace('var ', '')
 
+		if cs.startswith('let '):
+			c = c.replace('let ', '__let__[')
+			c = c.replace(':', ':"')
+			c = c.replace('=', '"]=')
+
+
 		if '= function(' in c:
 			k = '= function('
 			a,b = c.split(k)
@@ -596,6 +602,9 @@ f(&mut *x)
 f(@mut *x)
 ## f(x << __as__ << uint)
 f(x as uint)
+
+## __let__[x :" Vec<(uint, Y<int>)> "]= range(0,1).map().collect()
+let x : Vec<(uint, Y<int>)> = range(0,1).map().collect()
 
 '''
 
