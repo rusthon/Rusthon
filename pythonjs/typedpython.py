@@ -60,6 +60,8 @@ def transform_source( source, strip=False ):
 		gotype = None
 		isindef = False
 		inline_wrap = False
+		inline_ptr = False
+		prevchar = None
 
 		for i,char in enumerate(line):
 			if isindef is False and len(a) and ''.join(a).strip().startswith('def '):
@@ -72,7 +74,16 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if char == '(' and nextchar in ('&','@'):
+
+			if prevchar=='=' and char in '&*~':
+				inline_ptr = True
+				a.append('__inline__["' + char)
+			elif inline_ptr and char not in '&*~':
+				inline_ptr = False
+				a.append('"] << ')
+				a.append( char )
+
+			elif char == '(' and nextchar in ('&','@'):
 				inline_wrap = True
 				a.append('(inline("')
 			elif char in '),' and inline_wrap:
@@ -189,6 +200,10 @@ def transform_source( source, strip=False ):
 			else:
 				a.append( char )
 
+			if char.strip():
+				prevchar = char
+
+
 		if not a:
 			continue
 
@@ -210,8 +225,11 @@ def transform_source( source, strip=False ):
 
 		if cs.startswith('let '):
 			c = c.replace('let ', '__let__[')
-			c = c.replace(':', ':"')
-			c = c.replace('=', '"]=')
+			if ':' in c:
+				c = c.replace(':', ':"')
+				c = c.replace('=', '"]=')
+			else:
+				c += ']'
 
 
 		if '= function(' in c:
@@ -608,7 +626,8 @@ f(x as uint)
 
 ## __let__[x :" Vec<(uint, Y<int>)> "]= range(0,1).map().collect()
 let x : Vec<(uint, Y<int>)> = range(0,1).map().collect()
-
+let i
+i = &**x
 '''
 
 if __name__ == '__main__':
