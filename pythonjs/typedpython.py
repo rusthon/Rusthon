@@ -59,6 +59,7 @@ def transform_source( source, strip=False ):
 		hit_go_funcdef = False
 		gotype = None
 		isindef = False
+		inline_wrap = False
 
 		for i,char in enumerate(line):
 			if isindef is False and len(a) and ''.join(a).strip().startswith('def '):
@@ -71,7 +72,17 @@ def transform_source( source, strip=False ):
 				if nextchar.strip(): break
 				j += 1
 
-			if not isindef and len(a) and char in OPERATORS['left'] and j==i+1:
+			if char == '(' and nextchar in ('&','@'):
+				inline_wrap = True
+				a.append('(inline("')
+			elif char == ')' and inline_wrap:
+				inline_wrap = False
+				for u,_ in enumerate(a):
+					if _=='@':
+						a[u] = 'ref '
+				a.append('"))')
+
+			elif not isindef and len(a) and char in OPERATORS['left'] and j==i+1:
 				a.append( '<<__op_left__(u"%s")<<' %char)
 			elif not isindef and len(a) and char in OPERATORS['right']:
 				a.append('<<__op_right__(u"%s")' % char )
@@ -404,6 +415,9 @@ def transform_source( source, strip=False ):
 		if c.strip().startswith('nonlocal '):  ## Python3 syntax
 			c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global
 
+		if ' as ' in c and '(' in c and not c.startswith('except '):
+			c = c.replace(' as ', '<<__as__<<')
+
 		if type(output_post) is list:
 			output_post.append( c )
 		else:
@@ -509,14 +523,6 @@ select:
 	case x = <- b:
 		y += x
 
-## in go becomes: []string{x,y,z}
-## becomes: __go__array__(string) << (x,y,z)
-a = []string(x,y,z)
-
-## in go becomes: [3]int{x,y,z}
-## becomes: __go__arrayfixed__(3, string) << (x,y,z)
-a = [ 3 ]int(x,y,z)
-
 
 
 def f(a:int, b:int, c:int) ->int:
@@ -574,6 +580,22 @@ a = map[string]int{
 def f():
     return [[0]]
 print f()[0][0]
+
+## in go becomes: []string{x,y,z}
+## becomes: __go__array__(string) << (x,y,z)
+a = []string(x,y,z)
+
+## in go becomes: [3]int{x,y,z}
+## becomes: __go__arrayfixed__(3, string) << (x,y,z)
+a = [ 3 ]int(x,y,z)
+
+## Rust
+## inline('&mut *x')
+f(&mut *x)
+## inline('ref mut *x')
+f(@mut *x)
+## f(x << __as__ << uint)
+f(x as uint)
 
 '''
 
