@@ -2111,7 +2111,11 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				code = '%s[...] = %s' %(self.visit(target.value), self.visit(node.value))
 
 			elif isinstance(target.slice, ast.Slice):
-				code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
+				if isinstance(target.value, ast.Name) and target.value.id == '__let__':
+					## pass along special __let__ to the backend pass
+					code = '__let__[%s : %s]' %(self.visit(target.slice.upper), self.visit(target.slice.lower))
+				else:
+					code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 
 			elif self._with_dart or self._with_ll or self._with_glsl or self._with_go:
 				code = '%s[ %s ] = %s'
@@ -3007,7 +3011,21 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				assert len(decorator.args)==1
 				func_expr = self.visit(decorator.args[0])
 
-			elif isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
+			elif isinstance(decorator, Call) and decorator.func.id == '__typedef__':  ## new style
+				c = decorator
+				assert len(c.args) == 3 and len(c.keywords)==0
+				vname = self.visit(c.args[0])
+				vtype = self.visit(c.args[1])
+				vptr  = self.visit(c.args[2])
+
+				self._typedef_vars[ vname ] = vtype
+				self._instances[ vname ] = vtype
+				self._func_typedefs[ vname ] = vtype
+				local_typedefs.append( '%s=%s' %(vname, vtype))
+				writer.write('@__typedef__(%s, %s, %s)' %(vname, vtype, vptr))
+
+
+			elif isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):  ## old style
 				c = decorator
 				assert len(c.args) == 0 and len(c.keywords)
 				for kw in c.keywords:

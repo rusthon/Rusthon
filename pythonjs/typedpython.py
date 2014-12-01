@@ -401,13 +401,13 @@ def transform_source( source, strip=False ):
 						y, kw = y.split('=')
 					arg, typedef = y.split(':')
 					chan = False
-					rust_type = False
+					T = False
 					if len(typedef.strip().split()) >= 2:
 						parts = typedef.strip().split()
-						if 'chan' in parts:
+						if 'chan' in parts:  ## go syntax
 							chan = True
-						else:
-							rust_type = ' '.join(parts[:-1])
+						else:                ## rust or c++ syntax
+							T = ' '.join(parts[:-1])
 
 						#typedef = typedef.strip().split()[-1]
 						typedef = parts[-1]
@@ -426,8 +426,8 @@ def transform_source( source, strip=False ):
 					elif typedef.startswith('func('):
 						typedef = '"%s"' %typedef.strip()
 
-					if rust_type:
-						output.append('%s@typedef_rust(%s, %s, "%s")' %(indent, arg_name, typedef, rust_type))
+					if T:  ## rust or c++ syntax
+						output.append('%s@__typedef__(%s, %s, "%s")' %(indent, arg_name, typedef, T))
 					elif chan:
 						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
 					else:

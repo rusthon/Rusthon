@@ -606,9 +606,49 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return ' new %s' %right
 
 		elif op == '<<':
+			rust_hacks = ('__rust__array__', '__rust__arrayfixed__', '__rust__map__', '__rust__func__')
+			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
+
 			if left in ('__go__receive__', '__go__send__'):
 				return '<- %s' %right
-			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__'):
+
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in rust_hacks:
+				if node.left.func.id == '__rust__func__':
+					raise SyntaxError('TODO - rust.func')
+				elif node.left.func.id == '__rust__map__':
+					key_type = self.visit(node.left.args[0])
+					value_type = self.visit(node.left.args[1])
+					if value_type == 'interface': value_type = 'interface{}'
+					return '&map[%s]%s%s' %(key_type, value_type, right)
+				else:
+					right = []
+					for elt in node.right.elts:
+						if isinstance(elt, ast.Num):
+							right.append( str(elt.n)+'i' )
+						else:
+							right.append( self.visit(elt) )
+					right = '(%s)' %','.join(right)
+
+					if node.left.func.id == '__rust__array__':
+						T = self.visit(node.left.args[0])
+						if T in go_types:
+							#return '&vec!%s%s' %(T, right)
+							return '&mut vec!%s' %right
+						else:
+							self._catch_assignment = {'class':T}  ## visit_Assign catches this
+							return '&[]*%s%s' %(T, right)
+
+					elif node.left.func.id == '__rust__arrayfixed__':
+						asize = self.visit(node.left.args[0])
+						atype = self.visit(node.left.args[1])
+						if atype not in go_types:
+							if right != '{}': raise SyntaxError('todo init array of objects with args')
+							return '&make([]*%s, %s)' %(atype, asize)
+						else:
+							#return '&[%s]%s%s' %(asize, atype, right)
+							return '&vec!%s' %right
+
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
 					raise SyntaxError('TODO - go.func')
 				elif node.left.func.id == '__go__map__':
@@ -734,27 +774,34 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
-				for key in decor.keywords:
-					if isinstance( key.value, ast.Str):
-						args_typedefs[ key.arg ] = key.value.s
-					else:
-						args_typedefs[ key.arg ] = self.visit(key.value)
+				if len(decor.args) == 3:
+					vname = self.visit(decor.args[0])
+					vtype = self.visit(decor.args[1])
+					vptr = decor.args[2].s
+					args_typedefs[ vname ] = '%s %s' %(vptr, vtype)  ## space is required because it could have the `mut` keyword
 
-					## check for super classes - generics ##
-					if args_typedefs[ key.arg ] in self._classes:
-						if node.name=='__init__':
-							## generics type switch is not possible in __init__ because
-							## it is used to generate the type struct, where types are static.
-							## as a workaround generics passed to init always become `interface{}`
-							args_typedefs[ key.arg ] = 'interface{}'
-							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
+				else:
+					for key in decor.keywords:
+						if isinstance( key.value, ast.Str):
+							args_typedefs[ key.arg ] = key.value.s
 						else:
-							classname = args_typedefs[ key.arg ]
-							generic_base_class = classname
-							generics.add( classname ) # switch v.(type) for each
-							generics = generics.union( self._classes[classname]._subclasses )
-							args_typedefs[ key.arg ] = 'interface{}'
-							args_generics[ key.arg ] = classname
+							args_typedefs[ key.arg ] = self.visit(key.value)
+
+						## check for super classes - generics ##
+						if args_typedefs[ key.arg ] in self._classes:
+							if node.name=='__init__':
+								## generics type switch is not possible in __init__ because
+								## it is used to generate the type struct, where types are static.
+								## as a workaround generics passed to init always become `interface{}`
+								args_typedefs[ key.arg ] = 'interface{}'
+								#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
+							else:
+								classname = args_typedefs[ key.arg ]
+								generic_base_class = classname
+								generics.add( classname ) # switch v.(type) for each
+								generics = generics.union( self._classes[classname]._subclasses )
+								args_typedefs[ key.arg ] = 'interface{}'
+								args_generics[ key.arg ] = classname
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
