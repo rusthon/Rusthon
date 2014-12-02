@@ -9,9 +9,10 @@ from pythonjs_to_lua import main as pythonjs_to_lua
 from pythonjs_to_luajs import main as pythonjs_to_luajs
 from pythonjs_to_go import main as pythonjs_to_go
 from pythonjs_to_rust import main as pythonjs_to_rust
+from pythonjs_to_cpp import main as pythonjs_to_cpp
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--rust|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
+usage: translator.py [--dart|--coffee|--lua|--go|--rust|--cpp|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
 
 example:
        translator.py --no-wrapper myscript.py > myscript.js
@@ -25,7 +26,11 @@ def main(script, module_path=None):
 	else:
 		code = ''
 		res = None
-		if '--rust' in sys.argv:
+
+		if '--cpp' in sys.argv:
+			a = python_to_pythonjs(script, rust=True, module_path=module_path)
+			code = pythonjs_to_cpp( a )
+		elif '--rust' in sys.argv:
 			a = python_to_pythonjs(script, rust=True, module_path=module_path)
 			code = pythonjs_to_rust( a )
 		elif '--go' in sys.argv:

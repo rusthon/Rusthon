@@ -197,6 +197,10 @@ go_runnable = runnable( 'go version')
 gopherjs_runnable = runnable( 'gopherjs')
 
 rust_runnable = runnable( 'rustc --help')
+cpp_runnable = runnable( 'g++ --help')
+
+
+
 
 assert rhino_runnable or node_runnable
 
@@ -449,12 +453,12 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
     ]
-    if backend == 'GO' or backend == 'RUST':
+    if backend in ('GO', 'RUST', 'CPP'):
         a.append(_patch_header_go)
     else:
         a.append(_patch_header)
 
-    if python != 'PYTHONJS':
+    if python != 'PYTHONJS':  ## remove extra type syntax to run in regular Python
         code = typedpython.transform_source( code, strip=True )
         a.append( _python_only_extra_header )
 
@@ -477,7 +481,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, cpp=True, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 
@@ -515,6 +519,9 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     elif rust:
         content = patch_python(filename, backend='RUST')
 
+    elif cpp:
+        content = patch_python(filename, backend='CPP')
+
     else:
         content = patch_python(filename)
 
@@ -545,6 +552,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
         cmd.append( '--gopherjs' )
     elif rust:
         cmd.append( '--rust' )
+    elif cpp:
+        cmd.append( '--cpp' )
 
     if not requirejs:
         cmd.append( '--no-wrapper' )
@@ -819,6 +828,7 @@ def run_gopherjs_node(content):
     return run_command("node %s.js" % tmpname)
 
 
+## rust backend ##
 def run_pythonjs_rust_test(dummy_filename):
     """Rusthon"""
     return run_if_no_error(run_rust)
@@ -835,6 +845,23 @@ def run_rust(content):
         return run_command( '/tmp/regtest-rust' )
 
 
+## c++ backend ##
+def run_pythonjs_cpp_test(dummy_filename):
+    """cppthon"""
+    return run_if_no_error(run_cpp)
+
+def run_cpp(content):
+    """compile and run c++ program"""
+    write("%s.cpp" % tmpname, content)
+    subprocess.check_call(['g++', '-o', '/tmp/regtest-cpp',  '%s.cpp' % tmpname] )
+    errors = False
+    if errors:
+        return errors
+    else:
+        return run_command( '/tmp/regtest-cpp' )
+
+
+## NodeWebkit and Google Chrome ##
 def run_html_test( filename, sum_errors ):
     lines = open(filename, 'rb').read().decode('utf-8').splitlines()
     filename = os.path.split(filename)[-1]
@@ -1010,6 +1037,10 @@ def run_test_on(filename):
         if rust_runnable:
             js = translate_js(filename, rust=True)
             display(run_pythonjs_rust_test)
+
+        if cpp_runnable:
+            js = translate_js(filename, cpp=True)
+            display(run_pythonjs_cpp_test)
 
 
     print()
