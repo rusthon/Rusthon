@@ -853,7 +853,7 @@ def run_pythonjs_cpp_test(dummy_filename):
 def run_cpp(content):
     """compile and run c++ program"""
     write("%s.cpp" % tmpname, content)
-    subprocess.check_call(['g++', '-o', '/tmp/regtest-cpp',  '%s.cpp' % tmpname] )
+    subprocess.check_call(['g++', '-std=c++0x', '-o', '/tmp/regtest-cpp',  '%s.cpp' % tmpname] )
     errors = False
     if errors:
         return errors

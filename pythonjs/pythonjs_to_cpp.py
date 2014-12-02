@@ -12,15 +12,11 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs_to_rust.RustGenerator.__init__(self, requirejs=False, insert_runtime=False)
-		self._globals = {
-			'string' : set()
-		}
+		self._cpp = True
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
-		#return '"%s"' % s
-		if self._function_stack: return '"%s".to_string()' % s
-		else: return '"%s"' % s
+		return 'std::string("%s")' % s
 
 
 	def visit_Print(self, node):
@@ -43,7 +39,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 	def visit_Module(self, node):
 		header = [
-			'include <iostream>'
+			'#include <iostream>',
+			#'#include <sstream>',  ## c++11
+			'#include <string>',
 		]
 		lines = []
 

@@ -19,6 +19,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._globals = {
 			'string' : set()
 		}
+		self._cpp = False
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -484,7 +485,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			arr = fname.split('.append')[0]
 
 		if fname=='str':
-			return '%s.to_string()' %self.visit(node.args[0])
+			if self._cpp:
+				#return 'static_cast<std::ostringstream*>( &(std::ostringstream() << %s) )->str()' %self.visit(node.args[0])
+				return 'std::to_string(%s)' %self.visit(node.args[0])  ## only works with number types
+			else:
+				return '%s.to_string()' %self.visit(node.args[0])
 
 		elif fname == 'range':  ## TODO - some syntax for mutable
 			assert len(node.args)
@@ -846,10 +851,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					a = '__gen__ %s' %arg_type
 				else:
 
-					if arg_type == 'string':
-						arg_type = 'String'  ## standard string type in rust
 
-					a = '%s:%s' %(arg_name, arg_type)
+					if self._cpp:
+						if arg_type == 'string': arg_type = 'std::string'  ## standard string type in c++
+						a = '%s %s' %(arg_type, arg_name)
+					else:
+						if arg_type == 'string': arg_type = 'String'  ## standard string type in rust
+						a = '%s:%s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
 				a = '%s chan %s' %(arg_name, arg_type)
@@ -895,9 +903,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
-				out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
+				if self._cpp:
+					out.append( self.indent() + '%s %s(%s) -> %s {\n' % (return_type, node.name, ', '.join(args)) )
+				else:
+					out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
 			else:
-				out.append( self.indent() + 'fn %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
+				if self._cpp:
+					out.append( self.indent() + 'void %s(%s) {\n' % (node.name, ', '.join(args)) )
+				else:
+					out.append( self.indent() + 'fn %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
@@ -1236,8 +1250,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
 			else:
 				self._globals['string'].add( target )
-				return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
-				#return 'static %s : string = String::from_str(%s);' % (target, value)  ## TODO other types (`let` will not work at global scope)
+				if self._cpp:
+					return 'const std::string %s = %s;' % (target, value)
+				else:
+					return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
 			value = self.visit(node.value)
