@@ -690,8 +690,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							return '&vec!%s' %right
 
 
-			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__' and op == '<<':
+			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__':
 				return '*[]%s' %self.visit(node.right)
+
+			elif isinstance(node.right, ast.Name) and node.right.id=='__as__':
+				return '%s as ' %self.visit(node.left)
+
+			elif isinstance(node.left, ast.BinOp) and isinstance(node.left.right, ast.Name) and node.left.right.id=='__as__':
+				return '%s %s' %(self.visit(node.left), right)
+
+
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'
