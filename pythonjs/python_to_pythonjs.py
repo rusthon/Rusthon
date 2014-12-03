@@ -1511,7 +1511,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		is_go_listcomp = False
 		if self._with_go:
 			if op == '<<':
-				if isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name):
+				if isinstance(node.left, ast.Subscript) and isinstance(node.left.value, ast.Name) and node.left.value.id=='__inline__':
+					return 'inline("%s %s")' %(node.left.slice.value.s, self.visit(node.right))
+
+				elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name):
 					if node.left.func.id=='__go__array__' and isinstance(node.right, ast.GeneratorExp):
 						is_go_listcomp = True
 						node.right.go_listcomp_type = node.left.args[0].id
