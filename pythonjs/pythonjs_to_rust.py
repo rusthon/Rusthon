@@ -484,7 +484,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		if fname=='str':
+		if fname=='str' and not self._cpp:
 			if self._cpp:
 				#return 'static_cast<std::ostringstream*>( &(std::ostringstream() << %s) )->str()' %self.visit(node.args[0])
 				return 'std::to_string(%s)' %self.visit(node.args[0])  ## only works with number types
@@ -824,6 +824,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					returns_self = True
 					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 
+		is_main = node.name == 'main'
+		if is_main and self._cpp:  ## g++ requires main returns an integer
+			return_type = 'int'
+
+
 		node._arg_names = args_names = []
 		args = []
 		oargs = []
@@ -904,7 +909,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			if return_type:
 				if self._cpp:
-					out.append( self.indent() + '%s %s(%s) -> %s {\n' % (return_type, node.name, ', '.join(args)) )
+					out.append( self.indent() + '%s %s(%s) {\n' % (return_type, node.name, ', '.join(args)) )
 				else:
 					out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
 			else:
@@ -1046,6 +1051,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			#for b in node.body:
 		self._scope_stack = []
 
+		if is_main and self._cpp:
+			out.append( self.indent() + 'return 0;' )
 
 
 		self.pull()

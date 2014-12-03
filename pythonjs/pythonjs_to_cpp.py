@@ -82,11 +82,10 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 def main(script, insert_runtime=True):
 
 	if insert_runtime:
-		#dirname = os.path.dirname(os.path.abspath(__file__))
-		#dirname = os.path.join(dirname, 'runtime')
-		#runtime = open( os.path.join(dirname, 'rust_builtins.py') ).read()
-		#script = runtime + '\n' + script
-		pass
+		dirname = os.path.dirname(os.path.abspath(__file__))
+		dirname = os.path.join(dirname, 'runtime')
+		runtime = open( os.path.join(dirname, 'cpp_builtins.py') ).read()
+		script = runtime + '\n' + script
 
 	try:
 		tree = ast.parse(script)
