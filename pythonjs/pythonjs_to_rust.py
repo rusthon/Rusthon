@@ -487,8 +487,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if fname == '__let__':
 			self._known_vars.add( node.args[0].id )
-			#self._vars.add( node.args[0].id )
-			return 'let %s' %node.args[0].id
+			self._vars.remove( node.args[0].id )
+			if len(node.args) == 1:
+				return 'let %s			/* declared */' %node.args[0].id
+			elif len(node.args) == 3:
+				return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+			else:
+				raise SyntaxError('TODO __let__ %s' %len(node.args))
 
 		elif fname=='str' and not self._cpp:
 			if self._cpp:
@@ -508,21 +513,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif fname == 'go.type_assert':
 			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])
+			#return '%s(*%s)' %(type, val )
 			raise GenerateTypeAssert( {'type':type, 'value':val} )
-			## below is deprecated
-			if type == 'self':
-				## todo how to better mark interfaces, runtime type switch?
-				if '.' in type and type.split('.')[0]=='self' and type.split('.')[-1] in self.interfaces[self._class_stack[-1].name]:
-					val += '.(%s)' %self._class_stack[-1].name
-					return '&%s(%s)' %(type, val )
-				else:
-					type = '&' + self._class_stack[-1].name
-			else:
-				type = '*' + type  ## TODO tests - should this be &
-			#return 'interface{}(%s).(%s)' %(self.visit(node.args[0]), type)
-
-
-			return '%s(*%s)' %(type, val )
 
 
 		if node.args:
@@ -1293,17 +1285,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
+				info = varname + '  '
 				if varname in self._known_vars:
 					## generics generator ##
 					#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
 					cname = self._known_instances[varname]
+					info += 'class: ' + cname
 					if node.value.func.attr in self.method_returns_multiple_subclasses[ cname ]:
-
 						self._known_instances[target] = cname
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
 
-
-				return 'let %s = %s;' % (target, value)
+				return 'let %s = %s;			/* %s */' % (target, value, info)
 
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
@@ -1312,10 +1304,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					self._known_instances[ target ] = node.value.func.id
 					return 'let %s = __new__%s;' %(target, value)
 				else:
-					return 'let %s = %s;' % (target, value)
+					return 'let %s = %s;			/* new variable */' % (target, value)
 
 			else:
-				return 'let mut %s = %s;' % (target, value)
+				return 'let mut %s = %s;			/* new muatble */' % (target, value)
 
 		else:
 			value = self.visit(node.value)
