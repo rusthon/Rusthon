@@ -480,11 +480,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)
 		is_append = False
-		if fname.endswith('.append'):
+
+		if fname.endswith('.append'): ## TODO - deprecate append to pushX ?
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		if fname=='str' and not self._cpp:
+		if fname == '__let__':
+			self._known_vars.add( node.args[0].id )
+			#self._vars.add( node.args[0].id )
+			return 'let %s' %node.args[0].id
+
+		elif fname=='str' and not self._cpp:
 			if self._cpp:
 				#return 'static_cast<std::ostringstream*>( &(std::ostringstream() << %s) )->str()' %self.visit(node.args[0])
 				return 'std::to_string(%s)' %self.visit(node.args[0])  ## only works with number types
@@ -498,6 +504,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif fname == 'len':
 			return '%s.len()' %self.visit(node.args[0])
+
 		elif fname == 'go.type_assert':
 			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])
@@ -559,9 +566,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					varname = node.func.value.id
 					if varname in self._known_vars:
 						#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
-
-
-
 						cname = self._known_instances[varname]
 						if node.func.attr in self.method_returns_multiple_subclasses[ cname ]:
 							raise SyntaxError('%s(%s)' % (fname, args))
@@ -1137,10 +1141,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				subclasses = self.get_subclasses( G['class'] )
 				for sub in subclasses:
-					#self._vars = prev_vars
-					#self._known_vars = prev_used
-
-
 					out.append(self.indent()+'case "%s":' %sub)
 					self.push()
 					#out.append(self.indent()+'%s := __subclass__.(*%s)' %(G['target'], sub)) ## error not an interface
@@ -1294,12 +1294,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
 				if varname in self._known_vars:
+					## generics generator ##
 					#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
 					cname = self._known_instances[varname]
 					if node.value.func.attr in self.method_returns_multiple_subclasses[ cname ]:
+
 						self._known_instances[target] = cname
-						#raise SyntaxError('xxxxxxxxx %s - %s' % (self.visit(node.value), target ) )
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
+
+
 				return 'let %s = %s;' % (target, value)
 
 

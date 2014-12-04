@@ -224,12 +224,11 @@ def transform_source( source, strip=False ):
 			c = c.replace('var ', '')
 
 		if cs.startswith('let '):
-			c = c.replace('let ', '__let__[')
+			c = c.replace('let ', '__let__(')
 			if ':' in c:
-				c = c.replace(':', ':"')
-				c = c.replace('=', '"]=')
-			else:
-				c += ']'
+				c = c.replace(':', ',"')
+				c = c.replace('=', '", ')
+			c += ')'
 
 
 		if '= function(' in c:

@@ -26,12 +26,11 @@ def retrieve_vars(body):
 	local_vars = set()
 	global_vars = set()
 	for n in body:
-		#if isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Name):  ## assignment to local - TODO support `a=b=c`
-		#	local_vars.add( n.targets[0].id )
-		#elif isinstance(n, ast.Assign) and isinstance(n.targets[0], ast.Tuple):
-		#	for c in n.targets[0].elts:
-		#		local_vars.add( c.id )
-		if isinstance(n, ast.Assign):
+		if isinstance(n, ast.Expr):
+			if isinstance(n.value, ast.Call) and isinstance(n.value.func, ast.Name) and n.value.func.id=='__let__':
+				local_vars.add( n.value.args[0].id )
+
+		elif isinstance(n, ast.Assign):
 			user_typedef = None
 			self_typedef = None
 			if len(n.targets) == 2:
@@ -40,22 +39,21 @@ def retrieve_vars(body):
 
 			for i,u in enumerate(n.targets):
 				if isinstance(u, ast.Name):
+
 					if i==0:
+						## dirty hack that catches `int = x = 1` or `int = x`,
+						## this should be deprecated because it is not rust style,
+						## and only works with reserved standard types like:
+						## float, int, and str in typedpython.types
 						if u.id in typedpython.types:
 							user_typedef = u.id
 						else:
 							local_vars.add( u.id )
 					elif user_typedef:
-						#raise SyntaxError(user_typedef + u.id)
 						local_vars.add( '%s=%s' %(user_typedef, u.id) )
 						user_typedef = None
-					else:
-						#add = True   ## TODO this should work?!
-						#for x in local_vars:
-						#	if u.id == x or ('=' in x and x.split('=')[-1] == u.id):
-						#		add = False
-						#		break
-						#if add:
+
+					else:  ## regular local variable ##
 						local_vars.add( u.id )
 
 				elif isinstance(u, ast.Tuple):
