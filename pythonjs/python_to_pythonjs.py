@@ -4131,6 +4131,16 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				if a: writer.write(a)
 			self._with_gojs = False
 
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'asm':
+			asmcode = []
+			for b in node.body:
+				asmcode.append( b.value.s )
+			args = [ 'code="%s"' % ''.join(asmcode) ]
+			for kw in node.context_expr.keywords:
+				args.append( '%s=%s' %(kw.arg, self.visit(kw.value)) )
+			asm = '__asm__( %s )' %(','.join(args))
+			writer.write( asm )
+
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 

@@ -485,7 +485,43 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		if fname == '__let__':
+		if fname == '__asm__':
+			assert self._cpp
+			code = ['asm']
+			volatile = False
+			outputs = []
+			inputs = []
+			clobber = []
+			asmcode = None
+			for kw in node.keywords:
+				if kw.arg == 'volatile' and kw.value.id.lower()=='true':
+					volatile = True
+				elif kw.arg == 'outputs':
+					outputs.append('"=g" (%s)' %kw.value.id)
+				elif kw.arg == 'inputs':
+					inputs.append('"g" (%s)' %kw.value.id)
+				elif kw.arg == 'clobber':
+					clobber = ['"%s"'%clob for clob in kw.value.s.split(',') ]
+				elif kw.arg == 'code':
+					asmcode = '"%s"' %kw.value.s
+
+			if volatile:
+				code.append( 'volatile' )
+			code.append( '(' )
+			code.append( asmcode )
+			code.append( ':' )
+			if outputs:
+				code.append( ','.join(outputs) )
+			code.append( ':' )
+			if inputs:
+				code.append( ','.join(inputs) )
+			code.append( ':' )
+			if clobber:
+				code.append( ','.join(clobber) )
+			code.append( ');')
+			return ' '.join( code )
+
+		elif fname == '__let__':
 			self._known_vars.add( node.args[0].id )
 			self._vars.remove( node.args[0].id )
 			if len(node.args) == 1:

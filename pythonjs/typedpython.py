@@ -43,16 +43,42 @@ OPERATORS = {
 	'right' : [u'⟧', u'⟫', u'⟆', u'⎬'],
 }
 
-
-
+def get_indent(s):
+	indent = []
+	for char in s:
+		if char in __whitespace:
+			indent.append( char )
+		else:
+			break
+	return ''.join(indent)
 
 def transform_source( source, strip=False ):
 	output = []
 	output_post = None
+	asm_block = False
+	asm_block_indent = 0
 
 	for line in source.splitlines():
 		if line.strip().startswith('#'):
 			continue
+
+		if asm_block:
+			dent = get_indent(line)
+			if asm_block==True:
+				asm_block_indent = len(dent)
+
+			if len(dent) < asm_block_indent:
+				asm_block = False
+				asm_block_indent = 0
+			elif len(dent) > asm_block_indent:
+				raise SyntaxError('invalid asm indentation level')
+			else:
+				if line.strip():
+					output.append( '%s"%s"' %(dent,line.strip()) )
+				else:
+					asm_block = False
+					asm_block_indent = 0
+				continue
 
 		a = []
 		hit_go_typedef = False
@@ -73,7 +99,6 @@ def transform_source( source, strip=False ):
 				nextchar = line[j]
 				if nextchar.strip(): break
 				j += 1
-
 
 			if prevchar=='=' and char in '&*~':
 				inline_ptr = True
@@ -460,6 +485,9 @@ def transform_source( source, strip=False ):
 		else:
 			output.append( c )
 
+		if c.strip().startswith('with asm('):
+			asm_block = True
+
 		if type(output_post) is str:  ## DEPRECATED
 			indent = 0
 			for u in output[-1]:
@@ -641,6 +669,10 @@ i = &**x
 
 def f(a:&mut int) ->int:
 	return a
+
+with asm( outputs=b, inputs=a, volatile=True ):
+	movl %1, %%ebx;
+	movl %%ebx, %0;
 
 '''
 
