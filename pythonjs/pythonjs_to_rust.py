@@ -486,7 +486,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			arr = fname.split('.append')[0]
 
 		if fname == '__asm__':
-			assert self._cpp
+			assert self._cpp  ## in rust mode this needs to generate a C interface
+
+			ASM_WRITE_ONLY = '='  ## write constraint
+			ASM_ANY_REG    = 'r'  ## register name: r, eax, ax, al,  ebx, bx, bl
+			ASM_OUT_DEFAULT = ASM_WRITE_ONLY + ASM_ANY_REG
+
 			code = ['asm']
 			volatile = False
 			outputs = []
@@ -497,13 +502,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if kw.arg == 'volatile' and kw.value.id.lower()=='true':
 					volatile = True
 				elif kw.arg == 'outputs':
-					outputs.append('"=g" (%s)' %kw.value.id)
+					write_mode = ASM_OUT_DEFAULT
+					outputs.append('"%s" (%s)' %(write_mode, kw.value.id))
+
 				elif kw.arg == 'inputs':
+					input_mode = ASM_ANY_REG
 					if isinstance(kw.value, ast.List):
 						for elt in kw.value.elts:
-							inputs.append('"g" (%s)' %elt.id)
+							inputs.append('"%s" (%s)' %(input_mode,elt.id))
 					else:
-						inputs.append('"g" (%s)' %kw.value.id)
+						inputs.append('"%s" (%s)' %(input_mode,kw.value.id))
 				elif kw.arg == 'clobber':
 					if isinstance(kw.value, ast.List):
 						clobber.extend( ['"%s"' %elt.s for elt in kw.value.elts] )

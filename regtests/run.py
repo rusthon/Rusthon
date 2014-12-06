@@ -974,7 +974,7 @@ def run_test_on(filename):
             display(run_old_pypy_test_on)
 
     global js
-    if not filename.startswith('./go/'):
+    if not filename.startswith('./go/') and not filename.startswith('./asm/'):
         js = translate_js(
             filename, 
             javascript=False, 
