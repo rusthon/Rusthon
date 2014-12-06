@@ -527,7 +527,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if len(node.args) == 1:
 				return 'let %s			/* declared */' %node.args[0].id
 			elif len(node.args) == 3:
-				return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+				if self._cpp:
+					return '%s  %s = %s' %(node.args[1].s, node.args[0].id, self.visit(node.args[2]))
+				else:
+					return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
 			else:
 				raise SyntaxError('TODO __let__ %s' %len(node.args))
 
