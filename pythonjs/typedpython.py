@@ -65,6 +65,7 @@ def transform_source( source, strip=False ):
 		if asm_block:
 			dent = get_indent(line)
 			if asm_block==True:
+				asm_block = 'OK'
 				asm_block_indent = len(dent)
 
 			if len(dent) < asm_block_indent:
@@ -73,6 +74,7 @@ def transform_source( source, strip=False ):
 			elif len(dent) > asm_block_indent:
 				raise SyntaxError('invalid asm indentation level')
 			else:
+				assert len(dent)==asm_block_indent
 				if line.strip():
 					output.append( '%s"%s"' %(dent,line.strip()) )
 				else:
@@ -670,9 +672,11 @@ i = &**x
 def f(a:&mut int) ->int:
 	return a
 
-with asm( outputs=b, inputs=a, volatile=True ):
-	movl %1, %%ebx;
-	movl %%ebx, %0;
+def f():
+	with asm( outputs=b, inputs=a, volatile=True ):
+		movl %1, %%ebx;
+		movl %%ebx, %0;
+	return x
 
 '''
 
