@@ -499,7 +499,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				elif kw.arg == 'outputs':
 					outputs.append('"=g" (%s)' %kw.value.id)
 				elif kw.arg == 'inputs':
-					inputs.append('"g" (%s)' %kw.value.id)
+					if isinstance(kw.value, ast.List):
+						for elt in kw.value.elts:
+							inputs.append('"g" (%s)' %elt.id)
+					else:
+						inputs.append('"g" (%s)' %kw.value.id)
 				elif kw.arg == 'clobber':
 					clobber = ['"%s"'%clob for clob in kw.value.s.split(',') ]
 				elif kw.arg == 'code':
