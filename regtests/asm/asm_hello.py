@@ -5,14 +5,14 @@ gcc inline assembly
 
 def test_single_input( a : int ) -> int:
 	let b : int = 0
-	with asm( outputs=b, inputs=a, volatile=True ):
+	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx' ):
 		movl %1, %%ebx;
 		movl %%ebx, %0;
 	return b
 
 def test_multi_input( a : int, b : int ) -> int:
 	let out : int = 0
-	with asm( outputs=out, inputs=(a,b), volatile=True ):
+	with asm( outputs=out, inputs=(a,b), volatile=True, clobber=('%ebx','memory') ):
 		movl %1, %%ebx;
 		addl %2, %%ebx;
 		movl %%ebx, %0;
