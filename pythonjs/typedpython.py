@@ -251,11 +251,21 @@ def transform_source( source, strip=False ):
 			c = c.replace('var ', '')
 
 		if cs.startswith('let '):
-			c = c.replace('let ', '__let__(')
+			mut = False
+			if cs.startswith('let mut '):
+				c = c.replace('let mut ', '__let__(')
+				mut = True
+			else:
+				c = c.replace('let ', '__let__(')
+
 			if ':' in c:
 				c = c.replace(':', ',"')
 				c = c.replace('=', '", ')
-			c += ')'
+
+			if mut:
+				c += ',mutable=True)'
+			else:
+				c += ')'
 
 
 		if '= function(' in c:
@@ -677,6 +687,8 @@ def f():
 		movl %1, %%ebx;
 		movl %%ebx, %0;
 	return x
+
+let mut x : int = 1
 
 '''
 

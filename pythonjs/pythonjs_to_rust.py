@@ -358,6 +358,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		header = [
 			'#![allow(unknown_features)]',
 			'#![feature(slicing_syntax)]',
+			'#![feature(asm)]',
 			'#![allow(unused_parens)]',
 			'#![allow(non_camel_case_types)]',
 			'#![allow(dead_code)]',
@@ -486,13 +487,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			arr = fname.split('.append')[0]
 
 		if fname == '__asm__':
-			assert self._cpp  ## in rust mode this needs to generate a C interface
-
 			ASM_WRITE_ONLY = '='  ## write constraint
 			ASM_ANY_REG    = 'r'  ## register name: r, eax, ax, al,  ebx, bx, bl
 			ASM_OUT_DEFAULT = ASM_WRITE_ONLY + ASM_ANY_REG
 
-			code = ['asm']
+			code = []
+			if self._cpp:
+				code.append('asm')
+			else:
+				# http://doc.rust-lang.org/guide-unsafe.html#inline-assembly
+				code.append('unsafe{ asm!')
+
 			volatile = False
 			outputs = []
 			inputs = []
@@ -533,7 +538,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					asmcode = '"%s"' %kw.value.s
 
 			if volatile:
-				code.append( 'volatile' )
+				if self._cpp:
+					code.append( 'volatile' )
+
 			code.append( '(' )
 			code.append( asmcode )
 			code.append( ':' )
@@ -545,19 +552,34 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			code.append( ':' )
 			if clobber:
 				code.append( ','.join(clobber) )
-			code.append( ');')
+
+			if self._cpp:
+				code.append( ');')
+			else:
+				code.append( '); } // end unsafe' )
+
+
 			return ' '.join( code )
 
 		elif fname == '__let__':
 			self._known_vars.add( node.args[0].id )
 			self._vars.remove( node.args[0].id )
+			mutable = False
+			for kw in node.keywords:
+				if kw.arg=='mutable':
+					if kw.value.id.lower()=='true':
+						mutable = True
+
 			if len(node.args) == 1:
 				return 'let %s			/* declared */' %node.args[0].id
 			elif len(node.args) == 3:
 				if self._cpp:
 					return '%s  %s = %s' %(node.args[1].s, node.args[0].id, self.visit(node.args[2]))
 				else:
-					return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+					if mutable:
+						return 'let mut %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+					else:
+						return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
 			else:
 				raise SyntaxError('TODO __let__ %s' %len(node.args))
 
