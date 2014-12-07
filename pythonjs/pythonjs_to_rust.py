@@ -511,6 +511,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				code.append('unsafe{ asm!')
 
 			volatile = False
+			alignstack = False
 			outputs = []
 			inputs = []
 			clobber = []
@@ -518,6 +519,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for kw in node.keywords:
 				if kw.arg == 'volatile' and kw.value.id.lower()=='true':
 					volatile = True
+				elif kw.arg == 'alignstack' and kw.value.id.lower()=='true':
+					alignstack = True
 				elif kw.arg == 'outputs':
 					write_mode = ASM_OUT_DEFAULT
 					if isinstance(kw.value, ast.List):
@@ -580,6 +583,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				ropts = []
 				if volatile:
 					ropts.append('"volatile"')
+				if alignstack:
+					ropts.append('"alignstack"')
+
 				code.append( ','.join(ropts) )
 				code.append( '); } // end unsafe' )
 

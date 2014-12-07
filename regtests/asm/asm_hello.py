@@ -5,7 +5,7 @@ gcc inline assembly
 
 def test_single_input( a : int ) -> int:
 	let mut b : int = 0
-	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx' ):
+	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx', alignstack=True ):
 		movl %1, %%ebx;
 		movl %%ebx, %0;
 	return b
