@@ -503,15 +503,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					volatile = True
 				elif kw.arg == 'outputs':
 					write_mode = ASM_OUT_DEFAULT
-					outputs.append('"%s" (%s)' %(write_mode, kw.value.id))
+					if isinstance(kw.value, ast.List):
+						mode = kw.value.elts[0].s
+						output = kw.value.elts[1].id
+						outputs.append('"%s" (%s)' %(mode, output))
+					else:
+						outputs.append('"%s" (%s)' %(write_mode, kw.value.id))
 
 				elif kw.arg == 'inputs':
-					input_mode = ASM_ANY_REG
 					if isinstance(kw.value, ast.List):
 						for elt in kw.value.elts:
-							inputs.append('"%s" (%s)' %(input_mode,elt.id))
+							if isinstance(elt, ast.List):
+								register = elt.elts[0].s
+								input = elt.elts[1].id
+								inputs.append('"%s" (%s)' %(register, input))
+							else:
+								inputs.append('"%s" (%s)' %(ASM_ANY_REG,elt.id))
 					else:
-						inputs.append('"%s" (%s)' %(input_mode,kw.value.id))
+						inputs.append('"%s" (%s)' %(ASM_ANY_REG,kw.value.id))
 				elif kw.arg == 'clobber':
 					if isinstance(kw.value, ast.List):
 						clobber.extend( ['"%s"' %elt.s for elt in kw.value.elts] )
