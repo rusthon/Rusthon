@@ -477,6 +477,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		lines.append( self.indent()+'}' )  ## end of for loop
 		return '\n'.join(lines)
 
+	def _gccasm_to_llvmasm(self, asmcode):
+		r = []
+		for i,char in enumerate(asmcode):
+			if i+1==len(asmcode): break
+			next = asmcode[i+1]
+			if next.isdigit() and char == '%':
+				r.append( '$' )
+			else:
+				r.append( char )
+		r.append('"')
+		a = ''.join(r)
+		return a.replace('%%', '%')
 
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)
@@ -540,6 +552,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if volatile:
 				if self._cpp:
 					code.append( 'volatile' )
+
+			assert asmcode
+			if not self._cpp:
+				## rust asm uses llvm as its backend,
+				## llvm asm syntax is slightly different from regular gcc,
+				## input arguments in gcc are given as `%N`,
+				## while in llvm they are given as `$N`
+				asmcode = self._gccasm_to_llvmasm(asmcode)
 
 			code.append( '(' )
 			code.append( asmcode )
