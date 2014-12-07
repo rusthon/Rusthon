@@ -576,6 +576,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if self._cpp:
 				code.append( ');')
 			else:
+				code.append( ':' )  ## rust options
+				ropts = []
+				if volatile:
+					ropts.append('"volatile"')
+				code.append( ','.join(ropts) )
 				code.append( '); } // end unsafe' )
 
 
