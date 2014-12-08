@@ -259,8 +259,12 @@ def transform_source( source, strip=False ):
 				c = c.replace('let ', '__let__(')
 
 			if ':' in c:
+				assert c.count(':')==1
 				c = c.replace(':', ',"')
-				c = c.replace('=', '", ')
+				if '=' in c:
+					c = c.replace('=', '", ')
+				else:
+					c += '"'
 
 			if mut:
 				c += ',mutable=True)'
@@ -689,6 +693,7 @@ def f():
 	return x
 
 let mut x : int = 1
+let x : int
 
 '''
 

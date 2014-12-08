@@ -4140,7 +4140,13 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				args.append( '%s=%s' %(kw.arg, self.visit(kw.value)) )
 			asm = '__asm__( %s )' %(','.join(args))
 			writer.write( asm )
-
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'extern':
+			writer.write('with %s:' %self.visit(node.context_expr))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 

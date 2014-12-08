@@ -365,6 +365,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(non_snake_case)]',
 			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
 			'#![allow(unused_variables)]',
+			'extern crate libc;',
+			'use libc::{c_int, size_t};',
 		]
 		lines = []
 
@@ -593,8 +595,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return ' '.join( code )
 
 		elif fname == '__let__':
-			self._known_vars.add( node.args[0].id )
-			self._vars.remove( node.args[0].id )
+			if self._function_stack:
+				self._known_vars.add( node.args[0].id )
+				self._vars.remove( node.args[0].id )
+				V = 'let'
+			else:
+				V = 'static'
+
 			mutable = False
 			for kw in node.keywords:
 				if kw.arg=='mutable':
@@ -602,15 +609,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						mutable = True
 
 			if len(node.args) == 1:
-				return 'let %s			/* declared */' %node.args[0].id
+				return '%s %s			/* declared */' %(V, node.args[0].id)
+			elif len(node.args) == 2:
+				if self._cpp:
+					return '%s  %s' %(node.args[1].s, node.args[0].id)
+				else:
+					if mutable:
+						return '%s mut %s : %s' %(V, node.args[0].id, node.args[1].s)
+					else:
+						return '%s %s : %s' %(V, node.args[0].id, node.args[1].s)
+
 			elif len(node.args) == 3:
 				if self._cpp:
 					return '%s  %s = %s' %(node.args[1].s, node.args[0].id, self.visit(node.args[2]))
 				else:
 					if mutable:
-						return 'let mut %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+						return '%s mut %s : %s = %s' %(V, node.args[0].id, node.args[1].s, self.visit(node.args[2]))
 					else:
-						return 'let %s : %s = %s' %(node.args[0].id, node.args[1].s, self.visit(node.args[2]))
+						return '%s %s : %s = %s' %(V, node.args[0].id, node.args[1].s, self.visit(node.args[2]))
 			else:
 				raise SyntaxError('TODO __let__ %s' %len(node.args))
 
@@ -1326,6 +1342,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif node.context_expr.func.id == '__switch__':
 				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
 				is_switch = True
+
+			elif node.context_expr.func.id == 'extern':
+				r.append('extern "C" {')  ## TODO other abi's
+				is_switch = True
+
 			else:
 				raise SyntaxError( 'invalid use of with')
 		else:
