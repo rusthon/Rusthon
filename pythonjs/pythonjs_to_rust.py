@@ -20,6 +20,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'string' : set()
 		}
 		self._cpp = False
+		self._cheader = []
+		self._cppheader = []
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -399,6 +401,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		lines.append('mod rusthon {')
 		## copy string globals into rusthon module
 		lines.append('}')
+
+		if len(self._cheader):
+			header.append('extern "C" {')
+			for line in self._cheader:
+				header.append(line)
+				raise SyntaxError(line)
+			header.append('}')
 
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
@@ -1048,12 +1057,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			if return_type:
 				if self._cpp:
-					out.append( self.indent() + '%s %s(%s) {\n' % (return_type, node.name, ', '.join(args)) )
+					sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+					out.append( self.indent() + '%s {\n' % sig )
+					self._cheader.append( sig + ';' )
 				else:
 					out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
 			else:
 				if self._cpp:
-					out.append( self.indent() + 'void %s(%s) {\n' % (node.name, ', '.join(args)) )
+					sig = 'void %s(%s)' %(node.name, ', '.join(args))
+					out.append( self.indent() + '%s {\n' % sig  )
+					self._cheader.append( sig + ';' )
 				else:
 					out.append( self.indent() + 'fn %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
 		self.push()

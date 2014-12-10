@@ -536,7 +536,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     cmd = [
         os.path.join("..", "pythonjs", "translator.py"),
         output_name,
-        '--debug'
+        '--debug',
+        '--stdout'
     ]
     if dart:
         cmd.append( '--dart' )

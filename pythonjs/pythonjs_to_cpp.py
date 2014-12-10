@@ -72,6 +72,13 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			lines.append('}')
 
 
+		if len(self._cheader):
+			header.append('extern "C" {')
+			for line in self._cheader:
+				header.append(line)
+			header.append('}')
+
+
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
 

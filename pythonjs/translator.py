@@ -12,10 +12,11 @@ from pythonjs_to_rust import main as pythonjs_to_rust
 from pythonjs_to_cpp import main as pythonjs_to_cpp
 
 cmdhelp = """\
-usage: translator.py [--dart|--coffee|--lua|--go|--rust|--cpp|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
+usage: translator.py --output=myfile.js [--stdout|--dart|--coffee|--lua|--go|--rust|--cpp|--visjs|--no-wrapper|--no-runtime|--fast-javascript|--fast-loops|--pure-javascript|--modules|--analyze] file.py
+(defaults to javascript mode)
 
 example:
-       translator.py --no-wrapper myscript.py > myscript.js
+       translator.py --no-wrapper --stdout myscript.py > myscript.js
 """
 
 
@@ -160,10 +161,25 @@ def command():
 		data = sys.stdin.read()
 
 	js = main(data, module_path=mpath)
+	stdout = '--stdout' in sys.argv
+	dump   = False
+	for arg in sys.argv:
+		if arg.startswith('--output'):
+			assert '=' in arg
+			dump = arg.split('=')[-1]
+
 	if isinstance(js, dict):
-		print( json.dumps(js) )
+		out = json.dumps(js)
 	else:
-		print(js)
+		out = js
+
+	if stdout: print(out)
+	else:
+		if not dump:
+			raise RuntimeError('no output file given. --output=filename')
+		f = open(dump, 'wb')
+		f.write( out )
+		f.close()
 
 
 if __name__ == '__main__':
