@@ -1023,6 +1023,9 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 						attr = item.targets[0].attr
 						if attr not in node._struct_vars:
 							node._struct_vars[ attr ] = 'interface'
+				elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='__let__':
+					if isinstance(item.value.args[0], ast.Attribute) and item.value.args[0].value.id=='self':
+						node._struct_vars[ item.value.args[0].attr ] = item.value.args[1].s
 
 		## methods
 		for method in method_list:
@@ -1037,7 +1040,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		if not init and not method_list:
 			writer.write( 'pass' )
 
-
+		## this special dict is picked up in the second stage of `pythonjs_to_xxx` to build structs or classes
 		if node._struct_vars:
 			writer.write('{')
 			for k in node._struct_vars:

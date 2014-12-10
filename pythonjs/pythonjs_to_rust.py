@@ -130,7 +130,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if node.name not in self.method_returns_multiple_subclasses:
 			self.method_returns_multiple_subclasses[ node.name ] = set()
 		
-		self.interfaces[ node.name ] = set()
+		#self.interfaces[ node.name ] = set()
 
 
 		for base in node.bases:
@@ -161,7 +161,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				for kw in decor.keywords:
 					props.add( kw.arg )
 					T = kw.value.id
-					if T == 'interface': T = 'interface{}'
 					sdef[ kw.arg ] = T
 
 
@@ -179,13 +178,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						v = b.value.values[i].s
 					else:
 						v = self.visit( b.value.values[i] )
-					if v == 'interface': v = 'interface{}'
 					sdef[k] = v
 
 		for k in sdef:
 			v = sdef[k]
-			if v=='interface{}':
-				self.interfaces[node.name].add(k)
+			#if v=='interface{}':  ## deprecated
+			#	self.interfaces[node.name].add(k)
 
 		node._struct_def.update( sdef )
 		unionstruct = dict()
@@ -214,9 +212,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						out.append( self.visit(b) )
 
 
-		out.append( 'type %s struct {' %node.name)
-		if len(node._parents)==0:
-			out.append('__object__')
+		out.append( 'struct %s {' %node.name)
 
 		if base_classes:
 			for bnode in base_classes:
@@ -234,7 +230,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#for name in sdef:
 		#	out.append('%s %s' %(name, sdef[name]))
 		for name in unionstruct:
-			out.append('%s %s' %(name, unionstruct[name]))
+			if unionstruct[name]=='interface{}':
+				raise SyntaxError('interface{} is deprecated')
+			out.append('	%s : %s,' %(name, unionstruct[name]))
 		out.append('}')
 
 
@@ -608,7 +606,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			return ' '.join( code )
 
-		elif fname == '__let__':
+		elif fname == '__let__' and isinstance(node.args[0], ast.Name):
 			if self._function_stack:
 				self._known_vars.add( node.args[0].id )
 				self._vars.remove( node.args[0].id )
@@ -866,24 +864,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					type = self._class_stack[-1].name
 
 
-				## This hack using reflect will not work for either case where the value
-				## maybe an empty interface, or a pointer to a struct, because it is known
-				## to the Go compiler if the value is an interface or pointer to struct,
-				## and will not allow the alternate case.
-				## case struct pointer:  invalid type assertion: __unknown__.(*A) (non-interface type *A on left)
-				## case empty interface: cannot convert __unknown__ (type interface {}) to type B: need type assertion
-				#out = [
-				#	'__unknown__ := %s' %G['value'],
-				#	'switch reflect.TypeOf(__unknown__).Kind() {',
-				#	' case reflect.Interface:',
-				#	'    __addr := __unknown__.(*%s)' %type,
-				#	'    return __addr',
-				#	' case reflect.Ptr:',
-				#	'    __addr := %s(__unknown__)' %type,
-				#	'    return __addr',
-				#	'}'
-				#]
-
 				if not hasattr(node.value, 'uid'):
 					node.value.uid = self.uid()
 
@@ -947,6 +927,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 						## check for super classes - generics ##
 						if args_typedefs[ key.arg ] in self._classes:
+							raise SyntaxError('DEPRECATED')
 							if node.name=='__init__':
 								## generics type switch is not possible in __init__ because
 								## it is used to generate the type struct, where types are static.

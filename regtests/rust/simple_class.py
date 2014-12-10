@@ -10,16 +10,6 @@ class A:
 	def mymethod(self, m:int) -> int:
 		return self.x * m
 
-class B(A):
-	def __init__(self, s:string):
-		string self.w = s
-		int    self.x = 1
-
-	def method2(self, v:string) ->string:
-		print(self.x)
-		self.w = v
-		return self.w
-
 def call_method( cb:func(int)(int), mx:int ) ->int:
 	return cb(mx)
 
@@ -34,6 +24,3 @@ def main():
 
 	c = call_method( a.mymethod, 4 )
 	print( c )
-
-	x = B('testing...')
-	print( x.method2('hello world') )

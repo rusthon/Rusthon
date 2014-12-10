@@ -28,7 +28,8 @@ def retrieve_vars(body):
 	for n in body:
 		if isinstance(n, ast.Expr):
 			if isinstance(n.value, ast.Call) and isinstance(n.value.func, ast.Name) and n.value.func.id=='__let__':
-				local_vars.add( n.value.args[0].id )
+				if isinstance(n.value.args[0], ast.Name):  ## could be ast.Attribute, `let self.x : int = n`
+					local_vars.add( n.value.args[0].id )
 
 		elif isinstance(n, ast.Assign):
 			user_typedef = None

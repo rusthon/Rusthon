@@ -694,6 +694,10 @@ def f():
 
 let mut x : int = 1
 let x : int
+def __init__():
+	let self.x : int = x
+	let mut self.y : int = y
+
 
 '''
 
