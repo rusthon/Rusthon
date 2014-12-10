@@ -71,16 +71,20 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 				lines.append( '  __use__%s bool' %name)
 			lines.append('}')
 
-
+		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		if len(self._cheader):
-			header.append('extern "C" {')
+			cheader = []
+			cppheader = ['extern "C" {']
 			for line in self._cheader:
-				header.append(line)
-			header.append('}')
+				cheader.append(line)
+				cppheader.append('\t'+line)
+			cppheader.append('}')
 
-
+		pak['header.c'] = '\n'.join( cheader )
+		pak['header.cpp'] = '\n'.join( cppheader )
 		lines = header + list(self._imports) + lines
-		return '\n'.join( lines )
+		pak['main'] = '\n'.join( lines )
+		return pak['main']
 
 
 
@@ -103,10 +107,10 @@ def main(script, insert_runtime=True):
 	g = CppGenerator()
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
-
+	g.reset()
 	pass3 = g.visit(tree)
 	#open('/tmp/pass3.cpp', 'wb').write( pass3 )
-	return pass3
+	return g.output_pak
 
 
 
