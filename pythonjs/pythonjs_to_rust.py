@@ -238,7 +238,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				out.append('	%s : %s,' %(name, unionstruct[name]))
 
-		out.append('}')
 
 		self._rust_trait = []
 		self._cpp_class_header = []
@@ -248,6 +247,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(b, ast.FunctionDef):
 				impl.append( self.visit(b) )
 		self.pull()
+
+		if self._cpp:
+			for impl_def in self._cpp_class_header:
+				out.append( '\t' + impl_def )
+
+			if init:
+				out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
+
+			out.append('};')
+		else:
+			out.append('}')
+
 
 		if self._cpp:
 			for impl_def in impl: out.append( impl_def )
@@ -664,6 +675,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				raise SyntaxError('TODO __let__ %s' %len(node.args))
 
+		elif fname == '__let__' and isinstance(node.args[0], ast.Attribute):
+			if isinstance(node.args[0].value, ast.Name) and node.args[0].value.id=='self':
+				if self._cpp:
+					return 'this->%s = %s' %(node.args[0].attr, self.visit(node.args[-1]))
+				else:
+					return 'self.%s = %s' %(node.args[0].attr, self.visit(node.args[-1]))
+
 		elif fname=='str' and not self._cpp:
 			if self._cpp:
 				#return 'static_cast<std::ostringstream*>( &(std::ostringstream() << %s) )->str()' %self.visit(node.args[0])
@@ -1036,10 +1054,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		##############################################
 		if oargs:
-			#args.append( '[%s]' % ','.join(oargs) )
-			#args.append( '{%s}' % ','.join(oargs) )
-			args.append( '__kwargs : _kwargs_type_')
 			node._arg_names.append( '__kwargs' )
+			if self._cpp:
+				args.append( '_kwargs_type_  __kwargs')
+			else:
+				args.append( '__kwargs : _kwargs_type_')
 
 		starargs = None
 		if node.args.vararg:
@@ -1069,6 +1088,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
 						out.append( self.indent() + '%s {\n' % sig )
+						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+						self._cpp_class_header.append(sig + ';')
 
 					else:
 						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
@@ -1088,6 +1109,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						classname = self._class_stack[-1].name
 						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
 						out.append( self.indent() + '%s {\n' % sig  )
+
+						sig = 'void %s(%s)' % (node.name, ', '.join(args))
+						self._cpp_class_header.append(sig + ';')
 
 					else:
 						sig = 'void %s(%s)' %(node.name, ', '.join(args))
