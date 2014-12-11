@@ -211,8 +211,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							#continue
 						out.append( self.visit(b) )
 
+		if self._cpp:
+			out.append( 'class %s {' %node.name)
+			out.append( '  public:')
+		else:
+			out.append( 'struct %sStruct {' %node.name)
 
-		out.append( 'struct %sStruct {' %node.name)
 		if base_classes:
 			for bnode in base_classes:
 				## Go only needs the name of the parent struct and all its items are inserted automatically ##
@@ -227,28 +231,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						unionstruct.pop(key)
 
 		for name in unionstruct:
-			if unionstruct[name]=='interface{}':
-				raise SyntaxError('interface{} is deprecated')
-			out.append('	%s : %s,' %(name, unionstruct[name]))
+			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is deprecated')
+
+			if self._cpp:
+				out.append('	%s  %s;' %(unionstruct[name], name ))
+			else:
+				out.append('	%s : %s,' %(name, unionstruct[name]))
+
 		out.append('}')
 
 		self._rust_trait = []
-		rust_impl  = []
+		self._cpp_class_header = []
+		impl  = []
 		self.push()
 		for b in node.body:
 			if isinstance(b, ast.FunctionDef):
-				rust_impl.append( self.visit(b) )
+				impl.append( self.visit(b) )
 		self.pull()
 
-		out.append('trait %s {' %node.name)
-		for trait_def in self._rust_trait:
-			out.append( '\t'+ trait_def )
-		out.append('}')
+		if self._cpp:
+			for impl_def in impl: out.append( impl_def )
 
-		out.append('impl %s for %sStruct {' %(node.name, node.name))
-		for impl_def in rust_impl:
-			out.append( impl_def )
-		out.append('}')
+		else:
+			out.append('trait %s {' %node.name)
+			for trait_def in self._rust_trait: out.append( '\t'+ trait_def )
+			out.append('}')
+
+			out.append('impl %s for %sStruct {' %(node.name, node.name))
+			for impl_def in impl: out.append( impl_def )
+			out.append('}')
 
 
 		if init or parent_init:
@@ -1053,22 +1064,37 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
-				if self._cpp:
-					sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
-					out.append( self.indent() + '%s {\n' % sig )
-					if not is_main: self._cheader.append( sig + ';' )
-				else:
+				if self._cpp: ## c++ ##
+					if is_method:
+						classname = self._class_stack[-1].name
+						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
+						out.append( self.indent() + '%s {\n' % sig )
+
+					else:
+						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+						out.append( self.indent() + '%s {\n' % sig )
+						if not is_main: self._cheader.append( sig + ';' )
+
+				else:  ## rust ##
 					if is_method:
 						self._rust_trait.append('fn %s(&self, %s) -> %s;' %(node.name, ', '.join(args), return_type) )
 						out.append( self.indent() + 'fn %s(&self, %s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 					else:
 						out.append( self.indent() + 'fn %s(%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
-				if self._cpp:
-					sig = 'void %s(%s)' %(node.name, ', '.join(args))
-					out.append( self.indent() + '%s {\n' % sig  )
-					if not is_main: self._cheader.append( sig + ';' )
-				else:
+
+				if self._cpp: ## c++ ##
+					if is_method:
+						classname = self._class_stack[-1].name
+						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
+						out.append( self.indent() + '%s {\n' % sig  )
+
+					else:
+						sig = 'void %s(%s)' %(node.name, ', '.join(args))
+						out.append( self.indent() + '%s {\n' % sig  )
+						if not is_main: self._cheader.append( sig + ';' )
+
+				else:         ## rust ##
 					if is_method:
 						self._rust_trait.append('fn %s(&self, %s);' %(node.name, ', '.join(args)) )
 						out.append( self.indent() + 'fn %s(&self, %s) {\n' % (node.name, ', '.join(args)) )
