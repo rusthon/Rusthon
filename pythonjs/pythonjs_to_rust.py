@@ -212,8 +212,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						out.append( self.visit(b) )
 
 
-		out.append( 'struct %s {' %node.name)
-
+		out.append( 'struct %sStruct {' %node.name)
 		if base_classes:
 			for bnode in base_classes:
 				## Go only needs the name of the parent struct and all its items are inserted automatically ##
@@ -227,18 +226,30 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if key in unionstruct:
 						unionstruct.pop(key)
 
-		#for name in sdef:
-		#	out.append('%s %s' %(name, sdef[name]))
 		for name in unionstruct:
 			if unionstruct[name]=='interface{}':
 				raise SyntaxError('interface{} is deprecated')
 			out.append('	%s : %s,' %(name, unionstruct[name]))
 		out.append('}')
 
-
+		self._rust_trait = []
+		rust_impl  = []
+		self.push()
 		for b in node.body:
 			if isinstance(b, ast.FunctionDef):
-				out.append( self.visit(b) )
+				rust_impl.append( self.visit(b) )
+		self.pull()
+
+		out.append('trait %s {' %node.name)
+		for trait_def in self._rust_trait:
+			out.append( '\t'+ trait_def )
+		out.append('}')
+
+		out.append('impl %s for %sStruct {' %(node.name, node.name))
+		for impl_def in rust_impl:
+			out.append( impl_def )
+		out.append('}')
+
 
 		if init or parent_init:
 			if parent_init:
@@ -1047,26 +1058,34 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					out.append( self.indent() + '%s {\n' % sig )
 					if not is_main: self._cheader.append( sig + ';' )
 				else:
-					out.append( self.indent() + 'fn %s%s(%s) -> %s {\n' % (method, node.name, ', '.join(args), return_type) )
+					if is_method:
+						self._rust_trait.append('fn %s(&self, %s) -> %s;' %(node.name, ', '.join(args), return_type) )
+						out.append( self.indent() + 'fn %s(&self, %s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
+					else:
+						out.append( self.indent() + 'fn %s(%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
 				if self._cpp:
 					sig = 'void %s(%s)' %(node.name, ', '.join(args))
 					out.append( self.indent() + '%s {\n' % sig  )
 					if not is_main: self._cheader.append( sig + ';' )
 				else:
-					out.append( self.indent() + 'fn %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
+					if is_method:
+						self._rust_trait.append('fn %s(&self, %s);' %(node.name, ', '.join(args)) )
+						out.append( self.indent() + 'fn %s(&self, %s) {\n' % (node.name, ', '.join(args)) )
+					else:
+						out.append( self.indent() + 'fn %s(%s) {\n' % (node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
 			for n,v in oargs:
-				out.append('let %s = %s;' %(n,v))
-				out.append('if __kwargs.__use__%s == true {' %n )
-				out.append( '  %s = __kwargs.%s' %(n,n))
-				out.append('}')
+				out.append(self.indent() + 'let %s = %s;' %(n,v))
+				out.append(self.indent() + 'if __kwargs.__use__%s == true {' %n )
+				out.append(self.indent() +  '  %s = __kwargs.%s' %(n,n))
+				out.append(self.indent() + '}')
 				#out.append('} else { %s := %s }' %(n,v))
 
 		if starargs:
-			out.append('let %s = &__vargs__;' %starargs)
+			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
