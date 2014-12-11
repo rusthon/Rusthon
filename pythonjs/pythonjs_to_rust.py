@@ -273,36 +273,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append('}')
 
 
-		if init or parent_init:
-			if parent_init:
-				classname = parent_init['class'].name
-				init = parent_init['init']
-			else:
-				classname = node.name
-
-			out.append( 'fn __new__%s( %s ) *%s {' %(node.name, init._args_signature, node.name))
-			out.append( '  ob := %s{}' %node.name )
-			out.append( '  ob.__init__(%s)' %','.join(init._arg_names))
-			## used by generics to workaround the problem that a super method that returns `self`,
-			## may infact return wrong subclass type, because a struct to return that is not of type
-			## self will be cast to self - while this is ok if just reading attributes from it,
-			## it fails with method calls, because the casting operation on the struct changes it's
-			## method pointers.  by storing the class name on the instance, it can be used in a generics
-			## type switch to get to the real class and call the right methods.
-			out.append( '  ob.__class__ = "%s"' %node.name)
-			out.append( '  return &ob')
-			out.append('}')
-
-		else:
-			#out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
-			out.append( 'fn __new__%s() *%s {' %(node.name, node.name))
-			out.append( '  ob := %s{}' %node.name )
-			out.append( '  ob.__class__ = "%s"' %node.name)
-			out.append( '  return &ob')
-			out.append('}')
-
-
-
 		self.catch_call = set()
 		self._class_stack.pop()
 		return '\n'.join(out)
@@ -430,8 +400,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			lines.append('struct _kwargs_type_ {')
 			for name in self._kwargs_type_:
 				type = self._kwargs_type_[name]
-				lines.append( '  %s %s' %(name,type))
-				lines.append( '  __use__%s bool' %name)
+				if self._cpp:
+					lines.append( '  %s %s;' %(type,name))
+					lines.append( '  bool __use__%s;' %name)
+				else:
+					lines.append( '  %s : %s,' %(name,type))
+					lines.append( '  __use__%s : bool,' %name)
 			lines.append('}')
 
 		lines.append('mod rusthon {')
@@ -1508,9 +1482,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
 				if node.value.func.id in self._classes:
-					#raise SyntaxError(value+' in classes')
-					self._known_instances[ target ] = node.value.func.id
-					return 'let %s = __new__%s;' %(target, value)
+					classname = node.value.func.id
+					self._known_instances[ target ] = classname
+					if self._cpp:
+						return '%s = new %s;' %(target, value)
+
+					else:
+						return 'let %s = __new__%s;' %(target, value)
 				else:
 					return 'let %s = %s;			/* new variable */' % (target, value)
 
