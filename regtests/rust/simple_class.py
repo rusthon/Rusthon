@@ -22,5 +22,9 @@ def main():
 	b = a.mymethod(3)
 	print( b )
 
-	c = call_method( a.mymethod, 4 )
+	## taking the address of a method pointer is not allowed in rust
+	## http://stackoverflow.com/questions/24728394/rust-method-pointer
+	##c = call_method( a.mymethod, 4 )
+
+	c = call_method( lambda W: a.mymethod(W), 4 )
 	print( c )

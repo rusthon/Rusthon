@@ -215,8 +215,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( 'class %s {' %node.name)
 			out.append( '  public:')
 		else:
-			out.append( 'struct %sStruct {' %node.name)
-			out.append( '	__class__ : String,')
+			out.append( 'struct %s {' %node.name)
+			#out.append( '	__class__ : String,')
 
 		if base_classes:
 			for bnode in base_classes:
@@ -268,41 +268,39 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for impl_def in impl: out.append( impl_def )
 
 		else:
-			out.append('trait %s {' %node.name)
-			for trait_def in self._rust_trait: out.append( '\t'+ trait_def )
-			out.append('}')
+			## using a trait is not required, a struct type can be directly implemented.
+			## note: methods require a lambda wrapper to be passed to another function.
+			#out.append('trait %s {' %node.name)
+			#for trait_def in self._rust_trait: out.append( '\t'+ trait_def )
+			#out.append('}')
+			#out.append('impl %s for %sStruct {' %(node.name, node.name))
+			#for impl_def in impl: out.append( impl_def )
+			#out.append('}')
 
-			out.append('impl %s for %sStruct {' %(node.name, node.name))
+			out.append('impl %s {' %node.name)
 			for impl_def in impl: out.append( impl_def )
 			out.append('}')
 
 
-			if init or parent_init:
-				if parent_init:
-					classname = parent_init['class'].name
-					init = parent_init['init']
+			if False:  ## this will not work in rust because we need to pass in a lifetime variable
+				if init or parent_init:
+					if parent_init:
+						classname = parent_init['class'].name
+						init = parent_init['init']
+					else:
+						classname = node.name
+
+					out.append( 'fn __new__%s( %s ) -> %s {' %(node.name, init._args_signature, node.name))
+					out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
+					out.append( '  ob.__init__(%s);' %','.join(init._arg_names))
+					out.append( '  return ob;')
+					out.append('}')
+
 				else:
-					classname = node.name
-
-				out.append( 'fn __new__%s( %s ) -> %s {' %(node.name, init._args_signature, node.name))
-				out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
-				out.append( '  ob.__init__(%s);' %','.join(init._arg_names))
-				## used by generics to workaround the problem that a super method that returns `self`,
-				## may infact return wrong subclass type, because a struct to return that is not of type
-				## self will be cast to self - while this is ok if just reading attributes from it,
-				## it fails with method calls, because the casting operation on the struct changes it's
-				## method pointers.  by storing the class name on the instance, it can be used in a generics
-				## type switch to get to the real class and call the right methods.
-				#out.append( '  ob.__class__ = "%s"' %node.name)
-				out.append( '  return ob;')
-				out.append('}')
-
-			else:
-				#out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
-				out.append( 'fn __new__%s() -> %s {' %(node.name, node.name))
-				out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
-				out.append( '  return ob;')
-				out.append('}')
+					out.append( 'fn __new__%s() -> %s {' %(node.name, node.name))
+					out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
+					out.append( '  return ob;')
+					out.append('}')
 
 
 
@@ -939,6 +937,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return 'return %s;' % v
 		return 'return;'
 
+
+	def visit_Lambda(self, node):
+		args = [self.visit(a) for a in node.args.args]
+		if args and args[0]=='__INLINE_FUNCTION__':
+			raise SyntaxError('TODO inline lambda/function hack')
+			#self._inline_lambda = True
+			#raise SwapLambda( node )
+		else:
+			return '|%s| %s ' %(','.join(args), self.visit(node.body))
+
+
 	def _visit_function(self, node):
 		is_closure = False
 		if self._function_stack[0] is node:
@@ -974,11 +983,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 						if args_typedefs[key.arg].startswith('func('):
 							funcdef = args_typedefs[key.arg]
+							## TODO - better parser
+							hack = funcdef.replace(')', '(').split('(')
+							lambda_args = hack[1].strip()
+							lambda_return  = hack[3].strip()
 							if self._cpp:
 								pass
 							else:
-								sig = funcdef[ funcdef.index('(')+1  : funcdef.index(')') ].strip()
-								args_typedefs[ key.arg ] = '|%s|' %sig
+								if lambda_return:
+									args_typedefs[ key.arg ] = '|%s|->%s' %(lambda_args, lambda_return)
+								else:
+									args_typedefs[ key.arg ] = '|%s|' %lambda_args
 
 						## check for super classes - generics ##
 						if args_typedefs[ key.arg ] in self._classes:
@@ -1113,8 +1128,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				else:  ## rust ##
 					if is_method:
-						self._rust_trait.append('fn %s(&self, %s) -> %s;' %(node.name, ', '.join(args), return_type) )
-						out.append( self.indent() + 'fn %s(&self, %s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
+						self._rust_trait.append('fn %s(&mut self, %s) -> %s;' %(node.name, ', '.join(args), return_type) )
+						out.append( self.indent() + 'fn %s(&mut self, %s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 					else:
 						out.append( self.indent() + 'fn %s(%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
@@ -1135,19 +1150,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				else:         ## rust ##
 					if is_method:
-						self._rust_trait.append('fn %s(&self, %s);' %(node.name, ', '.join(args)) )
-						out.append( self.indent() + 'fn %s(&self, %s) {\n' % (node.name, ', '.join(args)) )
+						self._rust_trait.append('fn %s(&mut self, %s);' %(node.name, ', '.join(args)) )
+						out.append( self.indent() + 'fn %s(&mut self, %s) {\n' % (node.name, ', '.join(args)) )
 					else:
 						out.append( self.indent() + 'fn %s(%s) {\n' % (node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
 			for n,v in oargs:
-				out.append(self.indent() + 'let %s = %s;' %(n,v))
+				out.append(self.indent() + 'let mut %s = %s;' %(n,v))
 				out.append(self.indent() + 'if __kwargs.__use__%s == true {' %n )
 				out.append(self.indent() +  '  %s = __kwargs.%s' %(n,n))
 				out.append(self.indent() + '}')
-				#out.append('} else { %s := %s }' %(n,v))
 
 		if starargs:
 			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)
@@ -1529,15 +1543,21 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						return '%s = new %s;' %(target, value)
 
 					else:
-						#return 'let %s = __new__%s;' %(target, value)
-						#raise SyntaxError( self._classes[classname]._struct_init_names )
+						## TODO missing fields, (rust requires all members are initialized)
 						args = []
 						for i,arg in enumerate(node.value.args):
 							args.append( '%s:%s' %(self._classes[classname]._struct_init_names[i], self.visit(arg)))
 						if node.value.keywords:
 							for kw in node.value.keywords:
 								args.append( '%s:%s' %(kw.arg, self.visit(kw.value)))
-						return 'let %s = %s{ %s };' %(target, classname, ','.join(args))
+
+						## do not cast to trait type, because as a trait can be used to access the data inside the struct
+						#return 'let %s = &%sStruct{ %s } as &%s;' %(target, classname, ','.join(args), classname)
+
+						## note: methods are defined with `&mut self`, this requires that
+						## a mutable reference is taken so that methods can be called on the instance.
+						return 'let %s = &mut %s{ %s };' %(target, classname, ','.join(args))
+
 				else:
 					return 'let %s = %s;			/* new variable */' % (target, value)
 
