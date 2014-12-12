@@ -231,8 +231,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if key in unionstruct:
 						unionstruct.pop(key)
 
+		node._struct_init_names = []  ## save order of struct layout
+
 		for name in unionstruct:
 			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is deprecated')
+			node._struct_init_names.append( name )
 
 			if self._cpp:
 				out.append('	%s  %s;' %(unionstruct[name], name ))
@@ -1526,7 +1529,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						return '%s = new %s;' %(target, value)
 
 					else:
-						return 'let %s = __new__%s;' %(target, value)
+						#return 'let %s = __new__%s;' %(target, value)
+						#raise SyntaxError( self._classes[classname]._struct_init_names )
+						args = []
+						for i,arg in enumerate(node.value.args):
+							args.append( '%s:%s' %(self._classes[classname]._struct_init_names[i], self.visit(arg)))
+						if node.value.keywords:
+							for kw in node.value.keywords:
+								args.append( '%s:%s' %(kw.arg, self.visit(kw.value)))
+						return 'let %s = %s{ %s };' %(target, classname, ','.join(args))
 				else:
 					return 'let %s = %s;			/* new variable */' % (target, value)
 
