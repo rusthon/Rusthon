@@ -216,6 +216,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( '  public:')
 		else:
 			out.append( 'struct %sStruct {' %node.name)
+			out.append( '	__class__ : String,')
 
 		if base_classes:
 			for bnode in base_classes:
@@ -271,6 +272,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append('impl %s for %sStruct {' %(node.name, node.name))
 			for impl_def in impl: out.append( impl_def )
 			out.append('}')
+
+
+			if init or parent_init:
+				if parent_init:
+					classname = parent_init['class'].name
+					init = parent_init['init']
+				else:
+					classname = node.name
+
+				out.append( 'fn __new__%s( %s ) -> %s {' %(node.name, init._args_signature, node.name))
+				out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
+				out.append( '  ob.__init__(%s);' %','.join(init._arg_names))
+				## used by generics to workaround the problem that a super method that returns `self`,
+				## may infact return wrong subclass type, because a struct to return that is not of type
+				## self will be cast to self - while this is ok if just reading attributes from it,
+				## it fails with method calls, because the casting operation on the struct changes it's
+				## method pointers.  by storing the class name on the instance, it can be used in a generics
+				## type switch to get to the real class and call the right methods.
+				#out.append( '  ob.__class__ = "%s"' %node.name)
+				out.append( '  return ob;')
+				out.append('}')
+
+			else:
+				#out.append( 'func __new__%s() *%s { return &%s{} }' %(node.name, node.name, node.name))
+				out.append( 'fn __new__%s() -> %s {' %(node.name, node.name))
+				out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
+				out.append( '  return ob;')
+				out.append('}')
+
 
 
 		self.catch_call = set()
@@ -938,6 +968,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							args_typedefs[ key.arg ] = key.value.s
 						else:
 							args_typedefs[ key.arg ] = self.visit(key.value)
+
+						if args_typedefs[key.arg].startswith('func('):
+							funcdef = args_typedefs[key.arg]
+							if self._cpp:
+								pass
+							else:
+								sig = funcdef[ funcdef.index('(')+1  : funcdef.index(')') ].strip()
+								args_typedefs[ key.arg ] = '|%s|' %sig
 
 						## check for super classes - generics ##
 						if args_typedefs[ key.arg ] in self._classes:
