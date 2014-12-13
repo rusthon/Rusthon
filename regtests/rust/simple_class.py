@@ -26,5 +26,5 @@ def main():
 	## http://stackoverflow.com/questions/24728394/rust-method-pointer
 	##c = call_method( a.mymethod, 4 )
 
-	c = call_method( lambda W: a.mymethod(W), 4 )
+	c = call_method( lambda W=int: a.mymethod(W), 4 )
 	print( c )

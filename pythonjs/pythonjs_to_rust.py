@@ -943,6 +943,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if args and args[0]=='__INLINE_FUNCTION__':
 			raise SyntaxError('TODO inline lambda/function hack')
 		elif self._cpp:
+			assert len(node.args.args)==len(node.args.defaults)
+			args = []
+			for i,a in  enumerate(node.args.args):  ## typed args lambda hack
+				s = '%s  %s' %(node.args.defaults[i].s, self.visit(a))
+				args.append( s )
 			return '[&](%s){%s}' %(','.join(args), self.visit(node.body))
 		else:
 			return '|%s| %s ' %(','.join(args), self.visit(node.body))

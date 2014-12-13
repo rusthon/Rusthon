@@ -2946,10 +2946,16 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				return '__get__(%s, "__call__")( )' %name
 
 	def visit_Lambda(self, node):
-		args = [self.visit(a) for a in node.args.args]
+		args = []
+		for i,a in  enumerate(node.args.args):  ## typed args lambda hack
+			s = self.visit(a)
+			if len(node.args.defaults):
+				assert len(node.args.args)==len(node.args.defaults)
+				s += '="%s"' %self.visit(node.args.defaults[i])
+			args.append( s )
+
 
 		##'__INLINE_FUNCTION__' from typedpython.py
-
 		if hasattr(node, 'keep_as_lambda') or (args and args[0]=='__INLINE_FUNCTION__'):
 			## TODO lambda keyword args
 			self._in_lambda = True
