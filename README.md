@@ -3,7 +3,7 @@ Introduction
 Rusthon is a python-like language that converts and compiles into: Rust, C++, and JavaScript.
 
 
-Example
+Simple Class Example
 ===============
 
 
@@ -135,10 +135,79 @@ int main() {
         std::cout << a->x << std::endl;
         std::cout << a->y << std::endl;
         std::cout << a->z << std::endl;
-        auto b = a->mymethod(3);                        /* a  class: A */
+        auto b = a->mymethod(3);                  
         std::cout << b << std::endl;
-        auto c = call_method([&](int  W){ return a->mymethod(W); }, 4);                 /* new variable */
+        auto c = call_method([&](int  W){ return a->mymethod(W); }, 4);
         std::cout << c << std::endl;
         return 0;
+}
+```
+
+ASM Example
+===============
+Rusthon supports GCC inline assembly using the C++ backend.
+This allows you to fully optimize CPU performance, and code directly for bare metal.
+
+Assembly code is given inside a `with asm(...):` indented block.
+The syntax is:
+```
+with asm( outputs=R, inputs=(...), volatile=True/False, clobber=('cc', 'memory', ...) ):
+	movl %1 %%ebx;
+	...
+
+```
+The `with asm` options follow GCC's extended ASM syntax.
+http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html#s5
+
+Rusthon input
+------------
+
+```
+def test_single_input( a : int ) -> int:
+	let mut b : int = 0
+	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx', alignstack=True ):
+		movl %1, %%ebx;
+		movl %%ebx, %0;
+	return b
+
+def test_multi_input( a : int, b : int ) -> int:
+	let mut out : int = 0
+	with asm( outputs=out, inputs=(a,b), volatile=True, clobber=('%ebx','memory') ):
+		movl %1, %%ebx;
+		addl %2, %%ebx;
+		movl %%ebx, %0;
+	return out
+
+
+def main():
+	let x : int = test_single_input(999)
+	print x  ## prints 999
+	let y : int = test_multi_input(400, 20)
+	print y  ## prints 420
+```
+
+C++ output
+------------
+
+```
+int test_single_input(int a) {
+
+	int   b = 0;
+	asm volatile ( "movl %1, %%ebx;movl %%ebx, %0;" : "=r" (b) : "r" (a) : "%ebx" );
+	return b;
+}
+int test_multi_input(int a, int b) {
+
+	int   out = 0;
+	asm volatile ( "movl %1, %%ebx;addl %2, %%ebx;movl %%ebx, %0;" : "=r" (out) : "r" (a),"r" (b) : "%ebx","memory" );
+	return out;
+}
+int main() {
+
+	int   x = test_single_input(999);
+	std::cout << x << std::endl;
+	int   y = test_multi_input(400, 20);
+	std::cout << y << std::endl;
+	return 0;
 }
 ```
