@@ -942,8 +942,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		args = [self.visit(a) for a in node.args.args]
 		if args and args[0]=='__INLINE_FUNCTION__':
 			raise SyntaxError('TODO inline lambda/function hack')
-			#self._inline_lambda = True
-			#raise SwapLambda( node )
+		elif self._cpp:
+			return '[&](%s){%s}' %(','.join(args), self.visit(node.body))
 		else:
 			return '|%s| %s ' %(','.join(args), self.visit(node.body))
 
@@ -1549,7 +1549,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						self._known_instances[target] = cname
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
 
-				return 'let %s = %s;			/* %s */' % (target, value, info)
+				if self._cpp:
+					return 'auto %s = %s;			/* %s */' % (target, value, info)
+				else:
+					return 'let %s = %s;			/* %s */' % (target, value, info)
 
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
@@ -1557,7 +1560,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					classname = node.value.func.id
 					self._known_instances[ target ] = classname
 					if self._cpp:
-						return '%s = new %s;' %(target, value)
+						return 'auto %s = new %s;' %(target, value)
 
 					else:
 						## TODO missing fields, (rust requires all members are initialized)
@@ -1576,7 +1579,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						return 'let %s = &mut %s{ %s };' %(target, classname, ','.join(args))
 
 				else:
-					return 'let %s = %s;			/* new variable */' % (target, value)
+					if self._cpp:
+						return 'auto %s = %s;			/* new variable */' % (target, value)
+					else:
+						return 'let %s = %s;			/* new variable */' % (target, value)
 
 			else:
 				return 'let mut %s = %s;			/* new muatble */' % (target, value)
