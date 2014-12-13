@@ -19,9 +19,21 @@ class A:
 	def mymethod(self, m:int) -> int:
 		return self.x * m
 
+```
+The struct layout of the class above `A` is defined in the construtor method `__init__`.
+
+
+```
 def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
 
+```
+Callback functions can be passed as arguments to other functions, the type of the argument is given
+with this syntax: `name : lambda(A)(R)`, where `A` are the input types, and `R` is the return type.
+In the function above `call_method` the first argument `cb` is a lambda function that takes an integer
+and returns an integer.
+
+```
 def main():
 	a = A( 100, 200, z=9999 )
 	print( a.x )
@@ -33,6 +45,11 @@ def main():
 	print( c )
 
 ```
+Rust and C++ require a lambda function wrapper in order to pass a method as a callback function.
+Above the first argument to `call_method` is a special form of lambda where the type of the argument
+is given after `=`. The types of input arguments for a lambda function only need to be defined when
+translating to C++, because the Rust compiler is able to infer those types automatically. 
+
 
 translation to Rust
 ------------
