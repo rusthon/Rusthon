@@ -1493,6 +1493,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			a = '%s %s= %s;' %(target, op, value)
 		return a
 
+
+	def visit_Attribute(self, node):
+		name = self.visit(node.value)
+		attr = node.attr
+		if name in self._known_instances and self._cpp:
+			## TODO - attribute lookup stack to make this safe for `a.x.y`
+			## from the known instance need to check its class type, for any
+			## subobjects and deference pointers as required. `a->x->y`
+			## TODO - the user still needs a syntax to use `->` for working with
+			## external C++ libraries where the variable may or may not be a pointer.
+			return '%s->%s' % (name, attr)
+		else:
+			return '%s.%s' % (name, attr)
+
 	def visit_Assign(self, node):
 		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')
 		self._catch_assignment = False
