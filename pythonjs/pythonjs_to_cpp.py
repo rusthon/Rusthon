@@ -40,8 +40,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def visit_Module(self, node):
 		header = [
 			'#include <iostream>',
-			#'#include <sstream>',  ## c++11
 			'#include <string>',
+			'#include <functional>', ## c++11
+			#'#include <sstream>',  ## c++11
 		]
 		lines = []
 

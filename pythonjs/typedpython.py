@@ -465,6 +465,8 @@ def transform_source( source, strip=False ):
 						typedef = '"*%s"' %typedef.strip()
 					elif typedef.startswith('func('):
 						typedef = '"%s"' %typedef.strip()
+					elif typedef.startswith('lambda('):
+						typedef = '"%s"' %typedef.strip()
 
 					if T:  ## rust or c++ syntax
 						output.append('%s@__typedef__(%s, %s, "%s")' %(indent, arg_name, typedef, T))
@@ -546,32 +548,6 @@ if True:
 	float* def Y():
 		pass
 
-A.callback = B->method
-A.do_something( x,y,z, B->method )
-A.do_something( x,y,z, callback=B->method )
-A.do_something( x,y,z, callback=def cb(x):
-	return x+y
-)
-A.do_something( x,y,z, callback=def (x,y,z):
-	return x+y
-)
-a = {
-	'cb1': def (x,y):
-		return x+y
-}
-def xxx():
-	b = {
-		'cb1': def (x,y):
-			return x+y,
-		'cb2': def (x,y):
-			return x+y
-	}
-
-X.func( cb1=def ():
-		return 1,
-	cb2=def ():
-		return 2
-)
 
 c = function(x,y):
 	return x+y
@@ -698,8 +674,40 @@ def __init__():
 	let self.x : int = x
 	let mut self.y : int = y
 
+A.callback = B->method
+A.do_something( x,y,z, B->method )
+A.do_something( x,y,z, callback=B->method )
+A.do_something( x,y,z, callback=def cb(x):
+	return x+y
+)
+A.do_something( x,y,z, callback=def (x,y,z):
+	return x+y
+)
+a = {
+	'cb1': def (x,y):
+		return x+y
+}
+def xxx():
+	b = {
+		'cb1': def (x,y):
+			return x+y,
+		'cb2': def (x,y):
+			return x+y
+	}
+
+def call_method( cb:lambda(int)(int) ) ->int:
+	return cb(3)
+
 
 '''
+
+## TODO fix arg annotations
+#X.func( cb1=def ():
+#		return 1,
+#	cb2=def (x:int, y:string):
+#		return 2
+#)
+
 
 if __name__ == '__main__':
 	out = transform_source(test)

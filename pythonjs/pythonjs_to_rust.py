@@ -948,7 +948,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for i,a in  enumerate(node.args.args):  ## typed args lambda hack
 				s = '%s  %s' %(node.args.defaults[i].s, self.visit(a))
 				args.append( s )
-			return '[&](%s){%s}' %(','.join(args), self.visit(node.body))
+			## TODO support multiline lambda, and return the last line
+			return '[&](%s){ return %s; }' %(','.join(args), self.visit(node.body))
 		else:
 			return '|%s| %s ' %(','.join(args), self.visit(node.body))
 
@@ -987,7 +988,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						else:
 							args_typedefs[ key.arg ] = self.visit(key.value)
 
-						if args_typedefs[key.arg].startswith('func('):
+						if args_typedefs[key.arg].startswith('func(') or args_typedefs[key.arg].startswith('lambda('):
+							is_lambda_style = args_typedefs[key.arg].startswith('lambda(')
 							func_pointers.add( key.arg )
 							funcdef = args_typedefs[key.arg]
 							## TODO - better parser
@@ -995,10 +997,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							lambda_args = hack[1].strip()
 							lambda_return  = hack[3].strip()
 							if self._cpp:
-								if lambda_return:
-									args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
-								else:
-									args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
+								if is_lambda_style:
+									if lambda_return:  ## c++11
+										args_typedefs[ key.arg ] = 'std::function<%s(%s)>  %s' %(lambda_return, lambda_args, key.arg)
+									else:
+										args_typedefs[ key.arg ] = 'std::function<void(%s)>  %s' %(lambda_args, key.arg)
+
+								else:  ## old C style function pointers
+									if lambda_return:
+										args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
+									else:
+										args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
 
 							else:
 								if lambda_return:

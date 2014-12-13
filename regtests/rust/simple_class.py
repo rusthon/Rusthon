@@ -10,7 +10,7 @@ class A:
 	def mymethod(self, m:int) -> int:
 		return self.x * m
 
-def call_method( cb:func(int)(int), mx:int ) ->int:
+def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
 
 def main():
