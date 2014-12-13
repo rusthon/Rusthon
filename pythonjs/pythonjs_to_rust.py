@@ -965,6 +965,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		generics = set()
 		args_generics = dict()
 		returns_self = False
+		func_pointers = set()
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
@@ -982,13 +983,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							args_typedefs[ key.arg ] = self.visit(key.value)
 
 						if args_typedefs[key.arg].startswith('func('):
+							func_pointers.add( key.arg )
 							funcdef = args_typedefs[key.arg]
 							## TODO - better parser
 							hack = funcdef.replace(')', '(').split('(')
 							lambda_args = hack[1].strip()
 							lambda_return  = hack[3].strip()
 							if self._cpp:
-								pass
+								if lambda_return:
+									args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
+								else:
+									args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
+
 							else:
 								if lambda_return:
 									args_typedefs[ key.arg ] = '|%s|->%s' %(lambda_args, lambda_return)
@@ -1063,7 +1069,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 					if self._cpp:
 						if arg_type == 'string': arg_type = 'std::string'  ## standard string type in c++
-						a = '%s %s' %(arg_type, arg_name)
+						if arg_name in func_pointers:
+							## note C has funky function pointer syntax, where the arg name is in the middle
+							## of the type, the arg name gets put there when parsing above.
+							a = arg_type
+						else:
+							a = '%s %s' %(arg_type, arg_name)
 					else:
 						if arg_type == 'string': arg_type = 'String'  ## standard string type in rust
 						a = '%s:%s' %(arg_name, arg_type)
@@ -1158,13 +1169,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if oargs:
 			for n,v in oargs:
-				out.append(self.indent() + 'let mut %s = %s;' %(n,v))
-				out.append(self.indent() + 'if __kwargs.__use__%s == true {' %n )
-				out.append(self.indent() +  '  %s = __kwargs.%s' %(n,n))
+				if self._cpp:
+					out.append(self.indent() + '%s  %s = %s;' %(args_typedefs[n],n,v))
+				else:
+					out.append(self.indent() + 'let mut %s = %s;' %(n,v))
+				out.append(self.indent() + 'if (__kwargs.__use__%s == true) {' %n )
+				out.append(self.indent() +  '  %s = __kwargs.%s;' %(n,n))
 				out.append(self.indent() + '}')
 
 		if starargs:
 			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)
+
+		if self._cpp and is_method:
+			out.append(self.indent() + '%s self = *this;' %self._class_stack[-1].name )
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]

@@ -62,14 +62,14 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 					raise SyntaxError(b)
 
 		if len(self._kwargs_type_.keys())==0:
-			lines.append('struct _kwargs_type_;')
+			header.append('struct _kwargs_type_;')
 		else:
-			lines.append('struct _kwargs_type_ {')
+			header.append('struct _kwargs_type_ {')
 			for name in self._kwargs_type_:
 				type = self._kwargs_type_[name]
-				lines.append( '  %s %s;' %(type,name))
-				lines.append( '  bool __use__%s;' %name)
-			lines.append('}')
+				header.append( '  %s %s;' %(type,name))
+				header.append( '  bool __use__%s;' %name)
+			header.append('};')
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		if len(self._cheader):
