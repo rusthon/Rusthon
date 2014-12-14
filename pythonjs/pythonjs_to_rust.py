@@ -7,6 +7,9 @@ import ast
 import pythonjs_to_go
 
 go_types = 'bool string int float64'.split()
+rust_hacks = ('__rust__array__', '__rust__arrayfixed__', '__rust__map__', '__rust__func__')
+go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
+COLLECTION_TYPES = rust_hacks + go_hacks
 
 class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
@@ -1560,12 +1563,26 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
 
+			if self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
+				if isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:
+					S = node.value.left.func.id
+					args = []
+					for elt in node.value.right.elts:
+						#if isinstance(elt, ast.Num):
+						args.append( self.visit(elt) )
 
-			#if value.startswith('&(*') and '[' in value and ']' in value:  ## Go slice hack
-			#	v = value[1:]
-			#	return '_tmp := %s; %s := &_tmp;' %(v, target)
+					if S=='__go__array__':
+						T = self.visit(node.value.left.args[0])
+						## note: c++11 says that `=` is optional
+						return 'std::vector<%s>  %s = {%s};' %(T, target, ','.join(args))
+					elif S=='__go__arrayfixed__':
+						asize = self.visit(node.value.left.args[0])
+						atype = self.visit(node.value.left.args[1])
+						## note: the inner braces are due to the nature of initializer lists, one per template param.
+						return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
 
-			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
+
+			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
 				info = varname + '  '
 				if varname in self._known_vars:
@@ -1608,12 +1625,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				else:
 					if self._cpp:
-						return 'auto %s = %s;			/* new variable */' % (target, value)
+						if isinstance(node.value, ast.Expr) and isinstance(node.value.value, ast.BinOp) and self.visit(node.value.value.op)=='<<':
+							raise SyntaxError(node.value.value.left)
+						else:
+							return 'auto %s = %s;			/* new variable */' % (target, value)
 					else:
 						return 'let %s = %s;			/* new variable */' % (target, value)
 
 			else:
-				return 'let mut %s = %s;			/* new muatble */' % (target, value)
+				if self._cpp:
+					return 'auto %s = %s;' % (target, value)
+				else:
+					return 'let mut %s = %s;			/* new muatble */' % (target, value)
 
 		else:
 			value = self.visit(node.value)
