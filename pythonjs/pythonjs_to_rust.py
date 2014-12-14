@@ -1566,20 +1566,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
 				if isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:
 					S = node.value.left.func.id
-					args = []
-					for elt in node.value.right.elts:
-						#if isinstance(elt, ast.Num):
-						args.append( self.visit(elt) )
+					if S == '__go__map__':
+						key_type = self.visit(node.value.left.args[0])
+						value_type = self.visit(node.value.left.args[1])
+						if key_type=='string': key_type = 'std::string'
+						if value_type=='string': value_type = 'std::string'
 
-					if S=='__go__array__':
-						T = self.visit(node.value.left.args[0])
-						## note: c++11 says that `=` is optional
-						return 'std::vector<%s>  %s = {%s};' %(T, target, ','.join(args))
-					elif S=='__go__arrayfixed__':
-						asize = self.visit(node.value.left.args[0])
-						atype = self.visit(node.value.left.args[1])
-						## note: the inner braces are due to the nature of initializer lists, one per template param.
-						return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
+						a = []
+						for i in range( len(node.value.right.keys) ):
+							k = self.visit( node.value.right.keys[ i ] )
+							v = self.visit( node.value.right.values[i] )
+							a.append( '{%s,%s}'%(k,v) )
+						v = ', '.join( a )
+						return 'std::map<%s, %s>  %s = {%s};' %(key_type, value_type, target, v) 
+
+					elif 'array' in S:
+						args = []
+						for elt in node.value.right.elts:
+							#if isinstance(elt, ast.Num):
+							args.append( self.visit(elt) )
+
+						if S=='__go__array__':
+							T = self.visit(node.value.left.args[0])
+							## note: c++11 says that `=` is optional
+							return 'std::vector<%s>  %s = {%s};' %(T, target, ','.join(args))
+						elif S=='__go__arrayfixed__':
+							asize = self.visit(node.value.left.args[0])
+							atype = self.visit(node.value.left.args[1])
+							## note: the inner braces are due to the nature of initializer lists, one per template param.
+							return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
 
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):

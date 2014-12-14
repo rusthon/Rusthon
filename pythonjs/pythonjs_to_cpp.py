@@ -41,6 +41,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		header = [
 			'#include <iostream>',
 			'#include <string>',
+			'#include <map>',
 			'#include <functional>', ## c++11
 			#'#include <sstream>',  ## c++11
 		]
