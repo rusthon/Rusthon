@@ -1580,13 +1580,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						v = ', '.join( a )
 
 						## raw pointer
-						##return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+						return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
 						## c++11 shared pointer
 						#return 'auto %s = std::make_shared<std::map<%s, %s>>({%s});' %(target, key_type, value_type, v)  ## too many args to make_shared?
-						maptype = 'std::map<%s, %s>' %(key_type, value_type)
-						r = '%s _ref_%s = {%s};' %(maptype, target, v)
-						r += 'std::shared_ptr<%s> %s(&_ref_%s);' %(maptype, target, target)
-						return r
+						## this fails at runtime:  munmap_chunk(): invalid pointer
+						#maptype = 'std::map<%s, %s>' %(key_type, value_type)
+						#r = '%s _ref_%s = {%s};' %(maptype, target, v)
+						#r += 'std::shared_ptr<%s> %s(&_ref_%s);' %(maptype, target, target)
+						#return r
 
 					elif 'array' in S:
 						args = []
@@ -1597,12 +1598,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
 							## note: c++11 says that `=` is optional
-							return 'std::vector<%s>  %s = {%s};' %(T, target, ','.join(args))
+							return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
 						elif S=='__go__arrayfixed__':
 							asize = self.visit(node.value.left.args[0])
 							atype = self.visit(node.value.left.args[1])
 							## note: the inner braces are due to the nature of initializer lists, one per template param.
-							return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
+							#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
+							return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
 
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
