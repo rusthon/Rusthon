@@ -1578,7 +1578,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							v = self.visit( node.value.right.values[i] )
 							a.append( '{%s,%s}'%(k,v) )
 						v = ', '.join( a )
-						return 'std::map<%s, %s>  %s = {%s};' %(key_type, value_type, target, v) 
+
+						## raw pointer
+						return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+
 
 					elif 'array' in S:
 						args = []
