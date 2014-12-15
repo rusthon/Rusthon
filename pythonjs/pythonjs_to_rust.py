@@ -1580,8 +1580,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						v = ', '.join( a )
 
 						## raw pointer
-						return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
-
+						##return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+						## c++11 shared pointer
+						#return 'auto %s = std::make_shared<std::map<%s, %s>>({%s});' %(target, key_type, value_type, v)  ## too many args to make_shared?
+						maptype = 'std::map<%s, %s>' %(key_type, value_type)
+						r = '%s _ref_%s = {%s};' %(maptype, target, v)
+						r += 'std::shared_ptr<%s> %s(&_ref_%s);' %(maptype, target, target)
+						return r
 
 					elif 'array' in S:
 						args = []
