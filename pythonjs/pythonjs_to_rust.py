@@ -522,7 +522,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
 
 			else:
-				lines.append('for (%s,%s) in %s.iter() {' %(key,val, iter))
+				lines.append('for (%s,&%s) in %s.iter() {' %(key,val, iter))
 
 		else:
 
@@ -1530,7 +1530,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		value = self.visit(node.value)
 
 		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings and not self._cpp:
-			return '%s.push_str(%s.as_slice())' %(target, value)
+			return '%s.push_str(%s.as_slice());' %(target, value)
 
 		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s ++;' %target
