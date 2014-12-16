@@ -513,7 +513,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			iter = self.visit( node.iter )
 			key = self.visit(node.target.elts[0])
 			val = self.visit(node.target.elts[1])
-			lines.append('for %s,%s := range *%s {' %(key,val, iter))
+			iname = iter.split('.')[0]
+			if self._cpp:
+				assert iname in self._known_maps  ## TODO always assume its a map? and _ref_?
+				lines.append('for (auto &_pair_%s : _ref_%s) {' %(key, iter))
+				lines[-1] += '  auto %s = _pair_%s.first;' %(key, key)
+				lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
+
+			else:
+				lines.append('for %s,%s := range *%s {' %(key,val, iter))
 
 		else:
 
@@ -526,10 +534,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 			iter = self.visit( node.iter )
+			arrname = iter.split('.')[0]
 			if node.iter.is_ref:
 				if self._cpp:
-					#lines.append('for (auto &%s: (*%s)) {' %(target, iter))
-					lines.append('for (auto &%s: _ref_%s) {' %(target, iter))
+					if arrname in self._known_arrays:
+						#lines.append('for (auto &%s: (*%s)) {' %(target, iter))
+						lines.append('for (auto &%s: _ref_%s) {' %(target, iter))
+					elif arrname in self._known_maps:
+						lines.append('for (auto &_pair_%s: _ref_%s) {' %(target, iter))
+						lines.append('  auto %s = _pair_%s.second;')
+
 				else:
 					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
 			else:
@@ -1589,6 +1603,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						value_type = self.visit(node.value.left.args[1])
 						if key_type=='string': key_type = 'std::string'
 						if value_type=='string': value_type = 'std::string'
+
+						self._known_maps[ target ] = (key_type, value_type)
 
 						a = []
 						for i in range( len(node.value.right.keys) ):

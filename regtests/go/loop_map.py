@@ -12,5 +12,5 @@ def main():
 		b += key
 		c += value
 
-	#print( b )
-	#print( c )
+	print( b )
+	print( c )

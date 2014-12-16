@@ -70,6 +70,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._ids = 0
 		self._known_instances = dict()
 		self._known_arrays    = dict()
+		self._known_maps      = dict()
 		self._scope_stack = list()
 
 		self.interfaces = dict()
