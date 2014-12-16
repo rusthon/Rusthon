@@ -482,8 +482,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		return ' '.join( comp )
 
 	def visit_For(self, node):
+		if not hasattr(node.iter, 'uid'):
+			## in the first rustc pass we assume regular references using `&X`,
+			## for loops over an array of String's requires the other type using just `X` or `ref X`
+			node.iter.uid = self.uid()
+			node.iter.is_ref = True
+			self.unodes[ node.iter.uid ] = node.iter
+
 		target = self.visit(node.target)
 		lines = []
+
 		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name):
 
 			if node.iter.func.id == 'range':
@@ -501,7 +509,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				iter = self.visit(node.iter.args[0])
 				idx = self.visit(node.target.elts[0])
 				tar = self.visit(node.target.elts[1])
-				lines.append('for %s,%s := range *%s {' %(idx,tar, iter))
+				if self._cpp:
+					lines.append('int %s = -1;' %idx)
+					lines.append('for (auto &%s: _ref_%s) {' %(tar, iter))
+				else:
+					lines.append('let mut %s = -1i;' %idx)
+					if node.iter.is_ref:
+						lines.append('for &%s in %s.iter() { //magic:%s' %(tar, iter, node.iter.uid))
+					else:
+						lines.append('for %s in %s.iter() { //magic:%s' %(tar, iter, node.iter.uid))
+
+				lines.append('  %s += 1;' %idx)
 
 			else: ## generator function
 				gfunc = node.iter.func.id
@@ -525,14 +543,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				lines.append('for (%s,&%s) in %s.iter() {' %(key,val, iter))
 
 		else:
-
-			if not hasattr(node.iter, 'uid'):
-				## in the first rustc pass we assume regular references using `&X`,
-				## for loops over an array of String's requires the other type using just `X` or `ref X`
-				node.iter.uid = self.uid()
-				node.iter.is_ref = True
-				self.unodes[ node.iter.uid ] = node.iter
-
 
 			iter = self.visit( node.iter )
 			arrname = iter.split('.')[0]
@@ -1798,9 +1808,8 @@ def main(script, insert_runtime=True):
 				if '//magic:' in line:
 					uid = int( line.split('//magic:')[-1] )
 					g.unodes[ uid ].is_ref = False
-
 				else:
-					raise SyntaxError(line)
+					raise SyntaxError('BAD MAGIC:'+line)
 	pass3 = g.visit(tree)
 	open('/tmp/pass3.rs', 'wb').write( pass3 )
 	return pass3

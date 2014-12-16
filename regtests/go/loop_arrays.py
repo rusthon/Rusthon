@@ -29,12 +29,12 @@ def main():
 	#TestError( b2 == 5 )
 
 
-	#c = ''
-	#d = 0
-	#for i,v in enumerate(arr):
-	#	c += v
-	#	d += i
-	#TestError( c == 'abc' )
+	c = ''
+	d = 0
+	for i,v in enumerate(arr):
+		c += v
+		d += i
+	TestError( c == 'abc' )
 
 	#e = 0
 	#for i in range( len(arr) ):
