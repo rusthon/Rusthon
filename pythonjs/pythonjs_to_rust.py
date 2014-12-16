@@ -331,17 +331,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			raise NotImplementedError( 'ellipsis')
 		else:
 			## deference pointer and then index
-			if isinstance(node.slice, ast.Slice):
+			if isinstance(node.slice, ast.Slice):  ## TODO slice
 				r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
-				r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+				if self._cpp:
+					##this also works but is slower##r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+					r = '_ref_%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
-			if isinstance(node.value, ast.Name) and node.value.id in self._known_arrays:
-				target = node.value.id
-				#value = self.visit( node.value )
-				cname = self._known_arrays[target]
-				#raise GenerateGenericSwitch( {'target':target, 'value':r, 'class':cname} )
-				raise GenerateGenericSwitch( {'value':r, 'class':cname} )
+				else:
+					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+
+			## TODO: subclass generics for arrays
+			#if isinstance(node.value, ast.Name) and node.value.id in self._known_generics_arrays:
+			#	target = node.value.id
+			#	#value = self.visit( node.value )
+			#	cname = self._known_arrays[target]
+			#	#raise GenerateGenericSwitch( {'target':target, 'value':r, 'class':cname} )
+			#	raise GenerateGenericSwitch( {'value':r, 'class':cname} )
 
 			return r
 
@@ -703,7 +709,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			fname += str(len(node.args))
 
 		elif fname == 'len':
-			return '%s.len()' %self.visit(node.args[0])
+			if self._cpp:
+				return '%s->size()' %self.visit(node.args[0])
+			else:
+				return '%s.len()' %self.visit(node.args[0])
 
 		elif fname == 'go.type_assert':
 			val = self.visit(node.args[0])
@@ -735,6 +744,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			#if item in self._known_instances:
 			#	classname = self._known_instances[ item ]
 			#	if arr in self._known_arrays and classname != self._known_arrays[arr]:
+
+			assert not self._cpp  ## TODO move this logic to visit_Attribute for rust
 			return '%s.push( %s )' %(arr, item)
 
 		elif self._with_gojs:
@@ -1514,13 +1525,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
-		if name in self._known_instances and self._cpp:
+		if (name in self._known_instances or name in self._known_arrays) and self._cpp:
 			## TODO - attribute lookup stack to make this safe for `a.x.y`
 			## from the known instance need to check its class type, for any
 			## subobjects and deference pointers as required. `a->x->y`
 			## TODO - the user still needs a syntax to use `->` for working with
 			## external C++ libraries where the variable may or may not be a pointer.
-			return '%s->%s' % (name, attr)
+			if attr=='append' and name in self._known_arrays:
+				return '%s->push_back' %name
+			else:
+				return '%s->%s' % (name, attr)
 		else:
 			return '%s.%s' % (name, attr)
 
@@ -1597,11 +1611,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
+							self._known_arrays[ target ] = T
 							## note: c++11 says that `=` is optional
 							return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
 						elif S=='__go__arrayfixed__':
 							asize = self.visit(node.value.left.args[0])
 							atype = self.visit(node.value.left.args[1])
+							self._known_arrays[ target ] = (atype,asize)
+
 							## note: the inner braces are due to the nature of initializer lists, one per template param.
 							#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
 							return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
