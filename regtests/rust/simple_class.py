@@ -15,7 +15,7 @@ def call_method( cb:lambda(int)(int), mx:int ) ->int:
 
 def main():
 	a = A( 100, 200, z=9999 )
-	print( a.x )
+	print( a->x )  ## explicit C++ access member
 	print( a.y )
 	print( a.z )
 

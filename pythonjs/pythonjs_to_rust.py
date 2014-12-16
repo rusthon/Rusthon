@@ -1561,7 +1561,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
-		if (name in self._known_instances or name in self._known_arrays) and self._cpp:
+		if attr == '__leftarrow__':
+			if self._cpp:
+				return '%s->' %name
+			else:
+				return name
+		elif name.endswith('->'):
+			return '%s%s' %(name,attr)
+		elif (name in self._known_instances or name in self._known_arrays) and self._cpp:
 			## TODO - attribute lookup stack to make this safe for `a.x.y`
 			## from the known instance need to check its class type, for any
 			## subobjects and deference pointers as required. `a->x->y`
@@ -1815,8 +1822,11 @@ def main(script, insert_runtime=True):
 				if '//magic:' in line:
 					uid = int( line.split('//magic:')[-1] )
 					g.unodes[ uid ].is_ref = False
-				else:
+				elif line.startswith('for '):  ## needs magic id
 					raise SyntaxError('BAD MAGIC:'+line)
+				else:
+					raise SyntaxError(line)
+
 	pass3 = g.visit(tree)
 	open('/tmp/pass3.rs', 'wb').write( pass3 )
 	return pass3

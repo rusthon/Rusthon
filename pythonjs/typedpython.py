@@ -367,7 +367,8 @@ def transform_source( source, strip=False ):
 			a,b = c.split('->')
 			this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
 			method_name = b.split()[0].split('(')[0]
-			c = c.replace('->'+method_name, '.'+method_name+'.bind(%s)'%this_name)
+			#c = c.replace('->'+method_name, '.'+method_name+'.__leftarrow__(%s)'%this_name)
+			c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)
 
 		## callback=def .. inline function ##
 		if '=def ' in c or '= def ' in c or ': def ' in c or ':def ' in c:
@@ -675,8 +676,12 @@ def __init__():
 	let mut self.y : int = y
 
 A.callback = B->method
+A.callback = B->method()
 A.do_something( x,y,z, B->method )
 A.do_something( x,y,z, callback=B->method )
+A.do_something( x,y,z, B->method(U,W) )
+A.do_something( x,y,z, callback=B->method(X,Z) )
+
 A.do_something( x,y,z, callback=def cb(x):
 	return x+y
 )
