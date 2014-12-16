@@ -527,7 +527,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			iter = self.visit( node.iter )
 			if node.iter.is_ref:
-				lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
+				if self._cpp:
+					lines.append('for (auto &%s: (*%s)) {' %(target, iter))
+				else:
+					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
 			else:
 				lines.append('for %s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
 
