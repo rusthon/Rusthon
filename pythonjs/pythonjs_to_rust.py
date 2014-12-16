@@ -415,6 +415,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(unused_variables)]',
 			'extern crate libc;',
 			'use libc::{c_int, size_t};',
+			'use std::collections::{HashMap};',
 		]
 		lines = []
 
@@ -521,7 +522,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
 
 			else:
-				lines.append('for %s,%s := range *%s {' %(key,val, iter))
+				lines.append('for (%s,%s) in %s.iter() {' %(key,val, iter))
 
 		else:
 
@@ -1589,13 +1590,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			elif isinstance(node.value, ast.Num):
 				if type(node.value.n) is int:
-					value += 'i'
+					if self._cpp:
+						pass
+					else:
+						value += 'i'
 
 			#################################################################
 			if value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
+			#################################################################
 
-			if self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
+
+			if not self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id=='__go__map__':
+				key_type = self.visit(node.value.left.args[0])
+				value_type = self.visit(node.value.left.args[1])
+				if key_type=='string': key_type = 'String'
+				if value_type=='string': value_type = 'String'
+				self._known_maps[ target ] = (key_type, value_type)
+
+				a = []
+				for i in range( len(node.value.right.keys) ):
+					k = self.visit( node.value.right.keys[ i ] )
+					v = self.visit( node.value.right.values[i] )
+					a.append( '_ref_%s.insert(%s,%s);'%(target,k,v) )
+				v = '\n'.join( a )
+				r  = 'let mut _ref_%s = HashMap::<%s, %s>::new();\n%s\n' %(target, key_type, value_type, v) 
+				r += 'let mut %s = &_ref_%s;' %(target, target)
+				return r
+
+			elif self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
 				if isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:
 					S = node.value.left.func.id
 					if S == '__go__map__':

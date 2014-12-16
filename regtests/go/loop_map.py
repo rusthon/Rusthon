@@ -7,8 +7,8 @@ def main():
 	b = ''
 	c = 0
 	for key, value in a:
-		#print( key )
-		#print( value )
+		print( key )
+		print( value )
 		b += key
 		c += value
 
