@@ -528,7 +528,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			iter = self.visit( node.iter )
 			if node.iter.is_ref:
 				if self._cpp:
-					lines.append('for (auto &%s: (*%s)) {' %(target, iter))
+					#lines.append('for (auto &%s: (*%s)) {' %(target, iter))
+					lines.append('for (auto &%s: _ref_%s) {' %(target, iter))
 				else:
 					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
 			else:
@@ -1513,7 +1514,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		op = self.visit(node.op)
 		value = self.visit(node.value)
 
-		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings:
+		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings and not self._cpp:
 			return '%s.push_str(%s.as_slice())' %(target, value)
 
 		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
@@ -1614,6 +1615,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
+							if T=='string': T = 'std::string'
 							self._known_arrays[ target ] = T
 							## note: c++11 says that `=` is optional
 							return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
