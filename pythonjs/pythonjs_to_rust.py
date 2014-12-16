@@ -497,11 +497,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if node.iter.func.id == 'range':
 				if len(node.iter.args)==1:
 					iter = self.visit(node.iter.args[0])
-					lines.append('for %s in range(0u, %s) {' %(target, iter))
+					if self._cpp:
+						lines.append('for (int %s=0; %s<%s; %s++) {' %(target, target, iter, target))
+					else:
+						lines.append('for %s in range(0u, %s) {' %(target, iter))
 				elif len(node.iter.args)==2:
 					start = self.visit(node.iter.args[0])
 					iter = self.visit(node.iter.args[1])
-					lines.append('for %s in range(%s as uint, %s as uint) {' %(target, start, iter))
+					if self._cpp:
+						lines.append('for (int %s=%s; %s<%s; %s++) {' %(target, start, target, iter, target))
+
+					else:
+						lines.append('for %s in range(%s as uint, %s as uint) {' %(target, start, iter))
 				else:
 					raise SyntaxError('invalid for range loop')
 
