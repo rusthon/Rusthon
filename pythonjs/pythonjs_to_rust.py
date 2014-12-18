@@ -1637,7 +1637,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				slice = []
 				if msg['lower']:
 					N = msg['lower']
-					slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()-%s)' %(target, target, target, N))
+					slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
 				if msg['upper']:
 					N = msg['upper']
 					slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
