@@ -1782,6 +1782,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 	def visit_USub(self, node):
 		return '-'
+	def visit_UAdd(self, node):
+		return '+'
 
 
 	def visit_Attribute(self, node):

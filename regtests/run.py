@@ -481,7 +481,7 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, cpp=True, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, cpp=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(), 

@@ -154,7 +154,7 @@ def transform_source( source, strip=False ):
 						restore.append(char)
 						a = restore
 
-				elif ''.join(a[-3:])=='map' and gotype != 'func':
+				elif ''.join(a[-3:])=='map' and gotype != 'func' and a[-4] in __whitespace+['=']:
 					a.pop(); a.pop(); a.pop()
 					a.append('__go__map__(%s,' %gotype)
 				else:
@@ -702,6 +702,8 @@ def xxx():
 
 def call_method( cb:lambda(int)(int) ) ->int:
 	return cb(3)
+
+if self.__map[r][c] in (WALL,PERM_WALL): pass
 
 
 '''
