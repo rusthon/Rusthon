@@ -13,6 +13,7 @@ COLLECTION_TYPES = rust_hacks + go_hacks
 
 class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
+class GenerateSlice( SyntaxError ): pass  ## c++ backend
 
 
 class RustGenerator( pythonjs_to_go.GoGenerator ):
@@ -331,8 +332,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			raise NotImplementedError( 'ellipsis')
 		else:
 			## deference pointer and then index
-			if isinstance(node.slice, ast.Slice):  ## TODO slice
-				r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+			if isinstance(node.slice, ast.Slice):
+				if self._cpp:
+					## std::valarray has a slice operator `arr[ std::slice(start,end,step) ]`
+					## but std::valarray only works on numeric values, and can not grow in size.
+					msg = {'value':self.visit(node.value), 'slice':node.slice, 'lower':None, 'upper':None, 'step':None}
+					if node.slice.lower:
+						msg['lower'] = self.visit(node.slice.lower)
+					if node.slice.upper:
+						msg['upper'] = self.visit(node.slice.upper)
+
+					raise GenerateSlice( msg )
+				else:
+					r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
 				if self._cpp:
 					##this also works but is slower##r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
@@ -1564,7 +1576,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if attr == '__leftarrow__':
 			if self._cpp:
 				return '%s->' %name
-			else:
+			else:  ## skip left arrow for rust backend.
 				return name
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
@@ -1605,21 +1617,41 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
-			value = self.visit(node.value)
 			self._vars.remove( target )
 			self._known_vars.add( target )
 
 			if isinstance(node.value, ast.Str):  ## catch strings for `+=` hack
 				self._known_strings.add( target )
 
-			elif isinstance(node.value, ast.Num):
+			try:
+				value = self.visit(node.value)
+
+			except GenerateSlice as error:  ## special c++ case for slice syntax
+				assert self._cpp
+				msg = error[0]
+				val = msg['value']
+
+				## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
+				#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+				#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+				slice = []
+				if msg['lower']:
+					N = msg['lower']
+					slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()-%s)' %(target, target, target, N))
+				if msg['upper']:
+					N = msg['upper']
+					slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
+				slice = ';'.join(slice)
+				return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
+
+			if isinstance(node.value, ast.Num):
 				if type(node.value.n) is int:
 					if self._cpp:
 						pass
 					else:
 						value += 'i'
 
-			#################################################################
+			############################TODO deprecate this go hack##########
 			if value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
 			#################################################################

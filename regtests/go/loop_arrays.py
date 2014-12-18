@@ -14,8 +14,6 @@ def main():
 	arr = ['a', 'b', 'c']
 	for v in arr:
 		z += v
-		#z.push_str(v)
-		#z = z + v
 	TestError( z == 'abc' )
 
 	b = 0
@@ -36,13 +34,21 @@ def main():
 		d += i
 	TestError( c == 'abc' )
 
-	#e = 0
-	#for i in range( len(arr) ):
-	#	e += 1
-	#TestError( e == 3 )
+	e = 0
+	for i in range( len(arr) ):
+		e += 1
+	TestError( e == 3 )
 
-	#s = a[:2]
-	#TestError( len(s)==2 )
+	s = a[:2]
+	print('len of s:')
+	print(len(s))
+	TestError( len(s)==2 )
+
+	s2 = a[2:]
+	print('len of s2:')
+	print(len(s2))
+	TestError( len(s2)==2 )
+
 	#e = 0
 	#for i in s:
 	#	e += i
