@@ -45,6 +45,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_IsNot(self, node):
 		return '!='
 
+	def visit_TryExcept(self, node):
+		out = []
+		out.append( self.indent() + 'let lambda = ||{' )
+		self.push()
+		out.extend(
+			list( map(self.visit, node.body) )
+		)
+		self.pull()
+		out.append( self.indent() + '};' )
+		self.push()
+		#out.extend(
+		#	list( map(self.visit, node.handlers) )
+		#)
+		self.pull()
+		#out.append( '}' )
+		out.append('try!(lambda());')
+		return '\n'.join( out )
+
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
