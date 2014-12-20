@@ -13,5 +13,10 @@ std::string str( int s ) {
 	return std::to_string(s);
 }
 
+std::ofstream& __open__(const std::string name) {
+	std::ofstream f;
+	f.open( name.c_str(), std::ofstream::in | std::ofstream::binary );
+	return f;
+}
 
 """)

@@ -15,6 +15,11 @@ class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
 class GenerateSlice( SyntaxError ): pass  ## c++ backend
 
+TRY_MACRO = '''
+macro_rules! try_wrap_err(
+      ($e:expr, $ret:expr) => (match $e {Ok(e) => e, Err(e) => return ($ret)(e)})            
+)
+'''
 
 class RustGenerator( pythonjs_to_go.GoGenerator ):
 
@@ -47,11 +52,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_TryExcept(self, node):
 		out = []
-		out.append( self.indent() + 'let lambda = ||{' )
+		out.append( self.indent() + 'let try_lambda = || ->IoResult<bool> {' )
 		self.push()
-		out.extend(
-			list( map(self.visit, node.body) )
-		)
+		for b in node.body:
+			out.append( self.indent()+self.visit(b) )
+			#out.append( '%stry!(%s);' %( self.indent(), self.visit(b)[:-1] ) )
+
+		out.append(self.indent()+'return Ok(true);')
 		self.pull()
 		out.append( self.indent() + '};' )
 		self.push()
@@ -60,7 +67,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#)
 		self.pull()
 		#out.append( '}' )
-		out.append('try!(lambda());')
+		out.append('try_wrap_err!( try_lambda(), |_|{()});')
 		return '\n'.join( out )
 
 	def visit_If(self, node):
@@ -443,9 +450,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(non_snake_case)]',
 			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
 			'#![allow(unused_variables)]',
+			'#![feature(macro_rules)]',
 			'extern crate libc;',
 			'use libc::{c_int, size_t};',
 			'use std::collections::{HashMap};',
+			'use std::io::{File, Open, ReadWrite, Read, IoResult};',
+			TRY_MACRO,
 		]
 		lines = []
 
@@ -785,6 +795,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			type = self.visit(node.args[1])
 			#return '%s(*%s)' %(type, val )
 			raise GenerateTypeAssert( {'type':type, 'value':val} )
+
+		elif fname == '__open__':
+			if self._cpp:
+				return '__open__(%s)' %self.visit(node.args[0])
+			else:
+				return 'File::open_mode( &Path::new(%s.to_string()), Open, Read )' %self.visit(node.args[0])
 
 
 		if node.args:

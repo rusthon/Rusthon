@@ -30,6 +30,23 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		return ''.join(r)
 
 
+	def visit_TryExcept(self, node):
+		out = []
+		out.append( 'try {' )
+		self.push()
+		for b in node.body:
+			out.append( self.indent()+self.visit(b) )
+
+		self.pull()
+		out.append( self.indent() + '} catch (const std::exception& e) {' )
+		self.push()
+		out.extend(
+			list( map(self.visit, node.handlers) )
+		)
+		self.pull()
+		out.append( '}' )
+		return '\n'.join( out )
+
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		if r:
@@ -43,6 +60,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			'#include <vector>',
 			'#include <array>',
 			'#include <iostream>',
+			'#include <fstream>',
 			'#include <string>',
 			'#include <map>',
 			'#include <functional>', ## c++11
