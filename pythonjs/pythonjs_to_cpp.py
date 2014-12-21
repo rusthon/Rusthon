@@ -40,11 +40,14 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self.pull()
 		out.append( self.indent() + '} catch (const std::exception& e) {' )
 		self.push()
-		out.extend(
-			list( map(self.visit, node.handlers) )
-		)
+		for h in node.handlers:
+			out.append(self.indent()+self.visit(h))
 		self.pull()
 		out.append( '}' )
+		out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
+		out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
+		out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
+
 		return '\n'.join( out )
 
 	def visit_Import(self, node):

@@ -31,10 +31,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._cpp = False
 		self._cheader = []
 		self._cppheader = []
+		self._match_stack = []  # dicts of cases
 
 	def reset(self):
 		self._cheader = []
 		self._cppheader = []
+		self._match_stack = []
 
 
 	def visit_Str(self, node):
@@ -112,7 +114,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Name(self, node):
 		if node.id == 'None':
-			return 'nil'
+			if self._cpp:
+				return 'nullptr'
+			else:
+				return 'None'
 		elif node.id == 'True':
 			return 'true'
 		elif node.id == 'False':
@@ -1532,6 +1537,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_With(self, node):
 		r = []
 		is_switch = False
+		is_match  = False
+		has_default = False
+
 		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
 			#transform_gopherjs( node )
 			self._with_gojs = True
@@ -1542,9 +1550,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return '\n'.join(r)
 
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
-			r.append('default:')
+			has_default = True
+			if self._cpp:
+				r.append(self.indent()+'default:')
+			else:
+				r.append(self.indent()+'}, _ => {')
+
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
-			r.append('select {')
+			r.append(self.indent()+'select {')
 			is_switch = True
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
@@ -1562,9 +1575,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
-				r.append('case %s:' %a)
+				if self._cpp:
+					r.append(self.indent()+'case %s:' %a)
+				else:
+					if len(self._match_stack[-1])==0:
+						r.append(self.indent()+'%s => {' %a)
+					else:
+						r.append(self.indent()+'}, %s => { ' %a )
+
+					self._match_stack[-1].append(a)
+
 			elif node.context_expr.func.id == '__switch__':
-				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
+				if self._cpp:
+					r.append(self.indent()+'switch (%s) {' %self.visit(node.context_expr.args[0]))
+				else:
+					r.append(self.indent()+'match (%s) {' %self.visit(node.context_expr.args[0]))
+					is_match = True
+					self._match_stack.append( list() )
 				is_switch = True
 
 			elif node.context_expr.func.id == 'extern':
@@ -1579,12 +1606,21 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		for b in node.body:
 			a = self.visit(b)
-			if a: r.append(a)
+			if a: r.append(self.indent()+a)
 
 		if is_switch:
-			r.append('}')
+			if self._cpp:
+				r.append('}')
+			else:
+				r.append('}}')
 
 		return '\n'.join(r)
+
+	def visit_Break(self, node):
+		if len(self._match_stack) and not self._cpp:
+			return ''
+		else:
+			return 'break;'
 
 	def visit_AugAssign(self, node):
 		## n++ and n-- are slightly faster than n+=1 and n-=1
