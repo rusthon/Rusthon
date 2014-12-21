@@ -113,7 +113,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def visit_Name(self, node):
-		if node.id == 'None':
+		if node.id == 'None' or node.id == 'nil':
 			if self._cpp:
 				return 'nullptr'
 			else:
@@ -122,8 +122,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return 'true'
 		elif node.id == 'False':
 			return 'false'
-		#elif node.id == 'null':
-		#	return 'nil'
+
 		return node.id
 
 	def get_subclasses( self, C ):
@@ -1720,6 +1719,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						pass
 					else:
 						value += 'i'
+
+			if value=='None':
+				if self._cpp:
+					raise RuntimeError('invalid in c++ mode')
+				else:  ## TODO, this is a bad idea?  letting rust infer the type should have its own syntax like `let x;`
+					return 'let mut %s;  /* let rust infer type */' %target
 
 			############################TODO deprecate this go hack##########
 			if value.startswith('&[]*') and self._catch_assignment:

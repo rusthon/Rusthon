@@ -11,6 +11,7 @@ def main():
 		case 2:
 			x = 'ok'
 		default:
+			x = 'default'
 			break
 
 	TestError( x=='ok' )
