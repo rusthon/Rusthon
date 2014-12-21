@@ -1537,6 +1537,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		r = []
 		is_switch = False
 		is_match  = False
+		is_case   = False
 		has_default = False
 
 		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
@@ -1574,15 +1575,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
+				is_case = True
+				case_match = self.visit(node.context_expr.args[0].comparators[0])
 				if self._cpp:
-					r.append(self.indent()+'case %s:' %a)
+					r.append(self.indent()+'case %s:' %case_match)
 				else:
 					if len(self._match_stack[-1])==0:
-						r.append(self.indent()+'%s => {' %a)
+						r.append(self.indent()+'%s => {' %case_match)
 					else:
-						r.append(self.indent()+'}, %s => { ' %a )
+						r.append(self.indent()+'}, %s => { ' %case_match )
 
-					self._match_stack[-1].append(a)
+					self._match_stack[-1].append(case_match)
 
 			elif node.context_expr.func.id == '__switch__':
 				if self._cpp:
@@ -1607,11 +1610,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			a = self.visit(b)
 			if a: r.append(self.indent()+a)
 
+		if is_case and self._cpp:  ## always break after each case - do not fallthru to default: block
+			r.append(self.indent()+'break;')
+
 		if is_switch:
 			if self._cpp:
-				r.append('}')
+				r.append(self.indent()+'}')
 			else:
-				r.append('}}')
+				r.append(self.indent()+'}}')
 
 		return '\n'.join(r)
 
