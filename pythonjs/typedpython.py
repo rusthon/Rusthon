@@ -709,6 +709,8 @@ if self.__map[r][c] in (WALL,PERM_WALL): pass
 def func(x=None, callback=None):
 	func( callback=xxx )
 	x.func( xx=yy )
+
+let mut x = 0
 '''
 
 ## TODO fix arg annotations

@@ -164,14 +164,14 @@ Rusthon input
 
 ```
 def test_single_input( a : int ) -> int:
-	let mut b : int = 0
+	b = 0
 	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx', alignstack=True ):
 		movl %1, %%ebx;
 		movl %%ebx, %0;
 	return b
 
 def test_multi_input( a : int, b : int ) -> int:
-	let mut out : int = 0
+	out = 0
 	with asm( outputs=out, inputs=(a,b), volatile=True, clobber=('%ebx','memory') ):
 		movl %1, %%ebx;
 		addl %2, %%ebx;
@@ -180,9 +180,9 @@ def test_multi_input( a : int, b : int ) -> int:
 
 
 def main():
-	let x : int = test_single_input(999)
+	x = test_single_input(999)
 	print x  ## prints 999
-	let y : int = test_multi_input(400, 20)
+	y = test_multi_input(400, 20)
 	print y  ## prints 420
 ```
 
@@ -192,21 +192,21 @@ C++ output
 ```
 int test_single_input(int a) {
 
-	int   b = 0;
+	auto   b = 0;
 	asm volatile ( "movl %1, %%ebx;movl %%ebx, %0;" : "=r" (b) : "r" (a) : "%ebx" );
 	return b;
 }
 int test_multi_input(int a, int b) {
 
-	int   out = 0;
+	auto   out = 0;
 	asm volatile ( "movl %1, %%ebx;addl %2, %%ebx;movl %%ebx, %0;" : "=r" (out) : "r" (a),"r" (b) : "%ebx","memory" );
 	return out;
 }
 int main() {
 
-	int   x = test_single_input(999);
+	auto   x = test_single_input(999);
 	std::cout << x << std::endl;
-	int   y = test_multi_input(400, 20);
+	auto   y = test_multi_input(400, 20);
 	std::cout << y << std::endl;
 	return 0;
 }

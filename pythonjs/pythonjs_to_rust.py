@@ -46,10 +46,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_TryFinally(self, node):
 		assert len(node.body)==1
-		self.visit_TryExcept(node.body[0])
-		raise SyntaxError("TODO try/except/finally")
+		return self.visit_TryExcept(node.body[0], finallybody=node.finalbody)
 
-	def visit_TryExcept(self, node):
+	def visit_TryExcept(self, node, finallybody=None):
 		out = []
 		out.append( self.indent() + 'let try_lambda = || ->IoResult<bool> {' )
 		self.push()
@@ -730,10 +729,22 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			return ' '.join( code )
 
-		elif fname == '__let__' and isinstance(node.args[0], ast.Name):
+		elif fname == '__let__':
+			vname = None
+			infer_from = None
+			if len(node.args) and isinstance(node.args[0], ast.Name):
+				vname = node.args[0].id
+			else:
+				assert node.keywords
+				for kw in node.keywords:
+					if kw.arg=='mutable': continue
+					else:
+						vname = kw.arg
+						infer_from = kw.value  ## TODO need way to infer types for c++ backend
+
 			if self._function_stack:
-				self._known_vars.add( node.args[0].id )
-				self._vars.remove( node.args[0].id )
+				self._known_vars.add( vname )
+				self._vars.remove( vname )
 				V = 'let'
 			else:
 				V = 'static'
@@ -744,7 +755,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if kw.value.id.lower()=='true':
 						mutable = True
 
-			if len(node.args) == 1:
+			if len(node.args) == 0:
+				if self._cpp:
+					return 'auto %s = %s' %(vname, self.visit(infer_from))
+				else:
+					return '%s %s = %s' %(V, vname, self.visit(infer_from))
+
+			elif len(node.args) == 1:
 				return '%s %s			/* declared */' %(V, node.args[0].id)
 			elif len(node.args) == 2:
 				if self._cpp:

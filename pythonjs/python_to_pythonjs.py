@@ -1995,12 +1995,11 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				self._typedef_vars[ node.value.id ] = target.id
 				return None
 			elif isinstance(target, ast.Name) and target.id in typedpython.types:
-				raise SyntaxError( self.format_error(target.id) )
+				raise SyntaxError( self.format_error('ERROR: can not assign to builtin lowlevel type: '+target.id) )
 			else:
-				#xxx = self.visit(target) + ':' + self.visit(targets[1])
 				xxx = self.visit(target) + ':' + self.visit(node.value)
-				raise SyntaxError( self.format_error(targets) )
-				raise SyntaxError( self.format_error(xxx) )
+				#raise SyntaxError( self.format_error(targets) )
+				raise SyntaxError( self.format_error('invalid use of builtin lowlevel type: '+xxx) )
 
 		elif self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__', '__go__func__'):
 			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):

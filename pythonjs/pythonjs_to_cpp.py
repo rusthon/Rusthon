@@ -31,8 +31,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		return ''.join(r)
 
 
-	def visit_TryExcept(self, node):
+	def visit_TryExcept(self, node, finallybody=None):
 		out = []
+
 		out.append( 'try {' )
 		self.push()
 		for b in node.body:
@@ -44,7 +45,17 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		for h in node.handlers:
 			out.append(self.indent()+self.visit(h))
 		self.pull()
+
+		if finallybody:
+			## wrap in another try that is silent, always throw e
+			out.append('try {		// finally block')
+			for b in finallybody:
+				out.append(self.visit(b))
+
+			out.append('} throw e;')
+
 		out.append( '}' )
+
 		out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
 		out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
 		out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
