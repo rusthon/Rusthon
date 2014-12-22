@@ -1684,15 +1684,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							a.append( '{%s,%s}'%(k,v) )
 						v = ', '.join( a )
 
+						
+						
 						## raw pointer
-						return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+						#return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
 						## c++11 shared pointer
 						#return 'auto %s = std::make_shared<std::map<%s, %s>>({%s});' %(target, key_type, value_type, v)  ## too many args to make_shared?
 						## this fails at runtime:  munmap_chunk(): invalid pointer
-						#maptype = 'std::map<%s, %s>' %(key_type, value_type)
-						#r = '%s _ref_%s = {%s};' %(maptype, target, v)
-						#r += 'std::shared_ptr<%s> %s(&_ref_%s);' %(maptype, target, target)
-						#return r
+						maptype = 'std::map<%s, %s>' %(key_type, value_type)
+						r = '%s _ref_%s = {%s};' %(maptype, target, v)
+						r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
+						return r
 
 					elif 'array' in S:
 						args = []
