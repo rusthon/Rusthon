@@ -28,16 +28,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._globals = {
 			'string' : set()
 		}
-		self._cpp = False
-		self._cheader = []
-		self._cppheader = []
-		self._match_stack = []  # dicts of cases
-
-	def reset(self):
-		self._cheader = []
-		self._cppheader = []
-		self._match_stack = []
-
+		self._rust = True
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -1533,93 +1524,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#return '\n'.join(out)
 		return ''
 
-	def visit_With(self, node):
-		r = []
-		is_switch = False
-		is_match  = False
-		is_case   = False
-		has_default = False
 
-		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
-			#transform_gopherjs( node )
-			self._with_gojs = True
-			for b in node.body:
-				a = self.visit(b)
-				if a: r.append(a)
-			self._with_gojs = False
-			return '\n'.join(r)
-
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
-			has_default = True
-			if self._cpp:
-				r.append(self.indent()+'default:')
-			else:
-				r.append(self.indent()+'}, _ => {')
-
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
-			r.append(self.indent()+'select {')
-			is_switch = True
-		elif isinstance( node.context_expr, ast.Call ):
-			if not isinstance(node.context_expr.func, ast.Name):
-				raise SyntaxError( self.visit(node.context_expr))
-
-			if len(node.context_expr.args):
-				a = self.visit(node.context_expr.args[0])
-			else:
-				assert len(node.context_expr.keywords)
-				## need to catch if this is a new variable ##
-				name = node.context_expr.keywords[0].arg
-				if name not in self._known_vars:
-					a = 'let %s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
-				else:
-					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
-
-			if node.context_expr.func.id == '__case__':
-				is_case = True
-				case_match = self.visit(node.context_expr.args[0].comparators[0])
-				if self._cpp:
-					r.append(self.indent()+'case %s:' %case_match)
-				else:
-					if len(self._match_stack[-1])==0:
-						r.append(self.indent()+'%s => {' %case_match)
-					else:
-						r.append(self.indent()+'}, %s => { ' %case_match )
-
-					self._match_stack[-1].append(case_match)
-
-			elif node.context_expr.func.id == '__switch__':
-				if self._cpp:
-					r.append(self.indent()+'switch (%s) {' %self.visit(node.context_expr.args[0]))
-				else:
-					r.append(self.indent()+'match (%s) {' %self.visit(node.context_expr.args[0]))
-					is_match = True
-					self._match_stack.append( list() )
-				is_switch = True
-
-			elif node.context_expr.func.id == 'extern':
-				r.append('extern "C" {')  ## TODO other abi's
-				is_switch = True
-
-			else:
-				raise SyntaxError( 'invalid use of with')
-		else:
-			raise SyntaxError( 'invalid use of with')
-
-
-		for b in node.body:
-			a = self.visit(b)
-			if a: r.append(self.indent()+a)
-
-		if is_case and self._cpp:  ## always break after each case - do not fallthru to default: block
-			r.append(self.indent()+'break;')
-
-		if is_switch:
-			if self._cpp:
-				r.append(self.indent()+'}')
-			else:
-				r.append(self.indent()+'}}')
-
-		return '\n'.join(r)
 
 	def visit_Break(self, node):
 		if len(self._match_stack) and not self._cpp:

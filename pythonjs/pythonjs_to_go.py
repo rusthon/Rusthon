@@ -1084,8 +1084,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 	def _visit_call_helper_var(self, node):
 		args = [ self.visit(a) for a in node.args ]
-		#if args:
-		#	out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			for key in node.keywords:
 				args.append( key.arg )
@@ -1094,64 +1092,8 @@ class GoGenerator( pythonjs.JSGenerator ):
 			if name not in self._vars:
 				self._vars.add( name )
 
-		#out = []
-		#for v in args:
-		#	out.append( self.indent() + 'var ' + v + ' int')
+		return ''  ## do not declare variables in function head for Go backend
 
-		#return '\n'.join(out)
-		return ''
-
-	def visit_With(self, node):
-		r = []
-		is_switch = False
-		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
-			#transform_gopherjs( node )
-			self._with_gojs = True
-			for b in node.body:
-				a = self.visit(b)
-				if a: r.append(a)
-			self._with_gojs = False
-			return '\n'.join(r)
-
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
-			r.append('default:')
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
-			r.append('select {')
-			is_switch = True
-		elif isinstance( node.context_expr, ast.Call ):
-			if not isinstance(node.context_expr.func, ast.Name):
-				raise SyntaxError( self.visit(node.context_expr))
-
-			if len(node.context_expr.args):
-				a = self.visit(node.context_expr.args[0])
-			else:
-				assert len(node.context_expr.keywords)
-				## need to catch if this is a new variable ##
-				name = node.context_expr.keywords[0].arg
-				if name not in self._known_vars:
-					a = '%s := %s' %(name, self.visit(node.context_expr.keywords[0].value))
-				else:
-					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
-
-			if node.context_expr.func.id == '__case__':
-				r.append('case %s:' %a)
-			elif node.context_expr.func.id == '__switch__':
-				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
-				is_switch = True
-			else:
-				raise SyntaxError( 'invalid use of with')
-		else:
-			raise SyntaxError( 'invalid use of with')
-
-
-		for b in node.body:
-			a = self.visit(b)
-			if a: r.append(a)
-
-		if is_switch:
-			r.append('}')
-
-		return '\n'.join(r)
 
 	def visit_Assign(self, node):
 		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')

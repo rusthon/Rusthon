@@ -51,6 +51,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
 		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
+		self._rust = False
+		self._cpp = False
+		self._cheader = []
+		self._cppheader = []
+		self._match_stack = []  # dicts of cases
+
+
+	def reset(self):
+		self._cheader = []
+		self._cppheader = []
+		self._match_stack = []
+
+
 	def indent(self): return '\t' * self._indent
 	def push(self): self._indent += 1
 	def pull(self):
@@ -95,14 +108,34 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		return a
 
 	def visit_With(self, node):
+		'''
+		unified with-hacked syntax for all backends
+		'''
 		r = []
 		is_switch = False
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == '__default__':
-			r.append(self.indent()+'default:')
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == '__select__':
-			r.append('select {')
+		is_match  = False
+		is_case   = False
+		has_default = False
+
+		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
+			#transform_gopherjs( node )
+			self._with_gojs = True
+			for b in node.body:
+				a = self.visit(b)
+				if a: r.append(a)
+			self._with_gojs = False
+			return '\n'.join(r)
+
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
+			has_default = True
+			if self._rust and not self._cpp:
+				r.append(self.indent()+'}, _ => {')
+			else:
+				r.append(self.indent()+'default:')
+
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
+			r.append(self.indent()+'select {')
 			is_switch = True
-			self.push()
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
 				raise SyntaxError( self.visit(node.context_expr))
@@ -111,27 +144,66 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				a = self.visit(node.context_expr.args[0])
 			else:
 				assert len(node.context_expr.keywords)
-				a = '%s = %s' %(node.context_expr.keywords[0].arg, self.visit(node.context_expr.keywords[0].value))
+				## need to catch if this is a new variable ##
+				name = node.context_expr.keywords[0].arg
+				if name not in self._known_vars:
+					a = 'let %s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
+				else:
+					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
-				r.append(self.indent()+'case %s:' %a)
+				if isinstance(node.context_expr.args[0], ast.Compare):
+					raise SyntaxError('"case x==n:" is not allowed in a case statement, use "case n:" instead.')
+				is_case = True
+				case_match = self.visit(node.context_expr.args[0])
+
+				if self._rust and not self._cpp:
+					if len(self._match_stack[-1])==0:
+						r.append(self.indent()+'%s => {' %case_match)
+					else:
+						r.append(self.indent()+'}, %s => { ' %case_match )
+				else:
+					r.append(self.indent()+'case %s:' %case_match)
+
+				self._match_stack[-1].append(case_match)
+
+
 			elif node.context_expr.func.id == '__switch__':
-				r.append('switch (%s) {' %self.visit(node.context_expr.args[0]))
+				self._match_stack.append( list() )
+
+				if self._rust and not self._cpp:
+					r.append(self.indent()+'match (%s) {' %self.visit(node.context_expr.args[0]))
+					is_match = True
+				else:
+					r.append(self.indent()+'switch (%s) {' %self.visit(node.context_expr.args[0]))
+
 				is_switch = True
+
+			elif node.context_expr.func.id == 'extern':
+				r.append('extern "C" {')  ## TODO other abi's
+				is_switch = True
+
 			else:
 				raise SyntaxError( 'invalid use of with')
+		else:
+			raise SyntaxError( 'invalid use of with')
 
-		self.push()
+
 		for b in node.body:
 			a = self.visit(b)
 			if a: r.append(self.indent()+a)
-		self.pull()
+
+		if is_case and not self._rust:  ## always break after each case - do not fallthru to default: block
+			r.append(self.indent()+'break;')
 
 		if is_switch:
-			self.pull()
-			r.append('}')
+			if self._rust and not self._cpp:
+				r.append(self.indent()+'}}')  ## rust needs extra closing brace for the match-block
+			else:
+				r.append(self.indent()+'}')
 
 		return '\n'.join(r)
+
 
 	def _new_module(self, name='main.js'):
 		header = []

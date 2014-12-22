@@ -162,7 +162,7 @@ def transform_source( source, strip=False ):
 					restore.append(char)
 					a = restore
 
-			elif hit_go_funcdef and char==')' and ')' in ''.join(a).split('func(')[-1]:
+			elif hit_go_funcdef and char==')' and ')' in ''.join(a).split('func(')[-1] and not ''.join(a).strip().startswith('def '):
 				hit_go_funcdef = False
 				a.append('))<<')
 
@@ -197,7 +197,7 @@ def transform_source( source, strip=False ):
 				b = b.strip()
 				is_class_type = b.startswith('class:') and len(b.split(':'))==2
 				is_pointer = b.startswith('*')
-				is_func = b.startswith('func(')
+				is_func = b.startswith('func(') and not ''.join(a).strip().startswith('func(')
 				if (b in types or is_class_type or is_pointer or is_func) and nextchar != '=':
 					if strip:
 						a = a[ : -len(b) ]
@@ -705,7 +705,10 @@ def call_method( cb:lambda(int)(int) ) ->int:
 
 if self.__map[r][c] in (WALL,PERM_WALL): pass
 
-
+## allow func to be used as a function name, because it is pretty commom and allowed by most backends.
+def func(x=None, callback=None):
+	func( callback=xxx )
+	x.func( xx=yy )
 '''
 
 ## TODO fix arg annotations

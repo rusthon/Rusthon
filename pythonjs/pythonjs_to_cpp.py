@@ -13,6 +13,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs_to_rust.RustGenerator.__init__(self, requirejs=False, insert_runtime=False)
 		self._cpp = True
+		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')

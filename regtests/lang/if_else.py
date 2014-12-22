@@ -2,7 +2,8 @@
 if/else
 '''
 
-def func(x=None, callback=None):
+#def func(x=None, callback=None):
+def func(x:bool=False, callback:lambda()(int)=None ):
 	a = False
 	if x:
 		a = False
