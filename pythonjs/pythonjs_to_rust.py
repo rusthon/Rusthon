@@ -29,6 +29,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'string' : set()
 		}
 		self._rust = True
+		##TODO##self._go   = False
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -42,6 +43,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_IsNot(self, node):
 		return '!='
+
+	def visit_TryFinally(self, node):
+		assert len(node.body)==1
+		self.visit_TryExcept(node.body[0])
+		raise SyntaxError("TODO try/except/finally")
 
 	def visit_TryExcept(self, node):
 		out = []

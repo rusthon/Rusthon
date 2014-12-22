@@ -5,7 +5,7 @@ if/else
 #def func(x=None, callback=None):
 def func(x:bool=False, callback:lambda()(int)=None ):
 	a = False
-	if x:
+	if x:   ## can c++ templates support this pythonic style?
 		a = False
 	else:
 		a = True

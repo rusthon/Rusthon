@@ -1401,6 +1401,17 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		writer.pull()
 		map(self.visit, node.handlers)
 
+	def visit_TryFinally(self, node):
+		#raise SyntaxError(node.body)
+		assert len(node.body)==1
+		self.visit_TryExcept(node.body[0])
+		writer.write('finally:')
+		writer.push()
+		for b in node.finalbody:
+			a = self.visit(b)
+			if a: writer.write(a)
+		writer.pull()
+
 	def visit_Raise(self, node):
 		#if self._with_js or self._with_dart:
 		#	writer.write('throw Error')
