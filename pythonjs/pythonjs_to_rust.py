@@ -241,7 +241,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						out.append( self.visit(b) )
 
 		if self._cpp:
-			out.append( 'class %s {' %node.name)
+			if base_classes:
+				parents = ','.join(['public %s' % bnode.name for bnode in base_classes])
+				out.append( 'class %s:  %s {' %(node.name, parents))
+			else:
+				out.append( 'class %s {' %node.name)
 			out.append( '  public:')
 		else:
 			out.append( 'struct %s {' %node.name)
@@ -249,16 +253,25 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if base_classes:
 			for bnode in base_classes:
-				## Go only needs the name of the parent struct and all its items are inserted automatically ##
-				out.append('%s' %bnode.name)
-				## Go allows multiple a variable to redefined by the sub-struct,
-				## but this can throw an error: `invalid operation: ambiguous selector`
-				## removing the duplicate name here fixes that error.
-				for key in bnode._struct_def.keys():
-					#if key in sdef:
-					#	sdef.pop(key)
-					if key in unionstruct:
-						unionstruct.pop(key)
+				if self._cpp:
+					out.append('//	parent class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+
+				elif self._rust:
+					out.append('//	parent class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+
+				else:
+					assert self._go
+					raise SyntaxError('TODO mixed Go backend')
+					## Go only needs the name of the parent struct and all its items are inserted automatically ##
+					out.append('%s' %bnode.name)
+					## Go allows multiple variables redefined by the sub-struct,
+					## but this can throw an error: `invalid operation: ambiguous selector`
+					## removing the duplicate name here fixes that error.
+					for key in bnode._struct_def.keys():
+						#if key in sdef:
+						#	sdef.pop(key)
+						if key in unionstruct:
+							unionstruct.pop(key)
 
 		node._struct_init_names = []  ## save order of struct layout
 
