@@ -1736,10 +1736,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							asize = self.visit(node.value.left.args[0])
 							atype = self.visit(node.value.left.args[1])
 							self._known_arrays[ target ] = (atype,asize)
-
-							## note: the inner braces are due to the nature of initializer lists, one per template param.
-							#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
-							return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
+							if self._shared_pointers:
+								vectype = 'std::array<%s, %sul>' %(atype, asize)
+								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
+								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								return r
+							else:
+								## note: the inner braces are due to the nature of initializer lists, one per template param.
+								#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
+								## TODO which is correct? above with double braces, or below with none?
+								return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
 
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
