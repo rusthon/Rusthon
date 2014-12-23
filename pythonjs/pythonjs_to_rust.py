@@ -254,10 +254,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if base_classes:
 			for bnode in base_classes:
 				if self._cpp:
-					out.append('//	parent class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+					out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
 
 				elif self._rust:
-					out.append('//	parent class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+					out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+					## to be safe order should be the same?
+					for key in bnode._struct_def.keys():
+						if key in unionstruct:
+							unionstruct.pop(key)  ## can subclass have different types in rust?
+						out.append('	%s : %s,' %(key, bnode._struct_def[key]))
 
 				else:
 					assert self._go
