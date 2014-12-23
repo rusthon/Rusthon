@@ -734,6 +734,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			infer_from = None
 			if len(node.args) and isinstance(node.args[0], ast.Name):
 				vname = node.args[0].id
+			elif len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
+				return '/*TODO self-this hack*/'
 			else:
 				assert node.keywords
 				for kw in node.keywords:
@@ -1771,7 +1773,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					classname = node.value.func.id
 					self._known_instances[ target ] = classname
 					if self._cpp:
-						return 'auto %s = new %s;' %(target, value)
+						if self._shared_pointers:
+							## TODO move get-args-and-kwargs to its own helper function
+							constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
+							r = '%s  _ref_%s = %s{%s};' %(classname, target, classname, constructor_args)
+							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
+							return r
+						else:  ## raw pointer to object
+							return 'auto %s = new %s;' %(target, value)  ## user must free memory manually
 
 					else:
 						## TODO missing fields, (rust requires all members are initialized)
@@ -1837,7 +1846,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 def main(script, insert_runtime=True):
-
+	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')
