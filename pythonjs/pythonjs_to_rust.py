@@ -759,7 +759,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					return 'auto %s = %s' %(vname, self.visit(infer_from))
 				else:
-					return '%s %s = %s' %(V, vname, self.visit(infer_from))
+					if mutable:
+						return '%s mut %s = %s' %(V, vname, self.visit(infer_from))
+					else:
+						return '%s %s = %s' %(V, vname, self.visit(infer_from))
 
 			elif len(node.args) == 1:
 				return '%s %s			/* declared */' %(V, node.args[0].id)
@@ -1701,17 +1704,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							a.append( '{%s,%s}'%(k,v) )
 						v = ', '.join( a )
 
-						
-						
-						## raw pointer
-						#return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+
 						## c++11 shared pointer
-						#return 'auto %s = std::make_shared<std::map<%s, %s>>({%s});' %(target, key_type, value_type, v)  ## too many args to make_shared?
-						## this fails at runtime:  munmap_chunk(): invalid pointer
-						maptype = 'std::map<%s, %s>' %(key_type, value_type)
-						r = '%s _ref_%s = {%s};' %(maptype, target, v)
-						r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
-						return r
+						if self._shared_pointers:
+							maptype = 'std::map<%s, %s>' %(key_type, value_type)
+							r = '%s _ref_%s = {%s};' %(maptype, target, v)
+							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
+							return r
+						else:  ## raw pointer
+							return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
 
 					elif 'array' in S:
 						args = []
@@ -1723,8 +1724,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							T = self.visit(node.value.left.args[0])
 							if T=='string': T = 'std::string'
 							self._known_arrays[ target ] = T
-							## note: c++11 says that `=` is optional
-							return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
+							if self._shared_pointers:
+								vectype = 'std::vector<%s>' %T
+								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
+								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								return r
+							else:  ## raw pointer
+								return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
+
 						elif S=='__go__arrayfixed__':
 							asize = self.visit(node.value.left.args[0])
 							atype = self.visit(node.value.left.args[1])
