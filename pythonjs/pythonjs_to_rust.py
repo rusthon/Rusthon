@@ -21,6 +21,9 @@ macro_rules! try_wrap_err(
 )
 '''
 
+def default_type( T ):
+	return {'int':0, 'string':'"".to_string()'}[T]
+
 class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def __init__(self, requirejs=False, insert_runtime=False):
@@ -253,7 +256,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( '  public:')
 		else:
 			out.append( 'struct %s {' %node.name)
-			#out.append( '	__class__ : String,')
+			## rust requires that a struct contains at least one item,
+			## `let a = A{}` is invalid in rust, and will fail with this error
+			## error: structure literal must either have at least one field or use functional structure update syntax
+			## to workaround this problem in the init constructor, the A::new static method simply makes
+			## the new struct passing the classname as a static string, and then calls the users __init__ method
+			out.append( '	__class__ : string,')
+
+
+		rust_struct_init = ['__class__:"%s"' %node.name]
 
 		if base_classes:
 			for bnode in base_classes:
@@ -267,6 +278,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if key in unionstruct:
 							unionstruct.pop(key)  ## can subclass have different types in rust?
 						out.append('	%s : %s,' %(key, bnode._struct_def[key]))
+						rust_struct_init.append('%s:%s' %(key, default_type(bnode._struct_def[key])))
 
 				else:
 					assert self._go
@@ -293,6 +305,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if T=='string': T = 'std::string'
 				out.append('	%s  %s;' %(T, name ))
 			else:
+				rust_struct_init.append('%s:%s' %(name, default_type(T)))
 				if T=='string': T = 'String'
 				out.append('	%s : %s,' %(name, T))
 
@@ -314,10 +327,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## in c++ constructor args can be extended by the subclass, but the parent constructors must be called first
 				## in the initalizer list, this is not pythonic.
 				##out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
-				out.append('	%s() {}' %node.name )  ## empty constructor
+				out.append('	%s() {}' %node.name )  ## c++ empty constructor
 
 			out.append('};')
-		else:
+
+		else: ## rust
 			out.append('}')
 
 
@@ -325,7 +339,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for impl_def in impl: out.append( impl_def )
 
 		else:
-			## using a trait is not required, a struct type can be directly implemented.
+			## using a trait is not required, because a struct type can be directly implemented.
 			## note: methods require a lambda wrapper to be passed to another function.
 			#out.append('trait %s {' %node.name)
 			#for trait_def in self._rust_trait: out.append( '\t'+ trait_def )
@@ -342,7 +356,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				for o in overloaded:
 					out.append( o )
 
-			out.append('}')
+			if init:
+				tmp = 'let mut __ref__ = %s{%s};' %(node.name, ','.join(rust_struct_init))
+				tmp += '__ref__.__init__(%s);' % ','.join(init._arg_names)
+				tmp += 'return __ref__;'
+				out.append('/*		constructor		*/')
+				out.append('	fn new( %s ) -> %s { %s }' %(init._args_signature, node.name, tmp) )
+
+
+			out.append('}')  ## end rust `impl`
 
 			if False:  ## this will not work in rust because we need to pass in a lifetime variable
 				if init or parent_init:
@@ -1836,21 +1858,28 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						else:  ## raw pointer to object
 							return 'auto %s = new %s;' %(target, value)  ## user must free memory manually
 
-					else:
-						## TODO missing fields, (rust requires all members are initialized)
-						args = []
-						for i,arg in enumerate(node.value.args):
-							args.append( '%s:%s' %(self._classes[classname]._struct_init_names[i], self.visit(arg)))
-						if node.value.keywords:
-							for kw in node.value.keywords:
-								args.append( '%s:%s' %(kw.arg, self.visit(kw.value)))
+					else:  ## rust
+						self._construct_rust_structs_directly = False
+						if self._construct_rust_structs_directly:
+							## convert args into struct constructor style `name:value`
+							args = []
+							for i,arg in enumerate(node.value.args):
+								args.append( '%s:%s' %(self._classes[classname]._struct_init_names[i], self.visit(arg)))
+							if node.value.keywords:
+								for kw in node.value.keywords:
+									args.append( '%s:%s' %(kw.arg, self.visit(kw.value)))
 
-						## do not cast to trait type, because as a trait can be used to access the data inside the struct
-						#return 'let %s = &%sStruct{ %s } as &%s;' %(target, classname, ','.join(args), classname)
+							## do not cast to trait type, because as a trait can not be used to access the data inside the struct
+							## directly, traits can only call methods.
+							#return 'let %s = &%sStruct{ %s } as &%s;' %(target, classname, ','.join(args), classname)
 
-						## note: methods are defined with `&mut self`, this requires that
-						## a mutable reference is taken so that methods can be called on the instance.
-						return 'let %s = &mut %s{ %s };' %(target, classname, ','.join(args))
+							## note: methods are defined with `&mut self`, this requires that
+							## a mutable reference is taken so that methods can be called on the instance.
+							return 'let %s = &mut %s{ %s };' %(target, classname, ','.join(args))  ## directly construct struct, this requires all arguments are given.
+						else:
+							## call user constructor __init__
+							value = self._visit_call_helper(node.value, force_name=classname+'::new')
+							return 'let %s = &mut %s;' %(target, value)
 
 				else:
 					if self._cpp:
