@@ -130,7 +130,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 
 def main(script, insert_runtime=True):
-
+	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')

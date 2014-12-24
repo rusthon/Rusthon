@@ -153,13 +153,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		props = set()
 		bases = set()
 		base_classes = set()
-
 		self._classes[ node.name ] = node
 		self._class_props[ node.name ] = props
 		if node.name not in self.method_returns_multiple_subclasses:
-			self.method_returns_multiple_subclasses[ node.name ] = set()
-		
-		#self.interfaces[ node.name ] = set()
+			self.method_returns_multiple_subclasses[ node.name ] = set()  ## tracks which methods in a class return different subclass types
+		#if self._cpp:
+		out.append('/*		class: %s		*/' %node.name)
+		#self.interfaces[ node.name ] = set()  ## old Go interface stuff
+
+
 
 
 		for base in node.bases:
@@ -224,6 +226,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		parent_init = None
+		overloaded  = []  ## TODO
 		if base_classes:
 			for bnode in base_classes:
 				for b in bnode.body:
@@ -232,13 +235,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
 							n = b.name
 							b.name = '%s_%s'%(bnode.name, b.name)
-							out.append( self.visit(b) )
+							overloaded.append( self.visit(b) )
 							b.name = n
 							continue
-						if b.name == '__init__':
+						if b.name == '__init__':  ## TODO fix me
 							parent_init = {'class':bnode, 'init':b}
 							#continue
-						out.append( self.visit(b) )
+						overloaded.append( self.visit(b) )
 
 		if self._cpp:
 			if base_classes:
@@ -285,7 +288,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			node._struct_init_names.append( name )
 
 			if self._cpp:
-				out.append('	%s  %s;' %(unionstruct[name], name ))
+				T = unionstruct[name]
+				if T=='string': T = 'std::string'
+				out.append('	%s  %s;' %(T, name ))
 			else:
 				out.append('	%s : %s,' %(name, unionstruct[name]))
 
@@ -304,7 +309,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append( '\t' + impl_def )
 
 			if init:
-				out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
+				## in c++ constructor args can be extended by the subclass, but the parent constructors must be called first
+				## in the initalizer list, this is not pythonic.
+				##out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
+				out.append('	%s() {}' %node.name )  ## empty constructor
 
 			out.append('};')
 		else:
@@ -365,9 +373,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				node.args.remove( node.args[0] )
 
 		#name = '_%s_' %self._class_stack[-1].name
-		name = 'self.'
-		name += fname.replace('.', '_')
-		return self._visit_call_helper(node, force_name=name)
+		#name = 'self.'
+		#name += fname.replace('.', '_')
+		#return self._visit_call_helper(node, force_name=name)
+		classname = fname.split('.')[0]
+		hacked = classname + '::' + fname[len(classname)+1:]
+		return self._visit_call_helper(node, force_name=hacked)
 
 
 	def visit_Subscript(self, node):
@@ -1188,6 +1199,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
 			return_type = 'int'
+		if return_type == 'string':
+			if self._cpp:
+				return_type = 'std::string'
 
 
 		node._arg_names = args_names = []
@@ -1794,7 +1808,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if self._shared_pointers:
 							## TODO move get-args-and-kwargs to its own helper function
 							constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
-							r = '%s  _ref_%s = %s{%s};' %(classname, target, classname, constructor_args)
+							r = '%s  _ref_%s = %s{};' %(classname, target, classname)
+							r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
 							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
 							return r
 						else:  ## raw pointer to object

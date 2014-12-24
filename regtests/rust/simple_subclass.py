@@ -1,5 +1,5 @@
 '''
-simple class
+simple subclass
 '''
 class A:
 	def __init__(self, x:int, y:int, z:int=1):
@@ -12,6 +12,7 @@ class A:
 
 class B(A):
 	def __init__(self, s:string):
+		A.__init__(self, 4, 5, z=6)
 		let self.w : string = s
 		let self.x : int    = 1
 
@@ -20,7 +21,7 @@ class B(A):
 		self.w = v
 		return self.w
 
-def call_method( cb:func(int)(int), mx:int ) ->int:
+def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
 
 def main():
