@@ -764,7 +764,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if len(node.args) and isinstance(node.args[0], ast.Name):
 				vname = node.args[0].id
 			elif len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
-				return '/*TODO self-this hack*/'
+				assert node.args[0].value.id == 'self'
+				assert len(node.args)==3
+				if self._cpp:
+					return 'this->%s = %s' %(node.args[0].attr, self.visit(node.args[2]))
+				else:
+					return '%s = %s' %(self.visit(node.args[0]), self.visit(node.args[2]))
+
 			else:
 				assert node.keywords
 				for kw in node.keywords:
@@ -1345,8 +1351,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if starargs:
 			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)
 
-		if self._cpp and is_method:
-			out.append(self.indent() + '%s self = *this;' %self._class_stack[-1].name )
+		#if self._cpp and is_method:  ## do not copy self onto stack
+		#	out.append(self.indent() + '%s self = *this;' %self._class_stack[-1].name )
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
@@ -1620,6 +1626,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return name
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
+		elif name=='self' and self._cpp and self._class_stack:
+			return 'this->%s' %attr
 		elif (name in self._known_instances or name in self._known_arrays) and self._cpp:
 			## TODO - attribute lookup stack to make this safe for `a.x.y`
 			## from the known instance need to check its class type, for any
