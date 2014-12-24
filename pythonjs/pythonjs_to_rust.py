@@ -162,8 +162,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#self.interfaces[ node.name ] = set()  ## old Go interface stuff
 
 
-
-
 		for base in node.bases:
 			n = self.visit(base)
 			if n == 'object':
@@ -226,22 +224,25 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		parent_init = None
-		overloaded  = []  ## TODO
+		overloaded  = []  ## this is just for rust
 		if base_classes:
 			for bnode in base_classes:
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
+						original = b.name
+						hackname = b.name
+
 						if b.name in method_names:
 							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
-							n = b.name
-							b.name = '%s_%s'%(bnode.name, b.name)
-							overloaded.append( self.visit(b) )
-							b.name = n
-							continue
-						if b.name == '__init__':  ## TODO fix me
-							parent_init = {'class':bnode, 'init':b}
-							#continue
+							hackname = '__%s_%s'%(bnode.name, b.name)
+
+						b.name = hackname
 						overloaded.append( self.visit(b) )
+						b.name = original
+
+						if b.name == '__init__':
+							parent_init = {'class':bnode, 'init':b}
+
 
 		if self._cpp:
 			if base_classes:
@@ -287,12 +288,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is deprecated')
 			node._struct_init_names.append( name )
 
+			T = unionstruct[name]
 			if self._cpp:
-				T = unionstruct[name]
 				if T=='string': T = 'std::string'
 				out.append('	%s  %s;' %(T, name ))
 			else:
-				out.append('	%s : %s,' %(name, unionstruct[name]))
+				if T=='string': T = 'String'
+				out.append('	%s : %s,' %(name, T))
 
 
 		self._rust_trait = []
@@ -334,8 +336,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			out.append('impl %s {' %node.name)
 			for impl_def in impl: out.append( impl_def )
-			out.append('}')
+	
+			if overloaded:
+				out.append('/*		overloaded methods		*/')
+				for o in overloaded:
+					out.append( o )
 
+			out.append('}')
 
 			if False:  ## this will not work in rust because we need to pass in a lifetime variable
 				if init or parent_init:
@@ -377,8 +384,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#name += fname.replace('.', '_')
 		#return self._visit_call_helper(node, force_name=name)
 		classname = fname.split('.')[0]
-		hacked = classname + '::' + fname[len(classname)+1:]
-		return self._visit_call_helper(node, force_name=hacked)
+		if self._cpp:
+			hacked = classname + '::' + fname[len(classname)+1:]
+			return self._visit_call_helper(node, force_name=hacked)
+		else:
+			hacked = 'self.__%s_%s' %(classname, fname[len(classname)+1:])
+			return self._visit_call_helper(node, force_name=hacked)
 
 
 	def visit_Subscript(self, node):
@@ -1208,6 +1219,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if return_type == 'string':
 			if self._cpp:
 				return_type = 'std::string'
+			elif self._rust:
+				return_type = 'String'
 
 
 		node._arg_names = args_names = []
