@@ -19,7 +19,10 @@ class B(A):
 	def method2(self, v:string) ->string:
 		print(self.x)
 		self.w = v
-		return self.w
+		## returning `self.w` or `v` is not allowed in Rust,
+		## because `v` is now owned by `self`
+		#return self.w
+		return "ok"
 
 def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
@@ -38,3 +41,4 @@ def main():
 
 	x = B('testing...')
 	print( x.method2('hello world') )
+	print( x.w )
