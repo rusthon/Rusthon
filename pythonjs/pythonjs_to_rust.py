@@ -33,6 +33,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		}
 		self._rust = True
 		##TODO##self._go   = False
+		self._threads = []  ## c++11 threads
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -957,7 +958,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		name = self.visit(node.func)
 		if name == '__go__':
 			if self._cpp:
-				raise SyntaxError("TODO: c++11 task library")
+				## simple auto threads
+				thread = '__thread%s__' %len(self._threads)
+				self._threads.append(thread)
+				return 'std::thread %s( %s );' %(thread, self.visit(node.args[0]))
 			elif self._rust:
 				return 'spawn(proc() {%s;} );' % self.visit(node.args[0])
 			else:
@@ -971,7 +975,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				raise SyntaxError('go make requires 2 or 3 arguments')
 		elif name == '__go_make_chan__':
 			if self._cpp:
-				raise SyntaxError('TODO c++11 channel library')
+				## cpp-channel API
+				return 'cpp::channel<%s>{}'%self.visit(node.args[0])
 			elif self._rust:
 				return 'channel::<%s>()' %self.visit(node.args[0])
 			else:  ## Go
@@ -1010,7 +1015,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			if left in ('__go__receive__', '__go__send__'):
 				if self._cpp:
-					raise SyntaxError('TODO c++11 channel lib')
+					## cpp-channel API
+					return '%s.recv()' %right
 				elif self._rust:
 					return '%s.recv()' %right
 				else:  ## Go
@@ -1311,7 +1317,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				arg_type = chan_args_typedefs[arg_name]
 				if self._cpp:
-					raise SyntaxError('TODO some c++11 channel library')
+					## cpp-channel API
+					a = 'cpp::channel<%s>  %s' %(arg_type, arg_name)
 				elif self._rust:
 					## TODO: Receiver<T>
 					a = '%s : Sender<%s>' %(arg_name, arg_type)
@@ -1540,6 +1547,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			#for b in node.body:
 		self._scope_stack = []
 
+		if self._threads:
+			assert self._cpp
+			while self._threads:
+				threadname = self._threads.pop()
+				out.append(self.indent()+'if (%s.joinable()) %s.join();' %(threadname,threadname))
+
 		if is_main and self._cpp:
 			out.append( self.indent() + 'return 0;' )
 
@@ -1719,7 +1732,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
 			if self._cpp:
-				raise SyntaxError('some c++11 channel lib')
+				## cpp-channel API
+				return '%s.send(%s);' % (target, value)
 			elif self._rust:
 				return '%s.send(%s);' % (target, value)
 			else: ## Go

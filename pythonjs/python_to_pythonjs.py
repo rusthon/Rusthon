@@ -1643,7 +1643,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		elif op == '**':
 			return 'Math.pow(%s,%s)' %(left, right)
 
-		elif op == '+' and not self._with_dart:
+		elif op == '+' and not (self._with_dart or self._with_go or self._with_rust or self._with_cpp):
 			if '+' in self._direct_operators:
 				return '%s+%s'%(left, right)
 			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
@@ -1665,14 +1665,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				writer.write('%s = %s' %(l,left))
 				writer.write('%s = %s' %(r,right))
 				return '__ternary_operator__( typeof(%s)=="number", %s + %s, __add_op(%s, %s))'%(l, l, r, l, r)
-
-		elif isinstance(node.left, Name):
-			typedef = self.get_typedef( node.left )
-			if typedef and op in typedef.operators:
-				func = typedef.operators[ op ]
-				node.operator_overloading = func
-				return '%s( [%s, %s], JSObject() )' %(func, left, right)
-
 
 		return '(%s %s %s)' % (left, op, right)
 
