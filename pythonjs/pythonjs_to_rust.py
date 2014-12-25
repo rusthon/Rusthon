@@ -233,6 +233,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for bnode in base_classes:
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
+						overload_nodes.append( b )
 						self.catch_call.add( '%s.%s' %(bnode.name, b.name))
 						if b.name in method_names:
 							b.overloaded = True
@@ -240,22 +241,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if b.name == '__init__':
 							parent_init = {'class':bnode, 'init':b}
 
-						overload_nodes.append( b )
-
-						if False:
-							original = b.name
-							hackname = b.name
-
-							if b.name in method_names:
-								self.catch_call.add( '%s.%s' %(bnode.name, b.name))
-								hackname = '__%s_%s'%(bnode.name, b.name)
-
-							b.name = hackname
-							overloaded.append( self.visit(b) )
-							b.name = original
-
-							if b.name == '__init__':
-								parent_init = {'class':bnode, 'init':b}
 
 		for b in overload_nodes:
 			if hasattr(b, 'overloaded'):
@@ -971,7 +956,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def _visit_call_helper_go(self, node):
 		name = self.visit(node.func)
 		if name == '__go__':
-			return 'go %s' %self.visit(node.args[0])
+			if self._cpp:
+				raise SyntaxError("TODO: c++11 task library")
+			elif self._rust:
+				return 'spawn(proc() {%s;} );' % self.visit(node.args[0])
+			else:
+				return 'go %s' %self.visit(node.args[0])
 		elif name == '__go_make__':
 			if len(node.args)==2:
 				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
@@ -980,7 +970,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				raise SyntaxError('go make requires 2 or 3 arguments')
 		elif name == '__go_make_chan__':
-			return 'make(chan %s)' %self.visit(node.args[0])
+			if self._cpp:
+				raise SyntaxError('TODO c++11 channel library')
+			elif self._rust:
+				return 'channel::<%s>()' %self.visit(node.args[0])
+			else:  ## Go
+				return 'make(chan %s)' %self.visit(node.args[0])
 		elif name == '__go__array__':
 			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
 				a = self.visit(node.args[0].left)
@@ -1014,7 +1009,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
 
 			if left in ('__go__receive__', '__go__send__'):
-				return '<- %s' %right
+				if self._cpp:
+					raise SyntaxError('TODO c++11 channel lib')
+				elif self._rust:
+					return '%s.recv()' %right
+				else:  ## Go
+					return '<- %s' %right
 
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in rust_hacks:
 				if node.left.func.id == '__rust__func__':
@@ -1310,7 +1310,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						a = '%s:%s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
-				a = '%s chan %s' %(arg_name, arg_type)
+				if self._cpp:
+					raise SyntaxError('TODO some c++11 channel library')
+				elif self._rust:
+					## TODO: Receiver<T>
+					a = '%s : Sender<%s>' %(arg_name, arg_type)
+				else: ## Go
+					a = '%s chan %s' %(arg_name, arg_type)
 
 			dindex = i - offset
 
@@ -1701,14 +1707,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return '%s.%s' % (name, attr)
 
 	def visit_Assign(self, node):
-		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')
 		self._catch_assignment = False
 
-		target = self.visit( node.targets[0] )
+		if isinstance(node.targets[0], ast.Tuple):
+			if len(node.targets) > 1: raise NotImplementedError('TODO')
+			elts = [self.visit(e) for e in node.targets[0].elts]
+			target = '(%s)' % ','.join(elts)
+		else:
+			target = self.visit( node.targets[0] )
 
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
-			return '%s <- %s;' % (target, value)
+			if self._cpp:
+				raise SyntaxError('some c++11 channel lib')
+			elif self._rust:
+				return '%s.send(%s);' % (target, value)
+			else: ## Go
+				return '%s <- %s;' % (target, value)
 
 		elif not self._function_stack:
 			value = self.visit(node.value)
@@ -1925,14 +1940,21 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			value = self.visit(node.value)
 			#if '<-' in value:
 			#	raise RuntimeError(target+value)
-			if value.startswith('&make('):
-				#raise SyntaxError(value)
-				v = value[1:]
-				return '_tmp := %s; %s = &_tmp;' %(v, target)
+			if self._cpp:
+				return 'auto %s = %s;' % (target, value)
+
+			elif self._rust:  ## fallback to mutable by default? `let mut (x,y) = z` breaks rustc
+				return 'let %s = %s;' % (target, value)
+
 			else:
-				#if value.startswith('&[]*') and self._catch_assignment:
-				#	raise SyntaxError(value)
-				return '%s = %s;' % (target, value)
+				if value.startswith('&make('):  ## TODO DEPRECATE go hack
+					#raise SyntaxError(value)
+					v = value[1:]
+					return '_tmp := %s; %s = &_tmp;' %(v, target)
+				else:
+					#if value.startswith('&[]*') and self._catch_assignment:
+					#	raise SyntaxError(value)
+					return '%s = %s;' % (target, value)
 
 	def visit_While(self, node):
 		cond = self.visit(node.test)
@@ -1954,7 +1976,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 def main(script, insert_runtime=True):
-	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')

@@ -151,7 +151,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 
 
-	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, rust=False, fast_javascript=False, pure_javascript=False):
+	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, rust=False, cpp=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
 		NodeVisitorBase.__init__(self)
 		self._modules = modules          ## split into mutiple files by class
@@ -161,9 +161,15 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		self._with_dart = dart
 		self._with_go = go or rust
 		self._with_gojs = False
-		self._with_rust = rust
+		self._with_rust = rust or cpp  ## TODO make self._with_cpp not mixed up with self._with_rust
+		self._with_cpp = cpp
 		self._fast_js = fast_javascript
 		self._strict_mode = pure_javascript
+
+		if self._with_rust or self._with_go or self._with_lua:
+			self._use_destructured_assignment = True
+		else:
+			self._use_destructured_assignment = False
 
 		self._html_tail = []; script = False
 		if source.strip().startswith('<html'):
@@ -1972,34 +1978,12 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 		targets = list( node.targets )
 		target = targets[0]
+
+		## requires long library ##
+		## TODO: writer.write('%s = long.fromString("%s")' %(targets[1].id, self.visit(node.value)))
+
 		if isinstance(target, ast.Name) and target.id in typedpython.types:
-			if len(targets)==2 and isinstance(targets[1], ast.Name):
-				self._typedef_vars[ targets[1].id ] = target.id
-				if target.id == 'long' and isinstance(node.value, ast.Num):
-					## requires long library ##
-					writer.write('%s = long.fromString("%s")' %(targets[1].id, self.visit(node.value)))
-					return None
-				else:
-					targets = targets[1:]
-
-			elif len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
-				self._class_stack[-1]._struct_vars[ targets[1].attr ] = target.id
-				if target.id == 'long' and isinstance(node.value, ast.Num):
-					## requires long library ##
-					writer.write('%s = long.fromString("%s")' %(targets[1].value.id, self.visit(node.value)))
-					return None
-				else:
-					targets = targets[1:]
-
-			elif len(targets)==1 and isinstance(node.value, ast.Name) and target.id in typedpython.types:
-				self._typedef_vars[ node.value.id ] = target.id
-				return None
-			elif isinstance(target, ast.Name) and target.id in typedpython.types:
-				raise SyntaxError( self.format_error('ERROR: can not assign to builtin lowlevel type: '+target.id) )
-			else:
-				xxx = self.visit(target) + ':' + self.visit(node.value)
-				#raise SyntaxError( self.format_error(targets) )
-				raise SyntaxError( self.format_error('invalid use of builtin lowlevel type: '+xxx) )
+			raise SyntaxError( self.format_error('ERROR: can not assign to builtin lowlevel type: '+target.id) )
 
 		elif self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__', '__go__func__'):
 			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
@@ -2319,36 +2303,38 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
-		elif self._with_lua:  ## Tuple - lua supports destructured assignment
-			elts = [self.visit(e) for e in target.elts]
-			writer.write('%s = %s' % (','.join(elts), self.visit(node.value)))
-
-		else:  # it's a Tuple
-
-			if isinstance(node.value, ast.Name):
-				r = node.value.id
+		elif isinstance(target, ast.Tuple):
+			if self._use_destructured_assignment:  ## Lua, Rust, Go, Dart
+				elts = [self.visit(e) for e in target.elts]
+				writer.write('(%s) = %s' % (','.join(elts), self.visit(node.value)))
 			else:
-				id = self.identifier
-				self.identifier += 1
-				r = '__r_%s' % id
-				writer.write('var(%s)' % r)
-				writer.write('%s = %s' % (r, self.visit(node.value)))
-
-
-			for i, target in enumerate(target.elts):
-				if isinstance(target, Attribute):
-					code = '__set__(%s, "%s", %s[%s])' % (
-						self.visit(target.value),
-						target.attr,
-						r,
-						i
-					)
-					writer.write(code)
-				elif self._with_js or self._with_dart:
-					writer.write("%s = %s[%s]" % (self.visit(target), r, i))
+				if isinstance(node.value, ast.Name):
+					r = node.value.id
 				else:
-					fallback = "__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i)
-					writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
+					id = self.identifier
+					self.identifier += 1
+					r = '__r_%s' % id
+					writer.write('var(%s)' % r)
+					writer.write('%s = %s' % (r, self.visit(node.value)))
+
+				for i, target in enumerate(target.elts):
+					if isinstance(target, Attribute):
+						code = '__set__(%s, "%s", %s[%s])' % (
+							self.visit(target.value),
+							target.attr,
+							r,
+							i
+						)
+						writer.write(code)
+					elif self._with_js or self._with_dart:
+						writer.write("%s = %s[%s]" % (self.visit(target), r, i))
+					else:
+						fallback = "__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i)
+						writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
+
+		else:
+			raise SyntaxError(target)
+
 
 	def visit_Print(self, node):
 		writer.write('print(%s)' % ', '.join(map(self.visit, node.values)))

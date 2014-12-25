@@ -29,7 +29,7 @@ def main(script, module_path=None):
 		res = None
 
 		if '--cpp' in sys.argv:
-			a = python_to_pythonjs(script, rust=True, module_path=module_path)
+			a = python_to_pythonjs(script, cpp=True, module_path=module_path)
 			code = pythonjs_to_cpp( a )
 		elif '--rust' in sys.argv:
 			a = python_to_pythonjs(script, rust=True, module_path=module_path)
