@@ -227,25 +227,44 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		parent_init = None
+		overload_nodes = []
 		overloaded  = []  ## this is just for rust
 		if base_classes:
 			for bnode in base_classes:
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
-						original = b.name
-						hackname = b.name
-
+						self.catch_call.add( '%s.%s' %(bnode.name, b.name))
 						if b.name in method_names:
-							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
-							hackname = '__%s_%s'%(bnode.name, b.name)
-
-						b.name = hackname
-						overloaded.append( self.visit(b) )
-						b.name = original
-
+							b.overloaded = True
+							b.classname  = bnode.name
 						if b.name == '__init__':
 							parent_init = {'class':bnode, 'init':b}
 
+						overload_nodes.append( b )
+
+						if False:
+							original = b.name
+							hackname = b.name
+
+							if b.name in method_names:
+								self.catch_call.add( '%s.%s' %(bnode.name, b.name))
+								hackname = '__%s_%s'%(bnode.name, b.name)
+
+							b.name = hackname
+							overloaded.append( self.visit(b) )
+							b.name = original
+
+							if b.name == '__init__':
+								parent_init = {'class':bnode, 'init':b}
+
+		for b in overload_nodes:
+			if hasattr(b, 'overloaded'):
+				original = b.name
+				b.name = '__%s_%s'%(b.classname, b.name)
+				overloaded.append( self.visit(b) )
+				b.name = original
+			else:
+				overloaded.append( self.visit(b) )
 
 		if self._cpp:
 			if base_classes:
@@ -362,6 +381,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				tmp += 'return __ref__;'
 				out.append('/*		constructor		*/')
 				out.append('	fn new( %s ) -> %s { %s }' %(init._args_signature, node.name, tmp) )
+			else:
+				tmp = 'let mut __ref__ = %s{%s};' %(node.name, ','.join(rust_struct_init))
+				tmp += 'return __ref__;'
+				out.append('/*		constructor		*/')
+				out.append('	fn new() -> %s { %s }' %(node.name, tmp) )
 
 
 			out.append('}')  ## end rust `impl`
@@ -1852,7 +1876,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							## TODO move get-args-and-kwargs to its own helper function
 							constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
 							r = '%s  _ref_%s = %s{};' %(classname, target, classname)
-							r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
+							if constructor_args:
+								r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
 							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
 							return r
 						else:  ## raw pointer to object
