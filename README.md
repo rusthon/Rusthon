@@ -9,7 +9,7 @@ Simple Class Example
 
 Rusthon input
 ------------
-```
+```python
 class A:
 	def __init__(self, x:int, y:int, z:int=1):
 		let self.x : int = x
@@ -23,7 +23,7 @@ class A:
 The struct layout of the class above `A` is defined in the construtor method `__init__`.
 
 
-```
+```python
 def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
 
@@ -33,7 +33,7 @@ with this syntax: `name : lambda(A)(R)`, where `A` are the input types, and `R` 
 In the function above `call_method` the first argument `cb` is a lambda function that takes an integer
 and returns an integer.
 
-```
+```python
 def main():
 	a = A( 100, 200, z=9999 )
 	print( a.x )
@@ -53,7 +53,7 @@ translating to C++, because the Rust compiler is able to infer those types autom
 
 translation to Rust
 ------------
-```
+```rust
     /*      class: A        */
     struct A {
         __class__ : string,
@@ -106,7 +106,7 @@ translation to Rust
 
 translation to C++11
 ------------
-```
+```c++
     /*      class: A        */
     class A {
       public:
@@ -161,7 +161,7 @@ This allows you to fully optimize CPU performance, and code directly for bare me
 
 Assembly code is given inside a `with asm(...):` indented block.
 The syntax is:
-```
+```python
 with asm( outputs=R, inputs=(...), volatile=True/False, clobber=('cc', 'memory', ...) ):
 	movl %1 %%ebx;
 	...
@@ -173,7 +173,7 @@ http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html#s5
 Rusthon input
 ------------
 
-```
+```python
 def test_single_input( a : int ) -> int:
 	b = 0
 	with asm( outputs=b, inputs=a, volatile=True, clobber='%ebx', alignstack=True ):
@@ -200,7 +200,7 @@ def main():
 C++ output
 ------------
 
-```
+```c++
 int test_single_input(int a) {
 
 	auto   b = 0;
