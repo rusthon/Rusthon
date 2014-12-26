@@ -1020,15 +1020,17 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		## constructor
 		if init:
 			methods.pop( '__init__' )
-			if not self._with_go:
+			#if not self._with_go:
+			if self._with_dart:
 				init.name = node.name
+
 			self.visit(init)
 			for item in init.body:
 				if isinstance(item, ast.Assign) and isinstance(item.targets[0], ast.Attribute):
 					if isinstance(item.targets[0].value, ast.Name) and item.targets[0].value.id=='self':
 						attr = item.targets[0].attr
 						if attr not in node._struct_vars:
-							node._struct_vars[ attr ] = 'interface'
+							node._struct_vars[ attr ] = 'interface'  ## TODO change this to something else `UNKNOWN`
 				elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='__let__':
 					if isinstance(item.value.args[0], ast.Attribute) and item.value.args[0].value.id=='self':
 						node._struct_vars[ item.value.args[0].attr ] = item.value.args[1].s
@@ -1228,7 +1230,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		if self._modules:
 			writer.write('__new_module__(%s)' %node.name) ## triggers a new file in final stage of translation.
 
-		if self._with_dart or self._with_go:
+		if self._with_dart or self._with_go or self._with_rust or self._with_cpp:
 			self._visit_dart_classdef(node)
 			return
 		elif self._with_js:
@@ -2557,7 +2559,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			else:
 				return '%s(%s)' %( F, ','.join(args) )
 
-		elif self._with_go:
+		elif self._with_go or self._with_rust or self._with_cpp:  ## pass-thru unchanged to next stage for Go, Rust and C++
 			args = list( map(self.visit, node.args) )
 			if node.keywords:
 				args.extend( ['%s=%s'%(x.arg,self.visit(x.value)) for x in node.keywords] )
@@ -3264,8 +3266,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
-		elif self._with_go:
-
+		elif self._with_go or self._with_rust or self._with_cpp:  ## pass-thru unchanged to next stage
 			args = []
 			offset = len(node.args.args) - len(node.args.defaults)
 			for i, arg in enumerate(node.args.args):
@@ -3277,13 +3278,11 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				else:
 					args.append( a )
 
-			if node.args.vararg:
-				args.append( '*%s' %node.args.vararg )
-
+			if node.args.vararg: args.append( '*%s' %node.args.vararg )
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript or self._with_ll or self._with_glsl or self._with_go:
+		elif self._with_js or javascript or self._with_ll or self._with_glsl:
 
 			if self._with_glsl:
 				writer.write('@__glsl__')
@@ -3327,7 +3326,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		writer.write('var(%s)' %a)
 
 		#####################################################################
-		if self._with_dart or self._with_glsl or self._with_go:
+		if self._with_dart or self._with_glsl or self._with_go or self._with_rust or self._with_cpp:
 			pass
 
 		elif self._with_js or javascript or self._with_ll:

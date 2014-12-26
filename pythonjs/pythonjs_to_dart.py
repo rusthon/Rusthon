@@ -244,6 +244,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 				args = [self.visit(a) for a in b.args.args][1:]
 				args = ','.join(args)
+
 				if operator and args:
 					out.append(self.indent()+ '%s(%s) { return %s.__%s(this,%s); }'%(operator, args, node.name, b.name, args) )
 
