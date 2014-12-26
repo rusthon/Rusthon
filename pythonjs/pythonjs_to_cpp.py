@@ -101,6 +101,15 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 				else:
 					raise SyntaxError(b)
 
+		if self._has_channels:
+			## https://github.com/ahorn/cpp-channel
+			#header.append('#include <channel>')
+			## instead of including, just directly inline cpp-channel source
+			dirname = os.path.dirname(os.path.abspath(__file__))
+			header.append(
+				open( os.path.join(dirname, 'runtime/c++/cpp-channel.h') ).read()
+			)
+
 		if len(self._kwargs_type_.keys())==0:
 			header.append('struct _kwargs_type_;')
 		else:

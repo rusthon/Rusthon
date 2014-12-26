@@ -34,6 +34,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._rust = True
 		##TODO##self._go   = False
 		self._threads = []  ## c++11 threads
+		self._has_channels = False
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -961,7 +962,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## simple auto threads
 				thread = '__thread%s__' %len(self._threads)
 				self._threads.append(thread)
-				return 'std::thread %s( %s );' %(thread, self.visit(node.args[0]))
+				closure_wrapper = '[&]{%s;}'%self.visit(node.args[0])
+				return 'std::thread %s( %s );' %(thread, closure_wrapper)
 			elif self._rust:
 				return 'spawn(proc() {%s;} );' % self.visit(node.args[0])
 			else:
@@ -1014,6 +1016,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
 
 			if left in ('__go__receive__', '__go__send__'):
+				self._has_channels = True
 				if self._cpp:
 					## cpp-channel API
 					return '%s.recv()' %right
@@ -1731,6 +1734,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
+			self._has_channels = True
 			if self._cpp:
 				## cpp-channel API
 				return '%s.send(%s);' % (target, value)
