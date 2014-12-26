@@ -128,17 +128,20 @@ class DartGenerator( pythonjs.JSGenerator ):
 		method_names = set()
 		for b in node.body:
 
-			if isinstance(b, ast.With):
+			if isinstance(b, ast.With):      ## `with lowlevel:` in class body
 				out.append( self.visit(b) )
-			elif isinstance(b, ast.FunctionDef) and len(b.decorator_list):  ##getter/setters
+
+			elif isinstance(b, ast.FunctionDef) and len(b.decorator_list) and self.function_has_getter_or_setter(b):
+				##getter/setters
 				for name_node in collect_names( b ):
 					if name_node.id == 'self':
 						name_node.id = 'this'
-
+				out.append('// getter/setter')
 				b.args.args = b.args.args[1:]
 				out.append( self.visit(b) )
 
 			elif extends:
+				out.append('//	dart class extends')
 				if isinstance(b, ast.FunctionDef):
 					b.args.args = b.args.args[1:]
 					if b.name == node.name:
@@ -177,8 +180,6 @@ class DartGenerator( pythonjs.JSGenerator ):
 						b.name = ''
 						b._prefix = 'operator ^'
 
-
-
 				line = self.visit(b)
 				out.append( line )
 
@@ -213,6 +214,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 					)
 
 			elif isinstance(b, ast.FunctionDef):
+				out.append('// regular method')
 				method_names.add( b.name )
 				TransformSuperCalls( b, bases )
 
@@ -267,6 +269,8 @@ class DartGenerator( pythonjs.JSGenerator ):
 				#	out.append( self.indent()+line )
 				#else:
 				#	out.append( line )
+
+		out.append('// %s' %method_names)
 
 		if not extends and base_classes:
 			for bnode in base_classes:

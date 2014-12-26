@@ -380,6 +380,13 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 			return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
 
+	def function_has_getter_or_setter(self, node):
+		options = {'getter':False, 'setter':False}
+		for d in node.decorator_list:
+			self._visit_decorator(d, options=options)
+		return options['getter'] or options['setter']
+
+
 	def _visit_decorator(self, decor, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None ):
 		if options is None: options = dict()
 		if args_typedefs is None: args_typedefs = dict()
@@ -389,8 +396,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		if func_pointers is None: func_pointers = set()
 
 		if isinstance(decor, ast.Name) and decor.id == 'property':
+			## a function is marked as a getter with `@property`
 			options['getter'] = True
 		elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
+			## a function is marked as a setter with `@name.setter`
 			options['setter'] = True
 
 		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
