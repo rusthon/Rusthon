@@ -51,6 +51,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
 		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
+		self._go   = False
 		self._rust = False
 		self._cpp = False
 		self._cheader = []
@@ -112,9 +113,11 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		unified with-hacked syntax for all backends
 		'''
 		r = []
+		is_select = False
 		is_switch = False
 		is_match  = False
 		is_case   = False
+		is_extern = False
 		has_default = False
 
 		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
@@ -134,8 +137,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				r.append(self.indent()+'default:')
 
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
-			r.append(self.indent()+'select {')
-			is_switch = True
+			is_select = True
+			self._match_stack.append( list() )
+
+			if self._rust:
+				r.append(self.indent()+'select! (')
+			else:
+				r.append(self.indent()+'select {')
+
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
 				raise SyntaxError( self.visit(node.context_expr))
@@ -152,10 +161,19 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
-				if isinstance(node.context_expr.args[0], ast.Compare):
-					raise SyntaxError('"case x==n:" is not allowed in a case statement, use "case n:" instead.')
 				is_case = True
-				case_match = self.visit(node.context_expr.args[0])
+				case_match = None
+				if not len(node.context_expr.args):
+					assert len(node.context_expr.keywords)==1
+					kw = node.context_expr.keywords[0]
+					if self._go:
+						case_match = '%s := %s' %(kw.arg, self.visit(kw.value))
+					else:
+						case_match = '%s = %s' %(kw.arg, self.visit(kw.value))
+				else:
+					if isinstance(node.context_expr.args[0], ast.Compare):
+						raise SyntaxError('"case x==n:" is not allowed in a case statement, use "case n:" instead.')
+					case_match = self.visit(node.context_expr.args[0])
 
 				if self._rust and not self._cpp:
 					if len(self._match_stack[-1])==0:
@@ -169,6 +187,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 
 			elif node.context_expr.func.id == '__switch__':
+				is_switch = True
 				self._match_stack.append( list() )
 
 				if self._rust and not self._cpp:
@@ -177,11 +196,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				else:
 					r.append(self.indent()+'switch (%s) {' %self.visit(node.context_expr.args[0]))
 
-				is_switch = True
 
 			elif node.context_expr.func.id == 'extern':
 				r.append('extern "C" {')  ## TODO other abi's
-				is_switch = True
+				is_extern = True
 
 			else:
 				raise SyntaxError( 'invalid use of with')
@@ -195,8 +213,18 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 
 		if is_case and not self._rust:  ## always break after each case - do not fallthru to default: block
 			r.append(self.indent()+'break;')
+		###################################
 
-		if is_switch:
+		if is_extern:
+			r.append(self.indent()+'}')
+
+		elif is_select:
+			if self._rust:
+				r.append(self.indent()+'})')  ## rust needs extra closing brace for the match-block
+			else:
+				r.append(self.indent()+'}')
+
+		elif is_switch:
 			if self._rust and not self._cpp:
 				r.append(self.indent()+'}}')  ## rust needs extra closing brace for the match-block
 			else:

@@ -1981,7 +1981,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_While(self, node):
 		cond = self.visit(node.test)
 		if cond == 'true' or cond == '1': cond = ''
-		body = [ 'for %s {' %cond]
+		body = []
+		if not cond.strip():
+			body.append('loop {')
+		else:
+			body.append('while %s {' %cond)
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
