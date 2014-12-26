@@ -8,11 +8,11 @@ glsl_xtypes = ['mat2x2', 'mat3x3', 'mat4x4']  ## others not supported in WebGLSL
 glsl_types.extend( glsl_xtypes )
 glsl_aliases = ['floatPOINTER', 'intPOINTER', 'structPOINTER']
 
-types.extend( glsl_types )
-types.extend( glsl_aliases )
+#types.extend( glsl_types )
+#types.extend( glsl_aliases )
 
 native_number_types = ['int', 'float', 'double']  ## float and double are the same
-simd_types = ['float32x4', 'int32x4']
+simd_types = ['float32x4', 'int32x4']  ## dart
 vector_types = ['float32vec']
 vector_types.extend( simd_types )
 number_types = ['long']  ## requires https://github.com/dcodeIO/Long.js

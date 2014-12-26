@@ -955,55 +955,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			return '%s(%s)' % (fname, args)
 
-	def _visit_call_helper_go(self, node):
-		name = self.visit(node.func)
-		if name == '__go__':
-			if self._cpp:
-				## simple auto threads
-				thread = '__thread%s__' %len(self._threads)
-				self._threads.append(thread)
-				closure_wrapper = '[&]{%s;}'%self.visit(node.args[0])
-				return 'std::thread %s( %s );' %(thread, closure_wrapper)
-			elif self._rust:
-				return 'spawn(proc() {%s;} );' % self.visit(node.args[0])
-			else:
-				return 'go %s' %self.visit(node.args[0])
-		elif name == '__go_make__':
-			if len(node.args)==2:
-				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
-			elif len(node.args)==3:
-				return 'make(%s, %s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]), self.visit(node.args[1]))
-			else:
-				raise SyntaxError('go make requires 2 or 3 arguments')
-		elif name == '__go_make_chan__':
-			## channel constructors
-			if self._cpp:
-				## cpp-channel API supports input/output
-				return 'cpp::channel<%s>{}'%self.visit(node.args[0])
-			elif self._rust:
-				## rust returns a tuple input/output that needs to be destructured by the caller
-				return 'channel::<%s>()' %self.visit(node.args[0])
-			else:  ## Go
-				return 'make(chan %s)' %self.visit(node.args[0])
-		elif name == '__go__array__':
-			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
-				a = self.visit(node.args[0].left)
-				if a in go_types:
-					return '*[]%s' %a
-				else:
-					return '*[]*%s' %a  ## todo - self._catch_assignment_array_of_obs = true
-
-			else:
-				a = self.visit(node.args[0])
-				if a in go_types:
-					return '[]%s{}' %a
-				else:
-					return '[]*%s{}' %a
-		elif name == '__go__addr__':
-			return '&%s' %self.visit(node.args[0])
-		else:
-			raise SyntaxError(name)
-
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
@@ -1188,87 +1139,28 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		args_typedefs = {}
 		chan_args_typedefs = {}
-		return_type = None
-		generic_base_class = None
 		generics = set()
 		args_generics = dict()
-		returns_self = False
 		func_pointers = set()
 
+
+		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None}
+
 		for decor in node.decorator_list:
-			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
-				if len(decor.args) == 3:
-					vname = self.visit(decor.args[0])
-					vtype = self.visit(decor.args[1])
-					vptr = decor.args[2].s
-					args_typedefs[ vname ] = '%s %s' %(vptr, vtype)  ## space is required because it could have the `mut` keyword
+			self._visit_decorator(
+				decor, 
+				options=options, 
+				args_typedefs=args_typedefs,
+				chan_args_typedefs=chan_args_typedefs,
+				generics=generics,
+				args_generics=args_generics,
+				func_pointers=func_pointers
+			)
 
-				else:
-					for key in decor.keywords:
-						if isinstance( key.value, ast.Str):
-							args_typedefs[ key.arg ] = key.value.s
-						else:
-							args_typedefs[ key.arg ] = self.visit(key.value)
+		returns_self = options['returns_self']
+		return_type = options['returns']
+		generic_base_class = options['generic_base_class']
 
-						if args_typedefs[key.arg].startswith('func(') or args_typedefs[key.arg].startswith('lambda('):
-							is_lambda_style = args_typedefs[key.arg].startswith('lambda(')
-							func_pointers.add( key.arg )
-							funcdef = args_typedefs[key.arg]
-							## TODO - better parser
-							hack = funcdef.replace(')', '(').split('(')
-							lambda_args = hack[1].strip()
-							lambda_return  = hack[3].strip()
-							if self._cpp:
-								if is_lambda_style:
-									if lambda_return:  ## c++11
-										args_typedefs[ key.arg ] = 'std::function<%s(%s)>  %s' %(lambda_return, lambda_args, key.arg)
-									else:
-										args_typedefs[ key.arg ] = 'std::function<void(%s)>  %s' %(lambda_args, key.arg)
-
-								else:  ## old C style function pointers
-									if lambda_return:
-										args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
-									else:
-										args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
-
-							else:
-								if lambda_return:
-									args_typedefs[ key.arg ] = '|%s|->%s' %(lambda_args, lambda_return)
-								else:
-									args_typedefs[ key.arg ] = '|%s|' %lambda_args
-
-						## check for super classes - generics ##
-						if args_typedefs[ key.arg ] in self._classes:
-							raise SyntaxError('DEPRECATED')
-							if node.name=='__init__':
-								## generics type switch is not possible in __init__ because
-								## it is used to generate the type struct, where types are static.
-								## as a workaround generics passed to init always become `interface{}`
-								args_typedefs[ key.arg ] = 'interface{}'
-								#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
-							else:
-								classname = args_typedefs[ key.arg ]
-								generic_base_class = classname
-								generics.add( classname ) # switch v.(type) for each
-								generics = generics.union( self._classes[classname]._subclasses )
-								args_typedefs[ key.arg ] = 'interface{}'
-								args_generics[ key.arg ] = classname
-
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
-				for key in decor.keywords:
-					chan_args_typedefs[ key.arg ] = self.visit(key.value)
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
-				if decor.keywords:
-					raise SyntaxError('invalid go return type')
-				elif isinstance(decor.args[0], ast.Name):
-					return_type = decor.args[0].id
-				else:
-					return_type = decor.args[0].s
-
-				if return_type == 'self':
-					return_type = '*' + self._class_stack[-1].name
-					returns_self = True
-					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer

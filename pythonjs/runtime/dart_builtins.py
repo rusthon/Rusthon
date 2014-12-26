@@ -29,7 +29,7 @@ class float32vec:
 	def __getitem__(self, index):
 		if index < 0: index = self.length + index
 
-		float32x4 vec = self[...][ index // 4 ]
+		let vec : float32x4 = self[...][ index // 4 ]
 		lane = index % 4
 		if lane == 0: return vec.x
 		elif lane == 1: return vec.y

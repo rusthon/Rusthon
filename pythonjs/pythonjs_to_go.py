@@ -51,6 +51,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def __init__(self, requirejs=False, insert_runtime=False):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 		self._go = True
+		self._dart = False
 		self._with_gojs = False
 		self._class_stack = list()
 		self._classes = dict()		## name : node
@@ -578,7 +579,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			return '%s(%s)' % (fname, args)
 
-	def _visit_call_helper_go(self, node):
+	def _visit_call_helper_go_DEPRECATED(self, node):
 		name = self.visit(node.func)
 		if name == '__go__':
 			return 'go %s' %self.visit(node.args[0])

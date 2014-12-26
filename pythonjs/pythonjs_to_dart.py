@@ -35,6 +35,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 		self._classes = dict()
 		self._class_props = dict()
 		self._raw_dict = False
+		self._dart     = True
 
 	def visit_With(self, node):
 		s = []
@@ -352,22 +353,18 @@ class DartGenerator( pythonjs.JSGenerator ):
 				code = 'var %s = %s;' % (target, value)
 			return code
 
-	def _visit_function(self, node):
-		getter = False
-		setter = False
-		args_typedefs = {}
-		for decor in node.decorator_list:
-			if isinstance(decor, ast.Name) and decor.id == 'property':
-				getter = True
-			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
-				setter = True
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
-				for key in decor.keywords:
-					args_typedefs[ key.arg ] = key.value.id
-			else:
-				raise SyntaxError
 
-		args = []  #self.visit(node.args)
+	def _visit_function(self, node):
+		args_typedefs = {}
+		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False}
+
+		for decor in node.decorator_list:
+			self._visit_decorator( decor, options=options, args_typedefs=args_typedefs )
+
+		getter = options['getter']
+		setter = options['setter']
+
+		args = []
 		oargs = []
 		offset = len(node.args.args) - len(node.args.defaults)
 		varargs = False
@@ -471,7 +468,12 @@ class DartGenerator( pythonjs.JSGenerator ):
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			for key in node.keywords:
-				out.append( '%s %s' %(key.value.id, key.arg) )
+				if isinstance(key.value, ast.Str):
+					out.append( '%s %s' %(key.value.s, key.arg) )
+				elif isinstance(key.value, ast.Name):
+					out.append( '%s %s' %(key.value.id, key.arg) )
+				else:
+					raise SyntaxError(key.value)
 
 		return ';'.join(out)
 

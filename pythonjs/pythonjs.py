@@ -51,6 +51,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
 		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
+		self._dart = False
 		self._go   = False
 		self._rust = False
 		self._cpp = False
@@ -379,6 +380,93 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 			return '(function (%s) {return %s;})' %(','.join(args), self.visit(node.body))
 
+	def _visit_decorator(self, decor, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None ):
+		if options is None: options = dict()
+		if args_typedefs is None: args_typedefs = dict()
+		if chan_args_typedefs is None: chan_args_typedefs = dict()
+		if generics is None: generics = set()
+		if args_generics is None: args_generics = dict()
+		if func_pointers is None: func_pointers = set()
+
+		if isinstance(decor, ast.Name) and decor.id == 'property':
+			options['getter'] = True
+		elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
+			options['setter'] = True
+
+		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+			if len(decor.args) == 3:
+				vname = self.visit(decor.args[0])
+				vtype = self.visit(decor.args[1])
+				vptr = decor.args[2].s
+				args_typedefs[ vname ] = '%s %s' %(vptr, vtype)  ## space is required because it could have the `mut` keyword
+
+			else:
+				for key in decor.keywords:
+					if isinstance( key.value, ast.Str):
+						args_typedefs[ key.arg ] = key.value.s
+					else:
+						args_typedefs[ key.arg ] = self.visit(key.value)
+
+					if args_typedefs[key.arg].startswith('func(') or args_typedefs[key.arg].startswith('lambda('):
+						is_lambda_style = args_typedefs[key.arg].startswith('lambda(')
+						func_pointers.add( key.arg )
+						funcdef = args_typedefs[key.arg]
+						## TODO - better parser
+						hack = funcdef.replace(')', '(').split('(')
+						lambda_args = hack[1].strip()
+						lambda_return  = hack[3].strip()
+						if self._cpp:
+							if is_lambda_style:
+								if lambda_return:  ## c++11
+									args_typedefs[ key.arg ] = 'std::function<%s(%s)>  %s' %(lambda_return, lambda_args, key.arg)
+								else:
+									args_typedefs[ key.arg ] = 'std::function<void(%s)>  %s' %(lambda_args, key.arg)
+
+							else:  ## old C style function pointers
+								if lambda_return:
+									args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
+								else:
+									args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
+
+						else:
+							if lambda_return:
+								args_typedefs[ key.arg ] = '|%s|->%s' %(lambda_args, lambda_return)
+							else:
+								args_typedefs[ key.arg ] = '|%s|' %lambda_args
+
+					## check for super classes - generics ##
+					if args_typedefs[ key.arg ] in self._classes:
+						raise SyntaxError('DEPRECATED')
+						if node.name=='__init__':
+							## generics type switch is not possible in __init__ because
+							## it is used to generate the type struct, where types are static.
+							## as a workaround generics passed to init always become `interface{}`
+							args_typedefs[ key.arg ] = 'interface{}'
+							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
+						else:
+							classname = args_typedefs[ key.arg ]
+							options['generic_base_class'] = classname
+							generics.add( classname ) # switch v.(type) for each
+							generics = generics.union( self._classes[classname]._subclasses )  ## TODO
+							args_typedefs[ key.arg ] = 'interface{}'
+							args_generics[ key.arg ] = classname
+
+		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
+			for key in decor.keywords:
+				chan_args_typedefs[ key.arg ] = self.visit(key.value)
+		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
+			if decor.keywords:
+				raise SyntaxError('invalid go return type')
+			elif isinstance(decor.args[0], ast.Name):
+				options['returns'] = decor.args[0].id
+			else:
+				options['returns'] = decor.args[0].s
+
+			if options['returns'] == 'self':
+				options['returns'] = '*' + self._class_stack[-1].name  ## go hacked generics
+				options['returns_self'] = True
+				self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
+
 
 
 	def visit_FunctionDef(self, node):
@@ -417,17 +505,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def _visit_function(self, node):
 		comments = []
 		body = []
-
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
 		is_pyfunc = False
-		return_type = None
-		glsl = False
-		glsl_wrapper_name = False
-		gpu_return_types = {}
-		gpu_vectorize = False
-		gpu_method = False
-		args_typedefs = {}
 		func_expr = False
 
 		for decor in node.decorator_list:
@@ -435,239 +515,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				assert len(decor.args)==1
 				func_expr = True
 				node.name = self.visit(decor.args[0])
-
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
-			elif isinstance(decor, ast.Name) and decor.id == '__glsl__':
-				glsl = True
-			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.value.id == '__glsl__':
-				glsl_wrapper_name = decor.attr
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
-				for key in decor.keywords:
-					args_typedefs[ key.arg ] = key.value.id
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
-				if decor.keywords:
-					for k in decor.keywords:
-						key = k.arg
-						assert key == 'array' or key == 'vec4'
-						gpu_return_types[ key ] = self.visit(k.value)
-
-				else:
-					return_type = decor.args[0].id
-					if return_type in typedpython.glsl_types:
-						gpu_return_types[ return_type ] = True
-
-			elif isinstance(decor, Attribute) and isinstance(decor.value, Name) and decor.value.id == 'gpu':
-				if decor.attr == 'vectorize':
-					gpu_vectorize = True
-				elif decor.attr == 'main':
-					is_main = True
-				elif decor.attr == 'method':
-					gpu_method = True
 
 		args = self.visit(node.args)
 
-		if glsl:
-			self._has_glsl = True  ## triggers extras in header
-			lines = []
-			x = []
-			for i,arg in enumerate(args):
-				if gpu_vectorize and arg not in args_typedefs:
-					x.append( 'float* %s' %arg )
-				else:
-					if arg in args_typedefs:
-						x.append( '%s %s' %(args_typedefs[arg].replace('POINTER', '*'), arg) )
-					elif gpu_method and i==0:
-						x.append( '%s self' %arg )
-					else:
-						#x.append( 'float* %s' %arg )  ## this could be a way to default to the struct.
-						raise SyntaxError('GLSL functions require a typedef: %s' %arg)
-
-			if is_main:
-				lines.append( 'var glsljit = glsljit_runtime(__shader_header__);')  ## each call to the wrapper function recompiles the shader
-				if x:
-					lines.append( 'glsljit.push("void main(%s) {");' %','.join(x) )
-				else:
-					lines.append( 'glsljit.push("void main( ) {");') ## WebCLGL parser requires the space in `main( )`
-
-			elif return_type:
-				#if gpu_method:
-				#	lines.append( '__shader_header__.push("%s %s(struct this, %s ) {");' %(return_type, node.name, ', '.join(x)) )
-				#else:
-				lines.append( '__shader_header__.push("%s %s( %s ) {");' %(return_type, node.name, ', '.join(x)) )
-			else:
-				lines.append( '__shader_header__.push("void %s( %s ) {");' %(node.name, ', '.join(x)) )
-
-			self.push()
-			# `_id_` always write out an array of floats or array of vec4floats
-			if is_main:
-				#lines.append( 'glsljit.push("vec2 _id_ = get_global_id(); int _FRAGMENT_ID_ = int(_id_.x + _id_.y * 100.0);");')
-				pass
-			else:
-				lines.append( '__shader_header__.push("vec2 _id_ = get_global_id();");')
-
-			self._glsl = True
-			for child in node.body:
-				if isinstance(child, Str):
-					continue
-				else:
-					for sub in self.visit(child).splitlines():
-						if is_main:
-							if '`' in sub:  ## "`" runtime lookups
-
-								if '``' in sub:
-									raise SyntaxError('inliner syntax error: %s'%sub)
-
-								sub = sub.replace('``', '')
-								chunks = sub.split('`')
-								if len(chunks) == 1:
-									raise RuntimeError(chunks)
-								sub = []
-								for ci,chk in enumerate(chunks):
-									#if not chk.startswith('@'): ## special inline javascript.
-									#	chk = '```'+chk+'```'
-									#chk = chk.replace('$', '```')
-
-									if not ci%2:
-										if '@' in chk:
-											raise SyntaxError(chunks)
-
-										if ci==0:
-											if chk:
-												sub.append('"%s"'%chk)
-										else:
-											if chk:
-												if sub:
-													sub.append(' + "%s"'%chk)
-												else:
-													sub.append('"%s"'%chk)
-
-									elif chk.startswith('@'): ## special inline javascript.
-										lines.append( chk[1:] )
-									else:
-										if sub:
-											sub.append(' + %s' %chk)
-										else:
-											sub.append(chk)
-
-								if sub:
-									lines.append( 'glsljit.push(%s);' %''.join(sub))
-
-							else:
-								sub = sub.replace('$', '```')
-								lines.append( 'glsljit.push("%s");' %(self.indent()+sub) )
-
-
-						else:  ## subroutine or method
-							if '`' in sub: sub = sub.replace('`', '')
-							lines.append( '__shader_header__.push("%s");' %sub )
-
-
-			self._glsl = False
-			self.pull()
-			if is_main:
-				lines.append('glsljit.push(";(1+1);");')  ## fixes WebCLGL 2.0 parser
-				lines.append('glsljit.push("}");')
-			else:
-				lines.append('__shader_header__.push("%s}");' %self.indent())
-
-			lines.append(';')
-
-			if is_main:
-				#insert = lines
-				#lines = []
-
-				if not glsl_wrapper_name:
-					glsl_wrapper_name = node.name
-
-				if args:
-					lines.append('function %s( %s, __offset ) {' %(glsl_wrapper_name, ','.join(args)) )
-				else:
-					lines.append('function %s( __offset ) {' %glsl_wrapper_name )
-
-				lines.append('	__offset =  __offset || 1024')  ## note by default: 0 allows 0-1.0 ## TODO this needs to be set per-buffer
-
-				#lines.extend( insert )
-
-				lines.append('  var __webclgl = new WebCLGL()')
-				lines.append('	var header = glsljit.compile_header()')
-				lines.append('	var shader = glsljit.compile_main()')
-
-				#lines.append('	console.log(header)')
-				lines.append('	console.log("-----------")')
-				lines.append('	console.log(shader)')
-
-				## create the webCLGL kernel, compiles GLSL source 
-				lines.append('  var __kernel = __webclgl.createKernel( shader, header );')
-
-				if gpu_return_types:
-					if 'array' in gpu_return_types:
-						if ',' in gpu_return_types['array']:
-							w,h = gpu_return_types['array'][1:-1].split(',')
-							lines.append('  var __return_length = %s * %s' %(w,h))
-						else:
-							lines.append('  var __return_length = %s' %gpu_return_types['array'])
-					elif 'vec4' in gpu_return_types:
-						if ',' in gpu_return_types['vec4']:
-							w,h = gpu_return_types['vec4'][1:-1].split(',')
-							lines.append('  var __return_length_vec4 = %s * %s' %(w,h))
-						else:
-							lines.append('  var __return_length_vec4 = %s' %gpu_return_types['vec4'])
-
-					elif 'mat4' in gpu_return_types:
-						lines.append('  var __return_length = 64')  ## minimum size is 64
-					else:
-						raise NotImplementedError
-				else:
-					lines.append('  var __return_length = 64')  ## minimum size is 64
-
-				for i,arg in enumerate(args):
-					lines.append('  if (%s instanceof Array) {' %arg)
-					#lines.append('    __return_length = %s.length==2 ? %s : %s.length' %(arg,arg, arg) )
-					lines.append('    var %s_buffer = __webclgl.createBuffer(%s.dims || %s.length, "FLOAT", %s.scale || __offset)' %(arg,arg,arg,arg))
-					lines.append('    __webclgl.enqueueWriteBuffer(%s_buffer, %s)' %(arg, arg))
-					lines.append('  __kernel.setKernelArg(%s, %s_buffer)' %(i, arg))
-					lines.append('  } else { __kernel.setKernelArg(%s, %s) }' %(i, arg))
-
-				#lines.append('	console.log("kernel.compile...")')
-				lines.append('	__kernel.compile()')
-				#lines.append('	console.log("kernel.compile OK")')
-
-				if gpu_return_types:
-					if 'vec4' in gpu_return_types:
-						dim = gpu_return_types[ 'vec4' ]
-						lines.append('	var rbuffer_vec4 = __webclgl.createBuffer(%s, "FLOAT4", __offset)' %dim)
-						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_vec4)')
-						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer_vec4 )')
-						lines.append('	return glsljit.unpack_vec4(__res, %s)' %gpu_return_types['vec4'])
-					elif 'array' in gpu_return_types:
-						dim = gpu_return_types[ 'array' ]
-						lines.append('	var rbuffer_array = __webclgl.createBuffer(%s, "FLOAT", __offset)' %dim)
-						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer_array)')
-						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float( rbuffer_array )')
-						lines.append('	return glsljit.unpack_array2d(__res, %s)' %gpu_return_types['array'])
-
-					elif 'mat4' in gpu_return_types:
-						lines.append('	var rbuffer = __webclgl.createBuffer([4,glsljit.matrices.length], "FLOAT4", __offset)')
-						lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, rbuffer)')
-						lines.append('  var __res = __webclgl.enqueueReadBuffer_Float4( rbuffer )')  ## slow
-						lines.append('	return glsljit.unpack_mat4(__res)')
-					else:
-						raise SyntaxError('invalid GPU return type: %s' %gpu_return_types)
-
-				else:
-					raise SyntaxError('GPU return type must be given')
-					lines.append('  var __return = __webclgl.createBuffer(__return_length, "FLOAT", __offset)')
-					lines.append('	__webclgl.enqueueNDRangeKernel(__kernel, __return)')
-					lines.append('	return __webclgl.enqueueReadBuffer_Float( __return )')
-
-				lines.append('} // end of wrapper')
-				lines.append('%s.return_matrices = glsljit.matrices' %glsl_wrapper_name )
-
-
-			return '\n'.join(lines)
-
-		elif len(node.decorator_list)==1 and not (isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id in self.special_decorators ) and not (isinstance(node.decorator_list[0], ast.Name) and node.decorator_list[0].id in self.special_decorators):
+		if len(node.decorator_list)==1 and not (isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id in self.special_decorators ) and not (isinstance(node.decorator_list[0], ast.Name) and node.decorator_list[0].id in self.special_decorators):
 			dec = self.visit(node.decorator_list[0])
 			fdef = '%s.%s = function(%s)' % (dec,node.name, ', '.join(args))
 
@@ -843,11 +696,59 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		else:
 			raise SyntaxError( args )
 
-	def _visit_call_helper_go( self, node ):
-		raise NotImplementedError('go call')
-
 	def _visit_call_special( self, node ):
 		raise NotImplementedError('special call')
+
+	def _visit_call_helper_go(self, node):
+		name = self.visit(node.func)
+		if name == '__go__':
+			if self._cpp:
+				## simple auto threads
+				thread = '__thread%s__' %len(self._threads)
+				self._threads.append(thread)
+				closure_wrapper = '[&]{%s;}'%self.visit(node.args[0])
+				return 'std::thread %s( %s );' %(thread, closure_wrapper)
+			elif self._rust:
+				return 'spawn(proc() {%s;} );' % self.visit(node.args[0])
+			elif self._dart:
+				return 'Isolate.spawn(%s);' %self.visit(node.args[0])
+			else:
+				return 'go %s' %self.visit(node.args[0])
+		elif name == '__go_make__':
+			if len(node.args)==2:
+				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
+			elif len(node.args)==3:
+				return 'make(%s, %s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]), self.visit(node.args[1]))
+			else:
+				raise SyntaxError('go make requires 2 or 3 arguments')
+		elif name == '__go_make_chan__':
+			## channel constructors
+			if self._cpp:
+				## cpp-channel API supports input/output
+				return 'cpp::channel<%s>{}'%self.visit(node.args[0])
+			elif self._rust:
+				## rust returns a tuple input/output that needs to be destructured by the caller
+				return 'channel::<%s>()' %self.visit(node.args[0])
+			else:  ## Go
+				return 'make(chan %s)' %self.visit(node.args[0])
+		elif name == '__go__array__':
+			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
+				a = self.visit(node.args[0].left)
+				if a in go_types:
+					return '*[]%s' %a
+				else:
+					return '*[]*%s' %a  ## todo - self._catch_assignment_array_of_obs = true
+
+			else:
+				a = self.visit(node.args[0])
+				if a in go_types:
+					return '[]%s{}' %a
+				else:
+					return '[]*%s{}' %a
+		elif name == '__go__addr__':
+			return '&%s' %self.visit(node.args[0])
+		else:
+			raise SyntaxError(name)
 
 
 	def visit_Call(self, node):
