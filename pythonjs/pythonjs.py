@@ -139,10 +139,14 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__select__':
 			is_select = True
 			self._match_stack.append( list() )
+			self._in_select_hack = True
 
 			if self._rust:
 				r.append(self.indent()+'select! (')
+			elif self._cpp:
+				r.append(self.indent()+'cpp::select _select_;')  ## TODO nested, _select_N
 			else:
+				assert self._go
 				r.append(self.indent()+'select {')
 
 		elif isinstance( node.context_expr, ast.Call ):
@@ -163,11 +167,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			if node.context_expr.func.id == '__case__':
 				is_case = True
 				case_match = None
+				select_hack = None
 				if not len(node.context_expr.args):
 					assert len(node.context_expr.keywords)==1
 					kw = node.context_expr.keywords[0]
 					if self._go:
 						case_match = '%s := %s' %(kw.arg, self.visit(kw.value))
+					elif self._cpp and hasattr(self, '_in_select_hack') and self._in_select_hack:
+						select_hack = True
+						case_match = '_select_.recv(%s, %s);' %(self.visit(kw.value), kw.arg)						
 					else:
 						case_match = '%s = %s' %(kw.arg, self.visit(kw.value))
 				else:
@@ -175,7 +183,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 						raise SyntaxError('"case x==n:" is not allowed in a case statement, use "case n:" instead.')
 					case_match = self.visit(node.context_expr.args[0])
 
-				if self._rust and not self._cpp:
+				if self._cpp and select_hack:
+					r.append(self.indent()+case_match)
+				elif self._rust and not self._cpp:
 					if len(self._match_stack[-1])==0:
 						r.append(self.indent()+'%s => {' %case_match)
 					else:
@@ -219,7 +229,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 			r.append(self.indent()+'}')
 
 		elif is_select:
-			if self._rust:
+			if self._cpp:
+				r.append(self.indent()+'_select_.wait();')
+			elif self._rust:
 				r.append(self.indent()+'})')  ## rust needs extra closing brace for the match-block
 			else:
 				r.append(self.indent()+'}')

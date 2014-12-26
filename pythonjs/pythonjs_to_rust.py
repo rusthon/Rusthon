@@ -32,7 +32,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'string' : set()
 		}
 		self._rust = True
-		##TODO##self._go   = False
+		self._go   = False
 		self._threads = []  ## c++11 threads
 		self._has_channels = False
 
@@ -1983,9 +1983,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if cond == 'true' or cond == '1': cond = ''
 		body = []
 		if not cond.strip():
-			body.append('loop {')
+			if self._cpp:
+				body.append('while (true) {')
+			else:
+				body.append('loop {')
 		else:
 			body.append('while %s {' %cond)
+
 		self.push()
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
