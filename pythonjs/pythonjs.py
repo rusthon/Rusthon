@@ -516,8 +516,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		body = []
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
-		is_pyfunc = False
-		func_expr = False
+		is_pyfunc    = False
+		is_prototype = False
+		protoname    = None
+		func_expr    = False
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
@@ -526,12 +528,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				node.name = self.visit(decor.args[0])
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
+				assert len(decor.args)==1
+				is_prototype = True
+				protoname = decor.args[0].id
 
 		args = self.visit(node.args)
 
-		if len(node.decorator_list)==1 and not (isinstance(node.decorator_list[0], ast.Call) and node.decorator_list[0].func.id in self.special_decorators ) and not (isinstance(node.decorator_list[0], ast.Name) and node.decorator_list[0].id in self.special_decorators):
-			dec = self.visit(node.decorator_list[0])
-			fdef = '%s.%s = function(%s)' % (dec,node.name, ', '.join(args))
+		if is_prototype:
+			fdef = '%s.prototype.%s = function(%s)' % (protoname, node.name, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
 			## this style will not make function global to the eval context in NodeJS ##

@@ -1183,10 +1183,11 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 			else:
 
-				writer.write('@%s.prototype'%name)
+				## this hack is required to assign the function to the class prototype `A.prototype.method=function`
+				writer.write('@__prototype__(%s)'%name)
 				line = self.visit(method)
 				if line: writer.write( line )
-				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))
+				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
 				if not self._fast_js:
 					## allows subclass method to extend the parent's method by calling the parent by class name,
