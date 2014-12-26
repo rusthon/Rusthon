@@ -468,6 +468,8 @@ def transform_source( source, strip=False ):
 						typedef = '"%s"' %typedef.strip()
 					elif typedef.startswith('lambda('):
 						typedef = '"%s"' %typedef.strip()
+					elif '<' in typedef and '>' in typedef: ## rust and c++ template/generics syntax
+						typedef = '"%s"' %typedef.strip()
 
 					if T:  ## rust or c++ syntax
 						output.append('%s@__typedef__(%s, %s, "%s")' %(indent, arg_name, typedef, T))
@@ -711,6 +713,10 @@ def func(x=None, callback=None):
 	x.func( xx=yy )
 
 let mut x = 0
+
+def templated( x : Type<T> ):
+	pass
+
 '''
 
 ## TODO fix arg annotations
