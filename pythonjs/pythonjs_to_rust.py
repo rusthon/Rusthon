@@ -976,10 +976,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				raise SyntaxError('go make requires 2 or 3 arguments')
 		elif name == '__go_make_chan__':
+			## channel constructors
 			if self._cpp:
-				## cpp-channel API
+				## cpp-channel API supports input/output
 				return 'cpp::channel<%s>{}'%self.visit(node.args[0])
 			elif self._rust:
+				## rust returns a tuple input/output that needs to be destructured by the caller
 				return 'channel::<%s>()' %self.visit(node.args[0])
 			else:  ## Go
 				return 'make(chan %s)' %self.visit(node.args[0])
@@ -1304,8 +1306,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
 				else:
-
-
 					if self._cpp:
 						if arg_type == 'string': arg_type = 'std::string'  ## standard string type in c++
 						if arg_name in func_pointers:

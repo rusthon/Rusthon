@@ -26,6 +26,8 @@ __whitespace = [' ', '\t']
 
 GO_SPECIAL_CALLS = {
 	'go'         : '__go__',
+	'spawn'      : '__go__',
+	'channel'    : '__go_make_chan__',
 	'go.channel' : '__go_make_chan__',
 	'go.array'   : '__go__array__',
 	'go.make'    : '__go_make__',
@@ -440,7 +442,10 @@ def transform_source( source, strip=False ):
 					kw = None
 					if '=' in y:
 						y, kw = y.split('=')
-					arg, typedef = y.split(':')
+					#arg, typedef = y.split(':')
+					arg = y[ : y.index(':') ]
+					typedef = y[ y.index(':')+1 : ]
+
 					chan = False
 					T = False
 					if len(typedef.strip().split()) >= 2:
@@ -715,6 +720,8 @@ def func(x=None, callback=None):
 let mut x = 0
 
 def templated( x : Type<T> ):
+	pass
+def templated( x : namespace::Type<T> ):
 	pass
 
 '''
