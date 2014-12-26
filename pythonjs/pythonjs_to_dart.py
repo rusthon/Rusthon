@@ -260,11 +260,13 @@ class DartGenerator( pythonjs.JSGenerator ):
 				b.name = name
 
 			else:
-				line = self.visit(b)
-				if line.startswith('var '):
-					out.append( self.indent()+line )
-				else:
-					out.append( line )
+				pass
+				## TODO loop the body and find the special dict that defines struct types
+				#line = self.visit(b)
+				#if line.startswith('var '):
+				#	out.append( self.indent()+line )
+				#else:
+				#	out.append( line )
 
 		if not extends and base_classes:
 			for bnode in base_classes:
