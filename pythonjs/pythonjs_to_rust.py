@@ -894,7 +894,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return '%s.len()' %self.visit(node.args[0])
 
 		elif fname == 'float':
-			if self._cpp:
+			if self._cpp or self._rust:
 				return '__float__(%s)'%self.visit(node.args[0])
 			else:
 				raise SyntaxError("TODO float builtin")
@@ -1660,6 +1660,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
+			## first assignment of a known variable, this requires 'auto' in c++, or `let` in rust.
 			self._vars.remove( target )
 			self._known_vars.add( target )
 
@@ -1857,14 +1858,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					return 'let mut %s = %s;			/* new muatble */' % (target, value)
 
-		else:
+		else:  ## the variable has already be used, and is getting reassigned.
+			assert target in self._known_vars
 			value = self.visit(node.value)
-			#if '<-' in value:
-			#	raise RuntimeError(target+value)
-			if self._cpp:
-				return 'auto %s = %s;' % (target, value)
 
-			elif self._rust:  ## fallback to mutable by default? `let mut (x,y) = z` breaks rustc
+			if self._cpp:
+				return '%s = %s;' % (target, value)
+
+			elif self._rust:
+				## destructured assignments fallback here.
+				## fallback to mutable by default? `let mut (x,y) = z` breaks rustc
 				return 'let %s = %s;' % (target, value)
 
 			else:

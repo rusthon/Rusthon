@@ -24,5 +24,12 @@ fn range2( start:int, end:int ) -> Vec<int> {
 	return arr;
 }
 
+fn ord( s:String ) -> int {
+	return s.into_bytes()[0] as int;
+}
+
+fn __float__( s:String ) -> f32 {
+	return std::str::FromStr::from_str( s.as_slice() ).unwrap();
+}
 
 """)
