@@ -38,5 +38,13 @@ std::shared_ptr<std::vector<int>> range2( int start, int end ) {
 	return std::make_shared<std::vector<int>>(vec);
 }
 
+int ord( std::string s) {
+	int r = (int)s.c_str()[0];
+	return r;
+}
+
+double __float__( std::string s ) {
+	return std::stod( s );
+}
 
 """)

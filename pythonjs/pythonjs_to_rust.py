@@ -893,6 +893,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				return '%s.len()' %self.visit(node.args[0])
 
+		elif fname == 'float':
+			if self._cpp:
+				return '__float__(%s)'%self.visit(node.args[0])
+			else:
+				raise SyntaxError("TODO float builtin")
+
 		elif fname == 'go.type_assert':
 			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])

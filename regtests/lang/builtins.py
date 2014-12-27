@@ -7,10 +7,11 @@ def main():
 	o = ord('x')
 	TestError( o == 120 )
 
-	#n = float('1.1')
-	#TestError( n==1.1 )
+	n = float('1.1')
+	TestError( n==1.1 )
 
-	#n = float('NaN')
+	n = float('NaN')
+	print( n )
 	#TestError( isNaN(n)==True )
 
 	#r = round( 1.1234, 2)
