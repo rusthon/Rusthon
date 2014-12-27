@@ -20,4 +20,23 @@ std::ofstream* __open__(const std::string name) {
 	return f;
 }
 
+std::shared_ptr<std::vector<int>> range1( int n ) {
+	std::vector<int> vec(n);
+	for (int i=0; i<n; i++) {
+		vec[i] = i;
+	}
+	return std::make_shared<std::vector<int>>(vec);
+}
+
+std::shared_ptr<std::vector<int>> range2( int start, int end ) {
+	std::vector<int> vec(end-start);
+	int index = 0;
+	for (int i=start; i<end; i++) {
+		vec[index] = i;
+		index ++;
+	}
+	return std::make_shared<std::vector<int>>(vec);
+}
+
+
 """)

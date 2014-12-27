@@ -445,8 +445,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
 				if self._cpp:
-					##this also works but is slower##r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
-					r = '_ref_%s[%s]' % (self.visit(node.value), self.visit(node.slice))
+					#r = '_ref_%s[%s]' % (self.visit(node.value), self.visit(node.slice))  ## this may not always work
+					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))     ## deference pointer is safer
 
 				else:
 					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
@@ -881,9 +881,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				return '%s.to_string()' %self.visit(node.args[0])
 
-		elif fname == 'range':  ## TODO - some syntax for mutable
+		elif fname == 'range':  ## TODO - some syntax for mutable range
 			assert len(node.args)
-			fname = '&mut ' + fname
+			if self._rust:
+				fname = '&mut ' + fname
 			fname += str(len(node.args))
 
 		elif fname == 'len':
