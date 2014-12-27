@@ -188,13 +188,14 @@ dart_runnable = os.path.isfile( dart_exe )
 
 coffee_runnable = runnable( "coffee -v" ) and '--coffee' in sys.argv
 lua_runnable = runnable( "lua -v" ) and '--lua' in sys.argv
-luajit_runnable = runnable( "luajit -v" ) and '--luajit' in sys.argv
+#luajit_runnable = runnable( "luajit -v" ) and '--luajit' in sys.argv
+luajit_runnable = runnable( "luajit -v" )
 
 lua2js = os.path.abspath( '../external/lua.js/lua2js' )
 luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 
 go_runnable = runnable( 'go version')
-gopherjs_runnable = runnable( 'gopherjs')
+gopherjs_runnable = runnable( 'gopherjs') and '--gopherjs' in sys.argv
 
 rust_runnable = runnable( 'rustc --help')
 cpp_runnable = runnable( 'g++ --help')

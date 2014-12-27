@@ -33,6 +33,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 		self._classes = dict()
 		self._class_props = dict()
+		self._lua = True
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
@@ -239,12 +240,11 @@ class LuaGenerator( pythonjs.JSGenerator ):
 				getter = True
 			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':
 				setter = True
-			elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'prototype':
-				klass = self.visit(decor)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 				pass
-			else:
-				raise SyntaxError(decor)
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
+				assert len(decor.args)==1
+				klass = decor.args[0].id
 
 		args = []  #self.visit(node.args)
 		oargs = []

@@ -159,9 +159,9 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
-		self._with_go = go or rust
+		self._with_go = go
 		self._with_gojs = False
-		self._with_rust = rust or cpp  ## TODO make self._with_cpp not mixed up with self._with_rust
+		self._with_rust = rust
 		self._with_cpp = cpp
 		self._fast_js = fast_javascript
 		self._strict_mode = pure_javascript
@@ -1147,9 +1147,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		else:
 			writer.write('pass')
 
+		if self._with_lua:  ## lua requires __class__ as a string to switch on
+			writer.write('this.__class__ = "%s"' %name)  ## isinstance runtime builtin requires this
 
-
-		if not self._fast_js:
+		elif not self._fast_js and not self._with_lua:
 			## `self.__class__` pointer ##
 			writer.write('this.__class__ = %s' %name)  ## isinstance runtime builtin requires this
 
@@ -1159,7 +1160,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 		writer.pull()
 
-		if not self._fast_js:
+		if not self._fast_js and not self._with_lua:
 			## class UID ##
 			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
 			writer.write('_PythonJS_UID += 1')
@@ -1189,40 +1190,36 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				if line: writer.write( line )
 				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
-				if not self._fast_js:
+				if not self._fast_js and not self._with_lua:
 					## allows subclass method to extend the parent's method by calling the parent by class name,
 					## `MyParentClass.some_method(self)`
 					f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
 					writer.write('%s.%s = JS("%s")'%(name,mname,f))
 
-		for base in node.bases:
-			base = self.visit(base)
-			if base == 'object': continue
-			a = [
-				'for (var n in %s.prototype) {'%base,
-				'  if (!(n in %s.prototype)) {'%name,
-				'    %s.prototype[n] = %s.prototype[n]'%(name,base),
-				'  }',
-				'}'
-			]
-			a = ''.join(a)
-			writer.write( "JS('%s')" %a )
+		if not self._with_lua:
+			for base in node.bases:
+				base = self.visit(base)
+				if base == 'object': continue
+				a = [
+					'for (var n in %s.prototype) {'%base,
+					'  if (!(n in %s.prototype)) {'%name,
+					'    %s.prototype[n] = %s.prototype[n]'%(name,base),
+					'  }',
+					'}'
+				]
+				a = ''.join(a)
+				writer.write( "JS('%s')" %a )
 
-		for item in class_vars:
-			if isinstance(item, Assign) and isinstance(item.targets[0], Name):
-				item_name = item.targets[0].id
-				item.targets[0].id = '__%s_%s' % (name, item_name)
-				self.visit(item)  # this will output the code for the assign
-				writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
+			for item in class_vars:
+				if isinstance(item, Assign) and isinstance(item.targets[0], Name):
+					item_name = item.targets[0].id
+					item.targets[0].id = '__%s_%s' % (name, item_name)
+					self.visit(item)  # this will output the code for the assign
+					writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
 
 		if gpu_object:
 			## TODO check class variables ##
 			writer.write('%s.prototype.__struct_name__ = "%s"' %(name,name))
-
-		## TODO support property decorators in javascript-mode ##
-		#writer.write('%s.prototype.__properties__ = {}' %name)
-		#writer.write('%s.prototype.__unbound_methods__ = {}' %name)
-
 
 		self._in_js_class = False
 
@@ -1892,9 +1889,12 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 				else:
 					s = self.visit(node.slice)
-					#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
-					check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
-					return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
+					## this is bad for chrome's jit because it trys to find `__uid__`
+					return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
+
+					## TODO check why the JSON.stringify hack fails with arrays (fake tuples)
+					#check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
+					#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
 
 		elif isinstance(node.slice, ast.Slice):
 			return '__get__(%s, "__getslice__")([%s], __NULL_OBJECT__)' % (
@@ -2125,8 +2125,11 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				elif self._with_direct_keys:
 					code = '%s[ %s ] = %s' % (self.visit(target.value), s, self.visit(node.value))
 				else:
-					check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
-					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' %(self.visit(target.value), s, check_array, self.visit(node.value))
+					## check_array is broken? TODO deprecate or fix this
+					#check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
+					#code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' %(self.visit(target.value), s, check_array, self.visit(node.value))
+					## this is safer
+					code = '%s[ __ternary_operator__(%s.__uid__, %s) ] = %s' %(self.visit(target.value), s, s, self.visit(node.value))
 
 			elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
 				code = '%s[%s] = %s'%(name, self.visit(target.slice.value), self.visit(node.value))
@@ -2323,6 +2326,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 						writer.write(code)
 					elif self._with_js or self._with_dart:
 						writer.write("%s = %s[%s]" % (self.visit(target), r, i))
+					elif self._with_lua:
+						writer.write("__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i))
 					else:
 						fallback = "__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i)
 						writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
@@ -3330,7 +3335,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		if self._with_dart or self._with_glsl or self._with_go or self._with_rust or self._with_cpp:
 			pass
 
-		elif self._with_js or javascript or self._with_ll:
+		elif (self._with_js or javascript or self._with_ll) and not self._with_lua:
 			if node.args.defaults:
 				if not self._fast_js:
 					## this trys to recover when called in a bad way,

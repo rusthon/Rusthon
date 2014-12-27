@@ -51,6 +51,7 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
 		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
 
+		self._lua  = False
 		self._dart = False
 		self._go   = False
 		self._rust = False
@@ -995,8 +996,12 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		## TODO, should newline be changed here?
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
 		if s.strip().startswith('#'): s = '/*%s*/'%s
-		if '__new__>>' in s:  ## fixes inline `JS("new XXX")`
+
+		if '__new__>>' in s:
+			## hack that fixes inline `JS("new XXX")`,
+			## TODO improve typedpython to be aware of quoted strings
 			s = s.replace('__new__>>', ' new ')
+
 		elif '"' in s or "'" in s:  ## can not trust direct-replace hacks
 			pass
 		else:
@@ -1113,14 +1118,18 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		elif isinstance(node.ops[0], ast.Eq):
 			left = self.visit(node.left)
 			right = self.visit(node.comparators[0])
-			if self._fast_js:
+			if self._lua:
+				return '%s == %s' %(left, right)
+			elif self._fast_js:
 				return '(%s===%s)' %(left, right)
 			else:
 				return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
 		elif isinstance(node.ops[0], ast.NotEq):
 			left = self.visit(node.left)
 			right = self.visit(node.comparators[0])
-			if self._fast_js:
+			if self._lua:
+				return '%s ~= %s' %(left, right)
+			elif self._fast_js:
 				return '(%s!==%s)' %(left, right)
 			else:
 				return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)

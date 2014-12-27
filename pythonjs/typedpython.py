@@ -273,12 +273,13 @@ def transform_source( source, strip=False ):
 			else:
 				c += ')'
 
-
-		if '= function(' in c:
-			k = '= function('
-			a,b = c.split(k)
-			output.append( '@expression(%s)' %a.strip())
-			c = 'def __NAMELESS__(' + b
+		## this conflicts with inline javascript and lua,
+		## TODO make the parser smarter, and skip quoted strings
+		#if '= function(' in c:
+		#	k = '= function('
+		#	a,b = c.split(k)
+		#	output.append( '@expression(%s)' %a.strip())
+		#	c = 'def __NAMELESS__(' + b
 
 		if ' except ' in c and ':' in c:  ## PEP 463 - exception expressions
 			s = c.split(' except ')
