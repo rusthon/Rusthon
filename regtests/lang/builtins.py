@@ -14,9 +14,9 @@ def main():
 	print( n )
 	#TestError( isNaN(n)==True )
 
-	#r = round( 1.1234, 2)
-	#print(r)
-	#TestError( str(r) == '1.12' )
+	r = round( 1.1234, 2)
+	print(r)
+	TestError( str(r) == '1.12' )
 
 	#r = round( 100.001, 2)
 	#TestError( r == 100 )

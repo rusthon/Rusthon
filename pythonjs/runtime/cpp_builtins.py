@@ -47,4 +47,9 @@ double __float__( std::string s ) {
 	return std::stod( s );
 }
 
+double round( double n, int places ) {
+	auto p = std::pow(10, places);
+	return std::round(n * p) / p;
+}
+
 """)

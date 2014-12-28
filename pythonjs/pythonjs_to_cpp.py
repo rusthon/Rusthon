@@ -72,6 +72,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 	def visit_Module(self, node):
 		header = [
+			'#include <cmath>',
 			'#include <memory>',
 			'#include <vector>',
 			'#include <array>',
