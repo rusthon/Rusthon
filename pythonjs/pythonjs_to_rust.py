@@ -1033,6 +1033,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if value_type == 'interface': value_type = 'interface{}'
 					return '&map[%s]%s%s' %(key_type, value_type, right)
 				else:
+					if isinstance(node.right, ast.Name):
+						raise SyntaxError(node.right.id)
+
 					right = []
 					for elt in node.right.elts:
 						if isinstance(elt, ast.Num):
@@ -1078,6 +1081,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			right += '[_id_]'
 
 		return '(%s %s %s)' % (left, op, right)
+
+	def visit_ListComp(self, node):
+		raise RuntimeError('list comps are only generated from the parent node')
 
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
@@ -1911,6 +1917,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 def main(script, insert_runtime=True):
+	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')

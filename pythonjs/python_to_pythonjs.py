@@ -666,15 +666,27 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 	def visit_ListComp(self, node):
 		node.returns_type = 'list'
+		if self._with_rust or self._with_cpp:
+			## pass directly to next translation stage
+			gen = node.generators[0]
+			a = self.visit(node.elt)
+			b = self.visit(gen.target)
+			c = self.visit(gen.iter)
+			return '[%s for %s in %s]' %(a,b,c)
+		else:
+			self._visit_listcomp_helper(node)
 
-		if len(self._comprehensions) == 0 or True:
-			comps = collect_comprehensions( node )
-			assert comps
-			for i,cnode in enumerate(comps):
-				cname = '__comp__%s' % self._comp_id
-				cnode._comp_name = cname
-				self._comprehensions.append( cnode )
-				self._comp_id += 1
+	def _visit_listcomp_helper(self, node):
+		## TODO - move this logic to the next translation stage for each backend.
+		## TODO - check if there was a bug here, why only when self._comprehensions is zero?
+		#if len(self._comprehensions) == 0 or True:
+		comps = collect_comprehensions( node )
+		assert comps
+		for i,cnode in enumerate(comps):
+			cname = '__comp__%s' % self._comp_id
+			cnode._comp_name = cname
+			self._comprehensions.append( cnode )
+			self._comp_id += 1
 
 		cname = node._comp_name
 		writer.write('var(%s)'%cname)

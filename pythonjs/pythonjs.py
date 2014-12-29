@@ -715,6 +715,8 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 		raise NotImplementedError('special call')
 
 	def _visit_call_helper_go(self, node):
+		go_types = 'bool string int float64'.split()
+
 		name = self.visit(node.func)
 		if name == '__go__':
 			if self._cpp:
@@ -746,7 +748,9 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				return 'channel::<%s>()' %self.visit(node.args[0])
 			else:  ## Go
 				return 'make(chan %s)' %self.visit(node.args[0])
+
 		elif name == '__go__array__':
+			## this happens only from typed function argument annotations.?
 			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
 				a = self.visit(node.args[0].left)
 				if a in go_types:
