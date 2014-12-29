@@ -18,7 +18,7 @@ class GenerateSlice( SyntaxError ): pass  ## c++ backend
 TRY_MACRO = '''
 macro_rules! try_wrap_err(
       ($e:expr, $ret:expr) => (match $e {Ok(e) => e, Err(e) => return ($ret)(e)})            
-)
+);
 '''
 
 def default_type( T ):
@@ -490,7 +490,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		for e in node.values:
 			s = self.visit(e)
 			if isinstance(e, ast.List):
-				r.append('println!("{}", %s);' %s[1:-1])
+				fmt = '{}' * len(e.elts)
+				r.append('println!("%s", %s);' %(fmt, s[1:-1]))
 			else:
 				r.append('println!("{}", %s);' %s)
 		return ''.join(r)
@@ -528,6 +529,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'use libc::{c_int, size_t};',
 			'use std::collections::{HashMap};',
 			'use std::io::{File, Open, ReadWrite, Read, IoResult};',
+			'use std::num::Float;',
+			'use std::num::Int;',
 			TRY_MACRO,
 		]
 		lines = []

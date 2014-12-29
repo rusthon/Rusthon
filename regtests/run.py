@@ -385,6 +385,12 @@ def TestError(file:string, line:int, result:bool, test:string):
         print(file + ":" + str(line) + " Error fail " + test)
 """
 
+_patch_header_rust = """# -*- coding: utf-8 -*-
+def TestError(file:string, line:int, result:bool, test:string):
+    if result == False:
+        print(file, line, " Error fail ", test)
+"""
+
 
 _python_only_extra_header = """
 try:
@@ -454,7 +460,9 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
         'PYTHON="%s"'%python, 
         'BACKEND="%s"'%backend, 
     ]
-    if backend in ('GO', 'RUST', 'CPP'):
+    if backend == 'RUST':
+        a.append(_patch_header_rust)
+    elif backend in ('GO', 'CPP'):
         a.append(_patch_header_go)
     else:
         a.append(_patch_header)
