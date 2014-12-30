@@ -32,6 +32,10 @@ fn __float__( s:String ) -> f32 {
 	return std::str::FromStr::from_str( s.as_slice() ).unwrap();
 }
 
+fn __int__( n:String ) -> int {
+	return from_str::<int>( n.as_slice() ).unwrap();
+}
+
 fn round( n:f32, places:int ) -> f32 {
 	let p = (10i).pow( places as uint ) as f32;
 	return (n*p) / p;

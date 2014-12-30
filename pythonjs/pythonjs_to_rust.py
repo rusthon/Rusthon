@@ -14,6 +14,7 @@ COLLECTION_TYPES = rust_hacks + go_hacks
 class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
 class GenerateSlice( SyntaxError ): pass  ## c++ backend
+class GenerateListComp( SyntaxError ): pass  ## c++ and rust backend
 
 TRY_MACRO = '''
 macro_rules! try_wrap_err(
@@ -1083,7 +1084,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		return '(%s %s %s)' % (left, op, right)
 
 	def visit_ListComp(self, node):
-		raise RuntimeError('list comps are only generated from the parent node')
+		#raise RuntimeError('list comps are only generated from the parent node')
+		raise GenerateListComp(node)
 
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
@@ -1634,6 +1636,25 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			return '%s.%s' % (name, attr)
 
+
+	def _listcomp_helper(self, node, target=None, type=None, size=None):
+		assert target
+		assert type
+
+		gen = node.generators[0]
+		a = self.visit(node.elt)
+		b = self.visit(gen.target)
+		c = self.visit(gen.iter)
+
+		compname = '_comp_%s' %target
+		out = []
+		out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
+		out.append('for %s in %s {' %(b, c))
+		out.append('	%s.push(%s);' %(compname, a))
+		out.append('}')
+		out.append('let mut %s = &%s;' %(target, compname))
+		return '\n'.join(out)
+
 	def visit_Assign(self, node):
 		self._catch_assignment = False
 
@@ -1678,6 +1699,28 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			try:
 				value = self.visit(node.value)
+
+			except GenerateListComp as error:  ## new style to generate list comprehensions
+				if not isinstance(node.value, ast.BinOp):
+					raise RuntimeError('untyped list comprehension')
+
+				assert isinstance(node.value.left, ast.Call)
+				assert node.value.left.func.id in ('__go__array__', '__go__arrayfixed__')
+				compnode = error[0]
+
+				if node.value.left.func.id == '__go__array__':
+					return self._listcomp_helper(
+						compnode, 
+						target=target, 
+						type=self.visit(node.value.left.args[0])
+					)
+				else:
+					return self._listcomp_helper(
+						compnode, 
+						target=target, 
+						type=self.visit(node.value.left.args[1]),
+						size=self.visit(node.value.left.args[0]),
+					)
 
 			except GenerateSlice as error:  ## special c++ case for slice syntax
 				assert self._cpp
