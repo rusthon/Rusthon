@@ -1645,12 +1645,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		a = self.visit(node.elt)
 		b = self.visit(gen.target)
 		c = self.visit(gen.iter)
+		if isinstance(gen.iter, ast.Call) and isinstance(gen.iter.func, ast.Name):
+			if gen.iter.func.id == 'range':
+				if len(gen.iter.args) == 1:
+					c = 'range(0u,1u)'
 
 		compname = '_comp_%s' %target
 		out = []
 		out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
 		out.append('for %s in %s {' %(b, c))
-		out.append('	%s.push(%s);' %(compname, a))
+		out.append('	%s.push(%s as %s);' %(compname, a, type))
 		out.append('}')
 		out.append('let mut %s = &%s;' %(target, compname))
 		return '\n'.join(out)
