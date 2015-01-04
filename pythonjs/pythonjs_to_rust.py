@@ -1648,7 +1648,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance(gen.iter, ast.Call) and isinstance(gen.iter.func, ast.Name):
 			if gen.iter.func.id == 'range':
 				if len(gen.iter.args) == 1:
-					c = 'range(0u,1u)'
+					c = 'range(0u,%su)' %self.visit(gen.iter.args[0])
+				elif len(gen.iter.args) == 2:
+					c = 'range(%su,%su)' %( self.visit(gen.iter.args[0]), self.visit(gen.iter.args[1]) )
+				else:
+					raise SyntaxError('TODO list comp range(low,high,step)')
 
 		compname = '_comp_%s' %target
 		out = []
