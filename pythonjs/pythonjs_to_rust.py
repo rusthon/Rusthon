@@ -635,7 +635,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				tar = self.visit(node.target.elts[1])
 				if self._cpp:
 					lines.append('int %s = -1;' %idx)
-					lines.append('for (auto &%s: _ref_%s) {' %(tar, iter))
+					lines.append('for (auto &%s: _ref_%s) {' %(tar, iter))  ## TODO remove _ref_
 				else:
 					lines.append('let mut %s = -1i;' %idx)
 					if node.iter.is_ref:
@@ -1645,22 +1645,54 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		a = self.visit(node.elt)
 		b = self.visit(gen.target)
 		c = self.visit(gen.iter)
+		range_n = []
 		if isinstance(gen.iter, ast.Call) and isinstance(gen.iter.func, ast.Name):
 			if gen.iter.func.id == 'range':
 				if len(gen.iter.args) == 1:
-					c = 'range(0u,%su)' %self.visit(gen.iter.args[0])
+					range_n.append( self.visit(gen.iter.args[0]) )
 				elif len(gen.iter.args) == 2:
-					c = 'range(%su,%su)' %( self.visit(gen.iter.args[0]), self.visit(gen.iter.args[1]) )
-				else:
-					raise SyntaxError('TODO list comp range(low,high,step)')
+					range_n.append( self.visit(gen.iter.args[0]) )
+					range_n.append( self.visit(gen.iter.args[1]) )
+				elif len(gen.iter.args) == 3:
+					range_n.append( self.visit(gen.iter.args[0]) )
+					range_n.append( self.visit(gen.iter.args[1]) )
+					range_n.append( self.visit(gen.iter.args[2]) )
 
 		compname = '_comp_%s' %target
 		out = []
-		out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
-		out.append('for %s in %s {' %(b, c))
-		out.append('	%s.push(%s as %s);' %(compname, a, type))
-		out.append('}')
-		out.append('let mut %s = &%s;' %(target, compname))
+		if self._rust:
+			if range_n:
+				if len(range_n)==1:
+					c = 'range(0u,%su)' %range_n[0]
+				elif len(range_n)==2:
+					c = 'range(%su,%su)' %( range_n[0], range_n[1] )
+				else:
+					raise SyntaxError('TODO list comp range(low,high,step)')
+
+			out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
+			out.append('for %s in %s {' %(b, c))
+			out.append('	%s.push(%s as %s);' %(compname, a, type))
+			out.append('}')
+			out.append('let mut %s = &%s;' %(target, compname))
+		elif self._cpp:
+			out.append('std::vector<%s> %s;' %(type,compname))
+			if range_n:
+				if len(range_n)==1:
+					out.append('for (int %s=0; %s<%s; %s++) {' %(a, a, range_n[0], a))
+
+				elif len(range_n)==2:
+					out.append('for (int %s=%s; %s<%s; %s++) {' %(a, range_n[0], a, range_n[1], a))
+
+			else:
+				out.append('for (auto &%s: %s) {' %(b, compname))
+
+			out.append('	%s.push_back(%s);' %(compname, a))
+			out.append('}')
+			out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
+
+		else:
+			raise RuntimeError('TODO list comp for some backend')
+
 		return '\n'.join(out)
 
 	def visit_Assign(self, node):
