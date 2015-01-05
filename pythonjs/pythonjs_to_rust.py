@@ -916,9 +916,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return 'File::open_mode( &Path::new(%s.to_string()), Open, Read )' %self.visit(node.args[0])
 
 		elif fname == '__arg_array__':  ## TODO make this compatible with Go backend, move to pythonjs.py
+			assert len(node.args)==1
 			if self._rust:
-				assert len(node.args)==1
 				return '&mut Vec<%s>' %self.parse_go_style_arg(node.args[0])
+			elif self._cpp:
+				return 'std::shared_ptr<std::vector<%s>>' %self.parse_go_style_arg(node.args[0])
 			else:
 				raise RuntimeError('TODO generic arg array')
 
@@ -944,14 +946,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args: args += ','
 			args += '*%s...' %self.visit(node.starargs)
 
-		if is_append: ## this is a bad rule, it is better the user must call `push` instead of `append`
+		if is_append: ## this is a bad rule, it is better the user must call `push` instead of `append`?
 			item = args
 			#if item in self._known_instances:
 			#	classname = self._known_instances[ item ]
 			#	if arr in self._known_arrays and classname != self._known_arrays[arr]:
 
-			assert not self._cpp  ## TODO move this logic to visit_Attribute for rust
-			return '%s.push( %s )' %(arr, item)
+			#assert not self._cpp  ## TODO move this logic to visit_Attribute for rust
+			if self._rust:
+				return '%s.push( %s )' %(arr, item)
+			elif self._cpp:
+				return '%s->push_back( %s )' %(arr, item)
 
 		elif self._with_gojs:
 			if isinstance(node.func, ast.Attribute):
