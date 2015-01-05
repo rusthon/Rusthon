@@ -984,7 +984,8 @@ def run_test_on(filename):
             display(run_old_pypy_test_on)
 
     global js
-    if not filename.startswith('./go/') and not filename.startswith('./asm/') and not filename.startswith('./rust/'):
+    do_js_test = not filename.startswith( ('./go/', './asm/', './rust/', './cpp') )
+    if do_js_test:
         js = translate_js(
             filename, 
             javascript=False, 
@@ -999,7 +1000,7 @@ def run_test_on(filename):
             display(run_pythonjs_test_on_nodewebkit)
 
 
-    if '--no-javascript-mode' not in sys.argv and not filename.startswith('./go/'):
+    if '--no-javascript-mode' not in sys.argv and do_js_test:
         js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
         if rhino_runnable:
             display(run_pythonjsjs_test_on)

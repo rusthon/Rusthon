@@ -15,19 +15,19 @@ from ast import parse
 from ast import Attribute
 from ast import NodeVisitor
 
-#import inline_function
-#import code_writer
 import typedpython
+import ast_utils
 
 class SwapLambda( RuntimeError ):
 	def __init__(self, node):
 		self.node = node
 		RuntimeError.__init__(self)
 
-class JSGenerator(NodeVisitor): #, inline_function.Inliner):
-	def __init__(self, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
-		#writer = code_writer.Writer()
-		#self.setup_inliner( writer )
+class JSGenerator(ast_utils.NodeVisitorBase):
+	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
+		assert source
+		ast_utils.NodeVisitorBase.__init__(self, source)
+
 		self._fast_js = fast_javascript
 		self._fast_loops = fast_loops
 		self._func_expressions = function_expressions
@@ -1451,6 +1451,7 @@ def main(source, requirejs=True, insert_runtime=True, webworker=False, function_
 		sys.exit(1)
 
 	gen = JSGenerator(
+		source = source,
 		requirejs=requirejs, 
 		insert_runtime=insert_runtime, 
 		webworker=webworker, 

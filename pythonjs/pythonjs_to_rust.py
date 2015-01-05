@@ -718,6 +718,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if not isinstance(self._stack, ast.Assign):
 				if self._rust:
 					fname = fname + '::new'
+					node.is_new = True
 				else:
 					raise SyntaxError('TODO create new class instance in function call argument')
 
@@ -1709,17 +1710,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError('TODO list comp range(low,high,step)')
 
+			mutref = False
 			if type == 'int':  ## TODO other low level types
 				out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
 			else:
 				out.append('let mut %s : Vec<&mut %s> = Vec::new();' %(compname,type))
+				mutref = True
 
-			out.append('for %s in %s {' %(b, c))
 			if range_n:
 				## in rust the range builtin returns ...
+				out.append('for %s in %s {' %(b, c))
 				out.append('	%s.push(%s as %s);' %(compname, a, type))
 			else:
-				out.append('	%s.push(%s);' %(compname, a))
+				out.append('for %s in %s.iter() {' %(b, c))
+				if mutref:
+					out.append('	%s.push(&mut %s);' %(compname, a))
+				else:
+					out.append('	%s.push(%s);' %(compname, a))
 
 			out.append('}')
 			out.append('let mut %s = &%s;' %(target, compname))
@@ -2106,20 +2113,28 @@ def main(script, insert_runtime=True):
 	open(path, 'wb').write( pass2 )
 	p = subprocess.Popen([exe, path], cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	errors = p.stderr.read().splitlines()
-	if len(errors):
-		hiterr = False
-		for line in errors:
-			if 'error:' in line:
-				hiterr = True
-			elif hiterr:
-				hiterr = False
-				if '//magic:' in line:
-					uid = int( line.split('//magic:')[-1] )
-					g.unodes[ uid ].is_ref = False
-				elif line.startswith('for '):  ## needs magic id
-					raise SyntaxError('BAD MAGIC:'+line)
-				else:
-					raise SyntaxError(line)
+
+	def magic():
+		if len(errors):
+			hiterr = False
+			for line in errors:
+				if 'error:' in line:
+					hiterr = True
+				elif hiterr:
+					hiterr = False
+					if '//magic:' in line:
+						uid = int( line.split('//magic:')[-1] )
+						g.unodes[ uid ].is_ref = False
+					elif line.startswith('for '):  ## needs magic id
+						raise SyntaxError('BAD MAGIC:'+line)
+					else:
+						raise SyntaxError(line)
+	try:
+		magic()
+	except SyntaxError as err:
+		errors = ['- - - rustc output - - -', ''] + errors
+		msg = '\n'.join(errors + ['- - - rustc error:', err[0]])
+		raise RuntimeError(msg)
 
 	pass3 = g.visit(tree)
 	open('/tmp/pass3.rs', 'wb').write( pass3 )
