@@ -29,11 +29,8 @@ import typedpython
 import ministdlib
 import inline_function
 import code_writer
+import ast_utils
 from ast_utils import *
-
-## TODO
-def log(txt):
-	pass
 
 
 POWER_OF_TWO = [ 2**i for i in range(32) ]
@@ -112,48 +109,18 @@ class Typedef(object):
 				if res:
 					return res
 
-class NodeVisitorBase( ast.NodeVisitor ):
-	def __init__(self):
-		self._line = None
-		self._line_number = 0
-		self._stack = []        ## current path to the root
-
-	def visit(self, node):
-		"""Visit a node."""
-		## modified code of visit() method from Python 2.7 stdlib
-		self._stack.append(node)
-		method = 'visit_' + node.__class__.__name__
-		visitor = getattr(self, method, self.generic_visit)
-		res = visitor(node)
-		self._stack.pop()
-		return res
-
-	def format_error(self, node):
-		lines = []
-		if self._line_number > 0:
-			lines.append( self._source[self._line_number-1] )
-		lines.append( self._source[self._line_number] )
-		if self._line_number+1 < len(self._source):
-			lines.append( self._source[self._line_number+1] )
-
-		msg = 'line %s\n%s\n%s\n' %(self._line_number, '\n'.join(lines), node)
-		msg += 'Depth Stack:\n'
-		for l, n in enumerate(self._stack):
-			#msg += str(dir(n))
-			msg += '%s%s line:%s col:%s\n' % (' '*(l+1)*2, n.__class__.__name__, n.lineno, n.col_offset)
-                return msg
 
 
-class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
-	identifier = 0
-	_func_typedefs = ()
+class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
-
+	identifier = 0  ## clean up
+	_func_typedefs = ()  ## TODO clean up
 
 	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, rust=False, cpp=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
-		NodeVisitorBase.__init__(self)
+		ast_utils.NodeVisitorBase.__init__(self, source)  ## note self._source gets changed below
+
 		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
@@ -222,7 +189,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 		source = typedpython.transform_source( source )
 
-		self.setup_inliner( writer )
+		self.setup_inliner( writer )  ## deprecated TODO
 
 		self._in_catch_exception = False
 
@@ -412,8 +379,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		if class_name:
 			#assert class_name in self._classes
 			if class_name not in self._classes:
-				#log('ERROR: class name not in self._classes: %s'%class_name)
-				#log('self._classes: %s'%self._classes)
 				#raise RuntimeError('class name: %s - not found in self._classes - node:%s '%(class_name, instance))
 				return None  ## TODO hook into self._typedef_vars
 
@@ -1035,7 +1000,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 			self.visit(init)
 			node._struct_vars.update( init._typed_args )
-			
+
 			for item in init.body:
 				if isinstance(item, ast.Assign) and isinstance(item.targets[0], ast.Attribute):
 					if isinstance(item.targets[0].value, ast.Name) and item.targets[0].value.id=='self':
@@ -1294,8 +1259,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 		for item in node.body:
 			if isinstance(item, FunctionDef):
-				log('  method: %s'%item.name)
-
 				self._classes[ name ].append( item.name )
 				item_name = item.name
 				item.original_name = item.name
@@ -2211,7 +2174,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 			elif typedef and '__setattr__' in typedef.methods:
 				func = typedef.get_pythonjs_function_name( '__setattr__' )
-				log('__setattr__ in instance typedef.methods - func:%s target_value:%s target_attr:%s' %(func, target_value, target_attr))
 				writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
 
 
@@ -2253,7 +2215,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
 			if writer.is_at_global_level():
-				log('GLOBAL: %s : %s'%(target.id, node_value))
 				self._globals[ target.id ] = None
 				self._global_nodes[ target.id ] = node.value
 
@@ -2283,17 +2244,14 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				if target.id in self._globals:
 					pass
 				else:
-					log('--forget: %s'%target.id)
 					type = self._instances.pop( target.id )
-					log('----%s'%type)
 
 			if target.id in self._instances:
 				type = self._instances[ target.id ]
-				log('typed assignment: %s is-type %s' %(target.id,type))
+				## typed assignment: %s is-type %s' %(target.id,type))
 				if writer.is_at_global_level():
 					self._globals[ target.id ] = type
-					log('known global:%s - %s'%(target.id,type))
-
+					## known global
 					if self._with_static_type:
 						if type == 'list':
 							self._global_typed_lists[ target.id ] = set()
@@ -2306,13 +2264,9 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				else:
 					if target.id in self._globals and self._globals[target.id] is None:
 						self._globals[target.id] = type
-						self._instances[ target.id ] = type
-						log('set global type: %s'%type)
+						self._instances[ target.id ] = type  ## needs more cleanup
 
 					writer.write('%s = %s' % (self.visit(target), node_value))
-
-			#elif self._with_dart and writer.is_at_global_level():
-			#	writer.write('JS("var %s = %s")' % (self.visit(target), node_value))
 			else:
 				writer.write('%s = %s' % (self.visit(target), node_value))
 
@@ -3031,7 +2985,6 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
-			log('@decorator: %s' %decorator)
 			if isinstance(decorator, Name) and decorator.id == 'gpu':
 				gpu = True
 
@@ -3486,7 +3439,8 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			if node.args.kwarg:
 				writer.write("""JS('var %s = __args__["%s"]')""" % (node.args.kwarg, node.args.kwarg))
 		else:
-			log('(function has no arguments)')
+			## function has no arguments ##
+			pass
 
 		################# function body #################
 

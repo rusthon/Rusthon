@@ -10,8 +10,8 @@ import pythonjs_to_rust
 
 class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
-	def __init__(self, requirejs=False, insert_runtime=False):
-		pythonjs_to_rust.RustGenerator.__init__(self, requirejs=False, insert_runtime=False)
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		pythonjs_to_rust.RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._cpp = True
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
 		self._shared_pointers = True
@@ -154,7 +154,7 @@ def main(script, insert_runtime=True):
 		sys.stderr.write(script)
 		raise err
 
-	g = CppGenerator()
+	g = CppGenerator( source=script )
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 	g.reset()

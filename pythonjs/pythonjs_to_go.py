@@ -16,7 +16,7 @@ def transform_gopherjs( node ):
 	gt.visit( node )
 	return node
 
-class GopherjsTransformer( ast.NodeVisitor ):
+class GopherjsTransformer( ast.NodeVisitor ):  ## TODO deprecate
 	#def visit_Assign(self, node):
 	#	writer.write( '%s.Set("%s", %s)' %(target_value, target.attr, self.visit(node.value)) )
 
@@ -47,9 +47,10 @@ class GopherjsTransformer( ast.NodeVisitor ):
 
 
 class GoGenerator( pythonjs.JSGenerator ):
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		assert source
+		pythonjs.JSGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 
-	def __init__(self, requirejs=False, insert_runtime=False):
-		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
 		self._go = True
 		self._dart = False
 		self._with_gojs = False
@@ -1197,7 +1198,7 @@ def main(script, insert_runtime=True):
 		sys.stderr.write(script)
 		raise err
 
-	g = GoGenerator()
+	g = GoGenerator( source=script )
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 

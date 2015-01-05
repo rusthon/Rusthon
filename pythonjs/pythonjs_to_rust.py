@@ -27,8 +27,9 @@ def default_type( T ):
 
 class RustGenerator( pythonjs_to_go.GoGenerator ):
 
-	def __init__(self, requirejs=False, insert_runtime=False):
-		pythonjs_to_go.GoGenerator.__init__(self, requirejs=False, insert_runtime=False)
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		assert source
+		pythonjs_to_go.GoGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._globals = {
 			'string' : set()
 		}
@@ -694,6 +695,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		return '\n'.join(lines)
 
 	def _gccasm_to_llvmasm(self, asmcode):
+		'''
+		tries to convert basic gcc asm syntax to llvm asm syntax,
+		TODO fix me
+		'''
 		r = []
 		for i,char in enumerate(asmcode):
 			if i+1==len(asmcode): break
@@ -708,9 +713,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)
-		is_append = False
 
-		if fname.endswith('.append'): ## TODO - deprecate append to pushX ?
+		if self._stack and fname in self._classes:
+			if not isinstance(self._stack, ast.Assign):
+				if self._rust:
+					fname = fname + '::new'
+				else:
+					raise SyntaxError('TODO create new class instance in function call argument')
+
+		is_append = False
+		if fname.endswith('.append'): ## TODO - deprecate append to pushX or make `.append` method reserved by not allowing methods named `append` in visit_ClassDef?
 			is_append = True
 			arr = fname.split('.append')[0]
 
@@ -920,7 +932,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif fname == '__arg_array__':  ## TODO make this compatible with Go backend, move to pythonjs.py
 			assert len(node.args)==1
 			if self._rust:
-				return '&mut Vec<%s>' %self.parse_go_style_arg(node.args[0])
+				T = self.parse_go_style_arg(node.args[0])
+				if T == 'int': ## TODO other ll types
+					return '&mut Vec<%s>' %T
+				else:
+					return '&mut Vec<&mut %s>' %T
+
 			elif self._cpp:
 				return 'std::shared_ptr<std::vector<%s>>' %self.parse_go_style_arg(node.args[0])
 			else:
@@ -1029,7 +1046,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							#return '&vec!%s%s' %(T, right)
 							return '&mut vec!%s' %right
 						else:
-							self._catch_assignment = {'class':T}  ## visit_Assign catches this
+							self._catch_assignment = {'class':T}  ## visit_Assign catches this, ugly hack for Go
 							return '&[]*%s%s' %(T, right)
 
 					elif node.left.func.id == '__rust__arrayfixed__':
@@ -1692,9 +1709,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError('TODO list comp range(low,high,step)')
 
-			out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
+			if type == 'int':  ## TODO other low level types
+				out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
+			else:
+				out.append('let mut %s : Vec<&mut %s> = Vec::new();' %(compname,type))
+
 			out.append('for %s in %s {' %(b, c))
-			out.append('	%s.push(%s as %s);' %(compname, a, type))
+			if range_n:
+				## in rust the range builtin returns ...
+				out.append('	%s.push(%s as %s);' %(compname, a, type))
+			else:
+				out.append('	%s.push(%s);' %(compname, a))
+
 			out.append('}')
 			out.append('let mut %s = &%s;' %(target, compname))
 		elif self._cpp:
@@ -1712,6 +1738,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append('	%s.push_back(%s);' %(compname, a))
 			out.append('}')
 			out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
+			## TODO vector.resize if size
 
 		else:
 			raise RuntimeError('TODO list comp for some backend')
@@ -1920,6 +1947,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
+
+				## creation of a new class instance and assignment to a local variable
+				## TODO self.writer.expression_stack for appending lines that will be inserted
+				## before each lines is normally written in visit_Expr, 
+				## this way syntax like `f(SomeClass())` will work.
 				if node.value.func.id in self._classes:
 					classname = node.value.func.id
 					self._known_instances[ target ] = classname
@@ -1937,7 +1969,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 					else:  ## rust
 						self._construct_rust_structs_directly = False
-						if self._construct_rust_structs_directly:
+
+						if self._construct_rust_structs_directly:  ## NOT DEFAULT
+							## this is option is only useful when nothing is happening
+							## in __init__ other than assignment of fields, rust enforces that
+							## values for all struct field types are given, and this can not
+							## map to __init__ logic where some arguments have defaults.
+
 							## convert args into struct constructor style `name:value`
 							args = []
 							for i,arg in enumerate(node.value.args):
@@ -1946,15 +1984,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								for kw in node.value.keywords:
 									args.append( '%s:%s' %(kw.arg, self.visit(kw.value)))
 
-							## do not cast to trait type, because as a trait can not be used to access the data inside the struct
-							## directly, traits can only call methods.
-							#return 'let %s = &%sStruct{ %s } as &%s;' %(target, classname, ','.join(args), classname)
-
-							## note: methods are defined with `&mut self`, this requires that
-							## a mutable reference is taken so that methods can be called on the instance.
 							return 'let %s = &mut %s{ %s };' %(target, classname, ','.join(args))  ## directly construct struct, this requires all arguments are given.
+
 						else:
-							## call user constructor __init__
+							## RUST DEFAULT create new class instance
+							## by calling user constructor __init__
+							## SomeClass::new(init-args) takes care of making the struct with
+							## default null/empty/zeroed values.
+
+							## note: methods are always defined with `&mut self`, this requires that
+							## a mutable reference is taken so that methods can be called on the instance.
+
 							value = self._visit_call_helper(node.value, force_name=classname+'::new')
 							return 'let %s = &mut %s;' %(target, value)
 
@@ -2048,7 +2088,7 @@ def main(script, insert_runtime=True):
 		sys.stderr.write(script)
 		raise err
 
-	g = RustGenerator()
+	g = RustGenerator( source=script )
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 
