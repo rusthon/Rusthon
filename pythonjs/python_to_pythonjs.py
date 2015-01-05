@@ -970,7 +970,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 			else:
 				return self._get_js_class_base_init( n )  ## TODO fixme
 
-	def _visit_dart_classdef(self, node):
+	def _visit_dart_classdef(self, node): ## this should be called visit_multibackend_classdef
 		name = node.name
 		node._struct_vars = dict()
 		self._js_classes[ name ] = node
@@ -1007,10 +1007,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 
 				writer.write('@__struct__(%s)' %','.join(sdef))
 
-		if self._with_go:
+		if self._with_go or self._with_rust or self._with_cpp:
 			pass
 		elif props:
-			writer.write('@properties(%s)'%','.join(props))
+			writer.write('@properties(%s)'%','.join(props))  ## TODO rename this to @__dart__props__
 			for dec in node.decorator_list:
 				writer.write('@%s'%self.visit(dec))
 
@@ -1026,23 +1026,26 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		init = methods.get( '__init__', None)
 
 		writer.push()
-		## declare vars here
-		#for attr in props:
-		#	writer.write('JS("var %s")'%attr)
+
 		## constructor
 		if init:
 			methods.pop( '__init__' )
-			#if not self._with_go:
 			if self._with_dart:
 				init.name = node.name
 
 			self.visit(init)
+			node._struct_vars.update( init._typed_args )
+			
 			for item in init.body:
 				if isinstance(item, ast.Assign) and isinstance(item.targets[0], ast.Attribute):
 					if isinstance(item.targets[0].value, ast.Name) and item.targets[0].value.id=='self':
 						attr = item.targets[0].attr
 						if attr not in node._struct_vars:
-							node._struct_vars[ attr ] = 'interface'  ## TODO change this to something else `UNKNOWN`
+							if self._with_go or self._with_dart:  ## this works for dart to?
+								node._struct_vars[ attr ] = 'interface'
+							else:
+								raise SyntaxError('class attribute `%s` is not typed'%attr)
+
 				elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='__let__':
 					if isinstance(item.value.args[0], ast.Attribute) and item.value.args[0].value.id=='self':
 						node._struct_vars[ item.value.args[0].attr ] = item.value.args[1].s
@@ -3007,7 +3010,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 		threaded = self._with_webworker
 		jsfile = None
 
-		self._typedef_vars = dict()  ## clear typed variables: filled in below by @typedef or in visit_Assign
+		self._typedef_vars = dict()  ## clear typed variables: filled in below by @typedef or in visit_Assign, TODO break this apart into _typed_args and _typed_locals on the node
+		node._typed_args = dict()    ## used in visit class def to get types for struct
+
+		## TODO deprecate all the glsl code
 		self._gpu_return_types = set()
 		gpu = False
 		gpu_main = False
@@ -3040,9 +3046,10 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 				vtype = self.visit(c.args[1])
 				vptr  = self.visit(c.args[2])
 
-				self._typedef_vars[ vname ] = vtype
-				self._instances[ vname ] = vtype
+				self._typedef_vars[ vname ]  = vtype
+				self._instances[ vname ]     = vtype
 				self._func_typedefs[ vname ] = vtype
+				node._typed_args[ vname ]    = vtype
 				local_typedefs.append( '%s=%s' %(vname, vtype))
 				writer.write('@__typedef__(%s, %s, %s)' %(vname, vtype, vptr))
 
@@ -3056,6 +3063,7 @@ class PythonToPythonJS(NodeVisitorBase, inline_function.Inliner):
 					self._typedef_vars[ kw.arg ] = kwval
 					self._instances[ kw.arg ] = kwval
 					self._func_typedefs[ kw.arg ] = kwval
+					node._typed_args[ kw.arg ]    = kwval
 					local_typedefs.append( '%s=%s' %(kw.arg, kwval))
 					if decorator.func.id=='typedef_chan':
 						typedef_chans.append( kw.arg )

@@ -191,7 +191,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		for decor in node.decorator_list:  ## class decorators
 			if isinstance(decor, ast.Call):
-				assert decor.func.id=='__struct__'
+				if decor.func.id != '__struct__':
+					raise SyntaxError(decor.func.id)  ## problem in previous translation can trigger this to happen.
+
 				#props.update( [self.visit(a) for a in decor.args] )
 				for kw in decor.keywords:
 					props.add( kw.arg )
@@ -1971,17 +1973,29 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					return 'let mut %s = %s;			/* new muatble */' % (target, value)
 
-		else:  ## the variable has already be used, and is getting reassigned.
-			assert target in self._known_vars
+		else:
+			## the variable has already be used, and is getting reassigned,
+			## or its a destructured assignment, or assignment to an attribute, TODO break this apart.
+
+			is_attr = False
+			#assert target in self._known_vars
+			if target not in self._known_vars:
+				#raise SyntaxError(target)
+				assert isinstance(node.targets[0], ast.Attribute)  ## self.x = y
+				is_attr = True
+
 			value = self.visit(node.value)
 
 			if self._cpp:
 				return '%s = %s;' % (target, value)
 
 			elif self._rust:
-				## destructured assignments fallback here.
+				## destructured assignments also fallback here.
 				## fallback to mutable by default? `let mut (x,y) = z` breaks rustc
-				return 'let %s = %s;' % (target, value)
+				if is_attr:
+					return '%s = %s;' % (target, value)
+				else:
+					return 'let %s = %s;' % (target, value)
 
 			else:
 				if value.startswith('&make('):  ## TODO DEPRECATE go hack
@@ -2021,6 +2035,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 def main(script, insert_runtime=True):
+	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')
