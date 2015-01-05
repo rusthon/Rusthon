@@ -467,9 +467,13 @@ def transform_source( source, strip=False ):
 					if typedef.startswith('*'):
 						typedef = '"%s"' %typedef.strip()
 					elif typedef.startswith('[]'):
-						typedef = '"*%s"' %typedef.strip()
+						#typedef = '"*%s"' %typedef.strip()  ## the pointer hack should not be forced here for arrays
+						typedef = '__arg_array__("%s")' %typedef.strip()  ## this parses the go syntax and converts it for each backend
+
 					elif typedef.startswith('map['):
-						typedef = '"*%s"' %typedef.strip()
+						#typedef = '"*%s"' %typedef.strip()  ## the pointer hack should not be forced here for maps
+						typedef = '__arg_map__("%s")' %typedef.strip()  ## this parses the go syntax and converts it for each backend
+
 					elif typedef.startswith('func('):
 						typedef = '"%s"' %typedef.strip()
 					elif typedef.startswith('lambda('):

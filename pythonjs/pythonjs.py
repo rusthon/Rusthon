@@ -714,6 +714,10 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 	def _visit_call_special( self, node ):
 		raise NotImplementedError('special call')
 
+	def parse_go_style_arg( self, s ):
+		if isinstance(s, ast.Str): s = s.s
+		return s.split(']')[-1]
+
 	def _visit_call_helper_go(self, node):
 		go_types = 'bool string int float64'.split()
 
@@ -750,11 +754,15 @@ class JSGenerator(NodeVisitor): #, inline_function.Inliner):
 				return 'make(chan %s)' %self.visit(node.args[0])
 
 		elif name == '__go__array__':
-			## this happens only from typed function argument annotations.?
 			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
 				a = self.visit(node.args[0].left)
 				if a in go_types:
-					return '*[]%s' %a
+					if self._go:
+						return '*[]%s' %a
+					elif self._rust:
+						return '&mut Vec<%s>' %a  ## TODO test this
+					else:
+						raise RuntimeError('todo')
 				else:
 					return '*[]*%s' %a  ## todo - self._catch_assignment_array_of_obs = true
 

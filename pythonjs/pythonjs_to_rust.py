@@ -915,6 +915,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				return 'File::open_mode( &Path::new(%s.to_string()), Open, Read )' %self.visit(node.args[0])
 
+		elif fname == '__arg_array__':  ## TODO make this compatible with Go backend, move to pythonjs.py
+			if self._rust:
+				assert len(node.args)==1
+				return '&mut Vec<%s>' %self.parse_go_style_arg(node.args[0])
+			else:
+				raise RuntimeError('TODO generic arg array')
+
+		elif fname == '__arg_map__':
+			raise RuntimeError('TODO generic arg map array')
+
 
 		if node.args:
 			args = [self.visit(e) for e in node.args]
@@ -1066,7 +1076,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__':
-				return '*[]%s' %self.visit(node.right)
+				if self._go:
+					return '*[]%s' %self.visit(node.right)
+				elif self._rust:
+					return '&mut Vec<%s>' %self.visit(node.right)  ## TODO - test this
+
+				else:
+					raise RuntimeError('TODO array pointer')
 
 			elif isinstance(node.right, ast.Name) and node.right.id=='__as__':
 				return '%s as ' %self.visit(node.left)
@@ -2000,7 +2016,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 def main(script, insert_runtime=True):
-	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'runtime')
