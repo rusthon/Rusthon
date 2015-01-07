@@ -953,8 +953,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		if node.args:
-			args = [self.visit(e) for e in node.args]
-			args = ', '.join([e for e in args if e])
+			#args = [self.visit(e) for e in node.args]
+			#args = ', '.join([e for e in args if e])
+			args = []
+			for e in node.args:
+				if self._rust and isinstance(e, ast.Name) and e.id in self._known_arrays:
+					args.append( e.id+'.clone()' )  ## automatically clone known array Rc box
+				else:
+					args.append( self.visit(e) )
+
+			args = ', '.join(args)
+
 		else:
 			args = ''
 
@@ -997,7 +1006,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							raise SyntaxError('%s(%s)' % (fname, args))
 
 
-			return '%s(%s)' % (fname, args)
+			return '%s(%s) /*%s*/' % (fname, args, self._known_arrays)
 
 
 	def visit_BinOp(self, node):
@@ -1998,6 +2007,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					if value.startswith('Rc::new(RefCell::new('):
 						#return 'let _RC_%s = %s; let mut %s = _RC_%s.borrow_mut();	/* new array */' % (target, value, target, target)
+						self._known_arrays[ target ] = 'XXX'  ## TODO get class name
 						return 'let %s = %s;	/* new array */' % (target, value)
 					else:
 						return 'let mut %s = %s;			/* new muatble */' % (target, value)
