@@ -1736,7 +1736,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				out.append('for (auto &%s: %s) {' %(b, c))
 
-			out.append('	%s.push_back(%s);' %(compname, a))
+			if is_ll:
+				out.append('	%s.push_back(%s);' %(compname, a))
+			else:
+				assert type in self._classes
+				tmp = '_tmp_'
+				constructor_args = a.strip()[ len(type)+1 :-1] ## strip to just args
+				r = '%s  _ref_%s = %s{};' %(type, tmp, type)
+				if constructor_args:
+					r += '_ref_%s.__init__(%s);\n' %(tmp, constructor_args)
+				r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(type, tmp, type, tmp)
+				out.append( r )
+				out.append('	%s.push_back(%s);' %(compname, tmp))
+
 			out.append('}')
 			if is_ll:
 				out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
