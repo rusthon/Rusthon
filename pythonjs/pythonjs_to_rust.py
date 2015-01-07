@@ -451,7 +451,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					#r = '_ref_%s[%s]' % (self.visit(node.value), self.visit(node.slice))  ## this may not always work
 					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))     ## deference pointer is safer
-
+				elif self._rust:
+					r = '%s.borrow_mut()[%s]' % (self.visit(node.value), self.visit(node.slice))
 				else:
 					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 
@@ -492,12 +493,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def visit_Print(self, node):
 		r = []
 		for e in node.values:
-			s = self.visit(e)
-			if isinstance(e, ast.List):
+			if isinstance(e, ast.List) or isinstance(e, ast.Tuple):
 				fmt = '{}' * len(e.elts)
-				r.append('println!("%s", %s);' %(fmt, s[1:-1]))
+				args = [self.visit(elt) for elt in e.elts]
+				r.append('println!("%s", %s);' %(fmt, ','.join(args)))
 			else:
-				r.append('println!("{}", %s);' %s)
+				r.append('println!("{}", %s);' %self.visit(e))
 		return ''.join(r)
 
 	#def visit_Expr(self, node):
@@ -535,6 +536,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'use std::io::{File, Open, ReadWrite, Read, IoResult};',
 			'use std::num::Float;',
 			'use std::num::Int;',
+			'use std::rc::Rc;',
+			'use std::cell::RefCell;',
 			TRY_MACRO,
 		]
 		lines = []
@@ -717,8 +720,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if self._stack and fname in self._classes:
 			if not isinstance(self._stack, ast.Assign):
 				if self._rust:
-					fname = fname + '::new'
-					node.is_new = True
+					node.is_new_class_instance = True
 				else:
 					raise SyntaxError('TODO create new class instance in function call argument')
 
@@ -910,7 +912,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if self._cpp:
 				return '%s->size()' %self.visit(node.args[0])
 			else:
-				return '%s.len()' %self.visit(node.args[0])
+				return '%s.borrow().len()' %self.visit(node.args[0])
 
 		elif fname == 'float':
 			if self._cpp or self._rust:
@@ -935,9 +937,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if self._rust:
 				T = self.parse_go_style_arg(node.args[0])
 				if T == 'int': ## TODO other ll types
-					return '&mut Vec<%s>' %T
+					#return '&mut Vec<%s>' %T
+					return 'Rc<RefCell< Vec<%s> >>' %T
 				else:
-					return '&mut Vec<&mut %s>' %T
+					#return '&mut Vec<&mut %s>' %T  ## old ref style
+					return 'Rc<RefCell< Vec<Rc<RefCell<%s>>> >>' %T
 
 			elif self._cpp:
 				return 'std::shared_ptr<std::vector<%s>>' %self.parse_go_style_arg(node.args[0])
@@ -974,18 +978,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			#assert not self._cpp  ## TODO move this logic to visit_Attribute for rust
 			if self._rust:
-				return '%s.push( %s )' %(arr, item)
+				return '%s.borrow_mut().push( %s )' %(arr, item)
 			elif self._cpp:
 				return '%s->push_back( %s )' %(arr, item)
 
-		elif self._with_gojs:
-			if isinstance(node.func, ast.Attribute):
-				fname = node.func.attr
-				obname = self.visit(node.func.value)
-				return 'Get("%s").Call("%s",%s)' % (obname, fname, args)
-
-			else:
-				return 'Call("%s",%s)' % (fname, args)
+		elif hasattr(node, 'is_new_class_instance') and self._rust:
+			return 'Rc::new(RefCell::new( %s::new(%s) ))' % (fname, args)
 
 		else:
 
@@ -1025,41 +1023,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return '<- %s' %right
 
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in rust_hacks:
-				if node.left.func.id == '__rust__func__':
-					raise SyntaxError('TODO - rust.func')
-				elif node.left.func.id == '__rust__map__':
-					key_type = self.visit(node.left.args[0])
-					value_type = self.visit(node.left.args[1])
-					if value_type == 'interface': value_type = 'interface{}'
-					return '&map[%s]%s%s' %(key_type, value_type, right)
-				else:
-					right = []
-					for elt in node.right.elts:
-						if isinstance(elt, ast.Num):
-							right.append( str(elt.n)+'i' )
-						else:
-							right.append( self.visit(elt) )
-					right = '(%s)' %','.join(right)
-
-					if node.left.func.id == '__rust__array__':
-						T = self.visit(node.left.args[0])
-						if T in go_types:
-							#return '&vec!%s%s' %(T, right)
-							return '&mut vec!%s' %right
-						else:
-							self._catch_assignment = {'class':T}  ## visit_Assign catches this, ugly hack for Go
-							return '&[]*%s%s' %(T, right)
-
-					elif node.left.func.id == '__rust__arrayfixed__':
-						asize = self.visit(node.left.args[0])
-						atype = self.visit(node.left.args[1])
-						if atype not in go_types:
-							if right != '{}': raise SyntaxError('todo init array of objects with args')
-							return '&make([]*%s, %s)' %(atype, asize)
-						else:
-							#return '&[%s]%s%s' %(asize, atype, right)
-							return '&vec!%s' %right
-
+				raise RuntimeError('deprecated rust_hacks')
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
 					raise SyntaxError('TODO - go.func')
@@ -1083,8 +1047,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
 						if T in go_types:
-							#return '&vec!%s%s' %(T, right)
-							return '&mut vec!%s' %right
+							#return '&mut vec!%s' %right
+							return 'Rc::new(RefCell::new(vec!%s))' %right
 						else:
 							self._catch_assignment = {'class':T}  ## visit_Assign catches this
 							return '&[]*%s%s' %(T, right)
@@ -1096,8 +1060,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							if right != '{}': raise SyntaxError('todo init array of objects with args')
 							return '&make([]*%s, %s)' %(atype, asize)
 						else:
-							#return '&[%s]%s%s' %(asize, atype, right)
-							return '&vec!%s' %right
+							#return '&vec!%s' %right
+							return 'Rc::new(RefCell::new(vec!%s))' %right
 
 
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__':
@@ -1714,22 +1678,29 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if type == 'int':  ## TODO other low level types
 				out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
 			else:
-				out.append('let mut %s : Vec<&mut %s> = Vec::new();' %(compname,type))
 				mutref = True
+				#out.append('let mut %s : Vec<&mut %s> = Vec::new();' %(compname,type))  ## ref style
+				out.append('let %s : Vec< Rc<RefCell<%s>> > = Vec::new();' %(compname,type))
 
 			if range_n:
 				## in rust the range builtin returns ...
 				out.append('for %s in %s {' %(b, c))
 				out.append('	%s.push(%s as %s);' %(compname, a, type))
 			else:
-				out.append('for %s in %s.iter() {' %(b, c))
+				out.append('for &%s in %s.iter() {' %(b, c))
 				if mutref:
-					out.append('	%s.push(&mut %s);' %(compname, a))
+					#out.append('	%s.push(&mut %s);' %(compname, a))
+					out.append('	%s.push(%s);' %(compname, a))
 				else:
 					out.append('	%s.push(%s);' %(compname, a))
 
 			out.append('}')
-			out.append('let mut %s = &%s;' %(target, compname))
+			if mutref or True:
+				out.append('let %s : Rc<RefCell<%s>> = Rc::new(RefCell::new(%s));' %(target, type, compname))
+			else:
+				out.append('let mut %s = &%s;' %(target, compname))
+
+
 		elif self._cpp:
 			out.append('std::vector<%s> %s;' %(type,compname))
 			if range_n:
@@ -1950,7 +1921,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					return 'auto %s = %s;			/* %s */' % (target, value, info)
 				else:
-					return 'let %s = %s;			/* %s */' % (target, value, info)
+					if '.borrow_mut()' in value:
+						return 'let mut %s = %s;			/* %s */' % (target, value, info)
+					else:
+						return 'let %s = %s;			/* %s */' % (target, value, info)
 
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
@@ -2002,9 +1976,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							## note: methods are always defined with `&mut self`, this requires that
 							## a mutable reference is taken so that methods can be called on the instance.
 
-							value = self._visit_call_helper(node.value, force_name=classname+'::new')
-							return 'let %s = &mut %s;' %(target, value)
+							## old ref style
+							#value = self._visit_call_helper(node.value, force_name=classname+'::new')
+							#return 'let %s = &mut %s;' %(target, value)
 
+							## new reference counted mutable style
+							value = self._visit_call_helper(node.value)
+							return 'let %s : Rc<RefCell<%s>> = %s;' %(target, classname, value)
 				else:
 					if self._cpp:
 						if isinstance(node.value, ast.Expr) and isinstance(node.value.value, ast.BinOp) and self.visit(node.value.value.op)=='<<':
@@ -2018,7 +1996,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					return 'auto %s = %s;' % (target, value)
 				else:
-					return 'let mut %s = %s;			/* new muatble */' % (target, value)
+					if value.startswith('Rc::new(RefCell::new('):
+						#return 'let _RC_%s = %s; let mut %s = _RC_%s.borrow_mut();	/* new array */' % (target, value, target, target)
+						return 'let %s = %s;	/* new array */' % (target, value)
+					else:
+						return 'let mut %s = %s;			/* new muatble */' % (target, value)
 
 		else:
 			## the variable has already be used, and is getting reassigned,

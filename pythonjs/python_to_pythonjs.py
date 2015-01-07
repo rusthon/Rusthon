@@ -555,12 +555,16 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			v = self.visit(e)
 			assert v is not None
 			a.append( v )
-		a = '[%s]' % ', '.join(a)
 
 		if self._with_dart:
-			return 'tuple(%s)' %a
+			return 'tuple([%s])' %','.join(a)
+		elif self._with_rust or self._with_cpp:
+			if len(a)==1:
+				return '(%s,)' % a[0]
+			else:
+				return '(%s)' % ', '.join(a)
 		else:
-			return a
+			return '[%s]' % ', '.join(a)
 
 	def visit_List(self, node):
 		node.returns_type = 'list'
@@ -2222,17 +2226,17 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				self._instances[ target.id ] = node.value.func.id  ## keep track of instances
 			elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
 				self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
-			elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and isinstance(node.value.func.value, Name) and node.value.func.value.id in self._instances:
-				typedef = self.get_typedef( node.value.func.value )
-				method = node.value.func.attr
-				if method in typedef.methods:
-					func = typedef.get_pythonjs_function_name( method )
-					if func in self._function_return_types:
-						self._instances[ target.id ] = self._function_return_types[ func ]
-					else:
-						writer.write('## %s - unknown return type for: %s' % (typedef.name, func))
-				else:
-					writer.write('## %s - not a method: %s' %(typedef.name, method))
+			#elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and isinstance(node.value.func.value, Name) and node.value.func.value.id in self._instances:
+			#	typedef = self.get_typedef( node.value.func.value )
+			#	method = node.value.func.attr
+			#	if method in typedef.methods:
+			#		func = typedef.get_pythonjs_function_name( method )
+			#		if func in self._function_return_types:
+			#			self._instances[ target.id ] = self._function_return_types[ func ]
+			#		else:
+			#			writer.write('## %s - unknown return type for: %s' % (typedef.name, func))
+			#	else:
+			#		writer.write('## %s - not a method: %s' %(typedef.name, method))
 
 			elif isinstance(node.value, Name) and node_value in self._instances:  ## if this is a simple copy: "a = b" and "b" is known to be of some class
 				self._instances[ target.id ] = self._instances[ node_value ]

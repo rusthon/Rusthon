@@ -1,6 +1,8 @@
 """array types"""
 
 def test_pass_array_as_arg( arr:[]int ):
+	#m = arr.borrow_mut()
+	#m.push( 5 )
 	arr.append( 5 )
 
 def main():
@@ -10,7 +12,7 @@ def main():
 	a.append( 4 )
 	TestError( len(a)==4 )
 
-	test_pass_array_as_arg( a )
+	test_pass_array_as_arg( a.clone() )  ## Rc needs to be cloned because `a` is used after this call below.
 	TestError( len(a)==5 )
 
 	b = [2]int(100,200)

@@ -321,7 +321,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return ' in '
 
 	def visit_Tuple(self, node):
-		return '[%s]' % ', '.join(map(self.visit, node.elts))
+		if self._rust:
+			return 'vec!(%s)' % ', '.join(map(self.visit, node.elts))
+		else:
+			return '[%s]' % ', '.join(map(self.visit, node.elts))
 
 	def visit_List(self, node):
 		a = []
