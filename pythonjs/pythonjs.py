@@ -323,6 +323,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 	def visit_Tuple(self, node):
 		if self._rust:
 			return 'vec!(%s)' % ', '.join(map(self.visit, node.elts))
+		elif self._cpp:
+			return 'std::array<int, %s>{{%s}}' %(len(node.elts), ','.join(map(self.visit, node.elts)))
 		else:
 			return '[%s]' % ', '.join(map(self.visit, node.elts))
 

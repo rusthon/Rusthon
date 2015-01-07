@@ -719,10 +719,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if self._stack and fname in self._classes:
 			if not isinstance(self._stack, ast.Assign):
-				if self._rust:
-					node.is_new_class_instance = True
-				else:
-					raise SyntaxError('TODO create new class instance in function call argument')
+				#if self._rust:
+				node.is_new_class_instance = True
+				#else:
+				#	raise SyntaxError('TODO create new class instance in function call argument')
 
 		is_append = False
 		if fname.endswith('.append'): ## TODO - deprecate append to pushX or make `.append` method reserved by not allowing methods named `append` in visit_ClassDef?
@@ -934,8 +934,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif fname == '__arg_array__':  ## TODO make this compatible with Go backend, move to pythonjs.py
 			assert len(node.args)==1
+			T = self.parse_go_style_arg(node.args[0])
 			if self._rust:
-				T = self.parse_go_style_arg(node.args[0])
 				if T == 'int': ## TODO other ll types
 					#return '&mut Vec<%s>' %T
 					return 'Rc<RefCell< Vec<%s> >>' %T
@@ -944,7 +944,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'Rc<RefCell< Vec<Rc<RefCell<%s>>> >>' %T
 
 			elif self._cpp:
-				return 'std::shared_ptr<std::vector<%s>>' %self.parse_go_style_arg(node.args[0])
+				if T == 'int':
+					return 'std::shared_ptr<std::vector<%s>>' %T
+				else:
+					return 'std::shared_ptr<std::vector< std::shared_ptr<%s> >>' %T
 			else:
 				raise RuntimeError('TODO generic arg array')
 
@@ -1716,7 +1719,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		elif self._cpp:
-			out.append('std::vector<%s> %s;' %(type,compname))
+			is_ll = False
+			if type=='int':  ## TODO other ll types
+				is_ll = True
+				out.append('std::vector<%s> %s;' %(type,compname))
+			else:
+				out.append('std::vector<std::shared_ptr<%s>> %s;' %(type,compname))
+
 			if range_n:
 				if len(range_n)==1:
 					out.append('for (int %s=0; %s<%s; %s++) {' %(a, a, range_n[0], a))
@@ -1725,12 +1734,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					out.append('for (int %s=%s; %s<%s; %s++) {' %(a, range_n[0], a, range_n[1], a))
 
 			else:
-				out.append('for (auto &%s: %s) {' %(b, compname))
+				out.append('for (auto &%s: %s) {' %(b, c))
 
 			out.append('	%s.push_back(%s);' %(compname, a))
 			out.append('}')
-			out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
-			## TODO vector.resize if size
+			if is_ll:
+				out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
+			else:
+				out.append('auto %s = std::make_shared<std::vector< std::shared_ptr<%s> >>(%s);' %(target, type, compname))
+			## TODO vector.resize if size is given
 
 		else:
 			raise RuntimeError('TODO list comp for some backend')
