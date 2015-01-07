@@ -1006,7 +1006,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							raise SyntaxError('%s(%s)' % (fname, args))
 
 
-			return '%s(%s) /*%s*/' % (fname, args, self._known_arrays)
+			return '%s(%s)' % (fname, args)
 
 
 	def visit_BinOp(self, node):
@@ -1689,7 +1689,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				mutref = True
 				#out.append('let mut %s : Vec<&mut %s> = Vec::new();' %(compname,type))  ## ref style
-				out.append('let %s : Vec< Rc<RefCell<%s>> > = Vec::new();' %(compname,type))
+				out.append('let mut %s : Vec< Rc<RefCell<%s>> > = Vec::new();' %(compname,type))
 
 			if range_n:
 				## in rust the range builtin returns ...
@@ -1704,10 +1704,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					out.append('	%s.push(%s);' %(compname, a))
 
 			out.append('}')
-			if mutref or True:
-				out.append('let %s : Rc<RefCell<%s>> = Rc::new(RefCell::new(%s));' %(target, type, compname))
+
+			#out.append('let mut %s = &%s;' %(target, compname))
+			if mutref:
+				out.append('let %s : Rc<RefCell< Vec<Rc<RefCell<%s>>> >> = Rc::new(RefCell::new(%s));' %(target, type, compname))
 			else:
-				out.append('let mut %s = &%s;' %(target, compname))
+				out.append('let %s : Rc<RefCell< Vec<%s> >> = Rc::new(RefCell::new(%s));' %(target, type, compname))
+
+			self._known_arrays[target] = type
+			#out.append('drop(%s);' %compname)  ## release from scope, not required because the Rc/RefCell moves it.
 
 
 		elif self._cpp:

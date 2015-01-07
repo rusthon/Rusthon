@@ -30,6 +30,8 @@ def main():
 	#stuff = []string('list', 'comp')
 	#b = []A( A(x) for x in stuff)
 	#b = []A( A(x) for x in ('list', 'comp'))  ## TODO fix strings
-	b = []A( A(x) for x in (1,2,3,4))
 
+	b = []A( A(x) for x in (1,2,3,4))
+	TestError( len(b)==4 )
 	test_pass_array_of_objects( b, 5 )
+	TestError( len(b)==5 )
