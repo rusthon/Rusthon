@@ -2052,11 +2052,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## or its a destructured assignment, or assignment to an attribute, TODO break this apart.
 
 			is_attr = False
-			#assert target in self._known_vars
+			is_tuple = False
 			if target not in self._known_vars:
-				#raise SyntaxError(target)
-				assert isinstance(node.targets[0], ast.Attribute)  ## self.x = y
-				is_attr = True
+				if isinstance(node.targets[0], ast.Attribute):
+					is_attr = True
+				elif isinstance(node.targets[0], ast.Tuple):
+					is_tuple = True
+				else:
+					raise SyntaxError(node.targets[0])
 
 			value = self.visit(node.value)
 
