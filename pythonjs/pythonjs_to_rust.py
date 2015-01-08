@@ -538,6 +538,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'use std::num::Int;',
 			'use std::rc::Rc;',
 			'use std::cell::RefCell;',
+			'use std::thread::Thread;',
 			TRY_MACRO,
 		]
 		lines = []

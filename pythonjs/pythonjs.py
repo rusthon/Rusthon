@@ -735,7 +735,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				closure_wrapper = '[&]{%s;}'%self.visit(node.args[0])
 				return 'std::thread %s( %s );' %(thread, closure_wrapper)
 			elif self._rust:
-				return 'spawn( move || {%s;} );' % self.visit(node.args[0])
+				#return 'spawn( move || {%s;} );' % self.visit(node.args[0])
+				return 'Thread::spawn( move || {%s;} );' % self.visit(node.args[0])
 			elif self._dart:
 				return 'Isolate.spawn(%s);' %self.visit(node.args[0])
 			else:
