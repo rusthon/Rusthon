@@ -12,9 +12,9 @@ Rusthon input
 ```python
 class A:
 	def __init__(self, x:int, y:int, z:int=1):
-		let self.x : int = x
-		let self.y : int = y
-		let self.z : int = z
+		self.x = x
+		self.y = y
+		self.z = z
 
 	def mymethod(self, m:int) -> int:
 		return self.x * m
@@ -91,14 +91,13 @@ translation to Rust
     }
 
     fn main() {
-
-        let a = &mut A::new(100, 200,_kwargs_type_{z:9999,__use__z:true});
-        println!("{}", a.x);
-        println!("{}", a.y);
-        println!("{}", a.z);
-        let b = a.mymethod(3);          /* a  class: A */
+        let a : Rc<RefCell<A>> = Rc::new(RefCell::new( A::new(100, 200,_kwargs_type_{z:9999,__use__z:true}) ));
+        println!("{}", a.borrow_mut().x);
+        println!("{}", a.borrow_mut().y);
+        println!("{}", a.borrow_mut().z);
+        let mut b = a.borrow_mut().mymethod(3);
         println!("{}", b);
-        let c = call_method(|W| a.mymethod(W) , 4);         /* new variable */
+        let c = call_method(|W| a.borrow_mut().mymethod(W) , 4);
         println!("{}", c);
     }
 

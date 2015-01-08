@@ -3,9 +3,9 @@ simple class
 '''
 class A:
 	def __init__(self, x:int, y:int, z:int=1):
-		let self.x : int = x
-		let self.y : int = y
-		let self.z : int = z
+		self.x = x
+		self.y = y
+		self.z = z
 
 	def mymethod(self, m:int) -> int:
 		return self.x * m
