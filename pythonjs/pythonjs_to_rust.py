@@ -1629,6 +1629,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def visit_Attribute(self, node):
+		parent_node = self._stack[-2]
 		name = self.visit(node.value)
 		attr = node.attr
 		if attr == '__leftarrow__':
@@ -1640,16 +1641,21 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return '%s%s' %(name,attr)
 		elif name=='self' and self._cpp and self._class_stack:
 			return 'this->%s' %attr
-		elif (name in self._known_instances or name in self._known_arrays) and self._cpp:
-			## TODO - attribute lookup stack to make this safe for `a.x.y`
-			## from the known instance need to check its class type, for any
-			## subobjects and deference pointers as required. `a->x->y`
-			## TODO - the user still needs a syntax to use `->` for working with
-			## external C++ libraries where the variable may or may not be a pointer.
-			if attr=='append' and name in self._known_arrays:
-				return '%s->push_back' %name
-			else:
-				return '%s->%s' % (name, attr)
+		elif (name in self._known_instances or name in self._known_arrays) and not isinstance(parent_node, ast.Attribute):
+			if self._cpp:
+				## TODO - attribute lookup stack to make this safe for `a.x.y`
+				## from the known instance need to check its class type, for any
+				## subobjects and deference pointers as required. `a->x->y`
+				## TODO - the user still needs a syntax to use `->` for working with
+				## external C++ libraries where the variable may or may not be a pointer.
+				if attr=='append' and name in self._known_arrays:
+					return '%s->push_back' %name
+				else:
+					return '%s->%s' % (name, attr)
+
+			else:  ## rust
+				return '%s.borrow_mut().%s' % (name, attr)
+
 		else:
 			return '%s.%s' % (name, attr)
 
