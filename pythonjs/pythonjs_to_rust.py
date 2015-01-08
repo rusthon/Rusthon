@@ -1247,6 +1247,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						a = '%s:%s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
+				is_sender = False
+				is_recver = False
+				if arg_type.startswith('Sender<'):
+					arg_type = arg_type[ len('Sender<') : -1 ]
+					is_sender = True
+				elif arg_type.startswith('Receiver<'):
+					arg_type = arg_type[ len('Receiver<') : -1 ]
+					is_recver = True
+
+
 				if self._cpp:
 					## cpp-channel API is both input and output like Go.
 					a = 'cpp::channel<%s>  %s' %(arg_type, arg_name)
@@ -1256,9 +1266,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					## will be the ones most often passed around.
 					## the user can use rust style typing `def f(x:X<t>):` in function def's
 					## to type a function argument as `Reveiver<t>`
-					a = '%s : Sender<%s>' %(arg_name, arg_type)
-				else: ## Go
+
+					if is_recver:
+						a = '%s : Receiver<%s>' %(arg_name, arg_type)
+					else:
+						a = '%s : Sender<%s>' %(arg_name, arg_type)
+
+				elif self._go:
 					a = '%s chan %s' %(arg_name, arg_type)
+
+				else:
+					raise RuntimeError('TODO chan for backend')
 
 			dindex = i - offset
 

@@ -468,7 +468,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 			for key in decor.keywords:
-				chan_args_typedefs[ key.arg ] = self.visit(key.value)
+				if isinstance(key.value, ast.Str):
+					chan_args_typedefs[ key.arg ] = key.value.s.strip()
+				else:
+					chan_args_typedefs[ key.arg ] = self.visit(key.value)
 		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 			if decor.keywords:
 				raise SyntaxError('invalid go return type')

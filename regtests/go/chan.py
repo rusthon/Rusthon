@@ -5,9 +5,9 @@ def wrapper(a:int, c: chan int):
 	c <- result
 
 def main():
-	c = go.channel(int)
+	c = channel(int)
 
-	go( wrapper(17, c) )
+	spawn( wrapper(17, c) )
 
 	# Do other work in the current goroutine until the channel has a result.
 
