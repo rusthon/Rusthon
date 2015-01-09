@@ -2278,6 +2278,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			if self._use_destructured_assignment:  ## Lua, Rust, Go, Dart
 				elts = [self.visit(e) for e in target.elts]
 				writer.write('(%s) = %s' % (','.join(elts), self.visit(node.value)))
+
+			elif self._with_cpp and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='channel':
+				## special case for rust style channels
+				sender = self.visit( target.elts[0] )
+				recver = self.visit( target.elts[1] )
+				writer.write('%s = %s' % (sender, self.visit(node.value)))
+				writer.write('%s = %s' % (recver, sender))
+
 			else:
 				if isinstance(node.value, ast.Name):
 					r = node.value.id

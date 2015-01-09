@@ -1272,7 +1272,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 						a = '%s : Sender<%s>' %(arg_name, arg_type)
 
-				elif self._go:
+				elif self._go:  ## TODO move go logic here?  currently this is done in pythonjs_to_go.py
 					a = '%s chan %s' %(arg_name, arg_type)
 
 				else:
