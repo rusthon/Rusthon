@@ -11,40 +11,6 @@ go_types = 'bool string int float64'.split()
 class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
 
-def transform_gopherjs( node ):
-	gt = GopherjsTransformer()
-	gt.visit( node )
-	return node
-
-class GopherjsTransformer( ast.NodeVisitor ):  ## TODO deprecate
-	#def visit_Assign(self, node):
-	#	writer.write( '%s.Set("%s", %s)' %(target_value, target.attr, self.visit(node.value)) )
-
-
-	def visit_Attribute(self, node):
-		#return '%s.Get("%s")' %(self.visit(node.value), node.attr)
-		args = [ ast.Str(node.attr) ]
-		f = ast.Call( ast.Name('Get', None), args, [], None, None )
-		node.__dict__ = f.__dict__
-
-	def visit_Call(self, node):
-		#if isinstance(self._stack[-2], ast.Expr):
-		#	pass
-		#else:
-		#	raise SyntaxError( self._stack )
-		if isinstance(node.func, ast.Attribute):
-			args = [ ast.Str(node.func.attr) ]
-			args.extend( node.args )
-			#f = ast.Call( ast.Name('Call', None), args, node.keywords, node.starargs, node.kwargs )
-			#raise SyntaxError(node)
-
-			f = ast.Call( ast.Name('__js_global_get_'+node.func.value.id, None), args, node.keywords, node.starargs, node.kwargs )
-
-			#x = ast.Attribute( ast.Name('js',None), 'Global', None )
-			#a = ast.Call( ast.Name('__js_global_get_',None), [ast.Str(node.func.value.id)], [], None, None )
-
-			node.__dict__ = f.__dict__
-
 
 class GoGenerator( pythonjs.JSGenerator ):
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):
@@ -53,7 +19,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 		self._go = True
 		self._dart = False
-		self._with_gojs = False
 		self._class_stack = list()
 		self._classes = dict()		## name : node
 		#	node._parents = set()
@@ -554,15 +519,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			return '__%s := append(*%s,%s); *%s = __%s;' % (id, arr, item, arr, id)
 
-		elif self._with_gojs:
-			if isinstance(node.func, ast.Attribute):
-				fname = node.func.attr
-				obname = self.visit(node.func.value)
-				return 'Get("%s").Call("%s",%s)' % (obname, fname, args)
-
-			else:
-				return 'Call("%s",%s)' % (fname, args)
-
 		else:
 
 			if isinstance(node.func, ast.Attribute) and False:
@@ -570,9 +526,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 					varname = node.func.value.id
 					if varname in self._known_vars:
 						#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
-
-
-
 						cname = self._known_instances[varname]
 						if node.func.attr in self.method_returns_multiple_subclasses[ cname ]:
 							raise SyntaxError('%s(%s)' % (fname, args))
@@ -580,37 +533,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			return '%s(%s)' % (fname, args)
 
-	def _visit_call_helper_go_DEPRECATED(self, node):
-		name = self.visit(node.func)
-		if name == '__go__':
-			return 'go %s' %self.visit(node.args[0])
-		elif name == '__go_make__':
-			if len(node.args)==2:
-				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
-			elif len(node.args)==3:
-				return 'make(%s, %s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]), self.visit(node.args[1]))
-			else:
-				raise SyntaxError('go make requires 2 or 3 arguments')
-		elif name == '__go_make_chan__':
-			return 'make(chan %s)' %self.visit(node.args[0])
-		elif name == '__go__array__':
-			if isinstance(node.args[0], ast.BinOp):# and node.args[0].op == '<<':  ## todo assert right is `typedef`
-				a = self.visit(node.args[0].left)
-				if a in go_types:
-					return '*[]%s' %a
-				else:
-					return '*[]*%s' %a  ## todo - self._catch_assignment_array_of_obs = true
-
-			else:
-				a = self.visit(node.args[0])
-				if a in go_types:
-					return '[]%s{}' %a
-				else:
-					return '[]*%s{}' %a
-		elif name == '__go__addr__':
-			return '&%s' %self.visit(node.args[0])
-		else:
-			raise SyntaxError(name)
 
 
 	def visit_BinOp(self, node):
@@ -763,7 +685,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 				for key in decor.keywords:
-					chan_args_typedefs[ key.arg ] = self.visit(key.value)
+					if isinstance(key.value, ast.Str):
+						chan_args_typedefs[ key.arg ] = key.value.s.strip()
+					else:
+						chan_args_typedefs[ key.arg ] = self.visit(key.value)
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				if decor.keywords:
 					raise SyntaxError('invalid go return type')
@@ -806,6 +731,10 @@ class GoGenerator( pythonjs.JSGenerator ):
 					a = '%s %s' %(arg_name, arg_type)
 			else:
 				arg_type = chan_args_typedefs[arg_name]
+				if arg_type.startswith('Sender<'):
+					arg_type = arg_type[ len('Sender<') : -1 ]
+				elif arg_type.startswith('Receiver<'):
+					arg_type = arg_type[ len('Receiver<') : -1 ]
 				a = '%s chan %s' %(arg_name, arg_type)
 
 			dindex = i - offset
@@ -1098,7 +1027,16 @@ class GoGenerator( pythonjs.JSGenerator ):
 
 
 	def visit_Assign(self, node):
-		if isinstance(node.targets[0], ast.Tuple): raise NotImplementedError('TODO')
+		if isinstance(node.targets[0], ast.Tuple):
+			## special case for rust compatible style of creating sender,recver,
+			## which in go are actually the same channel, below the go channel is assigned to both targets.
+			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='__go_make_chan__':
+				sender = self.visit(node.targets[0].elts[0])
+				recver = self.visit(node.targets[0].elts[1])
+				T = self.visit(node.value.args[0])
+				return '%s := make(chan %s); %s := %s' %(sender, T, recver, sender)
+			else:
+				raise NotImplementedError('TODO')
 		self._catch_assignment = False
 
 		target = self.visit( node.targets[0] )
