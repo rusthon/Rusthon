@@ -989,9 +989,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			#	classname = self._known_instances[ item ]
 			#	if arr in self._known_arrays and classname != self._known_arrays[arr]:
 
-			#assert not self._cpp  ## TODO move this logic to visit_Attribute for rust
 			if self._rust:
-				return '%s.borrow_mut().push( %s )' %(arr, item)
+				return '%s.push( %s )' %(arr, item)
 			elif self._cpp:
 				return '%s->push_back( %s )' %(arr, item)
 
@@ -1169,6 +1168,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			self._vars = set()
 			self._known_vars = set()
 			self._known_strings = set()
+			##TODO self._known_arrays = ...
 		elif len(self._function_stack) > 1:
 			## do not clear self._vars and _known_vars inside of closure
 			is_closure = True
@@ -1178,7 +1178,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		generics = set()
 		args_generics = dict()
 		func_pointers = set()
-
+		arrays = dict()
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None}
 
@@ -1190,13 +1190,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				chan_args_typedefs=chan_args_typedefs,
 				generics=generics,
 				args_generics=args_generics,
-				func_pointers=func_pointers
+				func_pointers=func_pointers,
+				arrays = arrays,
 			)
+
+		for name in arrays:
+			self._known_arrays[ name ] = arrays[ name ]
 
 		returns_self = options['returns_self']
 		return_type = options['returns']
 		generic_base_class = options['generic_base_class']
-
 
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer

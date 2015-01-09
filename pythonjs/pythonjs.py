@@ -393,13 +393,14 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return options['getter'] or options['setter']
 
 
-	def _visit_decorator(self, decor, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None ):
+	def _visit_decorator(self, decor, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None, arrays=None ):
 		if options is None: options = dict()
 		if args_typedefs is None: args_typedefs = dict()
 		if chan_args_typedefs is None: chan_args_typedefs = dict()
 		if generics is None: generics = set()
 		if args_generics is None: args_generics = dict()
 		if func_pointers is None: func_pointers = set()
+		if arrays is None: arrays = dict()
 
 		if isinstance(decor, ast.Name) and decor.id == 'property':
 			## a function is marked as a getter with `@property`
@@ -420,6 +421,9 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 					if isinstance( key.value, ast.Str):
 						args_typedefs[ key.arg ] = key.value.s
 					else:
+						if isinstance(key.value, ast.Call) and isinstance(key.value.func, ast.Name) and key.value.func.id=='__arg_array__':
+							arrays[ key.arg ] = self.visit(key.value.args[0])
+
 						args_typedefs[ key.arg ] = self.visit(key.value)
 
 					if args_typedefs[key.arg].startswith('func(') or args_typedefs[key.arg].startswith('lambda('):
