@@ -355,7 +355,14 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return '\n'.join( out )
 
 	def visit_Raise(self, node):
-		return 'throw new %s;' % self.visit(node.type)
+		if self._rust:
+			return 'panic!("%s");'  % self.visit(node.type)
+		elif self._cpp:
+			T = self.visit(node.type)
+			if T == 'RuntimeError()': T = 'std::exception'
+			return 'throw %s;' % T
+		else:
+			return 'throw new %s;' % self.visit(node.type)
 
 	def visit_Yield(self, node):
 		return 'yield %s' % self.visit(node.value)

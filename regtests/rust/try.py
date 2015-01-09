@@ -7,16 +7,13 @@ def myfunc():
 	try:
 		print('trying something that will fail...')
 		print('some call that fails at runtime')
-		f = open('/tmp/nosuchfile')
+		#f = open('/tmp/nosuchfile')
+		raise RuntimeError()
 	except:
 		b = True
 
-	#print('trying something that will fail...')
-	#print('some call that fails at runtime')
-	#f = open('/tmp/nosuchfile')
-
-
 	TestError( b == True )
+	print('ok')
 
 def main():
 	myfunc()

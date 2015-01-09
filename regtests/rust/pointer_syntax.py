@@ -9,7 +9,7 @@ def f(a:&mut int) ->int:
 
 def main():
 	f(&mut *x)
-	f(@mut *x, y.z())
+	#f(@mut *x, y.z())  ## translates to `ref mut *x`, but this might be deprecated in the latest rust.
 	f(x as uint)
 
 	let x : Vec<(uint, Y<int>)> = range(0,1).map().collect()
