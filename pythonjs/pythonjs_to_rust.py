@@ -963,6 +963,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for e in node.args:
 				if self._rust and isinstance(e, ast.Name) and e.id in self._known_arrays:
 					args.append( e.id+'.clone()' )  ## automatically clone known array Rc box
+				elif isinstance(e, ast.Call) and isinstance(e.func, ast.Attribute) and isinstance(e.func.value, ast.Name) and e.func.value.id in self._known_arrays and e.func.attr=='clone':
+					if self._rust:
+						args.append( e.func.value.id+'.clone()' )  	## user called clone()
+					else:
+						args.append( e.func.value.id )  			## skip clone() for c++ backend
 				else:
 					args.append( self.visit(e) )
 
