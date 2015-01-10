@@ -1218,12 +1218,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				a = ''.join(a)
 				writer.write( "JS('%s')" %a )
 
+			## class attributes
 			for item in class_vars:
 				if isinstance(item, Assign) and isinstance(item.targets[0], Name):
 					item_name = item.targets[0].id
-					item.targets[0].id = '__%s_%s' % (name, item_name)
-					self.visit(item)  # this will output the code for the assign
-					writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
+					#item.targets[0].id = '__%s_%s' % (name, item_name)
+					#self.visit(item)  # this will output the code for the assign
+					#writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
+					writer.write('%s.%s = %s' % (name, item_name, self.visit(item.value)))
 
 		if gpu_object:
 			## TODO check class variables ##
@@ -4081,16 +4083,17 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				a = self.visit(b)
 				if a: writer.write(a)
 			self._with_ll = False
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':
-			self._with_js = True
+
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':  ## deprecated
+			#self._with_js = True
 			map(self.visit, node.body)
-			self._with_js = False
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'python':
-			if not self._with_js:
-				raise SyntaxError('"with python:" is only used inside of a "with javascript:" block')
-			self._with_js = False
+			#self._with_js = False
+		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'python':  ## deprecated
+			#if not self._with_js:
+			#	raise SyntaxError('"with python:" is only used inside of a "with javascript:" block')
+			#self._with_js = False
 			map(self.visit, node.body)
-			self._with_js = True
+			#self._with_js = True
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'fastdef':
 			self._with_fastdef = True

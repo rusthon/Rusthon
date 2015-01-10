@@ -17,6 +17,10 @@ with lowlevel:
 	def __getfast__(ob, attr):
 		v = ob[ attr ]
 		if v is undefined:
+			if ob.__class__:
+				v = ob.__class__[attr]
+				if v is not undefined:
+					return v
 			raise AttributeError(attr)
 		else:
 			return v
@@ -250,27 +254,11 @@ def type(ob_or_class_name, bases=None, class_dict=None):
 			return create_class(ob_or_class_name, bases, class_dict)  ## TODO rename create_class to _pyjs_create_class
 
 
-def getattr(ob, attr, property=False):
-	with javascript:
-		if property:
-			prop = _get_upstream_property( ob.__class__, attr )
-			if prop and prop['get']:
-				return prop['get']( [ob], {} )
-			else:
-				print "ERROR: getattr property error", prop
-		else:
-			return __get__(ob, attr)
+def getattr(ob, attr):
+	return __getfast__(ob, attr)
 
-def setattr(ob, attr, value, property=False):
-	with javascript:
-		if property:
-			prop = _get_upstream_property( ob.__class__, attr )
-			if prop and prop['set']:
-				prop['set']( [ob, value], {} )
-			else:
-				print "ERROR: setattr property error", prop
-		else:
-			__set__(ob, attr, value)
+def setattr(ob, attr, value):
+	ob[attr] = value
 
 def issubclass(C, B):
 	if C is B:
