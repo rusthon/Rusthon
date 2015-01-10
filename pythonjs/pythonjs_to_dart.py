@@ -30,8 +30,8 @@ def collect_names(node):
 
 class DartGenerator( pythonjs.JSGenerator ):
 
-	def __init__(self, requirejs=False, insert_runtime=False):
-		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		pythonjs.JSGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._classes = dict()
 		self._class_props = dict()
 		self._raw_dict = False
@@ -475,12 +475,19 @@ class DartGenerator( pythonjs.JSGenerator ):
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			for key in node.keywords:
+				T = 'var'
 				if isinstance(key.value, ast.Str):
-					out.append( '%s %s' %(key.value.s, key.arg) )
+					T = key.value.s
 				elif isinstance(key.value, ast.Name):
-					out.append( '%s %s' %(key.value.id, key.arg) )
+					T = key.value.id
 				else:
 					raise SyntaxError(key.value)
+
+				if T.startswith('lambda(') or T.startswith('func('):
+					T = 'var'
+
+				out.append( '%s %s' %(T, key.arg) )
+
 
 		return ';'.join(out)
 
@@ -578,7 +585,7 @@ class DartGenerator( pythonjs.JSGenerator ):
 
 def main(script):
 	tree = ast.parse(script)
-	return DartGenerator().visit(tree)
+	return DartGenerator( source=script ).visit(tree)
 
 
 def command():

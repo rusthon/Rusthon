@@ -29,8 +29,8 @@ def collect_names(node):
 
 class LuaGenerator( pythonjs.JSGenerator ):
 
-	def __init__(self, requirejs=False, insert_runtime=False):
-		pythonjs.JSGenerator.__init__(self, requirejs=False, insert_runtime=False)
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		pythonjs.JSGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._classes = dict()
 		self._class_props = dict()
 		self._lua = True
@@ -335,7 +335,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 
 def main(script):
 	tree = ast.parse(script)
-	return LuaGenerator().visit(tree)
+	return LuaGenerator( source=script ).visit(tree)
 
 
 def command():

@@ -454,11 +454,14 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 								else:
 									args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
 
-						else:
+						elif self._rust:
 							if lambda_return:
 								args_typedefs[ key.arg ] = '|%s|->%s' %(lambda_args, lambda_return)
 							else:
 								args_typedefs[ key.arg ] = '|%s|' %lambda_args
+
+						elif self._dart:
+							args_typedefs[ key.arg ] = 'var'
 
 					## check for super classes - generics ##
 					if args_typedefs[ key.arg ] in self._classes:
