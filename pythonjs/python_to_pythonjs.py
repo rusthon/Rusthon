@@ -121,6 +121,12 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		#super(PythonToPythonJS, self).__init__()
 		ast_utils.NodeVisitorBase.__init__(self, source)  ## note self._source gets changed below
 
+		## lowlevel is code within a `with lowlevel:` block
+		## this is used to define some builtin methods for each backend,
+		## where the user wants the most direct translation possible to
+		## the target backend.  This is only for special cases.
+		self._with_ll = False   ## lowlevel
+
 		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
 		self._with_lua = lua
@@ -132,6 +138,26 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		self._with_cpp = cpp
 		self._fast_js = fast_javascript
 		self._strict_mode = pure_javascript
+
+		## TODO _with_js should be renamed to _with_restricted_python, or _with_rpy.
+		## originally this option was only used to switch modes from the original
+		## full python mode to the faster more restricted python mode.
+		## The older full python mode requires a backend that is very dynamic, like: javascript or lua
+		## full python mode maps all calls through a generic `__get__` method that takes care of all
+		## dynamic mapping at runtime, this basically emulates what CPython is doing in C in a slower VM.
+		## full python mode also breaks down classes into flat function calls, for backends that do not
+		## directly support classes like Lua and JavaScript.
+		## The JavaScript backend now defaults to restricted python mode, because it is much faster,
+		## and classes are now translated to JavaScript prototypes and constructed by calling new,
+		## this also provides much better interop with external JS libraries.
+		## Since restricted python mode became default the new backends: rust and c++ now require that mode,
+		## and it makes the last stage of translation simpler and more generic.
+		## However, the Lua backend still requires the old style full python mode, because in Lua classes
+		## must be fully broken down into flat functions.
+		self._with_js = True
+		if self._with_lua:
+			self._with_js = False
+
 
 		if self._with_rust or self._with_go or self._with_lua:
 			self._use_destructured_assignment = True
@@ -201,8 +227,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		else:
 			self._direct_operators = set()
 
-		self._with_ll = False   ## lowlevel
-		self._with_js = True
 		self._in_lambda = False
 		self._in_while_test = False
 		self._use_threading = False
@@ -1215,7 +1239,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		if self._with_dart or self._with_go or self._with_rust or self._with_cpp:
 			self._visit_dart_classdef(node)
 			return
+
 		elif self._with_js:
+			assert not self._with_lua
 			self._visit_js_classdef(node)
 			return
 
@@ -2671,7 +2697,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 							return '%s(%s)' %( method, ','.join(args) )
 
 
-			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
+			elif isinstance(node.func, Name) and node.func.id in self._js_classes and not self._with_lua:
 				if node.keywords:
 					kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
 					if args:

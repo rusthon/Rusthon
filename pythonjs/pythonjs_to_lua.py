@@ -334,6 +334,7 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		return '\n'.join(out)
 
 def main(script):
+	#raise SyntaxError(script)
 	tree = ast.parse(script)
 	return LuaGenerator( source=script ).visit(tree)
 
