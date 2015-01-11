@@ -22,8 +22,8 @@ with javascript:
 			return ob.length
 		elif __is_typed_array(ob):
 			return ob.length
-		elif instanceof(ob, ArrayBuffer):
-			return ob.byteLength
+		#elif instanceof(ob, ArrayBuffer):  ## missing in safari
+		#	return ob.byteLength
 		elif ob.__len__:
 			return ob.__len__()
 		else: #elif instanceof(ob, Object):
@@ -224,9 +224,9 @@ with javascript:
 		return False
 
 	def __is_typed_array( ob ):
-		if instanceof( ob, Int8Array ) or instanceof( ob, Uint8Array ):
-			return True
-		elif instanceof( ob, Int16Array ) or instanceof( ob, Uint16Array ):
+		#if instanceof( ob, Int8Array ) or instanceof( ob, Uint8Array ):  ## missing in safari
+		#	return True
+		if instanceof( ob, Int16Array ) or instanceof( ob, Uint16Array ):
 			return True
 		elif instanceof( ob, Int32Array ) or instanceof( ob, Uint32Array ):
 			return True

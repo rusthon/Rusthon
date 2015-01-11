@@ -15,3 +15,6 @@ if typeof(window) != 'undefined':
 if typeof(importScripts) == 'function':
 	__WEBWORKER__ = True
 
+if not __NODEJS__ and not __WEBWORKER__:
+	if typeof(HTMLDocument) == 'undefined':  ## fix for older IE
+		HTMLDocument = Document

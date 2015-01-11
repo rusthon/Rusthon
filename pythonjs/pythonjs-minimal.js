@@ -24,20 +24,13 @@ var len = function(ob)
 		}
 		else
 		{
-			if (ob instanceof ArrayBuffer)
+			if (ob.__len__)
 			{
-				return ob.byteLength;
+				return ob.__len__();
 			}
 			else
 			{
-				if (ob.__len__)
-				{
-					return ob.__len__();
-				}
-				else
-				{
-					return Object.keys(ob).length;
-				}
+				return Object.keys(ob).length;
 			}
 		}
 	}
@@ -426,32 +419,25 @@ var __is_some_array = function(ob)
 var __is_typed_array = function(ob)
 {
 	
-	if (ob instanceof Int8Array || ob instanceof Uint8Array)
+	if (ob instanceof Int16Array || ob instanceof Uint16Array)
 	{
 		return true;
 	}
 	else
 	{
-		if (ob instanceof Int16Array || ob instanceof Uint16Array)
+		if (ob instanceof Int32Array || ob instanceof Uint32Array)
 		{
 			return true;
 		}
 		else
 		{
-			if (ob instanceof Int32Array || ob instanceof Uint32Array)
+			if (ob instanceof Float32Array || ob instanceof Float64Array)
 			{
 				return true;
 			}
 			else
 			{
-				if (ob instanceof Float32Array || ob instanceof Float64Array)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}

@@ -14,6 +14,13 @@ if (typeof(importScripts)==="function")
 {
 	__WEBWORKER__ = true;
 }
+if (! (__NODEJS__) && ! (__WEBWORKER__))
+{
+	if (typeof(HTMLDocument)==="undefined")
+	{
+		HTMLDocument = Document;
+	}
+}
 IndexError = function(msg) {this.message = msg || "";}; IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";
 KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";
 ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";
@@ -40,20 +47,13 @@ var len = function(ob)
 		}
 		else
 		{
-			if (ob instanceof ArrayBuffer)
+			if (ob.__len__)
 			{
-				return ob.byteLength;
+				return ob.__len__();
 			}
 			else
 			{
-				if (ob.__len__)
-				{
-					return ob.__len__();
-				}
-				else
-				{
-					return Object.keys(ob).length;
-				}
+				return Object.keys(ob).length;
 			}
 		}
 	}
@@ -442,32 +442,25 @@ var __is_some_array = function(ob)
 var __is_typed_array = function(ob)
 {
 	
-	if (ob instanceof Int8Array || ob instanceof Uint8Array)
+	if (ob instanceof Int16Array || ob instanceof Uint16Array)
 	{
 		return true;
 	}
 	else
 	{
-		if (ob instanceof Int16Array || ob instanceof Uint16Array)
+		if (ob instanceof Int32Array || ob instanceof Uint32Array)
 		{
 			return true;
 		}
 		else
 		{
-			if (ob instanceof Int32Array || ob instanceof Uint32Array)
+			if (ob instanceof Float32Array || ob instanceof Float64Array)
 			{
 				return true;
 			}
 			else
 			{
-				if (ob instanceof Float32Array || ob instanceof Float64Array)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
+				return false;
 			}
 		}
 	}
