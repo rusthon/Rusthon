@@ -1,3 +1,11 @@
+requires
+-------
+https://github.com/rusthon/Rusthon/blob/master/pythonjs/pythonjs-minimal.js
+https://github.com/rusthon/Rusthon/blob/master/pythonjs/pythonjs.js
+
+You need one of the above, pythonjs.js is complete and 58K, less pythonic
+code might be able to get by with just including pythonjs-minimal.js thats only 14K.
+
 Classes
 -----------
 ```python

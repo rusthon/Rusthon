@@ -1,5 +1,7 @@
 https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
 https://github.com/rusthon/Rusthon/blob/master/doc/memory.md
+https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md
+
 
 ```python
 class A:
