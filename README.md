@@ -1,14 +1,5 @@
-Introduction
-------------
-Rusthon is a python-like language that converts and compiles into: Rust, C++, and JavaScript.
+https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
 
-
-Simple Class Example
-===============
-
-
-Rusthon input
-------------
 ```python
 class A:
 	def __init__(self, x:int, y:int, z:int=1):
@@ -21,7 +12,9 @@ class A:
 
 ```
 The struct layout of the class above `A` is defined in the construtor method `__init__`.
-
+The named param `z` defaults to 1.
+Below an instance of `A` is created and passed to `call_method` through a lambda function,
+where `a.mymethod` gets returned and printed.
 
 ```python
 def call_method( cb:lambda(int)(int), mx:int ) ->int:
