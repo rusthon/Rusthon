@@ -2167,34 +2167,46 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			if self._with_js or self._with_dart or self._with_go:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 
-			elif typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
-				setter = typedef.properties[ target.attr ]['set']
-				writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
+			elif self._with_lua:  ## this could be better optimized for the lua backend.
 
-			#elif typedef and target.attr in typedef.class_attributes:
-			#	writer.write( '''%s['__class__']['%s'] = %s''' %(target_value, target.attr, self.visit(node.value)))
-
-			elif typedef and target.attr in typedef.attributes:
-				writer.write( '%s.%s = %s' %(target_value, target.attr, self.visit(node.value)))
-
-			elif typedef and typedef.parents:
-				parent_prop = typedef.check_for_parent_with( property=target.attr )
-				#parent_classattr = typedef.check_for_parent_with( class_attribute=target.attr )
-				parent_setattr = typedef.check_for_parent_with( method='__setattr__' )
-				if parent_prop and 'set' in parent_prop.properties[target.attr]:
-					setter = parent_prop.properties[target.attr]['set']
+				if typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
+					setter = typedef.properties[ target.attr ]['set']
 					writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
 
-				#elif parent_classattr:
-				#	writer.write( "__%s_attrs.%s = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+				elif typedef and target.attr in typedef.attributes:
+					writer.write( '%s.%s = %s' %(target_value, target.attr, self.visit(node.value)))
 
-				elif parent_setattr:
-					func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
-					writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
+				elif typedef and typedef.parents:
+					parent_prop = typedef.check_for_parent_with( property=target.attr )
+					#parent_classattr = typedef.check_for_parent_with( class_attribute=target.attr )
+					parent_setattr = typedef.check_for_parent_with( method='__setattr__' )
+					if parent_prop and 'set' in parent_prop.properties[target.attr]:
+						setter = parent_prop.properties[target.attr]['set']
+						writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
 
-				elif '__setattr__' in typedef.methods:
+					#elif parent_classattr:
+					#	writer.write( "__%s_attrs.%s = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
+
+					elif parent_setattr:
+						func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
+						writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
+
+					elif '__setattr__' in typedef.methods:
+						func = typedef.get_pythonjs_function_name( '__setattr__' )
+						writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
+
+					else:
+						code = '__set__(%s, "%s", %s)' % (
+							target_value,
+							target.attr,
+							self.visit(node.value)
+						)
+						writer.write(code)
+
+				elif typedef and '__setattr__' in typedef.methods:
 					func = typedef.get_pythonjs_function_name( '__setattr__' )
 					writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
+
 
 				else:
 					code = '__set__(%s, "%s", %s)' % (
@@ -2203,44 +2215,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 						self.visit(node.value)
 					)
 					writer.write(code)
-
-			elif typedef and '__setattr__' in typedef.methods:
-				func = typedef.get_pythonjs_function_name( '__setattr__' )
-				writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
-
-
-			else:
-				code = '__set__(%s, "%s", %s)' % (
-					target_value,
-					target.attr,
-					self.visit(node.value)
-				)
-				writer.write(code)
-
-		elif isinstance(target, Name) and self._with_glsl:  ## assignment to variable
-			if target.id not in self._typedef_vars:
-				raise SyntaxError(self.format_error('untyped variable'))
-			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
-
-			if node_value in self._typedef_vars:
-				writer.write('%s = %s' % (self.visit(target), self.visit(node.value)))
-
-			elif isinstance(node.value, ast.Subscript) and isinstance(node.value.slice, ast.Ellipsis):
-				writer.write('glsl_inline_assign_from_iterable("%s", "%s", %s)'%(self._typedef_vars[target.id], target.id, self.visit(node.value.value)) )
-
-			else:
-
-				## also assign variable in current javascript scope ##
-				if not isinstance(node.value, (ast.BinOp, ast.Call)):
-					if isinstance(node.value, ast.Subscript) and isinstance(node.value.slice, ast.Slice):
-						x = node_value.split('(')[-1].split(')')[0].split('[')[0]
-						writer.write('glsl_inline_push_js_assign("%s", %s.__getslice__(%s))'%(target.id, x, self.visit(node.value.slice)) )
-					else:
-						writer.write('glsl_inline_push_js_assign("%s", %s)'%(target.id, self.visit(node.value)) )
-				else:
-					writer.write('%s = %s' % (target.id, self.visit(node.value)))
-
-			return None
 
 
 		elif isinstance(target, Name):  ## assignment to variable
@@ -2254,18 +2228,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				self._instances[ target.id ] = node.value.func.id  ## keep track of instances
 			elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
 				self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
-			#elif isinstance(node.value, Call) and isinstance(node.value.func, Attribute) and isinstance(node.value.func.value, Name) and node.value.func.value.id in self._instances:
-			#	typedef = self.get_typedef( node.value.func.value )
-			#	method = node.value.func.attr
-			#	if method in typedef.methods:
-			#		func = typedef.get_pythonjs_function_name( method )
-			#		if func in self._function_return_types:
-			#			self._instances[ target.id ] = self._function_return_types[ func ]
-			#		else:
-			#			writer.write('## %s - unknown return type for: %s' % (typedef.name, func))
-			#	else:
-			#		writer.write('## %s - not a method: %s' %(typedef.name, method))
-
 			elif isinstance(node.value, Name) and node_value in self._instances:  ## if this is a simple copy: "a = b" and "b" is known to be of some class
 				self._instances[ target.id ] = self._instances[ node_value ]
 			elif isinstance(node.value, BinOp) and hasattr(node.value, 'operator_overloading') and node.value.operator_overloading in self._function_return_types:
@@ -3414,73 +3376,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				else:
 					writer.write( "%s = args[ %s ]" %(arg.id, i+1) )
 
-		elif len(node.args.defaults) or len(node.args.args) or node.args.vararg or node.args.kwarg:
 
-			# new pythonjs' python function arguments handling
-			# create the structure representing the functions arguments
-			# first create the defaultkwargs JSObject
-			if not self._with_coffee:
-				writer.write('var(__sig__, __args__)')
-
-			L = len(node.args.defaults)
-			kwargsdefault = map(lambda x: keyword(self.visit(x[0]), x[1]), zip(node.args.args[-L:], node.args.defaults))
-			kwargsdefault = Call(
-				Name('JSObject', None),
-				[],
-				kwargsdefault,
-				None,
-				None
-			)
-			args = Call(
-				Name('JSArray', None),
-				map(lambda x: Str(x.id), node.args.args),
-				[],
-				None,
-				None
-			)
-			keywords = list([
-				keyword(Name('kwargs', None), kwargsdefault),
-				keyword(Name('args', None), args),
-			])
-			if node.args.vararg:
-				keywords.append(keyword(Name('vararg', None), Str(node.args.vararg)))
-			if node.args.kwarg:
-				keywords.append(keyword(Name('varkwarg', None), Str(node.args.kwarg)))
-
-			# create a JS Object to store the value of each parameter
-			signature = ', '.join(map(lambda x: '%s:%s' % (self.visit(x.arg), self.visit(x.value)), keywords))
-			writer.write('__sig__ = {%s}' % signature)
-
-			# First check the arguments are well formed 
-			# ie. that this function is not a callback of javascript code
-
-			if not self._with_go:
-				writer.write("""if instanceof(args,Array) and Object.prototype.toString.call(kwargs) == '[object Object]' and arguments.length==2:""")
-				writer.push()
-				writer.write('pass')  # do nothing if it's not called from javascript
-				writer.pull()
-
-				writer.write('else:')
-				writer.push()
-				# If it's the case, move use ``arguments`` to ``args`` 
-				writer.write('args = Array.prototype.slice.call(arguments, 0, __sig__.args.length)')
-				# This means you can't pass keyword argument from javascript but we already knew that
-				writer.write('kwargs = JSObject()')
-				writer.pull()
-
-
-
-			writer.write('__args__ = __getargs__("%s", __sig__, args, kwargs)' %node.name)
-			# # then for each argument assign its value
-			for arg in node.args.args:
-				writer.write("""JS("var %s = __args__['%s']")""" % (arg.id, arg.id))
-			if node.args.vararg:
-				writer.write("""JS("var %s = __args__['%s']")""" % (node.args.vararg, node.args.vararg))
-			if node.args.kwarg:
-				writer.write("""JS('var %s = __args__["%s"]')""" % (node.args.kwarg, node.args.kwarg))
-		else:
-			## function has no arguments ##
-			pass
 
 		################# function body #################
 

@@ -8,7 +8,6 @@ pythonjs.configure( direct_operator='*' )
 pythonjs.configure( direct_keys=True )
 
 from builtins_core import *
-from builtins_glsl import *
 
 _PythonJS_UID = 0
 
