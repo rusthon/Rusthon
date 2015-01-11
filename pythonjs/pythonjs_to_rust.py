@@ -1323,9 +1323,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		out = []
 		if is_closure:
 			if return_type:
-				out.append( self.indent() + '%s := func (%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
+				if self._rust:
+					out.append( self.indent() + 'let %s = |%s| -> %s {\n' % (node.name, ', '.join(args), return_type) )
+				elif self._cpp:
+					out.append( self.indent() + 'auto %s = [&](%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
+				elif self._go:
+					out.append( self.indent() + '%s := func (%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
-				out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
+				if self._rust:
+					out.append( self.indent() + 'let %s = |%s| {\n' % (node.name, ', '.join(args)) )
+				elif self._cpp:
+					out.append( self.indent() + 'auto %s = [&](%s) {\n' % (node.name, ', '.join(args)) )
+				elif self._go:
+					out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
 				if self._cpp: ## c++ ##
@@ -1519,7 +1529,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		self.pull()
-		out.append( self.indent()+'}' )
+		if self._rust and is_closure:
+			out.append( self.indent()+'};' )
+		else:
+			out.append( self.indent()+'}' )
+
 		return '\n'.join(out)
 
 	def _hack_return(self, v, return_type, gname, gt, node):

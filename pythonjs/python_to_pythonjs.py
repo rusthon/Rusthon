@@ -1384,7 +1384,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		elif isinstance(node.test, ast.List):
 			writer.write('if %s.length:' % self.visit(node.test))
 
-		elif self._with_ll or self._with_glsl or self._fast_js:
+		elif self._with_ll or self._with_rust or self._with_cpp or self._fast_js:
 			writer.write('if %s:' % self.visit(node.test))
 		elif isinstance(node.test, ast.Compare):
 			writer.write('if %s:' % self.visit(node.test))
