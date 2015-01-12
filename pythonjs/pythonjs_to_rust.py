@@ -94,7 +94,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_If(self, node):
 		out = []
-		if isinstance(node.test, ast.Compare):
+		if isinstance(node.test, ast.Compare) or isinstance(node.test, ast.UnaryOp):
 			test = self.visit(node.test)
 		elif isinstance(node.test, ast.Name):
 			if node.test.id in ('null', 'None', 'False'):
