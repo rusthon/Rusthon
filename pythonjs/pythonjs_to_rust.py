@@ -75,9 +75,39 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		out.append('try_wrap_err!( try_lambda(), |_|{()});')
 		return '\n'.join( out )
 
+	def visit_Compare(self, node):
+		comp = [ '(']
+		comp.append( self.visit(node.left) )
+		comp.append( ')' )
+
+		for i in range( len(node.ops) ):
+			comp.append( self.visit(node.ops[i]) )
+
+			if isinstance(node.comparators[i], ast.BinOp):
+				comp.append('(')
+				comp.append( self.visit(node.comparators[i]) )
+				comp.append(')')
+			else:
+				comp.append( self.visit(node.comparators[i]) )
+
+		return ' '.join( comp )
+
 	def visit_If(self, node):
 		out = []
-		test = self.visit(node.test)
+		if isinstance(node.test, ast.Compare):
+			test = self.visit(node.test)
+		elif isinstance(node.test, ast.Name):
+			if node.test.id in ('null', 'None', 'False'):
+				test = 'false'
+			elif node.test.id == 'True':
+				test = 'true'
+			else:
+				test = '%s==true' %node.test.id
+		elif isinstance(node.test, ast.Num):
+			test = '%s!=0' %node.test.n
+		else:
+			raise SyntaxError(node.test)
+
 		if test.startswith('(') and test.endswith(')'):
 			out.append( 'if %s {' %test )
 		else:
@@ -116,7 +146,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def visit_Name(self, node):
-		if node.id == 'None' or node.id == 'nil':
+		if node.id == 'None' or node.id == 'nil' or node.id == 'null':
 			if self._cpp:
 				return 'nullptr'
 			else:
@@ -587,23 +617,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		lines = header + list(self._imports) + lines
 		return '\n'.join( lines )
 
-
-	def visit_Compare(self, node):
-		comp = [ '(']
-		comp.append( self.visit(node.left) )
-		comp.append( ')' )
-
-		for i in range( len(node.ops) ):
-			comp.append( self.visit(node.ops[i]) )
-
-			if isinstance(node.comparators[i], ast.BinOp):
-				comp.append('(')
-				comp.append( self.visit(node.comparators[i]) )
-				comp.append(')')
-			else:
-				comp.append( self.visit(node.comparators[i]) )
-
-		return ' '.join( comp )
 
 	def visit_For(self, node):
 		if not hasattr(node.iter, 'uid'):
