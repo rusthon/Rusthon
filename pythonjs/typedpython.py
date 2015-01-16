@@ -217,12 +217,13 @@ def transform_source( source, strip=False ):
 						u = u.replace('func(', '__go__func__["func(')
 						u += '"]=\t\t\t\t'
 						a = [w for w in u]
+
 					else:
-						if a[-1]=='*':
-							a.pop()
-							a.append('POINTER')
-						a.append('=\t\t\t\t')
-						#a.append( char )
+						#if a[-1]=='*':
+						#	a.pop()
+						#	a.append('POINTER')
+						#a.append('=\t\t\t\t')
+						a.append( char )
 
 				else:
 					a.append( char )
@@ -297,33 +298,40 @@ def transform_source( source, strip=False ):
 				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
-		if '=\t\t\t\tdef ' in c:  ## todo deprecate
-			x, c = c.split('=\t\t\t\tdef ')
-			indent = []
-			pre = []
-			for char in x:
-				if char in __whitespace:
-					indent.append(char)
-				else:
-					pre.append( char )
-			indent = ''.join(indent)
-			pre = ''.join(pre)
-			output.append( indent + '@returns(%s)' %pre)
-			c = indent+'def '+c
-		elif c.strip().startswith('def ') and '->' in c:  ## python3 syntax
+		indent = 0
+		for u in c:
+			if u == ' ' or u == '\t':
+				indent += 1
+			else:
+				break
+		indent = '\t'*indent
+
+		if ' def(' in c or ' def (' in c:
+			if ' def(' in c:
+				a,b = c.split(' def(')
+			else:
+				a,b = c.split(' def (')
+
+			if '=' in a:
+				output.append( indent + '@expression(%s)' %a.split('=')[0])
+				c = indent + 'def __NAMELESS__(' + b 
+
+
+
+		if c.strip().startswith('def ') and '->' in c:  ## python3 syntax
 			c, rtype = c.split('->')
 			c += ':'
 			rtype = rtype.strip()[:-1].strip()
 			if rtype.startswith('*'):
 				rtype = '"%s"' %rtype
 
-			indent = []
-			for char in c:
-				if char in __whitespace:
-					indent.append(char)
-				else:
-					break
-			indent = ''.join(indent)
+			#indent = []
+			#for char in c:
+			#	if char in __whitespace:
+			#		indent.append(char)
+			#	else:
+			#		break
+			#indent = ''.join(indent)
 			output.append( indent + '@returns(%s)' %rtype)
 
 		if c.startswith('import '):
@@ -371,14 +379,6 @@ def transform_source( source, strip=False ):
 			this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
 			method_name = b.split()[0].split('(')[0]
 			c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)  ## TODO should be rightarrow
-
-		indent = 0
-		for u in c:
-			if u == ' ' or u == '\t':
-				indent += 1
-			else:
-				break
-		indent = '\t'*indent
 
 
 		## python3 annotations
@@ -467,35 +467,35 @@ def transform_source( source, strip=False ):
 		if ' as ' in c and '(' in c and not c.startswith('except '):
 			c = c.replace(' as ', '<<__as__<<')
 
-		if ' def(' in c or ' def (' in c:
-			if ' def(' in c:
-				a,b = c.split(' def(')
-			else:
-				a,b = c.split(' def (')
-
-			if '=' in a:
-				output.append( indent + '@expression(%s)' %a.split('=')[0])
-				output.append( indent + 'def __NAMELESS__(' + b )
-		else:
-			## regular output
-			output.append( c )
-
 		if c.strip().startswith('with asm('):
 			asm_block = True
+
+
+		## regular output
+		output.append( c )
+
 
 	r = '\n'.join(output)
 	return r
 
+## deprecated
+#int a = 1
+#float b = 1.1
+#str c = "hi"
+#int d
+#int def xxx(): pass
+## TODO deprecate
+#class A:
+#	def __init__(self):
+#		int 		self.x = 1
+#		[]int		self.y = []int()
+#		class:ABS     self.z = A()
+#		[]A     self.z = A()
+#		bool    self.b = xxx()
+#		*ABS     self.z = A()
+#		#[]*A     self.z = A()   ## this is ugly
 
 test = u'''
-
-## todo deprecate
-int a = 1
-float b = 1.1
-str c = "hi"
-int d
-int def xxx(): pass
-
 
 if True:
 	d = a[ 'somekey' ] except KeyError: 'mydefault'
@@ -546,17 +546,6 @@ def plot(id:string, latency:[]float64, xlabel:string, title:string ):
 
 def f( x:*ABC ) -> *XXX:
 	pass
-
-## TODO deprecate
-class A:
-	def __init__(self):
-		int 		self.x = 1
-		[]int		self.y = []int()
-		class:ABS     self.z = A()
-		[]A     self.z = A()
-		bool    self.b = xxx()
-		*ABS     self.z = A()
-		#[]*A     self.z = A()   ## this is ugly
 
 def listpass( a:[]int ):
 	pass
@@ -646,7 +635,7 @@ def templated( x : Type<T> ):
 def templated( x : namespace::Type<T> ):
 	pass
 
-c.x[0] = def(xx,yy):
+c.x[0] = def(xx,yy) ->int:
 	return xx+yy
 
 print xxx

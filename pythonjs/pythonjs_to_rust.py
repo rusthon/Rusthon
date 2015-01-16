@@ -1212,6 +1212,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				arrays = arrays,
 			)
 
+			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
+				assert len(decor.args)==1
+				node.name = self.visit(decor.args[0])
+
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]
 
