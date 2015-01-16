@@ -2987,10 +2987,12 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
-			if isinstance(decorator, Name) and decorator.id == 'gpu':
+			if isinstance(decorator, Name) and decorator.id == 'gpu':  ## DEPRECATED  TODO
 				gpu = True
 
-			elif isinstance(decorator, Call) and decorator.func.id == 'expression':  ## js function expressions are now the default
+			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
+				## js function expressions are now the default, because hoisting is not pythonic.
+				## when the user writes `a = def(): ...` this gets translated to `@expression( target )\n def __NAMELESS__()`
 				assert len(decorator.args)==1
 				func_expr = self.visit(decorator.args[0])
 
@@ -3037,7 +3039,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					assert len(decorator.args) == 1
 					jsfile = decorator.args[0].s
 
-			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
+			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':  ## DEPRECATED - TODO
 				if decorator.keywords:
 					for k in decorator.keywords:
 						key = k.arg
@@ -3058,7 +3060,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					if return_type in typedpython.glsl_types:
 						self._gpu_return_types.add( return_type )
 
-			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
+			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':  ## DEPRECATED - TODO
 				gpu = True
 				if decorator.attr == 'vectorize':
 					gpu_vectorize = True
@@ -3079,9 +3081,11 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 			elif isinstance(decorator, Name) and decorator.id == 'fastdef':
 				fastdef = True
+				raise SyntaxError('@fast is deprecated')
 
 			elif isinstance(decorator, Name) and decorator.id == 'javascript':
 				javascript = True
+				raise SyntaxError('@javascript is deprecated')
 
 			elif isinstance(decorator, Name) and decorator.id == 'property':
 				property_decorator = decorator

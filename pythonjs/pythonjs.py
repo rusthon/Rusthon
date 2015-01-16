@@ -542,7 +542,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		is_pyfunc    = False
 		is_prototype = False
 		protoname    = None
-		func_expr    = False
+		func_expr    = False  ## function expressions `var a = function()` are not hoisted
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
@@ -551,7 +551,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				node.name = self.visit(decor.args[0])
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':  ## TODO deprecated
 				assert len(decor.args)==1
 				is_prototype = True
 				protoname = decor.args[0].id

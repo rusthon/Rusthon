@@ -467,10 +467,14 @@ def transform_source( source, strip=False ):
 		if ' as ' in c and '(' in c and not c.startswith('except '):
 			c = c.replace(' as ', '<<__as__<<')
 
-		if ' def(' in c:
-			a,b = c.split(' def(')
+		if ' def(' in c or ' def (' in c:
+			if ' def(' in c:
+				a,b = c.split(' def(')
+			else:
+				a,b = c.split(' def (')
+
 			if '=' in a:
-				output.append( indent + '@__target__(%s)' %a.split('=')[0])
+				output.append( indent + '@expression(%s)' %a.split('=')[0])
 				output.append( indent + 'def __NAMELESS__(' + b )
 		else:
 			## regular output
