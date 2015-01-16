@@ -1087,7 +1087,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
 						if atype not in go_types:
-							if right != '{}': raise SyntaxError('todo init array of objects with args')
+							if right != '{}': raise SyntaxError(right)
 							return '&make([]*%s, %s)' %(atype, asize)
 						else:
 							#return '&vec!%s' %right

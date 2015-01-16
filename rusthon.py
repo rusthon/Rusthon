@@ -1,8 +1,50 @@
 #!/usr/bin/env python
-import sys, subprocess
+import os, sys, subprocess
 import pythonjs
+import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
 import pythonjs.pythonjs_to_cpp
+
+def compile_js( script, module_path ):
+	fastjs = True
+	directjs = False     ## compatible with pythonjs-minimal.js
+	directloops = False  ## allows for looping over strings, arrays, hmtlElements, etc. if true outputs cleaner code.
+	result = {}
+
+	pyjs = pythonjs.python_to_pythonjs.main(
+		script, 
+		module_path=module_path,
+		fast_javascript = fastjs,
+		pure_javascript = directjs
+	)
+
+	if isinstance(pyjs, dict):  ## split apart by webworkers
+		for jsfile in a:
+			result[ jsfile ] = pythonjs.pythonjs.main(
+				a[jsfile], 
+				webworker=jsfile != 'main',
+				requirejs=False, 
+				insert_runtime=False,
+				fast_javascript = fastjs,
+				fast_loops      = directloops
+			)
+
+	else:
+		print( pyjs )
+
+		code = pythonjs.pythonjs.main(
+			pyjs, 
+			requirejs=False, 
+			insert_runtime=False,
+			fast_javascript = fastjs,
+			fast_loops      = directloops
+		)
+		if isinstance(code, dict):
+			result.update( code )
+		else:
+			result['main'] = code
+
+	return result
 
 def convert_to_markdown_project(path):
 	files = []
@@ -150,23 +192,148 @@ def convert_to_markdown_project(path):
 
 	return '\n'.join(project)
 
+def new_module():
+	return {
+		'python'  : [],
+		'rusthon' : [],
+		'rust'    : [],
+		'c'       : [],
+		'c++'     : [],
+	}
+
+def load_md( url ):
+	compile = new_module()
+	lang = False
+	data = open(url, 'rb').read()
+	for line in data.splitlines():
+		if line.strip().startswith('```'):
+			lang = line.strip().split('```')[-1] or 'rusthon'
+			p, n = os.path.split(url)
+			mod = {'path':p, 'name':n, 'code':code}
+			compile[ lang ].append( mod )
+
+	package = build( compile )
+	return package
+
+def build( modules, module_path ):
+	python_main = {'name':'main.py', 'script':[]}
+
+	output = {'executeable':None, 'rust':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
+
+	if modules['python']:
+		for mod in modules['python']:
+			if 'name' in mod:
+				output['python'].append( {'name':name, 'script':mod[name]} )
+			else:
+				python_main['script'].append( mod['code'] )
+
+	if modules['rusthon']:
+		for mod in modules['rusthon']:
+			script = mod['code']
+			header = script.splitlines()[0]
+			backend = 'c++'  ## default to c++ backend
+			if header.startswith('#'):
+				backend = header[1:].strip() or 'c++'
+
+
+			if backend == 'c++':
+				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
+				pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
+				modules['c++'].append( {'code':pak['main']})  ## gets compiled below
+
+			elif backend == 'rust':
+				pyjs = pythonjs.python_to_pythonjs.main(script, rust=True, module_path=module_path)
+				rustcode = pythonjs.pythonjs_to_rust.main( pyjs )
+				modules['rust'].append( {'code':rustcode})  ## gets compiled below
+
+			elif backend == 'go':
+				pyjs = pythonjs.python_to_pythonjs.main(script, go=True, module_path=module_path)
+				gocode = pythonjs.pythonjs_to_go.main( pyjs )
+				modules['go'].append( {'code':gocode})  ## gets compiled below
+
+			elif backend == 'javascript':
+				js = compile_js( mod['code'], module_path )
+				for name in js:
+					output['javascript'].append( {'name':name, 'script':js[name]} )
+
+	link = []
+
+	if modules['rust']:
+		source = []
+		for mod in modules['rust']:
+			source.append( mod['code'] )
+
+		tmpfile = '/tmp/rusthon-build.rs'
+		data = '\n'.join(source)
+
+		open(tmpfile, 'wb').write( data )
+		if modules['c++']:
+			libname = 'rusthon-lib%s' %len(output['rust'])
+			link.append(libname)
+			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '--crate-type', 'staticlib' ,'-o', '/tmp/'+libname,  tmpfile] )
+			output['rust'].append( {'source':data, 'staticlib':libname} )
+
+		else:
+			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', '/tmp/rusthon-bin',  tmpfile] )
+			output['rust'].append( {'source':data, 'binary':'/tmp/rusthon-bin'} )
+			output['executeable'] = '/tmp/rusthon-bin'
+
+	if modules['c']:
+		libname = 'rusthon-clib%s' %len(output['c'])
+		link.append(libname)
+		source = []
+		for mod in modules['c']:
+			source.append( mod['code'] )
+
+		tmpfile = '/tmp/rusthon-build.c'
+		data = '\n'.join(source)
+		open(tmpfile, 'wb').write( data )
+		cmd = ['gcc', '-c', tmpfile, '-o', '/tmp/'+libname+'.o' ]
+		subprocess.check_call( cmd )
+		cmd = ['ar', 'rcs', '/tmp/lib'+libname+'.a', '/tmp/'+libname+'.o']
+		subprocess.check_call( cmd )
+		output['c'].append({'source':data, 'staticlib':libname+'.a'})
+
+
+	if modules['c++']:
+		source = []
+		for mod in modules['c++']:
+			source.append( mod['code'] )
+
+		tmpfile = '/tmp/rusthon-build.cpp'
+		data = '\n'.join(source)
+		open(tmpfile, 'wb').write( data )
+		cmd = ['g++']
+		if link:
+			cmd.append('-static')
+			cmd.append( tmpfile )
+			cmd.append('-L/tmp/.')
+			for libname in link:
+				cmd.append('-l'+libname)
+		cmd.extend(
+			[tmpfile, '-o', '/tmp/rusthon-bin', '-pthread', '-std=c++11' ]
+		)
+		subprocess.check_call( cmd )
+		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-bin'} )
+		output['executeable'] = '/tmp/rusthon-bin'
+
+	if python_main:
+		python_main['script'] = '\n'.join(python_main['script'])
+		output['python'].append( python_main )
+
+	return output
 
 def main(script, module_path=None):
-	a = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
-	build = pythonjs.pythonjs_to_cpp.main( a )
-	#print(build.keys())
-	#print(build['main'])
-	tmpfile = '/tmp/rusthon-build.cpp'
-	open(tmpfile, 'wb').write( build['main'] )
-	open('header.h', 'wb').write( build['header.c'] )
-	open('header.hpp', 'wb').write( build['header.cpp'] )
-
-	print('translation written to: %s' %tmpfile)
-	subprocess.check_call(['g++', tmpfile, '-o', '/tmp/rusthon-bin', '-pthread', '-std=c++11',   ] )
-	subprocess.check_call(['/tmp/rusthon-bin'])
+	modules = new_module()
+	modules['rusthon'].append( {'name':'main', 'code':script} )
+	package = build( modules, module_path )
+	subprocess.check_call( package['executeable'] )
 
 
 if __name__ == '__main__':
-	path = sys.argv[-1]
-	assert path.endswith('.py')
-	main( open(path,'rb').read() )
+	if len(sys.argv)==1:
+		print('useage: ./rusthon.py myscript.py')
+	else:
+		path = sys.argv[-1]
+		assert path.endswith('.py')
+		main( open(path,'rb').read(), module_path=os.path.split(path)[0] )
