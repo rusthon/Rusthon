@@ -1,16 +1,12 @@
 '''
-in (contains)
+in (dict contains)
 '''
 
-def func( word, custom={} ):
-	if word in custom:
-		return True
-	else:
-		return False
-
 def main():
-	TestError( func('x', custom={'x':1})==True )
-
-	TestError( func('y', custom={'x':1})==False )
+	d = {'x':1}
+	a = 'x' in d
+	TestError( a==True )
+	b = 'y' in d
+	TestError( b==False )
 
 

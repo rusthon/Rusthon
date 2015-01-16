@@ -1,6 +1,6 @@
 """func expr"""
 
-F = function( x,y ):
+F = def ( x,y ):
 	return x+y
 
 def main():

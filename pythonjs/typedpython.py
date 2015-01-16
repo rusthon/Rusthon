@@ -365,68 +365,24 @@ def transform_source( source, strip=False ):
 				#c = c.replace('<-', '<<__go__send__<<')
 
 
-		## X.method.bind(X) shortcut `->`
+		## c++ `->`
 		if '->' in c:
 			a,b = c.split('->')
 			this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
 			method_name = b.split()[0].split('(')[0]
-			#c = c.replace('->'+method_name, '.'+method_name+'.__leftarrow__(%s)'%this_name)
-			c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)
+			c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)  ## TODO should be rightarrow
 
-		## callback=def .. inline function ##
-		if '=def ' in c or '= def ' in c or ': def ' in c or ':def ' in c:
-			if '=def ' in  c:
-				d = '=def '
-			elif '= def ' in c:
-				d = '= def '
-			elif ': def ' in c:
-				d = ': def '
-			elif ':def ' in c:
-				d = ':def '
-
-			if 'def (' in c:
-				c = c.replace('def (', 'def __NAMELESS__(')
-			c, tail = c.split(d)
-
-			#if d.startswith('='):
-			#	if '(' in c:
-			#		c += '=lambda __INLINE_FUNCTION__: %s )' %tail.strip().split(':')[0]
-			#	else:
-			#		c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
-			#	output_post = 'def %s'%tail
-
-			if d.startswith('='):
-				c += '=lambda __INLINE_FUNCTION__: %s' %tail.strip().split(':')[0]
-
-				if output_post:
-					if output_post[-1][-1]==',':
-						output_post[-1] = output_post[-1][:-1]
-						output[-1] += ','
-				else: output_post = list()
-
-				output.append( c )
-
-				c = 'def %s'%tail
-
+		indent = 0
+		for u in c:
+			if u == ' ' or u == '\t':
+				indent += 1
 			else:
-				c += ':lambda __INLINE_FUNCTION__: %s,' %tail.strip().split(':')[0]
-				output.append( c )
-				if output_post:
-					if output_post[-1][-1]==',':
-						output_post[-1] = output_post[-1][:-1]
-				else: output_post = list()
-				c = 'def %s'%tail
+				break
+		indent = '\t'*indent
 
 
 		## python3 annotations
 		if 'def ' in c and c.count(':') > 1:
-			indent = 0
-			for u in c:
-				if u == ' ' or u == '\t':
-					indent += 1
-				else:
-					break
-			indent = '\t'*indent
 
 			#head, tail = c.split('(')
 			head = c[ : c.index('(') ]
@@ -511,59 +467,32 @@ def transform_source( source, strip=False ):
 		if ' as ' in c and '(' in c and not c.startswith('except '):
 			c = c.replace(' as ', '<<__as__<<')
 
-		if type(output_post) is list:
-			output_post.append( c )
+		if ' def(' in c:
+			a,b = c.split(' def(')
+			if '=' in a:
+				output.append( indent + '@__target__(%s)' %a.split('=')[0])
+				output.append( indent + 'def __NAMELESS__(' + b )
 		else:
+			## regular output
 			output.append( c )
 
 		if c.strip().startswith('with asm('):
 			asm_block = True
-
-		if type(output_post) is str:  ## DEPRECATED
-			indent = 0
-			for u in output[-1]:
-				if u == ' ' or u == '\t':
-					indent += 1
-				else:
-					break
-			output.append( ('\t'*indent)+output_post)
-			output_post = True
-		elif output_post == True:  ## DEPRECATED
-			if output[-1].strip()==')':
-				output.pop()
-				output_post = None
-
-		elif type(output_post) is list:
-			if output_post[-1].strip().endswith( ('}',')') ):
-				output.append( output_post.pop() )
-				indent = 0
-				for u in output[-1]:
-					if u == ' ' or u == '\t':
-						indent += 1
-					else:
-						break
-				for ln in output_post:
-					output.append( ('\t'*indent)+ln )
-
-				output_post = None
 
 	r = '\n'.join(output)
 	return r
 
 
 test = u'''
+
+## todo deprecate
 int a = 1
 float b = 1.1
 str c = "hi"
 int d
 int def xxx(): pass
-if True:
-	float* def Y():
-		pass
 
 
-c = function(x,y):
-	return x+y
 if True:
 	d = a[ 'somekey' ] except KeyError: 'mydefault'
 
@@ -614,6 +543,7 @@ def plot(id:string, latency:[]float64, xlabel:string, title:string ):
 def f( x:*ABC ) -> *XXX:
 	pass
 
+## TODO deprecate
 class A:
 	def __init__(self):
 		int 		self.x = 1
@@ -694,23 +624,6 @@ A.do_something( x,y,z, callback=B->method )
 A.do_something( x,y,z, B->method(U,W) )
 A.do_something( x,y,z, callback=B->method(X,Z) )
 
-A.do_something( x,y,z, callback=def cb(x):
-	return x+y
-)
-A.do_something( x,y,z, callback=def (x,y,z):
-	return x+y
-)
-a = {
-	'cb1': def (x,y):
-		return x+y
-}
-def xxx():
-	b = {
-		'cb1': def (x,y):
-			return x+y,
-		'cb2': def (x,y):
-			return x+y
-	}
 
 def call_method( cb:lambda(int)(int) ) ->int:
 	return cb(3)
@@ -729,13 +642,35 @@ def templated( x : Type<T> ):
 def templated( x : namespace::Type<T> ):
 	pass
 
+c.x[0] = def(xx,yy):
+	return xx+yy
+
+print xxx
 '''
 
-## TODO fix arg annotations
+## function expressions, deprecated
+## TODO: this would be nice to bring back with a proper parser
 #X.func( cb1=def ():
 #		return 1,
 #	cb2=def (x:int, y:string):
 #		return 2
+#)
+#a = {
+#	'cb1': def (x,y):
+#		return x+y
+#}
+#def xxx():
+#	b = {
+#		'cb1': def (x,y):
+#			return x+y,
+#		'cb2': def (x,y):
+#			return x+y
+#	}
+#A.do_something( x,y,z, callback=def cb(x):
+#	return x+y
+#)
+#A.do_something( x,y,z, callback=def (x,y,z):
+#	return x+y
 #)
 
 
