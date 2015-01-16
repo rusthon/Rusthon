@@ -543,12 +543,15 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		is_prototype = False
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
+		func_expr_var = True
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
 				assert len(decor.args)==1
 				func_expr = True
+				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
+
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':  ## TODO deprecated
@@ -570,7 +573,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			## infact, var should always be used with function expressions.
 
 			if self._func_expressions or func_expr:
-				fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+				if func_expr_var:
+					fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+				else:
+					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
 			else:
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
@@ -581,7 +587,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		else:
 
 			if self._func_expressions or func_expr:
-				fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+				if func_expr_var:
+					fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+				else:
+					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
 			else:
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
@@ -1067,6 +1076,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		left = self.visit(node.left)
 		op = self.visit(node.op)
 		right = self.visit(node.right)
+		go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__', '__go__receive__', '__go__send__')
 
 		if op == '>>' and left == '__new__':
 
@@ -1079,6 +1089,47 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				right = self.visit(node.right.args[0])
 
 			return ' new %s' %right
+
+
+		elif op == '<<':
+
+			if left in ('__go__receive__', '__go__send__'):
+				self._has_channels = True
+				return '%s.recv()' %right
+
+			if isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
+				if node.left.func.id == '__go__func__':
+					raise SyntaxError('TODO - go.func')
+				elif node.left.func.id == '__go__map__':
+					key_type = self.visit(node.left.args[0])
+					value_type = self.visit(node.left.args[1])
+					if value_type == 'interface': value_type = 'interface{}'
+					return '&map[%s]%s%s' %(key_type, value_type, right)
+				else:
+					if isinstance(node.right, ast.Name):
+						raise SyntaxError(node.right.id)
+
+					right = []
+					for elt in node.right.elts:
+						if isinstance(elt, ast.Num):
+							right.append( str(elt.n)+'i' )
+						else:
+							right.append( self.visit(elt) )
+					right = '(%s)' %','.join(right)
+
+					if node.left.func.id == '__go__array__':
+						T = self.visit(node.left.args[0])
+						if T in go_types:
+							#return '&mut vec!%s' %right
+							return 'Rc::new(RefCell::new(vec!%s))' %right
+						else:
+							self._catch_assignment = {'class':T}  ## visit_Assign catches this
+							return '&[]*%s%s' %(T, right)
+
+					elif node.left.func.id == '__go__arrayfixed__':
+						asize = self.visit(node.left.args[0])
+						atype = self.visit(node.left.args[1])
+						return ' new Array(%s) /*array of: %s*/' %(asize, atype)
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
 			left += '[_id_]'
