@@ -232,7 +232,7 @@ def import_md( url, modules=None ):
 
 
 def build( modules, module_path ):
-	output = {'executeable':None, 'rust':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
+	output = {'executeable':None, 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
 	python_main = {'name':'main.py', 'script':[]}
 
 	if modules['python']:
