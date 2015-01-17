@@ -194,6 +194,7 @@ def convert_to_markdown_project(path):
 
 def new_module():
 	return {
+		'markdown': None,
 		'python'  : [],
 		'rusthon' : [],
 		'rust'    : [],
@@ -201,19 +202,33 @@ def new_module():
 		'c++'     : [],
 	}
 
-def load_md( url ):
+def import_md( url ):
 	compile = new_module()
+	doc = []
+	code = []
 	lang = False
+	in_code = False
+
 	data = open(url, 'rb').read()
 	for line in data.splitlines():
 		if line.strip().startswith('```'):
-			lang = line.strip().split('```')[-1] or 'rusthon'
-			p, n = os.path.split(url)
-			mod = {'path':p, 'name':n, 'code':code}
-			compile[ lang ].append( mod )
+			if in_code:
+				if lang:
+					p, n = os.path.split(url)
+					mod = {'path':p, 'name':n, 'code':'\n'.join(code) }
+					compile[ lang ].append( mod )
+				in_code = False
+				code = []
+			else:
+				in_code = True
+			lang = line.strip().split('```')[-1]
+		elif in_code:
+			code.append(line)
+		else:
+			doc.append(line)
 
-	package = build( compile )
-	return package
+	compile['markdown'] = '\n'.join(doc)
+	return compile
 
 def build( modules, module_path ):
 	python_main = {'name':'main.py', 'script':[]}
@@ -323,7 +338,7 @@ def build( modules, module_path ):
 
 	return output
 
-def main(script, module_path=None):
+def run_script(script, module_path=None):
 	modules = new_module()
 	modules['rusthon'].append( {'name':'main', 'code':script} )
 	package = build( modules, module_path )
@@ -334,6 +349,20 @@ if __name__ == '__main__':
 	if len(sys.argv)==1:
 		print('useage: ./rusthon.py myscript.py')
 	else:
+		paths = []
+		scripts = []
+		markdowns = []
+		gen_md = False
+		for arg in sys.argv[1:]:
+			if os.path.isdir(arg):
+				paths.append(arg)
+			elif arg.endswith('.py'):
+				scripts.append(arg)
+			elif arg.endswith('.md'):
+				markdowns.append(arg)
+			elif arg == '--create-md':
+				gen_md = True
+
 		path = sys.argv[-1]
 		assert path.endswith('.py')
-		main( open(path,'rb').read(), module_path=os.path.split(path)[0] )
+		run_script( open(path,'rb').read(), module_path=os.path.split(path)[0] )

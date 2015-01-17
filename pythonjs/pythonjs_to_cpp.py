@@ -122,6 +122,8 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			header.append('};')
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
+		cheader = None
+		cppheader = None
 		if len(self._cheader):
 			cheader = []
 			cppheader = ['extern "C" {']
@@ -130,8 +132,11 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 				cppheader.append('\t'+line)
 			cppheader.append('}')
 
-		pak['header.c'] = '\n'.join( cheader )
-		pak['header.cpp'] = '\n'.join( cppheader )
+		if cheader:
+			pak['header.c'] = '\n'.join( cheader )
+		if cppheader:
+			pak['header.cpp'] = '\n'.join( cppheader )
+
 		lines = header + list(self._imports) + lines
 		pak['main'] = '\n'.join( lines )
 		return pak['main']
