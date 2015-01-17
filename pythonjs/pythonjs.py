@@ -42,14 +42,11 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self.catch_call = set()  ## subclasses can use this to catch special calls
 
 		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__', 'expression'])
-		self._glsl = False
-		self._has_glsl = False
-		self._typed_vars = dict()
+		self._glsl = False  ## TODO deprecate
+		self._has_glsl = False  ## TODO deprecate
+		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'  ## TODO deprecate
 
-		## the helper function below _mat4_to_vec4 is invalid because something can only be indexed
-		## with a constant expression.  The GLSL compiler will throw this ERROR: 0:19: '[]' : Index expression must be constant"
-		#self.glsl_runtime = 'vec4 _mat4_to_vec4( mat4 a, int col) { return vec4(a[col][0], a[col][1], a[col][2],a[col][3]); }'
-		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'
+		self._typed_vars = dict()
 
 		self._lua  = False
 		self._dart = False
@@ -87,15 +84,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
-			## visit_BinOp checks for `numpy.float32` and changes the operands from `a*a` to `a[id]*a[id]`
-			if self._glsl and value.startswith('numpy.'):
-				self._typed_vars[ target ] = value
-				return ''
-			else:
-				code = '%s = %s;' % (target, value)
-				if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
-					self._exports.add( target )
-				return code
+			code = '%s = %s;' % (target, value)
+			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
+				self._exports.add( target )
+			return code
 
 	def visit_AugAssign(self, node):
 		## n++ and n-- are slightly faster than n+=1 and n-=1
@@ -298,8 +290,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			lines.append( 'return __module__')
 			lines.append('}) //end requirejs define')
 
-		if self._has_glsl:
-			header.append( 'var __shader_header__ = ["%s"]'%self.glsl_runtime )
 
 		if len(modules) == 1:
 			lines = header + lines
@@ -542,25 +532,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self._function_stack.pop()
 		return buffer
 
-	def _visit_call_helper_var_glsl(self, node):
-		lines = []
-		for key in node.keywords:
-			ptrs = key.value.id.count('POINTER')
-			if ptrs:
-				## TODO - preallocate array size - if nonliteral arrays are used later ##
-				#name = key.arg
-				#pid = '[`%s.length`]' %name
-				#ptrs = pid * ptrs
-				#lines.append( '%s %s' %(key.value.id.replace('POINTER',''), name+ptrs))
-
-				## assume that this is a dynamic variable and will be typedef'ed by
-				## __glsl_dynamic_typedef() is inserted just before the assignment.
-				pass
-			else:
-				self._typed_vars[ key.arg ] = key.value.id
-				lines.append( '%s %s' %(key.value.id, key.arg))
-
-		return ';'.join(lines)
 
 
 	def _visit_function(self, node):
@@ -706,11 +677,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 	def visit_Subscript(self, node):
 		if isinstance(node.slice, ast.Ellipsis):
-			if self._glsl:
-				#return '%s[_id_]' % self.visit(node.value)
-				return '%s[matrix_index()]' % self.visit(node.value)
-			else:
-				return self._visit_subscript_ellipsis( node )
+			return self._visit_subscript_ellipsis( node )
 		else:
 			return '%s[%s]' % (self.visit(node.value), self.visit(node.slice))
 
@@ -740,11 +707,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
-		if self._glsl and name not in ('self', 'this'):
-			if name not in self._typed_vars:
-				return '`%s.%s`' % (name, attr)
-			else:
-				return '%s.%s' % (name, attr)
 		return '%s.%s' % (name, attr)
 
 	def visit_Print(self, node):
@@ -869,10 +831,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			return self._visit_call_helper_JSObject( node )
 
 		elif name == 'var':
-			if self._glsl:
-				return self._visit_call_helper_var_glsl( node )
-			else:
-				return self._visit_call_helper_var( node )
+			return self._visit_call_helper_var( node )
 
 		elif name == 'JSArray':
 			return self._visit_call_helper_JSArray( node )
@@ -919,10 +878,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return "var __returns__%s = null;"%return_id
 
 	def _visit_call_helper_numpy_array(self, node):
-		if self._glsl:
-			return self.visit(node.keywords[0].value)
-		else:
-			return self.visit(node.args[0])
+		return self.visit(node.args[0])
 
 	def _visit_call_helper_list(self, node):
 		name = self.visit(node.func)
@@ -1145,9 +1101,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return '==='
 
 	def visit_Compare(self, node):
-		if self._glsl:
-			return self.visit(node.left)
-		elif isinstance(node.ops[0], ast.Eq):
+		if isinstance(node.ops[0], ast.Eq):
 			left = self.visit(node.left)
 			right = self.visit(node.comparators[0])
 			if self._lua:
@@ -1260,68 +1214,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_some_array(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
 			)
 
-	def _visit_for_glsl(self, node):
-		target = self.visit(node.target)
-
-		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='iter':  ## `for i in iter(n):`
-			assert isinstance(node.iter.args[0], ast.Name)
-			iter = node.iter.args[0].id
-			self._typed_vars[target] = 'struct*'  ## this fixes attributes on structs
-
-			lines = [
-				'`@var __length__ = %s.length;`' %iter,
-				#'`@console.log("DEBUG iter: "+%s);`' %iter,
-				#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
-				'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
-				##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
-				#'`@console.log("DEBUG sname: "+__struct_name__);`',
-				'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
-			]
-
-			##TODO## lines.append('$')  ## optimizes webclgl parser
-
-			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
-
-			## declare struct variable ##
-			lines.append( '`__struct_name__` %s;' %target)
-
-			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
-			lines.append( '`@}`')
-
-			##TODO## lines.append('$')  ## optimizes webclgl parser
-
-
-		elif isinstance(node.iter, ast.Call):  ## `for i in range(n):`
-			iter = self.visit(node.iter.args[0])
-			lines = ['for (int %s=0; %s < %s; %s++) {' %(target, target, iter, target)]
-		elif isinstance(node.iter, ast.Name):  ## `for subarray in arrayofarrays:`
-			## capture the length of the subarray into the current javascript scope
-			## this is required to inline the lengths as constants into the GLSL for loops
-			lines = ['`@var __length__ = %s[0].length;`' %node.iter.id]
-			## start the GLSL for loop - `__length__` is set above ##
-			lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
-
-			## declare subarray with size ##
-			lines.append( 'float %s[`__length__`];' %target)
-
-			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-			## below checks if the top-level iterator is the same index, and if so copy its contents into the local subarray,
-			lines.append(     '`@glsljit.push("if (_iter==" +__j+ ") { for (int _J=0; _J<" +__length__+ "; _J++) {%s[_J] = %s_" +__j+ "[_J];} }");`' %(target, node.iter.id))
-			lines.append( '`@}`')
-			## this works because the function glsljit.array will unpack an array of arrays using the variable name with postfix "_n"
-			## note the extra for loop `_J` is required because the local subarray can not be assigned to `A_n`
-
-		else:
-			raise SyntaxError(node.iter)
-
-		for b in node.body:
-			lines.append( self.visit(b) )
-		lines.append( '}' )  ## end of for loop
-		return '\n'.join(lines)
-
 
 	_iter_id = 0
 	def visit_For(self, node):
@@ -1338,8 +1230,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		above works because [...] returns the internal Array of mylist
 
 		'''
-		if self._glsl:
-			return self._visit_for_glsl( node )
 
 		target = node.target.id
 		iter = self.visit(node.iter) # iter is the python iterator
