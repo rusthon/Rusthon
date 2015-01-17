@@ -4,7 +4,7 @@ rusthon.py can be given a markdown file `.md` and code blocks will be extracted 
 This is inspired by CoffeeScript literate format, http://coffeescript.org/#literate
 
 Fenced code blocks with the syntax highlight tag are used to translate and build the project,
-the supported languages are: `rusthon`, `c++`, `rust`, 'javascript', 'python'
+the supported languages are: `rusthon`, `c++`, `rust`, `javascript`, `python`
 Code blocks tagged as `javascript` or `python` are saved to the output tar file.
 Fenced code blocks without a syntax highlight tag are ignored.
 
@@ -31,7 +31,9 @@ extern "C" {
 
 ```
 
-helloworld
+rusthon
+TODO fixme:
+https://github.com/github/linguist/pull/2001
 ----------
 ```rusthon
 
@@ -44,10 +46,15 @@ def main():
 	say_hi_c()
 ```
 
-python script
+cpython script
 -------------
 ```python
 print('cpython script')
+```
+javascript
+-------
+```javascript
+window.alert('hi');
 ```
 
 some c

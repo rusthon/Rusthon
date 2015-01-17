@@ -1,8 +1,25 @@
+This compiles and runs a project in literate multi-language markdown format.
+```
+cd Rusthon
+./rusthon.py path/to/myproject.md
+```
+https://github.com/rusthon/Rusthon/blob/master/examples/example-project.md
+
+The option `--tar` can be used to save the source code of the translated code,
+javascripts and python scripts inside the markdown, and compiled exes.
+```
+./rusthon.py myproject.md --tar project.tar
+```
+
+Docs
+----
 https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
 https://github.com/rusthon/Rusthon/blob/master/doc/memory.md
 https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md
 
 
+Example
+-------
 ```python
 class A:
 	def __init__(self, x:int, y:int, z:int=1):

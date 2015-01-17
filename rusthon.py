@@ -200,6 +200,8 @@ def new_module():
 		'rust'    : [],
 		'c'       : [],
 		'c++'     : [],
+		'go'      : [],
+		'javascript':[],
 	}
 
 def import_md( url, modules=None ):
