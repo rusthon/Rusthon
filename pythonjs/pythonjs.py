@@ -122,16 +122,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		is_extern = False
 		has_default = False
 
-		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
-			#transform_gopherjs( node )
-			self._with_gojs = True
-			for b in node.body:
-				a = self.visit(b)
-				if a: r.append(a)
-			self._with_gojs = False
-			return '\n'.join(r)
-
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
+		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
 			has_default = True
 			if self._rust and not self._cpp:
 				r.append(self.indent()+'}, _ => {')
@@ -210,7 +201,20 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 
 			elif node.context_expr.func.id == 'extern':
-				r.append('extern "C" {')  ## TODO other abi's
+				link = None
+				for kw in node.context_expr.keywords:
+					if kw.arg=='link':
+						link = kw.value.s
+				if self._cpp:
+					r.append('extern "C" {')  ## TODO other abi's
+				elif self._rust:
+					assert link
+					r.append('#[link(name = "%s")]' %link)
+					r.append('extern {')
+
+				else:
+					raise SyntaxError('with extern: not supported yet for backend')
+
 				is_extern = True
 
 			else:
@@ -843,87 +847,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		elif name in self.catch_call:
 			return self._visit_call_special( node )
 
-		elif self._glsl and isinstance(node.func, ast.Attribute):
-			if isinstance(node.func.value, ast.Name) and node.func.value.id in self._typed_vars:
-				args = ','.join( [self.visit(a) for a in node.args] )
-				return '`__struct_name__`_%s(%s, %s)' %(node.func.attr, node.func.value.id, args)
-			else:
-				return '`%s`' %self._visit_call_helper(node)
-
-		elif self._glsl and name == 'len':
-			if isinstance(node.args[0], ast.Name):
-				return '`%s.length`' %node.args[0].id
-			elif isinstance(node.args[0], ast.Subscript):
-				s = node.args[0]
-				v = self.visit(s).replace('`', '')
-				return '`%s.length`' %v
-
-			elif isinstance(node.args[0], ast.Attribute):  ## assume struct array attribute
-				s = node.args[0]
-				v = self.visit(s).replace('`', '')
-				return '`%s.length`' %v
-
-		elif name == 'glsl_inline_assign_from_iterable':
-			## the target must be declared without a typedef, because if declared first, it can not be redeclared,
-			## in the if-assignment block, the typedef is not given because `Iter_n` already has been typed beforehand.
-			sname = node.args[0].s
-			target = node.args[1].s
-			iter  = node.args[2].id
-			self._typed_vars[ target ] = sname
-
-
-			lines = [
-				'`@var __length__ = %s.length;`' %iter,
-				#'`@console.log("DEBUG iter: "+%s);`' %iter,
-				#'`@console.log("DEBUG first item: "+%s[0]);`' %iter,
-				#'`@var __struct_name__ = %s[0].__struct_name__;`' %iter,
-				##same as above - slower ##'`@var __struct_name__ = glsljit.define_structure(%s[0]);`' %iter,
-				#'`@console.log("DEBUG sname: "+__struct_name__);`',
-				'`@var %s = %s[0];`' %(target, iter)  ## capture first item with target name so that for loops can get the length of member arrays
-			]
-
-			#lines.append('for (int _iter=0; _iter < `__length__`; _iter++) {' )
-
-			## declare struct variable ##
-			#lines.append( '%s %s;' %(sname, target))
-
-			## at runtime loop over subarray, for each index inline into the shader's for-loop an if test,
-			lines.append( '`@for (var __j=0; __j<__length__; __j++) {`')
-			#lines.append(     '`@glsljit.push("if (OUTPUT_INDEX==" +__j+ ") { %s %s=%s_" +__j+ ";}");`' %(sname, target, iter))
-			lines.append(     '`@glsljit.push("if (matrix_index()==" +__j+ ") { %s=%s_" +__j+ ";}");`' %(target, iter))
-			lines.append( '`@}`')
-
-
-			#lines.append( '}' )  ## end of for loop
-			return '\n'.join(lines)
-
-		elif name == 'glsl_inline_push_js_assign':
-			# '@' triggers a new line of generated code
-			n = node.args[0].s
-			if isinstance(node.args[1], ast.Attribute):  ## special case bypass visit_Attribute
-				v = '%s.%s' %(node.args[1].value.id, node.args[1].attr )
-			else:
-				v = self.visit(node.args[1])
-
-			v = v.replace('`', '')  ## this is known this entire expression is an external call.
-
-			## check if number is required because literal floats like `1.0` will get transformed to `1` by javascript toString
-			orelse = 'typeof(%s)=="object" ? glsljit.object(%s, "%s") : glsljit.push("%s="+%s+";")' %(n, n,n, n,n)
-
-			## if a constant number literal directly inline
-			if v.isdigit() or (v.count('.')==1 and v.split('.')[0].isdigit() and v.split('.')[1].isdigit()):
-				#if_number = ' if (typeof(%s)=="number") { glsljit.push("%s=%s;") } else {' %(n, n,v)
-				#return '`@%s=%s; %s if (%s instanceof Array) {glsljit.array(%s, "%s")} else {%s}};`' %(n,v, if_number, n, n,n, orelse)
-				return '`@%s=%s; glsljit.push("%s=%s;");`' %(n,v, n,v)
-			else:
-				return '`@%s=%s; if (%s instanceof Array) {glsljit.array(%s, "%s")} else { if (%s instanceof Int16Array) {glsljit.int16array(%s,"%s")} else {%s} };`' %(n,v, n, n,n,  n,n,n,  orelse)
-
-		#elif name == 'glsl_inline':
-		#	return '`%s`' %self.visit(node.args[0])
-		#elif name == 'glsl_inline_array':
-		#	raise NotImplementedError
-		#	return '`__glsl_inline_array(%s, "%s")`' %(self.visit(node.args[0]), node.args[1].s)
-
 		elif name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
 			return self._visit_call_helper_instanceof( node )
 
@@ -965,21 +888,19 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				return 'import "%s" as %s;' %(node.args[0].s, node.args[1].s)
 			else:
 				raise SyntaxError
+
 		elif name == 'list':
 			return self._visit_call_helper_list( node )
 
 		elif name == '__get__' and len(node.args)==2 and isinstance(node.args[1], ast.Str) and node.args[1].s=='__call__':
 			return self._visit_call_helper_get_call_special( node )
 
-		#elif name in self._global_functions:
-		#	return_id = self.inline_function( node )
-		#	code = self.writer.getvalue()
-		#	return '\n'.join([code, return_id])
 		elif name.split('.')[-1] == '__go__receive__':
-			raise SyntaxError('__go__receive__')
+			raise SyntaxError('this should not happen __go__receive__')
 
 		else:
 			return self._visit_call_helper(node)
+
 
 	def _visit_call_helper(self, node):
 		if node.args:
