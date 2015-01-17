@@ -344,12 +344,6 @@ class GoGenerator( pythonjs.JSGenerator ):
 	def visit_Expr(self, node):
 		return self.visit(node.value)
 
-	def visit_Import(self, node):
-		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
-		if r:
-			for name in r:
-				self._imports.add('import("%s");' %name)
-		return ''
 
 	def visit_Module(self, node):
 		header = [

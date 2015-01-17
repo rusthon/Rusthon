@@ -52,9 +52,6 @@ class LuaGenerator( pythonjs.JSGenerator ):
 		else:
 			return '(%s %s %s)' % (left, op, right)
 
-	def visit_Import(self, node):
-		for alias in node.names:
-			return 'require "%s"' %alias.name
 
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)

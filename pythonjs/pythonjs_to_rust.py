@@ -37,6 +37,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._go   = False
 		self._threads = []  ## c++11 threads
 		self._has_channels = False
+		self._crates = {}
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -541,15 +542,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if s==';': return ''
 		else: return s
 
-	def visit_Import(self, node):
-		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
-		if r:
-			for name in r:
-				self._imports.add('import("%s");' %name)
-		return ''
+
 
 	def visit_Module(self, node):
-		header = [
+		top_header = [
 			'#![allow(unknown_features)]',
 			'#![feature(slicing_syntax)]',
 			'#![feature(asm)]',
@@ -560,8 +556,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
 			'#![allow(unused_variables)]',
 			'#![feature(macro_rules)]',
-			'extern crate libc;',
-			'use libc::{c_int, size_t};',
+		]
+
+		header = [
 			'use std::collections::{HashMap};',
 			'use std::io::{File, Open, ReadWrite, Read, IoResult};',
 			'use std::num::Float;',
@@ -569,7 +566,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			'use std::rc::Rc;',
 			'use std::cell::RefCell;',
 			'use std::thread::Thread;',
-			TRY_MACRO,
 		]
 		lines = []
 
@@ -584,7 +580,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 						lines.append( sub )
 			else:
-				if isinstance(b, ast.Import):
+				if isinstance(b, ast.Import) or isinstance(b, ast.ImportFrom):  ## these write later in header
 					pass
 				else:
 					raise SyntaxError(b)
@@ -603,9 +599,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					lines.append( '  __use__%s : bool,' %name)
 			lines.append('}')
 
-		lines.append('mod rusthon {')
+		#lines.append('mod rusthon {')
 		## copy string globals into rusthon module
-		lines.append('}')
+		#lines.append('}')
+
+		for crate in self._crates:
+			top_header.append('extern crate %s;' %crate)
+			use_items = self._crates[crate]
+			if use_items:
+				header.append('use %s::{%s};' %(crate, ','.join(use_items)))
 
 		if len(self._cheader):
 			header.append('extern "C" {')
@@ -614,7 +616,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				raise SyntaxError(line)
 			header.append('}')
 
-		lines = header + list(self._imports) + lines
+		header.append( TRY_MACRO )
+
+		lines = top_header + header + list(self._imports) + lines
 		return '\n'.join( lines )
 
 

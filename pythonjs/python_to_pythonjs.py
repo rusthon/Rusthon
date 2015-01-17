@@ -439,7 +439,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		tornado = ['tornado', 'tornado.web', 'tornado.ioloop']
 
 		for alias in node.names:
-			if self._with_go:
+			if self._with_go or self._with_rust:
 				writer.write('import %s' %alias.name)
 			elif alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
@@ -481,6 +481,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			lib = ministdlib.LUA
 		elif self._with_go:
 			lib = ministdlib.GO
+		elif self._with_rust or self._with_cpp:
+			lib = {}
 		else:
 			lib = ministdlib.JS
 
@@ -526,6 +528,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				pure_javascript = self._strict_mode,
 			)
 			self._js_classes.update( subtrans._js_classes ) ## TODO - what other typedef info needs to be copied here?
+
+		elif self._with_rust:  ## allow `import xx` to be translated to `extern crate xx`
+			writer.write('from %s import %s' %(node.module, ','.join([n.name for n in node.names])))
 
 		else:
 			msg = 'invalid import - file not found: %s'%path

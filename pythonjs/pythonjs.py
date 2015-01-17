@@ -371,7 +371,32 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		# print node.module
 		# print node.names[0].name
 		# print node.level
+		if self._rust:
+			crate = self._crates[node.module]
+			for alias in node.names:
+				crate.add( alias.name )
+
 		return ''
+
+	def visit_Import(self, node):
+		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
+		res = []
+		if r:
+			for name in r:
+				if self._go:
+					self._imports.add('import("%s");' %name)
+				elif self._rust:
+					if name not in self._crates:
+						self._crates[name] = set()
+				elif self._lua:
+					res.append('require "%s"' %name)
+				else:
+					raise SyntaxError('import not yet support for this backend')
+
+		if res:
+			return '\n'.join(res)
+		else:
+			return ''
 
 	def visit_ExceptHandler(self, node):
 		out = ''
