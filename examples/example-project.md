@@ -60,13 +60,33 @@ window.alert('hi');
 
 go
 -------
+This hand written Go code is callable from the rusthon code below.
 ```go
-package main
-import "fmt"
-func main() {
-	fmt.Println("hello world")
+func my_go_func() {
+	fmt.Println("hello world from Go.")
 }
+func call_rusthon_func_from_go() {
+	my_rusthon_func()
+}
+
 ```
 
+rusthon go backend
+------------------
+The backend is selected by the special comment on the first line of the script,
+below the Go backend is set by `#backend:go`.
+When using the Go backend, hand written Go code can be called directly,
+the call below `my_go_func` is defined above.
+```rusthon
+#backend:go
 
+def my_rusthon_func():
+	print('my rusthon func called from go')
+
+def main():
+	print('hello from rusthon go backend')
+	my_go_func()
+	call_rusthon_func_from_go()
+
+```
 

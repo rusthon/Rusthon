@@ -234,8 +234,10 @@ def import_md( url, modules=None ):
 
 
 def build( modules, module_path ):
-	output = {'executeable':None, 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
 	python_main = {'name':'main.py', 'script':[]}
+	go_main = {'name':'main.go', 'source':[]}
+
 
 	if modules['python']:
 		for mod in modules['python']:
@@ -253,8 +255,8 @@ def build( modules, module_path ):
 			script = mod['code']
 			header = script.splitlines()[0]
 			backend = 'c++'  ## default to c++ backend
-			if header.startswith('#'):
-				backend = header[1:].strip() or 'c++'
+			if header.startswith('#backend:'):
+				backend = header.split(':')[-1].strip()
 
 
 			if backend == 'c++':
@@ -270,12 +272,38 @@ def build( modules, module_path ):
 			elif backend == 'go':
 				pyjs = pythonjs.python_to_pythonjs.main(script, go=True, module_path=module_path)
 				gocode = pythonjs.pythonjs_to_go.main( pyjs )
-				modules['go'].append( {'code':gocode})  ## gets compiled below
+				#modules['go'].append( {'code':gocode})  ## gets compiled below
+				go_main['source'].append( gocode )
 
 			elif backend == 'javascript':
 				js = compile_js( mod['code'], module_path )
 				for name in js:
 					output['javascript'].append( {'name':name, 'script':js[name]} )
+
+
+	if modules['go']:
+		for mod in modules['go']:
+			if 'name' in mod:
+				name = mod['name']
+				if name.endswith('.md'):
+					go_main['source'].append( mod['code'] )
+				else:
+					output['go'].append( mod )
+			else:
+				go_main['source'].append( mod['code'] )
+
+	if go_main['source']:
+		go_main['source'] = '\n'.join(go_main['source'])
+		output['go'].insert( 0, go_main )
+
+	if output['go']:
+		source = [ mod['source'] for mod in output['go'] ]
+		tmpfile = '/tmp/rusthon-go-build.go'
+		open(tmpfile, 'wb').write( '\n'.join(source) )
+		cmd = ['go', 'build', tmpfile]
+		subprocess.check_call(['go', 'build', tmpfile], cwd='/tmp' )
+		mod['binary'] = '/tmp/rusthon-go-build'
+		output['executeables'].append('/tmp/rusthon-go-build')
 
 	link = []
 
@@ -286,8 +314,8 @@ def build( modules, module_path ):
 
 		tmpfile = '/tmp/rusthon-build.rs'
 		data = '\n'.join(source)
-
 		open(tmpfile, 'wb').write( data )
+
 		if modules['c++']:
 			libname = 'rusthon-lib%s' %len(output['rust'])
 			link.append(libname)
@@ -297,7 +325,7 @@ def build( modules, module_path ):
 		else:
 			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', '/tmp/rusthon-bin',  tmpfile] )
 			output['rust'].append( {'source':data, 'binary':'/tmp/rusthon-bin', 'name':'rusthon-bin'} )
-			output['executeable'] = '/tmp/rusthon-bin'
+			output['executeables'].append('/tmp/rusthon-bin')
 
 	if modules['c']:
 		libname = 'rusthon-clib%s' %len(output['c'])
@@ -321,7 +349,7 @@ def build( modules, module_path ):
 		for mod in modules['c++']:
 			source.append( mod['code'] )
 
-		tmpfile = '/tmp/rusthon-build.cpp'
+		tmpfile = '/tmp/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++']
@@ -332,11 +360,11 @@ def build( modules, module_path ):
 			for libname in link:
 				cmd.append('-l'+libname)
 		cmd.extend(
-			[tmpfile, '-o', '/tmp/rusthon-bin', '-pthread', '-std=c++11' ]
+			[tmpfile, '-o', '/tmp/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
 		subprocess.check_call( cmd )
-		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-bin', 'name':'rusthon-bin'} )
-		output['executeable'] = '/tmp/rusthon-bin'
+		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
+		output['executeables'].append('/tmp/rusthon-c++-bin')
 
 	if python_main['script']:
 		python_main['script'] = '\n'.join(python_main['script'])
@@ -348,11 +376,12 @@ def save_tar( package, path='build.tar' ):
 	import tarfile
 	import StringIO
 	tar = tarfile.TarFile(path,"w")
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py'}
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go'}
 	for lang in 'rust c++ go javascript python'.split():
 		print(lang)
 		for info in package[lang]:
 			source = False
+			is_bin = False
 			s = StringIO.StringIO()
 			if 'staticlib' in info:
 				s.write(open(info['staticlib'],'rb').read())
@@ -360,6 +389,7 @@ def save_tar( package, path='build.tar' ):
 			elif 'binary' in info:
 				s.write(open(info['binary'],'rb').read())
 				source = info['source']
+				is_bin = True
 			elif 'code' in info:
 				s.write(info['code'])
 			elif 'script' in info:
@@ -367,13 +397,14 @@ def save_tar( package, path='build.tar' ):
 			s.seek(0)
 			ti = tarfile.TarInfo(name=info['name'])
 			ti.size=len(s.buf)
+			if is_bin: ti.mode = 0777
 			tar.addfile(tarinfo=ti, fileobj=s)
 
 			if source:
 				s = StringIO.StringIO()
 				s.write(source)
 				s.seek(0)
-				ti = tarfile.TarInfo( name = info['name'] + exts[lang] )
+				ti = tarfile.TarInfo( name = info['name'] + '-source' + exts[lang] )
 				ti.size=len(s.buf)
 				tar.addfile(tarinfo=ti, fileobj=s)
 
@@ -421,7 +452,9 @@ if __name__ == '__main__':
 
 		package = build(modules, base_path )
 		if not save:
-			subprocess.check_call( package['executeable'] )
+			for exe in package['executeables']:
+				print('running: %s' %exe)
+				subprocess.check_call( exe )
 		else:
 			save_tar( package, output_tar )
 			print('saved build to:')
