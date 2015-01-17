@@ -194,7 +194,7 @@ def convert_to_markdown_project(path):
 
 def new_module():
 	return {
-		'markdown': None,
+		'markdown': '',
 		'python'  : [],
 		'rusthon' : [],
 		'rust'    : [],
@@ -202,8 +202,8 @@ def new_module():
 		'c++'     : [],
 	}
 
-def import_md( url ):
-	compile = new_module()
+def import_md( url, module=None ):
+	if module is None: module = new_module()
 	doc = []
 	code = []
 	lang = False
@@ -216,7 +216,7 @@ def import_md( url ):
 				if lang:
 					p, n = os.path.split(url)
 					mod = {'path':p, 'name':n, 'code':'\n'.join(code) }
-					compile[ lang ].append( mod )
+					module[ lang ].append( mod )
 				in_code = False
 				code = []
 			else:
@@ -227,13 +227,13 @@ def import_md( url ):
 		else:
 			doc.append(line)
 
-	compile['markdown'] = '\n'.join(doc)
-	return compile
+	module['markdown'] += '\n'.join(doc)
+	return module
+
 
 def build( modules, module_path ):
-	python_main = {'name':'main.py', 'script':[]}
-
 	output = {'executeable':None, 'rust':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
+	python_main = {'name':'main.py', 'script':[]}
 
 	if modules['python']:
 		for mod in modules['python']:
@@ -286,11 +286,11 @@ def build( modules, module_path ):
 			libname = 'rusthon-lib%s' %len(output['rust'])
 			link.append(libname)
 			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '--crate-type', 'staticlib' ,'-o', '/tmp/'+libname,  tmpfile] )
-			output['rust'].append( {'source':data, 'staticlib':libname} )
+			output['rust'].append( {'source':data, 'staticlib':libname, 'name':'lib'+libname+'.a'} )
 
 		else:
 			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', '/tmp/rusthon-bin',  tmpfile] )
-			output['rust'].append( {'source':data, 'binary':'/tmp/rusthon-bin'} )
+			output['rust'].append( {'source':data, 'binary':'/tmp/rusthon-bin', 'name':'rusthon-bin'} )
 			output['executeable'] = '/tmp/rusthon-bin'
 
 	if modules['c']:
@@ -329,30 +329,64 @@ def build( modules, module_path ):
 			[tmpfile, '-o', '/tmp/rusthon-bin', '-pthread', '-std=c++11' ]
 		)
 		subprocess.check_call( cmd )
-		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-bin'} )
+		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-bin', 'name':'rusthon-bin'} )
 		output['executeable'] = '/tmp/rusthon-bin'
 
-	if python_main:
+	if python_main['script']:
 		python_main['script'] = '\n'.join(python_main['script'])
 		output['python'].append( python_main )
 
 	return output
 
-def run_script(script, module_path=None):
-	modules = new_module()
-	modules['rusthon'].append( {'name':'main', 'code':script} )
-	package = build( modules, module_path )
-	subprocess.check_call( package['executeable'] )
+def save_tar( package, path='build.tar' ):
+	import tarfile
+	import StringIO
+	tar = tarfile.TarFile(path,"w")
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py'}
+	for lang in 'rust c++ go javascript python'.split():
+		print(lang)
+		for info in package[lang]:
+			source = False
+			s = StringIO.StringIO()
+			if 'staticlib' in info:
+				s.write(open(info['staticlib'],'rb').read())
+				source = info['source']
+			elif 'binary' in info:
+				s.write(open(info['binary'],'rb').read())
+				source = info['source']
+			elif 'code' in info:
+				s.write(info['code'])
+			elif 'script' in info:
+				s.write(info['script'])
+			s.seek(0)
+			ti = tarfile.TarInfo(name=info['name'])
+			ti.size=len(s.buf)
+			tar.addfile(tarinfo=ti, fileobj=s)
 
+			if source:
+				s = StringIO.StringIO()
+				s.write(source)
+				s.seek(0)
+				ti = tarfile.TarInfo( name = info['name'] + exts[lang] )
+				ti.size=len(s.buf)
+				tar.addfile(tarinfo=ti, fileobj=s)
+
+
+	tar.close()
 
 if __name__ == '__main__':
 	if len(sys.argv)==1:
 		print('useage: ./rusthon.py myscript.py')
 	else:
+		modules = new_module()
+
+		save = False
 		paths = []
 		scripts = []
 		markdowns = []
 		gen_md = False
+		output_tar = 'rusthon-build.tar'
+
 		for arg in sys.argv[1:]:
 			if os.path.isdir(arg):
 				paths.append(arg)
@@ -360,9 +394,32 @@ if __name__ == '__main__':
 				scripts.append(arg)
 			elif arg.endswith('.md'):
 				markdowns.append(arg)
+			elif arg.endswith('.tar'):
+				output_tar = arg
 			elif arg == '--create-md':
 				gen_md = True
+			elif arg == '--tar':
+				save = True
 
-		path = sys.argv[-1]
-		assert path.endswith('.py')
-		run_script( open(path,'rb').read(), module_path=os.path.split(path)[0] )
+		base_path = None
+		for path in scripts:
+			script = open(path,'rb').read()
+			modules['rusthon'].append( {'name':'main', 'code':script} )
+			if base_path is None:
+				base_path = os.path.split(path)[0]
+
+		for path in markdowns:
+			md = open(path,'rb').read()
+			import_md( md, modules=modules )
+			if base_path is None:
+				base_path = os.path.split(path)[0]
+
+		package = build(modules, base_path )
+		if not save:
+			subprocess.check_call( package['executeable'] )
+		else:
+			save_tar( package, output_tar )
+			print('saved build to:')
+			print(output_tar)
+
+
