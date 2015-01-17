@@ -202,8 +202,8 @@ def new_module():
 		'c++'     : [],
 	}
 
-def import_md( url, module=None ):
-	if module is None: module = new_module()
+def import_md( url, modules=None ):
+	if modules is None: modules = new_module()
 	doc = []
 	code = []
 	lang = False
@@ -216,7 +216,7 @@ def import_md( url, module=None ):
 				if lang:
 					p, n = os.path.split(url)
 					mod = {'path':p, 'name':n, 'code':'\n'.join(code) }
-					module[ lang ].append( mod )
+					modules[ lang ].append( mod )
 				in_code = False
 				code = []
 			else:
@@ -227,8 +227,8 @@ def import_md( url, module=None ):
 		else:
 			doc.append(line)
 
-	module['markdown'] += '\n'.join(doc)
-	return module
+	modules['markdown'] += '\n'.join(doc)
+	return modules
 
 
 def build( modules, module_path ):
@@ -238,7 +238,11 @@ def build( modules, module_path ):
 	if modules['python']:
 		for mod in modules['python']:
 			if 'name' in mod:
-				output['python'].append( {'name':name, 'script':mod[name]} )
+				name = mod['name']
+				if name.endswith('.md'):
+					python_main['script'].append( mod['code'] )
+				else:
+					output['python'].append( {'name':name, 'script':mod['code']} )
 			else:
 				python_main['script'].append( mod['code'] )
 
@@ -409,8 +413,7 @@ if __name__ == '__main__':
 				base_path = os.path.split(path)[0]
 
 		for path in markdowns:
-			md = open(path,'rb').read()
-			import_md( md, modules=modules )
+			import_md( path, modules=modules )
 			if base_path is None:
 				base_path = os.path.split(path)[0]
 
