@@ -201,6 +201,7 @@ def new_module():
 		'c'       : [],
 		'c++'     : [],
 		'go'      : [],
+		'html'    : [],
 		'javascript':[],
 	}
 
@@ -210,20 +211,21 @@ def import_md( url, modules=None ):
 	code = []
 	lang = False
 	in_code = False
-
+	index = 0
 	data = open(url, 'rb').read()
 	for line in data.splitlines():
 		if line.strip().startswith('```'):
 			if in_code:
 				if lang:
 					p, n = os.path.split(url)
-					mod = {'path':p, 'name':n, 'code':'\n'.join(code) }
+					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index }
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
 			else:
 				in_code = True
 			lang = line.strip().split('```')[-1]
+			index += 1
 		elif in_code:
 			code.append(line)
 		else:
@@ -234,10 +236,13 @@ def import_md( url, modules=None ):
 
 
 def build( modules, module_path ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[]}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[]}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 
+	if modules['html']:
+		for mod in modules['html']:
+			output['html'].append( mod )
 
 	if modules['python']:
 		for mod in modules['python']:
@@ -376,10 +381,13 @@ def save_tar( package, path='build.tar' ):
 	import tarfile
 	import StringIO
 	tar = tarfile.TarFile(path,"w")
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go'}
-	for lang in 'rust c++ go javascript python'.split():
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html'}
+	for lang in 'rust c++ go javascript python html'.split():
 		print(lang)
 		for info in package[lang]:
+			name = 'untitled'
+			if 'name' in info: name = info['name']
+
 			source = False
 			is_bin = False
 			s = StringIO.StringIO()
@@ -395,7 +403,11 @@ def save_tar( package, path='build.tar' ):
 			elif 'script' in info:
 				s.write(info['script'])
 			s.seek(0)
-			ti = tarfile.TarInfo(name=info['name'])
+
+			if not is_bin and not source and not name.endswith( exts[lang] ):
+				name += exts[lang]
+
+			ti = tarfile.TarInfo(name=name)
 			ti.size=len(s.buf)
 			if is_bin: ti.mode = 0777
 			tar.addfile(tarinfo=ti, fileobj=s)
@@ -404,7 +416,7 @@ def save_tar( package, path='build.tar' ):
 				s = StringIO.StringIO()
 				s.write(source)
 				s.seek(0)
-				ti = tarfile.TarInfo( name = info['name'] + '-source' + exts[lang] )
+				ti = tarfile.TarInfo( name = name + '-source' + exts[lang] )
 				ti.size=len(s.buf)
 				tar.addfile(tarinfo=ti, fileobj=s)
 
