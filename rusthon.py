@@ -5,10 +5,12 @@ import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
 import pythonjs.pythonjs_to_cpp
 
-def compile_js( script, module_path ):
-	fastjs = True
+def compile_js( script, module_path, directjs=False, directloops=False ):
+	'''
 	directjs = False     ## compatible with pythonjs-minimal.js
 	directloops = False  ## allows for looping over strings, arrays, hmtlElements, etc. if true outputs cleaner code.
+	'''
+	fastjs = True  ## this is now the default, and complete python mode is deprecated
 	result = {}
 
 	pyjs = pythonjs.python_to_pythonjs.main(
@@ -30,7 +32,6 @@ def compile_js( script, module_path ):
 			)
 
 	else:
-		print( pyjs )
 
 		code = pythonjs.pythonjs.main(
 			pyjs, 
@@ -212,24 +213,34 @@ def import_md( url, modules=None ):
 	lang = False
 	in_code = False
 	index = 0
+	prevline = None
+	tag = None
 	data = open(url, 'rb').read()
+
 	for line in data.splitlines():
 		if line.strip().startswith('```'):
 			if in_code:
 				if lang:
 					p, n = os.path.split(url)
-					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index }
+					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index, 'tag':tag }
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
 			else:
 				in_code = True
+				if prevline and prevline.strip().startswith('@'):
+					tag = prevline.strip()[1:]
+				else:
+					tag = None
+
 			lang = line.strip().split('```')[-1]
 			index += 1
 		elif in_code:
 			code.append(line)
 		else:
 			doc.append(line)
+
+		prevline = line
 
 	modules['markdown'] += '\n'.join(doc)
 	return modules
@@ -239,10 +250,7 @@ def build( modules, module_path ):
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[]}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
-
-	if modules['html']:
-		for mod in modules['html']:
-			output['html'].append( mod )
+	tagged = {}
 
 	if modules['python']:
 		for mod in modules['python']:
@@ -254,6 +262,7 @@ def build( modules, module_path ):
 					output['python'].append( {'name':name, 'script':mod['code']} )
 			else:
 				python_main['script'].append( mod['code'] )
+
 
 	if modules['rusthon']:
 		for mod in modules['rusthon']:
@@ -284,6 +293,37 @@ def build( modules, module_path ):
 				js = compile_js( mod['code'], module_path )
 				for name in js:
 					output['javascript'].append( {'name':name, 'script':js[name]} )
+
+				if len(js.keys())==1 and mod['tag']:
+					tagged[ mod['tag'] ] = js['main']
+
+	if modules['html']:
+		for mod in modules['html']:
+			html = []
+			for line in mod['code'].splitlines():
+				## `~/some/path/myscript.js` special syntax to copy javascript directly into the output html, good for testing locally.
+				if line.strip().startswith('<script ') and line.strip().endswith('</script>') and 'src="~/' in line:
+					url = line.split('src="')[-1].split('"')[0]
+					url = os.path.expanduser( url )
+					if os.path.isfile(url):
+						html.append('<script type="text/javascript">')
+						html.append( open(url, 'rb').read() )
+						html.append('</script>')
+					else:
+						print('WARNING: could not find file: %s' %url)
+						html.append( line )
+				else:
+					html.append( line )
+
+			html = '\n'.join(html)
+
+			for tagname in tagged:
+				tag = '<@%s>' %tagname
+				js  = tagged[tagname]
+				if tag in html:
+					html = html.replace(tag, '<script type="text/javascript">\n%s</script>' %js)
+			mod['code'] = html
+			output['html'].append( mod )
 
 
 	if modules['go']:
@@ -467,6 +507,14 @@ if __name__ == '__main__':
 			for exe in package['executeables']:
 				print('running: %s' %exe)
 				subprocess.check_call( exe )
+
+			if package['html']:
+				import webbrowser
+				for i,page in enumerate(package['html']):
+					tmp = '/tmp/rusthon-webpage%s.html' %i
+					open(tmp, 'wb').write( page['code'] )
+					webbrowser.open(tmp)
+
 		else:
 			save_tar( package, output_tar )
 			print('saved build to:')

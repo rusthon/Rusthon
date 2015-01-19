@@ -1,5 +1,39 @@
+html
+----
+To run this example run these commands in your shell:
+```
+cd
+git clone https://github.com/mrdoob/three.js.git
+git clone https://github.com/rusthon/Rusthon.git
+cd Rusthon/
+./rusthon.py ./examples/hello_threejs.md
+```
+This will compile, and then open a web-browser, clicking "click me" will start the threejs scene, and you should see some 3D objects rotating.
+
+Rusthon allows you to assemble html files, inserting static javascripts, and output from Rusthon using the javascript backend.
+The example below inserts the pythonjs minimal runtime `pythonjs-minimal.js` and the THREE.js library `three.min.js` into the output html file.
+This is triggered by using `~/` at the start of the path in the `src` attribute of the script tag.  The path is relative to your home directory.
+
+
+```html
+<html>
+<head>
+<script src="~/Rusthon/pythonjs/pythonjs-minimal.js"></script>
+<script src="~/three.js/build/three.min.js"></script>
+<@myscript>
+
+</head>
+<body>
+<button onclick="main()">click me</button>
+</body>
+</html>
+```
+Above a special syntax is used `<@myscript>` this tells Rusthon where to insert the output of scripts it translates using the javascript backend.
+
 rusthon
 -------
+Below `@myscript` is given on the line just before the fenced rusthon code block.  This allows you to insert multiple scripts into your html, in the head or body.
+
 @myscript
 ```rusthon
 #backend:javascript
@@ -80,21 +114,4 @@ def animate():
 		m.material.color.setRGB( x,y,z )
 
 	ren.render( scn, cam )
-```
-
-html
-----
-```html
-<html>
-<head>
-<script src="~/three.js/build/three.min.js"></script>
-<script type="text/javascript">
-<@myscript>
-</script>
-
-</head>
-<body>
-<button onclick="main()">click me</button>
-</body>
-</html>
 ```
