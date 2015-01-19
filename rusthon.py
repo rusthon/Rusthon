@@ -397,7 +397,7 @@ def build( modules, module_path ):
 		tmpfile = '/tmp/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
-		cmd = ['g++']
+		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native']
 		if link:
 			cmd.append('-static')
 			cmd.append( tmpfile )

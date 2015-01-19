@@ -1102,8 +1102,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._go:
 					return '*[]%s' %self.visit(node.right)
 				elif self._rust:
+					raise RuntimeError('TODO array pointer')
 					return '&mut Vec<%s>' %self.visit(node.right)  ## TODO - test this
+				elif self._cpp:
+					if isinstance(node.right, ast.Str):
+						raise RuntimeError(node.right.s)
+					else:
+						raise RuntimeError(node.right)
 
+					return 'std::shared_ptr<std::vector<%s>>'%self.visit(node.right)
 				else:
 					raise RuntimeError('TODO array pointer')
 
@@ -1115,9 +1122,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 
-		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
+		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':  ## deprecated
 			left += '[_id_]'
-		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':
+		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':  ## deprecated
 			right += '[_id_]'
 
 		return '(%s %s %s)' % (left, op, right)

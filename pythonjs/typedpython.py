@@ -638,7 +638,7 @@ def templated( x : namespace::Type<T> ):
 c.x[0] = def(xx,yy) ->int:
 	return xx+yy
 
-print xxx
+mdarray = [][]int()
 '''
 
 ## function expressions, deprecated
