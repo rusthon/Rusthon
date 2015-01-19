@@ -17,8 +17,8 @@ def main():
 	benchtime = a[0]
 	stones = a[1]
 	print( benchtime )
-	print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
-	print("#This machine benchmarks at pystones/second: %s" %stones)
+	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
+	#print("#This machine benchmarks at pystones/second: %s" %stones)
 
 
 def pystones(loops):
@@ -58,8 +58,6 @@ Ident3 = 3
 Ident4 = 4
 Ident5 = 5
 
-def create_array1glob(n):
-	return [0]*51
 
 def create_array2glob(n):
 	return [ Array1Glob[:] for i in range(n) ]

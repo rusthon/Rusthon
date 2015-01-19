@@ -481,7 +481,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			lib = ministdlib.LUA
 		elif self._with_go:
 			lib = ministdlib.GO
-		elif self._with_rust or self._with_cpp:
+		elif self._with_cpp:
+			lib = ministdlib.CPP
+		elif self._with_rust:
 			lib = {}
 		else:
 			lib = ministdlib.JS

@@ -63,3 +63,9 @@ GO = {
 		'clock': 'func clock() float64 { return float64(time.Now().Unix()); }'
 	},
 }
+
+CPP = {
+	'time': {
+		'clock': 'static std::chrono::time_point<std::chrono::steady_clock> clock() { return std::chrono::steady_clock::now();; }'
+	},
+}

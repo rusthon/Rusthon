@@ -83,6 +83,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			'#include <functional>', ## c++11
 			#'#include <sstream>',  ## c++11
 			'#include <thread>', ## c++11
+			'#include <chrono>', ## c++11
 		]
 		lines = []
 
