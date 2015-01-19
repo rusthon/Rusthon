@@ -672,7 +672,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			c = self.visit(gen.iter)
 			return '[%s for %s in %s]' %(a,b,c)
 		else:
-			self._visit_listcomp_helper(node)
+			compname = self._visit_listcomp_helper(node)
+			return compname
 
 	def _visit_listcomp_helper(self, node):
 		## TODO - move this logic to the next translation stage for each backend.
