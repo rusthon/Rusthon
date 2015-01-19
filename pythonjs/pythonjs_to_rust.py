@@ -1255,7 +1255,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					err = 'error in function: %s' %node.name
 					err += '\n  missing typedef: %s' %arg.id
-					raise SyntaxError(err)
+					raise SyntaxError( self.format_error(err) )
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]

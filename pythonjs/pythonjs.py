@@ -484,20 +484,27 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 					## check for super classes - generics ##
 					if args_typedefs[ key.arg ] in self._classes:
-						raise SyntaxError('DEPRECATED')
-						if node.name=='__init__':
-							## generics type switch is not possible in __init__ because
-							## it is used to generate the type struct, where types are static.
-							## as a workaround generics passed to init always become `interface{}`
-							args_typedefs[ key.arg ] = 'interface{}'
-							#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
-						else:
-							classname = args_typedefs[ key.arg ]
-							options['generic_base_class'] = classname
-							generics.add( classname ) # switch v.(type) for each
-							generics = generics.union( self._classes[classname]._subclasses )  ## TODO
-							args_typedefs[ key.arg ] = 'interface{}'
-							args_generics[ key.arg ] = classname
+						classname = args_typedefs[ key.arg ]
+
+						if self._cpp:
+							args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %classname
+
+						elif self._rust:
+							args_typedefs[ key.arg ] = 'Rc<RefCell<%s>>' %classname
+
+						elif self._go:  ## TODO test if this is still working in the Go backend
+							if node.name=='__init__':
+								## generics type switch is not possible in __init__ because
+								## it is used to generate the type struct, where types are static.
+								## as a workaround generics passed to init always become `interface{}`
+								args_typedefs[ key.arg ] = 'interface{}'
+								#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
+							else:
+								options['generic_base_class'] = classname
+								generics.add( classname ) # switch v.(type) for each
+								generics = generics.union( self._classes[classname]._subclasses )  ## TODO
+								args_typedefs[ key.arg ] = 'interface{}'
+								args_generics[ key.arg ] = classname
 
 		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef_chan__':
 			for key in decor.keywords:

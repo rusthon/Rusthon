@@ -3131,7 +3131,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				decorators.append( decorator )
 
 
-		if gpu:
+		if gpu:  ## TODO deprecate
 			restore_with_glsl = self._with_glsl
 			self._with_glsl = True
 			if gpu_main:  ## sets float
@@ -3226,7 +3226,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			else:
 				writer.write('@returns(%s)' %return_type)
 
-		if gpu_vectorize:
+		if gpu_vectorize:  ## TODO deprecate
 			writer.write('@gpu.vectorize')
 		if gpu_method:
 			writer.write('@gpu.method')
@@ -3266,7 +3266,22 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				a = arg.id
 				dindex = i - offset
 				if dindex >= 0 and node.args.defaults:
-					default = self.visit(node.args.defaults[dindex])
+					## try to infer type from named param default,
+					## this way the user can simply write `def f(a=0)`
+					## rather than `def f(a:int=0)`
+					default_node = node.args.defaults[dindex]
+					if a not in node._typed_args:
+						if isinstance(default_node, ast.Num):
+							if str(default_node.n).isdigit():
+								node._typed_args[a] = 'int'
+							else:
+								node._typed_args[a] = 'float'  ## default to 32 or 64 bit float?
+							writer.write('@__typedef__(%s="%s")' %(a, node._typed_args[a]))
+						elif isinstance(default_node, ast.Str):
+							node._typed_args[a] = 'string'
+							writer.write('@__typedef__(%s="%s")' %(a, node._typed_args[a]))
+
+					default = self.visit(default_node)
 					args.append( '%s=%s' %(a, default))
 				else:
 					args.append( a )
