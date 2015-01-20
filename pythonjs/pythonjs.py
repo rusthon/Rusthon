@@ -318,7 +318,11 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		if self._rust:
 			return 'vec!(%s)' % ', '.join(map(self.visit, node.elts))
 		elif self._cpp:
-			return 'std::array<int, %s>{{%s}}' %(len(node.elts), ','.join(map(self.visit, node.elts)))
+			## this hack was for `for i in range(x)`.
+			##return 'std::array<int, %s>{{%s}}' %(len(node.elts), ','.join(map(self.visit, node.elts)))
+
+			return '{%s}' %','.join(map(self.visit, node.elts))
+
 		else:
 			return '[%s]' % ', '.join(map(self.visit, node.elts))
 

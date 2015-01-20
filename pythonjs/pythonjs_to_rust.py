@@ -696,12 +696,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			arrname = iter.split('.')[0]
 			if node.iter.is_ref:
 				if self._cpp:
-					if arrname in self._known_arrays:
+					if arrname in self._known_arrays:  ## TODO get rid of _ref_ usage here
 						#lines.append('for (auto &%s: (*%s)) {' %(target, iter))
 						lines.append('for (auto &%s: _ref_%s) {' %(target, iter))
 					elif arrname in self._known_maps:
 						lines.append('for (auto &_pair_%s: _ref_%s) {' %(target, iter))
 						lines.append('  auto %s = _pair_%s.second;')
+					else:
+						lines.append('for (auto %s: %s) {' %(target, iter))
 
 				else:
 					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
@@ -1043,7 +1045,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return ' new %s' %right
 
 		elif op == '<<':
-			rust_hacks = ('__rust__array__', '__rust__arrayfixed__', '__rust__map__', '__rust__func__')
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
 
 			if left in ('__go__receive__', '__go__send__'):
@@ -1056,8 +1057,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:  ## Go
 					return '<- %s' %right
 
-			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in rust_hacks:
-				raise RuntimeError('deprecated rust_hacks')
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
 					raise SyntaxError('TODO - go.func')
@@ -1105,12 +1104,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					raise RuntimeError('TODO array pointer')
 					return '&mut Vec<%s>' %self.visit(node.right)  ## TODO - test this
 				elif self._cpp:
-					if isinstance(node.right, ast.Str):
-						raise RuntimeError(node.right.s)
-					else:
-						raise RuntimeError(node.right)
+					if not isinstance(node.right,ast.Call):
+						raise RuntimeError('TODO mdarrays')
 
-					return 'std::shared_ptr<std::vector<%s>>'%self.visit(node.right)
+					mdtype = self.visit(node.right.args[0])
+
+					return 'std::shared_ptr<std::vector< std::shared_ptr<std::vector<%s>> >>'%mdtype
 				else:
 					raise RuntimeError('TODO array pointer')
 
@@ -1958,7 +1957,50 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return r
 
 			elif self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
-				if isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:
+				if isinstance(node.value.left, ast.BinOp) and isinstance(node.value.right, ast.Tuple) and isinstance(node.value.op, ast.LShift):
+
+					if isinstance(node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
+						assert self._shared_pointers  ## always require shared pointers?
+
+						T = self.visit(node.value.left.right.args[0])
+						if T=='string': T = 'std::string'
+						self._known_arrays[ target ] = T
+						subvectype = 'std::vector<%s>' %T
+						vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
+
+						r = ['/* %s = vector of vectors to: %s */' %(target,T)]
+
+						args = []
+						for i,elt in enumerate(node.value.right.elts):
+							if isinstance(elt, ast.Tuple):
+								subname = '_sub%s_%s' %(i, target)
+								args.append( subname )
+
+								subargs = [self.visit(sarg) for sarg in elt.elts]
+								#r.append('%s %s = {%s};' %(subvectype, subname, ','.join(subargs)))  ## direct ref
+
+								r.append('%s _r_%s = {%s};' %(subvectype, subname, ','.join(subargs)))
+								r.append(  ## this also allows `if mdarray[0] is None:`
+									'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
+								)
+
+							else:
+								args.append( self.visit(elt) )
+
+
+						r.append('%s _ref_%s = {%s};' %(vectype, target, ','.join(args)))
+
+						r.append(
+							'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+						)
+						return (self.indent()+'\n').join(r)
+
+
+					else:
+						raise RuntimeError('TODO other md-array types', node.value.left.left)
+
+
+				elif isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:
 					S = node.value.left.func.id
 					if S == '__go__map__':
 						key_type = self.visit(node.value.left.args[0])
@@ -2107,7 +2149,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			else:
 				if self._cpp:
-					return 'auto %s = %s;' % (target, value)
+					raise RuntimeError((node.value.left, node.value.right, node.value.op))
+					return 'auto %s = %s;  /* fallback */' % (target, value)
 				else:
 					if value.startswith('Rc::new(RefCell::new('):
 						#return 'let _RC_%s = %s; let mut %s = _RC_%s.borrow_mut();	/* new array */' % (target, value, target, target)
