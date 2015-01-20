@@ -1837,6 +1837,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Assign(self, node):
 		self._catch_assignment = False
+		result = []  ## for arrays of arrays with list comps
+		value  = None
 
 		if isinstance(node.targets[0], ast.Tuple):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
@@ -1881,26 +1883,53 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				value = self.visit(node.value)
 
 			except GenerateListComp as error:  ## new style to generate list comprehensions
-				if not isinstance(node.value, ast.BinOp):
-					raise RuntimeError('untyped list comprehension')
-
-				assert isinstance(node.value.left, ast.Call)
-				assert node.value.left.func.id in ('__go__array__', '__go__arrayfixed__')
 				compnode = error[0]
 
-				if node.value.left.func.id == '__go__array__':
-					return self._listcomp_helper(
-						compnode, 
-						target=target, 
-						type=self.visit(node.value.left.args[0])
-					)
+				if not isinstance(node.value, ast.BinOp):
+					raise SyntaxError('untyped list comprehension')
+
+				comptarget = None
+				comptype = None
+				arrtype  = None
+
+				if isinstance(node.value.left, ast.Call):
+					assert node.value.left.func.id in ('__go__array__', '__go__arrayfixed__')
+					if comptype == '__go__array__':
+						comptarget = target
+						comptype = node.value.left.func.id
+						arrtype  = self.visit(node.value.left.args[0])
+
+						return self._listcomp_helper(
+							compnode, 
+							target=comptarget, 
+							type=arrtype
+						)
+					else:
+						return self._listcomp_helper(
+							compnode, 
+							target=target, 
+							type=self.visit(node.value.left.args[1]),
+							size=self.visit(node.value.left.args[0]),
+						)
+
+				elif isinstance(node.value.left, ast.BinOp):
+					comptype = node.value.left.left.id=='__go__array__'
+					if (node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
+						arrtype = node.value.left.right.args[0].id
+						comptarget = '_subcomp_'+target
+						result.append(
+							self._listcomp_helper(
+								compnode, 
+								target=comptarget, 
+								type=arrtype
+							)
+						)
+
+					else:
+						raise RuntimeError('TODO mdarray subtype')
 				else:
-					return self._listcomp_helper(
-						compnode, 
-						target=target, 
-						type=self.visit(node.value.left.args[1]),
-						size=self.visit(node.value.left.args[0]),
-					)
+					raise RuntimeError(node.value.left)
+
 
 			except GenerateSlice as error:  ## special c++ case for slice syntax
 				assert self._cpp
@@ -1934,7 +1963,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'let mut %s;  /* let rust infer type */' %target
 
 			############################TODO deprecate this go hack##########
-			if value.startswith('&[]*') and self._catch_assignment:
+			if value is not None and value.startswith('&[]*') and self._catch_assignment:
 				self._known_arrays[ target ] = self._catch_assignment['class']
 			#################################################################
 
@@ -1959,6 +1988,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
 				if isinstance(node.value.left, ast.BinOp) and isinstance(node.value.right, ast.Tuple) and isinstance(node.value.op, ast.LShift):
 
+					## c++ vector of vectors ##	
+					## std::shared_ptr< std::vector<std::shared_ptr<std::vector<T>>> >
 					if isinstance(node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
 						assert self._shared_pointers  ## always require shared pointers?
 
@@ -1983,6 +2014,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								r.append(  ## this also allows `if mdarray[0] is None:`
 									'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
 								)
+							elif isinstance(elt, ast.ListComp):
+								r.extend(result)
+								args.append('_subcomp_%s'%target)  ## already a shared_ptr
 
 							else:
 								args.append( self.visit(elt) )
