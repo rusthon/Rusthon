@@ -703,7 +703,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						lines.append('for (auto &_pair_%s: _ref_%s) {' %(target, iter))
 						lines.append('  auto %s = _pair_%s.second;')
 					else:
-						lines.append('for (auto %s: %s) {' %(target, iter))
+						lines.append('for (auto &%s: *%s) {' %(target, iter))
 
 				else:
 					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
@@ -2149,7 +2149,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			else:
 				if self._cpp:
-					raise RuntimeError((node.value.left, node.value.right, node.value.op))
+					#raise RuntimeError((node.value.left, node.value.right, node.value.op))
 					return 'auto %s = %s;  /* fallback */' % (target, value)
 				else:
 					if value.startswith('Rc::new(RefCell::new('):

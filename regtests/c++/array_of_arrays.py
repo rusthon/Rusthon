@@ -17,5 +17,11 @@ def main():
 	else:
 		print('never reached')
 
-	#for i in arr[0]:  ## TODO fix me
-	#	print( i )
+	print('sub 0 items:')
+	for i in arr[0]:
+		print( i )
+
+	print('sub 1 items:')
+	sub = arr[1]
+	for i in sub:
+		print(i)
