@@ -25,11 +25,13 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		r = []
 		for e in node.values:
 			s = self.visit(e)
-			if isinstance(e, ast.List):
-				r.append('std::cout << %s << std::endl;' %s[1:-1])
+			if isinstance(e, ast.List) or isinstance(e, ast.Tuple):
+				for sube in e.elts:
+					r.append('std::cout << %s;' %self.visit(sube))
+				r[-1] += 'std::cout << std::endl;'
 			else:
 				r.append('std::cout << %s << std::endl;' %s)
-		return ''.join(r)
+		return '\n'.join(r)
 
 
 	def visit_TryExcept(self, node, finallybody=None):
