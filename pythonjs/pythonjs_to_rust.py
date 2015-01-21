@@ -1580,24 +1580,39 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				for subclass in generics:
 					for i,line in enumerate(out):
-						if i==0:
-							if len(args_generics.keys()) > 1:
-								ipmuts = itertools.permutations(args_gens_indices)
-								for pmut in ipmuts:
-									gargs = []
-									for idx,arg in enumerate(args):
-										if idx in pmut:
-											gargs.append(
-												arg.replace('<%s>'%gclass, '<%s>'%subclass)
-											)
-										else:
-											gargs.append(arg)
-								sig = '%s %s(%s)' % (return_type, node.name, ', '.join(gargs))
-								line = '%s {\n' % sig 
-
-							else:
-								line = line.replace('<%s>'%gclass, '<%s>'%subclass)
+						if i==0: line = line.replace('<%s>'%gclass, '<%s>'%subclass)
 						overloads.append(line)
+
+				if len(args_generics.keys()) > 1:
+					len_gargs = len(args_generics.keys())
+					len_gsubs = len(generics)
+					gsigs = []
+
+					p = list(generics)
+					p.append( generic_base_class )
+					while len(p) < len_gargs:
+						p.append( generic_base_class )
+					gcombos = set( itertools.permutations(p) )
+					for combo in gcombos:
+						combo = list(combo)
+						combo.reverse()
+						gargs = []
+						for idx, arg in enumerate(args):
+							if idx in args_gens_indices:
+								gargs.append(
+									arg.replace('<%s>'%gclass, '<%s>'%combo.pop())
+								)
+							else:
+								gargs.append( arg )
+
+						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(gargs))
+						gsigs.append( sig )
+
+					for sig in gsigs:
+						overloads.append('%s {' %sig)
+						for line in out[1:]:
+							overloads.append(line)
+
 
 			out.extend(overloads)
 
