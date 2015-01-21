@@ -32,3 +32,11 @@ def main():
 	print('sub 3 items:')
 	for i in arr[3]:
 		print(i)
+
+	print('sub 3 items changed:')
+	arr[3][0] = 1000
+	arr[3][1] = 1001
+	arr[3][2] = 1002
+	arr[3][3] = 1003
+	for i in arr[3]:
+		print(i)

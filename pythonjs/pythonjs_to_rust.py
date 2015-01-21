@@ -1263,9 +1263,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					is_method = True
 					continue
 				else:
-					err = 'error in function: %s' %node.name
-					err += '\n  missing typedef: %s' %arg.id
-					raise SyntaxError( self.format_error(err) )
+					err =[
+						'- - - - - - - - - - - - - - - - - -',
+						'error in function: %s' %node.name,
+						'missing typedef: %s' %arg.id,
+						'- - - - - - - - - - - - - - - - - -',
+					]
+					raise SyntaxError( self.format_error('\n'.join(err)) )
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
@@ -1893,7 +1897,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				compnode = error[0]
 
 				if not isinstance(node.value, ast.BinOp):
-					raise SyntaxError('untyped list comprehension')
+					raise SyntaxError( self.format_error('untyped list comprehension') )
 
 				comptarget = None
 				comptype = None
@@ -2218,8 +2222,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					is_attr = True
 				elif isinstance(node.targets[0], ast.Tuple):
 					is_tuple = True
+				elif isinstance(node.targets[0], ast.Name):
+					##assert node.targets[0].id in self._globals
+					pass
+				elif isinstance(node.targets[0], ast.Subscript):
+					pass
 				else:
-					raise SyntaxError(node.targets[0])
+					raise SyntaxError( self.format_error(node.targets[0]))
 
 			value = self.visit(node.value)
 

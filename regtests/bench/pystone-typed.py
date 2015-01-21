@@ -59,15 +59,18 @@ Ident4 = 4
 Ident5 = 5
 
 
-def create_array2glob(n:int):
-	return [ Array1Glob[:] for i in range(n) ]
+def create_array2glob(n:int) -> [][]int:
+	comp = [][]int(
+		Array1Glob[:] for i in range(n)
+	)
+	return comp
 
 Array1Glob = [0]*51
 Array2Glob = create_array2glob(51)
 
 
 
-def Proc0(loops):
+def Proc0(loops:int):
 	global IntGlob
 	global BoolGlob
 	global Char1Glob

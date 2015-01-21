@@ -324,6 +324,8 @@ def transform_source( source, strip=False ):
 			rtype = rtype.strip()[:-1].strip()
 			if rtype.startswith('*'):
 				rtype = '"%s"' %rtype
+			elif rtype.startswith('['):
+				rtype = '"%s"' %rtype
 
 			#indent = []
 			#for char in c:
@@ -639,6 +641,9 @@ c.x[0] = def(xx,yy) ->int:
 	return xx+yy
 
 mdarray = [][]int()
+def F() ->[][]int:
+	pass
+
 '''
 
 ## function expressions, deprecated
