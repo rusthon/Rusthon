@@ -271,7 +271,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
 						overload_nodes.append( b )
-						self.catch_call.add( '%s.%s' %(bnode.name, b.name))
+						if self._cpp:
+							self.catch_call.add( '%s->%s' %(bnode.name, b.name))
+						else:
+							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
+
 						if b.name in method_names:
 							b.overloaded = True
 							b.classname  = bnode.name
@@ -440,6 +444,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def _visit_call_special( self, node ):
+		'''
+		hack for calling base class methods.
+		'''
 		fname = self.visit(node.func)
 		assert fname in self.catch_call
 		assert len(self._class_stack)
@@ -447,15 +454,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(node.args[0], ast.Name) and node.args[0].id == 'self':
 				node.args.remove( node.args[0] )
 
-		#name = '_%s_' %self._class_stack[-1].name
-		#name = 'self.'
-		#name += fname.replace('.', '_')
-		#return self._visit_call_helper(node, force_name=name)
-		classname = fname.split('.')[0]
 		if self._cpp:
-			hacked = classname + '::' + fname[len(classname)+1:]
+			classname = fname.split('->')[0]
+			hacked = classname + '::' + fname[len(classname)+2:]
 			return self._visit_call_helper(node, force_name=hacked)
 		else:
+			classname = fname.split('.')[0]
 			hacked = 'self.__%s_%s' %(classname, fname[len(classname)+1:])
 			return self._visit_call_helper(node, force_name=hacked)
 
@@ -1724,6 +1728,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:  ## rust
 				return '%s.borrow_mut().%s' % (name, attr)
 
+		elif self._cpp:
+			return '%s->%s' % (name, attr)  ## always deference shared pointer
+
 		else:
 			return '%s.%s' % (name, attr)
 
@@ -2006,6 +2013,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							if isinstance(elt, ast.Tuple):
 								subname = '_sub%s_%s' %(i, target)
 								args.append( subname )
+								sharedptr = False
+								for sarg in elt.elts:
+									if isinstance(sarg, ast.Name) and sarg.id in self._known_instances:
+										sharedptr = True
+										subvectype = 'std::vector<  std::shared_ptr<%s>  >' %T
+										vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
+
 
 								subargs = [self.visit(sarg) for sarg in elt.elts]
 								#r.append('%s %s = {%s};' %(subvectype, subname, ','.join(subargs)))  ## direct ref
