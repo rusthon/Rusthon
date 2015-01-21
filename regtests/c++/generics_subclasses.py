@@ -18,13 +18,20 @@ class C(A):
 	def method1(self) ->int:
 		return self.x + 200
 
-## c++ allows this type of Generics ##
+class D:
+	def __init__(self, x:int):
+		self.x = x
+
+	def method1(self) -> int:
+		return self.x
+
+## rusthon generates the same method for all subclass of `A` ##
 def my_generic( g:A ) ->int:
 	return g.method1()
-def my_generic( g:B ) ->int:
-	return g.method1()
-def my_generic( g:C ) ->int:
-	return g.method1()
+
+
+def my_generic2( g1:A, g2:A ) ->int:
+	return g1.method1() * g2.method1()
 
 def main():
 	a = A( 100 )
@@ -42,3 +49,6 @@ def main():
 	z = my_generic( c )
 	TestError( z==300 )
 	print(z)
+	print('----------------')
+	print( my_generic2(a,b))
+	print( my_generic2(b,c))

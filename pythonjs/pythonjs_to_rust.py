@@ -2,7 +2,7 @@
 # PythonJS to Go Translator
 # by Brett Hartshorn - copyright 2014
 # License: "New BSD"
-import os, sys
+import os, sys, itertools
 import ast
 import pythonjs_to_go
 
@@ -1254,6 +1254,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		varargs = False
 		varargs_name = None
 		is_method = False
+		args_gens_indices = []
+
 		for i, arg in enumerate(node.args.args):
 			arg_name = arg.id
 
@@ -1274,7 +1276,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
 				#if generics and (i==0 or (is_method and i==1)):
-				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
+				if self._go and generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
 				else:
 					if self._cpp:
@@ -1285,6 +1287,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							a = arg_type
 						else:
 							a = '%s %s' %(arg_type, arg_name)
+
+						if generics and arg_name in args_generics.keys():
+							args_gens_indices.append(i)
+
 					else:
 						if arg_type == 'string': arg_type = 'String'  ## standard string type in rust
 						a = '%s:%s' %(arg_name, arg_type)
@@ -1429,10 +1435,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if starargs:
 			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)
 
-		#if self._cpp and is_method:  ## do not copy self onto stack
-		#	out.append(self.indent() + '%s self = *this;' %self._class_stack[-1].name )
-
-		if generics:
+		## Go needs "class embedding hack" to switch on the name for generics ##
+		if generics and self._go:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
 
 			#panic: runtime error: invalid memory address or nil pointer dereference
@@ -1568,6 +1572,34 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( self.indent()+'};' )
 		else:
 			out.append( self.indent()+'}' )
+
+		if generics and self._cpp:
+			overloads = []
+			gclasses = set(args_generics.values())
+			for gclass in gclasses:
+
+				for subclass in generics:
+					for i,line in enumerate(out):
+						if i==0:
+							if len(args_generics.keys()) > 1:
+								ipmuts = itertools.permutations(args_gens_indices)
+								for pmut in ipmuts:
+									gargs = []
+									for idx,arg in enumerate(args):
+										if idx in pmut:
+											gargs.append(
+												arg.replace('<%s>'%gclass, '<%s>'%subclass)
+											)
+										else:
+											gargs.append(arg)
+								sig = '%s %s(%s)' % (return_type, node.name, ', '.join(gargs))
+								line = '%s {\n' % sig 
+
+							else:
+								line = line.replace('<%s>'%gclass, '<%s>'%subclass)
+						overloads.append(line)
+
+			out.extend(overloads)
 
 		return '\n'.join(out)
 

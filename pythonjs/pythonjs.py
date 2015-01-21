@@ -489,9 +489,14 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 					## check for super classes - generics ##
 					if args_typedefs[ key.arg ] in self._classes:
 						classname = args_typedefs[ key.arg ]
+						options['generic_base_class'] = classname
 
 						if self._cpp:
 							args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %classname
+							args_generics[ key.arg ] = classname
+
+							for subclass in self._classes[classname]._subclasses:
+								generics.add( subclass )
 
 						elif self._rust:
 							args_typedefs[ key.arg ] = 'Rc<RefCell<%s>>' %classname
@@ -504,7 +509,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 								args_typedefs[ key.arg ] = 'interface{}'
 								#self._class_stack[-1]._struct_def[ key.arg ] = 'interface{}'
 							else:
-								options['generic_base_class'] = classname
 								generics.add( classname ) # switch v.(type) for each
 								generics = generics.union( self._classes[classname]._subclasses )  ## TODO
 								args_typedefs[ key.arg ] = 'interface{}'
