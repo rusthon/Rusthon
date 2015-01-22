@@ -95,6 +95,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_If(self, node):
 		out = []
+		isinstance_test = False
+		target = None
+		classname = None
+
 		if isinstance(node.test, ast.Compare) or isinstance(node.test, ast.UnaryOp):
 			test = self.visit(node.test)
 		elif isinstance(node.test, ast.Name):
@@ -107,7 +111,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif isinstance(node.test, ast.Num):
 			test = '%s!=0' %node.test.n
 		elif isinstance(node.test, ast.Call) and isinstance(node.test.func, ast.Name) and node.test.func.id=='isinstance':
-			test = '(%s->__class__==std::string("%s"))' %(self.visit(node.test.args[0]), self.visit(node.test.args[1]))
+			isinstance_test = True
+			target = self.visit(node.test.args[0])
+			classname = self.visit(node.test.args[1])
+			test = '(%s->__class__==std::string("%s"))' %(target, classname)
 		else:
 			raise SyntaxError(node.test)
 
@@ -117,6 +124,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( 'if (%s) {' %test )
 
 		self.push()
+		if isinstance_test:
+			assert self._cpp
+			self._rename_hacks[target] = '_cast_%s' %target
+			out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
 
 		for line in list(map(self.visit, node.body)):
 			if line is None: continue
@@ -127,6 +138,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			orelse.append( self.indent() + line )
 
 		self.pull()
+
+		if isinstance_test:
+			self._rename_hacks.pop(target)
 
 		if orelse:
 			out.append( self.indent() + '} else {')
@@ -158,6 +172,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return 'true'
 		elif node.id == 'False':
 			return 'false'
+		elif node.id in self._rename_hacks:  ## TODO make the node above on the stack is not an attribute node.
+			return self._rename_hacks[ node.id ]
 
 		return node.id
 

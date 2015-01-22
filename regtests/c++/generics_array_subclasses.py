@@ -13,6 +13,8 @@ class A:
 class B(A):
 	def method1(self) ->int:
 		return self.x * 2
+	def method2(self, y:int):
+		print( self.x + y )
 
 class C(A):
 	def method1(self) ->int:
@@ -51,10 +53,10 @@ def main():
 
 		## to get to the real subclasses, we need if-isinstance
 		if isinstance(item, B):
-			print('is B')
-			my_generic( item )
+			print('item is B')
+			item.method2( 20 )
+
 		if isinstance(item, C):
-			print('is C')
-			my_generic( item )
-			#item.say_hi()  ## TODO
+			print('item is C')
+			item.say_hi()
 
