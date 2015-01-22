@@ -63,6 +63,13 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self._cppheader = []
 		self._match_stack = []
 
+	def is_prim_type(self, T):
+		prims = 'int float double long string str char byte i32 i64 f32 f64 std::string'.split()
+		if T in prims:
+			return True
+		else:
+			return False
+
 
 	def indent(self): return '\t' * self._indent
 	def push(self): self._indent += 1

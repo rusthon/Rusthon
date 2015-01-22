@@ -29,8 +29,10 @@ class D:
 def my_generic( g:A ) ->int:
 	return g.method1()
 
+def my_generic2( g1:A, g2:A) ->int:
+	return g1.method1() * g2.method1()
 
-def my_generic2( g1:A, g2:A, g3:A ) ->int:
+def my_generic3( g1:A, g2:A, g3:A ) ->int:
 	return g1.method1() * g2.method1() * g3.method1()
 
 def main():
@@ -50,7 +52,13 @@ def main():
 	TestError( z==300 )
 	print(z)
 	print('----------------')
-	print( my_generic2(a,b,c))
-	print( my_generic2(b,c,a))
-	print( my_generic2(c,b,a))
-	print( my_generic2(b,b,b))
+	print( my_generic2(a,b))
+	print( my_generic2(b,c))
+	print( my_generic2(c,b))
+	print( my_generic2(b,b))
+
+	print('----------------')
+	print( my_generic3(a,b,c))
+	print( my_generic3(b,c,a))
+	print( my_generic3(c,b,a))
+	print( my_generic3(b,b,b))

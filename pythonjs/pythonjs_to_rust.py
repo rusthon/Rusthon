@@ -2134,12 +2134,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
+							isprim = self.is_prim_type(T)
 							if T=='string': T = 'std::string'
 							self._known_arrays[ target ] = T
 							if self._shared_pointers:
-								vectype = 'std::vector<%s>' %T
+								if isprim:
+									vectype = 'std::vector<%s>' %T
+								else:
+									vectype = 'std::vector<std::shared_ptr<%s>>' %T
+
 								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
-								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
 								return r
 							else:  ## raw pointer
 								return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
