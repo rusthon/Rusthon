@@ -106,6 +106,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				test = '%s==true' %node.test.id
 		elif isinstance(node.test, ast.Num):
 			test = '%s!=0' %node.test.n
+		elif isinstance(node.test, ast.Call) and isinstance(node.test.func, ast.Name) and node.test.func.id=='isinstance':
+			test = '(%s->__class__==std::string("%s"))' %(self.visit(node.test.args[0]), self.visit(node.test.args[1]))
 		else:
 			raise SyntaxError(node.test)
 
@@ -299,6 +301,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				out.append( 'class %s {' %node.name)
 			out.append( '  public:')
+
+			if not base_classes:
+				## only the base class defines `__class__`, this must be the first element
+				## in the struct so that all rusthon object has the same header memory layout.
+				## note if a subclass redefines `__class__` even as a string, and even as the
+				## first struct item, it will still not have the same memory location as super.__class__.
+				## We require the same memory location for `__class__` because the `isinstance`
+				## hack requires on `__class__` always being valid to check an objects class type at runtime.
+				out.append( '	std::string __class__;')
+
 		else:
 			out.append( 'struct %s {' %node.name)
 			## rust requires that a struct contains at least one item,
@@ -344,6 +356,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		for name in unionstruct:
 			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is deprecated')
 			node._struct_init_names.append( name )
+			if name=='__class__': continue
 
 			T = unionstruct[name]
 			if self._cpp:
@@ -368,11 +381,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for impl_def in self._cpp_class_header:
 				out.append( '\t' + impl_def )
 
-			if init:
-				## in c++ constructor args can be extended by the subclass, but the parent constructors must be called first
-				## in the initalizer list, this is not pythonic.
-				##out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
-				out.append('	%s() {}' %node.name )  ## c++ empty constructor
+			#if init:  ## DEPRECATED
+			#	## in c++ constructor args can be extended by the subclass, but the parent constructors must be called first
+			#	## in the initalizer list, this is not pythonic.
+			#	##out.append('	%s( %s ) { this->__init__( %s ); }' %(node.name, init._args_signature, ','.join(init._arg_names)) )
+			#	out.append('	%s() {}' %node.name )  ## c++ empty constructor
+
+
+			## c++ empty constructor with `struct-emeddding` the class name
+			#out.append('	%s() : __class__(std::string("%s")) {}' %(node.name, node.name) )  ## this breaks when looping over array items
+			## member initializer list `MyClass() : x(1) {}` only work when `x` is locally defined inside the class,
+			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
+			## TODO make __class__ static const string.
+			out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
 
 			out.append('};')
 
@@ -415,27 +436,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 			out.append('}')  ## end rust `impl`
-
-			if False:  ## this will not work in rust because we need to pass in a lifetime variable
-				if init or parent_init:
-					if parent_init:
-						classname = parent_init['class'].name
-						init = parent_init['init']
-					else:
-						classname = node.name
-
-					out.append( 'fn __new__%s( %s ) -> %s {' %(node.name, init._args_signature, node.name))
-					out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
-					out.append( '  ob.__init__(%s);' %','.join(init._arg_names))
-					out.append( '  return ob;')
-					out.append('}')
-
-				else:
-					out.append( 'fn __new__%s() -> %s {' %(node.name, node.name))
-					out.append( '  let ob = %s{ __class__:"%s".to_string() };' %(node.name, node.name) )
-					out.append( '  return ob;')
-					out.append('}')
-
 
 
 		self.catch_call = set()
