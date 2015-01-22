@@ -14,6 +14,7 @@ javascripts and python scripts inside the markdown, and compiled exes.
 Docs
 ----
 https://github.com/rusthon/Rusthon/wiki
+
 https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
 https://github.com/rusthon/Rusthon/blob/master/doc/memory.md
 https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md
