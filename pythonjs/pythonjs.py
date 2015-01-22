@@ -528,10 +528,25 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			else:
 				options['returns'] = decor.args[0].s
 
+			if options['returns'].startswith('[]'):
+				options['returns_array'] = True
+				options['returns_array_dim'] = options['returns'].count('[]')
+				options['returns_array_type'] = options['returns'].split(']')[-1]
+				if self._cpp:
+					T = []
+					for i in range(options['returns_array_dim']):
+						T.append('std::shared_ptr<std::vector<')
+					T.append(options['returns_array_type'])
+					for i in range(options['returns_array_dim']):
+						T.append('>>')
+					options['returns'] = ''.join(T)
+
 			if options['returns'] == 'self':
-				options['returns'] = '*' + self._class_stack[-1].name  ## go hacked generics
 				options['returns_self'] = True
 				self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
+
+				if self._go:
+					options['returns'] = '*' + self._class_stack[-1].name  ## go hacked generics
 
 
 
