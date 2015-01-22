@@ -4,6 +4,7 @@ import pythonjs
 import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
 import pythonjs.pythonjs_to_cpp
+import tempfile
 
 def compile_js( script, module_path, directjs=False, directloops=False ):
 	'''
@@ -343,12 +344,12 @@ def build( modules, module_path ):
 
 	if output['go']:
 		source = [ mod['source'] for mod in output['go'] ]
-		tmpfile = '/tmp/rusthon-go-build.go'
+		tmpfile = tempfile.gettempdir() + '/rusthon-go-build.go'
 		open(tmpfile, 'wb').write( '\n'.join(source) )
 		cmd = ['go', 'build', tmpfile]
-		subprocess.check_call(['go', 'build', tmpfile], cwd='/tmp' )
-		mod['binary'] = '/tmp/rusthon-go-build'
-		output['executeables'].append('/tmp/rusthon-go-build')
+		subprocess.check_call(['go', 'build', tmpfile], cwd=tempfile.gettempdir() )
+		mod['binary'] = tempfile.gettempdir() + '/rusthon-go-build'
+		output['executeables'].append(tempfile.gettempdir() + '/rusthon-go-build')
 
 	link = []
 
@@ -357,20 +358,20 @@ def build( modules, module_path ):
 		for mod in modules['rust']:
 			source.append( mod['code'] )
 
-		tmpfile = '/tmp/rusthon-build.rs'
+		tmpfile = tempfile.gettempdir() + '/rusthon-build.rs'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 
 		if modules['c++']:
 			libname = 'rusthon-lib%s' %len(output['rust'])
 			link.append(libname)
-			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '--crate-type', 'staticlib' ,'-o', '/tmp/'+libname,  tmpfile] )
+			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '--crate-type', 'staticlib' ,'-o', tempfile.gettempdir() + '/'+libname,  tmpfile] )
 			output['rust'].append( {'source':data, 'staticlib':libname, 'name':'lib'+libname+'.a'} )
 
 		else:
-			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', '/tmp/rusthon-bin',  tmpfile] )
-			output['rust'].append( {'source':data, 'binary':'/tmp/rusthon-bin', 'name':'rusthon-bin'} )
-			output['executeables'].append('/tmp/rusthon-bin')
+			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', tempfile.gettempdir() + '/rusthon-bin',  tmpfile] )
+			output['rust'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-bin', 'name':'rusthon-bin'} )
+			output['executeables'].append(tempfile.gettempdir() + '/rusthon-bin')
 
 	if modules['c']:
 		libname = 'rusthon-clib%s' %len(output['c'])
@@ -379,12 +380,12 @@ def build( modules, module_path ):
 		for mod in modules['c']:
 			source.append( mod['code'] )
 
-		tmpfile = '/tmp/rusthon-build.c'
+		tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
-		cmd = ['gcc', '-c', tmpfile, '-o', '/tmp/'+libname+'.o' ]
+		cmd = ['gcc', '-c', tmpfile, '-o', tempfile.gettempdir() + '/'+libname+'.o' ]
 		subprocess.check_call( cmd )
-		cmd = ['ar', 'rcs', '/tmp/lib'+libname+'.a', '/tmp/'+libname+'.o']
+		cmd = ['ar', 'rcs', tempfile.gettempdir() + '/lib'+libname+'.a', tempfile.gettempdir() + '/'+libname+'.o']
 		subprocess.check_call( cmd )
 		output['c'].append({'source':data, 'staticlib':libname+'.a'})
 
@@ -394,22 +395,22 @@ def build( modules, module_path ):
 		for mod in modules['c++']:
 			source.append( mod['code'] )
 
-		tmpfile = '/tmp/rusthon-c++-build.cpp'
+		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native']
 		if link:
 			cmd.append('-static')
 			cmd.append( tmpfile )
-			cmd.append('-L/tmp/.')
+			cmd.append('-L' + tempfile.gettempdir() + '/.')
 			for libname in link:
 				cmd.append('-l'+libname)
 		cmd.extend(
-			[tmpfile, '-o', '/tmp/rusthon-c++-bin', '-pthread', '-std=c++11' ]
+			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
 		subprocess.check_call( cmd )
-		output['c++'].append( {'source':data, 'binary':'/tmp/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
-		output['executeables'].append('/tmp/rusthon-c++-bin')
+		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
+		output['executeables'].append(tempfile.gettempdir() + '/rusthon-c++-bin')
 
 	if python_main['script']:
 		python_main['script'] = '\n'.join(python_main['script'])
@@ -511,7 +512,7 @@ if __name__ == '__main__':
 			if package['html']:
 				import webbrowser
 				for i,page in enumerate(package['html']):
-					tmp = '/tmp/rusthon-webpage%s.html' %i
+					tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
 					open(tmp, 'wb').write( page['code'] )
 					webbrowser.open(tmp)
 
