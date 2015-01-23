@@ -99,7 +99,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		target = None
 		classname = None
 
-		if isinstance(node.test, ast.Compare) or isinstance(node.test, ast.UnaryOp):
+		if isinstance(node.test, ast.Compare) or isinstance(node.test, ast.UnaryOp) or isinstance(node.test, ast.BoolOp):
 			test = self.visit(node.test)
 		elif isinstance(node.test, ast.Name):
 			if node.test.id in ('null', 'None', 'False'):
@@ -116,7 +116,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			classname = self.visit(node.test.args[1])
 			test = '(%s->__class__==std::string("%s"))' %(target, classname)
 		else:
-			raise SyntaxError(node.test)
+			raise SyntaxError( self.format_error(node.test) )
 
 		if test.startswith('(') and test.endswith(')'):
 			out.append( 'if %s {' %test )

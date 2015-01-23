@@ -130,7 +130,7 @@ def Proc0(loops:int):
 		loopsPerBenchtime = (loops / benchtime)
 	return benchtime, loopsPerBenchtime
 
-def Proc1(PtrParIn):
+def Proc1(PtrParIn:Record ) ->Record:
 	NextRecord = PtrGlb.copy()
 	PtrParIn.PtrComp = NextRecord
 	PtrParIn.IntComp = 5
@@ -147,7 +147,7 @@ def Proc1(PtrParIn):
 	NextRecord.PtrComp = None
 	return PtrParIn
 
-def Proc2(IntParIO):
+def Proc2(IntParIO:int) ->int:
 	IntLoc = IntParIO + 10
 	while True:
 		if Char1Glob == 'A':
@@ -158,7 +158,7 @@ def Proc2(IntParIO):
 			break
 	return IntParIO
 
-def Proc3(PtrParOut):
+def Proc3(PtrParOut:Record) ->Record:
 	global IntGlob
 
 	if PtrGlb is not None:
@@ -182,7 +182,7 @@ def Proc5():
 	Char1Glob = 'A'
 	BoolGlob = FALSE
 
-def Proc6(EnumParIn):
+def Proc6(EnumParIn:int) ->int:
 	EnumParOut = EnumParIn
 	if not Func3(EnumParIn):
 		EnumParOut = Ident4
@@ -201,12 +201,12 @@ def Proc6(EnumParIn):
 		EnumParOut = Ident3
 	return EnumParOut
 
-def Proc7(IntParI1, IntParI2):
+def Proc7(IntParI1:int, IntParI2:int) ->int:
 	IntLoc = IntParI1 + 2
 	IntParOut = IntParI2 + IntLoc
 	return IntParOut
 
-def Proc8(Array1Par, Array2Par, IntParI1, IntParI2):
+def Proc8(Array1Par:[]int, Array2Par:[][]int, IntParI1:int, IntParI2:int):
 	global IntGlob
 
 	IntLoc = IntParI1 + 5
@@ -219,7 +219,7 @@ def Proc8(Array1Par, Array2Par, IntParI1, IntParI2):
 	Array2Par[IntLoc+20][IntLoc] = Array1Par[IntLoc]
 	IntGlob = 5
 
-def Func1(CharPar1, CharPar2):
+def Func1(CharPar1:string, CharPar2:string) ->int:
 	CharLoc1 = CharPar1
 	CharLoc2 = CharLoc1
 	if CharLoc2 != CharPar2:
@@ -227,7 +227,7 @@ def Func1(CharPar1, CharPar2):
 	else:
 		return Ident2
 
-def Func2(StrParI1, StrParI2):
+def Func2(StrParI1:string, StrParI2:string) -> int:
 	IntLoc = 1
 	while IntLoc <= 1:
 		if Func1(StrParI1[IntLoc], StrParI2[IntLoc+1]) == Ident1:
@@ -244,7 +244,7 @@ def Func2(StrParI1, StrParI2):
 		else:
 			return FALSE
 
-def Func3(EnumParIn):
+def Func3(EnumParIn:int) ->int:
 	EnumLoc = EnumParIn
 	if EnumLoc == Ident3: return TRUE
 	return FALSE
