@@ -726,9 +726,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						lines.append('for (auto &%s: *%s) {' %(target, iter))
 
 				else:
-					lines.append('for &%s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
+					lines.append('for &%s in %s.borrow_mut().iter() { //magic:%s' %(target, iter, node.iter.uid))
 			else:
-				lines.append('for %s in %s.iter() { //magic:%s' %(target, iter, node.iter.uid))
+				lines.append('for %s in %s.borrow_mut().iter() { //magic:%s' %(target, iter, node.iter.uid))
 
 		self.push()
 		for b in node.body:
