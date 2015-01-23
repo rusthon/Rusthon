@@ -1971,6 +1971,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				return ':%s' %upper
 			elif lower:
 				return '%s:'%lower
+			else:
+				return ':'
 		else:
 			return "%s, %s, %s" % (lower, upper, step)
 
