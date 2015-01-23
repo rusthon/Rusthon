@@ -1805,6 +1805,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def _listcomp_helper(self, node, target=None, type=None, size=None):
 		assert target
 		assert type
+		isprim = self.is_prim_type(type)
 
 		gen = node.generators[0]
 		a = self.visit(node.elt)
@@ -1835,7 +1836,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					raise SyntaxError('TODO list comp range(low,high,step)')
 
 			mutref = False
-			if type == 'int':  ## TODO other low level types
+			if isprim:
 				out.append('let mut %s : Vec<%s> = Vec::new();' %(compname,type))
 			else:
 				mutref = True
@@ -1867,24 +1868,22 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		elif self._cpp:
-			is_ll = False
-			if type=='int':  ## TODO other ll types
-				is_ll = True
+			if isprim:
 				out.append('std::vector<%s> %s;' %(type,compname))
 			else:
 				out.append('std::vector<std::shared_ptr<%s>> %s;' %(type,compname))
 
 			if range_n:
 				if len(range_n)==1:
-					out.append('for (int %s=0; %s<%s; %s++) {' %(a, a, range_n[0], a))
+					out.append('for (int %s=0; %s<%s; %s++) {' %(b, b, range_n[0], b))
 
 				elif len(range_n)==2:
-					out.append('for (int %s=%s; %s<%s; %s++) {' %(a, range_n[0], a, range_n[1], a))
+					out.append('for (int %s=%s; %s<%s; %s++) {' %(b, range_n[0], b, range_n[1], b))
 
 			else:
 				out.append('for (auto &%s: %s) {' %(b, c))
 
-			if is_ll:
+			if isprim:
 				out.append('	%s.push_back(%s);' %(compname, a))
 			else:
 				assert type in self._classes
@@ -1898,7 +1897,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append('	%s.push_back(%s);' %(compname, tmp))
 
 			out.append('}')
-			if is_ll:
+			if isprim:
 				out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
 			else:
 				out.append('auto %s = std::make_shared<std::vector< std::shared_ptr<%s> >>(%s);' %(target, type, compname))
@@ -1968,6 +1967,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				if isinstance(node.value.left, ast.Call):
 					assert node.value.left.func.id in ('__go__array__', '__go__arrayfixed__')
+					comptype = node.value.left.func.id
 					if comptype == '__go__array__':
 						comptarget = target
 						comptype = node.value.left.func.id
@@ -1979,6 +1979,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							type=arrtype
 						)
 					else:
+
 						return self._listcomp_helper(
 							compnode, 
 							target=target, 
