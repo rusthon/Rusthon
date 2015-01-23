@@ -1801,14 +1801,59 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			return '%s.%s' % (name, attr)
 
+	def _gen_slice(self, target=None, value=None, lower=None, upper=None):
+		'''
+		TODO fix segfault
+		'''
+		assert self._cpp
+		assert target
+		assert value
 
-	def _listcomp_helper(self, node, target=None, type=None, size=None):
+		## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
+		#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+		#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+
+		slice = [
+			'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
+			'auto %s = %s' %(target, value), ## copy shared_ptr
+			#'%s.reset()' %target, 
+			'%s.reset( &_ref_%s )' %(target, target)
+		]
+		if lower:
+			N = lower
+			slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
+
+		if upper:  ## BROKEN, TODO FIXME
+			N = upper
+			slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
+
+
+		#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
+		return ';\n'.join(slice) + ';'
+
+
+	def _listcomp_helper(self, node, target=None, type=None, size=None, dimensions=1):
 		assert target
 		assert type
 		isprim = self.is_prim_type(type)
+		slice_hack = False
 
 		gen = node.generators[0]
-		a = self.visit(node.elt)
+		try:
+			a = self.visit(node.elt)
+		except GenerateSlice as error:  ## special c++ case for slice syntax
+			assert self._cpp
+			msg = error[0]
+			a = '_slice_'
+			slice_hack = self._gen_slice(
+				a, 
+				value=msg['value'],
+				lower=msg['lower'],
+				upper=msg['upper'],
+			)
+
+
+
 		b = self.visit(gen.target)
 		c = self.visit(gen.iter)
 		range_n = []
@@ -1868,10 +1913,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		elif self._cpp:
+			vectype    = None
+			subvectype = None
 			if isprim:
-				out.append('std::vector<%s> %s;' %(type,compname))
+				subvectype = 'std::vector<%s>' %type
+				#out.append('std::vector<%s> %s;' %(type,compname))
 			else:
-				out.append('std::vector<std::shared_ptr<%s>> %s;' %(type,compname))
+				#out.append('std::vector<std::shared_ptr<%s>> %s;' %(type,compname))
+				subvectype = 'std::vector<std::shared_ptr<%s>>' %type
+
+			if dimensions == 1:
+				vectype = subvectype
+			elif dimensions == 2:
+				vectype = 'std::vector<std::shared_ptr< %s >>' %subvectype
+			else:
+				raise SyntaxError('TODO other dimensions')
+
+			out.append('%s %s;' %(vectype,compname))
+
 
 			if range_n:
 				if len(range_n)==1:
@@ -1882,6 +1941,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			else:
 				out.append('for (auto &%s: %s) {' %(b, c))
+
+			if slice_hack:
+				out.append( slice_hack )
 
 			if isprim:
 				out.append('	%s.push_back(%s);' %(compname, a))
@@ -1896,12 +1958,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append( r )
 				out.append('	%s.push_back(%s);' %(compname, tmp))
 
-			out.append('}')
-			if isprim:
-				out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
-			else:
-				out.append('auto %s = std::make_shared<std::vector< std::shared_ptr<%s> >>(%s);' %(target, type, compname))
+			out.append('}')  ## end comp for loop
+
+			#if isprim:
+			#	out.append('auto %s = std::make_shared<std::vector<%s>>(%s);' %(target, type, compname))
+			#else:
+			#	out.append('auto %s = std::make_shared<std::vector< std::shared_ptr<%s> >>(%s);' %(target, type, compname))
 			## TODO vector.resize if size is given
+			out.append('auto %s = std::make_shared<%s>(%s);' %(target, vectype, compname))
 
 		else:
 			raise RuntimeError('TODO list comp for some backend')
@@ -1912,6 +1976,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._catch_assignment = False
 		result = []  ## for arrays of arrays with list comps
 		value  = None
+		comptarget = None  ## if there was a comp, then use result and comptarget
 
 		if isinstance(node.targets[0], ast.Tuple):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
@@ -1988,6 +2053,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						)
 
 				elif isinstance(node.value.left, ast.BinOp):
+					## This happens when the constructor contains a list of items,
+					## and one of the items is an list comp, `result` gets shoved
+					## into one of the slots in the constuctor.
+					## This can also happens when a 1/2D array contains just a single
+					## list comp, `arr = [][]int((1,2,3) for i in range(4))`, 
+					## creates a 4x3 2D array, in this case the list comp needs
+					## to be regenerated as 2D below.
 					comptype = node.value.left.left.id=='__go__array__'
 					if (node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
 						arrtype = node.value.left.right.args[0].id
@@ -2009,29 +2081,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			except GenerateSlice as error:  ## special c++ case for slice syntax
 				assert self._cpp
 				msg = error[0]
-				val = msg['value']
+				return self._gen_slice(
+					target, 
+					value=msg['value'],
+					lower=msg['lower'],
+					upper=msg['upper'],
+				)
 
-				## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
-				#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-				#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-
-				slice = [
-					'auto _ref_%s = *%s' %(target,val), ## deference and copy vector
-					'auto %s = %s' %(target, val), ## copy shared_ptr
-					'%s.reset()' %target, 
-					'%s.reset( &_ref_%s )' %(target, target)
-				]
-				if msg['lower']:
-					N = msg['lower']
-					slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
-
-				if msg['upper']:  ## BROKEN, TODO FIXME
-					N = msg['upper']
-					slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
-
-				slice = ';\n'.join(slice) + ';'
-				return slice
-				#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
 
 			if isinstance(node.value, ast.Num):
 				if type(node.value.n) is int:
@@ -2070,10 +2126,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return r
 
 			elif self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
-				if isinstance(node.value.left, ast.BinOp) and isinstance(node.value.right, ast.Tuple) and isinstance(node.value.op, ast.LShift):
 
+				if isinstance(node.value.left, ast.BinOp) and isinstance(node.value.op, ast.LShift):  ## 2D Array
 					## c++ vector of vectors ##	
 					## std::shared_ptr< std::vector<std::shared_ptr<std::vector<T>>> >
+
 					if isinstance(node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
 						assert self._shared_pointers  ## always require shared pointers?
 
@@ -2083,42 +2140,51 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						subvectype = 'std::vector<%s>' %T
 						vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
 
-						r = ['/* %s = vector of vectors to: %s */' %(target,T)]
 
-						args = []
-						for i,elt in enumerate(node.value.right.elts):
-							if isinstance(elt, ast.Tuple):
-								subname = '_sub%s_%s' %(i, target)
-								args.append( subname )
-								sharedptr = False
-								for sarg in elt.elts:
-									if isinstance(sarg, ast.Name) and sarg.id in self._known_instances:
-										sharedptr = True
-										subvectype = 'std::vector<  std::shared_ptr<%s>  >' %T
-										vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
-
-
-								subargs = [self.visit(sarg) for sarg in elt.elts]
-								#r.append('%s %s = {%s};' %(subvectype, subname, ','.join(subargs)))  ## direct ref
-
-								r.append('%s _r_%s = {%s};' %(subvectype, subname, ','.join(subargs)))
-								r.append(  ## this also allows `if mdarray[0] is None:`
-									'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
-								)
-							elif isinstance(elt, ast.ListComp):
-								r.extend(result)
-								args.append('_subcomp_%s'%target)  ## already a shared_ptr
-
-							else:
-								args.append( self.visit(elt) )
+					 	if isinstance(node.value.right, ast.Tuple):
+							r = ['/* %s = vector of vectors to: %s */' %(target,T)]
+							args = []
+							for i,elt in enumerate(node.value.right.elts):
+								if isinstance(elt, ast.Tuple):
+									subname = '_sub%s_%s' %(i, target)
+									args.append( subname )
+									sharedptr = False
+									for sarg in elt.elts:
+										if isinstance(sarg, ast.Name) and sarg.id in self._known_instances:
+											sharedptr = True
+											subvectype = 'std::vector<  std::shared_ptr<%s>  >' %T
+											vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
 
 
-						r.append('%s _ref_%s = {%s};' %(vectype, target, ','.join(args)))
+									subargs = [self.visit(sarg) for sarg in elt.elts]
+									#r.append('%s %s = {%s};' %(subvectype, subname, ','.join(subargs)))  ## direct ref
 
-						r.append(
-							'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
-						)
-						return (self.indent()+'\n').join(r)
+									r.append('%s _r_%s = {%s};' %(subvectype, subname, ','.join(subargs)))
+									r.append(  ## this also allows `if mdarray[0] is None:`
+										'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
+									)
+								elif isinstance(elt, ast.ListComp):
+									r.extend(result)
+									args.append('_subcomp_%s'%target)  ## already a shared_ptr
+
+								else:
+									args.append( self.visit(elt) )
+
+							r.append('%s _ref_%s = {%s};' %(vectype, target, ','.join(args)))
+
+							r.append(
+								'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+							)
+							return (self.indent()+'\n').join(r)
+
+						elif isinstance(node.value.right, ast.ListComp):
+							compnode = node.value.right
+							return self._listcomp_helper(
+								compnode, 
+								target=target, 
+								type=T,
+								dimensions=2
+							)
 
 
 					else:
@@ -2189,7 +2255,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
 								## TODO which is correct? above with double braces, or below with none?
 								return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
-
+				else:
+					raise SyntaxError(('invalid << hack', node.value.right))
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
@@ -2281,7 +2348,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				if self._cpp:
 					#raise RuntimeError((node.value.left, node.value.right, node.value.op))
-					return 'auto %s = %s;  /* fallback */' % (target, value)
+					if comptarget:
+						result.append('auto %s = %s;  /* list comprehension */' % (target, comptarget))
+						return '\n'.join(result)
+					else:
+						return 'auto %s = %s;  /* fallback */' % (target, value)
 				else:
 					if value.startswith('Rc::new(RefCell::new('):
 						#return 'let _RC_%s = %s; let mut %s = _RC_%s.borrow_mut();	/* new array */' % (target, value, target, target)
