@@ -1864,7 +1864,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
-		elif self._with_ll or self._with_glsl or self._with_go:
+		elif self._with_ll or self._with_rust or self._with_go or self._with_cpp:
 			return '%s[%s]' %(name, self.visit(node.slice))
 
 		elif self._with_js or self._with_dart:
@@ -1949,7 +1949,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				return fallback
 
 	def visit_Slice(self, node):
-		if self._with_go:
+		if self._with_go or self._with_rust or self._with_cpp:
 			lower = upper = step = None
 		elif self._with_dart:
 			lower = upper = step = 'null'
@@ -1964,7 +1964,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		if node.step:
 			step = self.visit(node.step)
 
-		if self._with_go:
+		if self._with_go or self._with_rust or self._with_cpp:
 			if lower and upper:
 				return '%s:%s' %(lower,upper)
 			elif upper:

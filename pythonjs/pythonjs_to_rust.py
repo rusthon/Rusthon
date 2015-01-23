@@ -2013,15 +2013,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
 				#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
 				#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-				slice = []
+
+				slice = [
+					'auto _ref_%s = *%s' %(target,val), ## deference and copy vector
+					'auto %s = %s' %(target, val), ## copy shared_ptr
+					'%s.reset()' %target, 
+					'%s.reset( &_ref_%s )' %(target, target)
+				]
 				if msg['lower']:
 					N = msg['lower']
 					slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
-				if msg['upper']:
+
+				if msg['upper']:  ## BROKEN, TODO FIXME
 					N = msg['upper']
 					slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
-				slice = ';'.join(slice)
-				return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
+
+				slice = ';\n'.join(slice) + ';'
+				return slice
+				#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
 
 			if isinstance(node.value, ast.Num):
 				if type(node.value.n) is int:
@@ -2184,7 +2193,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id
 				info = varname + '  '
-				if varname in self._known_vars:
+
+				if varname in self._known_vars and varname in self._known_instances and self._go:  ## TODO, c++ backend
 					## generics generator ##
 					#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
 					cname = self._known_instances[varname]
