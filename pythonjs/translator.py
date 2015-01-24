@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, traceback, json
+import os, sys, traceback, json, subprocess
 
 from python_to_pythonjs import main as python_to_pythonjs
 from pythonjs import main as pythonjs_to_javascript
@@ -40,8 +40,9 @@ def main(script, module_path=None):
 		elif '--gopherjs' in sys.argv:
 			a = python_to_pythonjs(script, go=True, module_path=module_path)
 			code = pythonjs_to_go( a )
-
-			exe = os.path.expanduser('~/go/bin/gopherjs')
+            GOPATH = subprocess.check_output(["which", "go"])
+            GOPATH = '/'.join(GOPATH.split("/")[0:-1]
+			exe = os.path.expanduser(GOPATH+"/gopherjs")
 			if not os.path.isfile(exe):
 				raise RuntimeError('gopherjs not installed to ~/go/bin/gopherjs')
 			import subprocess
