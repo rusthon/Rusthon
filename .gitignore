@@ -11,3 +11,5 @@
 *.gcda
 
 __pycache__
+
+src/
