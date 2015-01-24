@@ -1261,6 +1261,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
 			return_type = 'int'
+
+		if return_type and not self.is_prim_type(return_type):
+			if self._cpp:
+				return_type = 'std::shared_ptr<%s>' %return_type
+			else:
+				return_type = 'Rc<RefCell<%s>>' %return_type
+
 		if return_type == 'string':
 			if self._cpp:
 				return_type = 'std::string'
