@@ -29,7 +29,7 @@ class Record:
 		self.IntComp = IntComp
 		self.StringComp = StringComp
 
-	def copy(self):
+	def copy(self) ->Record:
 		return Record(
 					PtrComp=self.PtrComp,
 					Discr=self.Discr, 

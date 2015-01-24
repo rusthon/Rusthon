@@ -907,7 +907,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return '%s %s			/* declared */' %(V, node.args[0].id)
 			elif len(node.args) == 2:
 				if self._cpp:
-					return '%s  %s' %(node.args[1].s, node.args[0].id)
+					T = node.args[1].s
+					if self.is_prim_type(T):
+						return '%s  %s' %(T, node.args[0].id)
+					else:
+						return 'std::shared_ptr<%s>  %s' %(T, node.args[0].id)
 				else:
 					if mutable:
 						return '%s mut %s : %s' %(V, node.args[0].id, node.args[1].s)
@@ -916,7 +920,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			elif len(node.args) == 3:
 				if self._cpp:
-					return '%s  %s = %s' %(node.args[1].s, node.args[0].id, self.visit(node.args[2]))
+					T = node.args[1].s
+					if self.is_prim_type(T):
+						return '%s  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
+					else:
+						return 'std::shared_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 				else:
 					if mutable:
 						return '%s mut %s : %s = %s' %(V, node.args[0].id, node.args[1].s, self.visit(node.args[2]))
@@ -2020,7 +2028,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					if guesstype=='string':
 						return 'const std::string %s = %s;' % (target, value)
-					elif isprim:
+					elif isprim or guesstype=='auto':
 						return '%s %s = %s;' % (guesstype, target, value)
 					else:
 						return 'std::shared_ptr<%s> %s = %s;' % (guesstype, target, value)
