@@ -44,8 +44,8 @@ IntGlob = 0
 BoolGlob = FALSE
 Char1Glob = '\0'
 Char2Glob = '\0'
-PtrGlb = None
-PtrGlbNext = None
+let PtrGlb     : Record = None
+let PtrGlbNext : Record = None
 
 Ident1 = 1
 Ident2 = 2 
@@ -53,6 +53,9 @@ Ident3 = 3
 Ident4 = 4
 Ident5 = 5
 
+def create_array1glob(n:int) -> []int:
+	comp = []int( 0 for i in range(51) )
+	return comp
 
 def create_array2glob(n:int) -> [][]int:
 	comp = [][]int(
@@ -60,7 +63,7 @@ def create_array2glob(n:int) -> [][]int:
 	)
 	return comp
 
-Array1Glob = [0]*51
+Array1Glob = create_array1glob(51)
 Array2Glob = create_array2glob(51)
 
 
@@ -76,7 +79,7 @@ def Proc0(loops:int):
 	global PtrGlbNext
 
 	starttime = clock()
-	for i in range(loops):
+	for j in range(loops):
 		pass
 	nulltime = clock() - starttime
 

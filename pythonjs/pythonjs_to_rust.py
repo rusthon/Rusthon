@@ -118,10 +118,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			raise SyntaxError( self.format_error(node.test) )
 
-		if test.startswith('(') and test.endswith(')'):
-			out.append( 'if %s {' %test )
-		else:
-			out.append( 'if (%s) {' %test )
+		out.append( 'if (%s) {' %test )
 
 		self.push()
 		if isinstance_test:
@@ -2003,11 +2000,33 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				value = '__new__' + value
 				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
 			else:
-				self._globals['string'].add( target )
+				guesstype = 'auto'
+				if isinstance(node.value, ast.Num):
+					guesstype = 'int'
+				elif isinstance(node.value, ast.Str):
+					guesstype = 'string'
+				elif self._rust:
+					if isinstance(node.value, ast.Name) and node.value.id=='None':
+						raise SyntaxError( self.format_error('untyped global set to None'))
+					else:
+						raise SyntaxError( self.format_error('untyped global'))
+
+
+				if guesstype not in self._globals:
+					self._globals[guesstype] = set()
+				self._globals[guesstype].add( target )
+
+				isprim = self.is_prim_type(guesstype)
 				if self._cpp:
-					return 'const std::string %s = %s;' % (target, value)
+					if guesstype=='string':
+						return 'const std::string %s = %s;' % (target, value)
+					elif isprim:
+						return '%s %s = %s;' % (guesstype, target, value)
+					else:
+						return 'std::shared_ptr<%s> %s = %s;' % (guesstype, target, value)
+
 				else:
-					return 'static %s : string = %s;' % (target, value)  ## TODO other types (`let` will not work at global scope)
+					return 'static %s : %s = %s;' % (target, guesstype, value)
 
 		elif isinstance(node.targets[0], ast.Name) and node.targets[0].id in self._vars:
 			## first assignment of a known variable, this requires 'auto' in c++, or `let` in rust.
