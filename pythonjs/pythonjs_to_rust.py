@@ -765,8 +765,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if fname.endswith('.append'): ## TODO - deprecate append to pushX or make `.append` method reserved by not allowing methods named `append` in visit_ClassDef?
 			is_append = True
 			arr = fname.split('.append')[0]
+		###########################################
 
-		if fname == '__asm__':
+		if fname == 'clock' and len(node.args)==0:
+			## note in c++ std::clock returns clock ticks, not time
+			return '__clock__()'
+
+		elif fname == '__asm__':
 			ASM_WRITE_ONLY = '='  ## write constraint
 			ASM_ANY_REG    = 'r'  ## register name: r, eax, ax, al,  ebx, bx, bl
 			ASM_OUT_DEFAULT = ASM_WRITE_ONLY + ASM_ANY_REG

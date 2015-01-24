@@ -195,7 +195,7 @@ lua2js = os.path.abspath( '../external/lua.js/lua2js' )
 luajs_runnable = os.path.isfile( lua2js ) and '--lua2js' in sys.argv
 
 go_runnable = runnable( 'go version')
-gopherjs_runnable = runnable( 'gopherjs') and '--gopherjs' in sys.argv
+gopherjs_runnable = False #runnable( 'gopherjs') and '--gopherjs' in sys.argv
 
 rust_runnable = runnable( 'rustc --help')
 cpp_runnable = runnable( 'g++ --help')
@@ -864,7 +864,7 @@ def run_cpp(content):
     """compile and run c++ program"""
     write("%s.cpp" % tmpname, content)
     #subprocess.check_call(['g++', '-std=c++11', '-o', '/tmp/regtest-cpp',  '%s.cpp' % tmpname] )
-    subprocess.check_call(['g++', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11',   ] )
+    subprocess.check_call(['g++', '-O3', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11',   ] )
     errors = False
     if errors:
         return errors
