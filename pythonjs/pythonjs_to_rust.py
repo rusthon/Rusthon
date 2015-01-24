@@ -1758,9 +1758,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings and not self._cpp:
 			return '%s.push_str(%s.as_slice());' %(target, value)
 
-		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
+		if self._cpp and op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s ++;' %target
-		if op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
+		elif self._cpp and op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s --;' %target
 		else:
 			a = '%s %s= %s;' %(target, op, value)
@@ -2413,7 +2413,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				body.append('loop {')
 		else:
-			body.append('while %s {' %cond)
+			if self._cpp:
+				body.append('while (%s) {' %cond)
+			else:
+				body.append('while %s {' %cond)
 
 		self.push()
 		for line in list( map(self.visit, node.body) ):

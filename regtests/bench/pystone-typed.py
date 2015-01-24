@@ -8,11 +8,6 @@ __version__ = "1.1"
 
 def main():
 	LOOPS = 100000
-	if PYTHON=='PYTHONJS':  
-		pythonjs.configure( direct_operator='+' )
-		pythonjs.configure( direct_operator='*' )
-		pythonjs.configure( direct_keys=True )
-		pass
 	a = pystones( LOOPS )
 	benchtime = a[0]
 	stones = a[1]
