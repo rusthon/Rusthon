@@ -30,7 +30,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):
 		assert source
 		pythonjs_to_go.GoGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
-		self._globals = {
+		self._global_types = {
 			'string' : set()
 		}
 		self._rust = True
@@ -2001,9 +2001,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else: ## Go
 				return '%s <- %s;' % (target, value)
 
-		elif not self._function_stack:
+		elif not self._function_stack:  ## global level
 			value = self.visit(node.value)
 			#return 'var %s = %s;' % (target, value)
+
+
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:
 				value = '__new__' + value
 				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
@@ -2019,11 +2021,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 						raise SyntaxError( self.format_error('untyped global'))
 
+				## save info about globals ##
+				if isinstance(node.targets[0], ast.Name):
+					self._globals[ node.targets[0].id ] = guesstype
+				if guesstype not in self._global_types:
+					self._global_types[guesstype] = set()
+				self._global_types[guesstype].add( target )
 
-				if guesstype not in self._globals:
-					self._globals[guesstype] = set()
-				self._globals[guesstype].add( target )
-
+				## we need a syntax for static/const ##
 				isprim = self.is_prim_type(guesstype)
 				if self._cpp:
 					if guesstype=='string':
@@ -2408,13 +2413,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					raise SyntaxError( self.format_error(node.targets[0]))
 
 			value = self.visit(node.value)
+			isclass = False
+			isglobal = target in self._globals
+			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:
+				isclass = True
 
 			if self._cpp:
-				return '%s = %s;' % (target, value)
+				if isclass:
+					assert self._shared_pointers
+					classname = node.value.func.id
+					self._known_instances[ target ] = classname
+					## TODO move get-args-and-kwargs to its own helper function
+					constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
+					r = ''
+					if isglobal:
+						r += '/* global : %s, type:%s */\n' %(target, classname)
+					r += '%s  _ref_%s = %s{};' %(classname, target, classname)
+					if constructor_args:
+						r += '_ref_%s.__init__(%s);' %(target, constructor_args)
+					r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
+					return r
+
+				else:
+					return '%s = %s;' % (target, value)
 
 			elif self._rust:
 				## destructured assignments also fallback here.
 				## fallback to mutable by default? `let mut (x,y) = z` breaks rustc
+				if isclass:
+					raise RuntimeError('TODO')
 				if is_attr:
 					return '%s = %s;' % (target, value)
 				else:

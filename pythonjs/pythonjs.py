@@ -57,6 +57,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self._cppheader = []
 		self._match_stack = []  # dicts of cases
 		self._rename_hacks = {}  ## used by c++ backend, to support `if isinstance`
+		self._globals = {}  ## name : type
 
 
 	def reset(self):

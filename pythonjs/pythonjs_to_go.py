@@ -40,7 +40,7 @@ class GoGenerator( pythonjs.JSGenerator ):
 		self._known_maps      = dict()
 		self._scope_stack = list()
 
-		self.interfaces = dict()
+		self.interfaces = dict()  ## for Go backend, TODO unify Go/Rust/C++ logic
 		self.uids = 0
 		self.unodes = dict()
 
