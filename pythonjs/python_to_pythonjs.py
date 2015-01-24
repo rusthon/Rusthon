@@ -2134,7 +2134,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				else:
 					code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 
-			elif self._with_dart or self._with_ll or self._with_glsl or self._with_go:
+			elif self._with_dart or self._with_ll or self._with_cpp or self._with_go or self._with_rust:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
