@@ -467,7 +467,7 @@ def save_tar( package, path='build.tar' ):
 
 def main():
     if len(sys.argv)==1:
-        print('useage: ./rusthon.py myscript.py')
+        print('usage: ./rusthon.py [python files] [markdown files] [tar file]')
         return
 
     modules = new_module()
