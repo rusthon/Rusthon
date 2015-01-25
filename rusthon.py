@@ -399,15 +399,14 @@ def build( modules, module_path ):
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native']
-		if link:
-			cmd.append('-static')
-			cmd.append( tmpfile )
-			cmd.append('-L' + tempfile.gettempdir() + '/.')
-			for libname in link:
-				cmd.append('-l'+libname)
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
+		if link:
+			cmd.append('-static')
+			cmd.append('-L' + tempfile.gettempdir() + '/.')
+			for libname in link:
+				cmd.append('-l'+libname)
 		subprocess.check_call( cmd )
 		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
 		output['executeables'].append(tempfile.gettempdir() + '/rusthon-c++-bin')
