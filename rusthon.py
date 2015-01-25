@@ -257,18 +257,6 @@ def build( modules, module_path ):
 	go_main = {'name':'main.go', 'source':[]}
 	tagged = {}
 
-	if modules['python']:
-		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod['index'])
-		for mod in mods_sorted_by_index:
-			if 'name' in mod:
-				name = mod['name']
-				if name.endswith('.md'):
-					python_main['script'].append( mod['code'] )
-				else:
-					output['python'].append( {'name':name, 'script':mod['code']} )
-			else:
-				python_main['script'].append( mod['code'] )
-
 
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod['index'])
@@ -304,6 +292,18 @@ def build( modules, module_path ):
 
 				if len(js.keys())==1 and mod['tag']:
 					tagged[ mod['tag'] ] = js['main']
+
+	if modules['python']:
+		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
+			if 'name' in mod:
+				name = mod['name']
+				if name.endswith('.md'):
+					python_main['script'].append( mod['code'] )
+				else:
+					output['python'].append( {'name':name, 'script':mod['code']} )
+			else:
+				python_main['script'].append( mod['code'] )
 
 	if modules['html']:
 		mods_sorted_by_index = sorted(modules['index'], key=lambda mod: mod['index'])
