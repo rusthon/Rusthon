@@ -15,7 +15,7 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	result = {}
 
 	pyjs = pythonjs.python_to_pythonjs.main(
-		script, 
+		script,
 		module_path=module_path,
 		fast_javascript = fastjs,
 		pure_javascript = directjs
@@ -24,9 +24,9 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	if isinstance(pyjs, dict):  ## split apart by webworkers
 		for jsfile in a:
 			result[ jsfile ] = pythonjs.pythonjs.main(
-				a[jsfile], 
+				a[jsfile],
 				webworker=jsfile != 'main',
-				requirejs=False, 
+				requirejs=False,
 				insert_runtime=False,
 				fast_javascript = fastjs,
 				fast_loops      = directloops
@@ -35,8 +35,8 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	else:
 
 		code = pythonjs.pythonjs.main(
-			pyjs, 
-			requirejs=False, 
+			pyjs,
+			requirejs=False,
 			insert_runtime=False,
 			fast_javascript = fastjs,
 			fast_loops      = directloops
@@ -464,61 +464,66 @@ def save_tar( package, path='build.tar' ):
 
 	tar.close()
 
+
+def main():
+    if len(sys.argv)==1:
+        print('useage: ./rusthon.py myscript.py')
+        return
+
+    modules = new_module()
+
+    save = False
+    paths = []
+    scripts = []
+    markdowns = []
+    gen_md = False
+    output_tar = 'rusthon-build.tar'
+
+    for arg in sys.argv[1:]:
+        if os.path.isdir(arg):
+            paths.append(arg)
+        elif arg.endswith('.py'):
+            scripts.append(arg)
+        elif arg.endswith('.md'):
+            markdowns.append(arg)
+        elif arg.endswith('.tar'):
+            output_tar = arg
+        elif arg == '--create-md':
+            gen_md = True
+        elif arg == '--tar':
+            save = True
+
+    base_path = None
+    for path in scripts:
+        script = open(path,'rb').read()
+        modules['rusthon'].append( {'name':'main', 'code':script} )
+        if base_path is None:
+            base_path = os.path.split(path)[0]
+
+    for path in markdowns:
+        import_md( path, modules=modules )
+        if base_path is None:
+            base_path = os.path.split(path)[0]
+
+    package = build(modules, base_path )
+    if not save:
+        for exe in package['executeables']:
+            print('running: %s' %exe)
+            subprocess.check_call( exe )
+
+        if package['html']:
+            import webbrowser
+            for i,page in enumerate(package['html']):
+                tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
+                open(tmp, 'wb').write( page['code'] )
+                webbrowser.open(tmp)
+
+    else:
+        save_tar( package, output_tar )
+        print('saved build to:')
+        print(output_tar)
+
+
 if __name__ == '__main__':
-	if len(sys.argv)==1:
-		print('useage: ./rusthon.py myscript.py')
-	else:
-		modules = new_module()
-
-		save = False
-		paths = []
-		scripts = []
-		markdowns = []
-		gen_md = False
-		output_tar = 'rusthon-build.tar'
-
-		for arg in sys.argv[1:]:
-			if os.path.isdir(arg):
-				paths.append(arg)
-			elif arg.endswith('.py'):
-				scripts.append(arg)
-			elif arg.endswith('.md'):
-				markdowns.append(arg)
-			elif arg.endswith('.tar'):
-				output_tar = arg
-			elif arg == '--create-md':
-				gen_md = True
-			elif arg == '--tar':
-				save = True
-
-		base_path = None
-		for path in scripts:
-			script = open(path,'rb').read()
-			modules['rusthon'].append( {'name':'main', 'code':script} )
-			if base_path is None:
-				base_path = os.path.split(path)[0]
-
-		for path in markdowns:
-			import_md( path, modules=modules )
-			if base_path is None:
-				base_path = os.path.split(path)[0]
-
-		package = build(modules, base_path )
-		if not save:
-			for exe in package['executeables']:
-				print('running: %s' %exe)
-				subprocess.check_call( exe )
-
-			if package['html']:
-				import webbrowser
-				for i,page in enumerate(package['html']):
-					tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
-					open(tmp, 'wb').write( page['code'] )
-					webbrowser.open(tmp)
-
-		else:
-			save_tar( package, output_tar )
-			print('saved build to:')
-			print(output_tar)
-
+    main()
 
