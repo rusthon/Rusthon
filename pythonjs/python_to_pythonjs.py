@@ -977,13 +977,17 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		self._js_classes[ name ] = node
 		self._class_stack.append( node )
 
-		methods = {}
+		comments = []
+		methods  = {}
 		method_list = []  ## getter/setters can have the same name
 		props = set()
 		struct_types = dict()
 
 		for item in node.body:
-			if isinstance(item, FunctionDef):
+			if isinstance(item, ast.Expr) and isinstance(item.value, ast.Str):
+				comments.append(item.value.s)
+
+			elif isinstance(item, FunctionDef):
 				methods[ item.name ] = item
 				finfo = inspect_method( item )
 				props.update( finfo['properties'] )
@@ -1027,6 +1031,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		init = methods.get( '__init__', None)
 
 		writer.push()
+
+		if comments:
+			writer.write("'''%s'''" %comments[0])
 
 		## constructor
 		if init:

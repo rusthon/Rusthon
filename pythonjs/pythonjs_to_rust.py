@@ -210,8 +210,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._class_props[ node.name ] = props
 		if node.name not in self.method_returns_multiple_subclasses:
 			self.method_returns_multiple_subclasses[ node.name ] = set()  ## tracks which methods in a class return different subclass types
-		#if self._cpp:
-		out.append('/*		class: %s		*/' %node.name)
+
+		comments = []
+		for b in node.body:
+			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Str):
+				comments.append(b.value.s)
+
+		if comments:
+			out.append('/**')
+			for line in comments[0].splitlines():
+				out.append('*'+line)
+			out.append('*/')
+
 		#self.interfaces[ node.name ] = set()  ## old Go interface stuff
 
 
@@ -1228,6 +1238,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def _visit_function(self, node):
+		out = []
+
 		is_closure = False
 		if self._function_stack[0] is node:
 			self._vars = set()
@@ -1237,6 +1249,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif len(self._function_stack) > 1:
 			## do not clear self._vars and _known_vars inside of closure
 			is_closure = True
+
+		comments = []
+		for b in node.body:
+			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Str):
+				comments.append( b.value.s )
+		if comments:
+			out.append('/**')
+			for line in comments[0].splitlines():
+				out.append('*'+line)
+			out.append('*/')
+
 
 		args_typedefs = {}
 		chan_args_typedefs = {}
@@ -1401,7 +1424,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			method = '(self *%s)  ' %self._class_stack[-1].name
 		else:
 			method = ''
-		out = []
+
 		if is_closure:
 			if return_type:
 				if self._rust:
@@ -1699,6 +1722,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			prev_used = used
 
 			b = body.pop()
+			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Str):  ## skip doc strings here
+				continue
+
 			try:
 				v = self.visit(b)
 				if v: out.append( self.indent() + v )
