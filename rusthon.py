@@ -219,7 +219,9 @@ def import_md( url, modules=None ):
 	data = open(url, 'rb').read()
 
 	for line in data.splitlines():
+		# Start or end of a code block.
 		if line.strip().startswith('```'):
+			# End of a code block.
 			if in_code:
 				if lang:
 					p, n = os.path.split(url)
@@ -227,6 +229,7 @@ def import_md( url, modules=None ):
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
+			# Start of a code block.
 			else:
 				in_code = True
 				if prevline and prevline.strip().startswith('@'):
@@ -234,8 +237,9 @@ def import_md( url, modules=None ):
 				else:
 					tag = None
 
-			lang = line.strip().split('```')[-1]
-			index += 1
+				lang = line.strip().split('```')[-1]
+				index += 1
+		# The middle of a code block.
 		elif in_code:
 			code.append(line)
 		else:
