@@ -1,24 +1,8 @@
 '''
-pystone
+static typed pystone
 '''
 
 from time import clock
-__version__ = "1.1"
-
-
-def main():
-	LOOPS = 100000
-	a = pystones( LOOPS )
-	benchtime = a[0]
-	stones = a[1]
-	print( benchtime )
-	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
-	#print("#This machine benchmarks at pystones/second: %s" %stones)
-
-
-def pystones(loops:int):
-	return Proc0(loops)
-
 
 class Record:
 
@@ -59,74 +43,43 @@ def create_array1glob(n:int) -> []int:
 
 def create_array2glob(n:int) -> [][]int:
 	comp = [][]int(
-		Array1Glob[:] for i in range(n)
+		create_array1glob(n) for i in range(n)
 	)
 	return comp
 
 Array1Glob = create_array1glob(51)
 Array2Glob = create_array2glob(51)
 
-
-
-def Proc0(loops:int):
-	global IntGlob
-	global BoolGlob
-	global Char1Glob
-	global Char2Glob
-	global Array1Glob
-	global Array2Glob
-	global PtrGlb
-	global PtrGlbNext
-
-	starttime = clock()
-	for j in range(loops):
-		pass
-	nulltime = clock() - starttime
-
-	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
-	PtrGlb = Record(
-		PtrComp=PtrGlbNext, 
-		Discr=Ident1, 
-		EnumComp=Ident3, 
-		IntComp=40, 
-		StringComp="DHRYSTONE PROGRAM, SOME STRING"
-	)
-
-	String1Loc = "DHRYSTONE PROGRAM, 1'ST STRING"
-	Array2Glob[8][7] = 10
-
-	starttime = clock()
-
-	for i in range(loops):
-		Proc5()
-		Proc4()
-		IntLoc1 = 2
-		IntLoc2 = 3
-		String2Loc = "DHRYSTONE PROGRAM, 2'ND STRING"
-		EnumLoc = Ident2
-		BoolGlob = not Func2(String1Loc, String2Loc)
-		while IntLoc1 < IntLoc2:
-			IntLoc3 = 5 * IntLoc1 - IntLoc2
-			IntLoc3 = Proc7(IntLoc1, IntLoc2)
-			IntLoc1 = IntLoc1 + 1
-		Proc8(Array1Glob, Array2Glob, IntLoc1, IntLoc3)
-		PtrGlb = Proc1(PtrGlb)
-		CharIndex = 'A'
-		while CharIndex <= Char2Glob:
-			if EnumLoc == Func1(CharIndex, 'C'):
-				EnumLoc = Proc6(Ident1)
-			CharIndex = chr(ord(CharIndex)+1)
-		IntLoc3 = IntLoc2 * IntLoc1
-		IntLoc2 = IntLoc3 / IntLoc1
-		IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1
-		IntLoc1 = Proc2(IntLoc1)
-
-	benchtime = clock() - starttime - nulltime
-	if benchtime == 0.0:
-		loopsPerBenchtime = 0.0
+def Func1(CharPar1:string, CharPar2:string) ->int:
+	CharLoc1 = CharPar1
+	CharLoc2 = CharLoc1
+	if CharLoc2 != CharPar2:
+		return Ident1
 	else:
-		loopsPerBenchtime = (loops / benchtime)
-	return benchtime, loopsPerBenchtime
+		return Ident2
+
+def Func2(StrParI1:string, StrParI2:string) -> int:
+	IntLoc = 1
+	while IntLoc <= 1:
+		if Func1(StrParI1[IntLoc], StrParI2[IntLoc+1]) == Ident1:
+			CharLoc = 'A'
+			IntLoc = IntLoc + 1
+	if CharLoc >= 'W' and CharLoc <= 'Z':
+		IntLoc = 7
+	if CharLoc == 'X':
+		return TRUE
+	else:
+		if StrParI1 > StrParI2:
+			IntLoc = IntLoc + 7
+			return TRUE
+		else:
+			return FALSE
+
+def Func3(EnumParIn:int) ->int:
+	EnumLoc = EnumParIn
+	if EnumLoc == Ident3: return TRUE
+	return FALSE
+
 
 def Proc1(PtrParIn:Record ) ->Record:
 	NextRecord = PtrGlb.copy()
@@ -217,35 +170,83 @@ def Proc8(Array1Par:[]int, Array2Par:[][]int, IntParI1:int, IntParI2:int):
 	Array2Par[IntLoc+20][IntLoc] = Array1Par[IntLoc]
 	IntGlob = 5
 
-def Func1(CharPar1:string, CharPar2:string) ->int:
-	CharLoc1 = CharPar1
-	CharLoc2 = CharLoc1
-	if CharLoc2 != CharPar2:
-		return Ident1
+
+def Proc0(loops:int):
+	global IntGlob
+	global BoolGlob
+	global Char1Glob
+	global Char2Glob
+	global Array1Glob
+	global Array2Glob
+	global PtrGlb
+	global PtrGlbNext
+
+	starttime = clock()
+	for j in range(loops):
+		pass
+	nulltime = clock() - starttime
+
+	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
+	PtrGlb = Record(
+		PtrComp=PtrGlbNext, 
+		Discr=Ident1, 
+		EnumComp=Ident3, 
+		IntComp=40, 
+		StringComp="DHRYSTONE PROGRAM, SOME STRING"
+	)
+
+	String1Loc = "DHRYSTONE PROGRAM, 1'ST STRING"
+	Array2Glob[8][7] = 10
+
+	starttime = clock()
+
+	## c++ has different variable scope rules that are safer (and better)
+	## than regular Python, where IntLoc3 is created in while loop below `while IntLoc1 < IntLoc2:`
+	## IntLoc3 then bleeds into the outer scope, this is bad, what if `IntLoc1 > IntLoc2` then IntLoc3 is what?
+	IntLoc3 = -1  ## c++ scope hack
+	for i in range(loops):
+		Proc5()
+		Proc4()
+		IntLoc1 = 2
+		IntLoc2 = 3
+		String2Loc = "DHRYSTONE PROGRAM, 2'ND STRING"
+		EnumLoc = Ident2
+		BoolGlob = not Func2(String1Loc, String2Loc)
+		while IntLoc1 < IntLoc2:
+			IntLoc3 = 5 * IntLoc1 - IntLoc2
+			IntLoc3 = Proc7(IntLoc1, IntLoc2)
+			IntLoc1 = IntLoc1 + 1
+		Proc8(Array1Glob, Array2Glob, IntLoc1, IntLoc3)
+		PtrGlb = Proc1(PtrGlb)
+		CharIndex = 'A'
+		while CharIndex <= Char2Glob:
+			if EnumLoc == Func1(CharIndex, 'C'):
+				EnumLoc = Proc6(Ident1)
+			CharIndex = chr(ord(CharIndex)+1)
+		IntLoc3 = IntLoc2 * IntLoc1
+		IntLoc2 = IntLoc3 / IntLoc1
+		IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1
+		IntLoc1 = Proc2(IntLoc1)
+
+	benchtime = clock() - starttime - nulltime
+	if benchtime == 0.0:
+		loopsPerBenchtime = 0.0
 	else:
-		return Ident2
-
-def Func2(StrParI1:string, StrParI2:string) -> int:
-	IntLoc = 1
-	while IntLoc <= 1:
-		if Func1(StrParI1[IntLoc], StrParI2[IntLoc+1]) == Ident1:
-			CharLoc = 'A'
-			IntLoc = IntLoc + 1
-	if CharLoc >= 'W' and CharLoc <= 'Z':
-		IntLoc = 7
-	if CharLoc == 'X':
-		return TRUE
-	else:
-		if StrParI1 > StrParI2:
-			IntLoc = IntLoc + 7
-			return TRUE
-		else:
-			return FALSE
-
-def Func3(EnumParIn:int) ->int:
-	EnumLoc = EnumParIn
-	if EnumLoc == Ident3: return TRUE
-	return FALSE
+		loopsPerBenchtime = (loops / benchtime)
+	return benchtime, loopsPerBenchtime
 
 
 
+
+
+def pystones(loops:int):
+	return Proc0(loops)
+
+def main():
+	LOOPS = 100000
+	a = pystones( LOOPS )
+	benchtime = a[0]
+	stones = a[1]
+	print( benchtime )
+	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
+	#print("#This machine benchmarks at pystones/second: %s" %stones)
