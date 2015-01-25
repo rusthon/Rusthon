@@ -15,7 +15,7 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	result = {}
 
 	pyjs = pythonjs.python_to_pythonjs.main(
-		script, 
+		script,
 		module_path=module_path,
 		fast_javascript = fastjs,
 		pure_javascript = directjs
@@ -24,9 +24,9 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	if isinstance(pyjs, dict):  ## split apart by webworkers
 		for jsfile in a:
 			result[ jsfile ] = pythonjs.pythonjs.main(
-				a[jsfile], 
+				a[jsfile],
 				webworker=jsfile != 'main',
-				requirejs=False, 
+				requirejs=False,
 				insert_runtime=False,
 				fast_javascript = fastjs,
 				fast_loops      = directloops
@@ -35,8 +35,8 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 	else:
 
 		code = pythonjs.pythonjs.main(
-			pyjs, 
-			requirejs=False, 
+			pyjs,
+			requirejs=False,
 			insert_runtime=False,
 			fast_javascript = fastjs,
 			fast_loops      = directloops
