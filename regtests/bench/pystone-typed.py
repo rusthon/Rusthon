@@ -60,6 +60,7 @@ def Func1(CharPar1:string, CharPar2:string) ->int:
 
 def Func2(StrParI1:string, StrParI2:string) -> int:
 	IntLoc = 1
+	CharLoc = '\0'  ## c++ scope style
 	while IntLoc <= 1:
 		if Func1(StrParI1[IntLoc], StrParI2[IntLoc+1]) == Ident1:
 			CharLoc = 'A'
@@ -80,24 +81,6 @@ def Func3(EnumParIn:int) ->int:
 	if EnumLoc == Ident3: return TRUE
 	return FALSE
 
-
-def Proc1(PtrParIn:Record ) ->Record:
-	NextRecord = PtrGlb.copy()
-	PtrParIn.PtrComp = NextRecord
-	PtrParIn.IntComp = 5
-	NextRecord.IntComp = PtrParIn.IntComp
-	NextRecord.PtrComp = PtrParIn.PtrComp
-	NextRecord.PtrComp = Proc3(NextRecord.PtrComp)
-	if NextRecord.Discr == Ident1:
-		NextRecord.IntComp = 6
-		NextRecord.EnumComp = Proc6(PtrParIn.EnumComp)
-		NextRecord.PtrComp = PtrGlb.PtrComp
-		NextRecord.IntComp = Proc7(NextRecord.IntComp, 10)
-	else:
-		PtrParIn = NextRecord.copy()
-	NextRecord.PtrComp = None
-	return PtrParIn
-
 def Proc2(IntParIO:int) ->int:
 	IntLoc = IntParIO + 10
 	EnumLoc = -1  ## c++ scope style
@@ -110,19 +93,8 @@ def Proc2(IntParIO:int) ->int:
 			break
 	return IntParIO
 
-def Proc3(PtrParOut:Record) ->Record:
-	global IntGlob
-
-	if PtrGlb is not None:
-		PtrParOut = PtrGlb.PtrComp
-	else:
-		IntGlob = 100
-	PtrGlb.IntComp = Proc7(10, IntGlob)
-	return PtrParOut
-
 def Proc4():
 	global Char2Glob
-
 	BoolLoc = Char1Glob == 'A'
 	BoolLoc = BoolLoc or BoolGlob
 	Char2Glob = 'B'
@@ -130,7 +102,6 @@ def Proc4():
 def Proc5():
 	global Char1Glob
 	global BoolGlob
-
 	Char1Glob = 'A'
 	BoolGlob = FALSE
 
@@ -171,6 +142,31 @@ def Proc8(Array1Par:[]int, Array2Par:[][]int, IntParI1:int, IntParI2:int):
 	Array2Par[IntLoc+20][IntLoc] = Array1Par[IntLoc]
 	IntGlob = 5
 
+def Proc3(PtrParOut:Record) ->Record:
+	global IntGlob
+	if PtrGlb is not None:
+		PtrParOut = PtrGlb.PtrComp
+	else:
+		IntGlob = 100
+	PtrGlb.IntComp = Proc7(10, IntGlob)
+	return PtrParOut
+
+def Proc1(PtrParIn:Record ) ->Record:
+	NextRecord = PtrGlb.copy()
+	PtrParIn.PtrComp = NextRecord
+	PtrParIn.IntComp = 5
+	NextRecord.IntComp = PtrParIn.IntComp
+	NextRecord.PtrComp = PtrParIn.PtrComp
+	NextRecord.PtrComp = Proc3(NextRecord.PtrComp)
+	if NextRecord.Discr == Ident1:
+		NextRecord.IntComp = 6
+		NextRecord.EnumComp = Proc6(PtrParIn.EnumComp)
+		NextRecord.PtrComp = PtrGlb.PtrComp
+		NextRecord.IntComp = Proc7(NextRecord.IntComp, 10)
+	else:
+		PtrParIn = NextRecord.copy()
+	NextRecord.PtrComp = None
+	return PtrParIn
 
 def Proc0(loops:int):
 	global IntGlob
@@ -181,11 +177,6 @@ def Proc0(loops:int):
 	global Array2Glob
 	global PtrGlb
 	global PtrGlbNext
-
-	starttime = clock()
-	for j in range(loops):
-		pass
-	nulltime = clock() - starttime
 
 	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
 	PtrGlb = Record(
@@ -198,8 +189,6 @@ def Proc0(loops:int):
 
 	String1Loc = "DHRYSTONE PROGRAM, 1'ST STRING"
 	Array2Glob[8][7] = 10
-
-	starttime = clock()
 
 	## c++ has different variable scope rules that are safer (and better)
 	## than regular Python, where IntLoc3 is created in while loop below `while IntLoc1 < IntLoc2:`
@@ -229,25 +218,27 @@ def Proc0(loops:int):
 		IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1
 		IntLoc1 = Proc2(IntLoc1)
 
+
+def pystones(loops:int):
+	starttime = clock()
+	for j in range(loops):
+		pass
+	nulltime = clock() - starttime
+	starttime = clock()
+
+	Proc0(loops)
+
 	benchtime = clock() - starttime - nulltime
+	print(benchtime)
 	if benchtime == 0.0:
 		loopsPerBenchtime = 0.0
 	else:
 		loopsPerBenchtime = (loops / benchtime)
-	return benchtime, loopsPerBenchtime
 
+	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
+	#print("#This machine benchmarks at pystones/second: %s" %stones)
 
-
-
-
-def pystones(loops:int):
-	return Proc0(loops)
 
 def main():
 	LOOPS = 100000
-	a = pystones( LOOPS )
-	benchtime = a[0]
-	stones = a[1]
-	print( benchtime )
-	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
-	#print("#This machine benchmarks at pystones/second: %s" %stones)
+	pystones( LOOPS )

@@ -114,6 +114,10 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 				open( os.path.join(dirname, 'runtime/c++/cpp-channel.h') ).read()
 			)
 
+		## forward declare all classes
+		for classname in self._classes:
+			header.append('class %s;' %classname)
+
 		if len(self._kwargs_type_.keys())==0:
 			header.append('struct _kwargs_type_;')
 		else:
