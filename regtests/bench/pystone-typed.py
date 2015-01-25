@@ -100,6 +100,7 @@ def Proc1(PtrParIn:Record ) ->Record:
 
 def Proc2(IntParIO:int) ->int:
 	IntLoc = IntParIO + 10
+	EnumLoc = -1  ## c++ scope style
 	while True:
 		if Char1Glob == 'A':
 			IntLoc = IntLoc - 1

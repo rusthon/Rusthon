@@ -367,18 +367,25 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		node._struct_init_names = []  ## save order of struct layout
 
 		for name in unionstruct:
-			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is deprecated')
+			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is just for the Go backend')
 			node._struct_init_names.append( name )
 			if name=='__class__': continue
 
 			T = unionstruct[name]
+			member_isprim = self.is_prim_type(T)
 			if self._cpp:
 				if T=='string': T = 'std::string'
-				out.append('	%s  %s;' %(T, name ))
+				if member_isprim:
+					out.append('	%s  %s;' %(T, name ))
+				else:
+					out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:
 				rust_struct_init.append('%s:%s' %(name, default_type(T)))
 				if T=='string': T = 'String'
-				out.append('	%s : %s,' %(name, T))
+				if member_isprim:
+					out.append('	%s : %s,' %(name, T))
+				else:
+					out.append('	%s : Rc<RefCell<%s>>,' %(name, T))
 
 
 		self._rust_trait = []
