@@ -380,7 +380,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		self._classes['tuple'] = set() #['__getitem__', '__setitem__'])
 		self._builtin_classes = set(['dict', 'list', 'tuple'])
 		self._builtin_functions = {
-			'ord':'%s.charCodeAt(0)', 
+			'ord':'%s.charCodeAt(0)',
 			'chr':'String.fromCharCode(%s)',
 			'abs':'Math.abs(%s)',
 			'cos':'Math.cos(%s)',
@@ -388,7 +388,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			'sqrt':'Math.sqrt(%s)'
 		}
 		self._builtin_functions_dart = {
-			'ord':'%s.codeUnitAt(0)', 
+			'ord':'%s.codeUnitAt(0)',
 			'chr':'new(String.fromCharCode(%s))',
 		}
 
@@ -499,7 +499,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			self._use_array = True ## this is just a hint that calls to array call the builtin array
 
 		elif node.module == 'bisect' and node.names[0].name == 'bisect':
-			## bisect library is part of the stdlib, 
+			## bisect library is part of the stdlib,
 			## in pythonjs it is a builtin function defined in builtins.py
 			pass
 
@@ -516,14 +516,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 
-		elif os.path.isfile(path):  
+		elif os.path.isfile(path):
 			## user import `from mymodule import *` TODO support files from other folders
 			## this creates a sub-translator, because they share the same `writer` object (a global),
 			## there is no need to call `writer.write` here.
 			## note: the current pythonjs.configure mode here maybe different from the subcontext.
 			data = open(path, 'rb').read()
 			subtrans = PythonToPythonJS(
-				data, 
+				data,
 				module_path     = self._module_path,
 				fast_javascript = self._fast_js,
 				modules         = self._modules,
@@ -1654,7 +1654,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		elif op == '//':
 			if self._with_dart:
-				return '(%s/%s).floor()' %(left, right)				
+				return '(%s/%s).floor()' %(left, right)
 			else:
 				return 'Math.floor(%s/%s)' %(left, right)
 
@@ -2918,7 +2918,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				## then this fails to call __call__ to initalize the instance,
 				## or a factory function was used that was passed the class to make,
 				## it will throw this confusing error:
-				## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function 
+				## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function
 				## TODO - remove this optimization, or provide the user with a better error message.
 
 				## So to be safe we still wrap with __get__ and "__call__"
@@ -3422,12 +3422,12 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		## write function body ##
 		## if sleep() is called or a new webworker is started, the following function body must be wrapped in
-		## a closure callback and called later by setTimeout 
+		## a closure callback and called later by setTimeout
 		timeouts = []
 		#continues = []
 		for b in node.body:
 
-			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call): 
+			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call):
 				if isinstance(b.value.func, ast.Attribute) and isinstance(b.value.func.value, Name) and b.value.func.value.id == 'threading':
 					if b.value.func.attr == 'start_new_thread':
 						self.visit(b)
@@ -4371,7 +4371,7 @@ def collect_calls(node):
 class CollectDictComprehensions(NodeVisitor):
 	_comps_ = []
 	def visit_GeneratorExp(self,node):
-		self._comps_.append( node )		
+		self._comps_.append( node )
 		self.visit( node.elt )
 		for gen in node.generators:
 			self.visit( gen.iter )
@@ -4393,7 +4393,7 @@ def collect_dict_comprehensions(node):
 class CollectComprehensions(NodeVisitor):
 	_comps_ = []
 	def visit_GeneratorExp(self,node):
-		self._comps_.append( node )		
+		self._comps_.append( node )
 		self.visit( node.elt )
 		for gen in node.generators:
 			self.visit( gen.iter )
@@ -4450,7 +4450,7 @@ def collect_generator_functions(node):
 
 def main(script, **kwargs):
 	translator = PythonToPythonJS(
-		source = script, 
+		source = script,
 		**kwargs
 	)
 
@@ -4490,7 +4490,7 @@ if __name__ == '__main__':
 
 
 	compiler = PythonToPythonJS(
-		source=data, 
+		source=data,
 		dart='--dart' in sys.argv
 	)
 	output = writer.getvalue()
