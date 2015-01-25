@@ -259,7 +259,7 @@ def build( modules, module_path ):
 
 
 	if modules['rusthon']:
-		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			script = mod['code']
 			index = mod.get('index')
@@ -294,7 +294,7 @@ def build( modules, module_path ):
 					tagged[ mod['tag'] ] = js['main']
 
 	if modules['python']:
-		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			if 'name' in mod:
 				name = mod['name']
@@ -306,7 +306,7 @@ def build( modules, module_path ):
 				python_main['script'].append( mod['code'] )
 
 	if modules['html']:
-		mods_sorted_by_index = sorted(modules['index'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['index'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			html = []
 			for line in mod['code'].splitlines():
@@ -363,7 +363,7 @@ def build( modules, module_path ):
 
 	if modules['rust']:
 		source = []
-		mods_sorted_by_index = sorted(modules['rust'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['rust'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
@@ -386,7 +386,7 @@ def build( modules, module_path ):
 		libname = 'rusthon-clib%s' %len(output['c'])
 		link.append(libname)
 		source = []
-		mods_sorted_by_index = sorted(modules['c'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['c'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
@@ -402,7 +402,7 @@ def build( modules, module_path ):
 
 	if modules['c++']:
 		source = []
-		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod['index'])
+		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
