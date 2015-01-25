@@ -229,6 +229,7 @@ def import_md( url, modules=None ):
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
+				index += 1
 			# Start of a code block.
 			else:
 				in_code = True
@@ -238,7 +239,6 @@ def import_md( url, modules=None ):
 					tag = None
 
 				lang = line.strip().split('```')[-1]
-				index += 1
 		# The middle of a code block.
 		elif in_code:
 			code.append(line)
@@ -257,21 +257,12 @@ def build( modules, module_path ):
 	go_main = {'name':'main.go', 'source':[]}
 	tagged = {}
 
-	if modules['python']:
-		for mod in modules['python']:
-			if 'name' in mod:
-				name = mod['name']
-				if name.endswith('.md'):
-					python_main['script'].append( mod['code'] )
-				else:
-					output['python'].append( {'name':name, 'script':mod['code']} )
-			else:
-				python_main['script'].append( mod['code'] )
-
 
 	if modules['rusthon']:
-		for mod in modules['rusthon']:
+		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
 			script = mod['code']
+			index = mod.get('index')
 			header = script.splitlines()[0]
 			backend = 'c++'  ## default to c++ backend
 			if header.startswith('#backend:'):
@@ -281,12 +272,12 @@ def build( modules, module_path ):
 			if backend == 'c++':
 				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
 				pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
-				modules['c++'].append( {'code':pak['main']})  ## gets compiled below
+				modules['c++'].append( {'code':pak['main'], 'index': index})  ## gets compiled below
 
 			elif backend == 'rust':
 				pyjs = pythonjs.python_to_pythonjs.main(script, rust=True, module_path=module_path)
 				rustcode = pythonjs.pythonjs_to_rust.main( pyjs )
-				modules['rust'].append( {'code':rustcode})  ## gets compiled below
+				modules['rust'].append( {'code':rustcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'go':
 				pyjs = pythonjs.python_to_pythonjs.main(script, go=True, module_path=module_path)
@@ -297,13 +288,26 @@ def build( modules, module_path ):
 			elif backend == 'javascript':
 				js = compile_js( mod['code'], module_path )
 				for name in js:
-					output['javascript'].append( {'name':name, 'script':js[name]} )
+					output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 
 				if len(js.keys())==1 and mod['tag']:
 					tagged[ mod['tag'] ] = js['main']
 
+	if modules['python']:
+		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
+			if 'name' in mod:
+				name = mod['name']
+				if name.endswith('.md'):
+					python_main['script'].append( mod['code'] )
+				else:
+					output['python'].append( {'name':name, 'script':mod['code']} )
+			else:
+				python_main['script'].append( mod['code'] )
+
 	if modules['html']:
-		for mod in modules['html']:
+		mods_sorted_by_index = sorted(modules['index'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
 			html = []
 			for line in mod['code'].splitlines():
 				## `~/some/path/myscript.js` special syntax to copy javascript directly into the output html, good for testing locally.
@@ -359,7 +363,8 @@ def build( modules, module_path ):
 
 	if modules['rust']:
 		source = []
-		for mod in modules['rust']:
+		mods_sorted_by_index = sorted(modules['rust'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-build.rs'
@@ -381,7 +386,8 @@ def build( modules, module_path ):
 		libname = 'rusthon-clib%s' %len(output['c'])
 		link.append(libname)
 		source = []
-		for mod in modules['c']:
+		mods_sorted_by_index = sorted(modules['c'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
@@ -396,7 +402,8 @@ def build( modules, module_path ):
 
 	if modules['c++']:
 		source = []
-		for mod in modules['c++']:
+		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod['index'])
+		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
