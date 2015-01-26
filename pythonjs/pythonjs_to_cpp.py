@@ -132,9 +132,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 			for name in self._kwargs_type_:
 				type = self._kwargs_type_[name]
-				header.append( '  *_KwArgs_  %s(%s %s);' %(name, type, name))
+				header.append( '  _KwArgs_*  %s(%s %s);' %(name, type, name))
 
-				impl.append( '  *_KwArgs_   _KwArgs_::%s(%s %s) {' %(name, type, name))
+				impl.append( '  _KwArgs_*   _KwArgs_::%s(%s %s) {' %(name, type, name))
 				impl.append( '		this->__use__%s = true;' %name)
 				impl.append( '		this->_%s_ = %s;' %(name, name))
 				impl.append( '		return this;')
