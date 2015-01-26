@@ -1070,7 +1070,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## creating a new `_KwArgs_` instance.
 				args += '(new _KwArgs_())'
 				for kw in node.keywords:
-					args += '.%s(%s)' %(kw.arg,self.visit(kw.value))
+					args += '->%s(%s)' %(kw.arg,self.visit(kw.value))
 			else:
 				raise RuntimeError('TODO named params for some backend')
 
@@ -1438,7 +1438,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if oargs:
 			node._arg_names.append( '__kwargs' )
 			if self._cpp:
-				args.append( '*_KwArgs_  __kwargs')
+				args.append( '_KwArgs_*  __kwargs')
 			elif self._rust:
 				raise SyntaxError('TODO kwargs for rust')
 			elif self._go:
