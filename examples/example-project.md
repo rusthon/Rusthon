@@ -14,7 +14,6 @@ cd Rusthon
 ```
 Above if `--tar` is not given then the result is run after being compiled by `rustc` and `g++`.
 
-
 some c++
 --------
 the function below `say_hi_cpp` can be directly called from the rusthon code below,
@@ -27,7 +26,6 @@ because the default backend for rusthon is c++.
 void say_hi_cpp() {
 	std::cout << std::string("hello world from c++") << std::endl;
 }
-
 ```
 
 rusthon
@@ -37,7 +35,6 @@ The code below is translated to C++ and merged with the hand written C++ code ab
 TODO fix syntax highlighting on github:
 https://github.com/github/linguist/pull/2001
 ```rusthon
-
 def say_hi():
 	print( 'hello world')
 
@@ -68,7 +65,6 @@ func my_go_func() {
 func call_rusthon_func_from_go() {
 	my_rusthon_func()
 }
-
 ```
 
 rusthon go backend
@@ -87,6 +83,5 @@ def main():
 	print('hello from rusthon go backend')
 	my_go_func()
 	call_rusthon_func_from_go()
-
 ```
 

@@ -10,12 +10,11 @@ def main():
 
 def otherfunc():
 	print('hi')
-
 ```
 
 Rusthon makes no attempt to reorder your functions so that they can be compiled by g++.  So for now you need to pay attention to how you order functions that depend on one another.  In the future this will be fixed with forward declarations of all functions in the header.  Until then, if you make this mistake, your going to see an error like this:
 ```
-brett@mint15 ~/Rusthon $ ./rusthon.py ./examples/fails_bad_order.md 
+brett@mint15 ~/Rusthon $ ./rusthon.py ./examples/fails_bad_order.md
 /tmp/rusthon-c++-build.cpp: In function ‘int main()’:
 /tmp/rusthon-c++-build.cpp:64:12: error: ‘otherfunc’ was not declared in this scope
 ```

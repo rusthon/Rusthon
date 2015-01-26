@@ -12,7 +12,6 @@ cd Rusthon/
 ./rusthon.py ./examples/hello_angular.md
 ```
 
-
 ```html
 <html>
 <head>
@@ -81,5 +80,4 @@ def invoice_controller():
 	this.convertCurrency = convertCurrency
 
 module.controller('InvoiceController', invoice_controller)
-
 ```

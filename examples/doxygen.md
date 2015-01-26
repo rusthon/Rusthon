@@ -1,4 +1,3 @@
-
 ```rusthon
 
 class A:
@@ -10,7 +9,6 @@ class A:
 		doc about mymethod
 		'''
 		pass
-
 
 def somefunc( x:int ) -> bool:
 	'''
@@ -25,6 +23,5 @@ def somefunc( x:int ) -> bool:
 
 def main():
 	somefunc( 10 )
-
 ```
 

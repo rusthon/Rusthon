@@ -11,7 +11,6 @@ void say_hi_cpp() {
 extern "C" {
 	void say_hi_c();
 }
-
 ```
 
 rusthon
@@ -26,7 +25,6 @@ def main():
 	say_hi_cpp()
 	say_hi_c()
 ```
-
 
 c staticlib
 ------

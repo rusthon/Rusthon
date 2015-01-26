@@ -14,7 +14,6 @@ Rusthon allows you to assemble html files, inserting static javascripts, and out
 The example below inserts the pythonjs minimal runtime `pythonjs-minimal.js` and the THREE.js library `three.min.js` into the output html file.
 This is triggered by using `~/` at the start of the path in the `src` attribute of the script tag.  The path is relative to your home directory.
 
-
 ```html
 <html>
 <head>
