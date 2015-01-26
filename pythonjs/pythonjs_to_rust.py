@@ -626,23 +626,22 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError(b)
 
-		if len(self._kwargs_type_.keys())==0:
-			lines.append('struct _kwargs_type_;')
-		else:
-			lines.append('struct _kwargs_type_ {')
-			for name in self._kwargs_type_:
-				type = self._kwargs_type_[name]
-				if self._cpp:
-					lines.append( '  %s %s;' %(type,name))
-					lines.append( '  bool __use__%s;' %name)
-				else:
+		if self._go:
+			assert not self._cpp
+
+			if len(self._kwargs_type_.keys())==0:
+				lines.append('struct _kwargs_type_;')
+			else:
+				lines.append('struct _kwargs_type_ {')
+				for name in self._kwargs_type_:
+					type = self._kwargs_type_[name]
 					lines.append( '  %s : %s,' %(name,type))
 					lines.append( '  __use__%s : bool,' %name)
-			lines.append('}')
+				lines.append('}')
 
-		#lines.append('mod rusthon {')
-		## copy string globals into rusthon module
-		#lines.append('}')
+		elif self._rust and len(self._kwargs_type_.keys()):
+			raise RuntimeError('TODO kwargs for rust')
+
 
 		for crate in self._crates:
 			top_header.append('extern crate %s;' %crate)
@@ -1439,12 +1438,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if oargs:
 			node._arg_names.append( '__kwargs' )
 			if self._cpp:
-				args.append( '_kwargs_type_  __kwargs')
-			else:
+				args.append( '*_KwArgs_  __kwargs')
+			elif self._rust:
+				raise SyntaxError('TODO kwargs for rust')
+			elif self._go:
 				args.append( '__kwargs : _kwargs_type_')
+			else:
+				raise SyntaxError('TODO kwargs for some backend')
 
 		starargs = None
 		if node.args.vararg:
+			if self._cpp: raise RuntimeError('TODO *args for c++')
 			starargs = node.args.vararg
 			assert starargs in args_typedefs
 			args.append( '__vargs__ : Vec<%s>' %args_typedefs[starargs])
@@ -1523,11 +1527,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			for n,v in oargs:
 				if self._cpp:
 					out.append(self.indent() + '%s  %s = %s;' %(args_typedefs[n],n,v))
+					out.append(self.indent() + 'if (__kwargs->__use__%s == true) {' %n )
+					out.append(self.indent() +  '  %s = __kwargs->_%s_;' %(n,n))
+					out.append(self.indent() + '}')
+
 				else:
 					out.append(self.indent() + 'let mut %s = %s;' %(n,v))
-				out.append(self.indent() + 'if (__kwargs.__use__%s == true) {' %n )
-				out.append(self.indent() +  '  %s = __kwargs.%s;' %(n,n))
-				out.append(self.indent() + '}')
+					out.append(self.indent() + 'if (__kwargs.__use__%s == true) {' %n )
+					out.append(self.indent() +  '  %s = __kwargs.%s;' %(n,n))
+					out.append(self.indent() + '}')
+
+			if self._cpp:
+				## TODO free __kwargs
+				pass
 
 		if starargs:
 			out.append(self.indent() + 'let %s = &__vargs__;' %starargs)

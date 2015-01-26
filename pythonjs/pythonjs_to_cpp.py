@@ -118,14 +118,22 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		for classname in self._classes:
 			header.append('class %s;' %classname)
 
-		if len(self._kwargs_type_.keys())==0:
-			header.append('struct _kwargs_type_;')
-		else:
-			header.append('struct _kwargs_type_ {')
+		if len(self._kwargs_type_.keys()):
+			header.append('class _KwArgs_;')
+			header.append('class _KwArgs_ {')
+			header.append('	public:')
 			for name in self._kwargs_type_:
 				type = self._kwargs_type_[name]
-				header.append( '  %s %s;' %(type,name))
+				header.append( '  %s _%s_;' %(type,name))
 				header.append( '  bool __use__%s;' %name)
+
+			for name in self._kwargs_type_:
+				type = self._kwargs_type_[name]
+				header.append( '  *_KwArgs_ %s(%s %s) {' %(name, type, name))
+				header.append( '		this->__use__%s = true;' %name)
+				header.append( '		this->_%s_ = %s;' %(name, name))
+				header.append( '		return *this;')
+				header.append('};')
 			header.append('};')
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
