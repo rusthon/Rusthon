@@ -217,8 +217,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				comments.append(b.value.s)
 
 		if comments:
+			lines = comments[0].splitlines()
+			start = 1
+			end   = -1
+			if lines[0] and (not lines[0].isspace()):
+				start = 0
+			if lines[-1] and (not lines[-1].isspace()):
+				end = None
 			out.append('/**')
-			for line in comments[0].splitlines():
+			for line in lines[start:end]:
 				out.append(' *'+line)
 			out.append(' */')
 
@@ -1255,8 +1262,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Str):
 				comments.append( b.value.s )
 		if comments:
+			lines = comments[0].splitlines()
+			start = 1
+			end   = -1
+			if lines[0] and (not lines[0].isspace()):
+				start = 0
+			if lines[-1] and (not lines[-1].isspace()):
+				end = None
 			out.append('/**')
-			for line in comments[0].splitlines():
+			for line in lines[start:end]:
 				out.append(' *'+line)
 			out.append(' */')
 
