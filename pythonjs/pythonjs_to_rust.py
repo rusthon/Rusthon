@@ -1049,13 +1049,33 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			args = ''
 
+		haskwargs = False
 		if node.keywords:
+			haskwargs = True
 			if args: args += ','
-			args += '_kwargs_type_{'
-			x = ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords]
-			x.extend( ['__use__%s:true' %kw.arg for kw in node.keywords] )
-			args += ','.join( x )
-			args += '}'
+			if self._go:
+				## This style works with Go because missing members are always initalized
+				## to their null value.  It also works in Rust and C++, but only when all 
+				## keywords are always given - which is almost never the case.
+				args += '_kwargs_type_{'
+				x = ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords]
+				x.extend( ['__use__%s:true' %kw.arg for kw in node.keywords] )
+				args += ','.join( x )
+				args += '}'
+			elif self._rust:
+				raise RuntimeError('TODO fix named params for rust backend')
+			elif self._cpp:
+				## In the future we can easily optimize this away on plain functions,
+				## because it is simple to lookup the function here, and see the order
+				## of the named params, and then reorder the args here to bypass 
+				## creating a new `_KwArgs_` instance.
+				args += '(new _KwArgs_())'
+				for kw in node.keywords:
+					args += '.%s(%s)' %(kw.arg,self.visit(kw.value))
+			else:
+				raise RuntimeError('TODO named params for some backend')
+
+
 
 		if node.starargs:
 			if args: args += ','
