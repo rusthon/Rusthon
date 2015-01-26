@@ -123,7 +123,6 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			header.append('class _KwArgs_;')  ## forward declare
 			header.append('class _KwArgs_ {')
 			header.append('	public:')
-			header.append('		_KwArgs_();')
 
 			for name in self._kwargs_type_:
 				type = self._kwargs_type_[name]
