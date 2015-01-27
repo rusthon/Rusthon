@@ -1306,6 +1306,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		for decor in node.decorator_list:
 			self._visit_decorator(
 				decor, 
+				node=node,
 				options=options, 
 				args_typedefs=args_typedefs,
 				chan_args_typedefs=chan_args_typedefs,

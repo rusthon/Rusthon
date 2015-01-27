@@ -432,7 +432,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		return options['getter'] or options['setter']
 
 
-	def _visit_decorator(self, decor, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None, arrays=None ):
+	def _visit_decorator(self, decor, node=None, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None, arrays=None ):
+		assert node
 		if options is None: options = dict()
 		if args_typedefs is None: args_typedefs = dict()
 		if chan_args_typedefs is None: chan_args_typedefs = dict()

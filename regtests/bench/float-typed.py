@@ -9,10 +9,10 @@ POINTS = 100000
 
 class Point(object):
 
-	def __init__(self, i):
-		self.x = sin(i)
-		self.y = cos(i) * 3
-		self.z = (self.x * self.x) / 2
+	def __init__(self, i:float):
+		let self.x:float = sin(i)
+		let self.y:float = cos(i) * 3
+		let self.z:float = (self.x * self.x) / 2
 
 	def normalize(self) ->self:
 		norm = sqrt(self.x * self.x + self.y * self.y + self.z * self.z)
@@ -21,7 +21,7 @@ class Point(object):
 		self.z /= norm
 		return self
 
-	def maximize(self, other):
+	def maximize(self, other:Point ):
 		if self.x < other.x: self.x = other.x
 		if self.y < other.y: self.y = other.y
 		if self.z < other.z: self.z = other.z
@@ -36,7 +36,7 @@ def maximize( points:[]Point ) ->Point:
 
 def benchmark( n:int ) -> Point:
 	points = []Point( 
-		Point(i).normalize() for i in range(n) 
+		Point(i as float).normalize() for i in range(n) 
 	)
 	return maximize(points)
 

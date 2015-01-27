@@ -71,4 +71,10 @@ CPP = {
 		#'clock': 'double __clock__() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() / (double)1000; }'
 		#'clock': 'std::chrono::time_point<std::chrono::steady_clock> __clock__() { return std::chrono::steady_clock::now(); }'
 	},
+
+	'math': {
+		'sin' : 'double sin(double a) { return std::sin(a); }',
+		'cos' : 'double cos(double a) { return std::cos(a); }',
+		'sqrt' : 'double sqrt(double a) { return std::sqrt(a); }',
+	}
 }
