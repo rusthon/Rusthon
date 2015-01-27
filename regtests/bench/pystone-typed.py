@@ -6,7 +6,7 @@ from time import clock
 
 class Record:
 
-	def __init__(self, PtrComp:Record = None, Discr = 0, EnumComp = 0, IntComp = 0, StringComp = 0):
+	def __init__(self, PtrComp:Record = None, Discr = 0, EnumComp = 0, IntComp = 0, StringComp = '\0'):
 		self.PtrComp = PtrComp
 		self.Discr = Discr
 		self.EnumComp = EnumComp
@@ -178,7 +178,7 @@ def Proc0(loops:int):
 	global PtrGlb
 	global PtrGlbNext
 
-	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
+	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp='\0' )
 	PtrGlb = Record(
 		PtrComp=PtrGlbNext, 
 		Discr=Ident1, 
