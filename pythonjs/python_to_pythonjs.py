@@ -1051,8 +1051,16 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 						if attr not in node._struct_vars:
 							if self._with_go or self._with_dart:  ## this works for dart to?
 								node._struct_vars[ attr ] = 'interface'
+							elif self._with_cpp:
+								pass
 							else:
-								raise SyntaxError( self.format_error('error: unknown type for attribute `self.%s`'%attr) )
+								err = [ 
+									'error: unknown type for attribute `self.%s`'%attr,
+									'init typed args:' + ', '.join(init._typed_args.keys()),
+									'struct members :' + ', '.join(node._struct_vars.keys())
+
+								]
+								raise SyntaxError( self.format_error('\n'.join(err)) )
 
 				elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='__let__':
 					if isinstance(item.value.args[0], ast.Attribute) and item.value.args[0].value.id=='self':
