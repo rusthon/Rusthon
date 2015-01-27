@@ -1210,8 +1210,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return 'return %s;' % ', '.join(map(self.visit, node.value.elts))
 		if node.value:
 			try:
-				v = self.visit(node.value)
+				if isinstance(node.value, ast.Name) and node.value.id=='self' and self._cpp:
+					v = 'std::make_shared<%s>(this);' %self._class_stack[-1].name
+				else:
+					v = self.visit(node.value)
 			except GenerateTypeAssert as err:
+
+				raise RuntimeError('TODO')
 				G = err[0]
 				type = G['type']
 				if type == 'self':
@@ -1240,7 +1245,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 
-			if v.startswith('&'):
+			if v.startswith('&'):  ## this was just for Go
 				return '_hack := %s; return &_hack' %v[1:]
 			else:
 				return 'return %s;' % v
@@ -1326,6 +1331,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		returns_self = options['returns_self']
 		return_type = options['returns']
 		generic_base_class = options['generic_base_class']
+		if returns_self and self._cpp:
+			return_type = self._class_stack[-1].name
 
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
@@ -1733,6 +1740,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def _hack_return(self, v, return_type, gname, gt, node):
 		## TODO - fix - this breaks easily
+		raise RuntimeError('hack return deprecated')
 		if v.strip().startswith('return ') and '*'+gt != return_type:
 			if gname in v and v.strip() != 'return self':
 				if '(' not in v:

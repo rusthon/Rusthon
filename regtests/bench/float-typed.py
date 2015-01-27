@@ -41,7 +41,7 @@ def benchmark( n:int ) -> Point:
 	return maximize(points)
 
 
-def test( arg:int ) ->[]f64:
+def test( arg:int ) ->[]float:
 	times = []
 	for i in range(arg):
 		t0 = clock()
