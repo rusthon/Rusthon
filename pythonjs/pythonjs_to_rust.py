@@ -1526,7 +1526,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if oargs:
 			for n,v in oargs:
 				if self._cpp:
-					out.append(self.indent() + '%s  %s = %s;' %(args_typedefs[n],n,v))
+					T = args_typedefs[n]
+					if T=='string':
+						T = 'std::string'
+					out.append(self.indent() + '%s  %s = %s;' %(T,n,v))
 					out.append(self.indent() + 'if (__kwargs->__use__%s == true) {' %n )
 					out.append(self.indent() +  '  %s = __kwargs->_%s_;' %(n,n))
 					out.append(self.indent() + '}')
