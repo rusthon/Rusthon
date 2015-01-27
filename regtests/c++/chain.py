@@ -1,5 +1,5 @@
 '''
-return a class instance
+chain
 '''
 
 class A:

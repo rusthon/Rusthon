@@ -185,7 +185,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 					else:
 						r.append(self.indent()+'}, %s => { ' %case_match )
 				else:
-					r.append(self.indent()+'case %s:' %case_match)
+					assert self._cpp
+					r.append(self.indent()+'case %s: {' %case_match) ## extra scope
 
 				self._match_stack[-1].append(case_match)
 
@@ -229,7 +230,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			if a: r.append(self.indent()+a)
 
 		if is_case and not self._rust:  ## always break after each case - do not fallthru to default: block
-			r.append(self.indent()+'break;')
+			r.append(self.indent()+'} break;')  ## } extra scope
 		###################################
 
 		if is_extern:
