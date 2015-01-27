@@ -31,6 +31,7 @@ def some_subclass( x:int ) ->A:
 			c = C(3)
 			return c
 
+
 def main():
 	a = some_subclass(0)
 	b = some_subclass(1)
@@ -45,6 +46,19 @@ def main():
 	2
 	-810797173
 	'''
+	print('- - - - - - - ')
+	if isinstance(b, B):
+		print('b is type B')
+		print(b.method())
+		print(b.foo())
+	if isinstance(c, C):
+		print('c is type C')
+		print(c.method())
+		print(c.bar())
+	else:
+		print('error: c is not type C')
+	#print(c.__class__)
+
 
 	## TODO-FIXME
 	# Segmentation fault
