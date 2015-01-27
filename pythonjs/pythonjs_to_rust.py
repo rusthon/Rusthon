@@ -219,7 +219,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if comments:
 			out.append('/**')
 			for line in comments[0].splitlines():
-				out.append(' *'+line)
+				out.append(' * '+line)
 			out.append(' */')
 
 		#self.interfaces[ node.name ] = set()  ## old Go interface stuff
@@ -1281,7 +1281,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if comments:
 			out.append('/**')
 			for line in comments[0].splitlines():
-				out.append(' *'+line)
+				out.append(' * '+line)
 			out.append(' */')
 
 

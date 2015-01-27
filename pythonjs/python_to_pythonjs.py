@@ -1012,6 +1012,39 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 				writer.write('@__struct__(%s)' %','.join(sdef))
 
+		if comments:
+			# Get comment lines.
+			comment_lines = comments[0].splitlines()
+
+			# Remove the first and last comment line, if they are empty (could be caused by a multi-line string).
+			if len(comment_lines[0].strip()) == 0:
+				comment_lines = comment_lines[1:]
+			if len(comment_lines) > 1 and len(comment_lines[-1].strip()) == 0:
+				comment_lines = comment_lines[:-1]
+
+			# Determine the number of leading whitespaces for the first comment line.
+			number_of_leading_whitespaces = len(comment_lines[0]) - len(comment_lines[0].lstrip())
+
+			stripped_comment_lines = []
+
+			# Remove the leading whitespaces from every line (assuming every whitespace starts with the same whitespaces).
+			for line in comment_lines:
+
+				# The comment line is too short.
+				if len(line) < number_of_leading_whitespaces:
+					stripped_comment_lines.append(line.lstrip())
+					continue
+
+				# The first part of the comment line does not contain only whitespaces.
+				if len(line[:number_of_leading_whitespaces].strip()) > 0:
+					stripped_comment_lines.append(line.lstrip())
+					continue
+
+				stripped_comment_lines.append(line[number_of_leading_whitespaces:])
+
+
+			comments = ['\n'.join(stripped_comment_lines)]
+
 		if self._with_go or self._with_rust or self._with_cpp:
 			pass
 		elif props:
