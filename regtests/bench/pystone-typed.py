@@ -14,13 +14,14 @@ class Record:
 		self.StringComp = StringComp
 
 	def copy(self) ->Record:
-		return Record(
+		r= Record(
 					PtrComp=self.PtrComp,
 					Discr=self.Discr, 
 					EnumComp=self.EnumComp,
 					IntComp=self.IntComp, 
 					StringComp=self.StringComp
 				)
+		return r
 
 TRUE = 1
 FALSE = 0
