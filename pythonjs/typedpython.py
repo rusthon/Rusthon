@@ -466,7 +466,7 @@ def transform_source( source, strip=False ):
 		if c.strip().startswith('nonlocal '):  ## Python3 syntax
 			c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global
 
-		if ' as ' in c and '(' in c and not c.startswith('except '):
+		if not c.startswith('except ') and ' as ' in c and (c.strip().startswith('return ') or '(' in c or '=' in c):
 			c = c.replace(' as ', '<<__as__<<')
 
 		if c.strip().startswith('with asm('):
@@ -643,6 +643,9 @@ c.x[0] = def(xx,yy) ->int:
 mdarray = [][]int()
 def F() ->[][]int:
 	pass
+
+def f():
+	return A as B
 
 '''
 

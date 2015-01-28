@@ -8,6 +8,12 @@ class A:
 	def method(self) -> int:
 		return self.x
 
+	def foo(self) ->int:
+		return self.x * 2
+	def bar(self) ->int:
+		return self.x + 200
+
+
 class B(A):
 
 	def foo(self) ->int:
@@ -26,16 +32,24 @@ def some_subclass( x:int ) ->A:
 			return a
 		case 1:
 			b = B(2)
-			return b
+			return b as A
 		case 3:
 			c = C(3)
-			return c
+			return c as A
 
 
 def main():
 	a = some_subclass(0)
 	b = some_subclass(1)
-	c = some_subclass(2)
+	c = some_subclass(2) as C
+	#cc = C(3)
+	#cc = c as C  ## segfaults
+	#print(cc.__class__)
+
+	print(a.getclassname())  ## works
+	print(b.getclassname())  ## works
+	print(c.getclassname())  ## segfaults  - TODO fixme
+
 
 	## TODO-FIXME
 	print(a.method())

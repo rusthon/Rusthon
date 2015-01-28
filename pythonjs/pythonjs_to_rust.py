@@ -124,7 +124,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance_test:
 			assert self._cpp
 			self._rename_hacks[target] = '_cast_%s' %target
-			out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
+			#out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
+			out.append(self.indent()+'auto _cast_%s = std::dynamic_pointer_cast<%s>(%s);' %(target, classname, target))
 
 		for line in list(map(self.visit, node.body)):
 			if line is None: continue
@@ -431,6 +432,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
 			## TODO make __class__ static const string.
 			out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
+			out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
 
 			out.append('};')
 
@@ -1187,11 +1189,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					raise RuntimeError('TODO array pointer')
 
 			elif isinstance(node.right, ast.Name) and node.right.id=='__as__':
-				return '%s as ' %self.visit(node.left)
+				if self._cpp:
+					return self.visit(node.left)
+				else:
+					return '%s as ' %self.visit(node.left)
 
 			elif isinstance(node.left, ast.BinOp) and isinstance(node.left.right, ast.Name) and node.left.right.id=='__as__':
-				return '%s %s' %(self.visit(node.left), right)
-
+				if self._rust:
+					return '%s %s' %(self.visit(node.left), right)
+				else:
+					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
+					#return 'std::static_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
+					return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
 
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':  ## deprecated
@@ -2321,9 +2330,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								dimensions=2
 							)
 
+					elif isinstance(node.value.left.right, ast.Name) and node.value.left.right.id=='__as__':
+						return self.indent()+'auto %s = %s;' %(target, value)
 
 					else:
-						raise RuntimeError('TODO other md-array types', node.value.left.left)
+						raise RuntimeError('TODO other md-array types', node.value)
 
 
 				elif isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id in COLLECTION_TYPES:

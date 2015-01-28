@@ -5,7 +5,6 @@
 
 inline("""
 
-
 std::string str( const std::string s ) {
 	return s;
 }
