@@ -481,7 +481,7 @@ def save_tar( package, path='build.tar' ):
 
 def main():
 	if len(sys.argv)==1:
-		print('usage: ./rusthon.py [python files] [markdown files] [tar file]')
+		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--run=]')
 		return
 
 	modules = new_module()
@@ -492,10 +492,14 @@ def main():
 	markdowns = []
 	gen_md = False
 	output_tar = 'rusthon-build.tar'
+	launch = []
 
 	for arg in sys.argv[1:]:
 		if os.path.isdir(arg):
 			paths.append(arg)
+		elif arg.startswith('--run='):
+			launch.extend( arg.split('=')[-1].split(',') )
+			save = True
 		elif arg.endswith('.py'):
 			scripts.append(arg)
 		elif arg.endswith('.md'):
@@ -537,6 +541,30 @@ def main():
 		save_tar( package, output_tar )
 		print('saved build to:')
 		print(output_tar)
+
+		if launch:
+			tmpdir = tempfile.gettempdir()
+			tmptar = os.path.join(tmpdir, 'temp.tar')
+			open(tmptar, 'wb').write(
+				open(output_tar, 'rb').read()
+			)
+			subprocess.check_call( ['tar', '-xvf', tmptar], cwd=tmpdir )
+
+			for name in launch:
+				if name.endswith('.py'):
+					firstline = open(os.path.join(tmpdir, name), 'rb').readlines()[0]
+					python = 'python'
+					if firstline.startswith('#!'):
+						if 'python3' in firstline:
+							python = 'python3'
+					subprocess.call( [python, name], cwd=tmpdir )
+
+				elif name.endswith('.js'):
+					subprocess.call( ['node', name],   cwd=tmpdir )
+
+				else:
+					subprocess.call( [name], cwd=tmpdir )
+
 
 
 if __name__ == '__main__':
