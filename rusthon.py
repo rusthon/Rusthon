@@ -4,6 +4,7 @@ import pythonjs
 import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
 import pythonjs.pythonjs_to_cpp
+import pythonjs.pythonjs_to_verilog
 import tempfile
 
 def compile_js( script, module_path, directjs=False, directloops=False ):
@@ -273,8 +274,12 @@ def build( modules, module_path ):
 			if header.startswith('#backend:'):
 				backend = header.split(':')[-1].strip()
 
+			if backend == 'verilog':
+				vcode = pythonjs.pythonjs_to_verilog.main( script )
+				raise SyntaxError(vcode)  ## TODO - verilog backend
+				modules['verilog'].append( {'code':pak['main'], 'index': index})  ## gets compiled below
 
-			if backend == 'c++':
+			elif backend == 'c++':
 				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
 				pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
 				modules['c++'].append( {'code':pak['main'], 'index': index})  ## gets compiled below
