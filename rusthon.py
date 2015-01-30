@@ -226,6 +226,11 @@ def import_md( url, modules=None ):
 				if lang:
 					p, n = os.path.split(url)
 					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index, 'tag':tag }
+					if tag and '.' in tag:
+						ext = tag.split('.')[-1].lower()
+						if ext in 'html js css py c h cpp hpp rust go'.split():
+							mod['name'] = tag
+
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
