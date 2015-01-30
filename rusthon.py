@@ -306,7 +306,7 @@ def build( modules, module_path ):
 				python_main['script'].append( mod['code'] )
 
 	if modules['html']:
-		mods_sorted_by_index = sorted(modules['index'], key=lambda mod: mod.get('index'))
+		mods_sorted_by_index = sorted(modules['html'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			html = []
 			for line in mod['code'].splitlines():
