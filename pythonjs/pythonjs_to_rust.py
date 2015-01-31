@@ -18,7 +18,7 @@ class GenerateListComp( SyntaxError ): pass  ## c++ and rust backend
 
 TRY_MACRO = '''
 macro_rules! try_wrap_err(
-      ($e:expr, $ret:expr) => (match $e {Ok(e) => e, Err(e) => return ($ret)(e)})            
+      ($e:expr, $ret:expr) => (match $e {Ok(e) => e, Err(e) => return ($ret)(e)})
 );
 '''
 
@@ -448,7 +448,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			out.append('impl %s {' %node.name)
 			for impl_def in impl: out.append( impl_def )
-	
+
 			if overloaded:
 				out.append('/*		overloaded methods		*/')
 				for o in overloaded:
@@ -1049,7 +1049,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args: args += ','
 			if self._go:
 				## This style works with Go because missing members are always initalized
-				## to their null value.  It also works in Rust and C++, but only when all 
+				## to their null value.  It also works in Rust and C++, but only when all
 				## keywords are always given - which is almost never the case.
 				args += '_kwargs_type_{'
 				x = ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords]
@@ -1061,7 +1061,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif self._cpp:
 				## In the future we can easily optimize this away on plain functions,
 				## because it is simple to lookup the function here, and see the order
-				## of the named params, and then reorder the args here to bypass 
+				## of the named params, and then reorder the args here to bypass
 				## creating a new `_KwArgs_` instance.
 				args += '(new _KwArgs_())'
 				for kw in node.keywords:
@@ -1305,9 +1305,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		for decor in node.decorator_list:
 			self._visit_decorator(
-				decor, 
+				decor,
 				node=node,
-				options=options, 
+				options=options,
 				args_typedefs=args_typedefs,
 				chan_args_typedefs=chan_args_typedefs,
 				generics=generics,
@@ -1919,7 +1919,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		slice = [
 			'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
 			'auto %s = %s' %(target, value), ## copy shared_ptr
-			#'%s.reset()' %target, 
+			#'%s.reset()' %target,
 			'%s.reset( &_ref_%s )' %(target, target)
 		]
 		if lower:
@@ -1949,7 +1949,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			msg = error[0]
 			a = '_slice_'
 			slice_hack = self._gen_slice(
-				a, 
+				a,
 				value=msg['value'],
 				lower=msg['lower'],
 				upper=msg['upper'],
@@ -2169,15 +2169,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						arrtype  = self.visit(node.value.left.args[0])
 
 						return self._listcomp_helper(
-							compnode, 
-							target=comptarget, 
+							compnode,
+							target=comptarget,
 							type=arrtype
 						)
 					else:
 
 						return self._listcomp_helper(
-							compnode, 
-							target=target, 
+							compnode,
+							target=target,
 							type=self.visit(node.value.left.args[1]),
 							size=self.visit(node.value.left.args[0]),
 						)
@@ -2187,7 +2187,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					## and one of the items is an list comp, `result` gets shoved
 					## into one of the slots in the constuctor.
 					## This can also happens when a 1/2D array contains just a single
-					## list comp, `arr = [][]int((1,2,3) for i in range(4))`, 
+					## list comp, `arr = [][]int((1,2,3) for i in range(4))`,
 					## creates a 4x3 2D array, in this case the list comp needs
 					## to be regenerated as 2D below.
 					comptype = node.value.left.left.id=='__go__array__'
@@ -2196,8 +2196,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						comptarget = '_subcomp_'+target
 						result.append(
 							self._listcomp_helper(
-								compnode, 
-								target=comptarget, 
+								compnode,
+								target=comptarget,
 								type=arrtype
 							)
 						)
@@ -2212,7 +2212,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				assert self._cpp
 				msg = error[0]
 				return self._gen_slice(
-					target, 
+					target,
 					value=msg['value'],
 					lower=msg['lower'],
 					upper=msg['upper'],
@@ -2251,14 +2251,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					v = self.visit( node.value.right.values[i] )
 					a.append( '_ref_%s.insert(%s,%s);'%(target,k,v) )
 				v = '\n'.join( a )
-				r  = 'let mut _ref_%s = HashMap::<%s, %s>::new();\n%s\n' %(target, key_type, value_type, v) 
+				r  = 'let mut _ref_%s = HashMap::<%s, %s>::new();\n%s\n' %(target, key_type, value_type, v)
 				r += 'let mut %s = &_ref_%s;' %(target, target)
 				return r
 
 			elif self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<':
 
 				if isinstance(node.value.left, ast.BinOp) and isinstance(node.value.op, ast.LShift):  ## 2D Array
-					## c++ vector of vectors ##	
+					## c++ vector of vectors ##
 					## std::shared_ptr< std::vector<std::shared_ptr<std::vector<T>>> >
 
 					if isinstance(node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
@@ -2310,8 +2310,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						elif isinstance(node.value.right, ast.ListComp):
 							compnode = node.value.right
 							return self._listcomp_helper(
-								compnode, 
-								target=target, 
+								compnode,
+								target=target,
 								type=T,
 								dimensions=2
 							)
@@ -2348,7 +2348,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
 							return r
 						else:  ## raw pointer
-							return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target) 
+							return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target)
 
 					elif 'array' in S:
 						args = []
@@ -2416,7 +2416,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 				## creation of a new class instance and assignment to a local variable
 				## TODO self.writer.expression_stack for appending lines that will be inserted
-				## before each lines is normally written in visit_Expr, 
+				## before each lines is normally written in visit_Expr,
 				## this way syntax like `f(SomeClass())` will work.
 				if node.value.func.id in self._classes:
 					classname = node.value.func.id
