@@ -258,7 +258,7 @@ def import_md( url, modules=None ):
 
 
 def build( modules, module_path ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[]}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[], 'verilog':[]}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged = {}
@@ -276,8 +276,7 @@ def build( modules, module_path ):
 
 			if backend == 'verilog':
 				vcode = pythonjs.pythonjs_to_verilog.main( script )
-				raise SyntaxError(vcode)  ## TODO - verilog backend
-				modules['verilog'].append( {'code':pak['main'], 'index': index})  ## gets compiled below
+				output['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
 				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
@@ -442,9 +441,8 @@ def save_tar( package, path='build.tar' ):
 	import tarfile
 	import StringIO
 	tar = tarfile.TarFile(path,"w")
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html'}
-	for lang in 'rust c++ go javascript python html'.split():
-		print(lang)
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.verilog'}
+	for lang in 'rust c++ go javascript python html verilog'.split():
 		for info in package[lang]:
 			name = 'untitled'
 			if 'name' in info: name = info['name']
