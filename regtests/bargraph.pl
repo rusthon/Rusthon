@@ -19,12 +19,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or (at
 # your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
@@ -58,8 +58,8 @@ Graph parameter types:
 # * Font face control and limited font size control
 # * Automatic arithmetic or harmonic mean calculation
 # * Automatic legend creation
-# * Automatic sorting, including sorting into SPEC CPU 2000 integer and 
-#   floating point benchmark groups and sorting by data 
+# * Automatic sorting, including sorting into SPEC CPU 2000 integer and
+#   floating point benchmark groups and sorting by data
 #
 # Multiple data sets can either be separated by =multi,
 #   or in a table with =table.  Does support incomplete datasets,
@@ -146,44 +146,44 @@ use IPC::Open2;
 
 # The full set of Postscript fonts supported by FIG
 %fig_font = (
-    'Default'                            => -1,      
-    'Times Roman'                        =>  0,      
+    'Default'                            => -1,
+    'Times Roman'                        =>  0,
     # alias
-    'Times'                              =>  0,      
-    'Times Italic'                       =>  1,      
-    'Times Bold'                         =>  2,      
-    'Times Bold Italic'                  =>  3,      
-    'AvantGarde Book'                    =>  4,      
-    'AvantGarde Book Oblique'            =>  5,      
-    'AvantGarde Demi'                    =>  6,      
-    'AvantGarde Demi Oblique'            =>  7,      
-    'Bookman Light'                      =>  8,      
-    'Bookman Light Italic'               =>  9,      
-    'Bookman Demi'                       => 10,      
-    'Bookman Demi Italic'                => 11,      
-    'Courier'                            => 12,      
-    'Courier Oblique'                    => 13,      
-    'Courier Bold'                       => 14,      
-    'Courier Bold Oblique'               => 15,      
-    'Helvetica'                          => 16,      
-    'Helvetica Oblique'                  => 17,      
-    'Helvetica Bold'                     => 18,      
-    'Helvetica Bold Oblique'             => 19,      
-    'Helvetica Narrow'                   => 20,      
-    'Helvetica Narrow Oblique'           => 21,      
-    'Helvetica Narrow Bold'              => 22,      
-    'Helvetica Narrow Bold Oblique'      => 23,      
-    'New Century Schoolbook Roman'       => 24,      
-    'New Century Schoolbook Italic'      => 25,      
-    'New Century Schoolbook Bold'        => 26,      
-    'New Century Schoolbook Bold Italic' => 27,      
-    'Palatino Roman'                     => 28,      
-    'Palatino Italic'                    => 29,      
-    'Palatino Bold'                      => 30,      
-    'Palatino Bold Italic'               => 31,      
-    'Symbol'                             => 32,      
-    'Zapf Chancery Medium Italic'        => 33,      
-    'Zapf Dingbats'                      => 34,      
+    'Times'                              =>  0,
+    'Times Italic'                       =>  1,
+    'Times Bold'                         =>  2,
+    'Times Bold Italic'                  =>  3,
+    'AvantGarde Book'                    =>  4,
+    'AvantGarde Book Oblique'            =>  5,
+    'AvantGarde Demi'                    =>  6,
+    'AvantGarde Demi Oblique'            =>  7,
+    'Bookman Light'                      =>  8,
+    'Bookman Light Italic'               =>  9,
+    'Bookman Demi'                       => 10,
+    'Bookman Demi Italic'                => 11,
+    'Courier'                            => 12,
+    'Courier Oblique'                    => 13,
+    'Courier Bold'                       => 14,
+    'Courier Bold Oblique'               => 15,
+    'Helvetica'                          => 16,
+    'Helvetica Oblique'                  => 17,
+    'Helvetica Bold'                     => 18,
+    'Helvetica Bold Oblique'             => 19,
+    'Helvetica Narrow'                   => 20,
+    'Helvetica Narrow Oblique'           => 21,
+    'Helvetica Narrow Bold'              => 22,
+    'Helvetica Narrow Bold Oblique'      => 23,
+    'New Century Schoolbook Roman'       => 24,
+    'New Century Schoolbook Italic'      => 25,
+    'New Century Schoolbook Bold'        => 26,
+    'New Century Schoolbook Bold Italic' => 27,
+    'Palatino Roman'                     => 28,
+    'Palatino Italic'                    => 29,
+    'Palatino Bold'                      => 30,
+    'Palatino Bold Italic'               => 31,
+    'Symbol'                             => 32,
+    'Zapf Chancery Medium Italic'        => 33,
+    'Zapf Dingbats'                      => 34,
 );
 
 ###########################################################################
@@ -586,7 +586,7 @@ while (<IN>) {
         if ($yerrorbars  && ($stacked || $stackcluster));
 
     # this line must have data on it!
-    
+
     if ($table) {
         # table has to look like this, separated by $table_splitby (default ' '):
         # <bmark1> <dataset1> <dataset2> <dataset3> ...
@@ -1235,7 +1235,7 @@ for ($g=0; $g<$groupcount; $g++) {
 if ($yerrorbars) {
     for ($g=0; $g<$groupcount; $g++) {
         for ($i=0; $i<$plotcount; $i++) {
-            $line = 0; 
+            $line = 0;
             foreach $b (@sorted) {
                 # support missing values in some datasets
                 if (defined($entry{$g,$b,$i})) {
@@ -1293,7 +1293,7 @@ open(FIG2DEV, "| $fig2dev") || die "Couldn't open $fig2dev\n";
 # fig format for text:
 #   4   1    0    0   -1    0     10   1.5708     0    135    1830  1386 2588  Actual text\001
 #     just     depth      font  fontsz rotation  flag boundy boundx   x    y
-#                                     angle(rads)             
+#                                     angle(rads)
 # justification: 0=center, 1=left, 2=right
 # flag (or-ed together): 1=rigid, 2=special, 4=PS fonts, 8=hidden
 # boundy and boundx: should be calculated from X::TextExtents but
@@ -1391,9 +1391,9 @@ $figcolorins|;
         if ($text eq "") {
             $legend_prefix_width = $boundx;
         } else {
-            $legend_text_height = $boundy if ($boundy > $legend_text_height);        
+            $legend_text_height = $boundy if ($boundy > $legend_text_height);
             if ($boundx > $legend_text_width) {
-                $legend_text_width = $boundx;                
+                $legend_text_width = $boundx;
                 $legend_text_widest = $text;
             }
         }
@@ -1437,8 +1437,8 @@ $figcolorins|;
 
     if ($add_commas) {
         # Add commas between 3 digits for text in thousands or millions
-        s|^4 (.*\d)(\d{3}\S*)\\001$|4 $1,$2\\001|; 
-        s|^4 (.*\d)(\d{3}),(\d{3}\S*)\\001$|4 $1,$2,$3\\001|; 
+        s|^4 (.*\d)(\d{3}\S*)\\001$|4 $1,$2\\001|;
+        s|^4 (.*\d)(\d{3}),(\d{3}\S*)\\001$|4 $1,$2,$3\\001|;
     }
 
     # With gnuplot 4.2, I get a red x axis in some plots w/ negative values (but
@@ -1624,15 +1624,15 @@ if ($use_legend && $plotcount > 1) {
     }
 
     print STDERR "legend at $lx,$ly ($outer_space)\n" if ($verbose);
-      
+
     # draw boxes w/ appropriate colors
     for ($i=0; $i<$plotcount; $i++) {
         $dy = $i * $key_text_line_space;
         printf FIG2DEV
 "2 1 0 1 -1 $fillcolor[$i] $legend_depth 0 $fillstyle[$i] 0.000 0 0 0 0 0 5
-\t %d %d %d %d %d %d %d %d %d %d  
-",  $lx+$border, $ly+$border+$key_box_height+$dy, 
-    $lx+$border, $ly+$border+$dy, 
+\t %d %d %d %d %d %d %d %d %d %d
+",  $lx+$border, $ly+$border+$key_box_height+$dy,
+    $lx+$border, $ly+$border+$dy,
     $lx+$border+$key_box_width, $ly+$border+$dy,
     $lx+$border+$key_box_width, $ly+$border+$key_box_height+$dy,
     $lx+$border, $ly+$border+$key_box_height+$dy;

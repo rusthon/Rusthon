@@ -457,8 +457,8 @@ def patch_python(filename, dart=False, python='PYTHONJS', backend=None):
     #            out.append( line )
     #    code = '\n'.join( out )
     a = [
-        'PYTHON="%s"'%python, 
-        'BACKEND="%s"'%backend, 
+        'PYTHON="%s"'%python,
+        'BACKEND="%s"'%backend,
     ]
     if backend == 'RUST':
         a.append(_patch_header_rust)
@@ -493,7 +493,7 @@ def run_python3_test_on(filename):
 def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, cpp=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
-        tempfile.gettempdir(), 
+        tempfile.gettempdir(),
         #'test-%s-js=%s-dart=%s-lua=%s' %(filename.split('/')[-1], javascript, dart, lua)
         'regtest-%s'%filename.split('/')[-1]
     )
@@ -584,8 +584,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
                 if not jsfile.startswith('/'):
                     stdout = stdout.replace('"%s"' %jsfile, '"/tmp/%s"' %jsfile)
                 write(
-                    os.path.join('/tmp', jsfile), 
-                    '\n'.join( [jsheader, d[jsfile]] ) 
+                    os.path.join('/tmp', jsfile),
+                    '\n'.join( [jsheader, d[jsfile]] )
                 )
 
         if dart:
@@ -927,7 +927,7 @@ def run_html_test( filename, sum_errors ):
         ## chrome-extension that won't force you to close your browser windows when deving: `Allow-Control-Allow-Origin:*`
         ## this still fails with iframes that do not allow cross origin.
         cmd = [
-            'google-chrome', 
+            'google-chrome',
             '--app=file:///tmp/%s.html'%filename,
             '--allow-file-access-from-files',  ## only takes affect if chrome is closed
             '--allow-file-access',             ## only takes affect if chrome is closed
@@ -988,8 +988,8 @@ def run_test_on(filename):
     do_js_test = not filename.startswith( ('./go/', './asm/', './rust/', './c++') )
     if do_js_test:
         js = translate_js(
-            filename, 
-            javascript=False, 
+            filename,
+            javascript=False,
             multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker'))
         )
         if rhino_runnable:
