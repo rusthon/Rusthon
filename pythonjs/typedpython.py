@@ -366,7 +366,7 @@ def transform_source( source, strip=False ):
 			c = c.replace('case ', 'with __case__(').replace(':', '):')
 
 		if '<-' in c:
-			if '=' in c:
+			if '=' in c and c.index('=') < c.index('<-'):
 				c = c.replace('<-', '__go__receive__<<')
 			else:
 				## keeping `=` allows for compatible transform to stacklessPython API,
