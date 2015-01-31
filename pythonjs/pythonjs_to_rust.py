@@ -1904,7 +1904,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			return '%s.%s' % (name, attr)
 
-	def _gen_slice(self, target=None, value=None, lower=None, upper=None):
+	def _gen_slice(self, target=None, value=None, lower=None, upper=None, type=None):
 		'''
 		TODO fix segfault
 		'''
@@ -1912,30 +1912,51 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		assert target
 		assert value
 
-		## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
-		#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-		#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+		if type:
+			## this should work, but crashes g++4.7 with this error:
+			## `Internal compiler error: Error reporting routines re-entered.`
+			slice = ['std::vector<%s> _ref_%s(' %(type,target)]
+			if lower:
+				slice.append('%s->begin()+%s,' %(value, lower))
+			else:
+				slice.append('%s->begin(),' %value)
+			if upper:
+				if upper < 0:
+					slice.append('%s->end() %s'%(value, upper))
+				else:
+					slice.append('%s->begin()+%s'%(value, upper))
+			else:
+				slice.append('%s->end()'%value)
+			slice.append(');')
+			vectype = 'std::vector<%s>' %type
+			slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(&_ref_%s);' %(vectype, target, vectype, target))
+			return '\n'.join(slice)
 
-		## this sefaults because _ref_ is on the stack and gets cleaned up, while the new smart pointer also has a reference
-		## to it and also cleans it up.  TODO how to force _ref_ onto the heap instead?
-		slice = [
-			'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
-			'auto %s = %s' %(target, value), ## copy shared_ptr
-			'%s.reset( &_ref_%s )' %(target, target)  ## segfaults
-			#'auto _ptr_%s = &_ref_%s' %(target,target),
-			#'%s.reset( _ptr_%s )' %(target,target)
-		]
-		if lower:
-			N = lower
-			slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
+		else:  ## SEGFAULTS - TODO FIXME
+			## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
+			#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
+			#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
 
-		if upper:  ## BROKEN, TODO FIXME
-			N = upper
-			slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
+			## this sefaults because _ref_ is on the stack and gets cleaned up, while the new smart pointer also has a reference
+			## to it and also cleans it up.  TODO how to force _ref_ onto the heap instead?
+			slice = [
+				'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
+				'auto %s = %s' %(target, value), ## copy shared_ptr
+				'%s.reset( &_ref_%s )' %(target, target)  ## segfaults
+				#'auto _ptr_%s = &_ref_%s' %(target,target),
+				#'%s.reset( _ptr_%s )' %(target,target)
+			]
+			if lower:
+				N = lower
+				slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
+
+			if upper:  ## BROKEN, TODO FIXME
+				N = upper
+				slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
 
 
-		#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
-		return ';\n'.join(slice) + ';'
+			#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
+			return ';\n'.join(slice) + ';'
 
 
 	def _listcomp_helper(self, node, target=None, type=None, size=None, dimensions=1):
@@ -2214,11 +2235,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			except GenerateSlice as error:  ## special c++ case for slice syntax
 				assert self._cpp
 				msg = error[0]
+				slice_type = None  ## slice on an unknown type is broken and will segfault - TODO fix this
+				if msg['value'] in self._known_arrays:
+					slice_type = self._known_arrays[msg['value']]
+
 				return self._gen_slice(
 					target,
 					value=msg['value'],
 					lower=msg['lower'],
 					upper=msg['upper'],
+					type=slice_type,
 				)
 
 
