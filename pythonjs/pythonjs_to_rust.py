@@ -822,7 +822,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						outputs.append('"%s" (%s)' %(write_mode, kw.value.id))
 
 				elif kw.arg == 'inputs':
-					if isinstance(kw.value, ast.List):
+					if isinstance(kw.value, ast.List) or isinstance(kw.value, ast.Tuple):
 						for elt in kw.value.elts:
 							if isinstance(elt, ast.List):
 								register = elt.elts[0].s
@@ -833,7 +833,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 						inputs.append('"%s" (%s)' %(ASM_ANY_REG,kw.value.id))
 				elif kw.arg == 'clobber':
-					if isinstance(kw.value, ast.List):
+					if isinstance(kw.value, ast.List) or isinstance(kw.value, ast.Tuple):
 						clobber.extend( ['"%s"' %elt.s for elt in kw.value.elts] )
 					else:
 						clobber.extend(
