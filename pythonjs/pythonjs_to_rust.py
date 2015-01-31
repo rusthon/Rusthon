@@ -1916,11 +1916,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
 		#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
 
+		## this sefaults because _ref_ is on the stack and gets cleaned up, while the new smart pointer also has a reference
+		## to it and also cleans it up.  TODO how to force _ref_ onto the heap instead?
 		slice = [
 			'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
 			'auto %s = %s' %(target, value), ## copy shared_ptr
-			#'%s.reset()' %target,
-			'%s.reset( &_ref_%s )' %(target, target)
+			'%s.reset( &_ref_%s )' %(target, target)  ## segfaults
+			#'auto _ptr_%s = &_ref_%s' %(target,target),
+			#'%s.reset( _ptr_%s )' %(target,target)
 		]
 		if lower:
 			N = lower
