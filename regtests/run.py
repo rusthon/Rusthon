@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+###!/usr/bin/env python3
 
 """
 Without argument: run all the regression tests.
@@ -13,10 +13,14 @@ About the tests:
 
 """
 
-import os, sys, re, tempfile, subprocess, json
+import os, sys, inspect, re, tempfile, subprocess, json
 import wsgiref, wsgiref.simple_server
 
-sys.path.append('../pythonjs')
+
+typedpython_folder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
+        inspect.getfile(inspect.currentframe()))[0], "../pythonjs")))
+if typedpython_folder not in sys.path:
+    sys.path.insert(0, typedpython_folder)
 import typedpython
 
 if 'NODE_PATH' not in os.environ:
@@ -108,9 +112,12 @@ def runnable(command):
     #f.close()
     #return output != ''
     try:
-        subprocess.check_call( command.split() )
+        with open(os.devnull, "w") as f:
+            subprocess.check_call( command.split(),  stdout=f, stderr=f )
+        print("Success: " + command)
         return True
     except OSError:
+        print("Failure: " + command)
         return False
 
 def run_pypy_test_on(filename):
