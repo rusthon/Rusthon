@@ -205,6 +205,7 @@ def new_module():
 		'c++'     : [],
 		'go'      : [],
 		'html'    : [],
+		'verilog' : [],
 		'javascript':[],
 	}
 
@@ -458,6 +459,7 @@ def save_tar( package, path='build.tar' ):
 				source = info['source']
 				is_bin = True
 			elif 'code' in info:
+				if lang=='verilog': print(info['code'])  ## just for testing.
 				s.write(info['code'])
 			elif 'script' in info:
 				s.write(info['script'])

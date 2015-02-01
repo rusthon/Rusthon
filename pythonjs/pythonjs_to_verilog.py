@@ -93,17 +93,25 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return '%s <= %s;' % (target, value)
 
 		elif not self._function_stack:  ## global level
-			value = self.visit(node.value)
-			return 'parameter %s = %s;' %(target, value)
-
+			if isinstance(node.value, ast.Num):
+				value = self.visit(node.value)
+				return 'parameter %s = %s;' %(target, value)
+			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._global_functions:
+				r = ['%s %s(' %(node.value.func.id, target)]
+				args = []
+				for kw in node.value.keywords:
+					args.append('.%s(%s)' %(kw.arg, self.visit(kw.value)))
+				r.append('	'+', '.join(args))
+				r.append(');')
+				return '\n'.join(r)
 		else:
 			value = self.visit(node.value)
 			return '%s = %s;' %(target, value)
 
 	def _visit_call_helper(self, node):
 		fname = self.visit(node.func)
-		if fname=='reg' or fname=='wire':
-			bits = 1
+		if fname in ('reg','wire','logic'):
+			bits = None
 			index = 0
 			args = [arg.id for arg in node.args]
 			for kw in node.keywords:
@@ -111,16 +119,19 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 					bits = kw.value.n-1
 				elif kw.arg=='index':
 					index = kw.value.n
-			if fname=='reg':
-				return 'reg [%s:%s] %s;' %(bits,index, ','.join(args))
+			if bits is not None:
+				return '%s [%s:%s] %s;' %(fname, bits,index, ','.join(args))
 			else:
-				return 'wire [%s:%s] %s;' %(bits,index, ','.join(args))
+				return '%s %s;' %(fname, ','.join(args))
+
 		elif fname.startswith('bit') and fname[3:].isdigit():
 			bits = int(fname[3:])
 			return "%s'd%s" %(bits, node.args[0].n)
 		elif fname.endswith('.assign'):
 			wire = fname.split('.')[0]
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
+		elif fname in self._global_functions:
+			raise RuntimeError('never should be reached - see visit_Assign')
 		else:
 			raise SyntaxError(fname)
 
@@ -136,7 +147,13 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 					if isinstance(kw.value, ast.Num):
 						args_typedefs[ kw.arg ] = '[%s:0]' %(kw.value.n-1)
 					elif isinstance(kw.value, ast.Str):
-						args_typedefs[ kw.arg ] = kw.value.s
+						s = kw.value.s
+						if s.startswith('[') and s.endswith(']') and ':' in s:
+							bits,index = s[1:-1].split(':')
+							s = '[%s:%s]' %(int(bits)-1, index)
+
+						args_typedefs[ kw.arg ] = s
+
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id=='returns':
 				a = decor.args[0]
 				if isinstance(a, ast.Call):

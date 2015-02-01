@@ -1,4 +1,16 @@
-Verilog Backend
+SystemVerilog
+-------
+```verilog
+
+typedef enum logic [2:0] {
+	RED, GREEN, BLUE
+} colortype;
+colortype color = RED;
+initial $display("hello world:", color.name());
+
+```
+
+SystemVerilog Backend
 ---------------
 old-style (pre-2001 verilog)
 
@@ -44,8 +56,16 @@ def mymodule2(q,r):
 
 #new-style (post-2001 verilog)
 
-def mymoduleX( q:2, r:[2:1] ) -> wire(res1, res2, bits=8):
-	reg(a,b)
+def mymoduleX( q:2, r:[4:1] ) -> wire(res1, res2, bits=8):
+	logic(a,b, bits=32)
 
+def mymod( clock, a:4, b:4 ) -> wire(res1, bits=8):
+	res1.assign( (a,b) )
+
+reg( A, bits=4 )
+reg( B, bits=4 )
+reg( clk )
+reg( R, bits=8 )
+mod = mymod( clock=clk, a=A, b=B, res1=R )
 
 ```
