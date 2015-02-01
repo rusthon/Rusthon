@@ -40,9 +40,9 @@ def mymodule2(q,r):
 
 	with always:
 		a = b & r
-		#for i in range(20):
-		#	output = i
-		#	delay(10)
+		for i in range(20):
+			output = i
+			delay(10)
 
 	with always.comb:
 		a = b

@@ -132,6 +132,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
 		elif fname in self._global_functions:
 			raise RuntimeError('never should be reached - see visit_Assign')
+		elif fname == 'delay':
+			return '#%s' %node.args[0].n
 		else:
 			raise SyntaxError(fname)
 
@@ -180,6 +182,38 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		self.pull()
 		r.append('endmodule')
 		return '\n'.join(r)
+
+
+	def visit_For(self, node):
+		'''
+		note: loops in verilog requires: a delay, @, or wait(FALSE)
+
+		'''
+		start = 0
+		end   = 0
+		step  = 1
+		target = node.target.id
+		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='range':
+			if len(node.iter.args)==1:
+				end = self.visit(node.iter.args[0])
+			elif len(node.iter.args)==2:
+				start = self.visit(node.iter.args[0])
+				end   = self.visit(node.iter.args[1])
+			else:
+				start = self.visit(node.iter.args[0])
+				end   = self.visit(node.iter.args[1])
+				step  = self.visit(node.iter.args[2])
+
+			out = ['for (%s=%s; %s<%s; %s=%s+%s) begin' %(target, start, target, end, target,target,step)]
+			self.push()
+			for b in node.body:
+				out.append(self.indent()+self.visit(b))
+			self.pull()
+			out.append(self.indent()+'end')
+			return '\n'.join(out)
+		else:
+			raise SyntaxError("TODO other for loop types")
+
 
 
 def main(script, insert_runtime=True):
