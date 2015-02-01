@@ -264,7 +264,6 @@ def build( modules, module_path ):
 	go_main = {'name':'main.go', 'source':[]}
 	tagged = {}
 
-
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
@@ -277,7 +276,7 @@ def build( modules, module_path ):
 
 			if backend == 'verilog':
 				vcode = pythonjs.pythonjs_to_verilog.main( script )
-				output['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
+				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
 				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
@@ -344,6 +343,27 @@ def build( modules, module_path ):
 			mod['code'] = html
 			output['html'].append( mod )
 
+	if modules['verilog']:
+		source = []
+		mods_sorted_by_index = sorted(modules['verilog'], key=lambda mod: mod.get('index'))
+		for mod in mods_sorted_by_index:
+			source.append( mod['code'] )
+		source = '\n'.join(source)
+
+		mod = {}
+		output['verilog'].append(mod)
+
+		if os.path.isfile('/usr/bin/iverilog'):
+			mod['source'] = source
+			mod['binary'] = tempfile.gettempdir() + '/rusthon-sv-build.vvp'
+			mod['name']   = 'main.vvp'
+			output['executeables'].append( mod['binary'] )
+			tmpfile = tempfile.gettempdir() + '/rusthon-verilog-build.sv'
+			open(tmpfile, 'wb').write( source )
+			cmd = ['iverilog', '-o', 'rusthon-sv-build.vvp', tmpfile]
+			subprocess.check_call(cmd, cwd=tempfile.gettempdir() )
+		else:
+			mod['code'] = source
 
 	if modules['go']:
 		for mod in modules['go']:
@@ -442,7 +462,7 @@ def save_tar( package, path='build.tar' ):
 	import tarfile
 	import StringIO
 	tar = tarfile.TarFile(path,"w")
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.verilog'}
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv'}
 	for lang in 'rust c++ go javascript python html verilog'.split():
 		for info in package[lang]:
 			name = 'untitled'
