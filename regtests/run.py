@@ -1,4 +1,4 @@
-###!/usr/bin/env python3
+#!/usr/bin/env python3
 
 """
 Without argument: run all the regression tests.
@@ -17,8 +17,7 @@ import os, sys, inspect, re, tempfile, subprocess, json
 import wsgiref, wsgiref.simple_server
 
 
-typedpython_folder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(
-        inspect.getfile(inspect.currentframe()))[0], "../pythonjs")))
+typedpython_folder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], "../pythonjs")))
 if typedpython_folder not in sys.path:
     sys.path.insert(0, typedpython_folder)
 import typedpython
