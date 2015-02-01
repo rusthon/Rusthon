@@ -44,7 +44,7 @@ def mymodule2(q,r):
 
 #new-style (post-2001 verilog)
 
-def mymoduleX( q:2, r:4 ) -> wire(result, bits=8):
+def mymoduleX( q:2, r:[2:1] ) -> wire(res1, res2, bits=8):
 	reg(a,b)
 
 

@@ -127,6 +127,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 	def _visit_function(self, node):
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
+		outputs = []
 
 		args_typedefs = {}
 		for decor in node.decorator_list:
@@ -134,8 +135,15 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				for kw in decor.keywords:
 					if isinstance(kw.value, ast.Num):
 						args_typedefs[ kw.arg ] = '[%s:0]' %(kw.value.n-1)
+					elif isinstance(kw.value, ast.Str):
+						args_typedefs[ kw.arg ] = kw.value.s
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id=='returns':
+				a = decor.args[0]
+				if isinstance(a, ast.Call):
+					outputs.append(self.visit(a))
+				else:
+					raise SyntaxError(a)
 
-		r = ['module %s(' %node.name]
 		args = []
 		for arg in node.args.args:
 			aname = self.visit(arg)
@@ -144,7 +152,11 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			else:
 				args.append('input '+aname)
 
-		r.append(','.join(args) + ');')
+		for out in outputs:
+			if out.endswith(';'): out = out[:-1]  ## ugly
+			args.append('output '+out)
+
+		r = ['module %s( %s );' %(node.name, ', '.join(args))]
 		self.push()
 		for b in node.body:
 			r.append(self.indent()+self.visit(b))
