@@ -23,9 +23,8 @@ The call `delay(10)` pauses this module for 10 clock ticks, and then prints "hel
 ```rusthon
 #backend:verilog
 
-def mymodule2():
-	with initial:
-		delay(10)
-		print('hello from rusthon')
+with module():
+	delay(10)
+	print('hello from rusthon')
 
 ```

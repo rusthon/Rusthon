@@ -14,6 +14,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		assert source
 		pythonjs.JSGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._verilog = True
+		self._modules = []
 
 
 	def visit_Print(self, node):
@@ -62,6 +63,25 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			for b in node.body:
 				## should skip some nodes like if/else
 				r.append(self.indent()+'# %s  %s' %(delay,self.visit(b)))
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'module':
+			r.append('module _mod%s ();' %len(self._modules))
+			self.push()
+			initial = []
+			functions = []
+			for b in node.body:
+				if isinstance(b, ast.FunctionDef):
+					functions.append(b)
+				else:
+					initial.append(b)
+
+			r.append(self.indent()+'initial begin')
+			self.push()
+			for b in initial:
+				r.append(self.indent()+self.visit(b))
+			self.pull()
+			r.append(self.indent()+'end')
+
+			self.pull()
 
 		return '\n'.join(r)
 
