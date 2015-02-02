@@ -16,8 +16,8 @@ endmodule
 
 Rusthon System Verilog Backend
 ---------------------------
-Below the function `mymodule2` is translated to a verilog "module" like above.
-The special `with initial:` marks things that run first, before the simulation starts.
+Below `with module():` is translated to a verilog "module" like above.
+All the statements inside the body are put inside an `initial begin` block in Verilog.
 The call `delay(10)` pauses this module for 10 clock ticks, and then prints "hello from rusthon".
 
 ```rusthon

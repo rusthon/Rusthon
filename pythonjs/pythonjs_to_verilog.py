@@ -22,6 +22,12 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		s = '$display(%s);' % ', '.join(args)
 		return s
 
+	def visit_Tuple(self, node):
+		'''
+		concatenates bits in verilog
+		'''
+		return '{%s}' %','.join(map(self.visit, node.elts))
+
 
 	def visit_With(self, node):
 		r = []
@@ -80,6 +86,9 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				r.append(self.indent()+self.visit(b))
 			self.pull()
 			r.append(self.indent()+'end')
+
+			for b in functions:
+				r.append(self.visit(b))
 
 			self.pull()
 
@@ -151,15 +160,22 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			wire = fname.split('.')[0]
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
 		elif fname in self._global_functions:
-			raise RuntimeError('never should be reached - see visit_Assign')
+			#raise RuntimeError('never should be reached - see visit_Assign')
+			return '%s<<1;' %fname  ## triggers signal to always-function.
 		elif fname == 'delay':
 			return '#%s' %node.args[0].n
 		else:
 			raise SyntaxError(fname)
 
 	def _visit_function(self, node):
+		## is it clear that top level functions are actually modules?
+		## it is bad for translation to hardware to have more than one module,
+		## the new syntax `with module():` replaces the old style.
+		#is_module = node.name in self._global_functions
+		is_module = False  ## force to be false
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
+		always_type = 'always'
 		outputs = []
 
 		args_typedefs = {}
@@ -183,26 +199,38 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				else:
 					raise SyntaxError(a)
 
-		args = []
-		for arg in node.args.args:
-			aname = self.visit(arg)
-			if aname in args_typedefs:
-				args.append('input %s %s' %(args_typedefs[aname], aname))
-			else:
-				args.append('input '+aname)
+		if is_module:
+			args = []
+			for arg in node.args.args:
+				aname = self.visit(arg)
+				if aname in args_typedefs:
+					args.append('input %s %s' %(args_typedefs[aname], aname))
+				else:
+					args.append('input '+aname)
 
-		for out in outputs:
-			if out.endswith(';'): out = out[:-1]  ## ugly
-			args.append('output '+out)
+			for out in outputs:
+				if out.endswith(';'): out = out[:-1]  ## ugly
+				args.append('output '+out)
 
-		r = ['module %s( %s );' %(node.name, ', '.join(args))]
-		self.push()
-		for b in node.body:
-			r.append(self.indent()+self.visit(b))
-		self.pull()
-		r.append('endmodule')
-		return '\n'.join(r)
+			r = ['module %s( %s );' %(node.name, ', '.join(args))]
+			self.push()
+			for b in node.body:
+				r.append(self.indent()+self.visit(b))
+			self.pull()
+			r.append('endmodule')
+			return '\n'.join(r)
 
+		else:
+			r = [
+				'reg bit %s;' %node.name,
+				'%s @(%s) begin' %(always_type, node.name),
+			]
+			self.push()
+			for b in node.body:
+				r.append(self.indent()+self.visit(b))
+			self.pull()
+			r.append('end')
+			return '\n'.join(r)
 
 	def visit_For(self, node):
 		'''
