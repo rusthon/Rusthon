@@ -91,6 +91,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				r.append(self.visit(b))
 
 			self.pull()
+			r.append('endmodule')
 
 		return '\n'.join(r)
 
