@@ -353,7 +353,7 @@ def build( modules, module_path ):
 		mod = {}
 		output['verilog'].append(mod)
 
-		if os.path.isfile('/usr/bin/iverilog'):
+		if os.path.isfile('/usr/bin/iverilog') or os.path.isfile('/usr/local/bin/iverilog'):
 			mod['source'] = source
 			mod['binary'] = tempfile.gettempdir() + '/rusthon-sv-build.vvp'
 			mod['name']   = 'main.vvp'
@@ -361,8 +361,39 @@ def build( modules, module_path ):
 			tmpfile = tempfile.gettempdir() + '/rusthon-verilog-build.sv'
 			open(tmpfile, 'wb').write( source )
 			cmd = ['iverilog', '-o', 'rusthon-sv-build.vvp', tmpfile]
-			subprocess.check_call(cmd, cwd=tempfile.gettempdir() )
+			p = subprocess.Popen(cmd, cwd=tempfile.gettempdir(), stdout=subprocess.PIPE, stderr=subprocess.PIPE )
+			p.wait()
+			if p.returncode != 0:
+				srclines = source.splitlines()
+				err = p.stderr.read()  ## ends with "I give up."
+				errors = []
+				for line in err.splitlines():
+					if 'syntax error' in line:
+						errors.append('- - - - - - - - - - - -')
+						lineno = int( line.split(':')[-2] )
+						e = [
+							'Syntax Error - line: %s' %lineno,
+						]
+						if lineno-2 < len(srclines):
+							e.append( srclines[lineno-2] )
+						if lineno-1 < len(srclines):
+							e.append( srclines[lineno-1] )
+						if lineno < len(srclines):
+							e.append( srclines[lineno] )
+
+						errors.extend( e )
+					else:
+						errors.append(line)
+
+				msg = []
+				for i,line in enumerate(source.splitlines()):
+					msg.append('%s:	%s' %(i+1, line))
+				msg.extend(errors)
+				raise RuntimeError('\n'.join(msg))
+
+
 		else:
+			print('WARNING: could not find iverilog')
 			mod['code'] = source
 
 	if modules['go']:
