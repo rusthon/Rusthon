@@ -15,6 +15,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		pythonjs.JSGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._verilog = True
 		self._modules = []
+		self._tasks   = {}
 
 
 	def visit_Print(self, node):
@@ -172,6 +173,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		elif fname.endswith('.assign'):
 			wire = fname.split('.')[0]
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
+		elif fname in self._tasks:
+			return '%s(%s);' %(fname, ','.join([arg.id for arg in node.args]))
 		elif fname in self._global_functions:
 			#raise RuntimeError('never should be reached - see visit_Assign')
 			return '%s=1;' %fname  ## triggers signal to always-function.
@@ -186,6 +189,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		## the new syntax `with module():` replaces the old style.
 		#is_module = node.name in self._global_functions
 		is_module = False  ## force to be false
+		is_task = False
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
 		always_type = 'always'
@@ -211,8 +215,11 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 					outputs.append(self.visit(a))
 				else:
 					raise SyntaxError(a)
+			elif isinstance(decor, ast.Name) and decor.id=='task':
+				is_task = True
+				self._tasks[node.name] = node
 
-		if is_module:
+		if is_module or is_task:
 			args = []
 			for arg in node.args.args:
 				aname = self.visit(arg)
@@ -225,13 +232,25 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				if out.endswith(';'): out = out[:-1]  ## ugly
 				args.append('output '+out)
 
-			r = ['module %s( %s );' %(node.name, ', '.join(args))]
-			self.push()
-			for b in node.body:
-				r.append(self.indent()+self.visit(b))
-			self.pull()
-			r.append('endmodule')
-			return '\n'.join(r)
+			if is_module:
+				r = ['module %s( %s );' %(node.name, ', '.join(args))]
+				self.push()
+				for b in node.body:
+					r.append(self.indent()+self.visit(b))
+				self.pull()
+				r.append('endmodule')
+				return '\n'.join(r)
+			else:
+				r = ['task %s;' %node.name]
+				self.push()
+				for arg in args:
+					r.append(self.indent()+arg+';')
+
+				for b in node.body:
+					r.append(self.indent()+self.visit(b))
+				self.pull()
+				r.append('endtask')
+				return '\n'.join(r)
 
 		else:
 			r = [
