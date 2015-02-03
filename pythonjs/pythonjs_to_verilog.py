@@ -72,13 +72,27 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'module':
 			r.append('module _mod%s ();' %len(self._modules))
 			self.push()
-			initial = []
+			declares  = []
+			initial   = []
 			functions = []
 			for b in node.body:
 				if isinstance(b, ast.FunctionDef):
 					functions.append(b)
-				else:
+				elif isinstance(b, ast.Expr):
+					b = b.value
+					if isinstance(b, ast.Call) and isinstance(b.func, ast.Name) and b.func.id in ('reg', 'wire', 'logic'):
+						declares.append(b)
+					else:
+						initial.append(b)
+				else:  ## catches things like ast.Print, which is not an expression
 					initial.append(b)
+
+			for b in declares:
+				r.append(self.indent()+self.visit(b))
+
+
+			for b in functions:
+				r.append(self.indent()+self.visit(b))
 
 			r.append(self.indent()+'initial begin')
 			self.push()
@@ -87,8 +101,6 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			self.pull()
 			r.append(self.indent()+'end')
 
-			for b in functions:
-				r.append(self.visit(b))
 
 			self.pull()
 			r.append('endmodule')
@@ -162,7 +174,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
 		elif fname in self._global_functions:
 			#raise RuntimeError('never should be reached - see visit_Assign')
-			return '%s<<1;' %fname  ## triggers signal to always-function.
+			return '%s=1;' %fname  ## triggers signal to always-function.
 		elif fname == 'delay':
 			return '#%s' %node.args[0].n
 		else:
@@ -223,12 +235,20 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 
 		else:
 			r = [
-				'reg bit %s;' %node.name,
-				'%s @(%s) begin' %(always_type, node.name),
+				'reg %s;' %node.name,  ## should this be logic?
 			]
+			if is_main:
+				#r.append('%s @(posedge) begin' %always_type)
+				r.append('%s begin' %always_type)
+			else:
+				r.append('%s @(%s) begin' %(always_type, node.name))
+
 			self.push()
 			for b in node.body:
 				r.append(self.indent()+self.visit(b))
+
+			if is_main:
+				r.append('$finish;')
 			self.pull()
 			r.append('end')
 			return '\n'.join(r)

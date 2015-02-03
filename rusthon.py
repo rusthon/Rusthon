@@ -385,7 +385,7 @@ def build( modules, module_path ):
 					else:
 						errors.append(line)
 
-				msg = []
+				msg = [' '.join(cmd)]
 				for i,line in enumerate(source.splitlines()):
 					msg.append('%s:	%s' %(i+1, line))
 				msg.extend(errors)
