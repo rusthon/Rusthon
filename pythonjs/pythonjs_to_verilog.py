@@ -16,6 +16,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		self._verilog = True
 		self._modules = []
 		self._tasks   = {}
+		self._declares = set()
 
 
 	def visit_Print(self, node):
@@ -76,6 +77,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			declares  = []
 			initial   = []
 			functions = []
+			body      = []
 			for b in node.body:
 				if isinstance(b, ast.FunctionDef):
 					functions.append(b)
@@ -93,15 +95,19 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 
 
 			for b in functions:
-				r.append(self.indent()+self.visit(b))
+				body.append(self.indent()+self.visit(b))
 
-			r.append(self.indent()+'initial begin')
+			body.append(self.indent()+'initial begin')
 			self.push()
 			for b in initial:
-				r.append(self.indent()+self.visit(b))
+				body.append(self.indent()+self.visit(b))
 			self.pull()
-			r.append(self.indent()+'end')
+			body.append(self.indent()+'end')
 
+			for decl in self._declares:
+				r.append(self.indent()+decl)
+
+			r.extend(body)
 
 			self.pull()
 			r.append('endmodule')
@@ -177,9 +183,9 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return '%s(%s);' %(fname, ','.join([arg.id for arg in node.args]))
 		elif fname in self._global_functions:
 			#raise RuntimeError('never should be reached - see visit_Assign')
-			return '%s=1;' %fname  ## triggers signal to always-function.
+			return '%s += 1;' %fname  ## triggers signal to always-function.
 		elif fname == 'delay':
-			return '#%s' %node.args[0].n
+			return '#%s;' %node.args[0].n
 		else:
 			raise SyntaxError(fname)
 
@@ -254,7 +260,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 
 		else:
 			r = [
-				'reg %s;' %node.name,  ## should this be logic?
+				'reg integer %s;' %node.name,  ## should this be logic?
+				'initial %s=0;' %node.name,    ## this should not trigger the func TODO fixme
 			]
 			if is_main:
 				#r.append('%s @(posedge) begin' %always_type)
@@ -274,13 +281,17 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 
 	def visit_For(self, node):
 		'''
-		note: loops in verilog requires: a delay, @, or wait(FALSE)
+		notes:
+			. the loop target must be declared as a register in the module header
+			. loops in verilog requires: a delay, @, or wait(FALSE)
 
 		'''
 		start = 0
 		end   = 0
 		step  = 1
 		target = node.target.id
+		self._declares.add('reg integer %s;' %target)  ## insert into module header
+
 		if isinstance(node.iter, ast.Call) and isinstance(node.iter.func, ast.Name) and node.iter.func.id=='range':
 			if len(node.iter.args)==1:
 				end = self.visit(node.iter.args[0])
@@ -292,12 +303,22 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				end   = self.visit(node.iter.args[1])
 				step  = self.visit(node.iter.args[2])
 
-			out = ['for (%s=%s; %s<%s; %s=%s+%s) begin' %(target, start, target, end, target,target,step)]
+			out = [
+				#'for(%s = %s; %s <= %s; %s = %s + %s)' %(target, start, target, end, target,target,step),
+				'for (%s=%s; %s<%s; %s++)' %(target, start, target, end, target),
+				#'do @(posedge)',
+			]
+			self.push()
+			out.append(self.indent()+'begin')
+
 			self.push()
 			for b in node.body:
 				out.append(self.indent()+self.visit(b))
+			#out.append(self.indent()+'i += %s;' %step)
 			self.pull()
 			out.append(self.indent()+'end')
+			self.pull()
+			#out.append(self.indent()+'while (%s < %s);' %(target, end))
 			return '\n'.join(out)
 		else:
 			raise SyntaxError("TODO other for loop types")
