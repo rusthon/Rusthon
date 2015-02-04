@@ -16,6 +16,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		self._verilog = True
 		self._modules = []
 		self._tasks   = {}
+		self._functions = {}
+		self._always_functions = {}
 		self._declares = set()
 
 
@@ -85,8 +87,17 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 					b = b.value
 					if isinstance(b, ast.Call) and isinstance(b.func, ast.Name) and b.func.id in ('reg', 'wire', 'logic'):
 						declares.append(b)
+					elif isinstance(b, ast.Assign):
+						raise SyntaxError('should not happen')
 					else:
 						initial.append(b)
+				elif isinstance(b, ast.Assign):
+					assert isinstance(b.targets[0], ast.Name)
+					if isinstance(b.value, ast.Num):
+						type = 'integer'
+						if '.' in str(b.value.n): type = 'real'
+						r.append('reg %s %s;' %(type, b.targets[0].id))
+
 				else:  ## catches things like ast.Print, which is not an expression
 					initial.append(b)
 
@@ -141,7 +152,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			value = self.visit(node.value.right)
 			return '%s <= %s;' % (target, value)
 
-		elif not self._function_stack:  ## global level
+		elif not self._function_stack and not self.indent():  ## global level
 			if isinstance(node.value, ast.Num):
 				value = self.visit(node.value)
 				return 'parameter %s = %s;' %(target, value)
@@ -181,7 +192,9 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return 'assign %s = %s;' %(wire, self.visit(node.args[0]))
 		elif fname in self._tasks:
 			return '%s(%s);' %(fname, ','.join([arg.id for arg in node.args]))
-		elif fname in self._global_functions:
+		elif fname in self._functions:
+			return '%s(%s);' %(fname, ','.join([self.visit(arg) for arg in node.args]))
+		elif fname in self._always_functions:
 			#raise RuntimeError('never should be reached - see visit_Assign')
 			return '%s += 1;' %fname  ## triggers signal to always-function.
 		elif fname == 'delay':
@@ -198,7 +211,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		is_task = False
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
-		always_type = 'always'
+		always_type = None
 		outputs = []
 
 		args_typedefs = {}
@@ -219,11 +232,25 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				a = decor.args[0]
 				if isinstance(a, ast.Call):
 					outputs.append(self.visit(a))
+				elif isinstance(a, ast.Name):
+					if a.id=='int':
+						outputs.append('integer')
+					elif a.id=='float':
+						outputs.append('real')
+					else:
+						outputs.append(a.id)
+
+
 				else:
 					raise SyntaxError(a)
+
 			elif isinstance(decor, ast.Name) and decor.id=='task':
 				is_task = True
 				self._tasks[node.name] = node
+
+			elif isinstance(decor, ast.Name) and decor.id=='always':
+				always_type = decor.id
+
 
 		if is_module or is_task:
 			args = []
@@ -258,7 +285,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 				r.append('endtask')
 				return '\n'.join(r)
 
-		else:
+		elif always_type:
+			self._always_functions[node.name] = node
 			r = [
 				'reg integer %s;' %node.name,  ## should this be logic?
 				'initial %s=0;' %node.name,    ## this should not trigger the func TODO fixme
@@ -278,6 +306,29 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			self.pull()
 			r.append('end')
 			return '\n'.join(r)
+
+		else:  ## normal verilog function
+			assert len(outputs) < 2
+			self._functions[ node.name ] = node
+			if not outputs: outputs.append('void')
+			r = ['function %s %s;' %(outputs[0], node.name)]
+			for arg in node.args.args:
+				aname = self.visit(arg)
+				if aname in args_typedefs:
+					r.append('input %s %s;' %(args_typedefs[aname], aname))
+				else:
+					r.append('input %s;'%aname)
+
+			self.push()
+			for b in node.body:
+				r.append(self.indent()+self.visit(b))
+			self.pull()
+
+
+			r.append('endfunction')
+			return '\n'.join(r)
+
+			raise RuntimeError( self.format_error('invalid function type') )
 
 	def visit_For(self, node):
 		'''

@@ -14,9 +14,15 @@ with module():
 	reg(a,b, bits=4)
 	reg(iput, oput, bits=4)
 	reg(c, bits=8)
+	myint = 0
+	myfloat = 0.0
 
 	delay(10)
 	print('testing function types...')
+
+	def myadd(x:int, y:int) -> int:
+		#return x+y  ## TODO
+		myadd = x+y
 
 	@always
 	def myfunc():
@@ -29,8 +35,8 @@ with module():
 		myoutput <- myinput  ## prints `x` uninitalized
 		#myoutput = myinput
 
+	@always
 	def main():
-		myfunc = 0
 		delay(1)
 		myfunc()
 		iput = 4
@@ -46,5 +52,10 @@ with module():
 			myfunc()
 
 		print(oput)
+		print('----------------')
+		myint = myadd( 100, 150 )
+		print(myint)
+
+
 
 ```
