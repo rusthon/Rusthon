@@ -78,6 +78,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			self.push()
 			declares  = []
 			initial   = []
+			initextra = []
 			functions = []
 			body      = []
 			for b in node.body:
@@ -97,6 +98,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 						type = 'integer'
 						if '.' in str(b.value.n): type = 'real'
 						r.append('reg %s %s;' %(type, b.targets[0].id))
+						initextra.append('%s = %s;' %(b.targets[0].id, self.visit(b.value)))
 
 				else:  ## catches things like ast.Print, which is not an expression
 					initial.append(b)
@@ -112,6 +114,9 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			self.push()
 			for b in initial:
 				body.append(self.indent()+self.visit(b))
+			for b in initextra:
+				body.append(self.indent()+b)
+
 			self.pull()
 			body.append(self.indent()+'end')
 
@@ -193,12 +198,21 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		elif fname in self._tasks:
 			return '%s(%s);' %(fname, ','.join([arg.id for arg in node.args]))
 		elif fname in self._functions:
-			return '%s(%s);' %(fname, ','.join([self.visit(arg) for arg in node.args]))
+			args = [self.visit(arg) for arg in node.args]
+			for kw in node.keywords:
+				# `error: malformed statement` given by iverilog
+				args.append('.%s(%s)' %(kw.arg, self.visit(kw.value)))
+			return '%s(%s);' %(fname, ', '.join(args))
 		elif fname in self._always_functions:
 			#raise RuntimeError('never should be reached - see visit_Assign')
 			return '%s += 1;' %fname  ## triggers signal to always-function.
 		elif fname == 'delay':
-			return '#%s;' %node.args[0].n
+			delay = node.args[0].n
+			if node.keywords:  ## delayed assignment
+				kw = node.keywords[0]
+				return '%s = #%s %s;' %(kw.arg, delay, self.visit(kw.value))
+			else:
+				return '#%s;' %delay
 		else:
 			raise SyntaxError(fname)
 
@@ -329,6 +343,10 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			return '\n'.join(r)
 
 			raise RuntimeError( self.format_error('invalid function type') )
+
+	## not required in SystemVerilog 2005
+	#def visit_Return(self, node):
+	#	return '%s = %s' %(self._function_stack[-1].name, self.visit(node.value))
 
 	def visit_For(self, node):
 		'''

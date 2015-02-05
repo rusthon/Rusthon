@@ -17,15 +17,20 @@ with module():
 	## infer register type
 	myint = 0       ## becomes `reg integer myint;`
 	myfloat = 0.0   ## becomes `reg real myfloat;`
+	X = 10
+	Y = 20
 
 	## gets moved into `initial begin`
 	delay(10)
 	print('testing function types...')
 
 	def myadd(x:int, y:int) -> int:
-		#return x+y  ## TODO
+		print('calling myadd')
+		print('x:', x)
+		print('y:', y)
 		x = x+2
-		myadd = x+y
+		#myadd = x+y
+		return x+y
 
 	@always
 	def myfunc():
@@ -56,7 +61,11 @@ with module():
 
 		print(oput)
 		print('----------------')
-		myint = myadd( 100, 150 )
+		delay(10, myint=myadd( 100, 150 ) )  ## delayed assignment
+		print(myint)
+		print(X)
+		print(Y)
+		myint = myadd( x=X, y=Y )
 		delay(1)
 		print('printing myint')
 		print(myint)
