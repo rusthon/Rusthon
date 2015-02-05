@@ -14,14 +14,17 @@ with module():
 	reg(a,b, bits=4)
 	reg(iput, oput, bits=4)
 	reg(c, bits=8)
-	myint = 0
-	myfloat = 0.0
+	## infer register type
+	myint = 0       ## becomes `reg integer myint;`
+	myfloat = 0.0   ## becomes `reg real myfloat;`
 
+	## gets moved into `initial begin`
 	delay(10)
 	print('testing function types...')
 
 	def myadd(x:int, y:int) -> int:
 		#return x+y  ## TODO
+		x = x+2
 		myadd = x+y
 
 	@always
@@ -31,7 +34,7 @@ with module():
 
 	@task
 	def mytask( myinput:4 ) -> reg(myoutput, bits=4):
-		#print('calling mytask')  ## printing now allowed in a task
+		print('calling mytask')
 		myoutput <- myinput  ## prints `x` uninitalized
 		#myoutput = myinput
 
@@ -54,6 +57,8 @@ with module():
 		print(oput)
 		print('----------------')
 		myint = myadd( 100, 150 )
+		delay(1)
+		print('printing myint')
 		print(myint)
 
 

@@ -360,7 +360,14 @@ def build( modules, module_path ):
 			output['executeables'].append( mod['binary'] )
 			tmpfile = tempfile.gettempdir() + '/rusthon-verilog-build.sv'
 			open(tmpfile, 'wb').write( source )
-			cmd = ['iverilog', '-o', 'rusthon-sv-build.vvp', tmpfile]
+			## note: iverilog defaults to verilog mode, not systemverilog, `-g2005-sv` is required. '-g2012' also works.
+			cmd = [
+				'iverilog', 
+				'-g2005-sv',
+				'-o', 
+				'rusthon-sv-build.vvp', 
+				tmpfile
+			]
 			p = subprocess.Popen(cmd, cwd=tempfile.gettempdir(), stdout=subprocess.PIPE, stderr=subprocess.PIPE )
 			p.wait()
 			if p.returncode != 0:
