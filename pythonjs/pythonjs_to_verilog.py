@@ -217,11 +217,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			raise SyntaxError(fname)
 
 	def _visit_function(self, node):
-		## is it clear that top level functions are actually modules?
-		## it is bad for translation to hardware to have more than one module,
-		## the new syntax `with module():` replaces the old style.
-		#is_module = node.name in self._global_functions
-		is_module = False  ## force to be false
+		is_module = False
 		is_task = False
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
@@ -264,6 +260,9 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 
 			elif isinstance(decor, ast.Name) and decor.id=='always':
 				always_type = decor.id
+
+			elif isinstance(decor, ast.Name) and decor.id=='module':
+				is_module = True
 
 
 		if is_module or is_task:
