@@ -257,6 +257,22 @@ def import_md( url, modules=None ):
 	modules['markdown'] += '\n'.join(doc)
 	return modules
 
+def compile_myhdl(script):
+	'''
+	this will not work because myhdl has a complex system to infer the bit width of signals,
+	and trying to chop things into parts, and translate each part will fail.
+	'''
+	import myhdl, types
+	from myhdl import always, Signal
+	exec(script, locals())
+	local_vars = locals()
+	functions = []
+	for var in local_vars.keys():
+		if var not in dir(myhdl):
+			if isinstance( local_vars[var], types.FunctionType):
+				functions.append( local_vars[var] )
+	#code = myhdl.toVerilog( functions[0] )
+	#raise SyntaxError(code)
 
 def build( modules, module_path ):
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[], 'verilog':[]}
@@ -273,8 +289,14 @@ def build( modules, module_path ):
 			backend = 'c++'  ## default to c++ backend
 			if header.startswith('#backend:'):
 				backend = header.split(':')[-1].strip()
+				if backend not in 'c++ rust javascript go verilog myhdl'.split():
+					raise SyntaxError('invalid backend: %s' %backend)
 
-			if backend == 'verilog':
+			if backend == 'myhdl':  ## TODO remove this
+				vcode = compile_myhdl(script)
+				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
+
+			elif backend == 'verilog':
 				vcode = pythonjs.pythonjs_to_verilog.main( script )
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
