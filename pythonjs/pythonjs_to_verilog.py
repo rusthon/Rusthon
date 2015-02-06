@@ -222,6 +222,7 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		is_main = node.name == 'main'
 		is_annon = node.name == ''
 		always_type = None
+		if is_main: always_type = 'always'
 		outputs = []
 
 		args_typedefs = {}
@@ -306,7 +307,8 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 			]
 			if is_main:
 				#r.append('%s @(posedge) begin' %always_type)
-				r.append('%s begin' %always_type)
+				#r.append('%s begin' %always_type)
+				r.append('%s @(%s) begin' %(always_type, node.name))
 			else:
 				r.append('%s @(%s) begin' %(always_type, node.name))
 
@@ -391,6 +393,35 @@ class VerilogGenerator( pythonjs.JSGenerator ):
 		else:
 			raise SyntaxError("TODO other for loop types")
 
+
+	def visit_If(self, node):
+		out = []
+		test = self.visit(node.test)
+		if test.startswith('(') and test.endswith(')'):
+			out.append( 'if %s' %test )
+		else:
+			out.append( 'if (%s)' %test )
+		out.append( self.indent() + 'begin' )
+
+		self.push()
+
+		for line in list(map(self.visit, node.body)):
+			if line is None: continue
+			out.append( self.indent() + line )
+
+		orelse = []
+		for line in list(map(self.visit, node.orelse)):
+			orelse.append( self.indent() + line )
+
+		self.pull()
+
+		if orelse:
+			out.append( self.indent() + 'else begin')
+			out.extend( orelse )
+
+		out.append( self.indent() + 'end' )
+
+		return '\n'.join( out )
 
 
 def main(script, insert_runtime=True):
