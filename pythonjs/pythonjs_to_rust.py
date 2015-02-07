@@ -1929,7 +1929,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				slice.append('%s->end()'%value)
 			slice.append(');')
 			vectype = 'std::vector<%s>' %type
-			slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(&_ref_%s);' %(vectype, target, vectype, target))
+			slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target))
 			return '\n'.join(slice)
 
 		else:  ## SEGFAULTS - TODO FIXME
