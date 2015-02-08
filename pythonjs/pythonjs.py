@@ -463,9 +463,22 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 						args_typedefs[ key.arg ] = key.value.s
 					else:
 						if isinstance(key.value, ast.Call) and isinstance(key.value.func, ast.Name) and key.value.func.id=='__arg_array__':
-							arrays[ key.arg ] = self.visit(key.value.args[0])
+							arrays[ key.arg ] = key.value.args[0].s
+							dims = arrays[ key.arg ].count('[')
+							arrtype = arrays[ key.arg ].split(']')[-1]
+							if self._cpp:
+								T = []
+								for i in range(dims):
+									T.append('std::shared_ptr<std::vector<')
+								T.append( arrtype )
+								for i in range(dims):
+									T.append('>>')
+								args_typedefs[ key.arg ] = ''.join(T)
 
-						args_typedefs[ key.arg ] = self.visit(key.value)
+							else:
+								raise SyntaxError('TODO')
+						else:
+							args_typedefs[ key.arg ] = self.visit(key.value)
 
 					if args_typedefs[key.arg].startswith('func(') or args_typedefs[key.arg].startswith('lambda('):
 						is_lambda_style = args_typedefs[key.arg].startswith('lambda(')

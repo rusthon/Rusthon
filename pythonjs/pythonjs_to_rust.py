@@ -2164,7 +2164,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				isprim = self.is_prim_type(guesstype)
 				if self._cpp:
 					if guesstype=='string':
-						return 'const std::string %s = %s;' % (target, value)
+						#return 'const std::string %s = %s;' % (target, value)
+						return 'std::string %s = %s;' % (target, value)
 					elif isprim or guesstype=='auto':
 						return '%s %s = %s;' % (guesstype, target, value)
 					else:
