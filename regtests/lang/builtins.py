@@ -18,6 +18,9 @@ def main():
 	print(r)
 	TestError( str(r) == '1.12' )
 
+	x = chr(120)
+	print(x)
+
 	#r = round( 100.001, 2)
 	#TestError( r == 100 )
 

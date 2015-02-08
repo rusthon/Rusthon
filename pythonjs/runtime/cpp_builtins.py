@@ -51,4 +51,10 @@ double round( double n, int places ) {
 	return std::round(n * p) / p;
 }
 
+std::string chr( int c ) {
+	//return std::to_string( static_cast<char>(c) );  // as a oneliner it fails?
+	auto s = static_cast<char>(c);
+	return std::string( &s );
+}
+
 """)
