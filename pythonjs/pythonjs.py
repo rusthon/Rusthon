@@ -544,6 +544,9 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				options['returns_array_dim'] = options['returns'].count('[]')
 				options['returns_array_type'] = options['returns'].split(']')[-1]
 				if self._cpp:
+					if options['returns_array_type']=='string':
+						options['returns_array_type'] = 'std::string'
+
 					T = []
 					for i in range(options['returns_array_dim']):
 						T.append('std::shared_ptr<std::vector<')
@@ -551,6 +554,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 					for i in range(options['returns_array_dim']):
 						T.append('>>')
 					options['returns'] = ''.join(T)
+				elif self._rust:
+					raise SyntaxError('TODO return 2d array rust backend')
+				else:
+					raise SyntaxError('TODO return 2d array some backend')
 
 			if options['returns'] == 'self':
 				options['returns_self'] = True

@@ -1345,7 +1345,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if return_type and not self.is_prim_type(return_type):
 			if self._cpp:
-				return_type = 'std::shared_ptr<%s>' %return_type
+				if 'returns_array' in options and options['returns_array']:
+					pass
+				else:
+					return_type = 'std::shared_ptr<%s>' %return_type
 			else:
 				return_type = 'Rc<RefCell<%s>>' %return_type
 
