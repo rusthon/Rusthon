@@ -516,8 +516,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
 				if self._cpp:
-					#r = '_ref_%s[%s]' % (self.visit(node.value), self.visit(node.slice))  ## this may not always work
-					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))     ## deference pointer is safer
+					## default to deference shared pointer ##
+					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
+					if isinstance(node.value, ast.Name):
+						if self._function_stack:
+							if node.value.id in self._known_strings:
+								r = '%s.substr(%s,1)' %(node.value.id, self.visit(node.slice))
+						if node.value.id in self._global_types['string']:  ## TODO regtest this
+							r = '%s.substr(%s,1)' %(node.value.id, self.visit(node.slice))
+
 				elif self._rust:
 					r = '%s.borrow_mut()[%s]' % (self.visit(node.value), self.visit(node.slice))
 				else:
@@ -1322,6 +1329,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]
+		for name in args_typedefs:
+			if args_typedefs[name]=='string':
+				self._known_strings.add(name)
 
 		returns_self = options['returns_self']
 		return_type = options['returns']
@@ -1905,9 +1915,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return '%s.%s' % (name, attr)
 
 	def _gen_slice(self, target=None, value=None, lower=None, upper=None, type=None):
-		'''
-		TODO fix segfault
-		'''
 		assert self._cpp
 		assert target
 		assert value

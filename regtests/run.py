@@ -869,8 +869,27 @@ def run_pythonjs_cpp_test(dummy_filename):
 def run_cpp(content):
     """compile and run c++ program"""
     write("%s.cpp" % tmpname, content)
-    #subprocess.check_call(['g++', '-std=c++11', '-o', '/tmp/regtest-cpp',  '%s.cpp' % tmpname] )
-    subprocess.check_call(['g++', '-O3', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11',   ] )
+    cmd = ['g++', '-O3', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11',   ]
+    try:
+        subprocess.check_call( cmd )
+    except subprocess.CalledProcessError:
+        ## reading template errors become so long we need to filter them out below ##
+        print('='*80)
+        p = subprocess.Popen(cmd, stderr=subprocess.PIPE)
+        p.wait()
+        if p.returncode:  ## there was an error
+            error = p.stderr.read().decode('utf-8')
+            for line in error.splitlines():
+                if '.py' in line:
+                    lineno = line.split(':')[1]
+                    if 'In function' in line:
+                        print(lineno, line.split('`')[-1])
+                    elif 'error:' in line:
+                        print(lineno, '\t'+line.split('error: ')[-1])
+                    else:
+                        print(lineno, line)
+            sys.exit()
+
     errors = False
     if errors:
         return errors
