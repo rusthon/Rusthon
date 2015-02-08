@@ -4139,6 +4139,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				a = self.visit(b)
 				if a: writer.write(a)
 			writer.pull()
+		elif isinstance( node.context_expr, ast.Str):
+			writer.write('with %s:' %self.visit(node.context_expr))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
+
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 

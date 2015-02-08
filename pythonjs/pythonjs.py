@@ -220,7 +220,11 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				is_extern = True
 
 			else:
-				raise SyntaxError( 'invalid use of with')
+				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)
+		elif isinstance(node.context_expr, ast.Str):
+			body = []
+			for b in node.body: body.append(self.visit(b))
+			return node.context_expr.s + ';'.join(body)
 		else:
 			raise SyntaxError( 'invalid use of with')
 

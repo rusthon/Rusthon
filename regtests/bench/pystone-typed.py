@@ -221,6 +221,7 @@ def Proc0(loops:int):
 
 
 def pystones(loops:int):
+
 	starttime = clock()
 	for j in range(loops):
 		pass
@@ -230,11 +231,11 @@ def pystones(loops:int):
 	Proc0(loops)
 
 	benchtime = clock() - starttime - nulltime
-	print(benchtime)
-	if benchtime == 0.0:
-		loopsPerBenchtime = 0.0
-	else:
-		loopsPerBenchtime = (loops / benchtime)
+	#benchtime = clock() - starttime
+	#print(benchtime)
+	print ('std::chrono::duration_cast<std::chrono::microseconds>')clock().count()
+
+	#loopsPerBenchtime = (loops / benchtime)
 
 	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
 	#print("#This machine benchmarks at pystones/second: %s" %stones)
