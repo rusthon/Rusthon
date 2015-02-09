@@ -5,6 +5,18 @@
 
 inline("""
 
+template<typename T, typename ...Args>
+std::unique_ptr<T> _make_unique( Args&& ...args )
+{
+    return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
+}
+
+int sum(std::shared_ptr<std::vector<int>> arr) {
+	int s = 0;
+	//TODO include? //std::for_each(arr->begin(),arr->end(),[&](int n){s += n;});
+	return s;
+}
+
 std::string str( const std::string s ) {
 	return s;
 }

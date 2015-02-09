@@ -66,10 +66,10 @@ GO = {
 
 CPP = {
 	'time': {
-		#'clock': 'double __clock__() { return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() / (double)10000.0; }'
+		'clock': 'double __clock__() { return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count() / (double)1000000000.0; }'
 		#'clock': 'double  __clock__() { return std::clock() / (double)CLOCKS_PER_SEC; }'  ## works, but not enough resolution
 		#'clock': 'double __clock__() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() / (double)1000; }'
-		'clock': 'std::chrono::time_point<std::chrono::steady_clock> __clock__() { return std::chrono::steady_clock::now().time_since_epoch(); }'
+		#'clock': 'std::chrono::time_point<std::chrono::steady_clock> __clock__() { return std::chrono::steady_clock::now().time_since_epoch(); }'
 	},
 
 	'math': {

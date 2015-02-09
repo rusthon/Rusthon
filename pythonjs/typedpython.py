@@ -327,14 +327,8 @@ def transform_source( source, strip=False ):
 			elif rtype.startswith('['):
 				rtype = '"%s"' %rtype
 
-			#indent = []
-			#for char in c:
-			#	if char in __whitespace:
-			#		indent.append(char)
-			#	else:
-			#		break
-			#indent = ''.join(indent)
-			output.append( indent + '@returns(%s)' %rtype)
+			if not strip:
+				output.append( indent + '@returns(%s)' %rtype)
 
 		if c.startswith('import '):
 			if '-' in c:
@@ -441,19 +435,20 @@ def transform_source( source, strip=False ):
 					elif ':' in typedef and typedef.strip().startswith('[') and typedef.strip().endswith(']'): ## verilog [bit:index] syntax
 						typedef = '"%s"' %typedef.strip()
 
-					if T:  ## rust or c++ syntax
-						output.append('%s@__typedef__(%s, %s, "%s")' %(indent, arg_name, typedef, T))
-					elif chan:
-						output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
-					else:
-						output.append('%s@typedef(%s=%s)' %(indent, arg_name, typedef))
+					if not strip:
+						if T:  ## rust or c++ syntax
+							output.append('%s@__typedef__(%s, %s, "%s")' %(indent, arg_name, typedef, T))
+						elif chan:
+							output.append('%s@typedef_chan(%s=%s)' %(indent, arg_name, typedef))
+						else:
+							output.append('%s@typedef(%s=%s)' %(indent, arg_name, typedef))
 
 					if kw:
 						arg += '=' + kw
 					args.append(arg)
 				else:
 					args.append(x)
-			c = head +'(' + ','.join(args) + ')'+tailend
+			c = head +'(' + ','.join(args) + ')'+tailend  ## restores to python2 syntax
 
 		elif '::' in c and '<' in c and '>' in c and c.count('<')==c.count('>'):  ## c++ syntax `('std::bla<T>')(foo)`
 			##  could auto quote here so `(std::<T>)` becomes `('std::<T>')

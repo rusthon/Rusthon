@@ -36,6 +36,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._rust = True
 		self._go   = False
 		self._threads = []  ## c++11 threads
+		self._unique_ptr = False ## TODO
 		self._has_channels = False
 		self._crates = {}
 
@@ -389,7 +390,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if member_isprim:
 					out.append('	%s  %s;' %(T, name ))
 				else:
-					out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
+					if self._unique_ptr:
+						out.append('	std::unique_ptr<%s>  %s;' %(T, name ))
+					else:
+						out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:
 				rust_struct_init.append('%s:%s' %(name, default_type(T)))
 				if T=='string': T = 'String'
@@ -941,7 +945,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if self.is_prim_type(T):
 						return '%s  %s' %(T, node.args[0].id)
 					else:
-						return 'std::shared_ptr<%s>  %s' %(T, node.args[0].id)
+						if self._unique_ptr:
+							return 'std::unique_ptr<%s>  %s' %(T, node.args[0].id)
+						else:
+							return 'std::shared_ptr<%s>  %s' %(T, node.args[0].id)
 				else:
 					if mutable:
 						return '%s mut %s : %s' %(V, node.args[0].id, node.args[1].s)
@@ -954,7 +961,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if self.is_prim_type(T):
 						return '%s  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 					else:
-						return 'std::shared_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
+						if self._unique_ptr:
+							return 'std::unique_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
+						else:
+							return 'std::shared_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 				else:
 					if mutable:
 						return '%s mut %s : %s = %s' %(V, node.args[0].id, node.args[1].s, self.visit(node.args[2]))
@@ -1019,10 +1029,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'Rc<RefCell< Vec<Rc<RefCell<%s>>> >>' %T
 
 			elif self._cpp:
-				if T == 'int':
-					return 'std::shared_ptr<std::vector<%s>>' %T
+				if self.is_prim_type(T):
+					if self._unique_ptr:
+						return 'std::unique_ptr<std::vector<%s>>' %T
+					else:
+						return 'std::shared_ptr<std::vector<%s>>' %T
 				else:
-					return 'std::shared_ptr<std::vector< std::shared_ptr<%s> >>' %T
+					if self._unique_ptr:
+						return 'std::unique_ptr<std::vector< std::unique_ptr<%s> >>' %T
+					else:
+						return 'std::shared_ptr<std::vector< std::shared_ptr<%s> >>' %T
 			else:
 				raise RuntimeError('TODO generic arg array')
 
@@ -1183,8 +1199,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						raise RuntimeError('TODO mdarrays')
 
 					mdtype = self.visit(node.right.args[0])
-
-					return 'std::shared_ptr<std::vector< std::shared_ptr<std::vector<%s>> >>'%mdtype
+					if self._unique_ptr:
+						return 'std::unique_ptr<std::vector< std::unique_ptr<std::vector<%s>> >>'%mdtype
+					else:
+						return 'std::shared_ptr<std::vector< std::shared_ptr<std::vector<%s>> >>'%mdtype
 				else:
 					raise RuntimeError('TODO array pointer')
 
@@ -1201,6 +1219,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
 					#return 'std::static_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
 					return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
+				return '%s%s' %(node.left.args[0].s, right)
 
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':  ## deprecated
@@ -1208,6 +1228,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':  ## deprecated
 			right += '[_id_]'
 
+		#if op=='<<':
+		#	raise SyntaxError(type(node.left))
+		#	raise SyntaxError(left+right)
 		return '(%s %s %s)' % (left, op, right)
 
 	def visit_ListComp(self, node):
@@ -1307,6 +1330,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		args_generics = dict()
 		func_pointers = set()
 		arrays = dict()
+		noexcept = True  ## C++11
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None}
 
@@ -1348,7 +1372,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if 'returns_array' in options and options['returns_array']:
 					pass
 				else:
-					return_type = 'std::shared_ptr<%s>' %return_type
+					if self._unique_ptr:
+						return_type = 'std::unique_ptr<%s>' %return_type
+					else:
+						return_type = 'std::shared_ptr<%s>' %return_type
 			else:
 				return_type = 'Rc<RefCell<%s>>' %return_type
 
@@ -1500,14 +1527,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if is_method:
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
-						out.append( self.indent() + '%s {\n' % sig )
+						out.append( self.indent() + '%s noexcept {\n' % sig )
 						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
-						self._cpp_class_header.append(sig + ';')
+						self._cpp_class_header.append(sig + ' noexcept;')
 
 					else:
 						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
-						out.append( self.indent() + '%s {\n' % sig )
-						if not is_main: self._cheader.append( sig + ';' )
+						out.append( self.indent() + '%s noexcept {\n' % sig )
+						if not is_main: self._cheader.append( sig + ' noexcept;' )
 
 				else:  ## rust ##
 					if is_method:
@@ -1521,15 +1548,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if is_method:
 						classname = self._class_stack[-1].name
 						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
-						out.append( self.indent() + '%s {\n' % sig  )
+						out.append( self.indent() + '%s noexcept {\n' % sig  )
 
 						sig = 'void %s(%s)' % (node.name, ', '.join(args))
-						self._cpp_class_header.append(sig + ';')
+						self._cpp_class_header.append(sig + ' noexcept;')
 
 					else:
 						sig = 'void %s(%s)' %(node.name, ', '.join(args))
-						out.append( self.indent() + '%s {\n' % sig  )
-						if not is_main: self._cheader.append( sig + ';' )
+						out.append( self.indent() + '%s noexcept {\n' % sig  )
+						if not is_main: self._cheader.append( sig + ' noexcept;' )
 
 				else:         ## rust ##
 					if is_method:
@@ -1939,7 +1966,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				slice.append('%s->end()'%value)
 			slice.append(');')
 			vectype = 'std::vector<%s>' %type
-			slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target))
+			if self._unique_ptr:
+				slice.append('std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(vectype, target, vectype, target))
+			else:
+				slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target))
 			return '\n'.join(slice)
 
 		else:  ## SEGFAULTS - TODO FIXME
@@ -2057,12 +2087,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				#out.append('std::vector<%s> %s;' %(type,compname))
 			else:
 				#out.append('std::vector<std::shared_ptr<%s>> %s;' %(type,compname))
-				subvectype = 'std::vector<std::shared_ptr<%s>>' %type
+				if self._unique_ptr:
+					subvectype = 'std::vector<std::unique_ptr<%s>>' %type
+				else:
+					subvectype = 'std::vector<std::shared_ptr<%s>>' %type
 
 			if dimensions == 1:
 				vectype = subvectype
 			elif dimensions == 2:
-				vectype = 'std::vector<std::shared_ptr< %s >>' %subvectype
+				if self._unique_ptr:
+					vectype = 'std::vector<std::unique_ptr< %s >>' %subvectype
+				else:
+					vectype = 'std::vector<std::shared_ptr< %s >>' %subvectype
 			else:
 				raise SyntaxError('TODO other dimensions')
 
@@ -2091,7 +2127,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				r = '%s  _ref_%s = %s{};' %(type, tmp, type)
 				if constructor_args:
 					r += '_ref_%s.__init__(%s);\n' %(tmp, constructor_args)
-				r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(type, tmp, type, tmp)
+
+				if self._unique_ptr:
+					r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(type, tmp, type, tmp)
+				else:
+					r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(type, tmp, type, tmp)
 				out.append( r )
 				out.append('	%s.push_back(%s);' %(compname, tmp))
 
@@ -2102,7 +2142,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			#else:
 			#	out.append('auto %s = std::make_shared<std::vector< std::shared_ptr<%s> >>(%s);' %(target, type, compname))
 			## TODO vector.resize if size is given
-			out.append('auto %s = std::make_shared<%s>(%s);' %(target, vectype, compname))
+			if self._unique_ptr:
+				out.append('auto %s = _make_unique<%s>(%s);' %(target, vectype, compname))
+			else:
+				out.append('auto %s = std::make_shared<%s>(%s);' %(target, vectype, compname))
 
 		else:
 			raise RuntimeError('TODO list comp for some backend')
@@ -2169,7 +2212,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					elif isprim or guesstype=='auto':
 						return '%s %s = %s;' % (guesstype, target, value)
 					else:
-						return 'std::shared_ptr<%s> %s = %s;' % (guesstype, target, value)
+						if self._unique_ptr:
+							return 'std::unique_ptr<%s> %s = %s;' % (guesstype, target, value)
+						else:
+							return 'std::shared_ptr<%s> %s = %s;' % (guesstype, target, value)
 
 				else:
 					return 'static %s : %s = %s;' % (target, guesstype, value)
@@ -2308,7 +2354,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if T=='string': T = 'std::string'
 						self._known_arrays[ target ] = T
 						subvectype = 'std::vector<%s>' %T
-						vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
+						if self._unique_ptr:
+							vectype = 'std::vector< std::unique_ptr<%s> >' %subvectype
+						else:
+							vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
 
 
 					 	if isinstance(node.value.right, ast.Tuple):
@@ -2322,17 +2371,29 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 									for sarg in elt.elts:
 										if isinstance(sarg, ast.Name) and sarg.id in self._known_instances:
 											sharedptr = True
-											subvectype = 'std::vector<  std::shared_ptr<%s>  >' %T
-											vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
+											if self._unique_ptr:
+												subvectype = 'std::vector<  std::unique_ptr<%s>  >' %T
+												vectype = 'std::vector< std::unique_ptr<%s> >' %subvectype
+											else:
+												subvectype = 'std::vector<  std::shared_ptr<%s>  >' %T
+												vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
 
 
 									subargs = [self.visit(sarg) for sarg in elt.elts]
 									#r.append('%s %s = {%s};' %(subvectype, subname, ','.join(subargs)))  ## direct ref
 
 									r.append('%s _r_%s = {%s};' %(subvectype, subname, ','.join(subargs)))
-									r.append(  ## this also allows `if mdarray[0] is None:`
-										'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
-									)
+
+									if self._unique_ptr:
+										r.append(
+											'std::unique_ptr<%s> %s = _make_unique<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
+										)
+
+									else:
+										r.append(
+											'std::shared_ptr<%s> %s = std::make_shared<%s>(_r_%s);' %(subvectype, subname, subvectype, subname)
+										)
+
 								elif isinstance(elt, ast.ListComp):
 									r.extend(result)
 									args.append('_subcomp_%s'%target)  ## already a shared_ptr
@@ -2342,9 +2403,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 							r.append('%s _ref_%s = {%s};' %(vectype, target, ','.join(args)))
 
-							r.append(
-								'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
-							)
+							if self._unique_ptr:
+								r.append(
+									'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								)
+							else:
+								r.append(
+									'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								)
 							return (self.indent()+'\n').join(r)
 
 						elif isinstance(node.value.right, ast.ListComp):
@@ -2385,7 +2451,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						if self._shared_pointers:
 							maptype = 'std::map<%s, %s>' %(key_type, value_type)
 							r = '%s _ref_%s = {%s};' %(maptype, target, v)
-							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
+							if self._unique_ptr:
+								r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(maptype, target, maptype, target)
+							else:
+								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(maptype, target, maptype, target)
 							return r
 						else:  ## raw pointer
 							return 'std::map<%s, %s> _ref_%s = {%s}; auto %s = &_ref_%s;' %(key_type, value_type, target, v, target, target)
@@ -2405,10 +2474,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								if isprim:
 									vectype = 'std::vector<%s>' %T
 								else:
-									vectype = 'std::vector<std::shared_ptr<%s>>' %T
+									if self._unique_ptr:
+										vectype = 'std::vector<std::unique_ptr<%s>>' %T
+									else:
+										vectype = 'std::vector<std::shared_ptr<%s>>' %T
 
 								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
-								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
+								if self._unique_ptr:
+									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
+								else:
+									r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
 								return r
 							else:  ## raw pointer
 								return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
@@ -2420,7 +2495,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							if self._shared_pointers:
 								vectype = 'std::array<%s, %sul>' %(atype, asize)
 								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
-								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								if self._unique_ptr:
+									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(vectype, target, vectype, target)
+								else:
+									r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target)
 								return r
 							else:
 								## note: the inner braces are due to the nature of initializer lists, one per template param.
@@ -2468,7 +2546,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							r = '%s  _ref_%s = %s{};' %(classname, target, classname)
 							if constructor_args:
 								r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
-							r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
+							if self._unique_ptr:
+								r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(classname, target, classname, target)
+							else:
+								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
 							return r
 						else:  ## raw pointer to object
 							return 'auto %s = new %s;' %(target, value)  ## user must free memory manually

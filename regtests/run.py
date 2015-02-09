@@ -343,6 +343,10 @@ def run_command(command, returns_stdout_stderr=False, nodewebkit_workaround=Fals
     return d
 
 _benchmark = None
+def in_benchmark():
+    if _benchmark: return True
+    else: return False
+
 def start_benchmark( name ):
     if not show_details: print('starting benchmark:', name)
     global _benchmark
@@ -691,7 +695,7 @@ process = { title:"", version:"" } ;
     return run_command("rhino -O -1 %s.js" % tmpname)
 
 def run_pythonjs_test_on_node(dummy_filename):
-    """PythonJS (normal)"""
+    """Rusthon JS (nodejs)"""
     return run_if_no_error(run_js_node)
 
 def run_pythonjsjs_test_on_node(filename):
@@ -712,7 +716,7 @@ def run_js_node(content):
 
 
 def run_pythonjs_test_on_nodewebkit(dummy_filename):
-    """PythonJS (normal) - NodeWebkit"""
+    """Rusthon JS (nodewebkit)"""
     return run_if_no_error(run_js_nodewebkit)
 
 def run_pythonjsjs_test_on_nodewebkit(filename):
@@ -863,13 +867,17 @@ def run_rust(content):
 
 ## c++ backend ##
 def run_pythonjs_cpp_test(dummy_filename):
-    """cppthon"""
+    """Rusthon C++ Backend"""
     return run_if_no_error(run_cpp)
 
 def run_cpp(content):
     """compile and run c++ program"""
     write("%s.cpp" % tmpname, content)
-    cmd = ['g++', '-O3', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11',   ]
+    if in_benchmark():
+        cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
+    else:
+        cmd = ['g++', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
+
     try:
         subprocess.check_call( cmd )
     except subprocess.CalledProcessError:
@@ -890,9 +898,12 @@ def run_cpp(content):
                         print(lineno, line)
             sys.exit()
 
-    errors = False
-    if errors:
-        return errors
+    if in_benchmark():
+        run_command( '/tmp/regtest-cpp' )
+        cmd = ['g++', '-O3', '-fprofile-use', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
+        print('<G++ PGO>')
+        subprocess.check_call( cmd )
+        return run_command( '/tmp/regtest-cpp' )
     else:
         return run_command( '/tmp/regtest-cpp' )
 
@@ -1025,16 +1036,15 @@ def run_test_on(filename):
         if nodewebkit_runnable:
             display(run_pythonjs_test_on_nodewebkit)
 
-
-    if '--no-javascript-mode' not in sys.argv and do_js_test:
-        js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
-        if rhino_runnable:
-            display(run_pythonjsjs_test_on)
-        if node_runnable:
-            display(run_pythonjsjs_test_on_node)
-
-        if nodewebkit_runnable:
-            display(run_pythonjsjs_test_on_nodewebkit)
+    ## TODO more optimized js settings pythonjs-minimal.js ##
+    #if '--no-javascript-mode' not in sys.argv and do_js_test:
+    #    js = translate_js(filename, javascript=True, multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker')))
+    #    if rhino_runnable:
+    #        display(run_pythonjsjs_test_on)
+    #    if node_runnable:
+    #        display(run_pythonjsjs_test_on_node)
+    #    if nodewebkit_runnable:
+    #        display(run_pythonjsjs_test_on_nodewebkit)
 
 
     if 'requirejs' not in filename:

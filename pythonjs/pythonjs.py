@@ -473,7 +473,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 							if self._cpp:
 								T = []
 								for i in range(dims):
-									T.append('std::shared_ptr<std::vector<')
+									if self._unique_ptr:
+										T.append('std::unique_ptr<std::vector<')
+									else:
+										T.append('std::shared_ptr<std::vector<')
 								T.append( arrtype )
 								for i in range(dims):
 									T.append('>>')
@@ -520,7 +523,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 						options['generic_base_class'] = classname
 
 						if self._cpp:
-							args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %classname
+							if self._unique_ptr:
+								args_typedefs[ key.arg ] = 'std::unique_ptr<%s>' %classname
+							else:
+								args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %classname
 							args_generics[ key.arg ] = classname
 
 							for subclass in self._classes[classname]._subclasses:
@@ -566,7 +572,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 					T = []
 					for i in range(options['returns_array_dim']):
-						T.append('std::shared_ptr<std::vector<')
+						if self._unique_ptr:
+							T.append('std::unique_ptr<std::vector<')
+						else:
+							T.append('std::shared_ptr<std::vector<')
 					T.append(options['returns_array_type'])
 					for i in range(options['returns_array_dim']):
 						T.append('>>')
