@@ -13,7 +13,7 @@ std::unique_ptr<T> _make_unique( Args&& ...args )
 
 int sum(std::shared_ptr<std::vector<int>> arr) {
 	int s = 0;
-	//TODO include? //std::for_each(arr->begin(),arr->end(),[&](int n){s += n;});
+	std::for_each(arr->begin(),arr->end(),[&](int n){s += n;});
 	return s;
 }
 
@@ -30,6 +30,18 @@ std::ofstream* __open__(const std::string name) {
 	f->open( name.c_str(), std::ofstream::in | std::ofstream::binary );
 	return f;
 }
+
+// a pointer version is also required for `range` because it could be called inside
+// a `with pointers:` block, in this special case return a copy and let the caller
+// take the pointer.
+std::vector<int> __range1__( int n ) {
+	std::vector<int> vec(n);
+	for (int i=0; i<n; i++) {
+		vec[i] = i;
+	}
+	return vec;
+}
+
 
 std::shared_ptr<std::vector<int>> range1( int n ) {
 	std::vector<int> vec(n);

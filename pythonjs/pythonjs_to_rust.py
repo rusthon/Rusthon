@@ -1143,7 +1143,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		try:
 			right = self.visit(node.right)
 		except GenerateListComp as err:
-			raise SyntaxError(self.format_error(err))
+			if isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='__go__array__':
+				node.right._comp_type = node.left.args[0].id
+				node.right._comp_dims = 1
+				raise err
+			elif isinstance(node.left, ast.BinOp) and isinstance(node.left.left, ast.Name) and node.left.left.id=='__go__array__':
+				node.right._comp_type = node.left.right.args[0].id
+				node.right._comp_dims = 2
+				raise err
+			else:
+				raise SyntaxError(self.format_error(err))
 
 		if op == '>>' and left == '__new__':
 			if self._cpp:
@@ -1749,7 +1758,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if is_main and self._cpp:
 			out.append( self.indent() + 'return 0;' )
 		if is_init and self._cpp:
-			out.append( self.indent() + 'return this;' )
+			if not self._shared_pointers:
+				out.append( self.indent() + 'return this;' )
+			else:
+				#out.append( self.indent() + 'return std::make_shared<%s>(this);' %self._class_stack[-1].name )  ## crashes GCC
+				out.append( self.indent() + 'return nullptr;' )  ## the exe with PGO will crash if nothing returns
 
 
 		self.pull()
@@ -2033,6 +2046,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def _listcomp_helper(self, node, target=None, type=None, size=None, dimensions=1):
+		if not target: target = node._comp_type
 		assert target
 		assert type
 		isprim = self.is_prim_type(type)
