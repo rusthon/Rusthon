@@ -874,7 +874,9 @@ def run_cpp(content):
     """compile and run c++ program"""
     write("%s.cpp" % tmpname, content)
     if in_benchmark():
-        cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
+        ## gcc will not use atomic updates on std::shared_ptr when not linked to libpthread, -pthread is omitted here.
+        ## http://stackoverflow.com/questions/15129263/is-there-a-non-atomic-equivalent-of-stdshared-ptr-and-why-isnt-there-one-in
+        cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-std=c++11' ]
     else:
         cmd = ['g++', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
 
@@ -900,7 +902,7 @@ def run_cpp(content):
 
     if in_benchmark():
         run_command( '/tmp/regtest-cpp' )
-        cmd = ['g++', '-O3', '-fprofile-use', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-pthread', '-std=c++11' ]
+        cmd = ['g++', '-O3', '-fprofile-use', '-march=native', '-mtune=native', '%s.cpp'%tmpname, '-o', '/tmp/regtest-cpp', '-std=c++11' ]
         print('<G++ PGO>')
         subprocess.check_call( cmd )
         return run_command( '/tmp/regtest-cpp' )

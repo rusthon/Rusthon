@@ -225,6 +225,17 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			body = []
 			for b in node.body: body.append(self.visit(b))
 			return node.context_expr.s + ';'.join(body)
+
+		elif isinstance(node.context_expr, ast.Name):
+			if node.context_expr.id == 'pointers':
+				self._shared_pointers = False
+				r = []
+				for b in node.body:
+					a = self.visit(b)
+					if a: r.append(self.indent()+a)
+				self._shared_pointers = True
+				return '\n'.join(r)
+
 		else:
 			raise SyntaxError( 'invalid use of with')
 
@@ -1074,7 +1085,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__', '__go__receive__', '__go__send__')
 
 		if op == '>>' and left == '__new__':
-
 			## this can happen because python_to_pythonjs.py will catch when a new class instance is created
 			## (when it knows that class name) and replace it with `new(MyClass())`; but this can cause a problem
 			## if later the user changes that part of their code into a module, and loads it as a javascript module,
@@ -1082,7 +1092,6 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 			## the following hack prevents `new new`
 			if isinstance(node.right, ast.Call) and isinstance(node.right.func, ast.Name) and node.right.func.id=='new':
 				right = self.visit(node.right.args[0])
-
 			return ' new %s' %right
 
 

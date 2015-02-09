@@ -1146,7 +1146,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			raise SyntaxError(self.format_error(err))
 
 		if op == '>>' and left == '__new__':
-			return ' new %s' %right
+			if self._cpp:
+				classname = node.right.func.id
+				if node.right.args:
+					args = ','.join([self.visit(arg) for arg in node.right.args])
+					return '(new %s)->__init__(%s)' %(classname, args)
+				else:
+					return '(new %s)' %classname
+			else:
+				return ' new %s' %right
 
 		elif op == '<<':
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
@@ -1378,6 +1386,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if returns_self and self._cpp:
 			return_type = self._class_stack[-1].name
 
+		is_init = node.name == '__init__'
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
 			return_type = 'int'
@@ -1389,6 +1398,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					if not self._shared_pointers:
 						return_type = '%s*' %return_type
+						#return_type = '%s' %return_type  ## return copy of object
+
 					elif self._unique_ptr:
 						return_type = 'std::unique_ptr<%s>' %return_type
 					else:
@@ -1737,6 +1748,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if is_main and self._cpp:
 			out.append( self.indent() + 'return 0;' )
+		if is_init and self._cpp:
+			out.append( self.indent() + 'return this;' )
 
 
 		self.pull()

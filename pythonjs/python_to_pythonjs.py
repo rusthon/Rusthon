@@ -1074,6 +1074,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			if self._with_dart:
 				init.name = node.name
 
+			writer.write('@returns(self)')
 			self.visit(init)
 			node._struct_vars.update( init._typed_args )
 
@@ -4140,6 +4141,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				if a: writer.write(a)
 			writer.pull()
 		elif isinstance( node.context_expr, ast.Str):
+			writer.write('with %s:' %self.visit(node.context_expr))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
+
+		elif isinstance(node.context_expr, ast.Name):  ## assume that backend can support this
 			writer.write('with %s:' %self.visit(node.context_expr))
 			writer.push()
 			for b in node.body:
