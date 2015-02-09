@@ -473,13 +473,22 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 							if self._cpp:
 								T = []
 								for i in range(dims):
-									if self._unique_ptr:
+									if not self._shared_pointers:
+										T.append('std::vector<')
+									elif self._unique_ptr:
 										T.append('std::unique_ptr<std::vector<')
 									else:
 										T.append('std::shared_ptr<std::vector<')
 								T.append( arrtype )
-								for i in range(dims):
-									T.append('>>')
+
+								if self._shared_pointers:
+									for i in range(dims):
+										T.append('>>')
+								else:
+									for i in range(dims):
+										T.append('*>')
+									T.append('*')
+
 								args_typedefs[ key.arg ] = ''.join(T)
 
 							else:
@@ -523,7 +532,9 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 						options['generic_base_class'] = classname
 
 						if self._cpp:
-							if self._unique_ptr:
+							if not self._shared_pointers:
+								args_typedefs[ key.arg ] = '%s*' %classname
+							elif self._unique_ptr:
 								args_typedefs[ key.arg ] = 'std::unique_ptr<%s>' %classname
 							else:
 								args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %classname
@@ -572,13 +583,21 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 					T = []
 					for i in range(options['returns_array_dim']):
-						if self._unique_ptr:
+						if not self._shared_pointers:
+							T.append('std::vector<')
+						elif self._unique_ptr:
 							T.append('std::unique_ptr<std::vector<')
 						else:
 							T.append('std::shared_ptr<std::vector<')
 					T.append(options['returns_array_type'])
-					for i in range(options['returns_array_dim']):
-						T.append('>>')
+
+					if self._shared_pointers:
+						for i in range(options['returns_array_dim']):
+							T.append('>>')
+					else:
+						for i in range(options['returns_array_dim']):
+							T.append('*>')
+						T.append('*')
 					options['returns'] = ''.join(T)
 				elif self._rust:
 					raise SyntaxError('TODO return 2d array rust backend')

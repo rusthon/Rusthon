@@ -14,7 +14,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		pythonjs_to_rust.RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._cpp = True
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
-		self._shared_pointers = True
+		self._shared_pointers = False
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -28,7 +28,10 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			if isinstance(e, ast.List) or isinstance(e, ast.Tuple):
 				for sube in e.elts:
 					r.append('std::cout << %s;' %self.visit(sube))
-				r[-1] += 'std::cout << std::endl;'
+				if r:
+					r[-1] += 'std::cout << std::endl;'
+				else:
+					r.append('std::cout << std::endl;')
 			else:
 				r.append('std::cout << %s << std::endl;' %s)
 		return '\n'.join(r)
@@ -82,6 +85,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			'#include <fstream>',
 			'#include <string>',
 			'#include <map>',
+			'#include <algorithm>', ## c++11
 			'#include <functional>', ## c++11
 			#'#include <sstream>',  ## c++11
 			'#include <thread>', ## c++11
@@ -176,7 +180,8 @@ def main(script, insert_runtime=True):
 	try:
 		tree = ast.parse(script)
 	except SyntaxError as err:
-		sys.stderr.write(script)
+		e = ['%s:	%s'%(i+1, line) for i,line in enumerate(script.splitlines())]
+		sys.stderr.write('\n'.join(e))
 		raise err
 
 	g = CppGenerator( source=script )
