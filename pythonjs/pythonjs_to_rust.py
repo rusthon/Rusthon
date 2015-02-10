@@ -1266,6 +1266,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
 				return '%s%s' %(node.left.args[0].s, right)
 			else:
+				## TODO this is hackish
+				atype = left.split('<')[-1].split('>')[0]
+				if isinstance(node.right, ast.Tuple):
+					r = ['new std::vector<%s> %s' %(atype, self.visit(elt)) for elt in node.right.elts]
+					right = '{%s}' %','.join(r)
 				return (left, right)  ## special case for new arrays
 
 
