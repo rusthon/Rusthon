@@ -452,11 +452,11 @@ def transform_source( source, strip=False ):
 
 		elif '::' in c and '<' in c and '>' in c and c.count('<')==c.count('>'):  ## c++ syntax `('std::bla<T>')(foo)`
 			##  could auto quote here so `(std::<T>)` becomes `('std::<T>')
-			c = c.replace(">')", ">')<<")
+			c = c.replace(">`", ">')<<")
 			left = c.index('::')
-			while c[left]!='(':
+			while c[left]!='`':
 				left -= 1
-			c = c[ :left ] + 'inline' + c[left:]
+			c = c[ :left-1 ] + " inline('" + c[left+1:]
 
 		## jquery ##
 		## TODO ensure this is not inside quoted text
@@ -476,6 +476,8 @@ def transform_source( source, strip=False ):
 		if c.strip().startswith('with asm('):
 			asm_block = True
 
+		if strip and c.strip().startswith('with ('):
+			c = c.split('with (')[0] + 'if True:'
 
 		## regular output
 		output.append( c )
@@ -651,7 +653,10 @@ def F() ->[][]int:
 def f():
 	return A as B
 
-print ('std::chrono::duration_cast<std::chrono::microseconds>')clock().count()
+print `std::chrono::duration_cast<std::chrono::microseconds>`clock().count()
+
+with (some, stuff):
+	pass
 
 '''
 

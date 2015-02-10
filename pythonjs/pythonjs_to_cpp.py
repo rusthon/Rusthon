@@ -20,13 +20,16 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			if atype.endswith('*'): atype = atype[:-1]
 			return 'new %s %s' %(atype, avalue)
 		else:
-			raise SyntaxError('TODO')
+			classname = node.args[0].func.id
+			args = [self.visit(arg) for arg in node.args[0].args ]
+			return '(new %s)->__init__(%s)' %(classname, ','.join(args))
 
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):
 		pythonjs_to_rust.RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._cpp = True
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
 		self._shared_pointers = True
+		self._noexcept = False
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')

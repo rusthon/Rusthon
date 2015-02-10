@@ -236,8 +236,28 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				self._shared_pointers = True
 				return '\n'.join(r)
 
+		elif isinstance(node.context_expr, ast.Tuple) or isinstance(node.context_expr, ast.List):
+			for elt in node.context_expr.elts:
+				if elt.id == 'pointers':
+					self._shared_pointers = False
+				elif elt.id == 'noexcept':
+					self._noexcept = True
+
+			r = []
+			for b in node.body:
+				a = self.visit(b)
+				if a: r.append(self.indent()+a)
+
+			for elt in node.context_expr.elts:
+				if elt.id == 'pointers':
+					self._shared_pointers = True
+				elif elt.id == 'noexcept':
+					self._noexcept = False
+
+			return '\n'.join(r)
+
 		else:
-			raise SyntaxError( 'invalid use of with')
+			raise SyntaxError( 'invalid use of with', node.context_expr)
 
 
 		for b in node.body:

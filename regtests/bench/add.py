@@ -1,7 +1,6 @@
 '''
 loop and add (integer)
 '''
-
 from time import clock
 
 class A:
@@ -37,12 +36,7 @@ class M:
 				w.iadd(self.f2(y, a,b,c, 4,5,6))
 		return w
 
-
 def main():
-	if PYTHON=='PYTHONJS':  ## about 25% faster with normal and javascript backends
-		pythonjs.configure( direct_operator='+' )
-		pass
-
 	m = M()
 	xsteps = 1000
 	ysteps = 100

@@ -4148,7 +4148,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				if a: writer.write(a)
 			writer.pull()
 
-		elif isinstance(node.context_expr, ast.Name):  ## assume that backend can support this
+		elif isinstance(node.context_expr, ast.Name) or isinstance(node.context_expr, ast.Tuple):  ## assume that backend can support this
 			writer.write('with %s:' %self.visit(node.context_expr))
 			writer.push()
 			for b in node.body:

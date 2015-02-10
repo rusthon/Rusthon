@@ -1381,7 +1381,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		args_generics = dict()
 		func_pointers = set()
 		arrays = dict()
-		noexcept = True  ## C++11
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None}
 
@@ -1583,14 +1582,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if is_method:
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
-						out.append( self.indent() + '%s noexcept {\n' % sig )
-						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
-						self._cpp_class_header.append(sig + ' noexcept;')
+						if self._noexcept:
+							out.append( self.indent() + '%s noexcept {\n' % sig )
+							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							self._cpp_class_header.append(sig + ' noexcept;')
+						else:
+							out.append( self.indent() + '%s {\n' % sig )
+							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							self._cpp_class_header.append(sig + ';')
 
 					else:
-						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
-						out.append( self.indent() + '%s noexcept {\n' % sig )
-						if not is_main: self._cheader.append( sig + ' noexcept;' )
+						if self._noexcept:
+							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							out.append( self.indent() + '%s noexcept {\n' % sig )
+							if not is_main: self._cheader.append( sig + ' noexcept;' )
+						else:
+							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							out.append( self.indent() + '%s {\n' % sig )
+							if not is_main: self._cheader.append( sig + ';' )
 
 				else:  ## rust ##
 					if is_method:
@@ -1604,15 +1613,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if is_method:
 						classname = self._class_stack[-1].name
 						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
-						out.append( self.indent() + '%s noexcept {\n' % sig  )
-
-						sig = 'void %s(%s)' % (node.name, ', '.join(args))
-						self._cpp_class_header.append(sig + ' noexcept;')
-
+						if self._noexcept:
+							out.append( self.indent() + '%s noexcept {\n' % sig  )
+							sig = 'void %s(%s)' % (node.name, ', '.join(args))
+							self._cpp_class_header.append(sig + ' noexcept;')
+						else:
+							out.append( self.indent() + '%s {\n' % sig  )
+							sig = 'void %s(%s)' % (node.name, ', '.join(args))
+							self._cpp_class_header.append(sig + ';')
 					else:
-						sig = 'void %s(%s)' %(node.name, ', '.join(args))
-						out.append( self.indent() + '%s noexcept {\n' % sig  )
-						if not is_main: self._cheader.append( sig + ' noexcept;' )
+						if self._noexcept:
+							sig = 'void %s(%s)' %(node.name, ', '.join(args))
+							out.append( self.indent() + '%s noexcept {\n' % sig  )
+							if not is_main: self._cheader.append( sig + ' noexcept;' )
+						else:
+							sig = 'void %s(%s)' %(node.name, ', '.join(args))
+							out.append( self.indent() + '%s {\n' % sig  )
+							if not is_main: self._cheader.append( sig + ';' )
 
 				else:         ## rust ##
 					if is_method:
@@ -2626,9 +2643,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## TODO self.writer.expression_stack for appending lines that will be inserted
 				## before each lines is normally written in visit_Expr,
 				## this way syntax like `f(SomeClass())` will work.
-				if node.value.func.id in self._classes:
-					classname = node.value.func.id
+				if node.value.func.id in self._classes or (node.value.func.id=='new' and isinstance(node.value.args[0],ast.Call) and not node.value.args[0].func.id.startswith('_') ):
+					if node.value.func.id=='new':
+						classname = node.value.args[0].func.id
+						value = self.visit(node.value.args[0])
+					else:
+						classname = node.value.func.id
+
 					self._known_instances[ target ] = classname
+
 					if self._cpp:
 
 						## make object on the stack, safe to use _ref_ in same block ##
