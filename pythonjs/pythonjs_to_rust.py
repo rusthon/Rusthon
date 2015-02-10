@@ -1156,12 +1156,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if op == '>>' and left == '__new__':
 			if self._cpp:
-				classname = node.right.func.id
-				if node.right.args:
-					args = ','.join([self.visit(arg) for arg in node.right.args])
-					return '(new %s)->__init__(%s)' %(classname, args)
+				if isinstance(node.right, ast.Call) and isinstance(node.right.func, ast.Name):
+					classname = node.right.func.id
+					if node.right.args:
+						args = ','.join([self.visit(arg) for arg in node.right.args])
+						return '(new %s)->__init__(%s)' %(classname, args)
+					else:
+						return '(new %s)' %classname
 				else:
-					return '(new %s)' %classname
+					raise SyntaxError(self.format_error(self.visit(node.right)))
 			else:
 				return ' new %s' %right
 
@@ -1192,18 +1195,27 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 					right = []
 					for elt in node.right.elts:
-						if isinstance(elt, ast.Num):
+						if isinstance(elt, ast.Num) and self._rust:
 							right.append( str(elt.n)+'i' )
 						else:
 							right.append( self.visit(elt) )
-					right = '(%s)' %','.join(right)
+
+					if self._rust:
+						right = '(%s)' %','.join(right)
+					elif self._cpp:
+						right = '{%s}' %','.join(right)
 
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
-						if T in go_types:
+						if self._cpp:
+							return ('std::vector<%s>*'%T, right)
+
+						elif self._rust:
 							#return '&mut vec!%s' %right
 							return 'Rc::new(RefCell::new(vec!%s))' %right
-						else:
+
+						elif self._go:
+							## DEPRECATED
 							self._catch_assignment = {'class':T}  ## visit_Assign catches this
 							return '&[]*%s%s' %(T, right)
 
@@ -1253,6 +1265,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
 				return '%s%s' %(node.left.args[0].s, right)
+			else:
+				return (left, right)  ## special case for new arrays
 
 
 		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':  ## deprecated
@@ -1260,9 +1274,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':  ## deprecated
 			right += '[_id_]'
 
-		#if op=='<<':
-		#	raise SyntaxError(type(node.left))
-		#	raise SyntaxError(left+right)
+		if op=='<<':
+			#raise SyntaxError(type(node.left))
+			raise SyntaxError(left+right)
 		return '(%s %s %s)' % (left, op, right)
 
 	def visit_ListComp(self, node):
@@ -2405,7 +2419,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					## std::shared_ptr< std::vector<std::shared_ptr<std::vector<T>>> >
 
 					if isinstance(node.value.left.left, ast.Name) and node.value.left.left.id=='__go__array__':
-						assert self._shared_pointers  ## always require shared pointers?
 
 						T = self.visit(node.value.left.right.args[0])
 						if T=='string': T = 'std::string'
@@ -2722,7 +2735,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			if self._cpp:
 				if isclass:
-					assert self._shared_pointers
 					classname = node.value.func.id
 					self._known_instances[ target ] = classname
 					## TODO move get-args-and-kwargs to its own helper function

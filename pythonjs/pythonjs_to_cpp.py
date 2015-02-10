@@ -10,7 +10,17 @@ import pythonjs_to_rust
 
 class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def _visit_call_helper_new(self, node):
-		raise SyntaxError( 'TODO' )
+		assert self._cpp
+		assert not self._shared_pointers
+		if isinstance(node.args[0], ast.BinOp):
+			a = self.visit(node.args[0])
+			if type(a) is not tuple:
+				raise SyntaxError(a)
+			atype, avalue = a
+			if atype.endswith('*'): atype = atype[:-1]
+			return 'new %s %s' %(atype, avalue)
+		else:
+			raise SyntaxError('TODO')
 
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):
 		pythonjs_to_rust.RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)

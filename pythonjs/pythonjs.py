@@ -497,7 +497,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 										T.append('>>')
 								else:
 									for i in range(dims):
-										T.append('*>')
+										if i: T.append('*>')
+										else: T.append('>')
 									T.append('*')
 
 								args_typedefs[ key.arg ] = ''.join(T)
@@ -600,6 +601,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 							T.append('std::unique_ptr<std::vector<')
 						else:
 							T.append('std::shared_ptr<std::vector<')
+
 					T.append(options['returns_array_type'])
 
 					if self._shared_pointers:
@@ -607,7 +609,8 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 							T.append('>>')
 					else:
 						for i in range(options['returns_array_dim']):
-							T.append('*>')
+							if i: T.append('*>')
+							else: T.append('>')
 						T.append('*')
 					options['returns'] = ''.join(T)
 				elif self._rust:
