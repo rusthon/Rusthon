@@ -208,6 +208,7 @@ def new_module():
 		'verilog' : [],
 		'bash'    : [],
 		'java'    : [],
+		'nim'     : [],
 		'javascript':[],
 	}
 
@@ -267,6 +268,23 @@ def build( modules, module_path, datadirs=None ):
 	tagged = {}
 
 	java2rusthon = []
+
+	if modules['nim']:
+		nimbin = os.path.expanduser('~/Nim/bin/nim')
+		if os.path.isfile(nimbin):
+			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
+			for mod in mods_sorted_by_index:
+				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
+				open(tmpfile, 'wb').write( mod['code'] )
+				cmd = [nimbin, 'compile', '--app:staticlib', tmpfile]
+				nim = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempfile.gettempdir())
+				nim.wait()
+				if nim.returncode:
+					raise SyntaxError(nim.stdout.read())
+				else:
+					raise RuntimeError('TODO')
+		else:
+			print('WARNING: can not find nim compiler')
 
 	if modules['java']:
 		mods_sorted_by_index = sorted(modules['java'], key=lambda mod: mod.get('index'))
