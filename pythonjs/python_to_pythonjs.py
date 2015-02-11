@@ -2639,7 +2639,11 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				self._in_assign_target = True
 				method = self.visit( node.func )
 				self._in_assign_target = False
-				if anode.attr == 'get' and len(args) > 0 and len(args) <= 2:
+
+				if anode.attr == 'update' and len(args) == 1:
+					return '__jsdict_update(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+
+				elif anode.attr == 'get' and len(args) > 0 and len(args) <= 2:
 					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				elif anode.attr == 'set' and len(args)==2:

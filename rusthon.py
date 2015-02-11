@@ -508,11 +508,10 @@ def save_tar( package, path='build.tar' ):
 	tar = tarfile.TarFile(path,"w")
 
 	if package['datadirs']:
-		for p in package['datadirs']:
-			for name in os.listdir(p):
-				ti = tarfile.TarInfo(name=os.path.join(p,name))
-				s = open(os.path.join(p,name), 'rb')
-				tar.addfile(tarinfo=ti, fileobj=s)
+		for datadir in package['datadirs']:
+			for name in os.listdir(datadir):
+				a = os.path.join(datadir,name)
+				tar.add(a)  ## files and folders
 
 	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv'}
 	for lang in 'rust c++ go javascript python html verilog'.split():

@@ -690,3 +690,21 @@ var __jsdict_pop = function(ob, key, _kwargs_)
 		}
 	}
 }
+
+var __jsdict_update = function(ob, other)
+{
+	
+	if (typeof(ob["update"])==="function")
+	{
+		return ob.update(other);
+	}
+	else
+	{
+				var __iter11 = __object_keys__(other);
+		if (! (__iter11 instanceof Array || typeof __iter11 == "string" || __is_typed_array(__iter11) || __is_some_array(__iter11) )) { __iter11 = __object_keys__(__iter11) }
+		for (var __i11=0; __i11 < __iter11.length; __i11++) {
+			var key = __iter11[ __i11 ];
+			ob[key] = other[key];
+		}
+	}
+}

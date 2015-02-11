@@ -366,3 +366,10 @@ with javascript:
 		else:  ## PythonJS object instance ##
 			## this works because instances from PythonJS are created using Object.create(null) ##
 			return JS("ob.pop(key, _default)")
+
+	def __jsdict_update(ob, other):
+		if typeof(ob['update'])=='function':
+			return inline('ob.update(other)')
+		else:
+			for key in __object_keys__(other):
+				ob[key]=other[key]
