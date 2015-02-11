@@ -59,7 +59,7 @@ def transform_source( source, strip=False ):
 	output_post = None
 	asm_block = False
 	asm_block_indent = 0
-
+	indent_unit = '' # indent sensitive, 
 	for line in source.splitlines():
 		if line.strip().startswith('#'):
 			continue
@@ -298,13 +298,14 @@ def transform_source( source, strip=False ):
 				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
-		indent = 0
-		for u in c:
-			if u == ' ' or u == '\t':
-				indent += 1
-			else:
-				break
-		indent = '\t'*indent
+		indent = len(c) - len(c.lstrip())
+	        if indent_unit == '' and indent:
+	            indent_unit = c[0]
+	        elif c:
+	            if indent and c[0] != indent_unit:
+	                raise TabError('inconsistent use of tabs and spaces in indentation in line:', str(i+1) + '\n'+ c)
+	
+	        indent = indent_unit*indent
 
 		if ' def(' in c or ' def (' in c:
 			if ' def(' in c:
