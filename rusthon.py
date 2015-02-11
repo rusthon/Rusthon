@@ -206,6 +206,8 @@ def new_module():
 		'go'      : [],
 		'html'    : [],
 		'verilog' : [],
+		'bash'    : [],
+		'java'    : [],
 		'javascript':[],
 	}
 
@@ -264,6 +266,16 @@ def build( modules, module_path, datadirs=None ):
 	go_main = {'name':'main.go', 'source':[]}
 	tagged = {}
 
+	java2rusthon = []
+
+	if modules['java']:
+		mods_sorted_by_index = sorted(modules['java'], key=lambda mod: mod.get('index'))
+		for mod in mods_sorted_by_index:
+			j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+			stdout,stderr  = j2py.communicate( mod['code'] )
+			if stderr: raise RuntimeError(stderr)
+			java2rusthon.append( stdout.replace('    ', '\t') )
+
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
@@ -285,6 +297,10 @@ def build( modules, module_path, datadirs=None ):
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
+				if java2rusthon:
+					script = '\n'.join(java2rusthon) + '\n' + script
+					java2rusthon = None
+
 				pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
 				pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
 				modules['c++'].append( {'code':pak['main'], 'index': index})  ## gets compiled below

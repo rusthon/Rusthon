@@ -502,6 +502,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			## bisect library is part of the stdlib,
 			## in pythonjs it is a builtin function defined in builtins.py
 			pass
+		elif node.module == '__future__':
+			pass
 
 		elif node.module in lib:
 			imported = False
