@@ -265,8 +265,8 @@ def build( modules, module_path, datadirs=None ):
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[], 'verilog':[], 'datadirs':datadirs}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
-	tagged = {}
-
+	tagged  = {}
+	link    = []
 	java2rusthon = []
 
 	if modules['nim']:
@@ -275,14 +275,13 @@ def build( modules, module_path, datadirs=None ):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
 				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
-				open(tmpfile, 'wb').write( mod['code'] )
-				cmd = [nimbin, 'compile', '--app:staticlib', tmpfile]
-				nim = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=tempfile.gettempdir())
-				nim.wait()
-				if nim.returncode:
-					raise SyntaxError(nim.stdout.read())
-				else:
-					raise RuntimeError('TODO')
+				open(tmpfile, 'wb').write( mod['code'].replace('\t', '  ') )
+				cmd = [nimbin, 'compile', '--app:staticlib', 'rusthon_build.nim']
+				subprocess.check_call(cmd, cwd=tempfile.gettempdir())
+				libname = 'rusthon_build.nim'
+				link.append(libname)
+				output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+
 		else:
 			print('WARNING: can not find nim compiler')
 
@@ -467,7 +466,6 @@ def build( modules, module_path, datadirs=None ):
 		mod['binary'] = tempfile.gettempdir() + '/rusthon-go-build'
 		output['executeables'].append(tempfile.gettempdir() + '/rusthon-go-build')
 
-	link = []
 
 	if modules['rust']:
 		source = []
@@ -526,6 +524,7 @@ def build( modules, module_path, datadirs=None ):
 			cmd.append('-L' + tempfile.gettempdir() + '/.')
 			for libname in link:
 				cmd.append('-l'+libname)
+		print(' '.join(cmd))
 		subprocess.check_call( cmd )
 		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
 		output['executeables'].append(tempfile.gettempdir() + '/rusthon-c++-bin')
