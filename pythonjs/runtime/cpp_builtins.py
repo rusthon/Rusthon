@@ -11,6 +11,8 @@ std::unique_ptr<T> _make_unique( Args&& ...args )
     return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
 }
 
+double __double__(int a) { return (double)a; }
+
 int sum(std::shared_ptr<std::vector<int>> arr) {
 	int s = 0;
 	std::for_each(arr->begin(),arr->end(),[&](int n){s += n;});

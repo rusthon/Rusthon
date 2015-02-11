@@ -165,7 +165,7 @@ rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 
 node_runnable = runnable("node --help")
 
-shedskin_runnable = runnable("shedskin --help")
+#shedskin_runnable = runnable("shedskin --help")
 
 
 ## sudo npm install nodewebkit -g
@@ -357,13 +357,17 @@ def in_benchmark():
 def start_benchmark( name ):
     if not show_details: print('starting benchmark:', name)
     global _benchmark
-    _benchmark = [
-        'font=Helvetica',
-        'fontsz=12',
-        '=color_per_datum',
-        'yformat=%g',
-        'ylabel=seconds'
-    ]
+    if name.endswith('-typed.py'):
+        untypedname = name.split('-typed.py')[0] + '.py'
+        _benchmark = open('/tmp/%s.perf' %untypedname, 'rb').read().decode('utf-8').splitlines()
+    else:
+        _benchmark = [
+            'font=Helvetica',
+            'fontsz=12',
+            '=color_per_datum',
+            'yformat=%g',
+            'ylabel=seconds'
+        ]
 
 def end_benchmark( name ):
     print('ending benchmark:', name)
@@ -1168,14 +1172,16 @@ def run():
     errors = []
     total_errors = {}
     for filename in files():
-        if filename.startswith('./bench/'):
-            start_benchmark( os.path.split(filename)[-1] )
 
         if show_details:
             if os.path.abspath(filename) not in argv:
                 continue
             print('*'*77)
             print(filename)
+
+        if filename.startswith('./bench/'):
+            start_benchmark( os.path.split(filename)[-1] )
+
         sum_errors = run_test_on(filename)
         if sum_errors:
             errors.append(filename)

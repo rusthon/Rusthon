@@ -797,8 +797,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 		###########################################
-
-		if fname == 'clock' and len(node.args)==0:
+		if fname == 'double' and self._cpp:
+			return '__double__(%s)' %self.visit(node.args[0])
+		elif fname == 'clock' and len(node.args)==0:
 			## note in c++ std::clock returns clock ticks, not time
 			return '__clock__()'
 

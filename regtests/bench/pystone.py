@@ -16,7 +16,7 @@ def main():
 	a = pystones( LOOPS )
 	benchtime = a[0]
 	stones = a[1]
-	print( benchtime )
+	print( stones )
 	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
 	#print("#This machine benchmarks at pystones/second: %s" %stones)
 
@@ -78,9 +78,6 @@ def Proc0(loops):
 	global PtrGlbNext
 
 	starttime = clock()
-	for i in range(loops):
-		pass
-	nulltime = clock() - starttime
 
 	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp=0 )
 	PtrGlb = Record(
@@ -93,8 +90,6 @@ def Proc0(loops):
 
 	String1Loc = "DHRYSTONE PROGRAM, 1'ST STRING"
 	Array2Glob[8][7] = 10
-
-	starttime = clock()
 
 	for i in range(loops):
 		Proc5()
@@ -120,7 +115,7 @@ def Proc0(loops):
 		IntLoc2 = 7 * (IntLoc3 - IntLoc2) - IntLoc1
 		IntLoc1 = Proc2(IntLoc1)
 
-	benchtime = clock() - starttime - nulltime
+	benchtime = clock() - starttime
 	if benchtime == 0.0:
 		loopsPerBenchtime = 0.0
 	else:

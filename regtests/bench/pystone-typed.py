@@ -4,6 +4,21 @@ static typed pystone
 
 from time import clock
 
+TRUE = 1
+FALSE = 0
+IntGlob = 0
+BoolGlob = FALSE
+Char1Glob = '\0'
+Char2Glob = '\0'
+Ident1 = 1
+Ident2 = 2 
+Ident3 = 3
+Ident4 = 4
+Ident5 = 5
+let PtrGlb     : Record = None
+let PtrGlbNext : Record = None
+
+
 class Record:
 
 	def __init__(self, PtrComp:Record = None, Discr = 0, EnumComp = 0, IntComp = 0, StringComp = '\0'):
@@ -14,29 +29,16 @@ class Record:
 		self.StringComp = StringComp
 
 	def copy(self) ->Record:
-		r= Record(
-					PtrComp=self.PtrComp,
-					Discr=self.Discr, 
-					EnumComp=self.EnumComp,
-					IntComp=self.IntComp, 
-					StringComp=self.StringComp
-				)
+		r = Record(
+			PtrComp=self.PtrComp,
+			Discr=self.Discr, 
+			EnumComp=self.EnumComp,
+			IntComp=self.IntComp, 
+			StringComp=self.StringComp
+		)
 		return r
 
-TRUE = 1
-FALSE = 0
-IntGlob = 0
-BoolGlob = FALSE
-Char1Glob = '\0'
-Char2Glob = '\0'
-let PtrGlb     : Record = None
-let PtrGlbNext : Record = None
 
-Ident1 = 1
-Ident2 = 2 
-Ident3 = 3
-Ident4 = 4
-Ident5 = 5
 
 def create_array1glob(n:int) -> []int:
 	comp = []int( 0 for i in range(51) )
@@ -180,6 +182,7 @@ def Proc0(loops:int):
 	global PtrGlbNext
 
 	PtrGlbNext = Record( PtrComp=None, Discr=0, EnumComp=0, IntComp=0, StringComp='\0' )
+
 	PtrGlb = Record(
 		PtrComp=PtrGlbNext, 
 		Discr=Ident1, 
@@ -221,22 +224,12 @@ def Proc0(loops:int):
 
 
 def pystones(loops:int):
-
 	starttime = clock()
-	for j in range(loops):
-		pass
-	nulltime = clock() - starttime
-	starttime = clock()
-
 	Proc0(loops)
-
-	benchtime = clock() - starttime - nulltime
-	#benchtime = clock() - starttime
+	benchtime = clock() - starttime
 	#print(benchtime)
-	print ('std::chrono::duration_cast<std::chrono::microseconds>')clock().count()
-
-	#loopsPerBenchtime = (loops / benchtime)
-
+	loopsPerBenchtime = ( double(loops) / benchtime)
+	print(loopsPerBenchtime)
 	#print("#Pystone(%s) time for %s passes = %s" % (__version__, LOOPS, benchtime))
 	#print("#This machine benchmarks at pystones/second: %s" %stones)
 
