@@ -132,7 +132,11 @@ def run_old_pypy_test_on(filename):
 
 old_pypy_runnable = pypy_runnable = False
 old_pypy_exe = pypy_exe = None
-if os.path.isfile( os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy') ):
+if os.path.isfile( os.path.expanduser('~/pypy-2.5.0-linux64/bin/pypy') ):
+    pypy_runnable = True
+    pypy_exe = os.path.expanduser('~/pypy-2.5.0-linux64/bin/pypy')
+    run_pypy_test_on.__doc__ = 'PyPy 2.5.0'
+elif os.path.isfile( os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy') ):
     pypy_runnable = True
     pypy_exe = os.path.expanduser('~/pypy-2.3.1-linux64/bin/pypy')
     run_pypy_test_on.__doc__ = 'PyPy 2.3.1'
@@ -160,6 +164,9 @@ if os.path.isdir( os.path.expanduser('~/webclgl') ):
 rhino_runnable = '--rhino' in sys.argv and runnable("rhino -e 'quit()'")
 
 node_runnable = runnable("node --help")
+
+shedskin_runnable = runnable("shedskin --help")
+
 
 ## sudo npm install nodewebkit -g
 ## nodewebkit npm package is broken? https://github.com/shama/nodewebkit/issues/31
