@@ -194,7 +194,7 @@ with javascript:
 				if x == a:
 					return True
 			return False
-		elif ob.__contains__:
+		elif ob and ob.__contains__:
 			return ob.__contains__(a)
 		elif instanceof(ob, Object) and Object.hasOwnProperty.call(ob, a):
 			return True

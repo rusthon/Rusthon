@@ -380,7 +380,7 @@ var __contains__ = function(ob, a)
 			}
 			else
 			{
-				if (ob.__contains__)
+				if (ob && ob.__contains__)
 				{
 					return ob.__contains__(a);
 				}
