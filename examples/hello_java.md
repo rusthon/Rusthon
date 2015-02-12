@@ -1,5 +1,6 @@
 Java Frontend
 --------------
+Clone and install:
 https://github.com/rusthon/java2python
 
 @install-script.sh
@@ -10,6 +11,10 @@ cd antlr-3.1.3/runtime/Python/
 sudo python setup.py install
 ```
 
+Java
+-----
+Some hand written Java source code, auto converted to Rusthon's syntax,
+and merged with below.
 ```java
 
 public class HelloWorld {
@@ -26,7 +31,8 @@ public class HelloWorld {
 
 Rusthon
 ---------------------------
-
+The above Java code is converted to Rusthon, and merged with this code.
+TODO syntax for calling class methods, so you dont have to use `inline()`.
 ```rusthon
 #backend:c++
 
