@@ -269,14 +269,17 @@ def build( modules, module_path, datadirs=None ):
 	link    = []
 	java2rusthon = []
 
+	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
+
 	if modules['nim']:
+		libdl = True
 		nimbin = os.path.expanduser('~/Nim/bin/nim')
 		if os.path.isfile(nimbin):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
 				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
 				open(tmpfile, 'wb').write( mod['code'].replace('\t', '  ') )
-				cmd = [nimbin, 'compile', '--app:staticlib', 'rusthon_build.nim']
+				cmd = [nimbin, 'compile', '--passL:-ldl', '--noMain', '--app:staticlib', 'rusthon_build.nim']
 				subprocess.check_call(cmd, cwd=tempfile.gettempdir())
 				libname = 'rusthon_build.nim'
 				link.append(libname)
@@ -522,6 +525,8 @@ def build( modules, module_path, datadirs=None ):
 		if link:
 			cmd.append('-static')
 			cmd.append('-L' + tempfile.gettempdir() + '/.')
+			if libdl:
+				cmd.append('-ldl')
 			for libname in link:
 				cmd.append('-l'+libname)
 		print(' '.join(cmd))
