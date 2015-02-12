@@ -1553,12 +1553,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			args.append( '__vargs__ : Vec<%s>' %args_typedefs[starargs])
 			node._arg_names.append( starargs )
 
-		node._args_signature = ','.join(args)
-
-		####
 		prefix = ''
 		if options['classmethod']:
 			prefix = 'static '
+			if args and 'object ' in args[0]:
+				args = args[1:]
+
+
+		node._args_signature = ','.join(args)
+
+		####
 		if is_method:
 			assert self._class_stack
 			method = '(self *%s)  ' %self._class_stack[-1].name
@@ -1583,7 +1587,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			if return_type:
 				if self._cpp: ## c++ ##
-					if is_method:
+					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
 						if self._noexcept:
@@ -1614,7 +1618,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 
 				if self._cpp: ## c++ ##
-					if is_method:
+					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
 						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
 						if self._noexcept:

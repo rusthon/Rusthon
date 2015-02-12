@@ -13,9 +13,12 @@ sudo python setup.py install
 ```java
 
 public class HelloWorld {
+    public static void test() {
+        System.out.println("Hello, World test");
+    }
 
-    public static void main(String[] args) {
-        System.out.println("Hello, World");
+    public static void foo(String msg) {
+        System.out.println(msg);
     }
 
 }
@@ -28,8 +31,8 @@ Rusthon
 #backend:c++
 
 def main():
-	args = []string('x', 'y')
-	HelloWorld.main( args )
-	print('hello from rusthon')
+	inline('HelloWorld::test()')
+	s = 'hello from rusthon'
+	inline('HelloWorld::foo(s)')
 
 ```
