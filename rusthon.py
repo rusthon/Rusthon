@@ -279,11 +279,30 @@ def build( modules, module_path, datadirs=None ):
 			for mod in mods_sorted_by_index:
 				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
 				open(tmpfile, 'wb').write( mod['code'].replace('\t', '  ') )
-				cmd = [nimbin, 'compile', '--passL:-ldl', '--noMain', '--app:staticlib', 'rusthon_build.nim']
+				#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
+				cmd = [
+					nimbin, 
+					'compile', 
+					'--noMain', 
+					'--compileOnly',
+					'--genScript',
+					'--app:staticlib', 
+					'rusthon_build.nim',
+				]
 				subprocess.check_call(cmd, cwd=tempfile.gettempdir())
-				libname = 'rusthon_build.nim'
-				link.append(libname)
-				output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+
+				## staticlib broken in nim? missing dlopen
+				#libname = 'rusthon_build.nim'
+				#link.append(libname)
+				#output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+
+				## get source from nim cache ##
+				nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
+				nim_stdlib = open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
+				nim_code   = open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
+
+				modules['c'].append( {'code':nim_stdlib+'\n'+nim_code, 'index':mod['index']})  ## gets compiled below
+
 
 		else:
 			print('WARNING: can not find nim compiler')
