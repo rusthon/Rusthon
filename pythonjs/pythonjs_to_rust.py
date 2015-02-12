@@ -2026,7 +2026,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				return '%s.borrow_mut().%s' % (name, attr)
 
 		elif self._cpp:
-			return '%s->%s' % (name, attr)  ## always deference shared pointer
+			if name in self._classes and not isinstance(parent_node, ast.Attribute):
+				return '%s::%s' % (name, attr)
+			else:
+				return '%s->%s' % (name, attr)
 
 		else:
 			return '%s.%s' % (name, attr)

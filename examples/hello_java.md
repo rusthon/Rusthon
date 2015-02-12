@@ -32,13 +32,11 @@ public class HelloWorld {
 Rusthon
 ---------------------------
 The above Java code is converted to Rusthon, and merged with this code.
-TODO syntax for calling class methods, so you dont have to use `inline()`.
 ```rusthon
 #backend:c++
 
 def main():
-	inline('HelloWorld::test()')
-	s = 'hello from rusthon'
-	inline('HelloWorld::foo(s)')
+	HelloWorld.test()
+	HelloWorld.foo("hi java")
 
 ```
