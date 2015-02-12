@@ -274,6 +274,7 @@ def build( modules, module_path, datadirs=None ):
 	if modules['nim']:
 		libdl = True
 		nimbin = os.path.expanduser('~/Nim/bin/nim')
+		niminclude = os.path.expanduser('~/Nim/lib')
 		if os.path.isfile(nimbin):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
@@ -283,12 +284,16 @@ def build( modules, module_path, datadirs=None ):
 				cmd = [
 					nimbin, 
 					'compile', 
+					'--header',
 					'--noMain', 
+					'--noLinking',
 					'--compileOnly',
 					'--genScript',
 					'--app:staticlib', 
 					'rusthon_build.nim',
 				]
+				print('-------- compile nim program -----------')
+				print(' '.join(cmd))
 				subprocess.check_call(cmd, cwd=tempfile.gettempdir())
 
 				## staticlib broken in nim? missing dlopen
@@ -301,9 +306,15 @@ def build( modules, module_path, datadirs=None ):
 				nim_stdlib = open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
 				nim_code   = open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
 
-				modules['c'].append( {'code':nim_stdlib+'\n'+nim_code, 'index':mod['index']})  ## gets compiled below
-
-
+				## gets compiled below
+				cfg = {
+					'link-dirs' :[nimcache, niminclude], 
+					'build-dirs':[nimcache],
+					'index'    : mod['index'],
+					#'code'     : '\n'.join([nim_stdlib, nim_code])
+					'code'     : open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
+				}
+				modules['c'].append( cfg )
 		else:
 			print('WARNING: can not find nim compiler')
 
@@ -511,21 +522,48 @@ def build( modules, module_path, datadirs=None ):
 			output['executeables'].append(tempfile.gettempdir() + '/rusthon-bin')
 
 	if modules['c']:
-		libname = 'rusthon-clib%s' %len(output['c'])
-		link.append(libname)
-		source = []
+		source   = []
+		cinclude = []
+		cbuild   = []
 		mods_sorted_by_index = sorted(modules['c'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
-			source.append( mod['code'] )
+			if 'link-dirs' in mod:
+				cinclude.extend(mod['link-dirs'])
+			if 'build-dirs' in mod:
+				for bdir in mod['build-dirs']:
+					for fname in os.listdir(bdir):
+						if fname.endswith('.c'):
+							cbuild.append(os.path.join(bdir,fname))
 
-		tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
-		data = '\n'.join(source)
-		open(tmpfile, 'wb').write( data )
-		cmd = ['gcc', '-c', tmpfile, '-o', tempfile.gettempdir() + '/'+libname+'.o' ]
-		subprocess.check_call( cmd )
-		cmd = ['ar', 'rcs', tempfile.gettempdir() + '/lib'+libname+'.a', tempfile.gettempdir() + '/'+libname+'.o']
-		subprocess.check_call( cmd )
-		output['c'].append({'source':data, 'staticlib':libname+'.a'})
+			if 'code' in mod and mod['code']:
+				source.append( mod['code'] )
+			else:
+				## module must contain a build config
+				raise RuntimeError('missing code')
+
+		if source:
+			libname = 'default-clib%s' %len(output['c'])
+			link.append(libname)
+			tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
+			data = '\n'.join(source)
+			open(tmpfile, 'wb').write( data )
+			cmd = ['gcc']
+			for idir in cinclude:
+				cmd.append('-I'+idir)
+
+			cmd.extend(['-c', tmpfile])
+			if cbuild:
+				cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
+
+			cmd.extend(['-o', tempfile.gettempdir() + '/'+libname+'.o' ])
+
+			print('========== compiling C library =========')
+			print(' '.join(cmd))
+			subprocess.check_call( cmd )
+			print('========== ar : staticlib ==========')
+			cmd = ['ar', 'rcs', tempfile.gettempdir() + '/lib'+libname+'.a', tempfile.gettempdir() + '/'+libname+'.o']
+			subprocess.check_call( cmd )
+			output['c'].append({'source':data, 'staticlib':libname+'.a'})
 
 
 	if modules['c++']:
@@ -548,6 +586,9 @@ def build( modules, module_path, datadirs=None ):
 				cmd.append('-ldl')
 			for libname in link:
 				cmd.append('-l'+libname)
+
+		print('========== g++ : compile main ==========')
+
 		print(' '.join(cmd))
 		subprocess.check_call( cmd )
 		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
