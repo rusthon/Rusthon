@@ -54,7 +54,7 @@ def get_indent(s):
 			break
 	return ''.join(indent)
 
-def transform_source( source, strip=False ):
+def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 	output = []
 	output_post = None
 	asm_block = False
@@ -282,30 +282,32 @@ def transform_source( source, strip=False ):
 		#	output.append( '@expression(%s)' %a.strip())
 		#	c = 'def __NAMELESS__(' + b
 
+		indent = []
+		for char in c:
+			if char in __whitespace:
+				indent.append( char )
+			else:
+				break
+		indent = ''.join(indent)
+
+
 		if ' except ' in c and ':' in c:  ## PEP 463 - exception expressions
 			s = c.split(' except ')
 			if len(s) == 2 and '=' in s[0] and ':' in s[1]:
-				indent = []
-				for char in s[0]:
-					if char in __whitespace:
-						indent.append( char )
-					else:
-						break
-				indent = ''.join(indent)
 				s0 = s[0].strip()
 				output.append('%stry: %s' %(indent, s0) )
 				exception, default = s[1].split(':')
 				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
-		indent = len(c) - len(c.lstrip())
-	        if indent_unit == '' and indent:
-	            indent_unit = c[0]
-	        elif c:
-	            if indent and c[0] != indent_unit:
-	                raise TabError('inconsistent use of tabs and spaces in indentation in line:', str(i+1) + '\n'+ c)
-	
-	        indent = indent_unit*indent
+		if not allow_tabs_and_spaces:  ## TODO fixme
+			indent = len(c) - len(c.lstrip())
+			if indent_unit == '' and indent:
+				indent_unit = c[0]
+			elif c:
+				if indent and c[0] != indent_unit:
+					raise TabError('inconsistent use of tabs and spaces in indentation in line:', str(i+1) + '\n'+ c)
+				indent = indent_unit*indent
 
 		if ' def(' in c or ' def (' in c:
 			if ' def(' in c:

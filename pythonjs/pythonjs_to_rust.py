@@ -1383,7 +1383,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		func_pointers = set()
 		arrays = dict()
 
-		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None}
+		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
 
 		for decor in node.decorator_list:
 			self._visit_decorator(
@@ -1556,6 +1556,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		node._args_signature = ','.join(args)
 
 		####
+		prefix = ''
+		if options['classmethod']:
+			prefix = 'static '
 		if is_method:
 			assert self._class_stack
 			method = '(self *%s)  ' %self._class_stack[-1].name
@@ -1585,20 +1588,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
 						if self._noexcept:
 							out.append( self.indent() + '%s noexcept {\n' % sig )
-							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
 							self._cpp_class_header.append(sig + ' noexcept;')
 						else:
 							out.append( self.indent() + '%s {\n' % sig )
-							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
 							self._cpp_class_header.append(sig + ';')
 
 					else:
 						if self._noexcept:
-							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
 							out.append( self.indent() + '%s noexcept {\n' % sig )
 							if not is_main: self._cheader.append( sig + ' noexcept;' )
 						else:
-							sig = '%s %s(%s)' % (return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
 							out.append( self.indent() + '%s {\n' % sig )
 							if not is_main: self._cheader.append( sig + ';' )
 
@@ -1616,19 +1619,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
 						if self._noexcept:
 							out.append( self.indent() + '%s noexcept {\n' % sig  )
-							sig = 'void %s(%s)' % (node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
 							self._cpp_class_header.append(sig + ' noexcept;')
 						else:
 							out.append( self.indent() + '%s {\n' % sig  )
-							sig = 'void %s(%s)' % (node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
 							self._cpp_class_header.append(sig + ';')
 					else:
 						if self._noexcept:
-							sig = 'void %s(%s)' %(node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' %(prefix, node.name, ', '.join(args))
 							out.append( self.indent() + '%s noexcept {\n' % sig  )
 							if not is_main: self._cheader.append( sig + ' noexcept;' )
 						else:
-							sig = 'void %s(%s)' %(node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' %(prefix, node.name, ', '.join(args))
 							out.append( self.indent() + '%s {\n' % sig  )
 							if not is_main: self._cheader.append( sig + ';' )
 

@@ -478,7 +478,10 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		if func_pointers is None: func_pointers = set()
 		if arrays is None: arrays = dict()
 
-		if isinstance(decor, ast.Name) and decor.id == 'property':
+		if isinstance(decor, ast.Name) and decor.id == 'classmethod':
+			options['classmethod'] = True
+
+		elif isinstance(decor, ast.Name) and decor.id == 'property':
 			## a function is marked as a getter with `@property`
 			options['getter'] = True
 		elif isinstance(decor, ast.Attribute) and isinstance(decor.value, ast.Name) and decor.attr == 'setter':

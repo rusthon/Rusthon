@@ -5,6 +5,7 @@ import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
 import pythonjs.pythonjs_to_cpp
 import pythonjs.pythonjs_to_verilog
+import pythonjs.typedpython as typedpython
 import tempfile
 
 def compile_js( script, module_path, directjs=False, directloops=False ):
@@ -321,10 +322,21 @@ def build( modules, module_path, datadirs=None ):
 	if modules['java']:
 		mods_sorted_by_index = sorted(modules['java'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
-			j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+			#j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+			j2pybin = 'j2py'
+			if os.path.isfile(os.path.expanduser('~/java2python/bin/j2py')):
+				j2pybin = os.path.expanduser('~/java2python/bin/j2py')
+			print('======== %s : translate to rusthon' %j2pybin)
+			j2py = subprocess.Popen([j2pybin, '--rusthon'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 			stdout,stderr  = j2py.communicate( mod['code'] )
 			if stderr: raise RuntimeError(stderr)
-			java2rusthon.append( stdout.replace('    ', '\t') )
+			if j2py.returncode: raise RuntimeError('j2py error!')
+			print(stdout)
+			print('---------------------------------')
+			rcode = typedpython.transform_source(stdout.replace('    ', '\t'))
+			print(rcode)
+			print('---------------------------------')
+			java2rusthon.append( rcode )
 
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
@@ -552,6 +564,7 @@ def build( modules, module_path, datadirs=None ):
 				cmd.append('-I'+idir)
 
 			cmd.extend(['-c', tmpfile])
+			#cmd.extend([tmpfile])
 			if cbuild:
 				cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
 

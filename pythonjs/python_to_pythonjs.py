@@ -330,7 +330,10 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			except SyntaxError:
 				raise SyntaxError(source)
 		else:
-			tree = ast.parse( source )
+			try:
+				tree = ast.parse( source )
+			except:
+				raise SyntaxError(source)
 
 		self._generator_function_nodes = collect_generator_functions( tree )
 
@@ -3052,8 +3055,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
-			if isinstance(decorator, Name) and decorator.id == 'gpu':  ## DEPRECATED  TODO
-				gpu = True
+			if isinstance(decorator, Name) and decorator.id == 'classmethod':
+				writer.write('@classmethod')
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
 				## js function expressions are now the default, because hoisting is not pythonic.
