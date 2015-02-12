@@ -1,10 +1,16 @@
 Java Frontend
 --------------
-Clone and install:
-https://github.com/rusthon/java2python
+Requires:
+* https://github.com/rusthon/java2python
+* Antlr 3.1.3 for Python2
 
 @install-script.sh
 ```bash
+cd
+git clone https://github.com/rusthon/java2python.git
+cd java2python
+sudo python setup.py install
+cd
 wget http://www.antlr3.org/download/antlr-3.1.3.tar.gz
 tar xfz antlr-3.1.3.tar.gz
 cd antlr-3.1.3/runtime/Python/
