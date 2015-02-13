@@ -2193,6 +2193,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				if isinstance(target.value, ast.Name) and target.value.id == '__let__':
 					## pass along special __let__ to the backend pass
 					code = '__let__[%s : %s]' %(self.visit(target.slice.upper), self.visit(target.slice.lower))
+				elif self._with_cpp or self._with_rust or self._with_go:
+					code = '%s[%s]=%s' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 				else:
 					code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 

@@ -45,6 +45,13 @@ def somefunc():
 	print('len h:', len(h))
 	for i in h: print i
 
+	print('---slice assignment---')
+	h.push_back(1000)
+	h.push_back(1000)
+	a[:2] = h
+	for i in a: print i
+	print('len a:', len(a))
+
 	print('somefunc done')
 
 def main():

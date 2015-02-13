@@ -733,7 +733,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			iname = iter.split('.')[0]
 			if self._cpp:
 				assert iname in self._known_maps  ## TODO always assume its a map? and _ref_?
-				lines.append('for (auto &_pair_%s : _ref_%s) {' %(key, iter))
+				lines.append('for (auto &_pair_%s : *%s) {' %(key, iter))
 				lines[-1] += '  auto %s = _pair_%s.first;' %(key, key)
 				lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
 
@@ -746,11 +746,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			arrname = iter.split('.')[0]
 			if node.iter.is_ref:
 				if self._cpp:
-					if arrname in self._known_arrays:  ## TODO get rid of _ref_ usage here
-						#lines.append('for (auto &%s: (*%s)) {' %(target, iter))
-						lines.append('for (auto &%s: _ref_%s) {' %(target, iter))
+					if arrname in self._known_arrays:
+						lines.append('for (auto &%s: (*%s)) {' %(target, iter))
 					elif arrname in self._known_maps:
-						lines.append('for (auto &_pair_%s: _ref_%s) {' %(target, iter))
+						lines.append('for (auto &_pair_%s: (*%s)) {' %(target, iter))
 						lines.append('  auto %s = _pair_%s.second;')
 					else:
 						lines.append('for (auto &%s: *%s) {' %(target, iter))
@@ -2296,6 +2295,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
 			elts = [self.visit(e) for e in node.targets[0].elts]
 			target = '(%s)' % ','.join(elts)
+		elif isinstance(node.targets[0], ast.Subscript) and isinstance(node.targets[0].slice, ast.Slice):
+			target = self.visit(node.targets[0].value)
+			slice = node.targets[0].slice
+			value = self.visit(node.value)
+			if not slice.lower and slice.upper:
+				return '%s->resize(%s); %s->insert(%s->end(), %s->begin(), %s->end());' %(target, self.visit(slice.upper), target, target, value,value)
+			else:
+				raise RuntimeError('TODO slice assignment')
 		else:
 			target = self.visit( node.targets[0] )
 
