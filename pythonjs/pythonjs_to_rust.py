@@ -2422,10 +2422,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:  ## TODO, this is a bad idea?  letting rust infer the type should have its own syntax like `let x;`
 					return 'let mut %s;  /* let rust infer type */' %target
 
-			############################TODO deprecate this go hack##########
-			if value is not None and value.startswith('&[]*') and self._catch_assignment:
-				self._known_arrays[ target ] = self._catch_assignment['class']
-			#################################################################
 
 
 			if not self._cpp and isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Call) and isinstance(node.value.left.func, ast.Name) and node.value.left.func.id=='__go__map__':

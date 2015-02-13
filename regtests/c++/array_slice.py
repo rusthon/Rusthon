@@ -22,6 +22,12 @@ def somefunc():
 	print( 'a pointer use count:', inline('a.use_count()'))
 	print( 'b pointer use count:', inline('b.use_count()'))
 	print( 'c pointer use count:', inline('c.use_count()'))
+
+	d = a[:2]
+	print('len d:', len(d))
+	print d[0]
+	print d[1]
+
 	print('somefunc done')
 
 def main():
