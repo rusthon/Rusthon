@@ -28,6 +28,11 @@ def somefunc():
 	print d[0]
 	print d[1]
 
+	e = a[::2]
+	print('len e:', len(d))
+	print(e[0])
+	print e[1]
+
 	print('somefunc done')
 
 def main():

@@ -2019,7 +2019,15 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			step = self.visit(node.step)
 
 		if self._with_go or self._with_rust or self._with_cpp:
-			if lower and upper:
+			if lower and upper and step:
+				return '%s:%s:%s' %(lower,upper,step)
+			elif lower and step:
+				return '%s::%s' %(lower,step)
+			elif upper and step:
+				return ':%s:%s' %(upper,step)
+			elif step:
+				return '::%s'%step
+			elif lower and upper:
 				return '%s:%s' %(lower,upper)
 			elif upper:
 				return ':%s' %upper

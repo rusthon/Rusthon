@@ -516,8 +516,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						msg['lower'] = self.visit(node.slice.lower)
 					if node.slice.upper:
 						msg['upper'] = self.visit(node.slice.upper)
-
+					if node.slice.step:
+						msg['step'] = self.visit(node.slice.step)
 					raise GenerateSlice( msg )
+
 				else:
 					r = '&(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 			else:
@@ -2034,27 +2036,38 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		else:
 			return '%s.%s' % (name, attr)
 
-	def _gen_slice(self, target=None, value=None, lower=None, upper=None, type=None):
+	def _gen_slice(self, target=None, value=None, lower=None, upper=None, step=None, type=None):
 		assert self._cpp
 		assert target
 		assert value
 
 		if type:
-			## this should work, but crashes g++4.7 with this error:
-			## `Internal compiler error: Error reporting routines re-entered.`
-			slice = ['std::vector<%s> _ref_%s(' %(type,target)]
-			if lower:
-				slice.append('%s->begin()+%s,' %(value, lower))
+			slice = []
+
+			if step:
+				slice.append('std::vector<%s> _ref_%s;' %(type,target))
+				slice.extend([
+					'int _len_ = %s->size();' %value,
+					'for (int _i_=0; _i_<_len_; _i_=_i_+%s) {' %step,
+					'	_ref_%s.push_back( (*%s)[_i_] );' %(target, value),
+					'}'
+				])
 			else:
-				slice.append('%s->begin(),' %value)
-			if upper:
-				if upper < 0:
-					slice.append('%s->end() %s'%(value, upper))
+				slice.append('std::vector<%s> _ref_%s(' %(type,target))
+
+				if lower:
+					slice.append('%s->begin()+%s,' %(value, lower))
 				else:
-					slice.append('%s->begin()+%s'%(value, upper))
-			else:
-				slice.append('%s->end()'%value)
-			slice.append(');')
+					slice.append('%s->begin(),' %value)
+				if upper:
+					if upper < 0:
+						slice.append('%s->end() %s'%(value, upper))
+					else:
+						slice.append('%s->begin()+%s'%(value, upper))
+				else:
+					slice.append('%s->end()'%value)
+				slice.append(');')
+
 			vectype = 'std::vector<%s>' %type
 
 			if not self._shared_pointers:
@@ -2111,6 +2124,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				value=msg['value'],
 				lower=msg['lower'],
 				upper=msg['upper'],
+				step =msg['step'],
 			)
 
 
@@ -2405,6 +2419,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					value=msg['value'],
 					lower=msg['lower'],
 					upper=msg['upper'],
+					step =msg['step'],
 					type=slice_type,
 				)
 
