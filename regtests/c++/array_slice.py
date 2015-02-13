@@ -41,6 +41,10 @@ def somefunc():
 	print('len g:', len(g))
 	for i in g: print i
 
+	h = a[2::-1]
+	print('len h:', len(h))
+	for i in h: print i
+
 	print('somefunc done')
 
 def main():

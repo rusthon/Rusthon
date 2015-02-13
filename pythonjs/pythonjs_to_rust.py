@@ -2046,16 +2046,30 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			if step:
 				slice.append('std::vector<%s> _ref_%s;' %(type,target))
-				slice.append( ''.join([
-					'if(%s<0){'%step,
-					'for(int _i_=%s->size()-1;_i_>=0;_i_+=%s){' %(value,step),
-					' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
-					'} else {',
-					'for(int _i_=0;_i_<%s->size();_i_+=%s){' %(value,step),
-					' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
-					'}',
-					])
-				)
+				if lower and not upper:
+					slice.append( ''.join([
+						'if(%s<0){'%step,
+						'for(int _i_=%s->size()-%s-1;_i_>=0;_i_+=%s){' %(value,lower,step),
+						' _ref_%s.push_back((*%s)[_i_]);' %(target, value),
+						'}} else {',
+						'for(int _i_=%s;_i_<%s->size();_i_+=%s){' %(lower,value,step),
+						' _ref_%s.push_back((*%s)[_i_]);' %(target, value),
+						'}}',
+						])
+					)
+				elif upper:
+					raise SyntaxError('TODO slice upper with step')
+				else:
+					slice.append( ''.join([
+						'if(%s<0){'%step,
+						'for(int _i_=%s->size()-1;_i_>=0;_i_+=%s){' %(value,step),
+						' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
+						'} else {',
+						'for(int _i_=0;_i_<%s->size();_i_+=%s){' %(value,step),
+						' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
+						'}',
+						])
+					)
 			else:
 				slice.append('std::vector<%s> _ref_%s(' %(type,target))
 
