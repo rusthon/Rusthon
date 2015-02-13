@@ -2802,7 +2802,28 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					raise SyntaxError( self.format_error(node.targets[0]))
 
-			value = self.visit(node.value)
+			out = []
+			try:
+				value = self.visit(node.value)
+			except GenerateSlice as error:  ## special c++ case for slice syntax
+				assert self._cpp
+				msg = error[0]
+				slice_type = None  ## slice on an unknown type is broken and will segfault - TODO fix this
+				if msg['value'] in self._known_arrays:
+					slice_type = self._known_arrays[msg['value']]
+
+				slice = self._gen_slice(
+					target,
+					value=msg['value'],
+					lower=msg['lower'],
+					upper=msg['upper'],
+					step =msg['step'],
+					type=slice_type,
+				)
+				return slice
+				out.append(slice)
+				raise RuntimeError(node.value.value.id)
+
 			isclass = False
 			isglobal = target in self._globals
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:

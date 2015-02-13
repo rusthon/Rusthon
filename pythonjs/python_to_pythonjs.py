@@ -3998,7 +3998,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 						self._call_ids += 1
 
 		if node.orelse:
-			raise SyntaxError( self.format_error('the syntax while/else is deprecated'))
 			self._in_loop_with_else = True
 			writer.write('var(__break__)')
 			writer.write('__break__ = False')
