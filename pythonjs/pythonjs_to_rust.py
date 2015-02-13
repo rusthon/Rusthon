@@ -2042,16 +2042,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		assert value
 
 		if type:
-			slice = []
+			slice = ['/* <slice> %s : %s : %s */' %(lower, upper, step)]
 
 			if step:
 				slice.append('std::vector<%s> _ref_%s;' %(type,target))
-				slice.extend([
-					'int _len_ = %s->size();' %value,
-					'for (int _i_=0; _i_<_len_; _i_=_i_+%s) {' %step,
-					'	_ref_%s.push_back( (*%s)[_i_] );' %(target, value),
-					'}'
-				])
+				slice.append( ''.join([
+					'if(%s<0){'%step,
+					'for(int _i_=%s->size()-1;_i_>=0;_i_+=%s){' %(value,step),
+					' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
+					'} else {',
+					'for(int _i_=0;_i_<%s->size();_i_+=%s){' %(value,step),
+					' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
+					'}',
+					])
+				)
 			else:
 				slice.append('std::vector<%s> _ref_%s(' %(type,target))
 

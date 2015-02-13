@@ -28,10 +28,18 @@ def somefunc():
 	print d[0]
 	print d[1]
 
-	e = a[::2]
-	print('len e:', len(d))
-	print(e[0])
-	print e[1]
+	print('len a:', len(a))
+	e = a[::1]
+	print('len e should be same as a:', len(e))
+	for i in e: print i
+
+	f = a[::2]
+	print('len f:', len(f))
+	for i in f: print i
+
+	g = a[::-1]
+	print('len g:', len(g))
+	for i in g: print i
 
 	print('somefunc done')
 
