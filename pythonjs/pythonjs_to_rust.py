@@ -1264,7 +1264,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
 					#return 'std::static_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
-					return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
+					#return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
+					return 'static_cast<%s>(%s)' %(right, self.visit(node.left.left))
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
 				return '%s%s' %(node.left.args[0].s, right)
 			else:
@@ -2020,6 +2021,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## external C++ libraries where the variable may or may not be a pointer.
 				if attr=='append' and name in self._known_arrays:
 					return '%s->push_back' %name
+				elif attr=='pop' and name in self._known_arrays:
+					return '%s->pop_back' %name
 				else:
 					return '%s->%s' % (name, attr)
 
@@ -2291,6 +2294,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		value  = None
 		comptarget = None  ## if there was a comp, then use result and comptarget
 
+		if isinstance(node.targets[0], ast.Name) and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='range':
+			self._known_arrays[node.targets[0].id] = 'int'
+		#######################
 		if isinstance(node.targets[0], ast.Tuple):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
 			elts = [self.visit(e) for e in node.targets[0].elts]
@@ -2305,7 +2311,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				raise RuntimeError('TODO slice assignment')
 		else:
 			target = self.visit( node.targets[0] )
-
+		#######################
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
 			self._has_channels = True
