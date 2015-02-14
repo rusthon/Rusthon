@@ -2021,7 +2021,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## external C++ libraries where the variable may or may not be a pointer.
 				if attr=='append' and name in self._known_arrays:
 					return '%s->push_back' %name
-				elif attr=='pop' and name in self._known_arrays:
+				elif attr=='pop' and name in self._known_arrays:  ## this will not work because pop_back in c++ returns void.
 					return '%s->pop_back' %name
 				else:
 					return '%s->%s' % (name, attr)
@@ -2296,6 +2296,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if isinstance(node.targets[0], ast.Name) and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='range':
 			self._known_arrays[node.targets[0].id] = 'int'
+
 		#######################
 		if isinstance(node.targets[0], ast.Tuple):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
@@ -2311,6 +2312,31 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				raise RuntimeError('TODO slice assignment')
 		else:
 			target = self.visit( node.targets[0] )
+		#######################
+
+		if self._cpp and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr == 'pop':
+			arrname = self.visit(node.value.func.value)
+			if arrname in self._known_arrays:
+				popindex = '0'
+				if node.value.args: popindex = self.visit(node.value.args[0])
+				else: popindex = '0'
+				if popindex == '0':
+					result.append('auto %s = (*%s)[0];' %(target, arrname))
+					#result.append('%s->pop_front();' %arrname)  ## no pop_front in c++11?
+					result.append('%s->erase(%s->begin(),%s->begin());' %(arrname,arrname,arrname))
+				elif popindex == '-1':
+					result.append('auto %s = (*%s)[ %s->size()-1 ];' %(target, arrname, arrname))
+					result.append('%s->pop_back();' %arrname)
+				else:
+					raise SyntaxError('TODO', popindex)
+	
+				return '\n'.join(result)
+
+			else:
+				## do nothing because we are not sure if this is an array
+				pass
+
+
 		#######################
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
