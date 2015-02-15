@@ -433,9 +433,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
 			## TODO make __class__ static const string.
 			out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
+
 			if self._polymorphic:
 				out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
-			else:
+			elif not base_classes:
 				out.append('	std::string getclassname() {return this->__class__;}')
 
 			out.append('};')
