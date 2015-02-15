@@ -2492,6 +2492,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				slice_type = None  ## slice on an unknown type is broken and will segfault - TODO fix this
 				if msg['value'] in self._known_arrays:
 					slice_type = self._known_arrays[msg['value']]
+					self._known_arrays[target] = slice_type
 
 				return self._gen_slice(
 					target,
@@ -2865,6 +2866,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				slice_type = None  ## slice on an unknown type is broken and will segfault - TODO fix this
 				if msg['value'] in self._known_arrays:
 					slice_type = self._known_arrays[msg['value']]
+					self._known_arrays[target] = slice_type
 
 				slice = self._gen_slice(
 					target,
@@ -2875,8 +2877,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					type=slice_type,
 				)
 				return slice
-				out.append(slice)
-				raise RuntimeError(node.value.value.id)
 
 			isclass = False
 			isglobal = target in self._globals

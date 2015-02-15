@@ -3,8 +3,7 @@ array slice syntax
 '''
 
 def somefunc():
-	a = []int(1,2,3,4,5)
-	print( 'a pointer use count:', inline('a.use_count()'))
+	a = [1,2,3,4,5]
 	print('a addr:', a)
 	print('len a:', len(a))
 	b = a[1:]
@@ -14,14 +13,11 @@ def somefunc():
 	c = a[:]
 	print('c addr (should not be `a` or `b` above):', c)
 	print('len c:', len(c))
-	c.push_back(6)
+	c.append(6)
 	print('len c - after append:', len(c))
 	print('len a:', len(a))
 
 	print('end slice test')
-	print( 'a pointer use count:', inline('a.use_count()'))
-	print( 'b pointer use count:', inline('b.use_count()'))
-	print( 'c pointer use count:', inline('c.use_count()'))
 
 	d = a[:2]
 	print('len d:', len(d))
@@ -46,8 +42,8 @@ def somefunc():
 	for i in h: print i
 
 	print('---slice assignment---')
-	h.push_back(1000)
-	h.push_back(1000)
+	h.append(1000)
+	h.append(1000)
 	a[:2] = h
 	for i in a: print i
 	print('len a:', len(a))
