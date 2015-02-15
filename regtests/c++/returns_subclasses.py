@@ -41,14 +41,19 @@ def some_subclass( x:int ) ->A:
 def main():
 	a = some_subclass(0)
 	b = some_subclass(1)
-	c = some_subclass(2) as C
+	#c = some_subclass(2) as C ## segfaults
+	c = some_subclass(2)
+
 	#cc = C(3)
 	#cc = c as C  ## segfaults
 	#print(cc.__class__)
 
 	print(a.getclassname())  ## works
 	print(b.getclassname())  ## works
-	print(c.getclassname())  ## segfaults  - TODO fixme
+	print(c)
+	#cc = c as A ## segfaults
+	#print(cc)
+	#print(c.getclassname())  ## segfaults  - TODO fixme
 
 
 	## TODO-FIXME
@@ -58,7 +63,7 @@ def main():
 	''' above prints
 	1
 	2
-	-810797173
+	-810797173 (invalid number)
 	'''
 	print('- - - - - - - ')
 	if isinstance(b, B):
@@ -84,3 +89,4 @@ def main():
 	#	if isinstance(o,C):## TODO-FIX elif isinstance(o,C)
 	#		print(o.bar())
 
+	print('end of test')

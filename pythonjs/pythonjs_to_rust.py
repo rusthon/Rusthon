@@ -1269,16 +1269,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					return '%s as ' %self.visit(node.left)
 
 			elif isinstance(node.left, ast.BinOp) and isinstance(node.left.right, ast.Name) and node.left.right.id=='__as__':
+				cast_to = right
 				if self._rust:
-					return '%s %s' %(self.visit(node.left), right)
+					return '%s %s' %(self.visit(node.left), cast_to)
 				else:
-					## TODO syntax to cast pointer types
 					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
-					#return 'std::static_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
-					#return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
-
-					## simple syntax to convert basic types, not pointers ##
-					return 'static_cast<%s>(%s)' %(right, self.visit(node.left.left))
+					if self.is_prim_type(cast_to):
+						return 'static_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
+					elif self._polymorphic:
+						return 'std::dynamic_pointer_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
+					else:
+						return 'std::static_pointer_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
 
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
 				return '%s%s' %(node.left.args[0].s, right)
