@@ -2134,7 +2134,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			self.visit(node.value)  ## writes function def
 			writer.write('%s = __lambda__' %self.visit(target))
 
-		elif isinstance(node.value, ast.Dict) and self._with_go:
+		elif isinstance(node.value, ast.Dict) and (self._with_go or self._with_rust or self._with_cpp):
 			key_type = None
 			val_type = None
 
@@ -2164,7 +2164,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			writer.write('%s = __go__map__(%s, %s) << %s' %(t, key_type, val_type, v))
 
 
-		elif isinstance(node.value, ast.List) and self._with_go:
+		elif isinstance(node.value, ast.List) and (self._with_go or self._with_rust or self._with_cpp):
 			guess_type = None
 			for elt in node.value.elts:
 				if isinstance(elt, ast.Num):

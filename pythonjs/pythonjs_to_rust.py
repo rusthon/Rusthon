@@ -2309,7 +2309,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance(node.targets[0], ast.Tuple):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
 			elts = [self.visit(e) for e in node.targets[0].elts]
-			target = '(%s)' % ','.join(elts)
+			target = '(%s)' % ','.join(elts)  ## this works in rust, not c++
 
 		elif isinstance(node.targets[0], ast.Subscript) and isinstance(node.targets[0].slice, ast.Slice):
 			## slice assignment, the place sliced away is replaced with the assignment value, this happens inplace.
@@ -2318,8 +2318,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			slice = node.targets[0].slice
 			value = self.visit(node.value)
 			if not slice.lower and slice.upper:
-				## TODO fixme
-				return '%s->resize(%s); %s->insert(%s->end(), %s->begin(), %s->end());' %(target, self.visit(slice.upper), target, target, value,value)
+				r = [
+					'%s->erase(%s->begin(), %s->begin()+%s);' %(target,target,target, self.visit(slice.upper)),
+					'%s->insert(%s->begin(), %s->begin(), %s->end());' %(target, target, value,value)
+				]
+				return '\n'.join(r)
 			else:
 				raise RuntimeError('TODO slice assignment')
 		else:
