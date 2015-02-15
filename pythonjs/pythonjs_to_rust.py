@@ -2310,11 +2310,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if len(node.targets) > 1: raise NotImplementedError('TODO')
 			elts = [self.visit(e) for e in node.targets[0].elts]
 			target = '(%s)' % ','.join(elts)
+
 		elif isinstance(node.targets[0], ast.Subscript) and isinstance(node.targets[0].slice, ast.Slice):
+			## slice assignment, the place sliced away is replaced with the assignment value, this happens inplace.
+			## `arr1[ :n ]=arr2` slices away all items before n, and inserts arr2 in its place.
 			target = self.visit(node.targets[0].value)
 			slice = node.targets[0].slice
 			value = self.visit(node.value)
 			if not slice.lower and slice.upper:
+				## TODO fixme
 				return '%s->resize(%s); %s->insert(%s->end(), %s->begin(), %s->end());' %(target, self.visit(slice.upper), target, target, value,value)
 			else:
 				raise RuntimeError('TODO slice assignment')
