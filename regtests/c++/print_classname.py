@@ -23,8 +23,8 @@ def main():
 	a = A(0)
 	b = B(1)
 	c = C(2)
-	print(a.__class__)
-	print(b.__class__)
-	print(c.__class__)
+	print(a.getclassname())
+	print(b.getclassname())
+	print(c.getclassname())
 
 

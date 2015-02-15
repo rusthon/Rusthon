@@ -125,8 +125,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if isinstance_test:
 			assert self._cpp
 			self._rename_hacks[target] = '_cast_%s' %target
-			#out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
-			out.append(self.indent()+'auto _cast_%s = std::dynamic_pointer_cast<%s>(%s);' %(target, classname, target))
+			if self._polymorphic:
+				out.append(self.indent()+'auto _cast_%s = std::dynamic_pointer_cast<%s>(%s);' %(target, classname, target))
+			else:
+				out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
 
 		for line in list(map(self.visit, node.body)):
 			if line is None: continue
@@ -431,7 +433,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
 			## TODO make __class__ static const string.
 			out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
-			out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
+			if self._polymorphic:
+				out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
+			else:
+				out.append('	std::string getclassname() {return this->__class__;}')
 
 			out.append('};')
 
@@ -1267,10 +1272,14 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._rust:
 					return '%s %s' %(self.visit(node.left), right)
 				else:
+					## TODO syntax to cast pointer types
 					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
 					#return 'std::static_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
 					#return 'std::dynamic_pointer_cast<%s>(%s)' %(right, self.visit(node.left.left))
+
+					## simple syntax to convert basic types, not pointers ##
 					return 'static_cast<%s>(%s)' %(right, self.visit(node.left.left))
+
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id=='inline':
 				return '%s%s' %(node.left.args[0].s, right)
 			else:
@@ -2714,7 +2723,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								#return 'std::array<%s, %s>  %s = {{%s}};' %(atype, asize, target, ','.join(args))
 								## TODO which is correct? above with double braces, or below with none?
 								return 'std::array<%s, %sul>  _ref_%s  {%s}; auto %s = &_ref_%s;' %(atype, asize, target, ','.join(args), target, target)
+
+				elif isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__receive__':
+					if target in self._known_vars:
+						return 'auto %s = %s;' %(target, self.visit(node.value))
+					else:
+						return 'auto %s = %s;' %(target, self.visit(node.value))
 				else:
+					#raise SyntaxError(('invalid << hack', self.visit(node.value.left)))
+					#raise SyntaxError(('invalid << hack', self.visit(node.value.right)))
 					raise SyntaxError(('invalid << hack', node.value.right))
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):

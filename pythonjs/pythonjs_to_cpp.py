@@ -30,6 +30,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
 		self._shared_pointers = True
 		self._noexcept = False
+		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
