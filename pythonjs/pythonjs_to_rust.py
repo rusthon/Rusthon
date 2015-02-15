@@ -798,7 +798,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 		###########################################
-		if fname == 'double' and self._cpp:
+		if fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
+			arr = fname.split('->insert')[0]
+			idx = self.visit(node.args[0])
+			val = self.visit(node.args[1])
+			return '%s->insert(%s->begin()+%s, %s)' %(arr, arr, idx, val)
+		elif fname == 'double' and self._cpp:
 			return '__double__(%s)' %self.visit(node.args[0])
 		elif fname == 'clock' and len(node.args)==0:
 			## note in c++ std::clock returns clock ticks, not time
@@ -2019,9 +2024,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				## subobjects and deference pointers as required. `a->x->y`
 				## TODO - the user still needs a syntax to use `->` for working with
 				## external C++ libraries where the variable may or may not be a pointer.
+				## note: `arr.insert(index,value)` is implemented in visit_call_helper
 				if attr=='append' and name in self._known_arrays:
 					return '%s->push_back' %name
-				elif attr=='pop' and name in self._known_arrays:  ## this will not work because pop_back in c++ returns void.
+				elif attr=='pop' and name in self._known_arrays:
+					## pop_back in c++ returns void, so this only works when `arr.pop()` is not used,
+					## in the case where the return is assigned `a=arr.pop()`, the workaround is done in visit_Assign, TODO `f(arr.pop())`
 					return '%s->pop_back' %name
 				else:
 					return '%s->%s' % (name, attr)
@@ -2314,21 +2322,28 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			target = self.visit( node.targets[0] )
 		#######################
 
-		if self._cpp and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr == 'pop':
+		if self._cpp and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr in ('pop', 'insert'):
 			arrname = self.visit(node.value.func.value)
 			if arrname in self._known_arrays:
-				popindex = '0'
-				if node.value.args: popindex = self.visit(node.value.args[0])
-				else: popindex = '0'
-				if popindex == '0':
-					result.append('auto %s = (*%s)[0];' %(target, arrname))
-					#result.append('%s->pop_front();' %arrname)  ## no pop_front in c++11?
-					result.append('%s->erase(%s->begin(),%s->begin());' %(arrname,arrname,arrname))
-				elif popindex == '-1':
-					result.append('auto %s = (*%s)[ %s->size()-1 ];' %(target, arrname, arrname))
-					result.append('%s->pop_back();' %arrname)
-				else:
-					raise SyntaxError('TODO', popindex)
+				if node.value.func.attr=='insert':
+					raise RuntimeError('insert - should not happen')
+					idx = self.visit(node.value.args[0])
+					val = self.visit(node.value.args[1])
+					return '%s->insert(%s.begin()+%s, %s)' %(arrname, arrname, idx, val)
+
+				elif node.value.func.attr=='pop':
+					popindex = '0'
+					if node.value.args: popindex = self.visit(node.value.args[0])
+					else: popindex = '0'
+					if popindex == '0':
+						result.append('auto %s = (*%s)[0];' %(target, arrname))
+						#result.append('%s->pop_front();' %arrname)  ## no pop_front in c++11?
+						result.append('%s->erase(%s->begin(),%s->begin());' %(arrname,arrname,arrname))
+					elif popindex == '-1':
+						result.append('auto %s = (*%s)[ %s->size()-1 ];' %(target, arrname, arrname))
+						result.append('%s->pop_back();' %arrname)
+					else:
+						raise SyntaxError('TODO', popindex)
 	
 				return '\n'.join(result)
 
