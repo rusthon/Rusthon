@@ -48,9 +48,13 @@ def main():
 	print(d.getclassname())
 
 	print(a.method())
+	print a.x
 	print(b.method())
+	print b.x
 	print(c.method())
+	print c.x
 	print(d.method())
+	print d.x
 
 	print('- - - - - - - ')
 	if isinstance(b, B):

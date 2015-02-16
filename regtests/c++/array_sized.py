@@ -2,6 +2,9 @@
 array with default size
 '''
 
+class A:
+	pass
+
 def somefunc():
 	a = [5]int(1,2,3,4,5)
 	print('len a:', len(a))
@@ -19,6 +22,12 @@ def somefunc():
 	print c[0]
 	print c[1]
 	print c[2]
+
+	x = A()
+	y = A()
+	d = [4]A( x,y )
+	print d[0]
+	print d[1]
 
 def main():
 	somefunc()

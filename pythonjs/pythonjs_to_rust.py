@@ -1238,7 +1238,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
 						if self._cpp:
-							return ('std::vector<%s>*'%T, right)
+							return ('std::vector<%s>*'%T, right)   ## note special case, returns a tuple.
 
 						elif self._rust:
 							#return '&mut vec!%s' %right
@@ -1252,12 +1252,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
-						if atype not in go_types:
-							if right != '{}': raise SyntaxError(right)
-							return '&make([]*%s, %s)' %(atype, asize)
-						else:
+						isprim = self.is_prim_type(atype)
+						if self._cpp:
+							return ('std::vector<%s>'%atype, asize, right) ## note special case, returns a tuple.
+						elif self._rust:
 							#return '&vec!%s' %right
 							return 'Rc::new(RefCell::new(vec!%s))' %right
+						elif self._go:
+							raise SyntaxError('TODO merge go/rust/c++ backends')
+							if not isprim:
+								if right != '{}': raise SyntaxError(right)
+								return '&make([]*%s, %s)' %(atype, asize)
 
 
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__':
@@ -2732,7 +2737,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							self._known_arrays[ target ] = (atype,asize)
 							if self._shared_pointers:
 								#vectype = 'std::array<%s, %sul>' %(atype, asize)  ## what api or syntax should we use for fixed size arrays?
-								vectype = 'std::vector<%s>' %atype
+								if self.is_prim_type(atype):
+									vectype = 'std::vector<%s>' %atype
+								else:
+									vectype = 'std::vector<std::shared_ptr<%s>>' %atype
 
 								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
 								r += '_ref_%s.resize(%s);' %(target, asize)
