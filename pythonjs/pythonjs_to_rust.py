@@ -205,6 +205,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			node._subclasses = set()  ## required for generics generator
 			## subclasses must be a struct union so that Go can convert between struct types
 			node._subclasses_union = dict()
+			## any classes that this class contains in arrays or maps,
+			## this is used by the child to create a weakref to the parent if required.
+			node._contains_classes = set()
 
 		out = []
 		sdef = dict()
@@ -409,12 +412,26 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if member_isprim:
 					out.append('	%s  %s;' %(T, name ))
 				else:
+					otherclass = T.split('<')[-1].split('>')[0]
+
+					if 'std::vector' in T or 'std::map' in T:
+						node._contains_classes.add( otherclass )
+
+					weakref = False
+					if otherclass in self._classes:
+						if node.name in self._classes[otherclass]._contains_classes:
+							#raise RuntimeError('%s contains %s' %(otherclass, node.name))
+							weakref = True
+
 					if not self._shared_pointers:
 						out.append('	%s*  %s;' %(T, name ))
 					elif self._unique_ptr:
 						out.append('	std::unique_ptr<%s>  %s;' %(T, name ))
 					else:
-						out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
+						if weakref:
+							out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
+						else:
+							out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:
 				rust_struct_init.append('%s:%s' %(name, default_type(T)))
 				if T=='string': T = 'String'
