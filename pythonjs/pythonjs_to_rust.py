@@ -39,6 +39,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._unique_ptr = False ## TODO
 		self._has_channels = False
 		self._crates = {}
+		self._root_classes = {}
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
@@ -228,27 +229,37 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		#self.interfaces[ node.name ] = set()  ## old Go interface stuff
 
-
+		root_classes = set()  ## subsubclasses in c++ need to inherit from the roots
+		cpp_bases = list()
 		for base in node.bases:
 			n = self.visit(base)
 			if n == 'object':
 				continue
-			node._parents.add( n )
+			if n in self._root_classes:
+				root_classes.add(n)
 
+			node._parents.add( n )
+			cpp_bases.append( n )
 			bases.add( n )
+
 			if n in self._class_props:
 				props.update( self._class_props[n] )
 				base_classes.add( self._classes[n] )
-			#else:  ## special case - subclassing a builtin like `list`
-			#	continue
 
 			for p in self._classes[ n ]._parents:
 				bases.add( p )
 				props.update( self._class_props[p] )
 				base_classes.add( self._classes[p] )
+				if p in self._root_classes:
+					root_classes.add(p)
 
 			self._classes[ n ]._subclasses.add( node.name )
 
+		if len(root_classes)>1 and self._cpp:
+			raise RuntimeError(root_classes)
+
+		if not len(base_classes):
+			self._root_classes[ node.name ] = node
 
 		for decor in node.decorator_list:  ## class decorators
 			if isinstance(decor, ast.Call):
@@ -323,7 +334,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if self._cpp:
 			if base_classes:
-				parents = ','.join(['public %s' % bnode.name for bnode in base_classes])
+				#parents = ','.join(['public %s' % rname for rname in root_classes])
+				parents = ','.join(['public %s' % rname for rname in cpp_bases])
 				out.append( 'class %s:  %s {' %(node.name, parents))
 			else:
 				out.append( 'class %s {' %node.name)
@@ -353,7 +365,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if base_classes:
 			for bnode in base_classes:
 				if self._cpp:
-					out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+					if bnode._struct_def.keys():
+						out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
+						for key in bnode._struct_def:
+							if key not in unionstruct:
+								unionstruct[key] = bnode._struct_def[key]
 
 				elif self._rust:
 					out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
@@ -383,7 +399,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		for name in unionstruct:
 			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is just for the Go backend')
 			node._struct_init_names.append( name )
-			if name=='__class__': continue
+			#if name=='__class__': continue
 
 			T = unionstruct[name]
 			member_isprim = self.is_prim_type(T)
@@ -436,7 +452,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			if self._polymorphic:
 				out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
-			elif not base_classes:
+			else: #not base_classes:
 				out.append('	std::string getclassname() {return this->__class__;}')
 
 			out.append('};')
@@ -1853,17 +1869,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					while len(p) < len_gargs:
 						p.append( generic_base_class )
 					gcombos = set( itertools.permutations(p) )
-					for combo in gcombos:
-						combo = list(combo)
-						combo.reverse()
-						gargs = []
-						for idx, arg in enumerate(args):
-							if idx in args_gens_indices:
-								gargs.append(
-									arg.replace('<%s>'%gclass, '<%s>'%combo.pop())
-								)
-							else:
-								gargs.append( arg )
+					if len(gcombos) < 16:  ## TODO fix bug that makes this explode
+						for combo in gcombos:
+							combo = list(combo)
+							combo.reverse()
+							gargs = []
+							for idx, arg in enumerate(args):
+								if idx in args_gens_indices:
+									gargs.append(
+										arg.replace('<%s>'%gclass, '<%s>'%combo.pop())
+									)
+								else:
+									gargs.append( arg )
 
 						sig = '%s %s(%s)' % (return_type, node.name, ', '.join(gargs))
 						gsigs.append( sig )

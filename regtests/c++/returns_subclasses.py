@@ -15,8 +15,7 @@ class C(A):
 	def bar(self) ->int:
 		return self.x + 200
 
-#class D(C): #warning: direct base ‘A’ inaccessible in ‘D’ due to ambiguity
-class D(A):
+class D(C):
 	def hey(self) ->int:
 		return self.x + 1
 
