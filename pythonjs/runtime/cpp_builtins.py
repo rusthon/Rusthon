@@ -5,6 +5,9 @@
 
 inline("""
 
+typedef double f64;
+typedef float  f32;
+
 template<typename T, typename ...Args>
 std::unique_ptr<T> _make_unique( Args&& ...args )
 {

@@ -367,9 +367,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp:
 					if bnode._struct_def.keys():
 						out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
-						for key in bnode._struct_def:
-							if key not in unionstruct:
-								unionstruct[key] = bnode._struct_def[key]
+						## not required, the subclass should not redeclare members of parents
+						#for key in bnode._struct_def:
+						#	if key not in unionstruct:
+						#		unionstruct[key] = bnode._struct_def[key]
 
 				elif self._rust:
 					out.append('//	members from class: %s  %s'  %(bnode.name, bnode._struct_def.keys()))
@@ -2730,8 +2731,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							atype = self.visit(node.value.left.args[1])
 							self._known_arrays[ target ] = (atype,asize)
 							if self._shared_pointers:
-								vectype = 'std::array<%s, %sul>' %(atype, asize)
+								#vectype = 'std::array<%s, %sul>' %(atype, asize)  ## what api or syntax should we use for fixed size arrays?
+								vectype = 'std::vector<%s>' %atype
+
 								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
+								r += '_ref_%s.resize(%s);' %(target, asize)
 								if self._unique_ptr:
 									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(vectype, target, vectype, target)
 								else:
