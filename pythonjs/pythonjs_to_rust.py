@@ -41,6 +41,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._crates = {}
 		self._root_classes = {}
 
+
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		#return '"%s"' % s
@@ -1480,6 +1481,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if returns_self and self._cpp:
 			return_type = self._class_stack[-1].name
 
+		is_delete = node.name == '__del__'
 		is_init = node.name == '__init__'
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
@@ -1622,7 +1624,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		prefix = ''
 		if options['classmethod']:
 			prefix = 'static '
-			if args and 'object ' in args[0]:
+			if args and 'object ' in args[0]:  ## classmethods output from java2python produces `cls:object`
 				args = args[1:]
 
 		node._args_signature = ','.join(args)
@@ -1684,15 +1686,27 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp: ## c++ ##
 					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
-						sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
-						if self._noexcept:
-							out.append( self.indent() + '%s noexcept {\n' % sig  )
-							sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
-							self._cpp_class_header.append(sig + ' noexcept;')
+						if is_delete:
+							sig = '%s::~%s()' %(classname, classname)
+							if self._noexcept:
+								out.append( self.indent() + '%s noexcept {\n' % sig  )
+								sig = '~%s()' %classname
+								self._cpp_class_header.append(sig + ';')
+							else:
+								out.append( self.indent() + '%s {\n' % sig  )
+								sig = '~%s()' %classname
+								self._cpp_class_header.append(sig + ';')
+
 						else:
-							out.append( self.indent() + '%s {\n' % sig  )
-							sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
-							self._cpp_class_header.append(sig + ';')
+							sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
+							if self._noexcept:
+								out.append( self.indent() + '%s noexcept {\n' % sig  )
+								sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
+								self._cpp_class_header.append(sig + ' noexcept;')
+							else:
+								out.append( self.indent() + '%s {\n' % sig  )
+								sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
+								self._cpp_class_header.append(sig + ';')
 					else:
 						if self._noexcept:
 							sig = '%svoid %s(%s)' %(prefix, node.name, ', '.join(args))

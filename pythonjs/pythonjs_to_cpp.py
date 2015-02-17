@@ -32,10 +32,30 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self._noexcept = False
 		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
 
+
+	def visit_Delete(self, node):
+		targets = [self.visit(t) for t in node.targets]
+		if len(targets)==0:
+			raise RuntimeError('no delete targets')
+		r = []
+		if self._shared_pointers:
+			for t in targets:
+				## shared_ptr.reset only releases if no there are no other references,
+				## is there a way to force the delete on all shared pointers to something?
+				#r.append('delete %s;' %t)  ## only works on pointers
+				r.append('%s.reset();' %t)
+		else:
+			for t in targets:
+				if t in self._known_arrays:
+					r.append('delete[] %s;')
+				else:
+					r.append('delete %s;')
+
+		return '\n'.join(r)
+
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		return 'std::string("%s")' % s
-
 
 	def visit_Print(self, node):
 		r = []

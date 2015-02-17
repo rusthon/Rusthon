@@ -49,6 +49,6 @@ def main():
 	c1.foo()
 	c1.bar()
 
-	delete p
+	del p
 	c1.foo()
 ```

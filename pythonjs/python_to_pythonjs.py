@@ -426,6 +426,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				)
 			return self._typedefs[ class_name ]
 
+	def visit_Delete(self, node):
+		writer.write('del %s' %','.join([self.visit(t) for t in node.targets]))
 
 	def visit_Import(self, node):
 		'''

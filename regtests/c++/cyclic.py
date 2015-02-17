@@ -7,9 +7,6 @@ class Parent:
 		self.y = y
 
 	def create_child(self, x:int, parent:Parent) ->Child:
-		#child = Child(x, self)  ## TODO fix me
-		#self.children.append( child )  ## TODO fix me
-
 		child = Child(x, parent)
 		self.children.push_back( child )
 		return child
