@@ -23,7 +23,8 @@ class Child:
 		'''
 		must call lock on weak_ptr to get a shared pointer
 		'''
-		par = self.parent.lock()
+		#par = self.parent.lock()  ## fails because this->parent->lock() should be this->parent.lock()
+		par = unwrap(self.parent)
 		if par:
 			return self.x * par.y
 		else:
