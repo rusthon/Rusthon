@@ -14,21 +14,24 @@ class Parent:
 		self.children.push_back( child )
 		return child
 
+	def say(self, msg:string):
+		print(msg)
+
 class Child:
 	def __init__(self, x:int, parent:Parent ):
 		self.x = x
 		self.parent = parent
 
 	def foo(self) ->int:
-		'''
-		must call unwrap on the weak_ptr to get a shared pointer,
-		and make sure it is not None.
-		'''
-		par = unwrap(self.parent)
+		par = self.parent
 		if par is not None:
 			return self.x * par.y
 		else:
 			print('parent is gone..')
+
+	def bar(self):
+		print(self.parent.y)
+		self.parent.say('hello parent')
 
 
 def main():

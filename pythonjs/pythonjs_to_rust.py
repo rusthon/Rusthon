@@ -208,6 +208,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## any classes that this class contains in arrays or maps,
 			## this is used by the child to create a weakref to the parent if required.
 			node._contains_classes = set()
+			node._weak_members = set()
 
 		out = []
 		sdef = dict()
@@ -430,6 +431,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 
 						if weakref:
+							node._weak_members.add(name)
 							out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
 						elif T.startswith('std::shared_ptr<'):
 							out.append('	%s  %s;' %(T, name ))
@@ -843,9 +845,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 		###########################################
-		if fname=='unwrap':
-			return '%s.lock()' %self.visit(node.args[0])
-		elif fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
+		#if fname=='unwrap':  ## no longer required, DEPRECATED
+		#	return '%s.lock()' %self.visit(node.args[0])
+		if fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
 			arr = fname.split('->insert')[0]
 			idx = self.visit(node.args[0])
 			val = self.visit(node.args[1])
@@ -2072,7 +2074,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
 		elif name=='self' and self._cpp and self._class_stack:
-			return 'this->%s' %attr
+			if attr in self._class_stack[-1]._weak_members:
+				return 'this->%s.lock()' %attr
+			else:
+				return 'this->%s' %attr
 		elif (name in self._known_instances or name in self._known_arrays) and not isinstance(parent_node, ast.Attribute):
 			if self._cpp:
 				## TODO - attribute lookup stack to make this safe for `a.x.y`
