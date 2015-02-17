@@ -1621,9 +1621,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if args and 'object ' in args[0]:
 				args = args[1:]
 
-
 		node._args_signature = ','.join(args)
-
 		####
 		if is_method:
 			assert self._class_stack

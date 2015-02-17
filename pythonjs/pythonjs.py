@@ -504,6 +504,17 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 							arrays[ key.arg ] = key.value.args[0].s
 							dims = arrays[ key.arg ].count('[')
 							arrtype = arrays[ key.arg ].split(']')[-1]
+
+							## non primitive types (objects and arrays) can be None, `[]MyClass( None, None)`
+							## use a pointer or smart pointer. 
+							if not self.is_prim_type(arrtype):
+								if not self._shared_pointers:
+									arrtype += '*'
+								elif self._unique_ptr:
+									arrtype = 'std::unique_ptr<%s>' %arrtype
+								else:
+									arrtype = 'std::shared_ptr<%s>' %arrtype
+
 							if self._cpp:
 								T = []
 								for i in range(dims):

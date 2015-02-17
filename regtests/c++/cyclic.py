@@ -25,7 +25,7 @@ class Child:
 		'''
 		#par = self.parent.lock()  ## fails because this->parent->lock() should be this->parent.lock()
 		par = unwrap(self.parent)
-		if par:
+		if par is not None:
 			return self.x * par.y
 		else:
 			print('parent is gone..')
@@ -34,7 +34,7 @@ class Child:
 def main():
 	#children = []Child(None,None)
 	children = []Child()
-	p = Parent( children )
+	p = Parent( 1000, children )
 	p.create_child(1, p)
 	p.create_child(2, p)
 	p.create_child(3, p)
