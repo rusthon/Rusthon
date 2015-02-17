@@ -2089,6 +2089,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return '%s%s' %(name,attr)
 		elif name=='self' and self._cpp and self._class_stack:
 			if attr in self._class_stack[-1]._weak_members:
+				if len(self._stack)>2:
+					assert self._stack[-1] is node
+					if isinstance(self._stack[-2], ast.Assign):
+						for target in self._stack[-2].targets:
+							if target is node:
+								return 'this->%s' %attr
 				return 'this->%s.lock()' %attr
 			else:
 				return 'this->%s' %attr

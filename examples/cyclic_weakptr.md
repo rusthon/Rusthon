@@ -25,7 +25,7 @@ class Child:
 			print('parent is gone..')
 
 	def bar(self):
-		print(self.parent.y)
+		#print(self.parent.y)
 		self.parent.say('hello parent')
 
 def make_child(p:Parent, x:int) -> Child:
@@ -46,9 +46,11 @@ def main():
 	print c2
 	print c3
 
-	c1.foo()
+	print 'calling foo'
+	print c1.foo()
+	print 'calling bar'
 	c1.bar()
 
 	del p
-	c1.foo()
+	print c1.foo()
 ```
