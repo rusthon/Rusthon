@@ -428,8 +428,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					elif self._unique_ptr:
 						out.append('	std::unique_ptr<%s>  %s;' %(T, name ))
 					else:
+
 						if weakref:
 							out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
+						elif T.startswith('std::shared_ptr<'):
+							out.append('	%s  %s;' %(T, name ))
 						else:
 							out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:

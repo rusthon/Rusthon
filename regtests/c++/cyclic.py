@@ -2,12 +2,17 @@
 detect cyclic parent/child, and insert weakref
 '''
 class Parent:
-	def __init__(self, children:[]Child ):
+	def __init__(self, y:int, children:[]Child ):
 		self.children = children
+		self.y = y
 
-	def create_child(self, x:int):
-		child = Child(x, self)
-		self.children.append( child )
+	def create_child(self, x:int, parent:Parent) ->Child:
+		#child = Child(x, self)
+		#self.children.append( child )
+
+		child = Child(x, parent)
+		self.children.push_back( child )
+		return child
 
 class Child:
 	def __init__(self, x:int, parent:Parent ):
@@ -15,13 +20,20 @@ class Child:
 		self.parent = parent
 
 	def foo(self) ->int:
-		return self.x * 2
+		'''
+		must call lock on weak_ptr to get a shared pointer
+		'''
+		par = self.parent.lock()
+		if par:
+			return self.x * par.y
+		else:
+			print('parent is gone..')
 
 
 def main():
 	#children = []Child(None,None)
 	children = []Child()
 	p = Parent( children )
-	p.create_child(1)
-	p.create_child(2)
-	p.create_child(3)
+	p.create_child(1, p)
+	p.create_child(2, p)
+	p.create_child(3, p)
