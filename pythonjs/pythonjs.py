@@ -55,6 +55,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self._cpp = False
 		self._cheader = []
 		self._cppheader = []
+		self._cpp_class_impl = []
 		self._match_stack = []  # dicts of cases
 		self._rename_hacks = {}  ## used by c++ backend, to support `if isinstance`
 		self._globals = {}  ## name : type
@@ -63,6 +64,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 	def reset(self):
 		self._cheader = []
 		self._cppheader = []
+		self._cpp_class_impl = []
 		self._match_stack = []
 
 	def is_prim_type(self, T):

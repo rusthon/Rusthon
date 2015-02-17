@@ -483,7 +483,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 		if self._cpp:
-			for impl_def in impl: out.append( impl_def )
+			for idef in impl:
+				#out.append( impl_def )  ## can not write c++ method implementations before other class headers
+				self._cpp_class_impl.append( idef )
 
 		else:
 			## using a trait is not required, because a struct type can be directly implemented.
