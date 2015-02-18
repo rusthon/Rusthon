@@ -20,15 +20,26 @@ class Child:
 		self.parent = parent
 
 	def foo(self) ->int:
-		par = self.parent
+		'''
+		It is also valid to use `par=self.parent`,
+		but it is more clear to use `weakref.unwrap(self.parent)`
+		'''
+		par = weak.unwrap(self.parent)
 		if par is not None:
 			return self.x * par.y
 		else:
 			print('parent is gone..')
 
 	def bar(self):
-		print(self.parent.y)
+		'''
+		below `self.parent` is directly used in expressions,
+		and not first assigned to a variable.
+		for each use of self.parent the weakref will be promoted
+		to a shared pointer, and then fall out of scope, 
+		which is slower than above.
+		'''
 		self.parent.say('hello parent')
+		print(self.parent.y)
 
 
 def main():

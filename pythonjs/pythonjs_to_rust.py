@@ -846,9 +846,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 		###########################################
-		#if fname=='unwrap':  ## no longer required, DEPRECATED
-		#	return '%s.lock()' %self.visit(node.args[0])
-		if fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
+		if fname=='weak->unwrap':
+			## this is needed for cases where we do not know if its a weakptr, `self.a.b.c.parent`,
+			## it is also useful for the user to simply make their code more clear.
+			w = self.visit(node.args[0])
+			if not w.endswith('.lock()'): w += '.lock()'
+			return w
+		elif fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
 			arr = fname.split('->insert')[0]
 			idx = self.visit(node.args[0])
 			val = self.visit(node.args[1])
