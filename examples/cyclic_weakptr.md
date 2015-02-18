@@ -25,8 +25,15 @@ class Child:
 			print('parent is gone..')
 
 	def bar(self):
-		#print(self.parent.y)
+		'''
+		this works even after parent is destroyed,
+		because the function is pure and not dependent on the state of the pointer.
+		'''
 		self.parent.say('hello parent')
+
+	def crashes(self):
+		a = self.parent.y
+		print a
 
 def make_child(p:Parent, x:int) -> Child:
 	c = Child(x, p)
@@ -53,4 +60,6 @@ def main():
 
 	del p
 	print c1.foo()
+	c1.bar()
+	#uncomment to segfault#c1.crashes()
 ```
