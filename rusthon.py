@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, subprocess
+import os, sys, subprocess, md5
 import pythonjs
 import pythonjs.pythonjs
 import pythonjs.python_to_pythonjs
@@ -50,31 +50,57 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 
 	return result
 
-def convert_to_markdown_project(path):
+def java_to_rusthon( input ):
+	#j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	j2pybin = 'j2py'
+	if os.path.isfile(os.path.expanduser('~/java2python/bin/j2py')):
+		j2pybin = os.path.expanduser('~/java2python/bin/j2py')
+	print('======== %s : translate to rusthon' %j2pybin)
+	j2py = subprocess.Popen([j2pybin, '--rusthon'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	stdout,stderr  = j2py.communicate( input )
+	if stderr: raise RuntimeError(stderr)
+	if j2py.returncode: raise RuntimeError('j2py error!')
+	print(stdout)
+	print('---------------------------------')
+	rcode = typedpython.transform_source(stdout.replace('    ', '\t'))
+	print(rcode)
+	print('---------------------------------')
+	return rcode
+
+
+def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=False, cpp=False, java=False, java2rusthon=False, file_metadata=False):
 	files = []
+	exts = []
+	if rust: exts.append('.rs')
+	if python: exts.append('.py')
+	if asm: exts.append('.s')
+	if c:   exts.append('.c')
+	if cpp: exts.append('.cpp')
+	if java: exts.append('.java')
+	exts = tuple(exts)
+
 	if os.path.isfile(path):
 		files.append( path )
-		assert path.endswith('.rs')
 
 	elif os.path.isdir(path):
 		for name in os.listdir(path):
-			if name.endswith( ('.rs', '.py', '.s') ):
+			if name.endswith( exts ):
 				files.append(os.path.join(path,name))
-
-			#elif os.path.isdir( os.path.join(path,name)): TODO
 
 	project = []
 	for file in files:
 		print 'reading: ', file
 
 		data = open(file, 'rb').read()
-		header = [
+		header = []
+		if file_metadata:
+			header.extend([
 			'#' + os.path.split(file)[-1],
 			'* file: ' + file,
 			'* md5sum   : %s' %md5.new(data).hexdigest(),
 			'* changed  : %s' %os.stat(file).st_mtime,
-			'',
-		]
+			''
+			])
 		lang = ''
 		if file.endswith('.rs'):
 			lang = 'rust'
@@ -82,6 +108,18 @@ def convert_to_markdown_project(path):
 			lang = 'python'
 		elif file.endswith('.s'):
 			lang = 'asm'
+		elif file.endswith('.c'):
+			lang = 'c'
+		elif file.endswith('.cpp'):
+			lang = 'c++'
+		elif file.endswith('.java'):
+			if java2rusthon:
+				## pre converts into rusthon in markdown, for hand editing ##
+				lang = 'rusthon'
+				data = java_to_rusthon(data)
+			else:
+				## this still trigers java2rusthon at final compile time ##
+				lang = 'java'
 
 		impls = []
 		pub_funcs = []
@@ -97,32 +135,33 @@ def convert_to_markdown_project(path):
 		comment_block = False
 		for line in data.splitlines():
 
-			if line.strip().startswith('//') or (lang != 'rust' and line.startswith('#')):
-				if fence:
-					code.append('```\n')  ## end fence
-					fence = False
-				if line.startswith('#'):
-					line = line[1:]
-				code.append('>'+line)
+			if False:
+				if line.strip().startswith('//') or (lang != 'rust' and line.startswith('#')):
+					if fence:
+						code.append('```\n')  ## end fence
+						fence = False
+					if line.startswith('#'):
+						line = line[1:]
+					code.append('>'+line)
 
-			elif line.strip().startswith('/*'):
-				if fence:
-					code.append('```\n')  ## end fence
-					fence = False
+				elif line.strip().startswith('/*'):
+					if fence:
+						code.append('```\n')  ## end fence
+						fence = False
 
-				if '*/' in line:
-					code.append('>*%s*' %line.replace('/*', '').replace('*/','').strip() )
-				else:
-					comment_block = True
+					if '*/' in line:
+						code.append('>*%s*' %line.replace('/*', '').replace('*/','').strip() )
+					else:
+						comment_block = True
 
-			elif '*/' in line:
-				assert comment_block
-				comment_block = False
-				a = line.replace('*/', '').strip()
-				if a:
-					code.append('>'+a)
-			elif comment_block:
-				code.append('>'+line)
+				elif '*/' in line:
+					assert comment_block
+					comment_block = False
+					a = line.replace('*/', '').strip()
+					if a:
+						code.append('>'+a)
+				elif comment_block:
+					code.append('>'+line)
 			else:
 				if not fence:
 					code.append('\n```%s' %lang)  ## begin fence
@@ -322,20 +361,7 @@ def build( modules, module_path, datadirs=None ):
 	if modules['java']:
 		mods_sorted_by_index = sorted(modules['java'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
-			#j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-			j2pybin = 'j2py'
-			if os.path.isfile(os.path.expanduser('~/java2python/bin/j2py')):
-				j2pybin = os.path.expanduser('~/java2python/bin/j2py')
-			print('======== %s : translate to rusthon' %j2pybin)
-			j2py = subprocess.Popen([j2pybin, '--rusthon'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-			stdout,stderr  = j2py.communicate( mod['code'] )
-			if stderr: raise RuntimeError(stderr)
-			if j2py.returncode: raise RuntimeError('j2py error!')
-			print(stdout)
-			print('---------------------------------')
-			rcode = typedpython.transform_source(stdout.replace('    ', '\t'))
-			print(rcode)
-			print('---------------------------------')
+			rcode = java_to_rusthon( mod['code'] )
 			java2rusthon.append( rcode )
 
 	if modules['rusthon']:
@@ -681,6 +707,7 @@ def main():
 	output_tar = 'rusthon-build.tar'
 	launch = []
 	datadirs = []
+	j2r = False
 
 	for arg in sys.argv[1:]:
 		if os.path.isdir(arg):
@@ -701,6 +728,15 @@ def main():
 			gen_md = True
 		elif arg == '--tar':
 			save = True
+		elif arg == '--java2rusthon':
+			gen_md = True
+			j2r = True
+
+	if j2r:
+		for path in paths:
+			m = convert_to_markdown_project(path, java=True, java2rusthon=True)
+			assert m
+			raise RuntimeError(m)
 
 	base_path = None
 	for path in scripts:
