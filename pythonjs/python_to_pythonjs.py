@@ -295,45 +295,41 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		source = self.preprocess_custom_operators( source )
 
-		## check for special imports - TODO clean this up ##
-		for line in source.splitlines():
-			if line.strip().startswith('import tornado'):
-				dirname = os.path.dirname(os.path.abspath(__file__))
-				header = open( os.path.join(dirname, os.path.join('fakelibs', 'tornado.py')) ).read()
-				source = header + '\n' + source
-				self._source = source.splitlines()
-			elif line.strip().startswith('import os'):
-				dirname = os.path.dirname(os.path.abspath(__file__))
-				header = open( os.path.join(dirname, os.path.join('fakelibs', 'os.py')) ).read()
-				source = header + '\n' + source
-				self._source = source.splitlines()
-			elif line.strip().startswith('import tempfile'):
-				dirname = os.path.dirname(os.path.abspath(__file__))
-				header = open( os.path.join(dirname, os.path.join('fakelibs', 'tempfile.py')) ).read()
-				source = header + '\n' + source
-				self._source = source.splitlines()
-			elif line.strip().startswith('import sys'):
-				dirname = os.path.dirname(os.path.abspath(__file__))
-				header = open( os.path.join(dirname, os.path.join('fakelibs', 'sys.py')) ).read()
-				source = header + '\n' + source
-				self._source = source.splitlines()
-			elif line.strip().startswith('import subprocess'):
-				dirname = os.path.dirname(os.path.abspath(__file__))
-				header = open( os.path.join(dirname, os.path.join('fakelibs', 'subprocess.py')) ).read()
-				source = header + '\n' + source
-				self._source = source.splitlines()
 
+		## check for special imports for nodejs
+		## fakelibs wrap the nodejs api's for a few basic builtins and tornado.
+		if self._with_js:
+			for line in source.splitlines():
+				if line.strip().startswith('import tornado'):
+					dirname = os.path.dirname(os.path.abspath(__file__))
+					header = open( os.path.join(dirname, os.path.join('fakelibs', 'tornado.py')) ).read()
+					source = header + '\n' + source
+					self._source = source.splitlines()
+				elif line.strip().startswith('import os'):
+					dirname = os.path.dirname(os.path.abspath(__file__))
+					header = open( os.path.join(dirname, os.path.join('fakelibs', 'os.py')) ).read()
+					source = header + '\n' + source
+					self._source = source.splitlines()
+				elif line.strip().startswith('import tempfile'):
+					dirname = os.path.dirname(os.path.abspath(__file__))
+					header = open( os.path.join(dirname, os.path.join('fakelibs', 'tempfile.py')) ).read()
+					source = header + '\n' + source
+					self._source = source.splitlines()
+				elif line.strip().startswith('import sys'):
+					dirname = os.path.dirname(os.path.abspath(__file__))
+					header = open( os.path.join(dirname, os.path.join('fakelibs', 'sys.py')) ).read()
+					source = header + '\n' + source
+					self._source = source.splitlines()
+				elif line.strip().startswith('import subprocess'):
+					dirname = os.path.dirname(os.path.abspath(__file__))
+					header = open( os.path.join(dirname, os.path.join('fakelibs', 'subprocess.py')) ).read()
+					source = header + '\n' + source
+					self._source = source.splitlines()
 
-		if '--debug--' in sys.argv:
-			try:
-				tree = ast.parse( source )
-			except SyntaxError:
-				raise SyntaxError(source)
-		else:
-			try:
-				tree = ast.parse( source )
-			except:
-				raise SyntaxError(source)
+		try:
+			tree = ast.parse( source )
+		except SyntaxError as err:
+			raise SyntaxError(self.format_error(err[0]))
 
 		self._generator_function_nodes = collect_generator_functions( tree )
 
@@ -444,7 +440,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		tornado = ['tornado', 'tornado.web', 'tornado.ioloop']
 
 		for alias in node.names:
-			if self._with_go or self._with_rust:
+			if self._with_go or self._with_rust or self._with_cpp:
 				writer.write('import %s' %alias.name)
 			elif alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py

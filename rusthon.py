@@ -8,6 +8,8 @@ import pythonjs.pythonjs_to_verilog
 import pythonjs.typedpython as typedpython
 import tempfile
 
+
+
 def compile_js( script, module_path, directjs=False, directloops=False ):
 	'''
 	directjs = False     ## compatible with pythonjs-minimal.js
@@ -50,6 +52,59 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 
 	return result
 
+def compile_java( javafiles ):
+	assert 'JAVA_HOME' in os.environ
+	tmpdir  = tempfile.gettempdir()
+	cmd = ['javac']
+	cmd.extend( javafiles )
+	print ' '.join(cmd)
+	subprocess.check_call(cmd, cwd=tmpdir)
+	classfiles = [jfile.replace('.java', '.class') for jfile in javafiles]
+	cmd = ['jar', 'cvf', 'mybuild.jar']
+	cmd.extend( classfiles )
+	print ' '.join(cmd)
+	subprocess.check_call(cmd, cwd=tmpdir)
+	jarfile = os.path.join(tmpdir,'mybuild.jar')
+	assert os.path.isfile(jarfile)
+	return {'class-files':classfiles, 'jar':jarfile}
+
+
+def compile_giws_bindings( xml ):
+	tmpdir  = tempfile.gettempdir()
+	tmpfile = os.path.join(tmpdir, 'rusthon_giws.xml')
+	open(tmpfile, 'wb').write(xml)
+	cmd = [
+		'giws',
+		'--description-file='+tmpfile,
+		'--output-dir='+tmpdir,
+		#'--per-package',
+		'--disable-return-size-array',
+		'--throws-exception-on-error',
+	]
+	#subprocess.check_call(cmd)
+	proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+	proc.wait()
+	if proc.returncode:
+		raise RuntimeError(proc.stderr.read())
+	else:
+		headers = []
+		impls = []
+		for line in proc.stdout.read().splitlines():
+			if line.endswith(' generated ...'):  ## TODO something better
+				name = line.split()[0]
+				if name.endswith('.hxx'):
+					headers.append( name )
+				elif name.endswith('.cpp'):
+					impls.append( name )
+
+		code = []
+		for header in headers:
+			code.append( open(os.path.join(tmpdir,header), 'rb').read() )
+		for impl in impls:
+			code.append( open(os.path.join(tmpdir,impl), 'rb').read() )
+
+		return '\n'.join(code)
+
 def java_to_rusthon( input ):
 	#j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	j2pybin = 'j2py'
@@ -68,7 +123,7 @@ def java_to_rusthon( input ):
 	return rcode
 
 
-def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=False, cpp=False, java=False, java2rusthon=False, file_metadata=False):
+def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=False, cpp=False, java=False, java2rusthon=False, giws=False, file_metadata=False):
 	files = []
 	exts = []
 	if rust: exts.append('.rs')
@@ -249,6 +304,7 @@ def new_module():
 		'bash'    : [],
 		'java'    : [],
 		'nim'     : [],
+		'xml'     : [],
 		'javascript':[],
 	}
 
@@ -273,7 +329,7 @@ def import_md( url, modules=None ):
 					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index, 'tag':tag }
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
-						if ext in 'html js css py c h cpp hpp rust go'.split():
+						if ext in 'html js css py c h cpp hpp rust go java'.split():
 							mod['name'] = tag
 
 					modules[ lang ].append( mod )
@@ -302,11 +358,12 @@ def import_md( url, modules=None ):
 
 
 def build( modules, module_path, datadirs=None ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'python':[], 'html':[], 'verilog':[], 'datadirs':datadirs}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'datadirs':datadirs}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged  = {}
 	link    = []
+	giws    = []   ## xml jni generator so c++ can call into java, blocks tagged with @gwis are compiled and linked with the final exe.
 	java2rusthon = []
 
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
@@ -360,9 +417,36 @@ def build( modules, module_path, datadirs=None ):
 
 	if modules['java']:
 		mods_sorted_by_index = sorted(modules['java'], key=lambda mod: mod.get('index'))
+		javafiles = []
+		tmpdir = tempfile.gettempdir()
 		for mod in mods_sorted_by_index:
-			rcode = java_to_rusthon( mod['code'] )
-			java2rusthon.append( rcode )
+			if mod['tag']=='java2rusthon':
+				rcode = java_to_rusthon( mod['code'] )
+				java2rusthon.append( rcode )
+			elif 'name' in mod:
+				jpath = os.path.join(tmpdir, mod['name'])
+				if '/' in mod['name']:
+					jdir,jname = os.path.split(jpath)
+					if not os.path.isdir(jdir):
+						os.makedirs(jdir)
+				open(jpath, 'wb').write(mod['code'])
+				javafiles.append( jpath )
+			else:
+				raise SyntaxError('java code must have a tag header: `java2rusthon` or a file path')
+
+		if javafiles:
+			output['java'].append( compile_java( javafiles ) )
+
+
+	if modules['xml']:
+		mods_sorted_by_index = sorted(modules['xml'], key=lambda mod: mod.get('index'))
+		for mod in mods_sorted_by_index:
+			if mod['tag']=='gwis':
+				giws.append(mod['code'])
+				bindings = compile_giws_bindings(mod['code'])
+				modules['c++'].append( {'code':bindings, 'index': mod['index']})  ## gets compiled below
+			else:
+				output['xml'].append(mod)
 
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
@@ -618,16 +702,23 @@ def build( modules, module_path, datadirs=None ):
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
-		if link:
+		if link or giws:
 			cmd.append('-static')
-			cmd.append('-L' + tempfile.gettempdir() + '/.')
+
+			if giws:   ## link to the JVM if giws bindings were compiled ##
+				cmd.append('-ljvm')
+				for jrepath in 'include include/linux jre/lib/i386 jre/lib/i386/client/'.split():
+					cmd.append('-I%s/%s' %(os.environ['JAVA_HOME'], jrepath))
+
 			if libdl:
 				cmd.append('-ldl')
-			for libname in link:
-				cmd.append('-l'+libname)
+
+			if link:  ## c staticlibs or giws c++ wrappers ##
+				cmd.append('-L' + tempfile.gettempdir() + '/.')
+				for libname in link:
+					cmd.append('-l'+libname)
 
 		print('========== g++ : compile main ==========')
-
 		print(' '.join(cmd))
 		subprocess.check_call( cmd )
 		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )

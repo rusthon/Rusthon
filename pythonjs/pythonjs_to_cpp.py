@@ -6,23 +6,52 @@ import os, sys
 import ast
 import pythonjs_to_rust
 
-
+JVM_HEADER = '''
+#include <jni.h>
+std::shared_ptr<JavaVM> __create_jvm__() {
+	JavaVM* jvm;
+	JNIEnv* env;
+	JavaVMInitArgs args;
+	JavaVMOption options[2];
+	args.version = JNI_VERSION_1_4;
+	args.nOptions = 2;
+	options[0].optionString = const_cast<char*>("-Djava.class.path=.");
+	options[1].optionString = const_cast<char*>("-Xcheck:jni");
+	args.options = options;
+	args.ignoreUnrecognized = JNI_FALSE;
+	JNI_CreateJavaVM(&jvm, (void **)&env, &args);
+	std::shared_ptr<JavaVM> sptr = std::make_shared<JavaVM>(jvm);
+	return sptr;
+}
+'''
 
 class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def _visit_call_helper_new(self, node):
-		assert self._cpp
-		assert not self._shared_pointers
-		if isinstance(node.args[0], ast.BinOp):
+		'''
+		low level `new` for interfacing with external c++.
+		Also used for code that is blocked with `with pointers:`
+		to create a class without having to create a temp variable,
+		`f( new(MyClass(x,y)) )`, directly calls the constructor,
+		if MyClass is a Rusthon class then __init__ will be called.
+		TODO fix mixing with std::shared_ptr by keeping a weak_ptr
+		in each object that __init__ returns (also fixes the _ref_hacks)
+		'''
+		if isinstance(node.args[0], ast.BinOp): # TODO check
+			raise SyntaxError('binopnew')
 			a = self.visit(node.args[0])
 			if type(a) is not tuple:
 				raise SyntaxError(a)
 			atype, avalue = a
 			if atype.endswith('*'): atype = atype[:-1]
-			return 'new %s %s' %(atype, avalue)
-		else:
+			return '(new %s %s)' %(atype, avalue)
+		## Rusthon class ##
+		elif isinstance(node.args[0], ast.Call) and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id in self._classes:
 			classname = node.args[0].func.id
 			args = [self.visit(arg) for arg in node.args[0].args ]
 			return '(new %s)->__init__(%s)' %(classname, ','.join(args))
+		## external c++ class ##
+		else:
+			return '(new %s)' %self.visit(node.args[0])
 
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):
 		pythonjs_to_rust.RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
@@ -106,10 +135,14 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
+		includes = []
 		if r:
 			for name in r:
-				self._imports.add('import("%s");' %name)
-		return ''
+				if name == 'jvm':
+					includes.append(JVM_HEADER)
+				else:
+					includes.append('#include <%s>");' %name)
+		return '\n'.join(includes)
 
 	def visit_Module(self, node):
 		header = [
@@ -141,7 +174,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 						lines.append( sub )
 			else:
 				if isinstance(b, ast.Import):
-					pass
+					header.append( self.visit(b) )
 				else:
 					raise SyntaxError(b)
 
