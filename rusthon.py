@@ -875,7 +875,10 @@ def main():
 	if not save:
 		for exe in package['executeables']:
 			print('running: %s' %exe)
-			subprocess.check_call( exe )
+			subprocess.check_call(
+				exe, 
+				cwd=tempfile.gettempdir() ## jvm needs this to find the .class files
+			)
 
 		if package['html']:
 			import webbrowser
