@@ -723,15 +723,24 @@ def build( modules, module_path, datadirs=None ):
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
 		if link or giws:
-			cmd.append('-static')
-
-			if giws:   ## link to the JVM if giws bindings were compiled ##
-				cmd.append('-ljvm')
-				for jrepath in 'include include/linux jre/lib/i386 jre/lib/i386/client/'.split():
-					cmd.append('-I%s/%s' %(os.environ['JAVA_HOME'], jrepath))
 
 			if libdl:
 				cmd.append('-ldl')
+
+			if giws:   ## link to the JVM if giws bindings were compiled ##
+				cmd.append('-ljvm')
+
+				os.environ['LD_LIBRARY_PATH']=''
+				#for jrepath in 'include include/linux jre/lib/i386 jre/lib/i386/client/'.split():
+				for jrepath in 'include include/linux'.split():
+					cmd.append('-I%s/%s' %(os.environ['JAVA_HOME'], jrepath))
+				for jrepath in 'jre/lib/amd64 jre/lib/amd64/server/'.split():
+					cmd.append('-L%s/%s' %(os.environ['JAVA_HOME'], jrepath))
+					os.environ['LD_LIBRARY_PATH'] += ':%s/%s'%(os.environ['JAVA_HOME'], jrepath)
+				#raise RuntimeError(os.environ['LD_LIBRARY_PATH'])
+
+			else:  ## TODO fix jvm with static c libs
+				cmd.append('-static')
 
 			if link:  ## c staticlibs or giws c++ wrappers ##
 				cmd.append('-L' + tempfile.gettempdir() + '/.')
