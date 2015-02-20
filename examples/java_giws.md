@@ -34,7 +34,7 @@ Rusthon
 ------------
 ```rusthon
 import jvm
-namespace('mymodule')
+jvm.namespace('mymodule')
 
 
 def foo( ob: MyJavaClass ):
