@@ -237,6 +237,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		root_classes = set()  ## subsubclasses in c++ need to inherit from the roots
 		cpp_bases = list()
+		extern_classes = list()
 		for base in node.bases:
 			n = self.visit(base)
 			if n == 'object':
@@ -252,14 +253,17 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				props.update( self._class_props[n] )
 				base_classes.add( self._classes[n] )
 
-			for p in self._classes[ n ]._parents:
-				bases.add( p )
-				props.update( self._class_props[p] )
-				base_classes.add( self._classes[p] )
-				if p in self._root_classes:
-					root_classes.add(p)
+			if n not in self._classes:
+				extern_classes.append(n)
+			else:
+				for p in self._classes[ n ]._parents:
+					bases.add( p )
+					props.update( self._class_props[p] )
+					base_classes.add( self._classes[p] )
+					if p in self._root_classes:
+						root_classes.add(p)
 
-			self._classes[ n ]._subclasses.add( node.name )
+				self._classes[ n ]._subclasses.add( node.name )
 
 		if len(root_classes)>1 and self._cpp:
 			raise RuntimeError(root_classes)
@@ -304,9 +308,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		unionstruct = dict()
 		unionstruct.update( sdef )
 		for pname in node._parents:
-			parent = self._classes[ pname ]
-			parent._subclasses_union.update( sdef )        ## first pass
-			unionstruct.update( parent._subclasses_union ) ## second pass
+			if pname in self._classes:
+				parent = self._classes[ pname ]
+				parent._subclasses_union.update( sdef )        ## first pass
+				unionstruct.update( parent._subclasses_union ) ## second pass
+			else:
+				pass  ## class from external c++ library
 
 
 		parent_init = None
@@ -339,7 +346,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				overloaded.append( self.visit(b) )
 
 		if self._cpp:
-			if base_classes:
+			if cpp_bases:
 				#parents = ','.join(['public %s' % rname for rname in root_classes])
 				parents = ','.join(['public %s' % rname for rname in cpp_bases])
 				out.append( 'class %s:  %s {' %(node.name, parents))
@@ -347,7 +354,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append( 'class %s {' %node.name)
 			out.append( '  public:')
 
-			if not base_classes:
+			#if not base_classes:
+			if not cpp_bases:
 				## only the base class defines `__class__`, this must be the first element
 				## in the struct so that all rusthon object has the same header memory layout.
 				## note if a subclass redefines `__class__` even as a string, and even as the
@@ -473,12 +481,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## member initializer list `MyClass() : x(1) {}` only work when `x` is locally defined inside the class,
 			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
 			## TODO make __class__ static const string.
-			out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
+			if not extern_classes:
+				out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
 
-			if self._polymorphic:
-				out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
-			else: #not base_classes:
-				out.append('	std::string getclassname() {return this->__class__;}')
+				if self._polymorphic:
+					out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
+				else: #not base_classes:
+					out.append('	std::string getclassname() {return this->__class__;}')
 
 			out.append('};')
 

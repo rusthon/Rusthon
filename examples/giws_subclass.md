@@ -55,10 +55,17 @@ Rusthon
 import jvm
 jvm.namespace('mymod')
 
+class C(A):
+	def hey(self):
+		print('hey from rusthon')
+
 def main():
 	a = jvm( A() )
 	b = jvm( B() )
 	a.foo()
 	b.bar()
+	c = jvm( C() )
+	c.foo()
+	c.hey()
 
 ```
