@@ -8,6 +8,8 @@ inline("""
 typedef double f64;
 typedef float  f32;
 
+const char* cstr( std::string s ) { return s.c_str(); }
+
 template<typename T, typename ...Args>
 std::unique_ptr<T> _make_unique( Args&& ...args )
 {

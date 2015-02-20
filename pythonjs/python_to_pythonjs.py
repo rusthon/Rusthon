@@ -326,10 +326,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					source = header + '\n' + source
 					self._source = source.splitlines()
 
-		try:
-			tree = ast.parse( source )
-		except SyntaxError as err:
-			raise SyntaxError(self.format_error(err[0]))
+		tree = ast.parse( source )
 
 		self._generator_function_nodes = collect_generator_functions( tree )
 

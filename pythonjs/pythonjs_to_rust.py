@@ -845,6 +845,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if fname.endswith('.append'): ## TODO - deprecate append to pushX or make `.append` method reserved by not allowing methods named `append` in visit_ClassDef?
 			is_append = True
 			arr = fname.split('.append')[0]
+
+		if fname.endswith('->__exec__'):
+			fname = fname.replace('->__exec__', '->exec')
+
 		###########################################
 		if fname=='jvm':
 			classname = node.args[0].func.id
@@ -860,7 +864,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif fname=='jvm->create':  ## TODO - test multiple vms
 			return '__create_jvm__();'
-		elif fname=='using_namespace':
+		elif fname=='jvm->namespace':  ## giws squashes the name space from `org.x.y` to `org_x_y`
+			s = node.args[0].s
+			return 'using namespace %s;' %s.replace('.', '_')
+			#ns = []
+			#nspath = s.split('.')
+			#for i,a in enumerate(nspath):
+			#	if i==len(nspath)-1:
+			#		ns.append('::'+a)
+			#	else:
+			#		ns.append(a+'_')
+			#raise SyntaxError(ns)
+		elif fname=='namespace':
 			return 'using namespace %s;' %node.args[0].s
 		elif fname=='weak->unwrap':
 			## this is needed for cases where we do not know if its a weakptr, `self.a.b.c.parent`,
