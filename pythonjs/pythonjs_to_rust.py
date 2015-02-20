@@ -852,7 +852,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			args.extend(
 				[self.visit(arg) for arg in node.args[0].args]
 			)
-			return 'new %s(%s)'%(classname,','.join(args))
+			return 'std::make_shared<%s>(new %s(%s))'%(classname, classname,','.join(args))
 
 		elif fname=='jvm->create':  ## TODO - test multiple vms
 			return '__create_jvm__();'

@@ -43,7 +43,7 @@ def foo( ob: MyJavaClass ):
 def main():
 	#vm = jvm.create()  ## android only allows one JavaVM
 	#ob  = new( MyJavaClass(vm) )
-	jvm( MyJavaClass() )
+	ob = jvm( MyJavaClass() )
 	foo( ob )
 
 ```
