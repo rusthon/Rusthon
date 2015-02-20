@@ -852,7 +852,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			args.extend(
 				[self.visit(arg) for arg in node.args[0].args]
 			)
-			return 'std::make_shared<%s>(new %s(%s))'%(classname, classname,','.join(args))
+			## this is slower because it makes two allocations, and if allocation of shared_ptr
+			## fails, then the object could be leaked.
+			#return 'std::shared_ptr<%s>(new %s(%s))'%(classname, classname,','.join(args))
+			## using make_shared is safer and is only a single allocation.
+			return 'std::make_shared<%s>(%s)'%(classname,','.join(args))
 
 		elif fname=='jvm->create':  ## TODO - test multiple vms
 			return '__create_jvm__();'
