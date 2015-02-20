@@ -41,8 +41,6 @@ def foo( ob: MyJavaClass ):
 	print ob.bar( 10.0, 100.0 )
 
 def main():
-	#vm = jvm.create()  ## android only allows one JavaVM
-	#ob  = new( MyJavaClass(vm) )
 	ob = jvm( MyJavaClass() )
 	foo( ob )
 

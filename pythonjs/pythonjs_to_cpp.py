@@ -8,8 +8,9 @@ import pythonjs_to_rust
 
 JVM_HEADER = '''
 #include <jni.h>
+
 JavaVM* __create_javavm__() {
-	JavaVM* jvm;
+	JavaVM* jvm = new JavaVM();
 	JNIEnv* env;
 	JavaVMInitArgs args;
 	JavaVMOption options[2];
@@ -22,7 +23,8 @@ JavaVM* __create_javavm__() {
 	JNI_CreateJavaVM(&jvm, (void **)&env, &args);
 	return jvm;
 }
-JavaVM* __javavm__ = __create_javavm__();
+
+static JavaVM* __javavm__ = __create_javavm__();
 '''
 def gen_jvm_header( jars ):
 	if jars:

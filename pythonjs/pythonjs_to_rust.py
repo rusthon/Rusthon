@@ -866,7 +866,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif fname=='jvm->create':  ## TODO - test multiple vms
 			return '__create_javavm__();'
 		elif fname=='jvm->load':
-			self._java_classpaths.append(node.args[0].s)
+			if node.args[0].s not in self._java_classpaths:
+				self._java_classpaths.append(node.args[0].s)
 			return ''
 		elif fname=='jvm->namespace':  ## giws squashes the name space from `org.x.y` to `org_x_y`
 			s = node.args[0].s
@@ -1917,6 +1918,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				out.append(self.indent()+'if (%s.joinable()) %s.join();' %(threadname,threadname))
 
 		if is_main and self._cpp:
+			if self._has_jvm:
+				out.append('std::cout << "take down...." <<std::endl;')
+				out.append(self.indent()+'__javavm__->DestroyJavaVM();')
+				out.append('std::cout << "jvm down." <<std::endl;')  ## jvm crashes here TODO fixme.
+				#out.append('delete __javavm__;')  ## invalid pointer - segfault.
 			out.append( self.indent() + 'return 0;' )
 		if is_init and self._cpp:
 			if not self._shared_pointers:
