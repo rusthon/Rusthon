@@ -1,5 +1,15 @@
+Jython Hello World
+------------------
+You need to download jython-standalone.jar from 
+http://www.jython.org/downloads.html
+tested with jython-standalone-2.7-b3.jar, rename to jython.jar and build with this command:
 
-Jython Gwis Wrapper
+@test.sh
+```bash
+./rusthon.py ./examples/giws_jython.md --data=~/Downloads/jython.jar
+```
+
+Gwis Wrapper
 -------
 Gwis generates JNI wrappers so the Java object can be used from C++.
 https://github.com/opencollab/giws
@@ -19,9 +29,6 @@ The XML below wraps the PythonInterpreter from Jython.
 
 Rusthon
 ------------
-You need to download jython-standalone.jar and place it in the build directory.
-http://www.jython.org/downloads.html
-tested with jython-standalone-2.7-b3.jar
 
 ```rusthon
 import jvm

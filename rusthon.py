@@ -766,9 +766,12 @@ def save_tar( package, path='build.tar' ):
 
 	if package['datadirs']:
 		for datadir in package['datadirs']:
-			for name in os.listdir(datadir):
-				a = os.path.join(datadir,name)
-				tar.add(a)  ## files and folders
+			if os.path.isdir(datadir):
+				for name in os.listdir(datadir):
+					a = os.path.join(datadir,name)
+					tar.add(a)  ## files and folders
+			elif os.path.isfile(datadir):
+				tar.add(datadir)
 
 	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv'}
 	for lang in 'rust c++ go javascript python html verilog'.split():
@@ -852,6 +855,8 @@ def main():
 			gen_md = True
 			j2r = True
 
+	datadirs = [os.path.expanduser(dd) for dd in datadirs]
+
 	if j2r:
 		for path in paths:
 			m = convert_to_markdown_project(path, java=True, java2rusthon=True)
@@ -873,11 +878,17 @@ def main():
 	package = build(modules, base_path, datadirs=datadirs )
 
 	if not save:
+		tmpdir = tempfile.gettempdir()
+		## copy jar files ##
+		for p in datadirs:
+			if p.endswith('.jar'):
+				dpath,dname = os.path.split(p)
+				open(os.path.join(tmpdir,dname),'wb').write(open(p,'rb').read())
 		for exe in package['executeables']:
 			print('running: %s' %exe)
 			subprocess.check_call(
 				exe, 
-				cwd=tempfile.gettempdir() ## jvm needs this to find the .class files
+				cwd=tmpdir ## jvm needs this to find the .class files
 			)
 
 		if package['html']:
