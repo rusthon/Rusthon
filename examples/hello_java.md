@@ -1,4 +1,4 @@
-Java Frontend
+Java Frontend with Java2Rusthon
 --------------
 Requires:
 * https://github.com/rusthon/java2python
@@ -21,6 +21,7 @@ Java
 -----
 Some hand written Java source code, auto converted to Rusthon's syntax,
 and merged with below.
+@java2rusthon
 ```java
 
 public class HelloWorld {
