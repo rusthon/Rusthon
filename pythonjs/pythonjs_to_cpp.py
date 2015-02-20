@@ -8,22 +8,29 @@ import pythonjs_to_rust
 
 JVM_HEADER = '''
 #include <jni.h>
-JavaVM* create_vm() {
+JavaVM* __create_javavm__() {
 	JavaVM* jvm;
 	JNIEnv* env;
 	JavaVMInitArgs args;
 	JavaVMOption options[2];
 	args.version = JNI_VERSION_1_4;
 	args.nOptions = 2;
-	options[0].optionString = const_cast<char*>("-Djava.class.path=.");
+	options[0].optionString = const_cast<char*>("-Djava.class.path=.%s");
 	options[1].optionString = const_cast<char*>("-Xcheck:jni");
 	args.options = options;
 	args.ignoreUnrecognized = JNI_FALSE;
 	JNI_CreateJavaVM(&jvm, (void **)&env, &args);
 	return jvm;
 }
-JavaVM* __javavm__ = create_vm();
+JavaVM* __javavm__ = __create_javavm__();
 '''
+def gen_jvm_header( jars ):
+	if jars:
+		a = ':' + ':'.join(jars)
+		return JVM_HEADER %a
+	else:
+		return JVM_HEADER %''
+
 
 class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def _visit_call_helper_new(self, node):
@@ -60,7 +67,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self._shared_pointers = True
 		self._noexcept = False
 		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
-
+		self._has_jvm = False
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
@@ -139,7 +146,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		if r:
 			for name in r:
 				if name == 'jvm':
-					includes.append(JVM_HEADER)
+					self._has_jvm = True
 				else:
 					includes.append('#include <%s>");' %name)
 		return '\n'.join(includes)
@@ -165,7 +172,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		for b in node.body:
 			line = self.visit(b)
 
-			if line:
+			if line is not None:
 				for sub in line.splitlines():
 					if sub==';':
 						#raise SyntaxError('bad semicolon')
@@ -186,6 +193,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			header.append(
 				open( os.path.join(dirname, 'runtime/c++/cpp-channel.h') ).read()
 			)
+
+		if self._has_jvm:
+			header.append( gen_jvm_header(self._java_classpaths) )
 
 		## forward declare all classes
 		for classname in self._classes:

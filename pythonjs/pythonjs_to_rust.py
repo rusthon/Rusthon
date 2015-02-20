@@ -40,6 +40,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._has_channels = False
 		self._crates = {}
 		self._root_classes = {}
+		self._java_classpaths = []
 
 
 	def visit_Str(self, node):
@@ -863,7 +864,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			return 'std::make_shared<%s>(%s)'%(classname,','.join(args))
 
 		elif fname=='jvm->create':  ## TODO - test multiple vms
-			return '__create_jvm__();'
+			return '__create_javavm__();'
+		elif fname=='jvm->load':
+			self._java_classpaths.append(node.args[0].s)
+			return ''
 		elif fname=='jvm->namespace':  ## giws squashes the name space from `org.x.y` to `org_x_y`
 			s = node.args[0].s
 			return 'using namespace %s;' %s.replace('.', '_')

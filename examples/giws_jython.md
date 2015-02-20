@@ -20,6 +20,8 @@ Rusthon
 ------------
 ```rusthon
 import jvm
+#jvm.load( 'jython-standalone-2.7-b3.jar' )
+jvm.load( 'jython.jar' )
 jvm.namespace('org.python.util')
 
 def main():
