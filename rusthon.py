@@ -79,7 +79,7 @@ def compile_giws_bindings( xml ):
 		'--output-dir='+tmpdir,
 		#'--per-package',
 		'--disable-return-size-array',
-		'--throws-exception-on-error',
+		#'--throws-exception-on-error', # requires GiwsException.hxx and GiwsException.cpp
 	]
 	#subprocess.check_call(cmd)
 	proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -99,9 +99,29 @@ def compile_giws_bindings( xml ):
 
 		code = []
 		for header in headers:
-			code.append( open(os.path.join(tmpdir,header), 'rb').read() )
+			data = open(os.path.join(tmpdir,header), 'rb').read()
+			code.append( data )
+			#lines = ['/* %s */' %header]
+			#for line in data.splitlines():
+			#	if line.startswith('class GIWSEXPORT '):
+			#		classname = line.split()[-2]
+			#		lines.append(line)
+			#		lines.append('	%s( std::shared_ptr<JavaVM> _jvm );' %classname)
+			#	else:
+			#		lines.append(line)
+			#code.append( '\n'.join(lines) )
+
+
 		for impl in impls:
-			code.append( open(os.path.join(tmpdir,impl), 'rb').read() )
+			data = open(os.path.join(tmpdir,impl), 'rb').read()
+			lines = ['/* %s */' %impl]
+			includes = []  ## ignore these
+			for line in data.splitlines():
+				if line.startswith('#include'):
+					includes.append(line)
+				else:
+					lines.append(line)
+			code.append( '\n'.join(lines) )
 
 		return '\n'.join(code)
 
@@ -442,7 +462,7 @@ def build( modules, module_path, datadirs=None ):
 		mods_sorted_by_index = sorted(modules['xml'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			if mod['tag']=='gwis':
-				giws.append(mod['code'])
+				giws.append(mod['code'])  ## hand written bindings should get saved in output tar.
 				bindings = compile_giws_bindings(mod['code'])
 				modules['c++'].append( {'code':bindings, 'index': mod['index']})  ## gets compiled below
 			else:

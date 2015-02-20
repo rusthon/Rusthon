@@ -20,7 +20,7 @@ https://github.com/opencollab/giws
 @gwis
 ```xml
 <package name="mymodule">
-  <object name="MyComplexClass">
+  <object name="MyJavaClass">
         <method name="bar" returnType="double">
           <param type="double" name="a" />
           <param type="double" name="b" />
@@ -41,8 +41,9 @@ def foo( ob: MyJavaClass ):
 	print ob.bar( 10.0, 100.0 )
 
 def main():
-	vm = jvm.create()
-	ob  = new( MyJavaClass(vm) )
+	#vm = jvm.create()  ## android only allows one JavaVM
+	#ob  = new( MyJavaClass(vm) )
+	jvm( MyJavaClass() )
 	foo( ob )
 
 ```

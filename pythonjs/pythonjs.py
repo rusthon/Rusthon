@@ -501,6 +501,18 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				for key in decor.keywords:
 					if isinstance( key.value, ast.Str):
 						args_typedefs[ key.arg ] = key.value.s
+					elif isinstance(key.value, ast.Name):
+						T = key.value.id
+						if self.is_prim_type(T):
+							args_typedefs[key.arg] = T
+						else:
+							if not self._shared_pointers:
+								args_typedefs[ key.arg ] = '%s*' %T
+							elif self._unique_ptr:
+								args_typedefs[ key.arg ] = 'std::unique_ptr<%s>' %T
+							else:
+								args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %T
+
 					else:
 						if isinstance(key.value, ast.Call) and isinstance(key.value.func, ast.Name) and key.value.func.id=='__arg_array__':
 							arrays[ key.arg ] = key.value.args[0].s

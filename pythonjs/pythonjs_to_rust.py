@@ -846,7 +846,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 		###########################################
-		if fname=='weak->unwrap':
+		if fname=='jvm':
+			classname = node.args[0].func.id
+			args = ['__javavm__']  ## global JavaVM instance
+			args.extend(
+				[self.visit(arg) for arg in node.args[0].args]
+			)
+			return 'new %s(%s)'%(classname,','.join(args))
+
+		elif fname=='jvm->create':  ## TODO - test multiple vms
+			return '__create_jvm__();'
+		elif fname=='using_namespace':
+			return 'using namespace %s;' %node.args[0].s
+		elif fname=='weak->unwrap':
 			## this is needed for cases where we do not know if its a weakptr, `self.a.b.c.parent`,
 			## it is also useful for the user to simply make their code more clear.
 			w = self.visit(node.args[0])
@@ -2841,40 +2853,35 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
 
 				## creation of a new class instance and assignment to a local variable
-				## TODO self.writer.expression_stack for appending lines that will be inserted
-				## before each lines is normally written in visit_Expr,
-				## this way syntax like `f(SomeClass())` will work.
 				if node.value.func.id in self._classes or (node.value.func.id=='new' and isinstance(node.value.args[0],ast.Call) and not node.value.args[0].func.id.startswith('_') ):
 					if node.value.func.id=='new':
 						classname = node.value.args[0].func.id
-						value = self.visit(node.value.args[0])
+						if not self._cpp:
+							value = self.visit(node.value.args[0])
 					else:
 						classname = node.value.func.id
 
 					self._known_instances[ target ] = classname
 
 					if self._cpp:
+						return 'auto %s = %s;' %(target, value)
 
-						## make object on the stack, safe to use _ref_ in same block ##
-						## TODO move get-args-and-kwargs to its own helper function
-						constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
-						r = '%s  _ref_%s = %s{};' %(classname, target, classname)
-						if constructor_args:
-							r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
-
-
-						if self._shared_pointers:
-							if self._unique_ptr:
-								r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(classname, target, classname, target)
-							else:
-								r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
-
-						else:  ## raw pointer to object
-
-							#return 'auto %s = new %s;' %(target, value)  ## user must free memory manually
-							r += '%s* %s = &_ref_%s;' %(classname, target, target)  ## free'ed when _ref_ goes out of scope
-
-						return r
+						if False:  ## DEPRECATED
+							## make object on the stack, safe to use _ref_ in same block ##
+							## TODO move get-args-and-kwargs to its own helper function
+							constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
+							r = '%s  _ref_%s = %s{};' %(classname, target, classname)
+							if constructor_args:
+								r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
+							if self._shared_pointers:
+								if self._unique_ptr:
+									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(classname, target, classname, target)
+								else:
+									r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
+							else:  ## raw pointer to object
+								#return 'auto %s = new %s;' %(target, value)  ## user must free memory manually
+								r += '%s* %s = &_ref_%s;' %(classname, target, target)  ## free'ed when _ref_ goes out of scope
+							return r
 
 
 					else:  ## rust
