@@ -488,6 +488,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
 				else: #not base_classes:
 					out.append('	std::string getclassname() {return this->__class__;}')
+			else:
+				## TODO some syntax like a class decor @jvm to mark the external class as a java subclass
+				out.append('	%s(JavaVM* _jvm) : %s(_jvm) {}' %(node.name, extern_classes[0]) )
 
 			out.append('};')
 
