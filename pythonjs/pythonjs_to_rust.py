@@ -271,16 +271,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if not len(base_classes):
 			self._root_classes[ node.name ] = node
 
-		for decor in node.decorator_list:  ## class decorators
-			if isinstance(decor, ast.Call):
-				if decor.func.id != '__struct__':
-					raise SyntaxError(decor.func.id)  ## problem in previous translation can trigger this to happen.
-
-				#props.update( [self.visit(a) for a in decor.args] )
+		## class decorators ##
+		is_jvm_class = False
+		for decor in node.decorator_list:
+			## __struct__ is generated in python_to_pythonjs.py
+			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id=='__struct__':
 				for kw in decor.keywords:
 					props.add( kw.arg )
 					T = kw.value.id
 					sdef[ kw.arg ] = T
+			elif self._cpp:
+				if isinstance(decor, ast.Name) and decor.id=='jvm':
+					## subclasses from a Java class ##
+					self._jvm_classes[ node.name ] = node
+					is_jvm_class = True
 
 
 		init = None
@@ -299,10 +303,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						v = self.visit( b.value.values[i] )
 					sdef[k] = v
 
-		for k in sdef:
-			v = sdef[k]
-			#if v=='interface{}':  ## deprecated
-			#	self.interfaces[node.name].add(k)
 
 		node._struct_def.update( sdef )
 		unionstruct = dict()
@@ -355,7 +355,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			out.append( '  public:')
 
 			#if not base_classes:
-			if not cpp_bases:
+			if not cpp_bases or is_jvm_class:
 				## only the base class defines `__class__`, this must be the first element
 				## in the struct so that all rusthon object has the same header memory layout.
 				## note if a subclass redefines `__class__` even as a string, and even as the
@@ -488,9 +488,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					out.append('	virtual std::string getclassname() {return this->__class__;}')  ## one virtual method makes class polymorphic
 				else: #not base_classes:
 					out.append('	std::string getclassname() {return this->__class__;}')
+
+			elif is_jvm_class:
+				## TODO constructor args for jvm super class and __init__ for subclass
+				out.append('	%s(JavaVM* _jvm) : %s(_jvm) {__class__ = std::string("%s");}' %(node.name, extern_classes[0], node.name) )
+				out.append('	std::string getclassname() {return this->__class__;}')
 			else:
-				## TODO some syntax like a class decor @jvm to mark the external class as a java subclass
-				out.append('	%s(JavaVM* _jvm) : %s(_jvm) {}' %(node.name, extern_classes[0]) )
+				pass ## some unknown external c++ class, TODO constructor.
 
 			out.append('};')
 
@@ -865,16 +869,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		###########################################
 		if fname=='jvm':
 			classname = node.args[0].func.id
-			args = ['__javavm__']  ## global JavaVM instance
-			args.extend(
-				[self.visit(arg) for arg in node.args[0].args]
-			)
-			## this is slower because it makes two allocations, and if allocation of shared_ptr
-			## fails, then the object could be leaked.  using this for now because it works with g++4.7
-			return 'std::shared_ptr<%s>(new %s(%s))'%(classname, classname,','.join(args))
+			args = [self.visit(arg) for arg in node.args[0].args]
 
 			## using make_shared is safer and is only a single allocation, but it crashes g++4.7
 			#return 'std::make_shared<%s>(%s)'%(classname,','.join(args))
+
+			## this is slower because it makes two allocations, and if allocation of shared_ptr
+			## fails, then the object could be leaked.  using this for now because it works with g++4.7
+			if classname in self._jvm_classes:
+				## Rusthon class that subclass from Java classes (decorated with @jvm)
+				return 'std::shared_ptr<%s>((new %s(__javavm__))->__init__(%s))'%(classname, classname,','.join(args))
+			else:
+				## Java class ##
+				args.insert(0, '__javavm__') ## global JavaVM instance
+				if len(args)>1:
+					raise RuntimeError('Giws as of feb21.2015, is missing support for constructor arguments')
+				return 'std::shared_ptr<%s>(new %s(%s))'%(classname, classname,','.join(args))
+
 
 		elif fname=='jvm->create':  ## TODO - test multiple vms
 			return '__create_javavm__();'
@@ -1521,6 +1532,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
 				assert len(decor.args)==1
 				node.name = self.visit(decor.args[0])
+			elif isinstance(decor, ast.Name) and decor.id=='jvm':
+				raise RuntimeError('TODO @jvm for function')
 
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]
@@ -1539,8 +1552,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		is_main = node.name == 'main'
 		if is_main and self._cpp:  ## g++ requires main returns an integer
 			return_type = 'int'
-
-		if return_type and not self.is_prim_type(return_type):
+		elif is_init and self._cpp:
+			return_type = '%s*' %self._class_stack[-1].name
+		elif return_type and not self.is_prim_type(return_type):
 			if self._cpp:
 				if 'returns_array' in options and options['returns_array']:
 					pass
@@ -1932,17 +1946,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if is_main and self._cpp:
 			if self._has_jvm:
-				out.append('std::cout << "take down...." <<std::endl;')
+				out.append('std::cout << "program exit - DestroyJavaVM" <<std::endl;')
 				out.append(self.indent()+'__javavm__->DestroyJavaVM();')
-				out.append('std::cout << "jvm down." <<std::endl;')  ## jvm crashes here TODO fixme.
+				out.append('std::cout << "JavaVM shutdown ok." <<std::endl;')  ## jvm crashes here TODO fixme.
 				#out.append('delete __javavm__;')  ## invalid pointer - segfault.
 			out.append( self.indent() + 'return 0;' )
 		if is_init and self._cpp:
-			if not self._shared_pointers:
-				out.append( self.indent() + 'return this;' )
-			else:
-				#out.append( self.indent() + 'return std::make_shared<%s>(this);' %self._class_stack[-1].name )  ## crashes GCC
-				out.append( self.indent() + 'return nullptr;' )  ## the exe with PGO will crash if nothing returns
+			out.append( self.indent() + 'return this;' )
+			#if not self._shared_pointers:
+			#	out.append( self.indent() + 'return this;' )
+			#else:
+			#	#out.append( self.indent() + 'return std::make_shared<%s>(this);' %self._class_stack[-1].name )  ## crashes GCC
+			#	out.append( self.indent() + 'return nullptr;' )  ## the exe with PGO will crash if nothing returns
 
 
 		self.pull()
@@ -2139,6 +2154,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		name = self.visit(node.value)
 		attr = node.attr
 		if attr == '__leftarrow__':
+			## TODO use for something else, because '.' is always turned into '->' in the c++ backend. ##
 			if self._cpp:
 				return '%s->' %name
 			else:  ## skip left arrow for rust backend.

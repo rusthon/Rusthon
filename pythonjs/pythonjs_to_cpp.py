@@ -70,6 +70,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self._noexcept = False
 		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
 		self._has_jvm = False
+		self._jvm_classes = dict()
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]

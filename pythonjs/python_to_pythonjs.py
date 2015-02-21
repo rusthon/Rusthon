@@ -215,18 +215,14 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		source = typedpython.transform_source( source )
 
-		self.setup_inliner( writer )  ## deprecated TODO
 
-		self._in_catch_exception = False
-
-
-
-		## optimize "+" and "*" operator
+		## optimize "+" and "*" operator, for python syntax like 'a'*3 becomes 'aaa'
 		if fast_javascript:
 			self._direct_operators = set( ['+', '*'] )
 		else:
 			self._direct_operators = set()
 
+		self._in_catch_exception = False
 		self._in_lambda = False
 		self._in_while_test = False
 		self._use_threading = False
@@ -980,7 +976,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		comments = []
 		methods  = {}
 		method_list = []  ## getter/setters can have the same name
-		props = set()
+		props = set()     ## type info for the backend and Dart (old)
 		struct_types = dict()
 
 		for item in node.body:
@@ -1045,12 +1041,12 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 			comments = ['\n'.join(stripped_comment_lines)]
 
-		if self._with_go or self._with_rust or self._with_cpp:
-			pass
-		elif props:
+		## pass along all class decorators to the backend ##
+		for dec in node.decorator_list:
+			writer.write('@%s'%self.visit(dec))
+
+		if self._with_dart and props:
 			writer.write('@properties(%s)'%','.join(props))  ## TODO rename this to @__dart__props__
-			for dec in node.decorator_list:
-				writer.write('@%s'%self.visit(dec))
 
 		bases = []
 		for base in node.bases:
@@ -2471,7 +2467,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		###############################################
 		if not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
 			if node.func.attr == 'append':
-				#return '%s.append( [%s], __NULL_OBJECT__)' %(node.func.value.id, self.visit(node.args[0]) )
 				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
 			else:
 				raise SyntaxError( self.format_error(node) )
@@ -2495,7 +2490,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		elif self._with_js and self._use_array and name == 'array':
 			args = [self.visit(arg) for arg in node.args]
-			#return 'array.__call__([%s], __NULL_OBJECT__)' %','.join(args)  ## this breaks `arr[ INDEX ]`
 			return '__js_typed_array(%s)' %','.join(args)
 
 		#########################################
@@ -2543,14 +2537,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					else:
 						raise SyntaxError( self.format_error(node) )
 
-				elif kw.arg == 'inline_functions':
-					if kw.value.id == 'True':
-						self._with_inline = True
-					elif kw.value.id == 'False':
-						self._with_inline = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
 				elif kw.arg == 'runtime_exceptions':
 					if kw.value.id == 'True':
 						self._with_runtime_exceptions = True
@@ -2576,32 +2562,15 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				else:
 					raise SyntaxError( self.format_error('invalid keyword option') )
 
-		elif self._with_ll or name == 'inline' or self._with_glsl:
+		elif name == 'inline':
+			return 'inline(%s)' %self.visit(node.args[0])
+
+		elif self._with_ll:
 			F = self.visit(node.func)
 			args = [self.visit(arg) for arg in node.args]
-			if hasattr(self, '_in_gpu_method') and self._in_gpu_method and isinstance(node.func, ast.Attribute):
-				fv = self.visit(node.func.value)
-				if fv == 'self':
-					clsname = self._in_gpu_method
-					args.insert(0, 'self')
-				else:
-					fvt = fv.split('.')[-1]
-					clsname = self._typedef_vars[ fvt ]
-					args.insert(0, fv)
-
-				F = '%s_%s' %(clsname, node.func.attr)
-
-			elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._typedef_vars:
-				#raise RuntimeError(node.func.value.id)
-				clsname = self._typedef_vars[ node.func.value.id ]
-				F = '%s_%s' %(clsname, node.func.attr)
-				args.insert(0, node.func.value.id)
-
-
 			if node.keywords:
 				args.extend( [self.visit(x.value) for x in node.keywords] )
 				return '%s(%s)' %( F, ','.join(args) )
-
 			else:
 				return '%s(%s)' %( F, ','.join(args) )
 
@@ -3102,9 +3071,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 						writer.write('@__typedef__(%s=%s)' %(kw.arg, kwval))
 
 
-			elif isinstance(decorator, Name) and decorator.id == 'inline':
-				inline = True
-				self._with_inline = True
+			#elif isinstance(decorator, Name) and decorator.id == 'inline':  ## TODO deprecate, a good backend compiler or JIT already inlines the easy stuff
+			#	inline = True
+			#	self._with_inline = True
 
 			elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'webworker':
 				if not self._with_dart:
@@ -3112,7 +3081,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					assert len(decorator.args) == 1
 					jsfile = decorator.args[0].s
 
-			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':  ## DEPRECATED - TODO
+			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
 				if decorator.keywords:
 					for k in decorator.keywords:
 						key = k.arg
@@ -3631,21 +3600,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 		writer.pull()  ## end function body
 
-		#if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
-		#	writer.write('%s.pythonscript_function=True'%node.name)
-
-
-		if gpu:
-			self._with_glsl = restore_with_glsl
-			if gpu_main:
-				self._in_gpu_main = False
-
 		self._typedef_vars = dict()  ## clear typed variables
 
-		if inline:
-			self._with_inline = False
-
-		if self._in_js_class:
+		if self._in_js_class:  ## used when making multiple output javascripts, like main.js and webworker.js
 			writer = writer_main
 			return
 
@@ -4014,24 +3971,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 	def visit_With(self, node):
 		global writer
 
-		if isinstance( node.context_expr, Name ) and node.context_expr.id == 'glsl':
-			if not isinstance(node.optional_vars, ast.Name):
-				raise SyntaxError( self.format_error('wrapper function name must be given: `with glsl as myfunc:`') )
-			main_func = None
-			writer.inline_glsl = True
-			self._with_glsl = True
-			for b in node.body:
-				if isinstance(b, ast.FunctionDef) and b.name == 'main':
-					main_func = True
-					writer.write('@__glsl__.%s' %node.optional_vars.id)
-				a = self.visit(b)
-				if a: writer.write(a)
-			self._with_glsl = False
-			writer.inline_glsl = False
-			if not main_func:
-				raise SyntaxError( self.format_error('a function named `main` must be defined as the entry point for the shader program') )
-
-		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
+		if isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'rpc':
 			self._with_rpc = self.visit( node.context_expr.args[0] )
 			if isinstance(node.optional_vars, ast.Name):
 				self._with_rpc_name = node.optional_vars.id
@@ -4056,13 +3996,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			self._with_webworker = False
 			writer = writer_main
 
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline':
-			writer.write('with inline:')
-			writer.push()
-			for b in node.body:
-				a = self.visit(b)
-				if a: writer.write(a)
-			writer.pull()
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'lowlevel':
 			self._with_ll = True
 			#map(self.visit, node.body)
@@ -4083,19 +4016,16 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			#self._with_js = True
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'fastdef':
-			self._with_fastdef = True
-			map(self.visit, node.body)
-			self._with_fastdef = False
+			raise RuntimeError('with fastdef: is deprecated')
+			#self._with_fastdef = True
+			#map(self.visit, node.body)
+			#self._with_fastdef = False
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'static':
-			self._with_static_type = True
-			map(self.visit, node.body)
-			self._with_static_type = False
-
-		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'inline_function':
-			self._with_inline = True
-			map(self.visit, node.body)
-			self._with_inline = False
+			raise RuntimeError('with static: is deprecated')
+			#self._with_static_type = True
+			#map(self.visit, node.body)
+			#self._with_static_type = False
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id in EXTRA_WITH_TYPES:
 			writer.write('with %s:' %self.visit(node.context_expr))
@@ -4106,9 +4036,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			writer.pull()
 
 		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id in EXTRA_WITH_TYPES:
-
-			restore = self._with_js
-			self._with_js = True
 			if node.context_expr.keywords:
 				assert len(node.context_expr.keywords)==1
 				k = node.context_expr.keywords[0].arg
@@ -4118,24 +4045,11 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			else:
 				writer.write('with %s:' %self.visit(node.context_expr))
 
-
-			self._with_js = restore
-
 			writer.push()
 			for b in node.body:
 				a = self.visit(b)
 				if a: writer.write(a)
 			writer.pull()
-
-		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == 'gojs':
-			raise SyntaxError('deprecated')
-			transform_gopherjs( node )
-
-			self._with_gojs = True
-			for b in node.body:
-				a = self.visit(b)
-				if a: writer.write(a)
-			self._with_gojs = False
 
 		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'asm':
 			asmcode = []
@@ -4172,7 +4086,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 		else:
 			raise SyntaxError('invalid use of "with" statement')
 
-EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__', 'gojs')
+EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
 
 
 

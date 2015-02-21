@@ -234,12 +234,6 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 				prevchar = char
 
 
-		if not a:
-			continue
-
-
-		if a[-1]==';':
-			a.pop()
 		c = ''.join(a)
 		cs = c.strip()
 
@@ -300,7 +294,7 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 				output.append('%sexcept %s: %s=%s' %(indent, exception, s0.split('=')[0], default) )
 				c = ''
 
-		if not allow_tabs_and_spaces:  ## TODO fixme
+		if not allow_tabs_and_spaces:  ## TODO fixme, this is not safe now because we do not skip quoted text
 			indent = len(c) - len(c.lstrip())
 			if indent_unit == '' and indent:
 				indent_unit = c[0]
@@ -372,12 +366,12 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 				#c = c.replace('<-', '<<__go__send__<<')
 
 
-		## c++ `->`
-		if '->' in c:
-			a,b = c.split('->')
-			this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
-			method_name = b.split()[0].split('(')[0]
-			c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)  ## TODO should be rightarrow
+		## c++ `->`  ## not required anymore because `.` always becomes `->`
+		#if '->' in c:
+		#	a,b = c.split('->')
+		#	this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
+		#	method_name = b.split()[0].split('(')[0]
+		#	c = c.replace('->'+method_name, '.__leftarrow__.'+method_name)  ## TODO should be rightarrow
 
 
 		## python3 annotations
