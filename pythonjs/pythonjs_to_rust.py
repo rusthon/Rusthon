@@ -299,8 +299,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					k = self.visit( b.value.keys[ i ] )
 					if isinstance(b.value.values[i], ast.Str):
 						v = b.value.values[i].s
+					elif isinstance(b.value.values[i], ast.Call):
+						n = b.value.values[i]
+						if n.func.id=='__go__map__':
+							key_type = self.visit(n.args[0])
+							value_type = self.visit(n.args[1])
+							if key_type=='string': key_type = 'std::string'
+							if value_type=='string': value_type = 'std::string'
+							v = 'std::map<%s, %s>' %(key_type, value_type)
+						else:
+							raise RuntimeError('TODO')
+
 					else:
 						v = self.visit( b.value.values[i] )
+
 					sdef[k] = v
 
 
