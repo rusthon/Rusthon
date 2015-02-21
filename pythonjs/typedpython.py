@@ -89,6 +89,7 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 		hit_go_funcdef = False
 		gotype = None
 		isindef = False
+		isinlet = False
 		inline_wrap = False
 		inline_ptr = False
 		prevchar = None
@@ -96,6 +97,8 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 		for i,char in enumerate(line):
 			if isindef is False and len(a) and ''.join(a).strip().startswith('def '):
 				isindef = True
+			if isinlet is False and len(a) and ''.join(a).strip().startswith('let '):
+				isinlet = True
 
 			nextchar = None
 			j = i+1
@@ -130,6 +133,7 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 			elif not isindef and len(a) and char in OPERATORS['right']:
 				a.append('<<__op_right__(u"%s")' % char )
 			## go array and map syntax ##
+			#elif (not isindef and not isinlet) and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 			elif not isindef and len(a) and char==']' and j==i+1 and nextchar!=None and nextchar in '[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
 				assert '[' in a
 				hit_go_typedef = True
@@ -167,7 +171,6 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 			elif hit_go_funcdef and char==')' and ')' in ''.join(a).split('func(')[-1] and not ''.join(a).strip().startswith('def '):
 				hit_go_funcdef = False
 				a.append('))<<')
-
 			elif hit_go_typedef and char=='(':
 				if ''.join(a).endswith('func'):
 					hit_go_funcdef = True
@@ -183,15 +186,18 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 				a.append('<<typedef),')
 				hit_go_typedef = False
 			elif hit_go_typedef and char in (' ', '\t'):
-				aa = []
-				for xx in a:
-					if xx == '__go__array__(':
-						aa.append('__go__array__[')
-					else:
-						aa.append( xx )
-				a = aa
-				a.append(']=\t\t\t\t')
 				hit_go_typedef = False
+				if isinlet:
+					a.append(')')
+				else:
+					aa = []
+					for xx in a:
+						if xx == '__go__array__(':
+							aa.append('__go__array__[')
+						else:
+							aa.append( xx )
+					a = aa
+					a.append(']=\t\t\t\t')
 
 
 			elif a and char in __whitespace:
@@ -255,13 +261,21 @@ def transform_source( source, strip=False, allow_tabs_and_spaces=True ):
 			else:
 				c = c.replace('let ', '__let__(')
 
-			if ':' in c:
+			if ':' in c:  ## `let x:T`
 				assert c.count(':')==1
-				c = c.replace(':', ',"')
-				if '=' in c:
-					c = c.replace('=', '", ')
+				## type must be quoted if its external style (rust or c++)
+				## like: `Vec<T>` or `std::something<T>`
+				ct = c.split(':')[-1]
+				if ('<' in ct and '>' in ct) or '::' in ct:
+					c = c.replace(':', ',"')
+					if '=' in c:
+						c = c.replace('=', '", ')
+					else:
+						c += '"'
 				else:
-					c += '"'
+					c = c.replace(':', ',')
+					if '=' in c:
+						c = c.replace('=', ',')
 
 			if mut:
 				c += ',mutable=True)'
@@ -615,13 +629,6 @@ def __init__():
 	let self.x : int = x
 	let mut self.y : int = y
 
-A.callback = B->method
-A.callback = B->method()
-A.do_something( x,y,z, B->method )
-A.do_something( x,y,z, callback=B->method )
-A.do_something( x,y,z, B->method(U,W) )
-A.do_something( x,y,z, callback=B->method(X,Z) )
-
 
 def call_method( cb:lambda(int)(int) ) ->int:
 	return cb(3)
@@ -654,6 +661,8 @@ print `std::chrono::duration_cast<std::chrono::microseconds>`clock().count()
 
 with (some, stuff):
 	pass
+def f():
+	let x : map[string]int = {}
 
 '''
 
