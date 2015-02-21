@@ -1094,7 +1094,8 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 
 				elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='__let__':
 					if isinstance(item.value.args[0], ast.Attribute) and item.value.args[0].value.id=='self':
-						node._struct_vars[ item.value.args[0].attr ] = item.value.args[1].s
+						#node._struct_vars[ item.value.args[0].attr ] = item.value.args[1].s
+						node._struct_vars[ item.value.args[0].attr ] = self.visit(item.value.args[1])
 
 		## methods
 		for method in method_list:
@@ -1536,41 +1537,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				self._return_type = node.value.func.id
 			elif isinstance(node.value, Name) and node.value.id == 'self' and 'self' in self._instances:
 				self._return_type = self._instances['self']
+			###################
 
-
-			if self._with_glsl and self._in_gpu_main:
-				## _id_ is inserted into all function headers by pythonjs.py for glsl functions.
-				if not self._gpu_return_types:
-					raise SyntaxError( self.format_error('function return type unknown - required decorator `@returns(array/vec4=[w,h])`') )
-
-				## only one return type is allowed ##
-				if 'array' in self._gpu_return_types:
-					writer.write('out_float = %s' %self.visit(node.value))
-				elif 'vec4' in self._gpu_return_types:
-					writer.write('out_float4 = %s' %self.visit(node.value))
-				elif 'mat4' in self._gpu_return_types:
-					nv = self.visit(node.value)
-					writer.write('inline("mat4 _res_ = %s; int _row = matrix_row();")' %nv)
-
-					r0 = 'vec4(_res_[0][0],_res_[0][1],_res_[0][2],_res_[0][3])'
-					r1 = 'vec4(_res_[1][0],_res_[1][1],_res_[1][2],_res_[1][3])'
-					r2 = 'vec4(_res_[2][0],_res_[2][1],_res_[2][2],_res_[2][3])'
-					r3 = 'vec4(_res_[3][0],_res_[3][1],_res_[3][2],_res_[3][3])'
-
-					writer.write('if _row==0: out_float4 = %s'   % r0)
-					writer.write('elif _row==1: out_float4 = %s'%r1)
-					writer.write('elif _row==2: out_float4 = %s'%r2)
-					writer.write('else: out_float4 = %s'%r3)
-
-				else:
-					raise SyntaxError( self.format_error('invalid GPU return type: %s' %self._gpu_return_types) )
-
-			elif self._inline:
-				writer.write('__returns__%s = %s' %(self._inline[-1], self.visit(node.value)) )
-				if self._inline_breakout:
-					writer.write('break')
-
-			elif isinstance(node.value, ast.Lambda):
+			if isinstance(node.value, ast.Lambda):
 				self.visit( node.value )
 				writer.write( 'return __lambda__' )
 
@@ -1581,11 +1550,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				writer.write('return %s' % self.visit(node.value))
 
 		else:
-			if self._inline:
-				if self._inline_breakout:
-					writer.write('break')
-			else:
-				writer.write('return')  ## empty return
+			writer.write('return')  ## empty return
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
