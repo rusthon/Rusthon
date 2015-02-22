@@ -1037,6 +1037,20 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			elif len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
 				assert node.args[0].value.id == 'self'
 				assert len(node.args)==3
+				T = None
+				value = self.visit(node.args[2])
+				if isinstance(node.args[1], ast.Str):
+					T = node.args[1].s
+				else:
+					T = self.visit(node.args[1])
+
+				if isinstance(node.args[2], ast.Dict):
+					assert T.startswith('__go__map__')
+					d = node.args[2]
+					mtypek = self.visit(node.args[1].args[0])
+					mtypev = self.visit(node.args[1].args[1])
+					value = '(new std::map<%s, %s>)' %(mtypek, mtypev)
+					#raise SyntaxError(value)
 				if self._cpp:
 					return 'this->%s = %s' %(node.args[0].attr, self.visit(node.args[2]))
 				else:
@@ -3079,6 +3093,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					else:
 						r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
 					return r
+
+				elif is_attr and target.startswith('this'):
+					raise RuntimeError(value)
+				elif target.startswith('this'):  ## __let__(special3)
+					raise RuntimeError('todo this should not happen?')
 
 				else:
 					return '%s = %s;' % (target, value)

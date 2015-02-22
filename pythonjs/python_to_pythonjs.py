@@ -550,27 +550,25 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_dart or self._with_ll or self._with_go or self._fast_js:
+			if self._with_dart or self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
 				a.append( '%s:%s'%(k,v) )
-				#if isinstance(node.keys[i], ast.Str):
-				#	a.append( '%s:%s'%(k,v) )
-				#else:
-				#	a.append( '"%s":%s'%(k,v) )
 			elif self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
 			else:
-				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## this allows non-string keys
+				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## DEPRECATED
 
 
-		if self._with_dart or self._with_ll or self._with_go or self._fast_js:
+		if self._with_dart or self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
 			b = ','.join( a )
 			return '{%s}' %b
 		elif self._with_js:
 			b = ','.join( a )
 			return '__jsdict( [%s] )' %b
-		else:
+		elif self._with_lua:
 			b = '[%s]' %', '.join(a)
 			return '__get__(dict, "__call__")([], {"js_object":%s})' %b
+		else:
+			raise RuntimeError('dict - unknown backend')
 
 	def visit_Tuple(self, node):
 		node.returns_type = 'tuple'
