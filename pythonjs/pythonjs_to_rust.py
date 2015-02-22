@@ -1158,12 +1158,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				raise SyntaxError("TODO float builtin")
 
-		elif fname == 'go.type_assert':
-			val = self.visit(node.args[0])
-			type = self.visit(node.args[1])
-			#return '%s(*%s)' %(type, val )
-			raise GenerateTypeAssert( {'type':type, 'value':val} )
-
 		elif fname == '__open__':
 			if self._cpp:
 				return '__open__(%s)' %self.visit(node.args[0])
@@ -1249,38 +1243,18 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			else:
 				raise RuntimeError('TODO named params for some backend')
 
-
-
 		if node.starargs:
 			if args: args += ','
 			args += '*%s...' %self.visit(node.starargs)
 
-		if is_append: ## this is a bad rule, it is better the user must call `push` instead of `append`?
-			item = args
-			#if item in self._known_instances:
-			#	classname = self._known_instances[ item ]
-			#	if arr in self._known_arrays and classname != self._known_arrays[arr]:
 
-			if self._rust:
-				return '%s.push( %s )' %(arr, item)
-			elif self._cpp:
-				return '%s->push_back( %s )' %(arr, item)
-
-		elif hasattr(node, 'is_new_class_instance') and self._rust:
+		if hasattr(node, 'is_new_class_instance') and self._rust:
 			return 'Rc::new(RefCell::new( %s::new(%s) ))' % (fname, args)
-
+		elif self._cpp and fname in self._classes:
+			return 'std::shared_ptr<%s>( (new %s())->__init__(%s) )' %(fname,fname,args)
+			#return 'std::make_shared<%s>( (new %s())->__init__(%s) )' %(fname,fname,args)
+			#return 'std::make_shared<%s>( %s().__init__(%s) )' %(fname,fname,args)
 		else:
-
-			if isinstance(node.func, ast.Attribute) and False:
-				if isinstance(node.func.value, ast.Name):
-					varname = node.func.value.id
-					if varname in self._known_vars:
-						#raise SyntaxError(varname + ' is known class::' + self._known_instances[varname] + '%s(%s)' % (fname, args))
-						cname = self._known_instances[varname]
-						if node.func.attr in self.method_returns_multiple_subclasses[ cname ]:
-							raise SyntaxError('%s(%s)' % (fname, args))
-
-
 			return '%s(%s)' % (fname, args)
 
 
@@ -1539,6 +1513,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		args_generics = dict()
 		func_pointers = set()
 		arrays = dict()
+		operator = None
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
 
@@ -2948,7 +2923,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					self._known_instances[ target ] = classname
 
 					if self._cpp:
-						return 'auto %s = %s;' %(target, value)
+						return 'auto %s = %s; // new style' %(target, value)
 
 						if False:  ## DEPRECATED
 							## make object on the stack, safe to use _ref_ in same block ##
@@ -3094,10 +3069,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
 					return r
 
-				elif is_attr and target.startswith('this'):
-					raise RuntimeError(value)
-				elif target.startswith('this'):  ## __let__(special3)
-					raise RuntimeError('todo this should not happen?')
+				#elif is_attr and target.startswith('this'):
+				#	raise RuntimeError(value)
+				#elif target.startswith('this'):  ## __let__(special3)
+				#	raise RuntimeError('todo this should not happen?')
 
 				else:
 					return '%s = %s;' % (target, value)
