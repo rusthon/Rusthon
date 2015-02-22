@@ -182,6 +182,8 @@ def inspect_function( node ):
 					typedefs[ kw.arg ] = '"%s"' %kw.value.s
 				elif isinstance( kw.value, ast.Call) and isinstance(kw.value.func, ast.Name) and kw.value.func.id=='__arg_array__':
 					typedefs[ kw.arg ] = '"%s"' %kw.value.args[0].s
+				elif isinstance( kw.value, ast.Call) and isinstance(kw.value.func, ast.Name) and kw.value.func.id=='__arg_map__':
+					typedefs[ kw.arg ] = '"%s"' %kw.value.args[0].s
 				else:
 					raise SyntaxError(kw.value)
 

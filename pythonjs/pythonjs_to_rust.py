@@ -301,14 +301,19 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						v = b.value.values[i].s
 					elif isinstance(b.value.values[i], ast.Call):
 						n = b.value.values[i]
-						if n.func.id=='__go__map__':
-							key_type = self.visit(n.args[0])
-							value_type = self.visit(n.args[1])
+						if n.func.id in ('__go__map__', '__arg_map__'):
+							if n.func.id=='__arg_map__':
+								assert n.args[0].s.startswith('map[')
+								key_type = n.args[0].s.split('[')[-1].split(']')[0]
+								value_type = n.args[0].s.split(']')[-1]
+							else:
+								key_type = self.visit(n.args[0])
+								value_type = self.visit(n.args[1])
 							if key_type=='string': key_type = 'std::string'
 							if value_type=='string': value_type = 'std::string'
 							v = 'std::map<%s, %s>' %(key_type, value_type)
 						else:
-							raise RuntimeError('TODO')
+							raise RuntimeError('TODO', n.func.id)
 
 					else:
 						v = self.visit( b.value.values[i] )
@@ -1194,7 +1199,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				raise RuntimeError('TODO generic arg array')
 
 		elif fname == '__arg_map__':
-			raise RuntimeError('TODO generic arg map array')
+			parse = node.args[0].s
+			assert parse.startswith('map[')
+			key_type = parse.split('[')[-1].split(']')[0]
+			value_type = parse.split(']')[-1]
+			if key_type=='string': key_type = 'std::string'
+			if value_type=='string': value_type = 'std::string'
+			return 'std::shared_ptr<std::map<%s, %s>>' %(key_type, value_type)
 
 
 		if node.args:
@@ -1250,10 +1261,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		if hasattr(node, 'is_new_class_instance') and self._rust:
 			return 'Rc::new(RefCell::new( %s::new(%s) ))' % (fname, args)
+
 		elif self._cpp and fname in self._classes:
-			return 'std::shared_ptr<%s>( (new %s())->__init__(%s) )' %(fname,fname,args)
-			#return 'std::make_shared<%s>( (new %s())->__init__(%s) )' %(fname,fname,args)
-			#return 'std::make_shared<%s>( %s().__init__(%s) )' %(fname,fname,args)
+			## create class instance - new clean style - TODO deprecate all the old _ref_hacks ##
+			return 'std::shared_ptr<%s>((new %s())->__init__(%s))' %(fname,fname,args)
 		else:
 			return '%s(%s)' % (fname, args)
 
@@ -1411,9 +1422,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':  ## deprecated
 			right += '[_id_]'
 
-		if op=='<<':
-			#raise SyntaxError(type(node.left))
-			raise SyntaxError(left+right)
+		#if op=='<<':
+		#	#raise SyntaxError(type(node.left))
+		#	raise SyntaxError(left+right)
+		if left.endswith('->pointer'):  ## TODO, find a better syntax for this, or reserve the name `pointer`
+			left = '*%s' %left.split('->pointer')[0]
+
 		return '(%s %s %s)' % (left, op, right)
 
 	def visit_ListComp(self, node):
@@ -1514,6 +1528,27 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		func_pointers = set()
 		arrays = dict()
 		operator = None
+		if node.name in ('__getitem__', '__setitem__'):
+			operator = '[]'
+		elif node.name == '__call__':
+			operator = '()'
+		elif node.name == '__add__':
+			operator = '+'
+		elif node.name == '__iadd__':
+			operator = '+='
+		elif node.name == '__sub__':
+			operator = '-'
+		elif node.name == '__isub__':
+			operator = '-='
+		elif node.name == '__mul__':
+			operator = '*'
+		elif node.name == '__imul__':
+			operator = '*='
+		elif node.name == '__div__':
+			operator = '/'
+		elif node.name == '__idiv__':
+			operator = '/='
+
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
 
@@ -1691,9 +1726,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		prefix = ''
 		if options['classmethod']:
-			prefix = 'static '
+			prefix += 'static '
 			if args and 'object ' in args[0]:  ## classmethods output from java2python produces `cls:object`
 				args = args[1:]
+
+		fname = node.name
+		if operator:
+			fname = 'operator ' + operator
 
 		node._args_signature = ','.join(args)
 		####
@@ -1723,23 +1762,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				if self._cpp: ## c++ ##
 					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
-						sig = '%s %s::%s(%s)' % (return_type, classname, node.name, ', '.join(args))
+						sig = '%s %s::%s(%s)' % (return_type, classname, fname, ', '.join(args))
 						if self._noexcept:
 							out.append( self.indent() + '%s noexcept {\n' % sig )
-							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							self._cpp_class_header.append(sig + ' noexcept;')
 						else:
 							out.append( self.indent() + '%s {\n' % sig )
-							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							self._cpp_class_header.append(sig + ';')
 
 					else:
 						if self._noexcept:
-							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							out.append( self.indent() + '%s noexcept {\n' % sig )
 							if not is_main: self._cheader.append( sig + ' noexcept;' )
 						else:
-							sig = '%s%s %s(%s)' % (prefix,return_type, node.name, ', '.join(args))
+							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							out.append( self.indent() + '%s {\n' % sig )
 							if not is_main: self._cheader.append( sig + ';' )
 
@@ -1766,22 +1805,22 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 								self._cpp_class_header.append(sig + ';')
 
 						else:
-							sig = 'void %s::%s(%s)' %(classname, node.name, ', '.join(args))
+							sig = 'void %s::%s(%s)' %(classname, fname, ', '.join(args))
 							if self._noexcept:
 								out.append( self.indent() + '%s noexcept {\n' % sig  )
-								sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
+								sig = '%svoid %s(%s)' % (prefix,fname, ', '.join(args))
 								self._cpp_class_header.append(sig + ' noexcept;')
 							else:
 								out.append( self.indent() + '%s {\n' % sig  )
-								sig = '%svoid %s(%s)' % (prefix,node.name, ', '.join(args))
+								sig = '%svoid %s(%s)' % (prefix,fname, ', '.join(args))
 								self._cpp_class_header.append(sig + ';')
 					else:
 						if self._noexcept:
-							sig = '%svoid %s(%s)' %(prefix, node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' %(prefix, fname, ', '.join(args))
 							out.append( self.indent() + '%s noexcept {\n' % sig  )
 							if not is_main: self._cheader.append( sig + ' noexcept;' )
 						else:
-							sig = '%svoid %s(%s)' %(prefix, node.name, ', '.join(args))
+							sig = '%svoid %s(%s)' %(prefix, fname, ', '.join(args))
 							out.append( self.indent() + '%s {\n' % sig  )
 							if not is_main: self._cheader.append( sig + ';' )
 
@@ -2137,6 +2176,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		target = self.visit(node.target)
 		op = self.visit(node.op)
 		value = self.visit(node.value)
+
+		if target.endswith('->pointer'):  ## TODO a better way to deref? if target in self._known_instances:
+			target = '*%s' %target.split('->pointer')[0]
 
 		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings and not self._cpp:
 			return '%s.push_str(%s.as_slice());' %(target, value)

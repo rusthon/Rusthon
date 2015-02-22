@@ -15,7 +15,7 @@ def main():
 	a3 = A(3)
 
 	arr = [][]A(
-		(a1,a2,a3),
+		(a1,a2,a3, A(4)),
 		(a1,None),
 		None,
 	)
