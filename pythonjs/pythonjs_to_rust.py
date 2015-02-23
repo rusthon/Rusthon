@@ -211,6 +211,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			## this is used by the child to create a weakref to the parent if required.
 			node._contains_classes = set()
 			node._weak_members = set()
+			node._requires_init = False
 
 		out = []
 		sdef = dict()
@@ -294,6 +295,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				method_names.add( b.name )
 				if b.name == '__init__':
 					init = b
+					node._requires_init = True
+
 			elif isinstance(b, ast.Expr) and isinstance(b.value, ast.Dict):
 				for i in range( len(b.value.keys) ):
 					k = self.visit( b.value.keys[ i ] )
@@ -341,6 +344,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				for b in bnode.body:
 					if isinstance(b, ast.FunctionDef):
 						overload_nodes.append( b )
+						## catch_call trick is used to call methods on base classes from the subclass.
 						if self._cpp:
 							self.catch_call.add( '%s->%s' %(bnode.name, b.name))
 						else:
@@ -351,12 +355,13 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							b.classname  = bnode.name
 						if b.name == '__init__':
 							parent_init = {'class':bnode, 'init':b}
+							node._requires_init = True
 
 
 		for b in overload_nodes:
 			if hasattr(b, 'overloaded'):
 				original = b.name
-				b.name = '__%s_%s'%(b.classname, b.name)
+				b.name = '__%s_%s'%(b.classname, b.name)  ## rust requires this extra hackery
 				overloaded.append( self.visit(b) )
 				b.name = original
 			else:
@@ -1264,7 +1269,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif self._cpp and fname in self._classes:
 			## create class instance - new clean style - TODO deprecate all the old _ref_hacks ##
-			return 'std::shared_ptr<%s>((new %s())->__init__(%s))' %(fname,fname,args)
+			if self._classes[fname]._requires_init:
+				return 'std::shared_ptr<%s>((new %s())->__init__(%s))' %(fname,fname,args)
+			else:
+				return 'std::shared_ptr<%s>(new %s())' %(fname,fname)
 		else:
 			return '%s(%s)' % (fname, args)
 
@@ -1530,6 +1538,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		operator = None
 		if node.name in ('__getitem__', '__setitem__'):
 			operator = '[]'
+		if node.name in ('__getattr__', '__getattribute__'):
+			operator = '->'
 		elif node.name == '__call__':
 			operator = '()'
 		elif node.name == '__add__':

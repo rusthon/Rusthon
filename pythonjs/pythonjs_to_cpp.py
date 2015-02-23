@@ -57,7 +57,13 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		elif isinstance(node.args[0], ast.Call) and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id in self._classes:
 			classname = node.args[0].func.id
 			args = [self.visit(arg) for arg in node.args[0].args ]
-			return '(new %s)->__init__(%s)' %(classname, ','.join(args))
+			if self._classes[classname]._requires_init:
+				return '(new %s)->__init__(%s)' %(classname, ','.join(args))
+			else:
+				if args:
+					raise SyntaxError('class %s: takes no init args' %classname)
+				return '(new %s)' %classname
+
 		## external c++ class ##
 		else:
 			return '(new %s)' %self.visit(node.args[0])

@@ -27,6 +27,7 @@ class A:
 	#def __setitem__(self, key:string, value:int):
 	#	self.m[key] = value
 
+
 class MyVec:
 	def __init__(self, x:int, y:int, z:int):
 		self.x = x
@@ -49,6 +50,13 @@ class MyVec:
 		print self.x
 		print self.y
 		print self.z
+
+
+class MyProxy:
+	## TODO __getattr__ is not really a good fit for deference?
+	def __getattr__(self) ->MyVec:
+		print 'myproxy'
+		return MyVec(0,0,0)
 
 
 def myfunc( v:MyVec ):
@@ -82,5 +90,8 @@ def main():
 	#vc.somevec += v2  ## this fails
 	vc.somevec[...] += v2  ## must manually deference `somevec`
 	vc[...]()
+
+	p = MyProxy()
+	p[...].show()
 
 ```
