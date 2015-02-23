@@ -233,9 +233,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		self._with_rpc_name = None
 		self._with_direct_keys = fast_javascript
 
-		self._with_glsl = False
-		self._in_gpu_main = False
-		self._gpu_return_types = set() ## 'array' or float32, or array of 'vec4' float32's.
+		self._with_glsl = False  ## TODO dep
 
 		self._source = source.splitlines()
 		self._class_stack = list()
@@ -1118,28 +1116,15 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		writer.pull()
 		self._class_stack.pop()
 
-	def is_gpu_method(self, n):
-		for dec in n.decorator_list:
-			if isinstance(dec, Attribute) and isinstance(dec.value, Name) and dec.value.id == 'gpu':
-				if dec.attr == 'method':
-					return True
-
 
 	def _visit_js_classdef(self, node):
 		name = node.name
 		self._js_classes[ name ] = node
 		self._in_js_class = True
 		class_decorators = []
-		gpu_object = False
 
 		for decorator in node.decorator_list:  ## class decorators
-			if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
-				if decorator.attr == 'object':
-					gpu_object = True
-				else:
-					raise SyntaxError( self.format_error('invalid gpu class decorator') )
-			else:
-				class_decorators.append( decorator )
+			class_decorators.append( decorator )
 
 		method_names = []  ## write back in order (required by GLSL)
 		methods = {}
@@ -1149,14 +1134,11 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
 				methods[ item.name ] = item
-				if self.is_gpu_method( item ):
-					item.args.args[0].id = name  ## change self to the class name, pythonjs.py changes it to 'ClassName self'
-				else:
-					item.args.args = item.args.args[1:]  ## remove self
-					finfo = inspect_function( item )
-					for n in finfo['name_nodes']:
-						if n.id == 'self':
-							n.id = 'this'
+				item.args.args = item.args.args[1:]  ## remove self
+				finfo = inspect_function( item )
+				for n in finfo['name_nodes']:
+					if n.id == 'self':
+						n.id = 'this'
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			else:
@@ -1182,9 +1164,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		writer.push()
 		if init:
 			tail = ''
-			if gpu_object:
-				tail = 'this.__struct_name__="%s"' %name
-
 
 			#for b in init.body:
 			#	line = self.visit(b)
@@ -1228,32 +1207,17 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		#keys.sort()
 		for mname in method_names:
 			method = methods[mname]
-			gpu_method = False
-			for dec in method.decorator_list:
-				if isinstance(dec, Attribute) and isinstance(dec.value, Name) and dec.value.id == 'gpu':
-					if dec.attr == 'method':
-						gpu_method = True
+			## this hack is required to assign the function to the class prototype `A.prototype.method=function`
+			writer.write('@__prototype__(%s)'%name)
+			line = self.visit(method)
+			if line: writer.write( line )
+			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
-			if gpu_method:
-				method.name = '%s_%s' %(name, method.name)
-				self._in_gpu_method = name  ## name of class
-				line = self.visit(method)
-				if line: writer.write( line )
-				self._in_gpu_method = None
-
-			else:
-
-				## this hack is required to assign the function to the class prototype `A.prototype.method=function`
-				writer.write('@__prototype__(%s)'%name)
-				line = self.visit(method)
-				if line: writer.write( line )
-				#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
-
-				if not self._fast_js and not self._with_lua:
-					## allows subclass method to extend the parent's method by calling the parent by class name,
-					## `MyParentClass.some_method(self)`
-					f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-					writer.write('%s.%s = JS("%s")'%(name,mname,f))
+			if not self._fast_js and not self._with_lua:
+				## allows subclass method to extend the parent's method by calling the parent by class name,
+				## `MyParentClass.some_method(self)`
+				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
+				writer.write('%s.%s = JS("%s")'%(name,mname,f))
 
 		if not self._with_lua:
 			for base in node.bases:
@@ -1277,10 +1241,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 					#self.visit(item)  # this will output the code for the assign
 					#writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
 					writer.write('%s.%s = %s' % (name, item_name, self.visit(item.value)))
-
-		if gpu_object:
-			## TODO check class variables ##
-			writer.write('%s.prototype.__struct_name__ = "%s"' %(name,name))
 
 		self._in_js_class = False
 
@@ -1310,16 +1270,9 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 
 		self._injector = []  ## DEPRECATED
 		class_decorators = []
-		gpu_object = False
 
 		for decorator in node.decorator_list:  ## class decorators
-			if isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':
-				if decorator.attr == 'object':
-					gpu_object = True
-				else:
-					raise SyntaxError( self.format_error('invalid gpu class decorator') )
-			else:
-				class_decorators.append( decorator )
+			class_decorators.append( decorator )
 
 		## always catch attributes ##
 		self._catch_attributes = set()
@@ -1346,14 +1299,10 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 				item_name = item.name
 				item.original_name = item.name
 
-				if self.is_gpu_method( item ):
-					item.name = '%s_%s' % (name, item_name)
-				else:
-					item.name = '__%s_%s' % (name, item_name)
-
+				item.name = '__%s_%s' % (name, item_name)
 				self.visit(item)  # this will output the code for the function
 
-				if item_name in self._decorator_properties or self.is_gpu_method( item ):
+				if item_name in self._decorator_properties:
 					pass
 				else:
 					writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
@@ -2968,11 +2917,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		node._typed_args = dict()    ## used in visit class def to get types for struct
 
 		## TODO deprecate all the glsl code
-		self._gpu_return_types = set()
-		gpu = False
-		gpu_main = False
-		gpu_vectorize = False
-		gpu_method = False
 		local_typedefs = []
 		typedef_chans = []
 		func_expr = None
@@ -2981,7 +2925,7 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 		self._cached_property = None
 		self._func_typedefs = {}
 
-		if writer.is_at_global_level() and not self._with_webworker and not self._with_glsl:
+		if writer.is_at_global_level() and not self._with_webworker:
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
@@ -3034,36 +2978,19 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 					jsfile = decorator.args[0].s
 
 			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
-				if decorator.keywords:
-					for k in decorator.keywords:
-						key = k.arg
-						assert key == 'array' or key == 'vec4'
-						self._gpu_return_types.add(key)  ## used in visit_Return ##
-						return_type_keywords[ key ] = self.visit(k.value)
-
+				#if decorator.keywords:  ## deprecated
+				#	for k in decorator.keywords:
+				#		key = k.arg
+				#		assert key == 'array' or key == 'vec4'
+				#		return_type_keywords[ key ] = self.visit(k.value)
+				#else:
+				assert len(decorator.args) == 1
+				if isinstance( decorator.args[0], Name):
+					return_type = decorator.args[0].id
+				elif isinstance(decorator.args[0], ast.Str):
+					return_type = '"%s"' %decorator.args[0].s
 				else:
-					assert len(decorator.args) == 1
-					if isinstance( decorator.args[0], Name):
-						return_type = decorator.args[0].id
-					elif isinstance(decorator.args[0], ast.Str):
-						return_type = '"%s"' %decorator.args[0].s
-					else:
-						raise SyntaxError('invalid @returns argument')
-
-
-					if return_type in typedpython.glsl_types:
-						self._gpu_return_types.add( return_type )
-
-			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id == 'gpu':  ## DEPRECATED - TODO
-				gpu = True
-				if decorator.attr == 'vectorize':
-					gpu_vectorize = True
-				elif decorator.attr == 'main':
-					gpu_main = True
-				elif decorator.attr == 'method':
-					gpu_method = True
-				else:
-					raise NotImplementedError(decorator)
+					raise SyntaxError('invalid @returns argument')
 
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
@@ -3115,15 +3042,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 
 			else:
 				decorators.append( decorator )
-
-
-		if gpu:  ## TODO deprecate
-			restore_with_glsl = self._with_glsl
-			self._with_glsl = True
-			if gpu_main:  ## sets float
-				self._in_gpu_main = True
-				writer.write('@gpu.main')
-
 
 
 		if threaded:
@@ -3211,11 +3129,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 				writer.write('@returns(%s)' %','.join( ['%s=%s' %(k,v) for k,v in return_type_keywords.items()] ))
 			else:
 				writer.write('@returns(%s)' %return_type)
-
-		if gpu_vectorize:  ## TODO deprecate
-			writer.write('@gpu.vectorize')
-		if gpu_method:
-			writer.write('@gpu.method')
 
 
 		if self._with_dart:
