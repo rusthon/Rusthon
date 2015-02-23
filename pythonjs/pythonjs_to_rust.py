@@ -1427,6 +1427,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#	raise SyntaxError(left+right)
 		if left.endswith('->pointer'):  ## TODO, find a better syntax for this, or reserve the name `pointer`
 			left = '*%s' %left.split('->pointer')[0]
+		if left in self._known_instances:
+			left = '*'+left
 
 		return '(%s %s %s)' % (left, op, right)
 
@@ -2177,8 +2179,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		op = self.visit(node.op)
 		value = self.visit(node.value)
 
-		if target.endswith('->pointer'):  ## TODO a better way to deref? if target in self._known_instances:
-			target = '*%s' %target.split('->pointer')[0]
+		#if target.endswith('->pointer'):  ## TODO a better way to deref? if target in self._known_instances:
+		#	target = '*%s' %target.split('->pointer')[0]
+		if target in self._known_instances:
+			target = '*'+target
 
 		if isinstance(node.target, ast.Name) and op=='+' and node.target.id in self._known_strings and not self._cpp:
 			return '%s.push_str(%s.as_slice());' %(target, value)

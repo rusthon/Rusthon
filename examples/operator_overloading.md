@@ -42,6 +42,9 @@ class MyVec:
 		print self.z
 
 
+def myfunc( v:MyVec ):
+	v.show()
+
 
 def main():
 	d = map[string]int{'hello':1, 'world':2}
@@ -52,9 +55,10 @@ def main():
 	v1 = MyVec(1,2,3)
 	v2 = MyVec(100,200,300)
 	v1.show()
-	v1.pointer += v2
+	v1 += v2
 	v1.show()
-	v3 = v1.pointer + v2
+	v3 = v1 + v2
 	v3.show()
+	myfunc( v1+v2 )
 
 ```
