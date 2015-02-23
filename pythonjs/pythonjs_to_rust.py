@@ -585,8 +585,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 
 	def visit_Subscript(self, node):
-		if isinstance(node.slice, ast.Ellipsis):
-			raise NotImplementedError( 'ellipsis')
+		if isinstance(node.slice, ast.Ellipsis):  ## special deference pointer syntax
+			return '(*%s)' %self.visit(node.value)
 		else:
 			## deference pointer and then index
 			if isinstance(node.slice, ast.Slice):
@@ -1425,8 +1425,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		#if op=='<<':
 		#	#raise SyntaxError(type(node.left))
 		#	raise SyntaxError(left+right)
-		if left.endswith('->pointer'):  ## TODO, find a better syntax for this, or reserve the name `pointer`
-			left = '*%s' %left.split('->pointer')[0]
 		if left in self._known_instances:
 			left = '*'+left
 
@@ -2179,8 +2177,6 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		op = self.visit(node.op)
 		value = self.visit(node.value)
 
-		#if target.endswith('->pointer'):  ## TODO a better way to deref? if target in self._known_instances:
-		#	target = '*%s' %target.split('->pointer')[0]
 		if target in self._known_instances:
 			target = '*'+target
 
