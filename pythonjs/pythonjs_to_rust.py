@@ -1269,10 +1269,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif self._cpp and fname in self._classes:
 			## create class instance - new clean style - TODO deprecate all the old _ref_hacks ##
+			prefix = ''
+			if self._shared_pointers:
+				prefix = 'std::shared_ptr<%s>' %fname
+			elif self._unique_ptr:
+				prefix = 'std::unique_ptr<%s>' %fname
+
 			if self._classes[fname]._requires_init:
-				return 'std::shared_ptr<%s>((new %s())->__init__(%s))' %(fname,fname,args)
+				return '%s((new %s())->__init__(%s))' %(prefix,fname,args)
 			else:
-				return 'std::shared_ptr<%s>(new %s())' %(fname,fname)
+				return '%s(new %s())' %(prefix,fname)
 		else:
 			return '%s(%s)' % (fname, args)
 

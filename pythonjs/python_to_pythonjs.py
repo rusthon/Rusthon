@@ -27,7 +27,6 @@ from ast import NodeVisitor
 
 import typedpython
 import ministdlib
-import inline_function
 import code_writer
 import ast_utils
 from ast_utils import *
@@ -112,7 +111,7 @@ class Typedef(object):
 
 
 
-class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
+class PythonToPythonJS(ast_utils.NodeVisitorBase):
 
 	identifier = 0  ## clean up
 	_func_typedefs = ()  ## TODO clean up
@@ -2681,9 +2680,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					a = ','.join(args)
 					return 'new( %s(%s) )' %( self.visit(node.func), a )
 
-			elif name in self._global_functions and self._with_inline and not self._with_lua:
-				return self.inline_function( node )
-
 			elif self._with_dart:  ## ------------------ DART --------------------------------------
 
 				if isinstance(node.func, ast.Attribute):  ## special method calls
@@ -2874,9 +2870,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 				else:
 					return '%s()' %name
 
-			elif name in self._global_functions and self._with_inline and not self._with_lua:
-				return self.inline_function( node )
-
 			elif call_has_args_only:
 				if name in self._global_functions:
 					return '%s( [%s], __NULL_OBJECT__)' %(name,args)
@@ -3033,10 +3026,6 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase, inline_function.Inliner):
 					else:
 						writer.write('@__typedef__(%s=%s)' %(kw.arg, kwval))
 
-
-			#elif isinstance(decorator, Name) and decorator.id == 'inline':  ## TODO deprecate, a good backend compiler or JIT already inlines the easy stuff
-			#	inline = True
-			#	self._with_inline = True
 
 			elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'webworker':
 				if not self._with_dart:
