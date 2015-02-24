@@ -354,7 +354,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							b.overloaded = True
 							b.classname  = bnode.name
 						if b.name == '__init__':
-							parent_init = {'class':bnode, 'init':b}
+							parent_init = {'class':bnode, 'node':b}
 							node._requires_init = True
 
 
@@ -485,6 +485,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		for b in node.body:
 			if isinstance(b, ast.FunctionDef):
 				impl.append( self.visit(b) )
+
+		## required by new style because __init__ returns this which needs to be defined for each subclass type ##
+		if self._cpp and not init and parent_init:
+			impl.append( self.visit(parent_init['node']) )
+
 		self.pull()
 
 		if self._cpp:

@@ -32,8 +32,6 @@ rusthon
 ----------
 The code below is translated to C++ and merged with the hand written C++ code above.
 
-TODO fix syntax highlighting on github:
-https://github.com/github/linguist/pull/2001
 ```rusthon
 def say_hi():
 	print( 'hello world')
