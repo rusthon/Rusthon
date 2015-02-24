@@ -81,9 +81,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		return '\n'.join( out )
 
 	def visit_Compare(self, node):
-		comp = [ '(']
-		comp.append( self.visit(node.left) )
-		comp.append( ')' )
+		comp = ['(']
+		if isinstance(node.left, ast.BinOp):
+			comp.extend( ['(', self.visit(node.left), ')'] )
+		else:
+			comp.append( self.visit(node.left) )
 
 		for i in range( len(node.ops) ):
 			comp.append( self.visit(node.ops[i]) )
@@ -94,6 +96,8 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				comp.append(')')
 			else:
 				comp.append( self.visit(node.comparators[i]) )
+
+		comp.append( ')' )
 
 		return ' '.join( comp )
 
@@ -1163,7 +1167,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif fname == 'len':
 			if self._cpp:
-				return '%s->size()' %self.visit(node.args[0])
+				arg = self.visit(node.args[0])
+				if arg in self._known_strings:
+					return '%s.size()' %arg
+				else:
+					return '%s->size()' %arg
 			else:
 				return '%s.borrow().len()' %self.visit(node.args[0])
 
