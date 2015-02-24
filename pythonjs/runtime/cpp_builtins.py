@@ -10,10 +10,20 @@ typedef float  f32;
 
 const char* cstr( std::string s ) { return s.c_str(); }
 
-template<typename T, typename ...Args>
-std::unique_ptr<T> _make_unique( Args&& ...args )
-{
-    return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
+std::shared_ptr<std::vector<std::string>> __split_string__(std::string s, std::string c) {
+	auto r = std::vector<std::string>();
+	auto a = std::string("");
+	r.push_back(a);
+	for (auto val: s) {
+		auto v = std::string(&val);
+		if (v == c) {
+			a = std::string("");
+			r.push_back(a);
+		} else {
+			a += v;
+		}
+	}
+	return std::make_shared<std::vector<std::string>>(r);
 }
 
 double __double__(int a) { return (double)a; }

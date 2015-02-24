@@ -21,6 +21,23 @@ def main():
 	print a[1:3] == 'YZ'
 	print a[1:] == 'YZ'
 
+	#print a.lower()  ## TODO
+	#print a.upper()
+
+	print ord('A')  ## should be 65
+	print chr(65)   ## should be 'A'
+
+	v1 = a.split()
+	print v1
+	print len(v1)
+	print v1[0]
+
+	abc = 'a b c'
+	print abc
+	v2 = abc.split()
+	print v2
+	print len(v2)
+
 	print 'ok'
 
 ```

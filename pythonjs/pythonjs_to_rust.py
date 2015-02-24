@@ -919,7 +919,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			fname = fname.replace('->__exec__', '->exec')
 
 		###########################################
-		if fname=='jvm':
+		if fname.endswith('.split') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
+			splitchar = 'std::string(" ")'
+			if len(node.args): splitchar = self.visit(node.args[0])
+			return '__split_string__( %s, std::string("%s") )' %(node.func.value.id, splitchar)
+		elif fname=='jvm':
 			classname = node.args[0].func.id
 			args = [self.visit(arg) for arg in node.args[0].args]
 
@@ -2286,6 +2290,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 			else:  ## rust
 				return '%s.borrow_mut().%s' % (name, attr)
+
+		elif (name in self._known_strings) and not isinstance(parent_node, ast.Attribute):
+			## allows direct use of c++ std::string properties and methods like: at, erase, replace, swap, pop_back, etc..
+			return '%s.%s' %(name,attr)
 
 		elif self._cpp:
 			if name in self._classes and not isinstance(parent_node, ast.Attribute):
