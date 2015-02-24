@@ -623,11 +623,23 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 					## default to deference shared pointer ##
 					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 					if isinstance(node.value, ast.Name):
+						target = node.value.id
+						is_neg = False
+						if isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num) and node.slice.value.n < 0:
+							is_neg = True
+
 						if self._function_stack:
-							if node.value.id in self._known_strings:
-								r = '%s.substr(%s,1)' %(node.value.id, self.visit(node.slice))
-						if node.value.id in self._global_types['string']:  ## TODO regtest this
-							r = '%s.substr(%s,1)' %(node.value.id, self.visit(node.slice))
+							if target in self._known_strings:
+								if is_neg:
+									r = '%s.substr(%s.size()%s,1)' %(target, target,self.visit(node.slice))
+								else:
+									r = '%s.substr(%s,1)' %(target, self.visit(node.slice))
+						## need to also check if the target name is a global string ##
+						if target in self._global_types['string']:
+							if is_neg:
+								r = '%s.substr(%s.size()%s,1)' %(target, target,self.visit(node.slice))
+							else:
+								r = '%s.substr(%s,1)' %(target, self.visit(node.slice))
 
 				elif self._rust:
 					r = '%s.borrow_mut()[%s]' % (self.visit(node.value), self.visit(node.slice))
