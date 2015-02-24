@@ -614,6 +614,15 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 						msg['upper'] = self.visit(node.slice.upper)
 					if node.slice.step:
 						msg['step'] = self.visit(node.slice.step)
+
+					if msg['step'] is None and (msg['value'] in self._known_strings or msg['value'] in self._global_types['string']):
+						if msg['lower'] and msg['upper']:
+							return '%s.substr(%s, %s)' %(msg['value'], msg['lower'], msg['upper'])
+						elif msg['lower']:
+							return '%s.substr(%s, %s.size()-1)' %(msg['value'], msg['lower'], msg['value'])
+						else:
+							return '%s.substr(0, %s)' %(msg['value'], msg['upper'])
+
 					raise GenerateSlice( msg )
 
 				else:
