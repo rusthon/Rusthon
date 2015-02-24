@@ -1542,10 +1542,12 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		func_pointers = set()
 		arrays = dict()
 		operator = None
-		if node.name in ('__getitem__', '__setitem__'):
+		if node.name in ('__getitem__', '__setitem__'):  ## TODO support setitem, return a proxy with `=` overloaded?
 			operator = '[]'
-		if node.name in ('__getattr__', '__getattribute__'):
+		elif node.name == '__unwrap__':
 			operator = '->'
+		elif node.name == '__copy__':
+			operator = '='
 		elif node.name == '__call__':
 			operator = '()'
 		elif node.name == '__add__':

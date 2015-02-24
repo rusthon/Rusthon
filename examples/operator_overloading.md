@@ -53,10 +53,15 @@ class MyVec:
 
 
 class MyProxy:
-	## TODO __getattr__ is not really a good fit for deference?
-	def __getattr__(self) ->MyVec:
-		print 'myproxy'
+	def __init__(self, id:int):
+		self.id = id
+	def __unwrap__(self) ->MyVec:
+		print 'unwrap MyProxy'
 		return MyVec(0,0,0)
+	def __copy__(self, p:MyProxy) ->MyProxy:
+		print 'copy MyProxy', self.id
+		print 'other:', p.id
+		return MyProxy(3)
 
 
 def myfunc( v:MyVec ):
@@ -65,7 +70,10 @@ def myfunc( v:MyVec ):
 class VecContainer:
 	def __init__(self, somevec:MyVec):
 		self.somevec = somevec
-	def __call__(self):
+	def __call__(self, x:int=0, y:int=0, z:int=0):
+		self.somevec.x += x
+		self.somevec.y += y
+		self.somevec.z += z
 		self.somevec.show()
 
 
@@ -89,9 +97,17 @@ def main():
 	print('change .somevec')
 	#vc.somevec += v2  ## this fails
 	vc.somevec[...] += v2  ## must manually deference `somevec`
-	vc[...]()
 
-	p = MyProxy()
-	p[...].show()
+	print 'testing call'
+	vc[...]( x=1000 )
+	ptr = vc[...]
+	ptr( y=1000 )
+	ptr( z=1000 )
+
+	p1 = MyProxy(1)
+	p2 = MyProxy(2)
+	p1[...].show()
+	print 'testing copy'
+	p2[...] = p1
 
 ```
