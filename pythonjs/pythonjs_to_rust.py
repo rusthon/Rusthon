@@ -41,6 +41,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		self._crates = {}
 		self._root_classes = {}
 		self._java_classpaths = []
+		self._known_strings = set()
 
 
 	def visit_Str(self, node):
