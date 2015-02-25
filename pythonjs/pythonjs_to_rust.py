@@ -96,7 +96,11 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 				else:
 					comp.append(' && ')
 				rator = self.visit(node.comparators[i])
-				comp.append('(%s.find(%s) != std::string::npos)' %(rator, left))
+				if rator in self._known_strings:
+					comp.append('(%s.find(%s) != std::string::npos)' %(rator, left))
+				else:
+					comp.append('(std::find(%s->begin(), %s->end(), %s) != %s->end())' %(rator, rator, left, rator))
+
 			else:
 				comp.append( self.visit(op) )
 

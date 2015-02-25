@@ -46,6 +46,11 @@ def main():
 	else:
 		print 'in test error'
 
+	if 'b' in v2:
+		print 'b in vector'
+	else:
+		print 'in array test error'
+
 	print 'ok'
 
 ```
