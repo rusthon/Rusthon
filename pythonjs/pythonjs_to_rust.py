@@ -82,20 +82,30 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def visit_Compare(self, node):
 		comp = ['(']
+		left = self.visit(node.left)
 		if isinstance(node.left, ast.BinOp):
 			comp.extend( ['(', self.visit(node.left), ')'] )
 		else:
 			comp.append( self.visit(node.left) )
 
 		for i in range( len(node.ops) ):
-			comp.append( self.visit(node.ops[i]) )
-
-			if isinstance(node.comparators[i], ast.BinOp):
-				comp.append('(')
-				comp.append( self.visit(node.comparators[i]) )
-				comp.append(')')
+			op = node.ops[i]
+			if isinstance(op, ast.In) or isinstance(op, ast.NotIn):
+				if comp[-1]==left:
+					comp.pop()
+				else:
+					comp.append(' && ')
+				rator = self.visit(node.comparators[i])
+				comp.append('(%s.find(%s) != std::string::npos)' %(rator, left))
 			else:
-				comp.append( self.visit(node.comparators[i]) )
+				comp.append( self.visit(op) )
+
+				if isinstance(node.comparators[i], ast.BinOp):
+					comp.append('(')
+					comp.append( self.visit(node.comparators[i]) )
+					comp.append(')')
+				else:
+					comp.append( self.visit(node.comparators[i]) )
 
 		comp.append( ')' )
 

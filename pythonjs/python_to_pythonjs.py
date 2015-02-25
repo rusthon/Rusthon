@@ -1723,24 +1723,19 @@ class PythonToPythonJS(ast_utils.NodeVisitorBase):
 
 				a = ( self.visit(node.comparators[i]), left )
 
-				if self._with_dart:
+				if self._with_cpp or self._with_rust or self._with_go:
+					comp.append('%s in %s' %(a[1], a[0]))
+
+				elif self._with_dart:
 					## indexOf works with lists and strings in Dart
 					comp.append( '%s.contains(%s)' %(a[0], a[1]) )
 
 				elif self._with_js:
 					## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
 					## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
-					## TODO double check this code
-					#comp.append( '%s in %s or' %(a[1], a[0]) )  ## this is ugly, will break with Arrays
-					#comp.append( '( Object.hasOwnProperty.call(%s, "__contains__") and' %a[0])
-					#comp.append( "%s['__contains__'](%s) )" %a )
-					##comp.append( ' or (instanceof(%s,Object) and %s in %s) ')
-					#comp.append( ' or Object.hasOwnProperty.call(%s, %s)' %(a[0],a[1]))
-					## fixes 'o' in 'helloworld' in javascript mode ##
-					#comp.append( ' or typeof(%s)=="string" and %s.__contains__(%s)' %(a[0],a[0],a[1]))
 					comp.append( '__contains__(%s, %s)' %(a[0],a[1]))
 				else:
-					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )
+					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )  ## deprecated? might be used for lua
 
 				if isinstance(node.ops[i], ast.NotIn):
 					comp.append( ' )')  ## it is not required to enclose NotIn

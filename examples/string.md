@@ -41,6 +41,11 @@ def main():
 	print 'v2[0]'
 	print v2[0]
 
+	if 'b' in abc:
+		print 'b in abc'
+	else:
+		print 'in test error'
+
 	print 'ok'
 
 ```
