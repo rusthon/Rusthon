@@ -376,6 +376,63 @@ def import_md( url, modules=None ):
 	modules['markdown'] += '\n'.join(doc)
 	return modules
 
+def hack_nim_stdlib(code):
+	'''
+	already talked to the nim guys in irc, they dont know why these dl functions need to be stripped
+	'''
+	out = []
+	for line in code.splitlines():
+		if 'dlclose(' in line or 'dlopen(' in line or 'dlsym(' in line:
+			pass
+		else:
+			out.append( line )
+	return '\n'.join(out)
+
+def hack_nim_code(code):
+	'''
+	this is required because nim outputs multiple c files that we merge into a single c file,
+	some functions in stdlib_system.c are inlined into the main code here, and they must be removed.
+	'''
+	out = []
+	skip_structs = ['TGenericSeq', 'NimStringDesc']
+	skip_struct = False
+	skip_inline = False
+
+	for line in code.splitlines():
+		if line.startswith('static N_INLINE('):
+			if 'nimFrame' in line or 'popFrame' in line or 'initStackBottomWith' in line:
+				if line.strip().endswith(';'):
+					continue
+				elif line.strip().endswith('{'):
+					skip_inline = True
+				else:
+					raise RuntimeError('error parsing nim c code')
+			else:
+				out.append(line)  ## TODO check these
+		elif line.startswith('struct '):
+			for s in skip_structs:
+				if s in line:
+					skip_struct = True
+					break
+			if skip_struct:
+				continue
+			else:
+				out.append(line)
+		elif skip_inline:
+			if line=='}':
+				skip_inline = False
+			continue
+		elif skip_struct:
+			if line=='};':
+				skip_struct = False
+			continue
+		else:
+			out.append(line)
+
+	return '\n'.join(out)
+
+
+
 
 def build( modules, module_path, datadirs=None ):
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'datadirs':datadirs}
@@ -396,7 +453,8 @@ def build( modules, module_path, datadirs=None ):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
 				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
-				open(tmpfile, 'wb').write( mod['code'].replace('\t', '  ') )
+				nimsrc = mod['code'].replace('\t', '  ')  ## nim will not accept tabs, replace with two spaces.
+				open(tmpfile, 'wb').write( nimsrc )
 				#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
 				cmd = [
 					nimbin, 
@@ -405,7 +463,7 @@ def build( modules, module_path, datadirs=None ):
 					'--noMain', 
 					'--noLinking',
 					'--compileOnly',
-					'--genScript',
+					'--genScript',   ## broken?
 					'--app:staticlib', 
 					'rusthon_build.nim',
 				]
@@ -420,16 +478,21 @@ def build( modules, module_path, datadirs=None ):
 
 				## get source from nim cache ##
 				nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
-				nim_stdlib = open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
-				nim_code   = open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
+				nim_stdlib = hack_nim_stdlib(
+					open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
+				)
+				#nim_header = open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
+				nim_code   = hack_nim_code(
+					open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
+				)
 
 				## gets compiled below
 				cfg = {
 					'link-dirs' :[nimcache, niminclude], 
-					'build-dirs':[nimcache],
+					#'build-dirs':[nimcache],  ## not working
 					'index'    : mod['index'],
-					#'code'     : '\n'.join([nim_stdlib, nim_code])
-					'code'     : open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
+					'code'     : '\n'.join([nim_stdlib, nim_code])
+					#'code'     : header
 				}
 				modules['c'].append( cfg )
 		else:
@@ -694,9 +757,11 @@ def build( modules, module_path, datadirs=None ):
 				cmd.append('-I'+idir)
 
 			cmd.extend(['-c', tmpfile])
-			#cmd.extend([tmpfile])
+
 			if cbuild:
-				cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
+				#gcc: fatal error: cannot specify -o with -c, -S or -E with multiple files
+				#cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
+				raise RuntimeError('TODO fix building multiple .c files at once using gcc option -o')
 
 			cmd.extend(['-o', tempfile.gettempdir() + '/'+libname+'.o' ])
 

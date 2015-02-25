@@ -1,10 +1,9 @@
 Nim
 --------------
-
+TODO fix printing s, `echo(s)` segfaults
 ```nim
 proc my_nim_function( s:cint ) {.cdecl, exportc.} =
 	echo("calling my_nim_function")
-	echo( s )
 
 
 ```
@@ -24,6 +23,8 @@ Rusthon
 #backend:c++
 
 def main():
+	print 'calling nim function'
 	my_nim_function( 100 )
+	print 'ok'
 
 ```
