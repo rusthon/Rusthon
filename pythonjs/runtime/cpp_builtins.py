@@ -19,6 +19,14 @@ typedef float  f32;
 
 const char* cstr( std::string s ) { return s.c_str(); }
 
+std::string __string_upper__( std::string s ) {
+	auto a = std::string("");
+	for (auto c: s) {
+		a += std::toupper(c);
+	}
+	return a;
+}
+
 std::string __string_lower__( std::string s ) {
 	auto a = std::string("");
 	for (auto c: s) {

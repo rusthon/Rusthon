@@ -45,14 +45,16 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		TODO fix mixing with std::shared_ptr by keeping a weak_ptr
 		in each object that __init__ returns (also fixes the _ref_hacks)
 		'''
-		if isinstance(node.args[0], ast.BinOp): # TODO check
-			raise SyntaxError('binopnew')
+		if isinstance(node.args[0], ast.BinOp): # makes an array or map
 			a = self.visit(node.args[0])
 			if type(a) is not tuple:
-				raise SyntaxError(a)
+				raise SyntaxError(self.format_error('TODO some extended type'))
+
 			atype, avalue = a
 			if atype.endswith('*'): atype = atype[:-1]
+			else: pass  ## this should never happen
 			return '(new %s %s)' %(atype, avalue)
+
 		## Rusthon class ##
 		elif isinstance(node.args[0], ast.Call) and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id in self._classes:
 			classname = node.args[0].func.id
