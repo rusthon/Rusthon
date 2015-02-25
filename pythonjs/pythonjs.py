@@ -205,6 +205,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 
 
 			elif node.context_expr.func.id == 'extern':
+				is_extern = True
 				link = None
 				for kw in node.context_expr.keywords:
 					if kw.arg=='link':
@@ -219,7 +220,11 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 				else:
 					raise SyntaxError('with extern: not supported yet for backend')
 
-				is_extern = True
+				## strip the bodies from function defs, that should be just defined as `def f(args):pass`
+				for b in node.body:
+					if isinstance(b, ast.FunctionDef):
+						b.body = []
+						b.declare_only = True
 
 			else:
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)

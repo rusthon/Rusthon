@@ -1571,7 +1571,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 	def _visit_function(self, node):
 		out = []
-
+		is_declare = hasattr(node, 'declare_only') and node.declare_only  ## see pythonjs.py visit_With
 		is_closure = False
 		if self._function_stack[0] is node:
 			self._vars = set()
@@ -2080,7 +2080,10 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		if self._rust and is_closure:
 			out.append( self.indent()+'};' )
 		else:
-			out.append( self.indent()+'}' )
+			if is_declare:
+				return out[0].replace('{', ';')
+			else:
+				out.append( self.indent()+'}' )
 
 		if generics and self._cpp:
 			overloads = []

@@ -8,19 +8,16 @@ proc my_nim_function( s:cint ) {.cdecl, exportc.} =
 
 ```
 
-c++ wrapper
-```c++
-extern "C" {
-	void my_nim_function(int s);
-}
-
-```
 
 Rusthon
 ---------------------------
 
 ```rusthon
 #backend:c++
+
+with extern(abi="C"):
+	def my_nim_function( s:int ): pass
+
 
 def main():
 	print 'calling nim function'
