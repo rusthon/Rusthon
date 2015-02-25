@@ -22,7 +22,6 @@ def main():
 	print a[1:] == 'YZ'
 
 	print a.lower()
-	#print a.upper()
 
 	print ord('A')  ## should be 65
 	print chr(65)   ## should be 'A'
@@ -34,6 +33,8 @@ def main():
 
 	abc = 'a b c'
 	print abc
+	print abc.upper()
+
 	v2 = abc.split()
 	print 'string split ok'
 	print v2
