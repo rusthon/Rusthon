@@ -35,8 +35,11 @@ def main():
 	abc = 'a b c'
 	print abc
 	v2 = abc.split()
+	print 'string split ok'
 	print v2
-	print len(v2)
+	print 'should print 3:', len(v2)
+	print 'v2[0]'
+	print v2[0]
 
 	print 'ok'
 

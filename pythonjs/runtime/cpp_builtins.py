@@ -3,6 +3,15 @@
 # License: "New BSD"
 
 
+#def __split_string_py__(s:string, m:string) ->[]string:
+#	vec = []string("")
+#	for c in s:
+#		if c == m:
+#			vec[-1].append("")
+#		else:
+#			vec[-1] += c
+#	return vec
+
 inline("""
 
 typedef double f64;
@@ -11,19 +20,30 @@ typedef float  f32;
 const char* cstr( std::string s ) { return s.c_str(); }
 
 std::shared_ptr<std::vector<std::string>> __split_string__(std::string s, std::string c) {
-	auto r = std::vector<std::string>();
-	auto a = std::string("");
-	r.push_back(a);
-	for (auto val: s) {
-		auto v = std::string(&val);
+	std::cout << "enter string split" <<std::endl;
+	std::cout << "'" << c << "'" << std::endl;
+
+	auto vec = std::vector<std::string>();
+	vec.push_back(std::string(""));
+	//for (auto val: s) {
+	for (auto i=0; i<s.size()-1; i++) {
+		//auto v = s.substr(i,i+1);
+		//std::cout << val <<std::endl;
+		//auto v = std::string(&val);
+		auto v = std::string(&s.at(i));
+		v.resize(1);
+		std::cout << "'" << v <<"'"<< std::endl;
 		if (v == c) {
-			a = std::string("");
-			r.push_back(a);
+			std::cout << "if.." <<std::endl;
+			vec.push_back(std::string(""));
 		} else {
-			a += v;
+			std::cout << "else.." << v <<std::endl;
+			vec.back() += v;
 		}
 	}
-	return std::make_shared<std::vector<std::string>>(r);
+	std::cout << "for ok" <<std::endl;
+
+	return std::make_shared<std::vector<std::string>>(vec);
 }
 
 double __double__(int a) { return (double)a; }
