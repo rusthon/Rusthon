@@ -937,6 +937,9 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 			splitchar = 'std::string(" ")'
 			if len(node.args): splitchar = self.visit(node.args[0])
 			return '__split_string__( %s, %s )' %(node.func.value.id, splitchar)
+		elif fname.endswith('.lower') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
+			return '__string_lower__(%s)' %node.func.value.id
+
 		elif fname=='jvm':
 			classname = node.args[0].func.id
 			args = [self.visit(arg) for arg in node.args[0].args]

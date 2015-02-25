@@ -19,30 +19,26 @@ typedef float  f32;
 
 const char* cstr( std::string s ) { return s.c_str(); }
 
-std::shared_ptr<std::vector<std::string>> __split_string__(std::string s, std::string c) {
-	std::cout << "enter string split" <<std::endl;
-	std::cout << "'" << c << "'" << std::endl;
+std::string __string_lower__( std::string s ) {
+	auto a = std::string("");
+	for (auto c: s) {
+		a += std::tolower(c);
+	}
+	return a;
+}
 
+std::shared_ptr<std::vector<std::string>> __split_string__(std::string s, std::string c) {
 	auto vec = std::vector<std::string>();
 	vec.push_back(std::string(""));
-	//for (auto val: s) {
 	for (auto i=0; i<s.size()-1; i++) {
-		//auto v = s.substr(i,i+1);
-		//std::cout << val <<std::endl;
-		//auto v = std::string(&val);
 		auto v = std::string(&s.at(i));
 		v.resize(1);
-		std::cout << "'" << v <<"'"<< std::endl;
 		if (v == c) {
-			std::cout << "if.." <<std::endl;
 			vec.push_back(std::string(""));
 		} else {
-			std::cout << "else.." << v <<std::endl;
 			vec.back() += v;
 		}
 	}
-	std::cout << "for ok" <<std::endl;
-
 	return std::make_shared<std::vector<std::string>>(vec);
 }
 

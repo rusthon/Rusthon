@@ -21,7 +21,7 @@ def main():
 	print a[1:3] == 'YZ'
 	print a[1:] == 'YZ'
 
-	#print a.lower()  ## TODO
+	print a.lower()
 	#print a.upper()
 
 	print ord('A')  ## should be 65
