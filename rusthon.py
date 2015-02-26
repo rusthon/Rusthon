@@ -882,7 +882,7 @@ def save_tar( package, path='build.tar' ):
 
 def main():
 	if len(sys.argv)==1:
-		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--run=]')
+		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--run=] [--data=]')
 		return
 
 	modules = new_module()

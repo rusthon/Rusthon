@@ -34,6 +34,16 @@ def gen_jvm_header( jars ):
 		return JVM_HEADER %''
 
 
+NIM_HEADER = '''
+extern "C" {
+	void NimMain();
+}
+
+'''
+
+def gen_nim_header():
+	return NIM_HEADER
+
 class CppGenerator( pythonjs_to_rust.RustGenerator ):
 	def _visit_call_helper_new(self, node):
 		'''
@@ -79,6 +89,7 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
 		self._has_jvm = False
 		self._jvm_classes = dict()
+		self._has_nim = False
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
@@ -158,8 +169,10 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 			for name in r:
 				if name == 'jvm':
 					self._has_jvm = True
+				elif name == 'nim':
+					self._has_nim = True
 				else:
-					includes.append('#include <%s>");' %name)
+					includes.append('#include <%s>' %name)
 		return '\n'.join(includes)
 
 	def visit_Module(self, node):
@@ -207,6 +220,9 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 
 		if self._has_jvm:
 			header.append( gen_jvm_header(self._java_classpaths) )
+
+		if self._has_nim:
+			header.append( gen_nim_header() )
 
 		## forward declare all classes
 		for classname in self._classes:

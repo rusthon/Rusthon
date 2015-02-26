@@ -943,6 +943,16 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 		elif fname.endswith('.upper') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
 			return '__string_upper__(%s)' %node.func.value.id
 
+		elif fname.startswith('nim->'):
+			if fname.endswith('main'):
+				return 'NimMain()'
+			elif fname.endswith('unref'):
+				return 'GC_unref(%s)' %self.visit(node.args[0])
+			elif fname.endswith('ref'):
+				return 'GC_ref(%s)' %self.visit(node.args[0])
+			else:
+				raise RuntimeError('unknown nim api function')
+
 		elif fname=='jvm':
 			classname = node.args[0].func.id
 			args = [self.visit(arg) for arg in node.args[0].args]
