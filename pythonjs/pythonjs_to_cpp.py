@@ -268,9 +268,13 @@ class CppGenerator( pythonjs_to_rust.RustGenerator ):
 		if cppheader:
 			pak['header.cpp'] = '\n'.join( cppheader )
 
-		main_index = lines.index('int main() {')
-		for idef in self._cpp_class_impl:
-			lines.insert(main_index,idef)
+		if 'int main() {' in lines:
+			main_index = lines.index('int main() {')
+			for idef in self._cpp_class_impl:
+				lines.insert(main_index,idef)
+		else:
+			## might want to warn user there is no main
+			pass
 
 		lines = header + list(self._imports) + lines
 		pak['main'] = '\n'.join( lines )

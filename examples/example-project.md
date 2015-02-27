@@ -35,7 +35,11 @@ The code below is translated to C++ and merged with the hand written C++ code ab
 ```rusthon
 def say_hi():
 	print( 'hello world')
+```
 
+`main` entry point function that gets translated to `int main() {...}`
+
+```rusthon
 def main():
 	say_hi()
 	say_hi_cpp()
