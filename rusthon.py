@@ -459,7 +459,7 @@ def gen_nim_wrappers(src, out):
 			out.extend(wrap)
 
 def build( modules, module_path, datadirs=None ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'datadirs':datadirs}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'datadirs':datadirs}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged  = {}
