@@ -477,51 +477,56 @@ def build( modules, module_path, datadirs=None ):
 		if os.path.isfile(nimbin):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
-				tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
-				nimsrc = mod['code'].replace('\t', '  ')  ## nim will not accept tabs, replace with two spaces.
-				gen_nim_wrappers( nimsrc, nim_wrappers )
-				open(tmpfile, 'wb').write( nimsrc )
-				#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
-				cmd = [
-					nimbin, 
-					'compile', 
-					'--header',
-					'--noMain', 
-					'--noLinking',
-					'--compileOnly',
-					'--genScript',   ## broken?
-					'--app:staticlib', ## Araq says staticlib and noMain will not work together.
-					'--deadCodeElim:on',
-					'rusthon_build.nim',
-				]
-				print('-------- compile nim program -----------')
-				print(' '.join(cmd))
-				subprocess.check_call(cmd, cwd=tempfile.gettempdir())
 
-				## staticlib broken in nim? missing dlopen
-				#libname = 'rusthon_build.nim'
-				#link.append(libname)
-				#output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+				if mod['tag']:  ## save standalone nim program, can be run with `rusthon.py my.md --run=myapp.nim`
+					output['nim'].append(mod)
 
-				## get source from nim cache ##
-				nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
-				nim_stdlib = hack_nim_stdlib(
-					open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
-				)
-				#nim_header = open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
-				nim_code   = hack_nim_code(
-					open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
-				)
+				else:  ## use nim to translate to C and build later as staticlib
+					tmpfile = tempfile.gettempdir() + '/rusthon_build.nim'
+					nimsrc = mod['code'].replace('\t', '  ')  ## nim will not accept tabs, replace with two spaces.
+					gen_nim_wrappers( nimsrc, nim_wrappers )
+					open(tmpfile, 'wb').write( nimsrc )
+					#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
+					cmd = [
+						nimbin, 
+						'compile', 
+						'--header',
+						'--noMain', 
+						'--noLinking',
+						'--compileOnly',
+						'--genScript',   ## broken?
+						'--app:staticlib', ## Araq says staticlib and noMain will not work together.
+						'--deadCodeElim:on',
+						'rusthon_build.nim',
+					]
+					print('-------- compile nim program -----------')
+					print(' '.join(cmd))
+					subprocess.check_call(cmd, cwd=tempfile.gettempdir())
 
-				## gets compiled below
-				cfg = {
-					'link-dirs' :[nimcache, niminclude], 
-					#'build-dirs':[nimcache],  ## not working
-					'index'    : mod['index'],
-					'code'     : '\n'.join([nim_stdlib, nim_code])
-					#'code'     : header
-				}
-				modules['c'].append( cfg )
+					## staticlib broken in nim? missing dlopen
+					#libname = 'rusthon_build.nim'
+					#link.append(libname)
+					#output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+
+					## get source from nim cache ##
+					nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
+					nim_stdlib = hack_nim_stdlib(
+						open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
+					)
+					#nim_header = open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
+					nim_code   = hack_nim_code(
+						open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
+					)
+
+					## gets compiled below
+					cfg = {
+						'link-dirs' :[nimcache, niminclude], 
+						#'build-dirs':[nimcache],  ## not working
+						'index'    : mod['index'],
+						'code'     : '\n'.join([nim_stdlib, nim_code])
+						#'code'     : header
+					}
+					modules['c'].append( cfg )
 		else:
 			print('WARNING: can not find nim compiler')
 
