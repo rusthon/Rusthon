@@ -80,30 +80,43 @@ class C(B):
 	def hey(self):
 		print('hey from rusthon')
 
+```
+
+main entry point
+-----
+
+```rusthon
 def main():
 	a = jvm( A() )
 	b = jvm( B() )
 	a.foo()
 	b.bar( 10 )
 
-	print 'testing c...'
+```
+A rusthon class that subclasses from a java class can have constructor args, below `C` is constructed with 999.
+The attribute `x` can be used directly on `c` because it is attached to the c++ class instance
 
-	## a rusthon class that subclasses from a java class can have constructor args ##
+```rusthon
 	c = jvm( C(999) )
-	print c.x  ## x can be used directly, prints 999
+	print c.x  # prints 999
+	c.hey()
 
-	## y can not be used directly because its attached to the java object ##
-	#print c.y
-	## this works because JNI code is inlined above in get_y
+```
+Below `y` can not be used directly because its attached to the java object.
+The workaround `get_y` defined above works because it uses the JNI api directly.
+
+```rusthon
+	#print c.y       ## this fails
 	print c.get_y()  ## prints 420
 
-	## the subclass can use methods defined from java. ##
+```
+
+the subclass can use methods defined on java parent class and up to the base class.
+
+```rusthon
 	c.foo()
 	c.bar( 100 )     ## sets y to 100
 	print c.get_y()  ## prints 100
-
-	## testing subclass method ##
-	c.hey()
 
 	## TODO java-only classes ##
 	if isinstance(c, C):

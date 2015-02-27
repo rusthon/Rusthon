@@ -609,7 +609,7 @@ def build( modules, module_path, datadirs=None ):
 		script = '\n'.join(merge)
 		pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
 		pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
-		n = len(modules['c++'])
+		n = len(modules['c++']) + len(giws)
 		modules['c++'].append( {'code':pak['main'], 'index':n+1})  ## gets compiled below
 
 
