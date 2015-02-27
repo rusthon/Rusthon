@@ -13,7 +13,7 @@ The Nim runtime and generated code is then merged into a single C file and built
 This static library is then linked to the final C++ exe below.
 
 The Nim program below is parsed by Rusthon, any functions that export to C using the pragma `{.cdecl, exportc.}`
-will wrappers generated for them so they can be called when linked to the final C++ exe.
+will have wrappers generated for them so they can be called when linked to the final C++ exe.
 The wrapper functions are declared as `extern "C"`.
 
 
@@ -30,7 +30,6 @@ proc my_nim_function( a:cint, b:cint, s:cstring ): cint {.cdecl, exportc.} =
 
 Rusthon
 ---------------------------
-Nim functions that you want to expose to Rusthon need to be declared inside a `with extern(abi="C"):` block.
 note: `nim` must be imported and `nim.main` must be called before calling any nim functions.
 note: below in the call to `my_nim_function` the string `s` is wrapped to `cstr` to convert it to a C string type `const char*`
 
