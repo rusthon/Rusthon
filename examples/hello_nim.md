@@ -18,8 +18,9 @@ The wrapper functions are declared as `extern "C"`.
 
 
 ```nim
-proc my_nim_function( a:cint, b:cint ): cint {.cdecl, exportc.} =
+proc my_nim_function( a:cint, b:cint, s:cstring ): cint {.cdecl, exportc.} =
 	echo("calling my_nim_function")
+	echo(s)
 	echo("a:", a)
 	echo("b:", b)
 	result = a+b
@@ -31,7 +32,7 @@ Rusthon
 ---------------------------
 Nim functions that you want to expose to Rusthon need to be declared inside a `with extern(abi="C"):` block.
 note: `nim` must be imported and `nim.main` must be called before calling any nim functions.
-
+note: below in the call to `my_nim_function` the string `s` is wrapped to `cstr` to convert it to a C string type `const char*`
 
 ```rusthon
 #backend:c++
@@ -40,7 +41,8 @@ import nim
 def main():
 	nim.main()
 	print 'calling nim function'
-	msg = my_nim_function( 10, 20 )
+	s = 'mymessage to nim'
+	msg = my_nim_function( 10, 20, cstr(s) )
 	print msg
 	print 'ok'
 
@@ -51,6 +53,7 @@ def main():
 
 TODO
 -----
+* return a cstring and convert it to a std::string
 * fix return `cstring` when trying to call `GC_ref(result)` nim throws this error: 
 ```
 Error: type mismatch: got (cstring)

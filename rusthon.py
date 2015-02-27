@@ -441,6 +441,9 @@ def gen_nim_wrappers(src, out):
 			restype  = line.split(':')[-1].split('{')[0].strip()
 			if not restype or not restype.startswith('c'):
 				raise RuntimeError('TODO: some other nim return type')
+			if restype=='cstring':
+				raise RuntimeError('TODO: nim function returns cstring')
+
 			restype = restype[1:] ## strip `c` prefix
 			args = line.split('(')[-1].split(')')[0]
 			wargs = []
@@ -448,9 +451,8 @@ def gen_nim_wrappers(src, out):
 				name, type = arg.split(':')
 				name = name.strip()
 				type = type.strip()
-				if type=='cstring':
-					raise RuntimeError('TODO: nim function returns cstring')
-				type = type[1:] # strip the `c` prefix
+				if not type=='cstring':  ## keep as cstring because we define that as `char*`
+					type = type[1:] # strip the `c` prefix
 				wargs.append( '%s:%s' %(name,type))
 
 			wrap = [

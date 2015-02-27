@@ -68,7 +68,7 @@ class JSGenerator(ast_utils.NodeVisitorBase):
 		self._match_stack = []
 
 	def is_prim_type(self, T):
-		prims = 'bool int float double long string str char byte i32 i64 f32 f64 std::string'.split()
+		prims = 'bool int float double long string str char byte i32 i64 f32 f64 std::string cstring'.split()
 		if T in prims:
 			return True
 		else:
