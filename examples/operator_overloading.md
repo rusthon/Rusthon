@@ -4,15 +4,6 @@ C++ Operator Overloading
 class A shows how to define subscript `a[key]`, define a method named `__getitem__` that takes the key and returns a value.
 Because subscripting always triggers the pointer to be deferenced, it works without any gotchas.
 
-There is a gotcha with overloading binary operators: `+`, `-`, `*`, and `\`, they do not automatically deference their operands,
-because normally these operations happen on primitive types, and not wrapped with a pointer.
-For the simple case where the left operand is a local variable known to be of some class, Rusthon will deference it automatically.
-Other cases where the left operand is unknown, the user must manually deference the pointer using `a[...]` ellipsis.
-Overloading `__call__` also has the same problem, because Rusthon expects a function and not a pointer, you must manually deference
-before calling the object `myob[...]()`.  
-Note: this will be fixed in Rusthon2.0 with a complete typing system that keeps track of pointers and their types.
-
-
 ```rusthon
 #backend:c++
 
@@ -26,8 +17,16 @@ class A:
 	## TODO
 	#def __setitem__(self, key:string, value:int):
 	#	self.m[key] = value
+```
 
 
+There is a gotcha with overloading binary operators: `+`, `-`, `*`, and `\`, they do not automatically deference their operands,
+because normally these operations happen on primitive types, and not wrapped with a pointer.
+For the simple case where the left operand is a local variable known to be of some class, Rusthon will deference it automatically.
+Other cases where the left operand is unknown, the user must manually deference the pointer using `a[...]` ellipsis.
+
+
+```rusthon
 class MyVec:
 	def __init__(self, x:int, y:int, z:int):
 		self.x = x
@@ -51,7 +50,13 @@ class MyVec:
 		print self.y
 		print self.z
 
+```
 
+__unwrap__ overloads the c++ operator `->` deference.
+__copy__ overloads the c++ operator '=' copy.
+This can be used for making custom pointer-like objects.
+
+```
 class MyProxy:
 	def __init__(self, id:int):
 		self.id = id
@@ -67,6 +72,15 @@ class MyProxy:
 def myfunc( v:MyVec ):
 	v.show()
 
+```
+
+Overloading `__call__` also has the same problem, because Rusthon expects a function and not a pointer, you must manually deference
+before calling the object `myob[...]()`.  
+Note: this will be fixed in Rusthon2.0 with a complete typing system that keeps track of pointers and their types.
+
+
+```rusthon
+
 class VecContainer:
 	def __init__(self, somevec:MyVec):
 		self.somevec = somevec
@@ -75,8 +89,12 @@ class VecContainer:
 		self.somevec.y += y
 		self.somevec.z += z
 		self.somevec.show()
+```
 
+main entry point
+---------------
 
+```rusthon
 def main():
 	d = map[string]int{'hello':1, 'world':2}
 	a = A(d)
@@ -95,6 +113,11 @@ def main():
 	vc = VecContainer( v1 )
 	vc.somevec.show()
 	print('change .somevec')
+
+```
+calling an object requires a manual pointer dereference using `[...]`
+
+```rusthon
 	#vc.somevec += v2  ## this fails
 	vc.somevec[...] += v2  ## must manually deference `somevec`
 
@@ -103,6 +126,11 @@ def main():
 	ptr = vc[...]
 	ptr( y=1000 )
 	ptr( z=1000 )
+
+```
+testing the special __unwrap__ and __copy__ overloads
+
+```rusthon
 
 	p1 = MyProxy(1)
 	p2 = MyProxy(2)

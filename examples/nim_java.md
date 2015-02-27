@@ -64,17 +64,19 @@ wrapper for the above Java class
 
 Rusthon
 ------------
-`PointSubclass` subclasses from the Java class `Point`, __init__ is used to call the Java method `set`
-because Gwis is missing support for constructors.
-The result of nim function `nim_sum` is passed to the Java method `scale`.
+first you need to import `nim` and `jvm` and set the jvm namespace to your package name defined in Java.
 
 ```rusthon
-#backend:c++
-
 import nim
 import jvm
 jvm.namespace('mymod')
 
+```
+
+`PointSubclass` subclasses from the Java class `Point`, __init__ is used to call the Java method `set`
+because Gwis is missing support for constructors.
+
+```rusthon
 @jvm
 class PointSubclass( Point ):
 	def __init__(self, x:int, y:int):
@@ -83,15 +85,17 @@ class PointSubclass( Point ):
 	def show(self):
 		print self.getx()
 		print self.gety()
+```
 
+The result of nim function `nim_sum` is passed to the Java method `scale`.
 
+```rusthon
 def main():
 	nim.main()
 	p1 = jvm( PointSubclass(1,2) )
 	p2 = jvm( PointSubclass(10,20) )
 	p1.show()
 	p2.show()
-	## test calling nim function and passing the result to JVM ##
 	p2.scale( nim_sum(100, 1000) )
 	p2.show()
 ```
