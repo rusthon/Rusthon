@@ -10,7 +10,7 @@ import pythonjs.typedpython as typedpython
 import tempfile
 
 
-def compile_js( script, module_path, directjs=False, directloops=False ):
+def compile_js( script, module_path, main_name='main', directjs=False, directloops=False ):
 	'''
 	directjs = False     ## compatible with pythonjs-minimal.js
 	directloops = False  ## allows for looping over strings, arrays, hmtlElements, etc. if true outputs cleaner code.
@@ -49,6 +49,10 @@ def compile_js( script, module_path, directjs=False, directloops=False ):
 			result.update( code )
 		else:
 			result['main'] = code
+
+	if main_name != 'main':
+		#assert main_name.endswith('.js')  ## allow tag names
+		result[main_name] = result.pop('main')
 
 	return result
 
@@ -563,6 +567,7 @@ def build( modules, module_path, datadirs=None ):
 			else:
 				output['xml'].append(mod)
 
+	js_merge  = []
 	cpp_merge = []
 
 	if modules['rusthon']:
@@ -600,12 +605,30 @@ def build( modules, module_path, datadirs=None ):
 				go_main['source'].append( gocode )
 
 			elif backend == 'javascript':
-				js = compile_js( mod['code'], module_path )
-				for name in js:
-					output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
+				if mod['tag'] and mod['tag'].endswith('.js'):  ## saves to external js file
+					js = compile_js( mod['code'], module_path, main_name=mod['tag'] )
+					for name in js:
+						output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
+				else:
+					js_merge.append(mod)
 
-				if len(js.keys())==1 and mod['tag']:
-					tagged[ mod['tag'] ] = js['main']
+	if js_merge:
+		tagname = None
+		src = []
+		for mod in js_merge:
+			if mod['tag']:
+				if tagname is not None:
+					raise RuntimeError('TODO multiple tag insertions')
+				tagname = mod['tag']
+				src.append( mod['code'] )
+			else:
+				src.append(mod['code'])
+
+			assert tagname
+			js = compile_js( '\n'.join(src), module_path, main_name=tagname )
+			tagged[ tagname ] = js[ tagname ]
+			for name in js:
+				output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 
 	if cpp_merge:
 		merge = []
