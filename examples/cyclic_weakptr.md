@@ -12,6 +12,12 @@ class Parent:
 	def say(self, msg:string):
 		print(msg)
 
+```
+the pointer to parent here in `self.parent` becomes a std::weak_ptr.
+note children can not contain a list of multiple parents, 
+but could have more than one parent if each had its own name like: `self.parent1` and `self.parent2`.
+
+```rusthon
 class Child:
 	def __init__(self, x:int, parent:Parent ):
 		self.x = x
@@ -35,10 +41,21 @@ class Child:
 		a = self.parent.y
 		print a
 
+```
+
+function that makes a new child object and returns it
+note: the c++ vector function `push_back` is used directly, instead of the python style `append`.
+
+```rusthon
 def make_child(p:Parent, x:int) -> Child:
 	c = Child(x, p)
 	p.children.push_back(c)
 	return c
+```
+
+main entry point.
+
+```rusthon
 
 def main():
 	children = []Child()

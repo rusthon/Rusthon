@@ -334,6 +334,24 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 							if key_type=='string': key_type = 'std::string'
 							if value_type=='string': value_type = 'std::string'
 							v = 'std::map<%s, %s>' %(key_type, value_type)
+						elif n.func.id == '__arg_array__':
+							if isinstance(n.args[0], ast.Str):
+								t = n.args[0].s
+							else:
+								t = self.visit(n.args[0])
+							dims = 0
+							if t.startswith('['):
+								dims = t.count('[')
+								t = t.split(']')[-1]
+							if t=='string': key_type = 'std::string'
+							if not self.is_prim_type(t):
+								t = 'std::shared_ptr<%s>' %t
+
+							if not dims or dims==1:
+								v = 'std::vector<%s>' %t
+							elif dims == 2:
+								v = 'std::vector<std::shared_ptr<std::vector<%s>>>' %t
+
 						else:
 							raise RuntimeError('TODO', n.func.id)
 
