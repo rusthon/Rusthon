@@ -9,7 +9,6 @@ import pythonjs.typedpython as typedpython
 import tempfile
 
 
-
 def compile_js( script, module_path, directjs=False, directloops=False ):
 	'''
 	directjs = False     ## compatible with pythonjs-minimal.js
@@ -101,16 +100,6 @@ def compile_giws_bindings( xml ):
 		for header in headers:
 			data = open(os.path.join(tmpdir,header), 'rb').read()
 			code.append( data )
-			#lines = ['/* %s */' %header]
-			#for line in data.splitlines():
-			#	if line.startswith('class GIWSEXPORT '):
-			#		classname = line.split()[-2]
-			#		lines.append(line)
-			#		lines.append('	%s( std::shared_ptr<JavaVM> _jvm );' %classname)
-			#	else:
-			#		lines.append(line)
-			#code.append( '\n'.join(lines) )
-
 
 		for impl in impls:
 			data = open(os.path.join(tmpdir,impl), 'rb').read()
@@ -126,7 +115,6 @@ def compile_giws_bindings( xml ):
 		return '\n'.join(code)
 
 def java_to_rusthon( input ):
-	#j2py = subprocess.Popen(['j2py'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 	j2pybin = 'j2py'
 	if os.path.isfile(os.path.expanduser('~/java2python/bin/j2py')):
 		j2pybin = os.path.expanduser('~/java2python/bin/j2py')
@@ -873,8 +861,8 @@ def save_tar( package, path='build.tar' ):
 			elif os.path.isfile(datadir):
 				tar.add(datadir)
 
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv'}
-	for lang in 'rust c++ go javascript python html verilog'.split():
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java'}
+	for lang in 'rust c++ go javascript python html verilog java nim'.split():
 		for info in package[lang]:
 			name = 'untitled'
 			if 'name' in info: name = info['name']
@@ -912,12 +900,21 @@ def save_tar( package, path='build.tar' ):
 				ti.size=len(s.buf)
 				tar.addfile(tarinfo=ti, fileobj=s)
 
-
 	tar.close()
+
 
 def main():
 	if len(sys.argv)==1:
 		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--run=] [--data=]')
+		print('		[tar file] is the optional name of the output tar that contains the build')
+		print()
+		print('		source files, transpiled source, and output binaries.')
+		print()
+		print('		--run is given a list of programs to run, "--run=a.py,b.py"')
+		print('		a.py and b.py can be run this way by naming the code blocks in the markdown')
+		print('		using the tag syntax "@a.py" on the line before the code block.')
+		print()
+		print('		--data is given a list of directories to include in the build dir and tarfile.')
 		return
 
 	modules = new_module()
@@ -1022,6 +1019,12 @@ def main():
 
 				elif name.endswith('.js'):
 					subprocess.call( ['node', name],   cwd=tmpdir )
+
+				elif name.endswith('.nim'):
+					subprocess.call( ['nim', 'compile', '--run', name],   cwd=tmpdir )
+
+				elif name.endswith('.go'):
+					subprocess.call( ['go', 'run', name],   cwd=tmpdir )
 
 				else:
 					subprocess.call( [name], cwd=tmpdir )
