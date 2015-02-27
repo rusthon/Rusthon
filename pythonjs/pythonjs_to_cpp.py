@@ -36,6 +36,7 @@ def gen_jvm_header( jars ):
 
 NIM_HEADER = '''
 extern "C" {
+	void PreMain();
 	void NimMain();
 }
 

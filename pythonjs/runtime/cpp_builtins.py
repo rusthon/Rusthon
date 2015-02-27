@@ -16,6 +16,7 @@ inline("""
 
 typedef double f64;
 typedef float  f32;
+typedef char*  cstring;
 
 const char* cstr( std::string s ) { return s.c_str(); }
 

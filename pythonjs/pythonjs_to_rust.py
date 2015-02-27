@@ -945,7 +945,7 @@ class RustGenerator( pythonjs_to_go.GoGenerator ):
 
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
-				return 'NimMain()'
+				return 'PreMain(); NimMain()'
 			elif fname.endswith('unref'):
 				return 'GC_unref(%s)' %self.visit(node.args[0])
 			elif fname.endswith('ref'):
