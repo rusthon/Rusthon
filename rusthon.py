@@ -326,6 +326,7 @@ def import_md( url, modules=None ):
 	index = 0
 	prevline = None
 	tag = None
+	base_path, markdown_name = os.path.split(url)
 	data = open(url, 'rb').read()
 
 	for line in data.splitlines():
@@ -358,6 +359,13 @@ def import_md( url, modules=None ):
 		elif in_code:
 			code.append(line)
 		else:
+			if line.startswith('* ') and '@import' in line and line.count('[')==1 and line.count(']')==1 and line.count('(')==1 and line.count(')')==1:
+				submarkdown = line.split('(')[-1].split(')')[0].strip()
+				subpath = os.path.join(base_path, submarkdown)
+				if not os.path.isfile(subpath):
+					raise RuntimeError('error: can not find markdown file: '+subpath)
+				import_md( subpath, modules )
+
 			doc.append(line)
 
 		prevline = line

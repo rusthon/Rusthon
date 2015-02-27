@@ -1,7 +1,7 @@
 Syntax for importing external markdowns into one for building together.
 
-* [@import mylibs/mylib_A](mylibs/mylib_A.md)
-* [@import mylibs/mylib_B](mylibs/mylib_B.md)
+* [@import mylib/mylib_A](mylib/mylib_A.md)
+* [@import mylib/mylib_B](mylib/mylib_B.md)
 
 
 ```rusthon
