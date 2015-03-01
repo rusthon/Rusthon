@@ -17,3 +17,8 @@ Markdown Imports
 * [@import intermediateform.md](intermediateform.md)
 
 
+* [@import jstranslator.md](jstranslator.md)
+* [@import gotranslator.md](gotranslator.md)
+* [@import rusttranslator.md](rusttranslator.md)
+* [@import cpptranslator.md](cpptranslator.md)
+

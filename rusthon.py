@@ -644,7 +644,7 @@ def build( modules, module_path, datadirs=None ):
 		merge.extend(cpp_merge)
 		script = '\n'.join(merge)
 		pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
-		pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
+		pak = translate_to_cpp( pyjs )   ## pak contains: c_header and cpp_header
 		n = len(modules['c++']) + len(giws)
 		modules['c++'].append( {'code':pak['main'], 'index':n+1})  ## gets compiled below
 
@@ -1103,9 +1103,19 @@ def bootstrap_rusthon():
 		src.append( mod['code'] )
 	src = '\n'.join(src)
 	print(src)
+	open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
+
 	if '--test' in sys.argv:
 		test_typedpython()  ## runs some basic tests on the extended syntax
+
+	if '--runtime' in sys.argv:
+		print('creating new runtime: pythonjs.js')
+		open('pythonjs.js', 'wb').write( generate_js_runtime() )
+	if '--miniruntime' in sys.argv:
+		print('creating new runtime: pythonjs-minimal.js')
+		open('pythonjs-minimal.js', 'wb').write( generate_minimal_js_runtime() )
+
 
 if __name__ == '__main__':
 	bootstrap_rusthon()
