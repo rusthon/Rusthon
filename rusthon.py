@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __version__ = '0.9.9'
-import os, sys, subprocess, md5
+import os, sys, subprocess, hashlib
 #import pythonjs
 #import pythonjs.pythonjs
 #import pythonjs.python_to_pythonjs
@@ -165,7 +165,7 @@ def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=Fal
 			header.extend([
 			'#' + os.path.split(file)[-1],
 			'* file: ' + file,
-			'* md5sum   : %s' %md5.new(data).hexdigest(),
+			'* md5sum   : %s' %hashlib.md5(data).hexdigest(),
 			'* changed  : %s' %os.stat(file).st_mtime,
 			''
 			])
