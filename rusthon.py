@@ -587,7 +587,7 @@ def build( modules, module_path, datadirs=None ):
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'verilog':
-				vcode = pythonjs.pythonjs_to_verilog.main( script )
+				vcode = translate_to_verilog( script )
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
@@ -1102,8 +1102,7 @@ def bootstrap_rusthon():
 	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
 		src.append( mod['code'] )
 	src = '\n'.join(src)
-	print(src)
-	open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
+	#open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
 
 	if '--test' in sys.argv:

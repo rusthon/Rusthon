@@ -5,8 +5,6 @@ Note: most of the c++ translator lives here to.
 
 ```python
 
-import os, sys, itertools
-#import pythonjs_to_go
 
 go_types = 'bool string int float64'.split()
 rust_hacks = ('__rust__array__', '__rust__arrayfixed__', '__rust__map__', '__rust__func__')
