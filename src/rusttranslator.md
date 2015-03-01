@@ -2865,7 +2865,7 @@ class RustGenerator( GoGenerator ):
 							vectype = 'std::vector< std::shared_ptr<%s> >' %subvectype
 
 
-					 	if isinstance(node.value.right, ast.Tuple):
+						if isinstance(node.value.right, ast.Tuple):
 							r = ['/* %s = vector of vectors to: %s */' %(target,T)]
 							args = []
 							for i,elt in enumerate(node.value.right.elts):
