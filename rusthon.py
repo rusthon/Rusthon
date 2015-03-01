@@ -463,7 +463,7 @@ def gen_nim_wrappers(src, out):
 			out.extend(wrap)
 
 def build( modules, module_path, datadirs=None ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'datadirs':datadirs}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged  = {}
@@ -579,14 +579,11 @@ def build( modules, module_path, datadirs=None ):
 			backend = 'c++'  ## default to c++ backend
 			if header.startswith('#backend:'):
 				backend = header.split(':')[-1].strip()
-				if backend not in 'c++ rust javascript go verilog'.split():
+				if backend not in 'c++ rust javascript go verilog dart lua'.split():
 					raise SyntaxError('invalid backend: %s' %backend)
 
-			if backend == 'myhdl':  ## TODO remove this
-				vcode = compile_myhdl(script)
-				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
-			elif backend == 'verilog':
+			if backend == 'verilog':
 				vcode = translate_to_verilog( script )
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
@@ -611,6 +608,15 @@ def build( modules, module_path, datadirs=None ):
 						output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 				else:
 					js_merge.append(mod)
+
+			elif backend == 'lua':
+				pyjs = python_to_pythonjs(script, lua=True, module_path=module_path)
+				luacode = translate_to_lua( pyjs )
+				name = 'main.lua'
+				if mod['tag']: name = mod['tag']
+				if not name.endswith('.lua'): name += '.lua'
+				output['lua'].append( {'name':name, 'script':luacode, 'index': index} )
+
 
 	if js_merge:
 		tagname = None
@@ -910,8 +916,8 @@ def save_tar( package, path='build.tar' ):
 			elif os.path.isfile(datadir):
 				tar.add(datadir)
 
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java'}
-	for lang in 'rust c++ go javascript python html verilog java nim'.split():
+	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java', 'dart':'.dart', 'lua':'.lua'}
+	for lang in 'rust c++ go javascript python html verilog java nim dart lua'.split():
 		for info in package[lang]:
 			name = 'untitled'
 			if 'name' in info: name = info['name']
@@ -1089,6 +1095,9 @@ def main():
 
 				elif name.endswith('.go'):
 					subprocess.call( ['go', 'run', name],   cwd=tmpdir )
+
+				elif name.endswith('.lua'):
+					subprocess.call( ['luajit', name],   cwd=tmpdir )
 
 				else:
 					subprocess.call( [name], cwd=tmpdir )
