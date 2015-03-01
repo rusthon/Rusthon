@@ -975,6 +975,7 @@ def main():
 	launch = []
 	datadirs = []
 	j2r = False
+	anaconda = False
 
 	for arg in sys.argv[1:]:
 		if os.path.isdir(arg):
@@ -998,6 +999,8 @@ def main():
 		elif arg == '--java2rusthon':
 			gen_md = True
 			j2r = True
+		elif arg == '--anaconda':
+			anaconda = True
 
 	datadirs = [os.path.expanduser(dd) for dd in datadirs]
 
@@ -1062,7 +1065,17 @@ def main():
 					if firstline.startswith('#!'):
 						if 'python3' in firstline:
 							python = 'python3'
-					subprocess.call( [python, name], cwd=tmpdir )
+
+					if anaconda:
+						## assume that the user installed anaconda to the default location ##
+						anabin = os.path.expanduser('~/anaconda/bin')
+						if not os.path.isdir(anabin):
+							raise RuntimeError('Anaconda Python not installed to default location: %s' %anabin)
+
+						subprocess.call( [os.path.join(anabin,python), name], cwd=tmpdir )
+
+					else:
+						subprocess.call( [python, name], cwd=tmpdir )
 
 				elif name.endswith('.js'):
 					subprocess.call( ['node', name],   cwd=tmpdir )
