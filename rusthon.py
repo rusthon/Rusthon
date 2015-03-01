@@ -18,7 +18,7 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 	fastjs = True  ## this is now the default, and complete python mode is deprecated
 	result = {}
 
-	pyjs = pythonjs.python_to_pythonjs.main(
+	pyjs = python_to_pythonjs(
 		script,
 		module_path=module_path,
 		fast_javascript = fastjs,
@@ -27,7 +27,7 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 
 	if isinstance(pyjs, dict):  ## split apart by webworkers
 		for jsfile in a:
-			result[ jsfile ] = pythonjs.pythonjs.main(
+			result[ jsfile ] = translate_to_javascript(
 				a[jsfile],
 				webworker=jsfile != 'main',
 				requirejs=False,
@@ -38,7 +38,7 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 
 	else:
 
-		code = pythonjs.pythonjs.main(
+		code = translate_to_javascript(
 			pyjs,
 			requirejs=False,
 			insert_runtime=False,

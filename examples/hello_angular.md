@@ -1,7 +1,9 @@
-html
-----
+testing
+-------
+
 To run this example run these commands in your shell:
-```
+
+```bash
 cd
 mkdir angular.js
 cd angular.js
@@ -11,6 +13,10 @@ git clone https://github.com/rusthon/Rusthon.git
 cd Rusthon/
 ./rusthon.py ./examples/hello_angular.md
 ```
+
+html
+----
+
 
 ```html
 <html>
@@ -45,7 +51,7 @@ cd Rusthon/
 </body>
 </html>
 ```
-Above a special syntax is used `<@myscript>` this tells Rusthon where to insert the output of scripts it translates using the javascript backend.
+Above a special syntax is used `@myscript` this tells Rusthon where to insert the output of scripts it translates using the javascript backend.
 
 rusthon
 -------
