@@ -217,7 +217,7 @@ class CppGenerator( RustGenerator ):
 			## instead of including, just directly inline cpp-channel source
 			dirname = os.path.dirname(os.path.abspath(__file__))
 			header.append(
-				open( os.path.join(dirname, 'runtime/c++/cpp-channel.h') ).read()
+				open( os.path.join(dirname, 'src/runtime/c++/cpp-channel.h') ).read()
 			)
 
 		if self._has_jvm:
@@ -286,7 +286,7 @@ def translate_to_cpp(script, insert_runtime=True):
 	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, 'runtime')
+		dirname = os.path.join(dirname, os.path.join('src', 'runtime'))
 		runtime = open( os.path.join(dirname, 'cpp_builtins.py') ).read()
 		script = runtime + '\n' + script
 
