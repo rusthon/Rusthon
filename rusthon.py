@@ -492,10 +492,10 @@ def build( modules, module_path, datadirs=None ):
 					open(tmpfile, 'wb').write( nimsrc )
 					#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
 					cmd = [
-						nimbin, 
-						'compile', 
+						nimbin,
+						'compile',
 						'--header',
-						'--noMain', 
+						'--noMain',
 						'--noLinking',
 						'--compileOnly',
 						'--genScript',   ## broken?
@@ -524,7 +524,7 @@ def build( modules, module_path, datadirs=None ):
 
 					## gets compiled below
 					cfg = {
-						'link-dirs' :[nimcache, niminclude], 
+						'link-dirs' :[nimcache, niminclude],
 						#'build-dirs':[nimcache],  ## not working
 						'index'    : mod['index'],
 						'code'     : '\n'.join([nim_stdlib, nim_code])
@@ -725,10 +725,10 @@ def build( modules, module_path, datadirs=None ):
 			open(tmpfile, 'wb').write( source )
 			## note: iverilog defaults to verilog mode, not systemverilog, `-g2005-sv` is required. '-g2012' also works.
 			cmd = [
-				'iverilog', 
+				'iverilog',
 				'-g2005-sv',
-				'-o', 
-				'rusthon-sv-build.vvp', 
+				'-o',
+				'rusthon-sv-build.vvp',
 				tmpfile
 			]
 			p = subprocess.Popen(cmd, cwd=tempfile.gettempdir(), stdout=subprocess.PIPE, stderr=subprocess.PIPE )
@@ -1052,7 +1052,7 @@ def main():
 		for exe in package['executeables']:
 			print('running: %s' %exe)
 			subprocess.check_call(
-				exe, 
+				exe,
 				cwd=tmpdir ## jvm needs this to find the .class files
 			)
 
