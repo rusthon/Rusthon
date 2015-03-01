@@ -1136,9 +1136,9 @@ def translate_to_go(script, insert_runtime=True):
 	## the Gython translator also has the same type information as Go, but it is simpler to use this hack.
 	import subprocess
 	pass2lines = pass2.splitlines()
-	path = '/tmp/pass2.go'
+	path = tempfile.gettempdir() + '/pass2.go'
 	open(path, 'wb').write( pass2 )
-	p = subprocess.Popen([exe, 'build', path], cwd='/tmp', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	p = subprocess.Popen([exe, 'build', path], cwd=tempfile.gettempdir(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	errors = p.stderr.read().splitlines()
 	if len(errors):
 		for line in errors:
