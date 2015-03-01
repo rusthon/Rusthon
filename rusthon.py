@@ -61,12 +61,12 @@ def compile_java( javafiles ):
 	tmpdir  = tempfile.gettempdir()
 	cmd = ['javac']
 	cmd.extend( javafiles )
-	print ' '.join(cmd)
+	print(' '.join(cmd))
 	subprocess.check_call(cmd, cwd=tmpdir)
 	classfiles = [jfile.replace('.java', '.class') for jfile in javafiles]
 	cmd = ['jar', 'cvf', 'mybuild.jar']
 	cmd.extend( classfiles )
-	print ' '.join(cmd)
+	print(' '.join(cmd))
 	subprocess.check_call(cmd, cwd=tmpdir)
 	jarfile = os.path.join(tmpdir,'mybuild.jar')
 	assert os.path.isfile(jarfile)
@@ -157,7 +157,7 @@ def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=Fal
 
 	project = []
 	for file in files:
-		print 'reading: ', file
+		print('reading: ', file)
 
 		data = open(file, 'rb').read()
 		header = []
