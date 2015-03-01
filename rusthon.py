@@ -652,14 +652,16 @@ def build( modules, module_path, datadirs=None ):
 	if modules['python']:
 		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
-			if 'name' in mod:
-				name = mod['name']
-				if name.endswith('.md'):
+			if mod['tag']:
+				name = mod['tag']
+				if not name.endswith('.py'):
+					name += '.py'
+				output['python'].append( {'name':name, 'script':mod['code']} )
+			else:
+				if len(output['python'])==0:
 					python_main['script'].append( mod['code'] )
 				else:
-					output['python'].append( {'name':name, 'script':mod['code']} )
-			else:
-				python_main['script'].append( mod['code'] )
+					output['python'][-1]['script'] += '\n' + mod['code']
 
 	if modules['html']:
 		mods_sorted_by_index = sorted(modules['html'], key=lambda mod: mod.get('index'))
