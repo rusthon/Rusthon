@@ -952,7 +952,7 @@ def save_tar( package, path='build.tar' ):
 
 			ti = tarfile.TarInfo(name=name)
 			ti.size=len(s.buf)
-			if is_bin: ti.mode = 0777
+			if is_bin: ti.mode = 0o777
 			tar.addfile(tarinfo=ti, fileobj=s)
 
 			if source:
