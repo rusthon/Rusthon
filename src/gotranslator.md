@@ -1118,7 +1118,7 @@ def translate_to_go(script, insert_runtime=True):
 
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, 'runtime')
+		dirname = os.path.join(dirname, os.path.join('src','runtime'))
 		runtime = open( os.path.join(dirname, 'go_builtins.py') ).read()
 		script = runtime + '\n' + script
 

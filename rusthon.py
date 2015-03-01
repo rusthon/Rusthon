@@ -594,13 +594,13 @@ def build( modules, module_path, datadirs=None ):
 				cpp_merge.append(script)
 
 			elif backend == 'rust':
-				pyjs = pythonjs.python_to_pythonjs.main(script, rust=True, module_path=module_path)
-				rustcode = pythonjs.pythonjs_to_rust.main( pyjs )
+				pyjs = python_to_pythonjs(script, rust=True, module_path=module_path)
+				rustcode = translate_to_rust( pyjs )
 				modules['rust'].append( {'code':rustcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'go':
-				pyjs = pythonjs.python_to_pythonjs.main(script, go=True, module_path=module_path)
-				gocode = pythonjs.pythonjs_to_go.main( pyjs )
+				pyjs = python_to_pythonjs(script, go=True, module_path=module_path)
+				gocode = translate_to_go( pyjs )
 				#modules['go'].append( {'code':gocode})  ## gets compiled below
 				go_main['source'].append( gocode )
 
