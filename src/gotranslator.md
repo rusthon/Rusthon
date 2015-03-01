@@ -4,15 +4,8 @@ Go Translator
 subclass'es from the javascript generator.
 
 ```python
-#import os, sys
-#import ast
-#import pythonjs
 
 go_types = 'bool string int float64'.split()
-
-class GenerateGenericSwitch( SyntaxError ): pass
-class GenerateTypeAssert( SyntaxError ): pass
-
 
 class GoGenerator( JSGenerator ):
 	def __init__(self, source=None, requirejs=False, insert_runtime=False):

@@ -617,6 +617,14 @@ def build( modules, module_path, datadirs=None ):
 				if not name.endswith('.lua'): name += '.lua'
 				output['lua'].append( {'name':name, 'script':luacode, 'index': index} )
 
+			elif backend == 'dart':
+				pyjs = python_to_pythonjs(script, dart=True, module_path=module_path)
+				dartcode = translate_to_dart( pyjs )
+				name = 'main.dart'
+				if mod['tag']: name = mod['tag']
+				if not name.endswith('.dart'): name += '.dart'
+				output['dart'].append( {'name':name, 'script':dartcode, 'index': index} )
+
 
 	if js_merge:
 		tagname = None
@@ -1098,6 +1106,10 @@ def main():
 
 				elif name.endswith('.lua'):
 					subprocess.call( ['luajit', name],   cwd=tmpdir )
+
+				elif name.endswith('.dart'):
+					dartbin = os.path.expanduser('~/dart-sdk/bin/dart')
+					subprocess.call( [dartbin, name],   cwd=tmpdir )
 
 				else:
 					subprocess.call( [name], cwd=tmpdir )

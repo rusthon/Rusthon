@@ -2,10 +2,11 @@ C++ Translator
 -------------
 
 subclass'es from the rust generator
+TODO: fix JVM crash, originally it was working, but then something changed here (making it a global?) that makes it crash on exit.
+
 
 ```python
 
-#import pythonjs_to_rust
 
 JVM_HEADER = '''
 #include <jni.h>

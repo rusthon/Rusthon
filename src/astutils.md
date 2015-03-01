@@ -54,15 +54,25 @@ class NodeVisitorBase( ast.NodeVisitor ):
 
 
 
+class TransformSuperCalls( ast.NodeVisitor ):  ## used by dart backend
+	def __init__(self, node, class_names):
+		self._class_names = class_names
+		self.visit(node)
+
+	def visit_Call(self, node):
+		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._class_names:
+			node.func.attr = '__' + node.func.attr
+
 class CollectNames(ast.NodeVisitor):
-	_names_ = []
+	def __init__(self):
+		self._names = []
 	def visit_Name(self, node):
-		self._names_.append( node )
+		self._names.append( node )
 
 def collect_names(node):
-	CollectNames._names_ = names = []
-	CollectNames().visit( node )
-	return names
+	a = CollectNames()
+	a.visit( node )
+	return a._names
 
 
 class CollectReturns(ast.NodeVisitor):
@@ -204,5 +214,17 @@ def inspect_method( node ):
 	info = inspect_function( node )
 	info['properties'] = retrieve_properties( node.body )
 	return info
+
+```
+
+Special Exceptions
+------------------
+these a special exceptions that are raise to signal the caller to do special hacks.
+
+```python
+
+## used by Go backend ##
+class GenerateGenericSwitch( SyntaxError ): pass
+class GenerateTypeAssert( SyntaxError ): pass
 
 ```

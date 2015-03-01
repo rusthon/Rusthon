@@ -20,6 +20,7 @@ Markdown Imports
 
 * [@import verilogtranslator.md](verilogtranslator.md)
 * [@import luatranslator.md](luatranslator.md)
+* [@import darttranslator.md](darttranslator.md)
 
 * [@import gotranslator.md](gotranslator.md)
 * [@import rusttranslator.md](rusttranslator.md)
