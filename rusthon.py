@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 __version__ = '0.9.9'
 import os, sys, subprocess, md5
-import pythonjs
-import pythonjs.pythonjs
-import pythonjs.python_to_pythonjs
-import pythonjs.pythonjs_to_cpp
-import pythonjs.pythonjs_to_verilog
-import pythonjs.typedpython as typedpython
+#import pythonjs
+#import pythonjs.pythonjs
+#import pythonjs.python_to_pythonjs
+#import pythonjs.pythonjs_to_cpp
+#import pythonjs.pythonjs_to_verilog
+#import pythonjs.typedpython as typedpython
 import tempfile
 
 
@@ -643,7 +643,7 @@ def build( modules, module_path, datadirs=None ):
 
 		merge.extend(cpp_merge)
 		script = '\n'.join(merge)
-		pyjs = pythonjs.python_to_pythonjs.main(script, cpp=True, module_path=module_path)
+		pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
 		pak = pythonjs.pythonjs_to_cpp.main( pyjs )   ## pak contains: c_header and cpp_header
 		n = len(modules['c++']) + len(giws)
 		modules['c++'].append( {'code':pak['main'], 'index':n+1})  ## gets compiled below
@@ -954,7 +954,7 @@ def save_tar( package, path='build.tar' ):
 
 def main():
 	if len(sys.argv)==1:
-		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--run=] [--data=]')
+		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--anaconda] [--run=] [--data=]')
 		print('		[tar file] is the optional name of the output tar that contains the build')
 		print()
 		print('		source files, transpiled source, and output binaries.')
@@ -964,6 +964,8 @@ def main():
 		print('		using the tag syntax "@a.py" on the line before the code block.')
 		print()
 		print('		--data is given a list of directories to include in the build dir and tarfile.')
+		print()
+		print('		--anaconda run scripts with Anaconda Python, must be installed to ~/anaconda')
 		return
 
 	modules = new_module()
@@ -1092,7 +1094,20 @@ def main():
 					subprocess.call( [name], cwd=tmpdir )
 
 
+def bootstrap_rusthon():
+	mods = new_module()
+	import_md( 'src/main.md', modules=mods )
+	src = []
+	mods_sorted_by_index = sorted(mods['python'], key=lambda mod: mod.get('index'))
+	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
+		src.append( mod['code'] )
+	src = '\n'.join(src)
+	print(src)
+	exec(src, globals())
+	if '--test' in sys.argv:
+		test_typedpython()  ## runs some basic tests on the extended syntax
 
 if __name__ == '__main__':
-    main()
+	bootstrap_rusthon()
+	main()
 
