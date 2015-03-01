@@ -12,7 +12,7 @@ This command compiles and runs this markdown file:
 
 Anaconda is how Python should be packaged.  Standard Python ships with TKinter as its GUI toolkit, so that you can make the most ugly interfaces anyone has ever seen since the 80's, take a look at [this](http://tktable.sourceforge.net/tile/screenshots/demo-alt-unix.png)
 
-Anaconda ships with a modern GUI toolkit using (Qt)[http://qt-project.org/].
+Anaconda ships with a modern GUI toolkit using [Qt](http://qt-project.org/).
 
 
 Simple Numba Example
