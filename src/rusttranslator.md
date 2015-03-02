@@ -215,6 +215,8 @@ note: `nullptr` is c++11
 			return 'false'
 		elif node.id in self._rename_hacks:  ## TODO make the node above on the stack is not an attribute node.
 			return self._rename_hacks[ node.id ]
+		elif node.id=='self' and self._class_stack:
+			return 'this'
 
 		return node.id
 
@@ -401,7 +403,9 @@ note: `nullptr` is c++11
 						overload_nodes.append( b )
 						## catch_call trick is used to call methods on base classes from the subclass.
 						if self._cpp:
-							self.catch_call.add( '%s->%s' %(bnode.name, b.name))
+							##self.catch_call.add( '%s->%s' %(bnode.name, b.name))
+							#note: `::` is automatic now when calling classmethod/staticmethods.
+							self.catch_call.add( '%s::%s' %(bnode.name, b.name))
 						else:
 							self.catch_call.add( '%s.%s' %(bnode.name, b.name))
 
@@ -644,7 +648,9 @@ hack for calling base class methods.
 				node.args.remove( node.args[0] )
 
 		if self._cpp:
-			classname = fname.split('->')[0]
+			if fname.count('::') > 1: raise RuntimeError('TODO: %s'%fname)
+			##classname = fname.split('->')[0]
+			classname = fname.split('::')[0]
 			hacked = classname + '::' + fname[len(classname)+2:]
 			return self._visit_call_helper(node, force_name=hacked)
 		else:
@@ -2418,7 +2424,7 @@ Augmented Assignment `+=`
 Attribute `.`
 ---------
 TODO deprecate `->` or use for something else.
-
+Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the name is one of the known classes.
 
 ```python
 
