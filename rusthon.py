@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __version__ = '0.9.9'
-import os, sys, subprocess, md5
+import os, sys, subprocess, hashlib
 #import pythonjs
 #import pythonjs.pythonjs
 #import pythonjs.python_to_pythonjs
@@ -61,12 +61,12 @@ def compile_java( javafiles ):
 	tmpdir  = tempfile.gettempdir()
 	cmd = ['javac']
 	cmd.extend( javafiles )
-	print ' '.join(cmd)
+	print(' '.join(cmd))
 	subprocess.check_call(cmd, cwd=tmpdir)
 	classfiles = [jfile.replace('.java', '.class') for jfile in javafiles]
 	cmd = ['jar', 'cvf', 'mybuild.jar']
 	cmd.extend( classfiles )
-	print ' '.join(cmd)
+	print(' '.join(cmd))
 	subprocess.check_call(cmd, cwd=tmpdir)
 	jarfile = os.path.join(tmpdir,'mybuild.jar')
 	assert os.path.isfile(jarfile)
@@ -157,7 +157,7 @@ def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=Fal
 
 	project = []
 	for file in files:
-		print 'reading: ', file
+		print('reading: ', file)
 
 		data = open(file, 'rb').read()
 		header = []
@@ -165,7 +165,7 @@ def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=Fal
 			header.extend([
 			'#' + os.path.split(file)[-1],
 			'* file: ' + file,
-			'* md5sum   : %s' %md5.new(data).hexdigest(),
+			'* md5sum   : %s' %hashlib.md5(data).hexdigest(),
 			'* changed  : %s' %os.stat(file).st_mtime,
 			''
 			])
@@ -493,10 +493,10 @@ def build( modules, module_path, datadirs=None ):
 					open(tmpfile, 'wb').write( nimsrc )
 					#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
 					cmd = [
-						nimbin, 
-						'compile', 
+						nimbin,
+						'compile',
 						'--header',
-						'--noMain', 
+						'--noMain',
 						'--noLinking',
 						'--compileOnly',
 						'--genScript',   ## broken?
@@ -525,7 +525,7 @@ def build( modules, module_path, datadirs=None ):
 
 					## gets compiled below
 					cfg = {
-						'link-dirs' :[nimcache, niminclude], 
+						'link-dirs' :[nimcache, niminclude],
 						#'build-dirs':[nimcache],  ## not working
 						'index'    : mod['index'],
 						'code'     : '\n'.join([nim_stdlib, nim_code])
@@ -726,10 +726,10 @@ def build( modules, module_path, datadirs=None ):
 			open(tmpfile, 'wb').write( source )
 			## note: iverilog defaults to verilog mode, not systemverilog, `-g2005-sv` is required. '-g2012' also works.
 			cmd = [
-				'iverilog', 
+				'iverilog',
 				'-g2005-sv',
-				'-o', 
-				'rusthon-sv-build.vvp', 
+				'-o',
+				'rusthon-sv-build.vvp',
 				tmpfile
 			]
 			p = subprocess.Popen(cmd, cwd=tempfile.gettempdir(), stdout=subprocess.PIPE, stderr=subprocess.PIPE )
@@ -953,7 +953,7 @@ def save_tar( package, path='build.tar' ):
 
 			ti = tarfile.TarInfo(name=name)
 			ti.size=len(s.buf)
-			if is_bin: ti.mode = 0777
+			if is_bin: ti.mode = 0o777
 			tar.addfile(tarinfo=ti, fileobj=s)
 
 			if source:
@@ -1053,7 +1053,7 @@ def main():
 		for exe in package['executeables']:
 			print('running: %s' %exe)
 			subprocess.check_call(
-				exe, 
+				exe,
 				cwd=tmpdir ## jvm needs this to find the .class files
 			)
 
