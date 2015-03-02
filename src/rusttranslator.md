@@ -3281,7 +3281,7 @@ def translate_to_rust(script, insert_runtime=True):
 	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, 'runtime')
+		dirname = os.path.join(dirname, 'src/runtime')
 		runtime = open( os.path.join(dirname, 'rust_builtins.py') ).read()
 		script = runtime + '\n' + script
 
