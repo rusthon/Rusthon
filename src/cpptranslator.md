@@ -1,169 +1,15 @@
 C++ Translator
 -------------
 
-subclass'es from the rust generator
-TODO: fix JVM crash, originally it was working, but then something changed here (making it a global?) that makes it crash on exit.
+Imports
+-------
+* [@import jvm.md](jvm.md)
+* [@import nim.md](nim.md)
+
 
 
 ```python
-
-
-JVM_HEADER = '''
-#include <jni.h>
-
-JavaVM* __create_javavm__() {
-	JavaVM* jvm = new JavaVM();
-	JNIEnv* env;
-	JavaVMInitArgs args;
-	JavaVMOption options[2];
-	args.version = JNI_VERSION_1_4;
-	args.nOptions = 2;
-	options[0].optionString = const_cast<char*>("-Djava.class.path=.%s");
-	options[1].optionString = const_cast<char*>("-Xcheck:jni");
-	args.options = options;
-	args.ignoreUnrecognized = JNI_FALSE;
-	JNI_CreateJavaVM(&jvm, (void **)&env, &args);
-	return jvm;
-}
-
-static JavaVM* __javavm__ = __create_javavm__();
-'''
-def gen_jvm_header( jars ):
-	if jars:
-		a = ':' + ':'.join(jars)
-		return JVM_HEADER %a
-	else:
-		return JVM_HEADER %''
-
-
-NIM_HEADER = '''
-extern "C" {
-	void PreMain();
-	void NimMain();
-}
-
-'''
-
-def gen_nim_header():
-	return NIM_HEADER
-
 class CppGenerator( RustGenerator ):
-	def _visit_call_helper_new(self, node):
-		'''
-		low level `new` for interfacing with external c++.
-		Also used for code that is blocked with `with pointers:`
-		to create a class without having to create a temp variable,
-		`f( new(MyClass(x,y)) )`, directly calls the constructor,
-		if MyClass is a Rusthon class then __init__ will be called.
-		TODO fix mixing with std::shared_ptr by keeping a weak_ptr
-		in each object that __init__ returns (also fixes the _ref_hacks)
-		'''
-		if isinstance(node.args[0], ast.BinOp): # makes an array or map
-			a = self.visit(node.args[0])
-			if type(a) is not tuple:
-				raise SyntaxError(self.format_error('TODO some extended type'))
-
-			atype, avalue = a
-			if atype.endswith('*'): atype = atype[:-1]
-			else: pass  ## this should never happen
-			return '(new %s %s)' %(atype, avalue)
-
-		## Rusthon class ##
-		elif isinstance(node.args[0], ast.Call) and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id in self._classes:
-			classname = node.args[0].func.id
-			args = [self.visit(arg) for arg in node.args[0].args ]
-			if self._classes[classname]._requires_init:
-				return '(new %s)->__init__(%s)' %(classname, ','.join(args))
-			else:
-				if args:
-					raise SyntaxError('class %s: takes no init args' %classname)
-				return '(new %s)' %classname
-
-		## external c++ class ##
-		else:
-			return '(new %s)' %self.visit(node.args[0])
-
-	def __init__(self, source=None, requirejs=False, insert_runtime=False):
-		RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
-		self._cpp = True
-		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
-		self._shared_pointers = True
-		self._noexcept = False
-		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
-		self._has_jvm = False
-		self._jvm_classes = dict()
-		self._has_nim = False
-
-	def visit_Delete(self, node):
-		targets = [self.visit(t) for t in node.targets]
-		if len(targets)==0:
-			raise RuntimeError('no delete targets')
-		r = []
-		if self._shared_pointers:
-			for t in targets:
-				## shared_ptr.reset only releases if no there are no other references,
-				## is there a way to force the delete on all shared pointers to something?
-				#r.append('delete %s;' %t)  ## only works on pointers
-				r.append('%s.reset();' %t)
-		else:
-			for t in targets:
-				if t in self._known_arrays:
-					r.append('delete[] %s;')
-				else:
-					r.append('delete %s;')
-
-		return '\n'.join(r)
-
-	def visit_Str(self, node):
-		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
-		return 'std::string("%s")' % s
-
-	def visit_Print(self, node):
-		r = []
-		for e in node.values:
-			s = self.visit(e)
-			if isinstance(e, ast.List) or isinstance(e, ast.Tuple):
-				for sube in e.elts:
-					r.append('std::cout << %s;' %self.visit(sube))
-				if r:
-					r[-1] += 'std::cout << std::endl;'
-				else:
-					r.append('std::cout << std::endl;')
-			else:
-				r.append('std::cout << %s << std::endl;' %s)
-		return '\n'.join(r)
-
-
-	def visit_TryExcept(self, node, finallybody=None):
-		out = []
-
-		out.append( 'try {' )
-		self.push()
-		for b in node.body:
-			out.append( self.indent()+self.visit(b) )
-
-		self.pull()
-		out.append( self.indent() + '} catch (const std::exception& e) {' )
-		self.push()
-		for h in node.handlers:
-			out.append(self.indent()+self.visit(h))
-		self.pull()
-
-		if finallybody:
-			## wrap in another try that is silent, always throw e
-			out.append('try {		// finally block')
-			for b in finallybody:
-				out.append(self.visit(b))
-
-			out.append('} throw e;')
-
-		out.append( '}' )
-
-		out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
-		out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
-		out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
-
-		return '\n'.join( out )
 
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
@@ -282,6 +128,150 @@ class CppGenerator( RustGenerator ):
 		pak['main'] = '\n'.join( lines )
 		return pak['main']
 
+```
+
+low level `new` for interfacing with external c++.
+Also used for code that is blocked with `with pointers:`
+to create a class without having to create a temp variable,
+`f( new(MyClass(x,y)) )`, directly calls the constructor,
+if MyClass is a Rusthon class then __init__ will be called.
+TODO fix mixing with std::shared_ptr by keeping a weak_ptr
+in each object that __init__ returns (also fixes the _ref_hacks)
+
+```python
+
+	def _visit_call_helper_new(self, node):
+		if isinstance(node.args[0], ast.BinOp): # makes an array or map
+			a = self.visit(node.args[0])
+			if type(a) is not tuple:
+				raise SyntaxError(self.format_error('TODO some extended type'))
+
+			atype, avalue = a
+			if atype.endswith('*'): atype = atype[:-1]
+			else: pass  ## this should never happen
+			return '(new %s %s)' %(atype, avalue)
+
+		## Rusthon class ##
+		elif isinstance(node.args[0], ast.Call) and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id in self._classes:
+			classname = node.args[0].func.id
+			args = [self.visit(arg) for arg in node.args[0].args ]
+			if self._classes[classname]._requires_init:
+				return '(new %s)->__init__(%s)' %(classname, ','.join(args))
+			else:
+				if args:
+					raise SyntaxError('class %s: takes no init args' %classname)
+				return '(new %s)' %classname
+
+		## external c++ class ##
+		else:
+			return '(new %s)' %self.visit(node.args[0])
+
+```
+
+Subclasses from `RustGenerator`, see here:
+[rusttranslator.md](rusttranslator.md)
+TODO: reverse, `RustGenerator` should subclass from `CppGenerator`.
+
+note: polymorphic classes are not generated by default, virtual methods are not required,
+casting works fine with `static_cast` and `std::static_pointer_cast`.
+
+```python
+
+	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+		RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
+		self._cpp = True
+		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
+		self._shared_pointers = True
+		self._noexcept = False
+		self._polymorphic = False  ## by default do not use polymorphic classes (virtual methods)
+		self._has_jvm = False
+		self._jvm_classes = dict()
+		self._has_nim = False
+
+	def visit_Delete(self, node):
+		targets = [self.visit(t) for t in node.targets]
+		if len(targets)==0:
+			raise RuntimeError('no delete targets')
+		r = []
+		if self._shared_pointers:
+			for t in targets:
+				## shared_ptr.reset only releases if no there are no other references,
+				## is there a way to force the delete on all shared pointers to something?
+				#r.append('delete %s;' %t)  ## only works on pointers
+				r.append('%s.reset();' %t)
+		else:
+			for t in targets:
+				if t in self._known_arrays:
+					r.append('delete[] %s;')
+				else:
+					r.append('delete %s;')
+
+		return '\n'.join(r)
+
+	def visit_Str(self, node):
+		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
+		return 'std::string("%s")' % s
+
+	def visit_Print(self, node):
+		r = []
+		for e in node.values:
+			s = self.visit(e)
+			if isinstance(e, ast.List) or isinstance(e, ast.Tuple):
+				for sube in e.elts:
+					r.append('std::cout << %s;' %self.visit(sube))
+				if r:
+					r[-1] += 'std::cout << std::endl;'
+				else:
+					r.append('std::cout << std::endl;')
+			else:
+				r.append('std::cout << %s << std::endl;' %s)
+		return '\n'.join(r)
+```
+
+TODO
+----
+* test finally
+
+```python
+
+	def visit_TryExcept(self, node, finallybody=None):
+		out = []
+
+		out.append( 'try {' )
+		self.push()
+		for b in node.body:
+			out.append( self.indent()+self.visit(b) )
+
+		self.pull()
+		out.append( self.indent() + '} catch (const std::exception& e) {' )
+		self.push()
+		for h in node.handlers:
+			out.append(self.indent()+self.visit(h))
+		self.pull()
+
+		if finallybody:
+			## wrap in another try that is silent, always throw e
+			out.append('try {		// finally block')
+			for b in finallybody:
+				out.append(self.visit(b))
+
+			out.append('} throw e;')
+
+		out.append( '}' )
+
+		out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
+		out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
+		out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
+
+		return '\n'.join( out )
+```
+
+Translate to C++
+----------------
+
+TODO save GCC PGO files.
+
+```python
 
 def translate_to_cpp(script, insert_runtime=True):
 	#raise SyntaxError(script)

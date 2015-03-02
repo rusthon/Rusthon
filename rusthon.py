@@ -321,8 +321,8 @@ def new_module():
 		'javascript':[],
 	}
 
-def import_md( url, modules=None ):
-	if modules is None: modules = new_module()
+def import_md( url, modules=None, index_offset=0 ):
+	assert modules is not None
 	doc = []
 	code = []
 	lang = False
@@ -340,7 +340,7 @@ def import_md( url, modules=None ):
 			if in_code:
 				if lang:
 					p, n = os.path.split(url)
-					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index, 'tag':tag }
+					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index+index_offset, 'tag':tag }
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
 						if ext in 'html js css py c h cpp hpp rust go java'.split():
@@ -363,19 +363,20 @@ def import_md( url, modules=None ):
 		elif in_code:
 			code.append(line)
 		else:
+			## import submarkdown file ##
 			if line.startswith('* ') and '@import' in line and line.count('[')==1 and line.count(']')==1 and line.count('(')==1 and line.count(')')==1:
 				submarkdown = line.split('(')[-1].split(')')[0].strip()
 				subpath = os.path.join(base_path, submarkdown)
 				if not os.path.isfile(subpath):
 					raise RuntimeError('error: can not find markdown file: '+subpath)
-				import_md( subpath, modules )
+				index += import_md( subpath, modules, index_offset=index )
 
 			doc.append(line)
 
 		prevline = line
 
 	modules['markdown'] += '\n'.join(doc)
-	return modules
+	return index
 
 def hack_nim_stdlib(code):
 	'''
@@ -1123,7 +1124,7 @@ def bootstrap_rusthon():
 	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
 		src.append( mod['code'] )
 	src = '\n'.join(src)
-	#open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
+	open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
 
 	if '--test' in sys.argv:
