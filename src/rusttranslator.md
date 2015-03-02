@@ -5,8 +5,6 @@ Note: most of the c++ translator lives here to.
 
 ```python
 
-
-
 TRY_MACRO = '''
 macro_rules! try_wrap_err(
       ($e:expr, $ret:expr) => (match $e {Ok(e) => e, Err(e) => return ($ret)(e)})
@@ -48,6 +46,14 @@ class RustGenerator( GoGenerator ):
 	def visit_IsNot(self, node):
 		return '!='
 
+```
+Try Except `try`, `except`
+----------
+
+TODO fix try/finally
+
+```python
+
 	def visit_TryFinally(self, node):
 		assert len(node.body)==1
 		return self.visit_TryExcept(node.body[0], finallybody=node.finalbody)
@@ -72,6 +78,14 @@ class RustGenerator( GoGenerator ):
 		out.append('try_wrap_err!( try_lambda(), |_|{()});')
 		return '\n'.join( out )
 
+```
+Compare `x==y`
+-------------
+
+needs to check if item is a string there is an `in` test, `if "x" in "xyz"`
+so that can be translated to string.find or if it is a vector `std::find`.
+
+```python
 	def visit_Compare(self, node):
 		comp = ['(']
 		left = self.visit(node.left)
@@ -106,6 +120,15 @@ class RustGenerator( GoGenerator ):
 		comp.append( ')' )
 
 		return ' '.join( comp )
+
+```
+If
+----
+
+TODO test `if pointer:` c++
+
+
+```python
 
 	def visit_If(self, node):
 		out = []
@@ -164,10 +187,6 @@ class RustGenerator( GoGenerator ):
 
 		return '\n'.join( out )
 
-	## can not assume that all numbers are signed integers
-	#def visit_Num(self, node):
-	#	if type(node.n) is int: return str(node.n) + 'i'
-	#	else: return str(node.n)
 
 	def visit_Index(self, node):
 		if isinstance(node.value, ast.Num):
@@ -175,6 +194,14 @@ class RustGenerator( GoGenerator ):
 		else:
 			return self.visit(node.value)
 
+```
+Name
+-----
+
+note: `nullptr` is c++11
+
+
+```python
 
 	def visit_Name(self, node):
 		if node.id == 'None' or node.id == 'nil' or node.id == 'null':

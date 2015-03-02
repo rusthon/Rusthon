@@ -14,19 +14,12 @@ This is also subclassed by these other backends:
 # License: "New BSD"
 
 
-#import os, sys
 from types import GeneratorType
-
-#import ast
 from ast import Str
 from ast import Name
 from ast import Tuple
-from ast import parse
 from ast import Attribute
 from ast import NodeVisitor
-
-#import typedpython
-#import ast_utils
 
 class SwapLambda( RuntimeError ):
 	def __init__(self, node):
@@ -70,12 +63,27 @@ class JSGenerator(NodeVisitorBase):
 		self._rename_hacks = {}  ## used by c++ backend, to support `if isinstance`
 		self._globals = {}  ## name : type
 
+```
+
+reset
+-----
+`reset()` needs to be called for multipass backends, that are dumb and run translation twice to gather info in two passes.
+
+```python
 
 	def reset(self):
 		self._cheader = []
 		self._cppheader = []
 		self._cpp_class_impl = []
 		self._match_stack = []
+
+```
+is_prim_type
+------------
+the typed backends like: go, rust and c++ need to know if a variable type is a builtin primitive,
+or something that needs to be wrapped by a pointer/shared-reference.
+
+```python
 
 	def is_prim_type(self, T):
 		prims = 'bool int float double long string str char byte i32 i64 f32 f64 std::string cstring'.split()
@@ -89,6 +97,16 @@ class JSGenerator(NodeVisitorBase):
 	def push(self): self._indent += 1
 	def pull(self):
 		if self._indent > 0: self._indent -= 1
+
+```
+
+Class
+------
+class is not implemented here for javascript, it gets translated ahead of time in 
+[intermediateform.md](intermediateform.md)
+
+
+```python
 
 	def visit_ClassDef(self, node):
 		raise NotImplementedError(node)
@@ -122,6 +140,15 @@ class JSGenerator(NodeVisitorBase):
 		else:
 			a = '%s %s= %s;' %(target, op, value)
 		return a
+
+```
+With
+----
+
+Special syntax that triggers different things depending on the backend.
+Also implements extra syntax like `switch` and `select`.
+
+```python
 
 	def visit_With(self, node):
 		'''
@@ -318,6 +345,13 @@ class JSGenerator(NodeVisitorBase):
 			'header' : header,
 			'lines'  : []
 		}
+
+```
+Module
+------
+can also generate a requirejs module.
+
+```python
 
 	def visit_Module(self, node):
 		modules = []
@@ -1440,11 +1474,16 @@ class JSGenerator(NodeVisitorBase):
 	def visit_Break(self, node):
 		return 'break;'
 
+```
 
+Regenerate JS Runtime
+---------------------
+
+```python
 def generate_minimal_js_runtime():
 	from python_to_pythonjs import main as py2pyjs
 	a = py2pyjs(
-		open('runtime/builtins_core.py', 'rb').read(),
+		open('src/runtime/builtins_core.py', 'rb').read(),
 		module_path = 'runtime',
 		fast_javascript = True
 	)
@@ -1453,15 +1492,23 @@ def generate_minimal_js_runtime():
 def generate_js_runtime():
 	from python_to_pythonjs import main as py2pyjs
 	builtins = py2pyjs(
-		open('runtime/builtins.py', 'rb').read(),
+		open('src/runtime/builtins.py', 'rb').read(),
 		module_path = 'runtime',
 		fast_javascript = True
 	)
 	lines = [
-		main( open('runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True ), ## lowlevel pythonjs
+		main( open('src/runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True ), ## lowlevel pythonjs
 		main( builtins, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 	]
 	return '\n'.join( lines )
+
+```
+
+Translate to Javascript
+-----------------------
+html files can also be translated, it is parsed and checked for `<script type="text/python">`
+
+```python
 
 def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
 	head = []
