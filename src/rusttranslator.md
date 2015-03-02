@@ -1435,8 +1435,13 @@ handles all special calls
 				return '%s(new %s())' %(prefix,fname)
 		else:
 			return '%s(%s)' % (fname, args)
+```
+BinOp
+------
+Extra syntax is supported by [typedpython.md](typedpython.md) using `<<` and special names as a way of encoding syntax that 
+regular Python has no support for.
 
-
+```python
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
 		op = self.visit(node.op)
@@ -1602,6 +1607,14 @@ handles all special calls
 		#raise RuntimeError('list comps are only generated from the parent node')
 		raise GenerateListComp(node)
 
+```
+Return
+-------
+
+TODO remove GenerateTypeAssert, go leftover.
+TODO tuple return for c++
+
+```python
 	def visit_Return(self, node):
 		if isinstance(node.value, ast.Tuple):
 			return 'return %s;' % ', '.join(map(self.visit, node.value.elts))
@@ -1640,14 +1653,20 @@ handles all special calls
 
 				return '\n'.join(out)
 
-
-
 			if v.startswith('&'):  ## this was just for Go
 				return '_hack := %s; return &_hack' %v[1:]
 			else:
 				return 'return %s;' % v
 		return 'return;'
+```
 
+Lambda Functions
+----------------
+rust lambda
+c++11 lambda
+
+
+```python
 
 	def visit_Lambda(self, node):
 		args = [self.visit(a) for a in node.args.args]
@@ -1664,6 +1683,15 @@ handles all special calls
 		else:
 			return '|%s| %s ' %(','.join(args), self.visit(node.body))
 
+```
+
+Function/Method
+---------------
+note: functions defined in `with extern(abi="C"):` are `declare_only` their bodies are skipped.
+operator overloading is implemented here for c++
+TODO clean up go stuff.
+
+```python
 
 	def _visit_function(self, node):
 		out = []
@@ -2238,6 +2266,17 @@ handles all special calls
 					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 		return v
 
+```
+
+generate_generic_branches
+-------------------------
+TODO, this is a left over from the Go backend,
+it is a nice hack that generates a branch in the caller for methods that return different types,
+this could also come in handy with the rust and c++ backends.
+
+
+```python
+
 	def generate_generic_branches(self, body, out, force_vars, force_used_vars):
 		#out.append('/* GenerateGeneric */')
 		#out.append('/*vars: %s*/' %self._vars)
@@ -2352,7 +2391,7 @@ Augmented Assignment `+=`
 -----------------------
 
 
-```
+```python
 
 	def visit_AugAssign(self, node):
 		## n++ and n-- are slightly faster than n+=1 and n-=1
