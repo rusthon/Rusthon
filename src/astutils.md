@@ -5,6 +5,11 @@ ast helper functions and classes
 
 ```python
 
+go_types = 'bool string int float64'.split()
+go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
+COLLECTION_TYPES = go_hacks
+
+
 class NodeVisitorBase( ast.NodeVisitor ):
 	def __init__(self, source_code):
 		self._line = None
@@ -226,5 +231,8 @@ these a special exceptions that are raise to signal the caller to do special hac
 ## used by Go backend ##
 class GenerateGenericSwitch( SyntaxError ): pass
 class GenerateTypeAssert( SyntaxError ): pass
+class GenerateSlice( SyntaxError ): pass  ## c++ backend
+class GenerateListComp( SyntaxError ): pass  ## c++ and rust backend
+
 
 ```

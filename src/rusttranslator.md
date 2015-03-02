@@ -6,15 +6,6 @@ Note: most of the c++ translator lives here to.
 ```python
 
 
-go_types = 'bool string int float64'.split()
-rust_hacks = ('__rust__array__', '__rust__arrayfixed__', '__rust__map__', '__rust__func__')
-go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
-COLLECTION_TYPES = rust_hacks + go_hacks
-
-class GenerateGenericSwitch( SyntaxError ): pass
-class GenerateTypeAssert( SyntaxError ): pass
-class GenerateSlice( SyntaxError ): pass  ## c++ backend
-class GenerateListComp( SyntaxError ): pass  ## c++ and rust backend
 
 TRY_MACRO = '''
 macro_rules! try_wrap_err(
@@ -2278,6 +2269,14 @@ class RustGenerator( GoGenerator ):
 		else:
 			return 'break;'
 
+```
+
+Augmented Assignment `+=`
+-----------------------
+
+
+```
+
 	def visit_AugAssign(self, node):
 		## n++ and n-- are slightly faster than n+=1 and n-=1
 		target = self.visit(node.target)
@@ -2298,6 +2297,14 @@ class RustGenerator( GoGenerator ):
 			a = '%s %s= %s;' %(target, op, value)
 		return a
 
+```
+
+Attribute `.`
+---------
+TODO deprecate `->` or use for something else.
+
+
+```python
 
 	def visit_Attribute(self, node):
 		parent_node = self._stack[-2]
@@ -2354,6 +2361,14 @@ class RustGenerator( GoGenerator ):
 
 		else:
 			return '%s.%s' % (name, attr)
+```
+
+Slice and List Comprehension `[:]`, `[]int(x for x in range(n))`
+----------------------------------
+negative slice is not fully supported, only `-1` literal works.
+TODO rename _gen_slice to _gen_slice_cpp and move to cpptranslator.md
+
+```python
 
 	def _gen_slice(self, target=None, value=None, lower=None, upper=None, step=None, type=None):
 		assert self._cpp
@@ -2604,6 +2619,20 @@ class RustGenerator( GoGenerator ):
 			raise RuntimeError('TODO list comp for some backend')
 
 		return '\n'.join(out)
+
+```
+
+Assignment
+----------
+
+implemented for rust and c++
+
+Assignment to some variable, tracks assignments to local variables for arrays, objects, and strings,
+because they need some special handling in other places.
+
+
+```python
+
 
 	def visit_Assign(self, node):
 		self._catch_assignment = False
@@ -3249,6 +3278,15 @@ class RustGenerator( GoGenerator ):
 					#if value.startswith('&[]*') and self._catch_assignment:
 					#	raise SyntaxError(value)
 					return '%s = %s;' % (target, value)
+```
+
+While Loop
+----------
+
+implemented for rust and c++
+
+```python
+
 
 	def visit_While(self, node):
 		cond = self.visit(node.test)
@@ -3275,6 +3313,16 @@ class RustGenerator( GoGenerator ):
 	def _inline_code_helper(self, s):
 		return s
 
+```
+
+The hack below runs the code generated in the second pass into the Rust compiler to check for errors,
+in some cases Rusthon may not always track the types inside an array, or other types, and so it
+it starts off by generating some dumb code that works most of the time.  If it will not pass the
+Rust compiler, stdout is parsed to check for errors and a magic ID that links to a ast Node.
+
+TODO: do not hard code rustc to /usr/local/bin
+
+```python
 
 
 def translate_to_rust(script, insert_runtime=True):
@@ -3299,10 +3347,6 @@ def translate_to_rust(script, insert_runtime=True):
 	if not os.path.isfile(exe):
 		raise RuntimeError('rustc not found in /usr/local/bin')
 
-	## this hack runs the code generated in the second pass into the Rust compiler to check for errors,
-	## in some cases Rusthon may not always track the types inside an array, or other types, and so it
-	## it starts off by generating some dumb code that works most of the time.  If it will not pass the
-	## Rust compiler, stdout is parsed to check for errors and a magic ID that links to a ast Node.
 	import subprocess
 	pass2lines = pass2.splitlines()
 	path = '/tmp/pass2.rs'
