@@ -14,10 +14,6 @@
 
 inline("""
 
-typedef double f64;
-typedef float  f32;
-typedef const char*  cstring;
-
 const char* cstr( std::string s ) { return s.c_str(); }
 
 std::string __string_upper__( std::string s ) {

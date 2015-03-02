@@ -5,6 +5,7 @@ Imports
 -------
 * [@import jvm.md](jvm.md)
 * [@import nim.md](nim.md)
+* [@import cppheader.md](cppheader.md)
 
 
 
@@ -25,21 +26,7 @@ class CppGenerator( RustGenerator ):
 		return '\n'.join(includes)
 
 	def visit_Module(self, node):
-		header = [
-			'#include <cmath>',
-			'#include <memory>',
-			'#include <vector>',
-			'#include <array>',
-			'#include <iostream>',
-			'#include <fstream>',
-			'#include <string>',
-			'#include <map>',
-			'#include <algorithm>', ## c++11
-			'#include <functional>', ## c++11
-			#'#include <sstream>',  ## c++11
-			'#include <thread>', ## c++11
-			'#include <chrono>', ## c++11
-		]
+		header = [ CPP_HEADER ]
 		lines = []
 
 		for b in node.body:
