@@ -3,28 +3,16 @@ Lua Translator
 
 experimental!
 
+This works by transforming all method calls to plain functions `Class_Method`,
+see `TransformSuperCalls` here: [astutils.md](astutils.md)
+
+Some dynamic parts of python are supported using `__get__`, defined here:
+[lua_builtins.py](runtime/lua_builtins.py)
+
+note Bit-operations require LuaJIT
+
+
 ```python
-
-class TransformSuperCalls( ast.NodeVisitor ):
-	def __init__(self, node, class_names):
-		self._class_names = class_names
-		self.visit(node)
-
-	def visit_Call(self, node):
-		if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._class_names:
-			node.func.attr = '__' + node.func.attr
-
-class CollectNames(ast.NodeVisitor):
-	def __init__(self):
-		self._names = []
-	def visit_Name(self, node):
-		self._names.append( node )
-
-def collect_names(node):
-	a = CollectNames()
-	a.visit( node )
-	return a._names
-
 
 class LuaGenerator( JSGenerator ):
 

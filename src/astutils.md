@@ -54,7 +54,7 @@ class NodeVisitorBase( ast.NodeVisitor ):
 
 
 
-class TransformSuperCalls( ast.NodeVisitor ):  ## used by dart backend
+class TransformSuperCalls( ast.NodeVisitor ):  ## used by dart and lua backend
 	def __init__(self, node, class_names):
 		self._class_names = class_names
 		self.visit(node)
