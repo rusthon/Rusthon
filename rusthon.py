@@ -603,8 +603,9 @@ def build( modules, module_path, datadirs=None ):
 				go_main['source'].append( gocode )
 
 			elif backend == 'javascript':
-				if mod['tag'] and mod['tag'].endswith('.js'):  ## saves to external js file
+				if mod['tag']:  ## saves to external js file
 					js = compile_js( mod['code'], module_path, main_name=mod['tag'] )
+					mod['build'] = {'script':js[mod['tag']]}
 					for name in js:
 						output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 				else:
@@ -709,9 +710,15 @@ def build( modules, module_path, datadirs=None ):
 
 	if modules['verilog']:
 		source = []
+		mainmod = None
 		mods_sorted_by_index = sorted(modules['verilog'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
+			if 'name' in mod and mod['name']=='main':
+				mainmod = mod
+			elif mainmod is None:
+				mainmod = mod
+
 		source = '\n'.join(source)
 
 		mod = {}
@@ -771,7 +778,7 @@ def build( modules, module_path, datadirs=None ):
 		for mod in modules['go']:
 			if 'name' in mod:
 				name = mod['name']
-				if name.endswith('.md'):
+				if name=='main':
 					go_main['source'].append( mod['code'] )
 				else:
 					output['go'].append( mod )
@@ -794,24 +801,35 @@ def build( modules, module_path, datadirs=None ):
 
 	if modules['rust']:
 		source = []
+		mainmod = None
 		mods_sorted_by_index = sorted(modules['rust'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
+			if 'name' in mod and mod['name']=='main':
+				mainmod = mod
+			elif mainmod is None:
+				mainmod = mod
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-build.rs'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 
+		pak = None
 		if modules['c++']:
 			libname = 'rusthon-lib%s' %len(output['rust'])
 			link.append(libname)
 			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '--crate-type', 'staticlib' ,'-o', tempfile.gettempdir() + '/'+libname,  tmpfile] )
-			output['rust'].append( {'source':data, 'staticlib':libname, 'name':'lib'+libname+'.a'} )
+			pak = {'source':data, 'staticlib':libname, 'name':'lib'+libname+'.a'}
 
 		else:
 			subprocess.check_call(['rustc', '--crate-name', 'rusthon', '-o', tempfile.gettempdir() + '/rusthon-bin',  tmpfile] )
-			output['rust'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-bin', 'name':'rusthon-bin'} )
+			pak = {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-bin', 'name':'rusthon-bin'}
 			output['executeables'].append(tempfile.gettempdir() + '/rusthon-bin')
+
+		assert pak
+		mainmod['build'] = pak
+		output['rust'].append( pak )
+
 
 	if modules['c']:
 		source   = []
@@ -864,8 +882,13 @@ def build( modules, module_path, datadirs=None ):
 	if modules['c++']:
 		source = []
 		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
+		mainmod = None
 		for mod in mods_sorted_by_index:
 			source.append( mod['code'] )
+			if 'name' in mod and mod['name']=='main':
+				mainmod = mod
+			elif mainmod is None:
+				mainmod = mod
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
@@ -902,7 +925,8 @@ def build( modules, module_path, datadirs=None ):
 		print('========== g++ : compile main ==========')
 		print(' '.join(cmd))
 		subprocess.check_call( cmd )
-		output['c++'].append( {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'} )
+		mainmod['build'] = {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'}
+		output['c++'].append( mainmod['build'] )
 		output['executeables'].append(tempfile.gettempdir() + '/rusthon-c++-bin')
 
 	if python_main['script']:
@@ -910,6 +934,11 @@ def build( modules, module_path, datadirs=None ):
 		output['python'].append( python_main )
 
 	return output
+
+def get_first_build_from_package(package):
+	for lang in 'rust c++ go javascript python html verilog java nim dart lua'.split():
+		for pak in package[lang]:
+			return pak
 
 def save_tar( package, path='build.tar' ):
 	import tarfile
@@ -1011,6 +1040,8 @@ def main():
 		elif arg.endswith('.tar'):
 			output_tar = arg
 			save = True
+		elif arg.startswith('--output='):
+			output_file = arg.split('=')[-1]
 		elif arg == '--create-md':
 			gen_md = True
 		elif arg == '--tar':
@@ -1030,11 +1061,24 @@ def main():
 			raise RuntimeError(m)
 
 	base_path = None
+	singleout = None
 	for path in scripts:
 		script = open(path,'rb').read()
-		modules['rusthon'].append( {'name':'main', 'code':script} )
+		if '--c++' in sys.argv:          script = '#backend:c++\n'+script
+		elif '--javascript' in sys.argv: script = '#backend:javascript\n'+script
+		elif '--rust' in sys.argv: script = '#backend:rust\n'+script
+		elif '--go' in sys.argv:   script = '#backend:go\n'+script
+		elif '--dart' in sys.argv: script = '#backend:dart\n'+script
+		elif '--lua' in sys.argv:  script = '#backend:lua\n'+script
+		elif '--verilog' in sys.argv: script = '#backend:verilog\n'+script
+		fpath,fname = os.path.split(path)
+		tag = fname.split('.')[0]
+		singlemod = {'name':'main', 'tag':tag, 'code':script}
+		modules['rusthon'].append( singlemod )
 		if base_path is None:
 			base_path = os.path.split(path)[0]
+		if singleout is None and output_file:
+			singleout = singlemod
 
 	for path in markdowns:
 		import_md( path, modules=modules )
@@ -1042,8 +1086,19 @@ def main():
 			base_path = os.path.split(path)[0]
 
 	package = build(modules, base_path, datadirs=datadirs )
+	if singleout:
+		pak = get_first_build_from_package(package)
+		if 'source' in pak:
+			open(output_file, 'wb').write(pak['source'])
+		elif 'code' in pak:
+			open(output_file, 'wb').write(pak['code'])
+		elif 'script' in pak:
+			open(output_file, 'wb').write(pak['script'])
+		else:
+			raise RuntimeError(pak)
+		print('saved output to: %s'%output_file)
 
-	if not save:
+	elif not save:
 		tmpdir = tempfile.gettempdir()
 		## copy jar files ##
 		for p in datadirs:
@@ -1117,14 +1172,15 @@ def main():
 
 
 def bootstrap_rusthon():
+	localdir = os.path.dirname(unicode(__file__, sys.getfilesystemencoding()))
 	mods = new_module()
-	import_md( 'src/main.md', modules=mods )
+	import_md( os.path.join(localdir,'src/main.md'), modules=mods )
 	src = []
 	mods_sorted_by_index = sorted(mods['python'], key=lambda mod: mod.get('index'))
 	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
 		src.append( mod['code'] )
 	src = '\n'.join(src)
-	open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
+	#open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
 
 	if '--test' in sys.argv:

@@ -511,39 +511,31 @@ def run_python3_test_on(filename):
 
 
 
-def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, luajs=False, go=False, gopherjs=False, rust=False, cpp=False, multioutput=False, requirejs=True):
+def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False, go=False, rust=False, cpp=False, multioutput=False, requirejs=True):
     global tmpname
     tmpname = os.path.join(
         tempfile.gettempdir(),
-        #'test-%s-js=%s-dart=%s-lua=%s' %(filename.split('/')[-1], javascript, dart, lua)
         'regtest-%s'%filename.split('/')[-1]
     )
 
     output_name = "%s.py" % tmpname
     if javascript:
         content = 'pythonjs.configure(javascript=True)\n' + patch_python(filename, backend='JAVASCRIPT')
+
     elif dart:
         source = [
             'pythonjs.configure(dart=True)',
-            open('../pythonjs/runtime/dart_builtins.py', 'rb').read().decode('utf-8'),
             patch_python(filename, dart=True, backend='DART')
         ]
         content = '\n'.join( source )
-    elif coffee:
-        source = [
-            'pythonjs.configure(coffee=True)',
-            patch_python(filename, backend='COFFEE')
-        ]
-        content = '\n'.join( source )
-    elif lua or luajs:
+    elif lua:
         source = [
             'pythonjs.configure(lua=True)',
-            read('../pythonjs/runtime/lua_builtins.py'),
             patch_python(filename, backend='LUA')
         ]
         content = '\n'.join( source )
 
-    elif go or gopherjs:
+    elif go:
         content = patch_python(filename, backend='GO')
 
     elif rust:
@@ -564,27 +556,22 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     )
     write(output_name, code)
     cmd = [
-        os.path.join("..", "pythonjs", "translator.py"),
+        os.path.join("..", "rusthon.py"),
         output_name,
-        '--debug',
-        '--stdout'
+        '--output=/tmp/output'
     ]
     if dart:
         cmd.append( '--dart' )
-    elif coffee:
-        cmd.append( '--coffee')
     elif lua:
         cmd.append( '--lua')
-    elif luajs:
-        cmd.append( '--luajs')
     elif go:
         cmd.append( '--go' )
-    elif gopherjs:
-        cmd.append( '--gopherjs' )
     elif rust:
         cmd.append( '--rust' )
     elif cpp:
-        cmd.append( '--cpp' )
+        cmd.append( '--c++' )
+    elif javascript:
+        cmd.append( '--javascript' )
 
     if not requirejs:
         cmd.append( '--no-wrapper' )
@@ -593,8 +580,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     if stderr:
         return ''
     else:
+        stdout = open('/tmp/output', 'rb').read().decode('utf-8')
 
-        #jsheader = 'if (typeof(process) != "undefined") { var requirejs = require("requirejs"); }'
         jsheader = ''
 
         if multioutput or (stdout.startswith("{") and stdout.endswith("}")):
@@ -631,43 +618,6 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
                 return open('/tmp/dart2js-output.js', 'rb').read().decode('utf-8')
             else:
                 return ''
-
-        elif coffee:
-
-            coffee_input = '/tmp/coffee-input.coffee'
-            open( coffee_input, 'wb').write( stdout.encode('utf-8') )
-
-            cmd = [
-                'coffee',
-                '--print', # print js to stdout
-                coffee_input
-            ]
-            #subprocess.call( cmd )
-            sout, serr = run_command(' '.join(cmd), returns_stdout_stderr=True)
-            if serr:
-                return ''
-            elif sout:
-                builtins = read(os.path.join("../pythonjs", "pythonjs.js"))
-                open('/tmp/coffee-output.js', 'wb').write( (builtins+'\n'+sout).encode('utf-8') )
-                return sout
-            else:
-                return ''
-
-        elif luajs:
-            lua2js_input = '/tmp/lua2js-input.lua'
-            lua2js_output = '/tmp/lua2js-output.js'
-            open( lua2js_input, 'wb').write( stdout.encode('utf-8') )
-
-            cmd = [
-                lua2js,
-                lua2js_input,
-                lua2js_output
-            ]
-            try:
-                subprocess.check_call( cmd )
-            except subprocess.CalledProcessError:
-                return ''
-            return open( lua2js_output, 'rb' ).read().decode('utf-8')
 
         else:
             return '\n'.join( [jsheader, stdout] )
