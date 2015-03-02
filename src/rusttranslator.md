@@ -627,11 +627,15 @@ note: `nullptr` is c++11
 		self._class_stack.pop()
 		return '\n'.join(out)
 
+```
+
+Visit Call Special
+-----------------
+hack for calling base class methods.
+
+```python
 
 	def _visit_call_special( self, node ):
-		'''
-		hack for calling base class methods.
-		'''
 		fname = self.visit(node.func)
 		assert fname in self.catch_call
 		assert len(self._class_stack)
@@ -647,6 +651,13 @@ note: `nullptr` is c++11
 			classname = fname.split('.')[0]
 			hacked = 'self.__%s_%s' %(classname, fname[len(classname)+1:])
 			return self._visit_call_helper(node, force_name=hacked)
+
+```
+
+Subscript `a[n]`
+-----------------
+
+```python
 
 
 	def visit_Subscript(self, node):
@@ -716,11 +727,16 @@ note: `nullptr` is c++11
 
 			return r
 
+```
 
+Slice `[:]`
+-----------------
+http://doc.rust-lang.org/std/slice/
+#![feature(slicing_syntax)]
+
+```python
 
 	def visit_Slice(self, node):
-		# http://doc.rust-lang.org/std/slice/
-		#![feature(slicing_syntax)]
 
 		lower = upper = step = None
 		if node.lower:
@@ -740,6 +756,7 @@ note: `nullptr` is c++11
 			raise SyntaxError('TODO slice')
 
 
+
 	def visit_Print(self, node):
 		r = []
 		for e in node.values:
@@ -751,8 +768,7 @@ note: `nullptr` is c++11
 				r.append('println!("{}", %s);' %self.visit(e))
 		return ''.join(r)
 
-	#def visit_Expr(self, node):
-	#	return self.visit(node.value)
+
 	def visit_Expr(self, node):
 		# XXX: this is UGLY
 		s = self.visit(node.value)
@@ -761,6 +777,15 @@ note: `nullptr` is c++11
 		if s==';': return ''
 		else: return s
 
+
+```
+
+Module
+-----------------
+generate main rust module
+TODO clean up go code.
+
+```python
 
 
 	def visit_Module(self, node):
@@ -838,6 +863,15 @@ note: `nullptr` is c++11
 
 		lines = top_header + header + list(self._imports) + lines
 		return '\n'.join( lines )
+
+
+```
+
+For Loop
+-----------------
+hooks into bad magic hack, 2nd pass rustc compile.
+
+```python
 
 
 	def visit_For(self, node):
@@ -934,11 +968,18 @@ note: `nullptr` is c++11
 		lines.append( self.indent()+'}' )  ## end of for loop
 		return '\n'.join(lines)
 
+
+```
+
+asm
+-----------------
+tries to convert basic gcc asm syntax to llvm asm syntax,
+TODO fix me
+
+```python
+
+
 	def _gccasm_to_llvmasm(self, asmcode):
-		'''
-		tries to convert basic gcc asm syntax to llvm asm syntax,
-		TODO fix me
-		'''
 		r = []
 		for i,char in enumerate(asmcode):
 			if i+1==len(asmcode): break
@@ -950,6 +991,15 @@ note: `nullptr` is c++11
 		r.append('"')
 		a = ''.join(r)
 		return a.replace('%%', '%')
+
+
+```
+
+Call Function/Method
+-----------------
+handles all special calls
+
+```python
 
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)

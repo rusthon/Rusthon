@@ -410,13 +410,17 @@ can also generate a requirejs module.
 	def visit_In(self, node):
 		return ' in '
 
+```
+Tuple and List
+--------------
+note: rust and c++ here, TODO move all backend logic to a baselogic.md
+
+```python
+
 	def visit_Tuple(self, node):
 		if self._rust:
 			return 'vec!(%s)' % ', '.join(map(self.visit, node.elts))
 		elif self._cpp:
-			## this hack was for `for i in range(x)`.
-			##return 'std::array<int, %s>{{%s}}' %(len(node.elts), ','.join(map(self.visit, node.elts)))
-
 			return '{%s}' %','.join(map(self.visit, node.elts))
 
 		else:
@@ -518,6 +522,13 @@ can also generate a requirejs module.
 			self._visit_decorator(d, options=options)
 		return options['getter'] or options['setter']
 
+```
+Function Decorators
+-------------------
+`_visit_decorator` is called by the other backends, the shared decorator logic is here.
+
+
+```python
 
 	def _visit_decorator(self, decor, node=None, options=None, args_typedefs=None, chan_args_typedefs=None, generics=None, args_generics=None, func_pointers=None, arrays=None ):
 		assert node
@@ -722,7 +733,12 @@ can also generate a requirejs module.
 				if self._go:
 					options['returns'] = '*' + self._class_stack[-1].name  ## go hacked generics
 
+```
+Function
+---------
+calls `_visit_function` which is subclassed by other backends.
 
+```python
 
 	def visit_FunctionDef(self, node):
 		self._function_stack.append( node )
@@ -1365,6 +1381,13 @@ can also generate a requirejs module.
 		op = self.visit(node.op)
 		return '('+ op.join( [self.visit(v) for v in node.values] ) +')'
 
+```
+If Test
+-------
+
+
+```python
+
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
@@ -1406,6 +1429,13 @@ can also generate a requirejs module.
 		b = ', '.join( a )
 		return '{ %s }' %b
 
+```
+For Loop
+--------
+when fast_loops is off much of python `for in something` style of looping is lost.
+
+
+```python
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		## support "for key in JSObject" ##
@@ -1419,19 +1449,6 @@ can also generate a requirejs module.
 
 	_iter_id = 0
 	def visit_For(self, node):
-		'''
-		for loops inside a `with javascript:` block will produce this faster for loop.
-
-		note that the rules are python-style, even though we are inside a `with javascript:` block:
-			. an Array is like a list, `for x in Array` gives you the value (not the index as you would get in pure javascript)
-			. an Object is like a dict, `for v in Object` gives you the key (not the value as you would get in pure javascript)
-
-		if your are trying to opitmize looping over a PythonJS list, you can do this:
-			for v in mylist[...]:
-				print v
-		above works because [...] returns the internal Array of mylist
-
-		'''
 
 		target = node.target.id
 		iter = self.visit(node.iter) # iter is the python iterator
