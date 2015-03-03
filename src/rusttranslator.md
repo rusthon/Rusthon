@@ -1042,10 +1042,10 @@ handles all special calls
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
 				return 'PreMain(); NimMain()'
-			elif fname.endswith('unref'):
-				return 'GC_unref(%s)' %self.visit(node.args[0])
-			elif fname.endswith('ref'):
-				return 'GC_ref(%s)' %self.visit(node.args[0])
+			#elif fname.endswith('unref'):  ## GC_ref is called from nim code, its not part of the NIM C API?
+			#	return 'GC_unref(%s)' %self.visit(node.args[0])
+			#elif fname.endswith('ref'):
+			#	return 'GC_ref(%s)' %self.visit(node.args[0])
 			else:
 				raise RuntimeError('unknown nim api function')
 
@@ -1889,7 +1889,7 @@ TODO clean up go stuff.
 					## allow go-style `chan` keyword with Rust backend,
 					## defaults to Sender<T>, because its assumed that sending channels
 					## will be the ones most often passed around.
-					## the user can use rust style typing `def f(x:X<t>):` in function def's
+					## the user can use rust style typing `def f(x:X<t>):` in function defs
 					## to type a function argument as `Reveiver<t>`
 
 					if is_recver:
@@ -1981,6 +1981,18 @@ TODO clean up go stuff.
 							out.append( self.indent() + '%s {\n' % sig )
 							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							self._cpp_class_header.append(sig + ';')
+							if node.args.defaults:
+								if len(args)==1:  ## all args have defaults, generate plain version with no defaults ##
+									okwargs = ['(new _KwArgs_)']
+									args = []
+									for oarg in oargs:
+										oname = oarg[0]
+										args.append('%s %s' %(args_typedefs[oname], oname))
+										okwargs.append('%s(%s)' %(oname,oname))
+
+									okwargs = '->'.join(okwargs)
+									osig = '%s%s %s(%s) { this->%s(%s); }' % (prefix,return_type, fname, ','.join(args), fname, okwargs)
+									self._cpp_class_header.append(osig)
 
 					else:
 						if self._noexcept:
