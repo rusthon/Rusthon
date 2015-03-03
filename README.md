@@ -1,3 +1,5 @@
+https://travis-ci.org/rusthon/Rusthon.svg
+
 This compiles and runs a project in literate multi-language markdown format.
 ```
 cd Rusthon

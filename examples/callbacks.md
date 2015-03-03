@@ -1,14 +1,12 @@
 Callback Functions/Methods
 ----------------
 
-TODO fix `def __init__(self, x:f32=0.0, y:f32=0.0):` segfaults
-
 
 ```rusthon
 #backend:c++
 
 class Vec2:
-	def __init__(self, x:f32, y:f32):
+	def __init__(self, x:f32=4.0, y:f32=0.2):
 		self.x = x
 		self.y = y
 
@@ -38,5 +36,10 @@ def main():
 		v2 
 	)
 	v3.show()
+	print 'callback ok'
+	v4 = Vec2(x=99.9)
+	v4.show()
+	#v5 = Vec2(99.9)  ## TODO
+	#v5.show()
 	print 'ok'
 ```

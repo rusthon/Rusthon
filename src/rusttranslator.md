@@ -2000,7 +2000,7 @@ TODO clean up go stuff.
 										okwargs.append('%s(%s)' %(oname,oname))
 
 									okwargs = '->'.join(okwargs)
-									osig = '%s%s %s(%s) { this->%s(%s); }' % (prefix,return_type, fname, ','.join(args), fname, okwargs)
+									osig = '%s%s %s(%s) { return this->%s(%s); }' % (prefix,return_type, fname, ','.join(args), fname, okwargs)
 									self._cpp_class_header.append(osig)
 
 					else:
@@ -2510,99 +2510,9 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 			return '%s.%s' % (name, attr)
 ```
 
-Slice and List Comprehension `[:]`, `[]int(x for x in range(n))`
-----------------------------------
-negative slice is not fully supported, only `-1` literal works.
-TODO rename _gen_slice to _gen_slice_cpp and move to cpptranslator.md
-
+List Comp
+---------
 ```python
-
-	def _gen_slice(self, target=None, value=None, lower=None, upper=None, step=None, type=None):
-		assert self._cpp
-		assert target
-		assert value
-
-		if type:
-			slice = ['/* <slice> %s : %s : %s */' %(lower, upper, step)]
-
-			if step:
-				slice.append('std::vector<%s> _ref_%s;' %(type,target))
-				if lower and not upper:
-					slice.append( ''.join([
-						'if(%s<0){'%step,
-						'for(int _i_=%s->size()-%s-1;_i_>=0;_i_+=%s){' %(value,lower,step),
-						' _ref_%s.push_back((*%s)[_i_]);' %(target, value),
-						'}} else {',
-						'for(int _i_=%s;_i_<%s->size();_i_+=%s){' %(lower,value,step),
-						' _ref_%s.push_back((*%s)[_i_]);' %(target, value),
-						'}}',
-						])
-					)
-				elif upper:
-					raise SyntaxError('TODO slice upper with step')
-				else:
-					slice.append( ''.join([
-						'if(%s<0){'%step,
-						'for(int _i_=%s->size()-1;_i_>=0;_i_+=%s){' %(value,step),
-						' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
-						'} else {',
-						'for(int _i_=0;_i_<%s->size();_i_+=%s){' %(value,step),
-						' _ref_%s.push_back((*%s)[_i_]);}' %(target, value),
-						'}',
-						])
-					)
-			else:
-				slice.append('std::vector<%s> _ref_%s(' %(type,target))
-
-				if lower:
-					slice.append('%s->begin()+%s,' %(value, lower))
-				else:
-					slice.append('%s->begin(),' %value)
-				if upper:
-					if upper < 0:
-						slice.append('%s->end() %s'%(value, upper))
-					else:
-						slice.append('%s->begin()+%s'%(value, upper))
-				else:
-					slice.append('%s->end()'%value)
-				slice.append(');')
-
-			vectype = 'std::vector<%s>' %type
-
-			if not self._shared_pointers:
-				slice.append('%s* %s = &_ref_%s);' %(vectype, target, target))
-			elif self._unique_ptr:
-				slice.append('std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(vectype, target, vectype, target))
-			else:
-				slice.append('std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(vectype, target, vectype, target))
-			return '\n'.join(slice)
-
-		else:  ## SEGFAULTS - TODO FIXME
-			## note: `auto` can not be used to make c++11 guess the type from a constructor that takes start and end iterators.
-			#return 'auto _ref_%s( %s->begin()+START, %s->end()+END ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-			#return 'std::vector<int> _ref_%s( %s->begin(), %s->end() ); auto %s = &_ref_%s;' %(target, val, val, target, target)
-
-			## this sefaults because _ref_ is on the stack and gets cleaned up, while the new smart pointer also has a reference
-			## to it and also cleans it up.  TODO how to force _ref_ onto the heap instead?
-			slice = [
-				'auto _ref_%s = *%s' %(target,value), ## deference and copy vector
-				'auto %s = %s' %(target, value), ## copy shared_ptr
-				'%s.reset( &_ref_%s )' %(target, target)  ## segfaults
-				#'auto _ptr_%s = &_ref_%s' %(target,target),
-				#'%s.reset( _ptr_%s )' %(target,target)
-			]
-			if lower:
-				N = lower
-				slice.append('_ref_%s.erase(_ref_%s.begin(), _ref_%s.begin()+%s)' %(target, target, target, N))
-
-			if upper:  ## BROKEN, TODO FIXME
-				N = upper
-				slice.append( '_ref_%s.erase(_ref_%s.begin()+_ref_%s.size()-%s+1, _ref_%s.end())'   %(target, target, target, N, target))
-
-
-			#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
-			return ';\n'.join(slice) + ';'
-
 
 	def _listcomp_helper(self, node, target=None, type=None, size=None, dimensions=1):
 		if not target: target = node._comp_type
