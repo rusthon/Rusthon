@@ -1,4 +1,4 @@
-https://travis-ci.org/rusthon/Rusthon.svg
+[![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
 This compiles and runs a project in literate multi-language markdown format.
 ```
