@@ -1675,6 +1675,13 @@ Lambda Functions
 rust lambda
 c++11 lambda
 
+Lambda functions have a different type syntax from normal functions and methods.
+Regular functions and methods type their arguments with Python3 annotation syntax,
+`def f( a:int ):`
+
+Lambda functions type their arguments using the keyword default value,
+`lambda a=int:`
+
 
 ```python
 
@@ -1685,8 +1692,10 @@ c++11 lambda
 		elif self._cpp:
 			assert len(node.args.args)==len(node.args.defaults)
 			args = []
-			for i,a in  enumerate(node.args.args):  ## typed args lambda hack
-				s = '%s  %s' %(node.args.defaults[i].s, self.visit(a))
+			for i,a in enumerate(node.args.args):
+				T = node.args.defaults[i].s
+				if not self.is_prim_type(T): T = 'std::shared_ptr<%s>' %T
+				s = '%s  %s' %(T, self.visit(a))
 				args.append( s )
 			## TODO support multiline lambda, and return the last line
 			return '[&](%s){ return %s; }' %(','.join(args), self.visit(node.body))

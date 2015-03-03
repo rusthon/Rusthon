@@ -1180,7 +1180,7 @@ def bootstrap_rusthon():
 	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
 		src.append( mod['code'] )
 	src = '\n'.join(src)
-	#open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
+	if '--dump' in sys.argv: open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
 
 	if '--test' in sys.argv:
