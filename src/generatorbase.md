@@ -296,8 +296,18 @@ Function Decorators
 						funcdef = args_typedefs[key.arg]
 						## TODO - better parser
 						hack = funcdef.replace(')', '(').split('(')
-						lambda_args = hack[1].strip()
-						lambda_return  = hack[3].strip()
+						lambda_args = []
+						for larg in hack[1].strip().split(','):
+							if self.is_prim_type(larg):
+								lambda_args.append(larg)
+							else:
+								lambda_args.append('std::shared_ptr<%s>'%larg)
+
+						lambda_args = ','.join(lambda_args)
+						lambda_return = hack[3].strip()
+						if not self.is_prim_type(lambda_return):
+							lambda_return = 'std::shared_ptr<%s>'%lambda_return
+
 						if self._cpp:
 							if is_lambda_style:
 								if lambda_return:  ## c++11
