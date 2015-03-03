@@ -1,93 +1,54 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
+
   <head>
-    <meta charset="utf-8">
+    <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>PythonJS by PythonJS</title>
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-    <script src="javascripts/respond.js"></script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <!--[if lt IE 8]>
-    <link rel="stylesheet" href="stylesheets/ie.css">
-    <![endif]-->
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="description" content="Rusthon : multilang markdown: python, c/c++, java, nim, js, go, rust.">
 
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Rusthon</title>
   </head>
+
   <body>
-      <div id="header">
-        <nav>
-          <li class="fork"><a href="https://github.com/PythonJS/PythonJS">View On GitHub</a></li>
-          <li class="downloads"><a href="https://github.com/PythonJS/PythonJS/zipball/master">ZIP</a></li>
-          <li class="downloads"><a href="https://github.com/PythonJS/PythonJS/tarball/master">TAR</a></li>
-          <li class="title">DOWNLOADS</li>
-        </nav>
-      </div><!-- end header -->
 
-    <div class="wrapper">
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/rusthon/Rusthon">View on GitHub</a>
 
-      <section>
-        <div id="title">
-          <h1>PythonJS</h1>
-          <p>Python to JavaScript Translator</p>
-          <hr>
-          <span class="credits left">Project maintained by <a href="https://github.com/PythonJS">PythonJS</a></span>
-          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
-        </div>
+          <h1 id="project_title">Rusthon</h1>
+          <h2 id="project_tagline">multilang markdown: python, c/c++, java, nim, js, go, rust.</h2>
 
-        <p>PythonJS</p>
-
-<p><img src="http://4.bp.blogspot.com/-24HxG7miZnE/UoHEmzmAByI/AAAAAAAAAgM/C_NwyODm5gY/s400/pythonjs-nodejs-0.8.4.png" alt="alt text" title="PythonJS"></p>
-
-<h1>
-<a name="introduction" class="anchor" href="#introduction"><span class="octicon octicon-link"></span></a>Introduction</h1>
-
-<p>PythonJS is a Python to Javascript translator written in Python, created by Amirouche Boubekki and Brett Hartshorn. It converts a subset of Python into a subset of Javascript.  It features: list comprehensions, classes, multiple inheritance, first-class functions, operator overloading, function and class decorators, HTML DOM, and easily integrates with JavaScript and external JavaScript libraries.  The generated code works in the Browser and in NodeJS.</p>
-
-<hr><h2>
-<a name="getting-started" class="anchor" href="#getting-started"><span class="octicon octicon-link"></span></a>Getting Started</h2>
-
-<p>Get Source Code::</p>
-
-<pre><code>git clone https://github.com/PythonJS/PythonJS.git
-</code></pre>
-
-<p>Translate Your Script::</p>
-
-<pre><code>cd PythonJS/pythonjs
-./translator.py myscript1.py myscript2.py &gt; ~/myapp.js
-</code></pre>
-
-<p>The translator.py script can take in multiple Python scripts, these are appended together, and translated into a single JavaScript.  The output is printed to stdout.  If no command line arguments is given, then translator.py takes input from stdin.</p>
-
-<h1>
-<a name="test-server-serverpy" class="anchor" href="#test-server-serverpy"><span class="octicon octicon-link"></span></a>Test Server (server.py)</h1>
-
-<p>Install Tornado for Python3::</p>
-
-<pre><code>wget https://pypi.python.org/packages/source/t/tornado/tornado-3.1.1.tar.gz
-tar xvf tornado-3.1.1.tar.gz
-cd tornado-3.1.1
-python3 setup.py build
-sudo python3 setup.py install
-</code></pre>
-
-<p>Run Test Server::</p>
-
-<pre><code>cd PythonJS/tests
-./server.py
-</code></pre>
-
-<p>Then open a web browser and go to: http://localhost:8080</p>
-
-<p>The test server dynamically compiles Python into JavaScript, this greatly speeds up the testing and development process.  Any html file you place in the PythonJS/tests directory will become available as a new web-page.  When this web-page is requested the server will parse the html and check all the </p>
-      </section>
-
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/rusthon/Rusthon/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/rusthon/Rusthon/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
     </div>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><img src="https://avatars1.githubusercontent.com/u/9886872?v=3&amp;s=200" alt="logo"></p>
+
+<h2>
+<a id="source-code" class="anchor" href="#source-code" aria-hidden="true"><span class="octicon octicon-link"></span></a>Source Code</h2>
+
+<p><a href="https://github.com/rusthon/Rusthon/blob/master/src/main.md">https://github.com/rusthon/Rusthon/blob/master/src/main.md</a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Rusthon maintained by <a href="https://github.com/rusthon">rusthon</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
     
+
   </body>
 </html>
