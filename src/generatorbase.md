@@ -182,7 +182,7 @@ or something that needs to be wrapped by a pointer/shared-reference.
 ```python
 
 	def is_prim_type(self, T):
-		prims = 'bool int float double long string str char byte i32 i64 f32 f64 std::string cstring'.split()
+		prims = 'void bool int float double long string str char byte i32 i64 f32 f64 std::string cstring'.split()
 		if T in prims:
 			return True
 		else:
@@ -297,7 +297,7 @@ Function Decorators
 						## TODO - better parser
 						hack = funcdef.replace(')', '(').split('(')
 						lambda_args = []
-						for larg in hack[1].strip().split(','):
+						for larg in hack[1].strip().split('|'):
 							if self.is_prim_type(larg):
 								lambda_args.append(larg)
 							else:
@@ -305,6 +305,7 @@ Function Decorators
 
 						lambda_args = ','.join(lambda_args)
 						lambda_return = hack[3].strip()
+						if not lambda_return: lambda_return = 'void'
 						if not self.is_prim_type(lambda_return):
 							lambda_return = 'std::shared_ptr<%s>'%lambda_return
 
