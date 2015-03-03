@@ -4,7 +4,8 @@ Rusthon Source Code
 You need to be familiar with the Python AST module to understand how Rusthon works.
 The best guide to Python AST is here: [Green Tree Snakes](https://greentreesnakes.readthedocs.org/en/latest/)
 
-This is the top level that imports all the other submarkdown modules.
+![toplevel](https://github.com/rusthon/Rusthon/tree/master/doc/RusthonToplevel.svg)
+
 
 Main Imports
 -------
@@ -13,6 +14,9 @@ import os, sys
 import ast, itertools
 
 ```
+
+This is the top level that imports all the other submarkdown modules.
+
 
 Markdown Imports
 -------
