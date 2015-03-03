@@ -33,12 +33,25 @@ class RustGenerator( GoGenerator ):
 		self._known_strings = set()
 
 
+	def _inline_code_helper(self, s):
+		return s
+
+	def visit_Expr(self, node):
+		# XXX: this is UGLY
+		s = self.visit(node.value)
+		if s is None:
+			raise RuntimeError('error in rusttranslator.md:' +node.value.func.id)
+		if s.strip() and not s.endswith(';'):
+			s += ';'
+		if s==';': return ''
+		else: return s
+
+
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		#return '"%s"' % s
 		if self._function_stack: return '"%s".to_string()' % s
 		else: return '"%s"' % s
-
 
 	def visit_Is(self, node):
 		return '=='
@@ -565,7 +578,7 @@ note: `nullptr` is c++11
 			## c++ empty constructor with `struct-emeddding` the class name
 			#out.append('	%s() : __class__(std::string("%s")) {}' %(node.name, node.name) )  ## this breaks when looping over array items
 			## member initializer list `MyClass() : x(1) {}` only work when `x` is locally defined inside the class,
-			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructor's body.
+			## it breaks on `__class__` because that is defined in the parent class, instead `__class__` is initalized in the constructors body.
 			## TODO make __class__ static const string.
 			if not extern_classes:
 				out.append('	%s() {__class__ = std::string("%s");}' %(node.name, node.name) )
@@ -773,15 +786,6 @@ http://doc.rust-lang.org/std/slice/
 			else:
 				r.append('println!("{}", %s);' %self.visit(e))
 		return ''.join(r)
-
-
-	def visit_Expr(self, node):
-		# XXX: this is UGLY
-		s = self.visit(node.value)
-		if s.strip() and not s.endswith(';'):
-			s += ';'
-		if s==';': return ''
-		else: return s
 
 
 ```
@@ -3409,7 +3413,6 @@ implemented for rust and c++
 
 ```python
 
-
 	def visit_While(self, node):
 		cond = self.visit(node.test)
 		if cond == 'true' or cond == '1': cond = ''
@@ -3432,8 +3435,6 @@ implemented for rust and c++
 		body.append( self.indent() + '}' )
 		return '\n'.join( body )
 
-	def _inline_code_helper(self, s):
-		return s
 
 ```
 

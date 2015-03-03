@@ -7,6 +7,7 @@ Imports
 * [@import nim.md](nim.md)
 * [@import cppheader.md](cppheader.md)
 
+TODO: make inline cpp-channel.h an option.
 
 
 ```python
