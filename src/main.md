@@ -4,7 +4,7 @@ Rusthon Source Code
 You need to be familiar with the Python AST module to understand how Rusthon works.
 The best guide to Python AST is here: [Green Tree Snakes](https://greentreesnakes.readthedocs.org/en/latest/)
 
-![toplevel](../doc/RusthonToplevel.svg)
+![toplevel](http://rusthon.github.io/Rusthon/images/RusthonToplevel.svg)
 
 
 Main Imports
