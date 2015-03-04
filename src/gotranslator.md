@@ -43,6 +43,11 @@ class GoGenerator( JSGenerator ):
 		self.uids += 1
 		return self.uids
 
+
+	def visit_Str(self, node):
+		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
+		return '"%s"' % s
+
 	def visit_Is(self, node):
 		return '=='
 	def visit_IsNot(self, node):
@@ -330,6 +335,7 @@ class GoGenerator( JSGenerator ):
 		r = []
 		for e in node.values:
 			s = self.visit(e)
+			if s is None: raise RuntimeError(e)
 			if isinstance(e, ast.List):
 				r.append('fmt.Println(%s);' %s[1:-1])
 			else:
