@@ -2465,7 +2465,7 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				return name
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
-		elif name=='self' and self._cpp and self._class_stack:
+		elif name in ('self','this') and self._cpp and self._class_stack:
 			if attr in self._class_stack[-1]._weak_members:
 				if len(self._stack)>2:
 					assert self._stack[-1] is node
