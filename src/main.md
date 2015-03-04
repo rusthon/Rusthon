@@ -30,6 +30,7 @@ Markdown Imports
 * [@import luatranslator.md](luatranslator.md)
 * [@import darttranslator.md](darttranslator.md)
 * [@import gotranslator.md](gotranslator.md)
+* [@import cpprustbase.md](cpprustbase.md)
 * [@import rusttranslator.md](rusttranslator.md)
 * [@import cpptranslator.md](cpptranslator.md)
 
