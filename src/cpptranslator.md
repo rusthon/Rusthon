@@ -148,9 +148,9 @@ in each object that __init__ returns (also fixes the _ref_hacks)
 			args = [self.visit(arg) for arg in node.args[0].args ]
 			if self._classes[classname]._requires_init:
 				return '(new %s)->__init__(%s)' %(classname, ','.join(args))
+			elif args:  ## a rusthon class that subclasses from an external c++ class ##
+				return '(new %s(%s))' %(classname, ','.join(args))
 			else:
-				if args:
-					raise SyntaxError('class %s: takes no init args' %classname)
 				return '(new %s)' %classname
 
 		## external c++ class ##
