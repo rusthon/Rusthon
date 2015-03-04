@@ -300,6 +300,8 @@ Function Decorators
 						for larg in hack[1].strip().split('|'):
 							if self.is_prim_type(larg):
 								lambda_args.append(larg)
+							elif not larg:
+								lambda_args.append('void')
 							else:
 								lambda_args.append('std::shared_ptr<%s>'%larg)
 
@@ -318,7 +320,7 @@ Function Decorators
 
 							else:  ## old C style function pointers
 								if lambda_return:
-									args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_args, key.arg, lambda_return)
+									args_typedefs[ key.arg ] = '%s(*%s)(%s)' %(lambda_return, key.arg, lambda_args)
 								else:
 									args_typedefs[ key.arg ] = 'void(*%s)(%s)' %(key.arg, lambda_args)
 

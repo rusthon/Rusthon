@@ -9,25 +9,18 @@ float call_callback( float(*cb)(void) ) {
 }
 
 ```
-c++ wrapper
 
-```c++
+The C function `call_callback` is declared below inside of `with extern(abi="C")`
+External C functions are typed as `func(args)(returns)`.
+C++11 lambda functions are typed instead with `lambda(args)(returns)`.
 
-extern "C" {
-	float call_callback( float(*cb)(void) );
-}
-
-```
-
-
-TODO fix with extern func()()
 
 ```rusthon
 #backend:c++
 
-#with extern(abi="C"):
-#	def call_callback( cb:func()(float) ) -> float:
-#		pass
+with extern(abi="C"):
+	def call_callback( cb:func()(float) ) -> float:
+		pass
 
 
 def mycb() ->float:
