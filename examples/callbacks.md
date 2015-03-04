@@ -1,9 +1,37 @@
 Callback Functions/Methods
 ----------------
+c function that takes a callback.
 
+```c
+
+float call_callback( float(*cb)(void) ) {
+	return cb();
+}
+
+```
+c++ wrapper
+
+```c++
+
+extern "C" {
+	float call_callback( float(*cb)(void) );
+}
+
+```
+
+
+TODO fix with extern func()()
 
 ```rusthon
 #backend:c++
+
+#with extern(abi="C"):
+#	def call_callback( cb:func()(float) ) -> float:
+#		pass
+
+
+def mycb() ->float:
+	return 100.1
 
 class Vec2:
 	def __init__(self, x:f32=4.0, y:f32=0.2):
@@ -41,5 +69,10 @@ def main():
 	v4.show()
 	#v5 = Vec2(99.9)  ## TODO
 	#v5.show()
+	print 'testing calling c function with callback'
+	t = call_callback( mycb )
+	print t
+
 	print 'ok'
+
 ```
