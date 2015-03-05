@@ -95,7 +95,6 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		return '/*globals: %s */' %','.join(node.names)
 
 	def visit_Assign(self, node):
-		# XXX: I'm not sure why it is a list since, mutiple targets are inside a tuple
 		target = node.targets[0]
 		if isinstance(target, Tuple):
 			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
@@ -122,7 +121,12 @@ class is not implemented here for javascript, it gets translated ahead of time i
 
 ```
 
+RequireJS
+---------
 
+generate a generic or requirejs module.
+
+```python
 	def _new_module(self, name='main.js'):
 		header = []
 		if self._requirejs and not self._webworker:
@@ -140,7 +144,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 ```
 Module
 ------
-can also generate a requirejs module.
+TODO: regenerate pythonjs.js each time.
 
 ```python
 
@@ -155,7 +159,7 @@ can also generate a requirejs module.
 
 		if self._insert_runtime:
 			dirname = os.path.dirname(os.path.abspath(__file__))
-			runtime = open( os.path.join(dirname, 'pythonjs.js') ).read()
+			runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
 			lines.append( runtime )  #.replace('\n', ';') )
 
 		for b in node.body:

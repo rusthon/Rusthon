@@ -330,12 +330,14 @@ def import_md( url, modules=None, index_offset=0 ):
 	index = 0
 	prevline = None
 	tag = None
+	fences = 0
 	base_path, markdown_name = os.path.split(url)
 	data = open(url, 'rb').read()
 
 	for line in data.splitlines():
 		# Start or end of a code block.
 		if line.strip().startswith('```'):
+			fences += 1
 			# End of a code block.
 			if in_code:
 				if lang:
@@ -376,6 +378,10 @@ def import_md( url, modules=None, index_offset=0 ):
 		prevline = line
 
 	modules['markdown'] += '\n'.join(doc)
+	if fences % 2:
+		raise SyntaxError('invalid markdown - unclosed tripple back quote fence in: %s' %url)
+
+
 	return index
 
 def hack_nim_stdlib(code):
