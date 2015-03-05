@@ -612,6 +612,7 @@ def build( modules, module_path, datadirs=None ):
 				if mod['tag']:  ## saves to external js file
 					js = compile_js( mod['code'], module_path, main_name=mod['tag'] )
 					mod['build'] = {'script':js[mod['tag']]}
+					tagged[ mod['tag'] ] = js[mod['tag']]
 					for name in js:
 						output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 				else:
@@ -632,7 +633,6 @@ def build( modules, module_path, datadirs=None ):
 				if mod['tag']: name = mod['tag']
 				if not name.endswith('.dart'): name += '.dart'
 				output['dart'].append( {'name':name, 'script':dartcode, 'index': index} )
-
 
 	if js_merge:
 		tagname = None
