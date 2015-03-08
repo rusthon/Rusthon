@@ -20,6 +20,6 @@ Rusthon
 
 
 def main():
-	foo()
-
+	#foo()
+	print module___main__
 ```

@@ -1002,14 +1002,13 @@ def build( modules, module_path, datadirs=None ):
 		if nuitka:
 			if not nuitka_include_path:
 				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
-			cmd.append('-lpython')
 			cmd.append('-I'+nuitka_include_path)
 			cmd.append('-I/usr/include/python2.7')
+			cmd.append('-lpython2.7')
 
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
-
 
 		if link or giws:
 
