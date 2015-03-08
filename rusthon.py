@@ -141,6 +141,8 @@ def hack_nuitka(data):
 	for line in data.splitlines():
 		if line.startswith('#include'):  ## do not include anything
 			pass
+		elif line.strip() == 'extern "C" const unsigned char constant_bin[];':
+			pass
 		else:
 			out.append(line)
 	return '\n'.join(out)
@@ -182,10 +184,15 @@ def nuitka_compile(source, functions):
 	assert os.path.isdir(bdir)
 	constbin  = None
 	helpers   = None
-	headers   = ['#include "nuitka/prelude.hpp"']
+	headers   = [
+		'#include "nuitka/prelude.hpp"',  ## from Nuitka
+		'#include "structseq.h"',         ## from CPython
+		'const unsigned char constant_bin[] = "TODO";',
+	]
 	sources   = []
-
-	for name in os.listdir(bdir):
+	buildfiles = os.listdir(bdir)
+	buildfiles.sort()
+	for name in buildfiles:
 		data = open(os.path.join(bdir,name), 'rb').read()
 		if name == '__constants.bin':
 			constbin = data
