@@ -136,10 +136,21 @@ def java_to_rusthon( input ):
 	return rcode
 
 
-def hack_nuitka(data, functions):
+def hack_nuitka(data):
 	out = []
 	for line in data.splitlines():
-		if line.startswith('static PyObject *impl_function_'):
+		if line.startswith('#include'):  ## do not include anything
+			pass
+		else:
+			out.append(line)
+	return '\n'.join(out)
+
+def hack_nuitka_main(data, functions):
+	out = []
+	for line in data.splitlines():
+		if line.startswith('#include'):  ## do not include anything
+			pass
+		elif line.startswith('static PyObject *impl_function_'):
 			fname = line.split('impl_function_')[-1].split('(')[0]
 			findex = fname.split('_')[0]
 			fname  = fname.split('_')[1]
@@ -158,7 +169,11 @@ def hack_nuitka(data, functions):
 
 	return '\n'.join(out)
 
-def nuitka_compile(source):
+def nuitka_compile(source, functions):
+	'''
+	not: all the headers can be removed, except `__helpers.hpp`,
+	because that gets included from `calling.hpp` (part of the Nuitka public headers)
+	'''
 	tmp = tempfile.gettempdir()
 	file = os.path.join(tmp,'nuitka_build.py')
 	open(file, 'wb').write(source)
@@ -166,25 +181,34 @@ def nuitka_compile(source):
 	bdir = os.path.join(tmp, 'nuitka_build.build')
 	assert os.path.isdir(bdir)
 	constbin  = None
-	headers   = []
+	helpers   = None
+	headers   = ['#include "nuitka/prelude.hpp"']
 	sources   = []
-	functions = []
 
 	for name in os.listdir(bdir):
 		data = open(os.path.join(bdir,name), 'rb').read()
 		if name == '__constants.bin':
 			constbin = data
+		elif name == '__helpers.hpp':
+			helpers = data
 		elif name.endswith('.hpp'):
 			headers.append(data)
 		elif name.endswith('.cpp'):
 			if name.startswith('module.') and name.endswith('__main__.cpp'):
-				data = hack_nuitka(data, functions)
+				data = hack_nuitka_main(data, functions)
+			else:
+				data = hack_nuitka( data )
 			sources.append(data)
 		else:
 			raise RuntimeError('invalid file found in nuitka build: %s' %name)
 
-	## TODO return parsed functions and new source
-
+	assert helpers
+	return {
+		'files':[
+			{'name':'__helpers.hpp', 'data':helpers}
+		],
+		'main':'\n'.join(headers+sources)
+	}
 
 def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=False, cpp=False, java=False, java2rusthon=False, giws=False, file_metadata=False):
 	files = []
@@ -703,6 +727,7 @@ def build( modules, module_path, datadirs=None ):
 				output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 
 	nuitka = []
+	nuitka_include_path = None  ## TODO option for this
 	if modules['python']:
 		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
@@ -723,6 +748,7 @@ def build( modules, module_path, datadirs=None ):
 
 	if cpp_merge:
 		merge = []
+		nuitka_funcs = []
 		if java2rusthon:
 			merge.extend(java2rusthon)
 			java2rusthon = None
@@ -732,14 +758,21 @@ def build( modules, module_path, datadirs=None ):
 			nim_wrappers.insert(1, 'with extern(abi="C"):')
 			merge.extend(nim_wrappers)
 		if nuitka:
-			merge.append( nuitka_compile('\n'.join(nuitka)))
+			npak = nuitka_compile('\n'.join(nuitka), nuitka_funcs)
+			for h in npak['files']:
+				modules['c++'].append(
+					{'code':h['data'], 'tag':h['name'], 'index':0}
+				)
 
 		merge.extend(cpp_merge)
 		script = '\n'.join(merge)
 		pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
 		pak = translate_to_cpp( pyjs )   ## pak contains: c_header and cpp_header
 		n = len(modules['c++']) + len(giws)
-		modules['c++'].append( {'code':pak['main'], 'index':n+1})  ## gets compiled below
+		cppcode = pak['main']
+		if nuitka:
+			cppcode = npak['main'] + '\n' + cppcode
+		modules['c++'].append( {'code':cppcode, 'index':n+1})  ## gets compiled below
 
 
 
@@ -948,7 +981,14 @@ def build( modules, module_path, datadirs=None ):
 		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
 		mainmod = None
 		for mod in mods_sorted_by_index:
-			source.append( mod['code'] )
+			if 'tag' in mod and mod['tag'] and mod['tag'].endswith('.hpp'):
+				## allows plain header files to be included in build directory ##
+				open(
+					os.path.join(tempfile.gettempdir(), mod['tag']), 'wb'
+				).write( mod['code'] )
+				output['c++'].append( mod )
+			else:
+				source.append( mod['code'] )
 			if 'name' in mod and mod['name']=='main':
 				mainmod = mod
 			elif mainmod is None:
@@ -957,10 +997,20 @@ def build( modules, module_path, datadirs=None ):
 		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
-		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native']
+		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
+
+		if nuitka:
+			if not nuitka_include_path:
+				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
+			cmd.append('-lpython')
+			cmd.append('-I'+nuitka_include_path)
+			cmd.append('-I/usr/include/python2.7')
+
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
 		)
+
+
 		if link or giws:
 
 			if libdl:
