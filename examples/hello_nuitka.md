@@ -4,10 +4,13 @@ Nuitka
 @nuitka
 ```python
 
+class A():
+	def pymethod(self):
+		print 'hello world'
+
 def foo():
 	print 'foo'
-def bar(s):
-	print s
+	return A()
 
 ```
 
@@ -17,9 +20,14 @@ Rusthon
 
 ```rusthon
 #backend:c++
+import nuitka
 
+with pointers:
+	def bar( pyob:PyObject ):
+		pyob.o_dict()
 
 def main():
-	#foo()
-	print module___main__
+	pyob = nuitka.foo()
+	bar( pyob )
+
 ```

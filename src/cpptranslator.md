@@ -14,6 +14,16 @@ TODO: make inline cpp-channel.h an option.
 
 
 ```python
+
+NUITKA_HEAD = '''
+PyObject *get_nuitka_module() { return module___main__; }
+PyDictObject *get_nuitka_module_dict() { return moduledict___main__; }
+
+'''
+
+def gen_nuitka_header():
+	return NUITKA_HEAD
+
 class CppGenerator( RustGenerator ):
 
 	def visit_Import(self, node):
@@ -25,6 +35,8 @@ class CppGenerator( RustGenerator ):
 					self._has_jvm = True
 				elif name == 'nim':
 					self._has_nim = True
+				elif name == 'nuitka':
+					self._has_nuitka = True
 				else:
 					includes.append('#include <%s>' %name)
 		return '\n'.join(includes)
@@ -63,6 +75,9 @@ class CppGenerator( RustGenerator ):
 
 		if self._has_nim:
 			header.append( gen_nim_header() )
+
+		if self._has_nuitka:
+			header.append( gen_nuitka_header() )
 
 		## forward declare all classes
 		for classname in self._classes:
@@ -178,6 +193,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_jvm = False
 		self._jvm_classes = dict()
 		self._has_nim = False
+		self._has_nuitka = False
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]

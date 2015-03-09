@@ -775,6 +775,16 @@ handles all special calls
 		elif fname.endswith('.upper') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
 			return '__string_upper__(%s)' %node.func.value.id
 
+		elif fname.startswith('nuitka->'):
+			fname = fname.split('nuitka->')[-1]
+			r = [
+				'GET_STRING_DICT_VALUE(',
+				' moduledict___main__,',
+				'(Nuitka_StringObject *)"%s" )' %fname
+			]
+			return '\n'.join(r)
+
+
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
 				return 'PreMain(); NimMain()'
@@ -2212,6 +2222,11 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				return 'this->%s.lock()' %attr
 			else:
 				return 'this->%s' %attr
+
+		elif name.startswith('nuitka->') and not isinstance(parent_node, ast.Attribute):
+			assert attr in ('module', 'moduledict')
+			raise RuntimeError('TODO')
+
 		elif (name in self._known_instances or name in self._known_arrays) and not isinstance(parent_node, ast.Attribute):
 			if self._cpp:
 				## TODO - attribute lookup stack to make this safe for `a.x.y`
