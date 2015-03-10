@@ -185,6 +185,7 @@ def nuitka_compile(source, functions):
 	constbin  = None
 	helpers   = None
 	headers   = [
+		'#include "Python.h"',
 		'#include "nuitka/prelude.hpp"',  ## from Nuitka
 		'#include "structseq.h"',         ## from CPython
 		'const unsigned char constant_bin[] = "TODO";',
@@ -1006,16 +1007,20 @@ def build( modules, module_path, datadirs=None ):
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
 
+
+		cmd.extend(
+			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
+		)
+
 		if nuitka:
+			## note: linking happens after the object-bin above is created `-o ruston-c++-bin`,
+			## fixes the error: undefined reference to `_PyThreadState_Current', etc.
 			if not nuitka_include_path:
 				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
 			cmd.append('-I'+nuitka_include_path)
 			cmd.append('-I/usr/include/python2.7')
 			cmd.append('-lpython2.7')
 
-		cmd.extend(
-			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
-		)
 
 		if link or giws:
 
