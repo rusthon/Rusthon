@@ -42,9 +42,7 @@ def main():
 	cpython.initalize()
 	a = cpython.foo()
 	print a
-	#print a.value as int  ## TODO fix syntax error
-	v = a.value as int
-	print 'self.value of a:', v
+	print a.value as int
 	a.pymethod()
 	cpython.finalize()
 
