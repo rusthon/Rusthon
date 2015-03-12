@@ -784,6 +784,14 @@ handles all special calls
 			]
 			return '\n'.join(r)
 
+		elif fname.startswith('cpython->'):
+			n = fname.split('cpython->')[-1]
+			if n == 'initalize':
+				return '__cpython_initalize__()'
+			elif n == 'finalize':
+				return '__cpython_finalize__()'
+			else:
+				return '__cpython_get__(%s)' %n
 
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
@@ -2226,6 +2234,9 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		elif name.startswith('nuitka->') and not isinstance(parent_node, ast.Attribute):
 			assert attr in ('module', 'moduledict')
 			raise RuntimeError('TODO')
+
+		elif name.startswith('cpython->') and not isinstance(parent_node, ast.Attribute):
+			raise RuntimeError(attr)
 
 		elif (name in self._known_instances or name in self._known_arrays) and not isinstance(parent_node, ast.Attribute):
 			if self._cpp:

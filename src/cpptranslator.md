@@ -37,6 +37,8 @@ class CppGenerator( RustGenerator ):
 					self._has_nim = True
 				elif name == 'nuitka':
 					self._has_nuitka = True
+				elif name == 'cpython':
+					self._has_cpython = True
 				else:
 					includes.append('#include <%s>' %name)
 		return '\n'.join(includes)
