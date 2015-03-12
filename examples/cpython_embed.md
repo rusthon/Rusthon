@@ -9,6 +9,8 @@ and is run after `cpython.initalize()` is called.
 ```python
 
 class A():
+	def __init__(self):
+		self.value = 100
 	def pymethod(self):
 		print 'hello world'
 
@@ -19,7 +21,7 @@ def foo():
 ```
 CPython CAPI
 ------------
-example shows how to use the fake `cpython` module, and directly use the CPython C-API.
+The code below shows how to use the `cpython` module and embed libpython directly using the CPython C-API.
 https://docs.python.org/2/c-api/object.html
 
 Build Options
@@ -32,11 +34,22 @@ import cpython
 
 def main():
 	cpython.initalize()
-	pyfoo = cpython.foo()
-	a = PyObject_Call(pyfoo, inline('Py_BuildValue("()")'), None)
-	pymeth = PyObject_GetAttrString(a, cstr("pymethod"));
-	PyObject_Call(pymeth, inline('Py_BuildValue("()")'), None)
+	a = cpython.foo()
 	print a
+	print a.value
+	a.pymethod()
+
+	## old style - directly using C API ##
+	#pyfoo = cpython.foo()
+	#empty_tuple = Py_BuildValue(cstr("()"))
+	#a = PyObject_Call(pyfoo, empty_tuple, None)
+	#pymeth = PyObject_GetAttrString(a, cstr("pymethod"))
+	#PyObject_Call(pymeth, empty_tuple, None)
+	#v = PyInt_AS_LONG(
+	#	PyObject_GetAttrString(a, cstr("value"))
+	#)
+	#print v
+
 
 	cpython.finalize()
 

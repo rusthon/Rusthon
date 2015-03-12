@@ -791,7 +791,7 @@ handles all special calls
 			elif n == 'finalize':
 				return '__cpython_finalize__()'
 			else:
-				return '__cpython_get__("%s")' %n
+				return '__cpython_call__("%s")' %n
 
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
@@ -2238,6 +2238,9 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		elif name.startswith('cpython->') and not isinstance(parent_node, ast.Attribute):
 			raise RuntimeError(attr)
 
+		elif self._cpp and (name in self._known_pyobjects) and not isinstance(parent_node, ast.Attribute):
+			return 'PyObject_GetAttrString(%s,"%s")' %(name, attr)
+
 		elif (name in self._known_instances or name in self._known_arrays) and not isinstance(parent_node, ast.Attribute):
 			if self._cpp:
 				## TODO - attribute lookup stack to make this safe for `a.x.y`
@@ -2902,6 +2905,8 @@ because they need some special handling in other places.
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
 
 				if self._cpp:
+					if value.startswith('__cpython_call__'):
+						self._known_pyobjects[ target ] = varname
 					return 'auto %s = %s;			/* %s */' % (target, value, info)
 				else:
 					if '.borrow_mut()' in value:

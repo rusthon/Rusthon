@@ -46,6 +46,10 @@ PyObject* __cpython_get__(const char* name) {
 	auto dict = PyModule_GetDict(mod);
 	return PyDict_GetItemString(dict, name);
 }
+PyObject* __cpython_call__(const char* name) {
+	auto empty_tuple = Py_BuildValue("()");
+	return PyObject_Call(__cpython_get__(name), empty_tuple, NULL);
+}
 
 '''
 
@@ -229,6 +233,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_nim = False
 		self._has_nuitka = False
 		self._has_cpython = False
+		self._known_pyobjects = dict()
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
