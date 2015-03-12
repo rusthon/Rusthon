@@ -179,7 +179,7 @@ def nuitka_compile(source, functions):
 	tmp = tempfile.gettempdir()
 	file = os.path.join(tmp,'nuitka_build.py')
 	open(file, 'wb').write(source)
-	subprocess.check_call(['nuitka', '--generate-c++-only', file], cwd=tmp)
+	subprocess.check_call(['nuitka', '--generate-c++-only', '--module', file], cwd=tmp)
 	bdir = os.path.join(tmp, 'nuitka_build.build')
 	assert os.path.isdir(bdir)
 	constbin  = None
