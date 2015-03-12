@@ -1957,11 +1957,11 @@ class PythonToPythonJS(NodeVisitorBase):
 		targets = list( node.targets )
 		target = targets[0]
 
-		## should be ok most of the time to assign to a low level type
-		#if isinstance(target, ast.Name) and target.id in typedpython.types:
-		#	raise SyntaxError( self.format_error('ERROR: can not assign to builtin lowlevel type: '+target.id) )
+		## should be ok most of the time to assign to a low level type, TODO deprecate this when `auto dict = x` is fixed c++ backend.
+		if isinstance(target, ast.Name) and target.id in typedpython.types:
+			raise SyntaxError( self.format_error('ERROR: can not assign to builtin lowlevel type: '+target.id) )
 
-		if self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__', '__go__func__'):
+		elif self._with_go and isinstance(target, ast.Subscript) and isinstance(target.value, ast.Name) and target.value.id in ('__go__array__', '__go__class__', '__go__pointer__', '__go__func__'):
 			if len(targets)==2 and isinstance(targets[1], ast.Attribute) and isinstance(targets[1].value, ast.Name) and targets[1].value.id == 'self' and len(self._class_stack):
 				if target.value.id == '__go__array__':
 					self._class_stack[-1]._struct_vars[ targets[1].attr ] = '__go__array__(%s<<typedef)' %self.visit(target.slice)

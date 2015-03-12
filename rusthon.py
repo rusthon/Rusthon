@@ -408,6 +408,8 @@ def import_md( url, modules=None, index_offset=0 ):
 	assert modules is not None
 	doc = []
 	code = []
+	code_links = []
+	code_idirs = []
 	lang = False
 	in_code = False
 	index = 0
@@ -418,14 +420,26 @@ def import_md( url, modules=None, index_offset=0 ):
 	data = open(url, 'rb').read()
 
 	for line in data.splitlines():
+		if line.startswith('* @link:'):
+			code_links.append( line.split(':')[-1] )
+		elif line.startswith('* @include:'):
+			code_idirs.append( line.split(':')[-1] )
 		# Start or end of a code block.
-		if line.strip().startswith('```'):
+		elif line.strip().startswith('```'):
 			fences += 1
 			# End of a code block.
 			if in_code:
 				if lang:
 					p, n = os.path.split(url)
-					mod = {'path':p, 'markdown':url, 'code':'\n'.join(code), 'index':index+index_offset, 'tag':tag }
+					mod = {
+						'path':p, 
+						'markdown':url, 
+						'code':'\n'.join(code), 
+						'index':index+index_offset, 
+						'tag':tag,
+						'links':code_links,
+						'include-dirs':code_idirs
+					}
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
 						if ext in 'html js css py c h cpp hpp rust go java'.split():
@@ -434,6 +448,8 @@ def import_md( url, modules=None, index_offset=0 ):
 					modules[ lang ].append( mod )
 				in_code = False
 				code = []
+				code_links = []
+				code_idirs = []
 				index += 1
 			# Start of a code block.
 			else:
@@ -659,6 +675,8 @@ def build( modules, module_path, datadirs=None ):
 
 	js_merge  = []
 	cpp_merge = []
+	cpp_links = []
+	cpp_idirs = []
 
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
@@ -679,6 +697,10 @@ def build( modules, module_path, datadirs=None ):
 
 			elif backend == 'c++':
 				cpp_merge.append(script)
+				if 'links' in mod:
+					cpp_links.extend(mod['links'])
+				if 'include-dirs' in mod:
+					cpp_idirs.extend(mod['include-dirs'])
 
 			elif backend == 'rust':
 				pyjs = python_to_pythonjs(script, rust=True, module_path=module_path)
@@ -781,7 +803,7 @@ def build( modules, module_path, datadirs=None ):
 		cppcode = pak['main']
 		if nuitka:
 			cppcode = npak['main'] + '\n' + cppcode
-		modules['c++'].append( {'code':cppcode, 'index':n+1})  ## gets compiled below
+		modules['c++'].append( {'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs})  ## gets compiled below
 
 
 
@@ -986,6 +1008,8 @@ def build( modules, module_path, datadirs=None ):
 
 
 	if modules['c++']:
+		links = []
+		idirs = []
 		source = []
 		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
 		mainmod = None
@@ -1002,6 +1026,10 @@ def build( modules, module_path, datadirs=None ):
 				mainmod = mod
 			elif mainmod is None:
 				mainmod = mod
+			if 'links' in mod:
+				links.extend(mod['links'])
+			if 'include-dirs' in mod:
+				idirs.extend(mod['include-dirs'])
 
 		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
@@ -1012,7 +1040,6 @@ def build( modules, module_path, datadirs=None ):
 			if not nuitka_include_path:
 				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
 			cmd.append('-I'+nuitka_include_path)  ## for `__helpers.hpp`
-
 
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
@@ -1027,6 +1054,13 @@ def build( modules, module_path, datadirs=None ):
 			cmd.append('-I/usr/include/python2.7')
 			cmd.append('-lpython2.7')
 
+		if idirs:
+			for idir in idirs:
+				cmd.append('-I'+idir)
+
+		if links:
+			for lib in links:
+				cmd.append('-l'+lib)
 
 		if link or giws:
 
