@@ -1,8 +1,8 @@
 Rusthon
 -------
 
-*link:python2.7
-*include:Python.h
+* @link:python2.7
+* @include:Python.h
 ```rusthon
 #backend:c++
 
