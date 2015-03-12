@@ -21,7 +21,7 @@ def foo():
 ```
 CPython CAPI
 ------------
-The code below shows how to use the `cpython` module and embed libpython directly using the CPython C-API.
+The code below shows how to use the `cpython` module that wraps around the CPython C-API.
 https://docs.python.org/2/c-api/object.html
 
 Build Options
@@ -38,19 +38,6 @@ def main():
 	print a
 	print a.value
 	a.pymethod()
-
-	## old style - directly using C API ##
-	#pyfoo = cpython.foo()
-	#empty_tuple = Py_BuildValue(cstr("()"))
-	#a = PyObject_Call(pyfoo, empty_tuple, None)
-	#pymeth = PyObject_GetAttrString(a, cstr("pymethod"))
-	#PyObject_Call(pymeth, empty_tuple, None)
-	#v = PyInt_AS_LONG(
-	#	PyObject_GetAttrString(a, cstr("value"))
-	#)
-	#print v
-
-
 	cpython.finalize()
 
 ```

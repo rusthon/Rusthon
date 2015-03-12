@@ -766,7 +766,10 @@ handles all special calls
 			fname = fname.replace('->__exec__', '->exec')
 
 		###########################################
-		if fname.endswith('.split') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
+		if fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
+			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), Py_BuildValue("()"), NULL)' %(node.func.value.id, node.func.attr)
+
+		elif fname.endswith('.split') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
 			splitchar = 'std::string(" ")'
 			if len(node.args): splitchar = self.visit(node.args[0])
 			return '__split_string__( %s, %s )' %(node.func.value.id, splitchar)
@@ -1474,7 +1477,9 @@ TODO clean up go stuff.
 			self._vars = set()
 			self._known_vars = set()
 			self._known_strings = set()
-			##TODO self._known_arrays = ...
+			self._known_pyobjects = dict()
+			##TODO self._known_arrays = ... etc, double check this
+
 		elif len(self._function_stack) > 1:
 			## do not clear self._vars and _known_vars inside of closure
 			is_closure = True
