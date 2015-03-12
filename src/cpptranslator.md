@@ -228,6 +228,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._jvm_classes = dict()
 		self._has_nim = False
 		self._has_nuitka = False
+		self._has_cpython = False
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
