@@ -1,6 +1,10 @@
 Embed CPython Script
 -------------
 
+The script below is marked with `@embed` which turns it into a static string in the final C++,
+and is run after `cpython.initalize()` is called.
+
+
 @embed
 ```python
 
@@ -13,6 +17,10 @@ def foo():
 	return A()
 
 ```
+CPython CAPI
+------------
+example shows how to use the fake `cpython` module, and directly use the CPython C-API.
+https://docs.python.org/2/c-api/object.html
 
 Build Options
 -------------
@@ -20,7 +28,6 @@ Build Options
 * @include:/usr/include/python2.7
 ```rusthon
 #backend:c++
-import Python.h
 import cpython
 
 def main():
