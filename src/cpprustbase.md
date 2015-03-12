@@ -1340,7 +1340,14 @@ regular Python has no support for.
 				else:
 					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
 					if self.is_prim_type(cast_to):
-						return 'static_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
+						ptr = self.visit(node.left.left)
+						if ptr.startswith('PyObject_GetAttrString'):
+							if cast_to == 'int':
+								return 'static_cast<%s>(PyInt_AS_LONG(%s))' %(cast_to, self.visit(node.left.left))
+							else:
+								raise RuntimeError('TODO other cast to types for cpython')
+						else:
+							return 'static_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
 					elif self._polymorphic:
 						return 'std::dynamic_pointer_cast<%s>(%s)' %(cast_to, self.visit(node.left.left))
 					else:
