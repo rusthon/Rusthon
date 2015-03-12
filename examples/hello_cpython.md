@@ -1,12 +1,15 @@
 Embed CPython
--------
+-------------
+This example directly uses the Python CAPI, for more info on embedding Python, see [here](https://docs.python.org/2.7/extending/embedding.html)
+
 The syntax below `* @link:` allows you to list external pre-built libraries to link to.
 The syntax `* @include:` allows you to list directories for GCC to find external header files,
 and include them in the final build using `import myheader.h`.
 
 note requires: static library `libpython.a`
 
-
+Build Options
+-------------
 * @link:python2.7
 * @include:/usr/include/python2.7
 ```rusthon
