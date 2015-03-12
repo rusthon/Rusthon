@@ -791,7 +791,7 @@ handles all special calls
 			elif n == 'finalize':
 				return '__cpython_finalize__()'
 			else:
-				return '__cpython_get__(%s)' %n
+				return '__cpython_get__("%s")' %n
 
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):

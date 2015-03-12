@@ -757,6 +757,7 @@ def build( modules, module_path, datadirs=None ):
 			for name in js:
 				output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 
+	cpyembed = []
 	nuitka = []
 	nuitka_include_path = None  ## TODO option for this
 	if modules['python']:
@@ -766,6 +767,8 @@ def build( modules, module_path, datadirs=None ):
 				name = mod['tag']
 				if name == 'nuitka':
 					nuitka.append(mod['code'])
+				elif name == 'embed' or name == 'embed:cpython':
+					cpyembed.append(mod['code'])
 				else:
 					if not name.endswith('.py'):
 						name += '.py'
@@ -803,6 +806,9 @@ def build( modules, module_path, datadirs=None ):
 		cppcode = pak['main']
 		if nuitka:
 			cppcode = npak['main'] + '\n' + cppcode
+		if cpyembed:
+			staticstr = 'const char* __python_main_script__ = "%s";\n' %('\n'.join(cpyembed)).replace('\n', '\\n')
+			cppcode = staticstr + cppcode
 		modules['c++'].append( {'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs})  ## gets compiled below
 
 

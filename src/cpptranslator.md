@@ -24,6 +24,35 @@ PyDictObject *get_nuitka_module_dict() { return moduledict___main__; }
 def gen_nuitka_header():
 	return NUITKA_HEAD
 
+```
+
+Cpython C-API
+--------
+
+```python
+
+CPYTHON_HEAD = '''
+#include <Python.h>
+
+void __cpython_initalize__(void) {
+	Py_Initialize();
+	PyRun_SimpleString(__python_main_script__);
+}
+void __cpython_finalize__(void) {
+	Py_Finalize();
+}
+PyObject* __cpython_get__(const char* name) {
+	auto mod = PyImport_AddModule("__main__");
+	auto dict = PyModule_GetDict(mod);
+	return PyDict_GetItemString(dict, name);
+}
+
+'''
+
+def gen_cpython_header():
+	return CPYTHON_HEAD
+
+
 class CppGenerator( RustGenerator ):
 
 	def visit_Import(self, node):
@@ -80,6 +109,9 @@ class CppGenerator( RustGenerator ):
 
 		if self._has_nuitka:
 			header.append( gen_nuitka_header() )
+
+		if self._has_cpython:
+			header.append( gen_cpython_header() )
 
 		## forward declare all classes
 		for classname in self._classes:
