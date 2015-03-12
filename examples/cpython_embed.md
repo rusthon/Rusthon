@@ -25,8 +25,12 @@ import cpython
 
 def main():
 	cpython.initalize()
-	a = cpython.foo()
+	pyfoo = cpython.foo()
+	a = PyObject_Call(pyfoo, inline('Py_BuildValue("()")'), None)
+	pymeth = PyObject_GetAttrString(a, cstr("pymethod"));
+	PyObject_Call(pymeth, inline('Py_BuildValue("()")'), None)
 	print a
+
 	cpython.finalize()
 
 ```
