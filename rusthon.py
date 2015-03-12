@@ -187,8 +187,9 @@ def nuitka_compile(source, functions):
 	headers   = [
 		'#include "Python.h"',
 		'#include "nuitka/prelude.hpp"',  ## from Nuitka
+		'#include "nuitka/compiled_frame.hpp"',  ## prelude.hpp already includes this, for some reason MAKE_FRAME is still missing
 		'#include "structseq.h"',         ## from CPython
-		'const unsigned char constant_bin[] = "TODO";',
+		'const unsigned char constant_bin[] = "TODO";',  ## TODO read the constants.bin and insert here.
 	]
 	sources   = []
 	buildfiles = os.listdir(bdir)
@@ -1007,6 +1008,11 @@ def build( modules, module_path, datadirs=None ):
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
 
+		if nuitka:
+			if not nuitka_include_path:
+				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
+			cmd.append('-I'+nuitka_include_path)  ## for `__helpers.hpp`
+
 
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
@@ -1015,9 +1021,9 @@ def build( modules, module_path, datadirs=None ):
 		if nuitka:
 			## note: linking happens after the object-bin above is created `-o ruston-c++-bin`,
 			## fixes the error: undefined reference to `_PyThreadState_Current', etc.
-			if not nuitka_include_path:
-				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
-			cmd.append('-I'+nuitka_include_path)
+			#if not nuitka_include_path:
+			#	nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
+			#cmd.append('-I'+nuitka_include_path)
 			cmd.append('-I/usr/include/python2.7')
 			cmd.append('-lpython2.7')
 
