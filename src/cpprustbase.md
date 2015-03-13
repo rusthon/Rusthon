@@ -1243,7 +1243,22 @@ regular Python has no support for.
 		elif op == '<<':
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
 
-			if left in ('__go__receive__', '__go__send__'):
+			if isinstance(node.left, ast.Attribute) and node.left.attr=='__right_arrow__':
+				if isinstance(node.right, ast.Call):
+					r = [
+						'PyObject_Call(',
+						'	PyObject_GetAttrString(%s,"%s"),' %(self.visit(node.left.value), node.right.func.id),
+						'	Py_BuildValue("()"),',
+						'	NULL',
+						')'
+					]
+					return '\n'.join(r)
+				elif isinstance(node.right, ast.Name):
+					return 'PyObject_GetAttrString(%s,"%s")' %(self.visit(node.left.value), node.right.id),
+				else:
+					raise SyntaxError(self.format_error('bad use of ->'))
+
+			elif left in ('__go__receive__', '__go__send__'):
 				self._has_channels = True
 				if self._cpp:
 					## cpp-channel API
@@ -1338,12 +1353,13 @@ regular Python has no support for.
 				if self._rust:
 					return '%s %s' %(self.visit(node.left), cast_to)
 				else:
-					#r = 'static_cast<std::shared_ptr<%s>>(%s)' %(right, self.visit(node.left.left))
 					if self.is_prim_type(cast_to):
 						ptr = self.visit(node.left.left)
+						if type(ptr) is tuple: ## this is probably a bug
+							ptr = ptr[0]
 						if ptr.startswith('PyObject_GetAttrString'):
 							if cast_to == 'int':
-								return 'static_cast<%s>(PyInt_AS_LONG(%s))' %(cast_to, self.visit(node.left.left))
+								return 'static_cast<%s>(PyInt_AS_LONG(%s))' %(cast_to, ptr)
 							else:
 								raise RuntimeError('TODO other cast to types for cpython')
 						else:
@@ -2223,12 +2239,9 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		parent_node = self._stack[-2]
 		name = self.visit(node.value)
 		attr = node.attr
-		if attr == '__leftarrow__':
-			## TODO use for something else, because '.' is always turned into '->' in the c++ backend. ##
-			if self._cpp:
-				return '%s->' %name
-			else:  ## skip left arrow for rust backend.
-				return name
+		if attr == '__right_arrow__':
+			#raise RuntimeError('never reached - see visit_BinOp')
+			return None
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
 		elif name in ('self','this') and self._cpp and self._class_stack:
@@ -2895,11 +2908,20 @@ because they need some special handling in other places.
 
 				elif isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__receive__':
 					if target in self._known_vars:
-						return 'auto %s = %s;' %(target, self.visit(node.value))
+						return 'auto %s = %s;' %(target, self.visit(node.value))  ## TODO check this is this a bug? should not be `auto`
 					else:
 						return 'auto %s = %s;' %(target, self.visit(node.value))
+
+				elif isinstance(node.value.left, ast.Attribute) and node.value.left.attr=='__right_arrow__':
+					pyob = self.visit(node.value.left.value)
+					if isinstance(node.value.right, ast.Name):
+						attr = node.value.right.id
+						return 'auto %s = PyObject_GetAttrString(%s,"%s");' %(target, pyob, attr)
+					else:
+						raise RuntimeError('TODO')
+
 				else:
-					#raise SyntaxError(('invalid << hack', self.visit(node.value.left)))
+					#raise SyntaxError(('invalid << hack', node.value.left.attr))
 					#raise SyntaxError(('invalid << hack', self.visit(node.value.right)))
 					raise SyntaxError(('invalid << hack', node.value.right))
 
