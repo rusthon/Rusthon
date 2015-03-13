@@ -767,7 +767,7 @@ handles all special calls
 
 		###########################################
 		if fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
-			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), Py_BuildValue("()"), NULL)' %(node.func.value.id, node.func.attr)
+			return self.gen_cpy_call(node.func.value.id, node)
 
 		elif fname.endswith('.split') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
 			splitchar = 'std::string(" ")'
@@ -1245,6 +1245,7 @@ regular Python has no support for.
 
 			if isinstance(node.left, ast.Attribute) and node.left.attr=='__right_arrow__':
 				if isinstance(node.right, ast.Call):
+					return self.gen_cpy_call(self.visit(node.left.value), node.right)
 					r = [
 						'PyObject_Call(',
 						'	PyObject_GetAttrString(%s,"%s"),' %(self.visit(node.left.value), node.right.func.id),
@@ -1357,7 +1358,7 @@ regular Python has no support for.
 						ptr = self.visit(node.left.left)
 						if type(ptr) is tuple: ## this is probably a bug
 							ptr = ptr[0]
-						if ptr.startswith('PyObject_GetAttrString'):
+						if ptr.startswith('PyObject_GetAttrString') or ptr.startswith('PyObject_Call'):
 							if cast_to == 'int':
 								return 'static_cast<%s>(PyInt_AS_LONG(%s))' %(cast_to, ptr)
 							else:
@@ -2916,9 +2917,11 @@ because they need some special handling in other places.
 					pyob = self.visit(node.value.left.value)
 					if isinstance(node.value.right, ast.Name):
 						attr = node.value.right.id
-						return 'auto %s = PyObject_GetAttrString(%s,"%s");' %(target, pyob, attr)
+						return 'auto %s = %s;' %(target, self.gen_cpy_get(pyob, attr))
+					elif isinstance(node.value.right, ast.Call):
+						return 'auto %s = %s;' %(target, self.gen_cpy_call(pyob, node.value.right))
 					else:
-						raise RuntimeError('TODO')
+						raise RuntimeError('TODO x=y->?')
 
 				else:
 					#raise SyntaxError(('invalid << hack', node.value.left.attr))

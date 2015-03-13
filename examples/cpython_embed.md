@@ -13,6 +13,8 @@ class A():
 		self.value = 100
 	def pymethod(self):
 		print 'hello world'
+	def add(self, a,b):
+		return a+b
 
 def foo():
 	print 'foo'
@@ -54,14 +56,24 @@ import cpython
 def main():
 	cpython.initalize()
 	a = cpython.foo()
-	print a
-	print a.value as int
-	a.pymethod()
+	print 'addr of a:', a
+	#print a.value as int
+	#a.pymethod()
 	b = a
 	b->pymethod()
 	print b->value as int
 	v = b->value as int
 	print v + 400
+	c = b->pymethod()
+
+	r = b->add(1, 2) as int
+	print r
+	#r = b->add(
+	#	b->value, 
+	#	b->value 
+	#)
+	#print r as int
+
 	cpython.finalize()
 
 ```

@@ -313,6 +313,41 @@ TODO
 		return '\n'.join( out )
 ```
 
+
+CPython C-API
+-------------
+user syntax `import cpython` and `->`
+
+```python
+
+	def gen_cpy_call(self, pyob, node):
+		fname = self.visit(node.func)
+		if not node.args and not node.keywords:
+			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), Py_BuildValue("()"), NULL)' %(pyob, fname)
+		else:
+			lambda_args = [
+				'[&] {',
+				'auto args = PyTuple_New(%s);' %len(node.args),
+			]
+			for i,arg in enumerate(node.args):
+				if isinstance(arg, ast.Num):
+					n = arg.n
+					if str(n).isdigit():
+						n = 'PyInt_FromLong(%s)' %n
+						lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, n))
+					else:
+						n = 'PyFloat_FromDouble(%s)' %n
+						lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, n))
+				else:
+					lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, self.visit(arg)))
+			lambda_args.append('return args; }()')
+			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), %s, NULL)' %(pyob, fname, '\n'.join(lambda_args))
+
+	def gen_cpy_get(self, pyob, name):
+		return 'PyObject_GetAttrString(%s,"%s")' %(pyob, name)
+
+```
+
 Translate to C++
 ----------------
 
@@ -437,3 +472,4 @@ negative slice is not fully supported, only `-1` literal works.
 			return ';\n'.join(slice) + ';'
 
 ```
+
