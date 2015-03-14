@@ -323,7 +323,7 @@ user syntax `import cpython` and `->`
 	def gen_cpy_call(self, pyob, node):
 		fname = self.visit(node.func)
 		if not node.args and not node.keywords:
-			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), Py_BuildValue("()"), NULL)' %(pyob, fname)
+			return 'PyObject_Call(%s, Py_BuildValue("()"), NULL)' %pyob
 		else:
 			lambda_args = [
 				'[&] {',
@@ -341,7 +341,7 @@ user syntax `import cpython` and `->`
 				else:
 					lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, self.visit(arg)))
 			lambda_args.append('return args; }()')
-			return 'PyObject_Call(PyObject_GetAttrString(%s,"%s"), %s, NULL)' %(pyob, fname, '\n'.join(lambda_args))
+			return 'PyObject_Call(%s, %s, NULL)' %(pyob, '\n'.join(lambda_args))
 
 	def gen_cpy_get(self, pyob, name):
 		return 'PyObject_GetAttrString(%s,"%s")' %(pyob, name)

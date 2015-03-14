@@ -5,10 +5,12 @@ CPython Threads GIL Test
 @embed
 ```python
 import thread, time
+import numpy
 
 class A():
 	def __init__(self):
 		self.value = 0
+		self.array = numpy.array([1,2,3,4]).astype(int)
 	def run(self):
 		print '-----starting run'
 		while self.value < 10:
@@ -80,6 +82,11 @@ def main():
 
 	with gil:
 		a = cpython.make_A()
+		b = a->array->__getitem__(0) as int
+		print 'numpy array data:', b
+		b = a->array->__getitem__(1) as int
+		print 'numpy array data:', b
+
 	print 'addr of a:', a
 
 	print 'starting thread1'

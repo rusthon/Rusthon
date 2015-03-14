@@ -361,10 +361,11 @@ class typedpython:
 			## c++/libpython `->` gets translated to a CPython C-API call. 
 			## TODO: could also be specialized or other backends, or by user  `with syntax('->', USER_MACRO):` ##
 			if '->' in c:
-				a,b = c.split('->')
-				this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
-				method_name = b.split()[0].split('(')[0]
-				c = c.replace('->'+method_name, '.__right_arrow__<<'+method_name)
+				#a,b = c.split('->')
+				#this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
+				#method_name = b.split()[0].split('(')[0]
+				#c = c.replace('->'+method_name, '.__right_arrow__<<'+method_name)
+				c = c.replace('->', '.__right_arrow__.')
 
 
 			## python3 annotations

@@ -767,7 +767,9 @@ handles all special calls
 
 		###########################################
 		if fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
-			return self.gen_cpy_call(node.func.value.id, node)
+			return self.gen_cpy_call(node.func.value.id, node)  ## TODO test this
+		elif fname.startswith('PyObject_GetAttrString(') and fname.endswith(')') and isinstance(node.func, ast.Attribute):
+			return self.gen_cpy_call(fname, node)
 
 		elif fname.endswith('.split') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_strings:
 			splitchar = 'std::string(" ")'
@@ -1243,7 +1245,7 @@ regular Python has no support for.
 		elif op == '<<':
 			go_hacks = ('__go__array__', '__go__arrayfixed__', '__go__map__', '__go__func__')
 
-			if isinstance(node.left, ast.Attribute) and node.left.attr=='__right_arrow__':
+			if isinstance(node.left, ast.Attribute) and node.left.attr=='__right_arrow__':  ## this style is deprecated
 				if isinstance(node.right, ast.Call):
 					return self.gen_cpy_call(self.visit(node.left.value), node.right)
 					r = [
@@ -1254,8 +1256,11 @@ regular Python has no support for.
 						')'
 					]
 					return '\n'.join(r)
+
 				elif isinstance(node.right, ast.Name):
-					return 'PyObject_GetAttrString(%s,"%s")' %(self.visit(node.left.value), node.right.id),
+					return 'PyObject_GetAttrString(%s,"%s")' %(self.visit(node.left.value), node.right.id)
+				elif isinstance(node.right, ast.Attribute) and node.right.attr=='__right_arrow__':
+					return 'PyObject_GetAttrString(%s,"%s")' %(self.visit(node.left.value), self.visit(node.right.value))
 				else:
 					raise SyntaxError(self.format_error('bad use of ->'))
 
@@ -2244,8 +2249,7 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		name = self.visit(node.value)
 		attr = node.attr
 		if attr == '__right_arrow__':
-			#raise RuntimeError('never reached - see visit_BinOp')
-			return None
+			return 'PyObject_GetAttrString(%s,' %name
 		elif name.endswith('->'):
 			return '%s%s' %(name,attr)
 		elif name in ('self','this') and self._cpp and self._class_stack:
@@ -2297,6 +2301,8 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		elif self._cpp:
 			if name in self._classes and not isinstance(parent_node, ast.Attribute):
 				return '%s::%s' % (name, attr)
+			elif name.endswith(',') and name.startswith('PyObject_GetAttrString('):
+				return '%s"%s")' %(name, attr)
 			else:
 				return '%s->%s' % (name, attr)
 
