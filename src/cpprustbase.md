@@ -705,8 +705,12 @@ Subscript `a[n]`
 			else:
 				if self._cpp:
 					## default to deference shared pointer ##
-					r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
-					if isinstance(node.value, ast.Name):
+					value = self.visit(node.value)
+					r = '(*%s)[%s]' % (value, self.visit(node.slice))
+					if value.startswith('PyObject_GetAttrString(') and value.endswith(')'):
+						r = 'PyObject_CallFunction(PyObject_GetAttrString(%s,"__getitem__"), "i", %s)' % (value, self.visit(node.slice))
+
+					elif isinstance(node.value, ast.Name):
 						target = node.value.id
 						is_neg = False
 						if isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num) and node.slice.value.n < 0:

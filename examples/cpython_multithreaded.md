@@ -82,10 +82,9 @@ def main():
 
 	with gil:
 		a = cpython.make_A()
-		b = a->array->__getitem__(0) as int
-		print 'numpy array data:', b
-		b = a->array->__getitem__(1) as int
-		print 'numpy array data:', b
+		for i in range(4):
+			b = a->array[i] as int
+			print 'numpy array data:', b
 
 	print 'addr of a:', a
 
