@@ -575,6 +575,16 @@ Also implements extra syntax like `switch` and `select`.
 					if a: r.append(self.indent()+a)
 				self._shared_pointers = True
 				return '\n'.join(r)
+			elif node.context_expr.id == 'gil':
+				r = ['auto __gstate__ = PyGILState_Ensure();']
+				for b in node.body:
+					a = self.visit(b)
+					if a: r.append(self.indent()+a)
+				r.append('PyGILState_Release(__gstate__);')
+				return '\n'.join(r)
+
+			else:
+				raise RuntimeError('TODO with syntax:%s'%node.context_expr.id)
 
 		elif isinstance(node.context_expr, ast.Tuple) or isinstance(node.context_expr, ast.List):
 			for elt in node.context_expr.elts:

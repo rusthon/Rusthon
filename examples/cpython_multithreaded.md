@@ -35,29 +35,22 @@ Build Options
 import cpython
 
 with pointers:
-	def thread_runner(pyob:PyObject, state:PyThreadState):
+	def thread_runner(pyob:PyObject):
 		print 'enter thread runner'
-		PyEval_AcquireThread(state)
-		#gstate = PyGILState_Ensure()
-		pyob->run_thread()
-		#pyob->run()
-		#PyGILState_Release(gstate)
-		PyEval_ReleaseThread(state)
-
+		with gil:
+			pyob->run_thread()
+			#pyob->run()
 		print 'edit thread runner'
 
 
-	def thread1( input: chan PyObject, output: chan PyObject, state:PyThreadState ):
+	def thread1( input: chan PyObject, output: chan PyObject ):
 		while True:
 			pyob = <- input  ## gets from main
 			if pyob is None:
 				print 'pyob is None'
 				break
-			PyEval_AcquireThread(state)
-			#gstate = PyGILState_Ensure()
-			v = pyob->value as int
-			#PyGILState_Release(gstate)
-			PyEval_ReleaseThread(state)
+			with gil:
+				v = pyob->value as int
 			print 'thread1:', v
 			inline('std::this_thread::sleep_for(std::chrono::milliseconds(100))')
 
@@ -67,36 +60,33 @@ with pointers:
 		#	#output <- pyob  ## sends to thread2
 		print 'end thread1'
 
-def thread2( C: chan PyObject):
-	for i in range(100):
-		pyob = <- C
-		v = pyob->value as int
-		print 'thread2:', v
+	def thread2( C: chan PyObject):
+		for i in range(100):
+			pyob = <- C
+			v = pyob->value as int
+			print 'thread2:', v
 
 
 def main():
 	cpython.initalize()
 	PyEval_InitThreads()  ## creates and locks GIL
 	print 'threads init'
-	mainstate = PyEval_SaveThread()
+	mainstate = PyEval_SaveThread()  ## releases GIL
 	print 'saved mainstate'
 
 	print 'setup channels'
 	input  = channel(PyObject)
 	output = channel(PyObject)
 
-	#gstate = PyGILState_Ensure()
-
-	PyEval_AcquireThread(mainstate)
-	a = cpython.make_A()
+	with gil:
+		a = cpython.make_A()
 	print 'addr of a:', a
-	PyEval_ReleaseThread(mainstate)
 
 	print 'starting thread1'
-	spawn( thread_runner(a, mainstate) )
+	spawn( thread_runner(a) )
 
 	spawn(
-		thread1(input, output, mainstate)
+		thread1(input, output)
 	)
 	#spawn(
 	#	thread2(output)
@@ -107,9 +97,8 @@ def main():
 
 	print 'sending pyob'
 	while True:
-		PyEval_AcquireThread(mainstate)
-		v = a->value as int
-		PyEval_ReleaseThread(mainstate)
+		with gil:
+			v = a->value as int
 
 		if v==10:
 			break
@@ -118,9 +107,8 @@ def main():
 		input <- a
 	input <- None
 
-	#PyGILState_Release(gstate)
 	print 'finalize'
-	PyEval_RestoreThread( mainstate )
+	PyEval_RestoreThread( mainstate )  ## required not to segfault on exit
 	cpython.finalize()
 
 ```
