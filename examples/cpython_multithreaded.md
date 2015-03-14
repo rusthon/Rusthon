@@ -70,11 +70,7 @@ with pointers:
 
 
 def main():
-	cpython.initalize()
-	PyEval_InitThreads()  ## creates and locks GIL
-	print 'threads init'
-	mainstate = PyEval_SaveThread()  ## releases GIL
-	print 'saved mainstate'
+	thread_state = cpython.initalize()
 
 	print 'setup channels'
 	input  = channel(PyObject)
@@ -114,7 +110,6 @@ def main():
 	input <- None
 
 	print 'finalize'
-	PyEval_RestoreThread( mainstate )  ## required not to segfault on exit
-	cpython.finalize()
+	cpython.finalize( thread_state )
 
 ```

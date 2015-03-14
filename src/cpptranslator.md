@@ -34,11 +34,14 @@ Cpython C-API
 CPYTHON_HEAD = '''
 #include <Python.h>
 
-void __cpython_initalize__(void) {
+PyThreadState* __cpython_initalize__(void) {
 	Py_Initialize();
+	PyEval_InitThreads();
 	PyRun_SimpleString(__python_main_script__);
+	return PyEval_SaveThread();
 }
-void __cpython_finalize__(void) {
+void __cpython_finalize__(PyThreadState* state) {
+	PyEval_RestoreThread( state );
 	Py_Finalize();
 }
 PyObject* __cpython_get__(const char* name) {

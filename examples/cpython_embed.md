@@ -54,26 +54,27 @@ Build Options
 import cpython
 
 def main():
-	cpython.initalize()
-	a = cpython.foo()
-	print 'addr of a:', a
-	#print a.value as int
-	#a.pymethod()
-	b = a
-	b->pymethod()
-	print b->value as int
-	v = b->value as int
-	print v + 400
-	c = b->pymethod()
+	state = cpython.initalize()
+	with gil:
+		a = cpython.foo()
+		print 'addr of a:', a
+		#print a.value as int
+		#a.pymethod()
+		b = a
+		b->pymethod()
+		print b->value as int
+		v = b->value as int
+		print v + 400
+		c = b->pymethod()
 
-	r = b->add(1, 2) as int
-	print r
-	#r = b->add(
-	#	b->value, 
-	#	b->value 
-	#)
-	#print r as int
+		r = b->add(1, 2) as int
+		print r
+		#r = b->add(
+		#	b->value, 
+		#	b->value 
+		#)
+		#print r as int
 
-	cpython.finalize()
+	cpython.finalize(state)
 
 ```

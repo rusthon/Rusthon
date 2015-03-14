@@ -798,7 +798,7 @@ handles all special calls
 			if n == 'initalize':
 				return '__cpython_initalize__()'
 			elif n == 'finalize':
-				return '__cpython_finalize__()'
+				return '__cpython_finalize__(%s)' %self.visit(node.args[0])
 			else:
 				return '__cpython_call__("%s")' %n
 
