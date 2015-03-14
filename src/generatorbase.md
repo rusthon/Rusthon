@@ -668,7 +668,11 @@ TODO clean up.
 			## channel constructors
 			if self._cpp:
 				## cpp-channel API supports input/output
-				return 'cpp::channel<%s>{}'%self.visit(node.args[0])
+				T = self.visit(node.args[0])
+				if self.is_prim_type(T):
+					return 'cpp::channel<%s>{}'%T
+				else:
+					return 'cpp::channel<%s*>{}'%T
 			elif self._rust:
 				## rust returns a tuple input/output that needs to be destructured by the caller
 				return 'channel::<%s>()' %self.visit(node.args[0])

@@ -1676,7 +1676,10 @@ TODO clean up go stuff.
 
 				if self._cpp:
 					## cpp-channel API is both input and output like Go.
-					a = 'cpp::channel<%s>  %s' %(arg_type, arg_name)
+					if self.is_prim_type(arg_type):
+						a = 'cpp::channel<%s>  %s' %(arg_type, arg_name)
+					else:
+						a = 'cpp::channel<%s*>  %s' %(arg_type, arg_name)
 				elif self._rust:
 					## allow go-style `chan` keyword with Rust backend,
 					## defaults to Sender<T>, because its assumed that sending channels
