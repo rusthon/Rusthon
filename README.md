@@ -1,11 +1,22 @@
 [![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
-This compiles and runs a project in literate multi-language markdown format.
+![highleveloverview](http://rusthon.github.io/Rusthon/images/RusthonC++.svg)
+
+Get Started
+-----------
+https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns
+https://github.com/rusthon/Rusthon/wiki/Lists-and-Arrays
+https://github.com/rusthon/Rusthon/wiki/concurrency
+https://github.com/rusthon/Rusthon/wiki/CPython-Integration
+https://github.com/rusthon/Rusthon/wiki/Array-Generics
+https://github.com/rusthon/Rusthon/wiki/Java-Frontend
+
+After git cloning this repo, try example-project.md, it is a multi-language project in a single markdown file.
 ```
 cd Rusthon
-./rusthon.py path/to/myproject.md
+./rusthon.py ./examples/example-project.md
 ```
-https://github.com/rusthon/Rusthon/blob/master/examples/example-project.md
+see [example-project.md](https://github.com/rusthon/Rusthon/blob/master/examples/example-project.md)
 
 The option `--tar` can be used to save the source code of the translated code,
 javascripts and python scripts inside the markdown, and compiled exes.
@@ -15,8 +26,6 @@ javascripts and python scripts inside the markdown, and compiled exes.
 
 Docs
 ----
-https://github.com/rusthon/Rusthon/wiki
-
 https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
 https://github.com/rusthon/Rusthon/blob/master/doc/memory.md
 https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md
