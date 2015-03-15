@@ -58,8 +58,9 @@ def main():
 	with gil:
 		a = cpython.foo()
 		print 'addr of a:', a
-		#print a.value as int
-		#a.pymethod()
+		print a->value as int
+		a->pymethod()
+
 		b = a
 		b->pymethod()
 		print b->value as int
@@ -69,11 +70,11 @@ def main():
 
 		r = b->add(1, 2) as int
 		print r
-		#r = b->add(
-		#	b->value, 
-		#	b->value 
-		#)
-		#print r as int
+		u = b->add(
+			b->value, 
+			b->value 
+		) as int
+		print u
 
 	cpython.finalize(state)
 

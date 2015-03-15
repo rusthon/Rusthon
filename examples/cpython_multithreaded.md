@@ -11,6 +11,8 @@ class A:
 	def __init__(self, name):
 		self.name  = name
 		self.value = 0
+		self.flag  = True
+		self.number = 1.5
 		self.array = numpy.array([1,2,3,4]).astype(int)
 
 	def echo(self, s):
@@ -96,6 +98,12 @@ def main():
 		a->echo('hello world')
 		name = a->name as string
 		print 'name:', name
+		n = a->number as float
+		print 'number:', n
+		n = a->number as f64
+		print 'number:', n
+		f = a->flag as bool
+		print 'flag:', f
 
 	print 'addr of a:', a
 

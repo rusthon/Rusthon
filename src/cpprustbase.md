@@ -1371,8 +1371,14 @@ regular Python has no support for.
 						if ptr.startswith('PyObject_GetAttrString') or ptr.startswith('PyObject_Call'):
 							if cast_to == 'int':
 								return 'static_cast<%s>(PyInt_AS_LONG(%s))' %(cast_to, ptr)
+							elif cast_to in ('float','f32'):
+								return 'static_cast<%s>(PyFloat_AsDouble(%s))' %(cast_to, ptr)
+							elif cast_to in ('double','f64'):
+								return 'PyFloat_AsDouble(%s)' %ptr
 							elif cast_to == 'string':
 								return 'std::string(PyString_AS_STRING(%s))' %ptr
+							elif cast_to == 'bool':
+								return '(%s==Py_True)' %ptr
 							else:
 								raise RuntimeError('TODO other cast to types for cpython')
 						else:
