@@ -225,7 +225,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._in_lambda = False
 		self._in_while_test = False
 		self._use_threading = False
-		self._use_sleep = False
+		self._use_sleep = False  ## only for the js backend, makes while loops `sleep` using setTimeOut
 		self._use_array = False
 		self._webworker_functions = dict()
 		self._with_webworker = False
@@ -485,8 +485,11 @@ class PythonToPythonJS(NodeVisitorBase):
 			path = os.path.join( './', node.module+'.py')
 
 		if node.module == 'time' and node.names[0].name == 'sleep':
-			self._use_sleep = True
-		elif node.module == 'array' and node.names[0].name == 'array':
+			if not (self._with_cpp or self._with_rust or self._with_go or self._with_ll):
+				self._use_sleep = True
+
+		############################################################
+		if node.module == 'array' and node.names[0].name == 'array':
 			self._use_array = True ## this is just a hint that calls to array call the builtin array
 
 		elif node.module == 'bisect' and node.names[0].name == 'bisect':
@@ -505,7 +508,7 @@ class PythonToPythonJS(NodeVisitorBase):
 						if fakestdlib.REQUIRES in lib[node.module]:
 							writer.write('import %s' %','.join(lib[node.module][fakestdlib.REQUIRES]))
 
-					writer.write( 'JS("%s")' %lib[node.module][n.name] )
+					writer.write( 'inline("%s")' %lib[node.module][n.name] )
 					if n.name not in self._builtin_functions:
 						self._builtin_functions[ n.name ] = n.name + '()'
 

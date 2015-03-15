@@ -43,6 +43,7 @@ Build Options
 ```rusthon
 #backend:c++
 import cpython
+from time import sleep
 
 with pointers:
 	def thread_runner(pyob:PyObject):
@@ -62,7 +63,7 @@ with pointers:
 			with gil:
 				v = pyob->value as int
 			print 'thread1:', v
-			inline('std::this_thread::sleep_for(std::chrono::milliseconds(100))')
+			sleep(0.5)
 
 		#for i in range(100):
 		#	v = pyob->value as int
