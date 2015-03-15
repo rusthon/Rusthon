@@ -118,6 +118,9 @@ class CppGenerator( RustGenerator ):
 			header.append('};')
 			header.extend( impl )
 
+		if 'hasattr' in self._called_functions and self._has_cpython:
+			header.append('bool hasattr(PyObject* o, std::string s) { return PyObject_HasAttrString(o,s.c_str());} ')
+
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		cheader = None
 		cppheader = None

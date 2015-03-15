@@ -1,6 +1,7 @@
 Transpiler Base Class
 ---------------------
 shared methods used by most backends are here.
+TODO move `__init__` from jstranslator.md to here.
 
 Imports
 -------
@@ -69,9 +70,21 @@ class GeneratorBase( CLikeLanguage ):
 	def _visit_call_special( self, node ):
 		raise NotImplementedError('special call')
 
+```
+Call Function/Method
+--------------------
+
+The backends subclass _visit_call_helper, which gets called here after doing some bookeeping like
+tracking what function names have been called, so backends can check `self._called_funtions` and
+do extra things like inline extra helper code for things like `hasattr`, etc.
+
+```python
 
 	def visit_Call(self, node):
 		name = self.visit(node.func)
+		if name not in self._called_functions:
+			self._called_functions[name] = 0
+		self._called_functions[name] += 1
 
 		if name in typedpython.GO_SPECIAL_CALLS.values():
 			return self._visit_call_helper_go( node )

@@ -59,10 +59,10 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		self._cheader = []
 		self._cppheader = []
 		self._cpp_class_impl = []
-		self._match_stack = []  # dicts of cases
-		self._rename_hacks = {}  ## used by c++ backend, to support `if isinstance`
-		self._globals = {}  ## name : type
-
+		self._match_stack = []       ## dicts of cases
+		self._rename_hacks = {}      ## used by c++ backend, to support `if isinstance`
+		self._globals = {}           ## name : type
+		self._called_functions = {}  ## name : number of calls
 ```
 
 reset

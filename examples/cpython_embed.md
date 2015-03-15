@@ -76,6 +76,9 @@ def main():
 		) as int
 		print u
 
+		if hasattr(b, "value"):
+			print('builtin `hasattr` works on b')
+
 	cpython.finalize(state)
 
 ```
