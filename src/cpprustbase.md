@@ -708,7 +708,7 @@ Subscript `a[n]`
 					value = self.visit(node.value)
 					r = '(*%s)[%s]' % (value, self.visit(node.slice))
 					if value.startswith('PyObject_GetAttrString(') and value.endswith(')'):
-						r = 'PyObject_CallFunction(PyObject_GetAttrString(%s,"__getitem__"), "i", %s)' % (value, self.visit(node.slice))
+						r = 'PyObject_CallFunction(PyObject_GetAttrString(%s,"__getitem__"),"i", %s)' % (value, self.visit(node.slice))
 
 					elif isinstance(node.value, ast.Name):
 						target = node.value.id
@@ -3140,6 +3140,13 @@ because they need some special handling in other places.
 					else:
 						return 'PyObject_SetAttrString(%s, "%s", %s);'%(pyob,attr, value)
 
+				elif target.startswith('PyObject_CallFunction(') and target.endswith(')'):
+					## hackish way to support `pyob->somearray[n]
+					hack = target.replace(
+						'"__getitem__"),"i",',
+						'"__setitem__"),"iO",'
+					)
+					return '%s, %s);' %( hack[:-1], value )
 				else:
 					return '%s = %s;' % (target, value)
 

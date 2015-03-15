@@ -11,6 +11,10 @@ class A():
 	def __init__(self):
 		self.value = 0
 		self.array = numpy.array([1,2,3,4]).astype(int)
+
+	def show_array(self):
+		print self.array
+
 	def run(self):
 		print '-----starting run'
 		while self.value < 10:
@@ -84,6 +88,9 @@ def main():
 		for i in range(4):
 			b = a->array[i] as int
 			print 'numpy array data:', b
+			a->array[i] = PyInt_FromLong(i*10)
+
+		a->show_array()
 
 	print 'addr of a:', a
 
