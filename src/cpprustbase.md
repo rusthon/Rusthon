@@ -1085,6 +1085,8 @@ handles all special calls
 				arg = self.visit(node.args[0])
 				if arg in self._known_strings:
 					return '%s.size()' %arg
+				elif arg.startswith('PyObject_GetAttrString(') and arg.endswith(')'):
+					return '(long)PySequence_Length(%s)' %arg
 				else:
 					return '%s->size()' %arg
 			else:
