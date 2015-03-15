@@ -1364,8 +1364,12 @@ regular Python has no support for.
 				if self._rust:
 					return '%s %s' %(self.visit(node.left), cast_to)
 				else:
-					if self.is_prim_type(cast_to):
-						ptr = self.visit(node.left.left)
+					ptr = self.visit(node.left.left)
+					if cast_to in 'pystring pystr pyint pylong pyfloat pydouble pybool'.split():
+						if cast_to=='pystring' or cast_to=='pystr':
+							return 'PyString_FromString(%s.c_str())' %ptr
+
+					elif self.is_prim_type(cast_to):
 						if type(ptr) is tuple: ## this is probably a bug
 							ptr = ptr[0]
 						if ptr.startswith('PyObject_GetAttrString') or ptr.startswith('PyObject_Call'):

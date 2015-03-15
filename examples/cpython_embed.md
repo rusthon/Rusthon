@@ -12,7 +12,10 @@ class A():
 	def __init__(self):
 		self.value = 100
 	def pymethod(self):
-		print 'hello world'
+		print 'from cpython: self.value=', self.value
+		if hasattr(self, 'my_dynamic_var'):
+			print self.my_dynamic_var
+
 	def add(self, a,b):
 		return a+b
 
@@ -78,6 +81,16 @@ def main():
 
 		if hasattr(b, "value"):
 			print('builtin `hasattr` works on b')
+			print str(b)
+			b->value = 'set from c++' as pystring
+			b->pymethod()
+			b->my_dynamic_var = 'hello dynamic var' as pystring
+			a->pymethod()
+			setattr(a, 'my_dynamic_var', 'setattr OK' as pystring)
+			a->pymethod()
+
+			s = b->my_dynamic_var as string
+			print s
 
 	cpython.finalize(state)
 

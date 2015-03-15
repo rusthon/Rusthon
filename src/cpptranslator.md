@@ -118,8 +118,16 @@ class CppGenerator( RustGenerator ):
 			header.append('};')
 			header.extend( impl )
 
-		if 'hasattr' in self._called_functions and self._has_cpython:
-			header.append('bool hasattr(PyObject* o, std::string s) { return PyObject_HasAttrString(o,s.c_str());} ')
+		if self._has_cpython:
+			if 'hasattr' in self._called_functions:
+				header.append('bool hasattr(PyObject* o, std::string s) { return PyObject_HasAttrString(o,s.c_str());} ')
+			if 'getattr' in self._called_functions:
+				header.append('PyObject* getattr(PyObject* o, std::string s) { return PyObject_GetAttrString(o,s.c_str());} ')
+			if 'setattr' in self._called_functions:
+				header.append('void setattr(PyObject* o, std::string s, PyObject* v) { PyObject_SetAttrString(o,s.c_str(),v);} ')
+			if 'str' in self._called_functions:
+				header.append('std::string str(PyObject* o) { return std::string( PyString_AS_STRING(PyObject_Str(o)) );} ')
+
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		cheader = None
