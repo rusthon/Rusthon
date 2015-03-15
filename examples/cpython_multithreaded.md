@@ -7,8 +7,9 @@ CPython Threads GIL Test
 import thread, time
 import numpy
 
-class A():
-	def __init__(self):
+class A:
+	def __init__(self, name):
+		self.name  = name
 		self.value = 0
 		self.array = numpy.array([1,2,3,4]).astype(int)
 
@@ -28,8 +29,6 @@ class A():
 	def run_thread(self):
 		thread.start_new_thread(self.run, ())
 
-def make_A():
-	return A()
 
 ```
 
@@ -84,7 +83,7 @@ def main():
 	output = channel(PyObject)
 
 	with gil:
-		a = cpython.make_A()
+		a = cpython.A('xxx')
 		x = 99
 		a->value = PyInt_FromLong(x)
 		a->value = 1

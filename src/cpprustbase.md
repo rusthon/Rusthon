@@ -800,7 +800,8 @@ handles all special calls
 			elif n == 'finalize':
 				return '__cpython_finalize__(%s)' %self.visit(node.args[0])
 			else:
-				return '__cpython_call__("%s")' %n
+				c = '__cpython_get__("%s")' %n
+				return self.gen_cpy_call(c, node)
 
 		elif fname.startswith('nim->'):
 			if fname.endswith('main'):
@@ -2955,8 +2956,8 @@ because they need some special handling in other places.
 						raise GenerateGenericSwitch( {'target':target, 'value':value, 'class':cname, 'method':node.value.func.attr} )
 
 				if self._cpp:
-					if value.startswith('__cpython_call__'):
-						self._known_pyobjects[ target ] = varname
+					#if value.startswith('__cpython_call__'):  ## logic no longer requires _known_pyobjects
+					#	self._known_pyobjects[ target ] = varname
 					return 'auto %s = %s;			/* %s */' % (target, value, info)
 				else:
 					if '.borrow_mut()' in value:
