@@ -94,6 +94,8 @@ def main():
 
 		a->show_array()
 		a->echo('hello world')
+		name = a->name as string
+		print 'name:', name
 
 	print 'addr of a:', a
 
