@@ -3125,10 +3125,20 @@ because they need some special handling in other places.
 						r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
 					return r
 
-				#elif is_attr and target.startswith('this'):
-				#	raise RuntimeError(value)
-				#elif target.startswith('this'):  ## __let__(special3)
-				#	raise RuntimeError('todo this should not happen?')
+				elif is_attr and target.startswith('PyObject_GetAttrString(') and target.endswith(')'):
+					pyob = self.visit(node.targets[0].value.value)
+					attr = node.targets[0].attr
+					if isinstance(node.value, ast.Num):
+						if str(node.value.n).isdigit():
+							return 'PyObject_SetAttrString(%s, "%s", PyInt_FromLong(%s));'%(pyob,attr, value)
+
+						else:
+							return 'PyObject_SetAttrString(%s, "%s", PyFloat_FromDouble(%s));'%(pyob,attr, value)
+
+					elif isinstance(node.value, ast.Str):
+						raise RuntimeError('TODO assign str to pyobject')
+					else:
+						return 'PyObject_SetAttrString(%s, "%s", %s);'%(pyob,attr, value)
 
 				else:
 					return '%s = %s;' % (target, value)

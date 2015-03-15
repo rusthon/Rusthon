@@ -78,6 +78,9 @@ def main():
 
 	with gil:
 		a = cpython.make_A()
+		x = 99
+		a->value = PyInt_FromLong(x)
+		a->value = 1
 		for i in range(4):
 			b = a->array[i] as int
 			print 'numpy array data:', b
