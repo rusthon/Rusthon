@@ -12,6 +12,9 @@ class A():
 		self.value = 0
 		self.array = numpy.array([1,2,3,4]).astype(int)
 
+	def echo(self, s):
+		print s
+
 	def show_array(self):
 		print self.array
 
@@ -91,6 +94,7 @@ def main():
 			a->array[i] = PyInt_FromLong(i*10)
 
 		a->show_array()
+		a->echo('hello world')
 
 	print 'addr of a:', a
 

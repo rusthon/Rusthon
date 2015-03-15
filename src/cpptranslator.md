@@ -312,6 +312,9 @@ user syntax `import cpython` and `->`
 					else:
 						n = 'PyFloat_FromDouble(%s)' %n
 						lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, n))
+				elif isinstance(arg, ast.Str):
+					n = 'PyString_FromString("%s")' %arg.s
+					lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, n))
 				else:
 					lambda_args.append('PyTuple_SetItem(args, %s, %s);' %(i, self.visit(arg)))
 			lambda_args.append('return args; }()')
