@@ -4,6 +4,7 @@ Python to Intermediate Form
 by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 License: "New BSD"
 
+* [@import fakestdlib.md](fakestdlib.md)
 
 ```python
 
@@ -29,11 +30,6 @@ from ast import With
 from ast import parse
 from ast import NodeVisitor
 
-#import typedpython
-#import ministdlib
-#import code_writer
-#import ast_utils
-#from ast_utils import *
 
 
 POWER_OF_TWO = [ 2**i for i in range(32) ]
@@ -471,17 +467,17 @@ class PythonToPythonJS(NodeVisitorBase):
 
 	def visit_ImportFrom(self, node):
 		if self._with_dart:
-			lib = ministdlib.DART
+			lib = fakestdlib.DART
 		elif self._with_lua:
-			lib = ministdlib.LUA
+			lib = fakestdlib.LUA
 		elif self._with_go:
-			lib = ministdlib.GO
+			lib = fakestdlib.GO
 		elif self._with_cpp:
-			lib = ministdlib.CPP
+			lib = fakestdlib.CPP
 		elif self._with_rust:
 			lib = {}
 		else:
-			lib = ministdlib.JS
+			lib = fakestdlib.JS
 
 		if self._module_path:
 			path = os.path.join( self._module_path, node.module+'.py')
@@ -506,8 +502,8 @@ class PythonToPythonJS(NodeVisitorBase):
 				if n.name in lib[ node.module ]:
 					if not imported:
 						imported = True
-						if ministdlib.REQUIRES in lib[node.module]:
-							writer.write('import %s' %','.join(lib[node.module][ministdlib.REQUIRES]))
+						if fakestdlib.REQUIRES in lib[node.module]:
+							writer.write('import %s' %','.join(lib[node.module][fakestdlib.REQUIRES]))
 
 					writer.write( 'JS("%s")' %lib[node.module][n.name] )
 					if n.name not in self._builtin_functions:
