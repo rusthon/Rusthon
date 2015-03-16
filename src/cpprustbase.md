@@ -1367,9 +1367,15 @@ regular Python has no support for.
 					return '%s %s' %(self.visit(node.left), cast_to)
 				else:
 					ptr = self.visit(node.left.left)
-					if cast_to in 'pystring pystr pyint pylong pyfloat pydouble pybool'.split():
+					if cast_to in 'pystring pystr pyint pyi32 pylong pyi64 pyfloat pydouble pyf32 pyf64 pybool'.split():
 						if cast_to=='pystring' or cast_to=='pystr':
 							return 'PyString_FromString(%s.c_str())' %ptr
+						elif cast_to in 'pyint pyi32 pylong pyi64'.split():
+							return 'PyInt_FromLong(%s)' %ptr
+						elif cast_to in 'pyfloat pyf32'.split():
+							return 'PyFloat_FromDouble(%s)' %ptr
+						else:
+							raise RuntimeError('TODO as type: %s'%cast_to)
 
 					elif self.is_prim_type(cast_to):
 						if type(ptr) is tuple: ## this is probably a bug
