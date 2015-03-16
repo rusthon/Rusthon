@@ -495,16 +495,16 @@ Also implements extra syntax like `switch` and `select`.
 			if not isinstance(node.context_expr.func, ast.Name):
 				raise SyntaxError( self.visit(node.context_expr))
 
-			if len(node.context_expr.args):
-				a = self.visit(node.context_expr.args[0])
-			else:
-				assert len(node.context_expr.keywords)
-				## need to catch if this is a new variable ##
-				name = node.context_expr.keywords[0].arg
-				if name not in self._known_vars:
-					a = 'let %s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
-				else:
-					a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
+			#if len(node.context_expr.args):  ## what was this used for?
+			#	a = self.visit(node.context_expr.args[0])
+			#else:
+			#	assert len(node.context_expr.keywords)
+			#	## need to catch if this is a new variable ##
+			#	name = node.context_expr.keywords[0].arg
+			#	if name not in self._known_vars:
+			#		a = 'let %s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
+			#	else:
+			#		a = '%s = %s' %(name, self.visit(node.context_expr.keywords[0].value))
 
 			if node.context_expr.func.id == '__case__':
 				is_case = True
