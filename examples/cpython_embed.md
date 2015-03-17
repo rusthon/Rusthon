@@ -92,6 +92,10 @@ def main():
 			s = b->my_dynamic_var as string
 			print s
 
+		pyob = cpython.foo()
+		b->my_dynamic_var = pyob
+		b->pymethod()
+
 	cpython.finalize(state)
 
 ```
