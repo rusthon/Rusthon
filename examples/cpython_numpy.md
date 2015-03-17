@@ -61,10 +61,10 @@ def main():
 			vec.append(value)
 			m->lst->append(i as pyint)
 		m->show()
-		for j in range( len(m->v2) ):
-			a = m->v2[j] as float
+		for i in range( len(m->v2) ):
+			a = m->v2[i] as float
 			print a
-			m->v2[j] = 3.14 as pyfloat
+			m->v2[i] = 3.14 as pyfloat
 		m->show()
 
 	print 'length of vec copy:', len(vec)

@@ -3639,7 +3639,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			raise NotImplementedError('unknown iterator target type: %s'%target)
 
 
-		if self._with_ll:
+		if self._with_ll or self._with_cpp or self._with_rust or self._with_go:
 			writer.write('for %s in %s:' %(self.visit(target), self.visit(iter)))
 			writer.push()
 			map(self.visit, node.body)
