@@ -120,8 +120,8 @@ hooks into bad magic hack, 2nd pass rustc compile.
 				target = self.visit(node.target.elts[0])
 				astype = self.visit(node.target.elts[2])
 				if iter.startswith('PyObject_GetAttrString('):
-					lines.append('PyObject *__pyiterator = PyObject_GetIter(%s);' %iter)
-					lines.append('while (auto _pyob_%s = PyIter_Next(__pyiterator)) {' %target)
+					lines.append('PyObject* __pyiter__%s = PyObject_GetIter(%s);' %(target,iter))
+					lines.append('while (auto _pyob_%s = PyIter_Next(__pyiter__%s)) {' %(target, target))
 					if astype in 'int long i32 i64'.split():
 						lines.append('	auto %s = PyInt_AS_LONG(_pyob_%s);' %(target,target))
 				else:
@@ -281,6 +281,16 @@ TODO test `if pointer:` c++
 			target = self.visit(node.test.args[0])
 			classname = self.visit(node.test.args[1])
 			test = '(%s->__class__==std::string("%s"))' %(target, classname)
+
+		elif isinstance(node.test, ast.Call) and isinstance(node.test.func, ast.Name) and node.test.func.id=='ispyinstance':
+			#isinstance_test = True
+			target = self.visit(node.test.args[0])
+			classname = self.visit(node.test.args[1])
+			test = 'ispyinstance(%s, std::string("%s"))==true' %(target, classname)
+			if 'ispyinstance' not in self._called_functions:
+				self._called_functions['ispyinstance'] = 0
+			self._called_functions['ispyinstance'] += 1
+
 		else:
 			test = '%s==true' %self.visit(node.test)
 

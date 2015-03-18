@@ -70,6 +70,14 @@ def main():
 		for item as int in m->lst:
 			print 'list item:', item
 
+		m->lst->append("hello list" as pystring)
+		m->show()
+		for something in m->lst:
+			if ispyinstance(something, int):
+				print 'item is a int'
+			if ispyinstance(something, str):
+				print 'item is a string'
+
 	print 'length of vec copy:', len(vec)
 
 	cpython.finalize(state)
