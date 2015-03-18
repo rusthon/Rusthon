@@ -464,6 +464,8 @@ class typedpython:
 			if not c.startswith('except ') and ' as ' in c:
 				if (c.strip().startswith('return ') or '(' in c or ')' in c or '=' in c or c.strip().startswith('print')):
 					c = c.replace(' as ', '<<__as__<<')
+				elif c.strip().startswith('for '):
+					c = c.replace('for ', 'for (').replace(' in ', ') in ').replace(' as ', ',__as__,')
 
 			if c.strip().startswith('with asm('):
 				asm_block = True

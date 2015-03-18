@@ -116,17 +116,30 @@ hooks into bad magic hack, 2nd pass rustc compile.
 
 		elif isinstance(node.target, ast.List) or isinstance(node.target, ast.Tuple):
 			iter = self.visit( node.iter )
-			key = self.visit(node.target.elts[0])
-			val = self.visit(node.target.elts[1])
-			iname = iter.split('.')[0]
-			if self._cpp:
-				assert iname in self._known_maps  ## TODO always assume its a map? and _ref_?
-				lines.append('for (auto &_pair_%s : *%s) {' %(key, iter))
-				lines[-1] += '  auto %s = _pair_%s.first;' %(key, key)
-				lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
+			if len(node.target.elts)==3 and isinstance(node.target.elts[1], ast.Name) and node.target.elts[1].id == '__as__':
+				target = self.visit(node.target.elts[0])
+				astype = self.visit(node.target.elts[2])
+				if iter.startswith('PyObject_GetAttrString('):
+					lines.append('PyObject *__pyiterator = PyObject_GetIter(%s);' %iter)
+					lines.append('while (auto _pyob_%s = PyIter_Next(__pyiterator)) {' %target)
+					if astype in 'int long i32 i64'.split():
+						lines.append('	auto %s = PyInt_AS_LONG(_pyob_%s);' %(target,target))
+				else:
+					lines.append('for (auto &%s: *%s) {' %(target, iter))
 
 			else:
-				lines.append('for (%s,&%s) in %s.iter() {' %(key,val, iter))
+				key = self.visit(node.target.elts[0])
+				val = self.visit(node.target.elts[1])
+				iname = iter.split('.')[0]
+				if self._cpp:
+					if iname not in self._known_maps:
+						raise SyntaxError(self.format_error('for loop target tuple unpack over some unknown type, not a known map'))
+					lines.append('for (auto &_pair_%s : *%s) {' %(key, iter))
+					lines[-1] += '  auto %s = _pair_%s.first;' %(key, key)
+					lines[-1] += '  auto %s = _pair_%s.second;' %(val, key)
+
+				else:  ## rust
+					lines.append('for (%s,&%s) in %s.iter() {' %(key,val, iter))
 
 		else:
 

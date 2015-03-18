@@ -67,8 +67,8 @@ def main():
 			m->v2[i] = 3.14 as pyfloat
 		m->show()
 
-		for item in m->lst:
-			print item
+		for item as int in m->lst:
+			print 'list item:', item
 
 	print 'length of vec copy:', len(vec)
 
