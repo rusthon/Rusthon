@@ -17,9 +17,24 @@ void __cpython_finalize__(PyThreadState* state) {
 	Py_Finalize();
 }
 PyObject* __cpython_get__(const char* name) {
-	auto mod = PyImport_AddModule("__main__");
+	auto mod  = PyImport_AddModule("__main__");
 	auto dict = PyModule_GetDict(mod);
-	return PyDict_GetItemString(dict, name);
+	auto ptr  = PyDict_GetItemString(dict, name);
+	if (ptr==nullptr) {
+		std::cout << "checking __builtins__" << std::endl;
+		std::cout << name << std::endl;
+		auto bmod  = PyImport_AddModule("__builtins__");
+		auto bdict = PyModule_GetDict(bmod);
+		auto bptr  = PyDict_GetItemString(bdict, name);
+		if (bptr==nullptr) {
+			std::cout << "ERROR" << std::endl;
+		} else {
+			return bptr;
+		}
+
+	} else {
+		return ptr;
+	}
 }
 PyObject* __cpython_call__(const char* name) {
 	auto empty_tuple = Py_BuildValue("()");

@@ -75,8 +75,10 @@ def main():
 		for something in m->lst:
 			if ispyinstance(something, int):
 				print 'item is a int'
+				print something
 			if ispyinstance(something, str):
 				print 'item is a string'
+				print something
 
 	print 'length of vec copy:', len(vec)
 

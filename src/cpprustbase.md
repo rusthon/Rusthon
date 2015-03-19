@@ -262,6 +262,7 @@ TODO test `if pointer:` c++
 	def visit_If(self, node):
 		out = []
 		isinstance_test = False
+		ispyinstance_test = False
 		target = None
 		classname = None
 
@@ -283,7 +284,7 @@ TODO test `if pointer:` c++
 			test = '(%s->__class__==std::string("%s"))' %(target, classname)
 
 		elif isinstance(node.test, ast.Call) and isinstance(node.test.func, ast.Name) and node.test.func.id=='ispyinstance':
-			#isinstance_test = True
+			ispyinstance_test = True
 			target = self.visit(node.test.args[0])
 			classname = self.visit(node.test.args[1])
 			test = 'ispyinstance(%s, std::string("%s"))==true' %(target, classname)
@@ -304,6 +305,17 @@ TODO test `if pointer:` c++
 				out.append(self.indent()+'auto _cast_%s = std::dynamic_pointer_cast<%s>(%s);' %(target, classname, target))
 			else:
 				out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
+
+		if ispyinstance_test:
+			assert self._cpp
+			self._rename_hacks[target] = '_cast_%s' %target
+			if classname in 'int i32 long i64'.split():
+				out.append(self.indent()+'auto _cast_%s = PyInt_AS_LONG(%s);' %(target, target))
+			elif classname in 'string str'.split():
+				out.append(self.indent()+'auto _cast_%s = std::string(PyString_AS_STRING(%s));' %(target, target))
+			else:
+				raise RuntimeError('TODO pytype:'+classname)
+
 
 		for line in list(map(self.visit, node.body)):
 			if line is None: continue

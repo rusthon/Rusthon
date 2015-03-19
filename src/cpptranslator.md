@@ -129,7 +129,11 @@ class CppGenerator( RustGenerator ):
 				header.append('std::string str(PyObject* o) { return std::string( PyString_AS_STRING(PyObject_Str(o)) );} ')
 			if 'ispyinstance' in self._called_functions:
 				header.append('bool ispyinstance(PyObject* o, std::string s) {')
-				header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')
+				##header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')  ## TODO fix
+				header.append('  if ( std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")))==s ) { return true; }')
+				header.append('  else { return false; }')
+
+				header.append('} ')
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		cheader = None
