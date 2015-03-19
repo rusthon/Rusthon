@@ -306,7 +306,7 @@ TODO test `if pointer:` c++
 			else:
 				out.append(self.indent()+'auto _cast_%s = std::static_pointer_cast<%s>(%s);' %(target, classname, target))
 
-		if ispyinstance_test:
+		elif ispyinstance_test:
 			assert self._cpp
 			self._rename_hacks[target] = '_cast_%s' %target
 			if classname in 'int i32 long i64'.split():
@@ -327,7 +327,7 @@ TODO test `if pointer:` c++
 
 		self.pull()
 
-		if isinstance_test:
+		if isinstance_test or ispyinstance_test:
 			self._rename_hacks.pop(target)
 
 		if orelse:
