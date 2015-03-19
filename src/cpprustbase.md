@@ -323,14 +323,15 @@ TODO test `if pointer:` c++
 			if line is None: continue
 			out.append( self.indent() + line )
 
+		if isinstance_test or ispyinstance_test:
+			self._rename_hacks.pop(target)
+
+
 		orelse = []
 		for line in list(map(self.visit, node.orelse)):
 			orelse.append( self.indent() + line )
 
 		self.pull()
-
-		if isinstance_test or ispyinstance_test:
-			self._rename_hacks.pop(target)
 
 		if orelse:
 			out.append( self.indent() + '} else {')
