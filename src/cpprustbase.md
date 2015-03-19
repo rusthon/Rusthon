@@ -311,6 +311,8 @@ TODO test `if pointer:` c++
 			self._rename_hacks[target] = '_cast_%s' %target
 			if classname in 'int i32 long i64'.split():
 				out.append(self.indent()+'auto _cast_%s = PyInt_AS_LONG(%s);' %(target, target))
+			elif classname in 'float f32 double f64'.split():
+				out.append(self.indent()+'auto _cast_%s = PyFloat_AS_DOUBLE(%s);' %(target, target))
 			elif classname in 'string str'.split():
 				out.append(self.indent()+'auto _cast_%s = std::string(PyString_AS_STRING(%s));' %(target, target))
 			else:

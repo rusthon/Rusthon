@@ -71,6 +71,8 @@ def main():
 			print 'list item:', item
 
 		m->lst->append("hello list" as pystring)
+		m->lst->append(1.123456789 as pyfloat)
+
 		m->show()
 		for something in m->lst:
 			if ispyinstance(something, int):
@@ -78,6 +80,10 @@ def main():
 				print something
 			if ispyinstance(something, str):
 				print 'item is a string'
+				print something
+
+			if ispyinstance(something, float):
+				print 'item is a float'
 				print something
 
 	print 'length of vec copy:', len(vec)
