@@ -132,8 +132,11 @@ class CppGenerator( RustGenerator ):
 				##header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')  ## TODO fix
 				header.append('  if ( std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")))==s ) { return true; }')
 				header.append('  else { return false; }')
-
 				header.append('} ')
+			if 'pytype' in self._called_functions:
+				header.append('std::string pytype(PyObject* o) { return std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")));} ')
+
+
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
 		cheader = None

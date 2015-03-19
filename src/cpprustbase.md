@@ -316,7 +316,10 @@ TODO test `if pointer:` c++
 			elif classname in 'string str'.split():
 				out.append(self.indent()+'auto _cast_%s = std::string(PyString_AS_STRING(%s));' %(target, target))
 			else:
-				raise RuntimeError('TODO pytype:'+classname)
+				#raise RuntimeError('TODO pytype:'+classname)
+				## user class
+				self._rename_hacks.pop(target)
+				
 
 
 		for line in list(map(self.visit, node.body)):
@@ -324,7 +327,8 @@ TODO test `if pointer:` c++
 			out.append( self.indent() + line )
 
 		if isinstance_test or ispyinstance_test:
-			self._rename_hacks.pop(target)
+			if target in self._rename_hacks:
+				self._rename_hacks.pop(target)
 
 
 		orelse = []

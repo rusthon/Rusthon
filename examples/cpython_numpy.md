@@ -76,6 +76,8 @@ def main():
 
 		m->show()
 		for something in m->lst:
+			print pytype(something)
+
 			if ispyinstance(something, int):
 				print 'item is a int'
 				print something
@@ -85,8 +87,11 @@ def main():
 			elif ispyinstance(something, float):
 				print 'item is a float'
 				print something
+			elif ispyinstance(something, Mat):
+				print 'item is an instance of Mat'
+				print something				
 			else:
-				print 'item is some object'
+				print 'item is unknown some object'
 				print something
 
 	print 'length of vec copy:', len(vec)
