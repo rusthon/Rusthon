@@ -2,14 +2,22 @@
 
 ![highleveloverview](http://rusthon.github.io/Rusthon/images/RusthonC++.svg)
 
-Get Started
+Docs
 -----------
-https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns
-https://github.com/rusthon/Rusthon/wiki/Lists-and-Arrays
-https://github.com/rusthon/Rusthon/wiki/concurrency
-https://github.com/rusthon/Rusthon/wiki/CPython-Integration
-https://github.com/rusthon/Rusthon/wiki/Array-Generics
-https://github.com/rusthon/Rusthon/wiki/Java-Frontend
+[markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
+[syntax overview](https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md)
+[vectors](https://github.com/rusthon/Rusthon/wiki/Lists-and-Arrays)
+[concurrency](https://github.com/rusthon/Rusthon/wiki/concurrency)
+[cpython integration](https://github.com/rusthon/Rusthon/wiki/CPython-Integration)
+[arrays and generics](https://github.com/rusthon/Rusthon/wiki/Array-Generics)
+[java frontend](https://github.com/rusthon/Rusthon/wiki/Java-Frontend)
+[memory and reference counting](https://github.com/rusthon/Rusthon/blob/master/doc/memory.md)
+[weak references](https://github.com/rusthon/Rusthon/wiki/Weak-References)
+[javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
+[nim integration](https://github.com/rusthon/Rusthon/wiki/Nim-Integration)
+
+Quick Start
+-----------
 
 After git cloning this repo, try example-project.md, it is a multi-language project in a single markdown file.
 ```
@@ -26,9 +34,6 @@ javascripts and python scripts inside the markdown, and compiled exes.
 
 Docs
 ----
-https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md
-https://github.com/rusthon/Rusthon/blob/master/doc/memory.md
-https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md
 
 
 Example
