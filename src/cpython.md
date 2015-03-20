@@ -46,4 +46,27 @@ PyObject* __cpython_call__(const char* name) {
 def gen_cpython_header():
 	return CPYTHON_HEAD
 
+
+class CPythonGenerator:
+	def gen_cpython_helpers(self):
+		header = []
+		if 'hasattr' in self._called_functions:
+			header.append('bool hasattr(PyObject* o, std::string s) { return PyObject_HasAttrString(o,s.c_str());} ')
+		if 'getattr' in self._called_functions:
+			header.append('PyObject* getattr(PyObject* o, std::string s) { return PyObject_GetAttrString(o,s.c_str());} ')
+		if 'setattr' in self._called_functions:
+			header.append('void setattr(PyObject* o, std::string s, PyObject* v) { PyObject_SetAttrString(o,s.c_str(),v);} ')
+		if 'str' in self._called_functions:
+			header.append('std::string str(PyObject* o) { return std::string( PyString_AS_STRING(PyObject_Str(o)) );} ')
+		if 'ispyinstance' in self._called_functions:
+			header.append('bool ispyinstance(PyObject* o, std::string s) {')
+			##header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')  ## TODO fix
+			header.append('  if ( std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")))==s ) { return true; }')
+			header.append('  else { return false; }')
+			header.append('} ')
+		if 'pytype' in self._called_functions:
+			header.append('std::string pytype(PyObject* o) { return std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")));} ')
+
+		return '\n'.join(header)
+
 ```

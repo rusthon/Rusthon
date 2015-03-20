@@ -31,7 +31,7 @@ TODO: make inline cpp-channel.h an option.
 
 ```python
 
-class CppGenerator( RustGenerator ):
+class CppGenerator( RustGenerator, CPythonGenerator ):
 
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
@@ -119,23 +119,7 @@ class CppGenerator( RustGenerator ):
 			header.extend( impl )
 
 		if self._has_cpython:
-			if 'hasattr' in self._called_functions:
-				header.append('bool hasattr(PyObject* o, std::string s) { return PyObject_HasAttrString(o,s.c_str());} ')
-			if 'getattr' in self._called_functions:
-				header.append('PyObject* getattr(PyObject* o, std::string s) { return PyObject_GetAttrString(o,s.c_str());} ')
-			if 'setattr' in self._called_functions:
-				header.append('void setattr(PyObject* o, std::string s, PyObject* v) { PyObject_SetAttrString(o,s.c_str(),v);} ')
-			if 'str' in self._called_functions:
-				header.append('std::string str(PyObject* o) { return std::string( PyString_AS_STRING(PyObject_Str(o)) );} ')
-			if 'ispyinstance' in self._called_functions:
-				header.append('bool ispyinstance(PyObject* o, std::string s) {')
-				##header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')  ## TODO fix
-				header.append('  if ( std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")))==s ) { return true; }')
-				header.append('  else { return false; }')
-				header.append('} ')
-			if 'pytype' in self._called_functions:
-				header.append('std::string pytype(PyObject* o) { return std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")));} ')
-
+			header.append( self.gen_cpython_helpers() )
 
 
 		self.output_pak = pak = {'c_header':'', 'cpp_header':'', 'main':''}
