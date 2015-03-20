@@ -77,6 +77,7 @@ def main():
 		m->show()
 		for something in m->lst:
 			print pytype(something)
+			print something->__class__->__name__ as string
 
 			if ispyinstance(something, int):
 				print 'item is a int'

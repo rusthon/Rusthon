@@ -46,6 +46,27 @@ PyObject* __cpython_call__(const char* name) {
 def gen_cpython_header():
 	return CPYTHON_HEAD
 
+CPYTHON_ISPYINSTANCE = '''
+bool ispyinstance(PyObject* pyob, std::string classname) {
+	// TODO: PyObject_IsInstance(pyob, pyobclass)
+	// the problem with directly using `ob_type` and reading `__name__` is object instances are "instance",
+	// and not the name of the class.  For now we simply just check the class name without any namespace `o.__class__.__name__`
+	//auto name = std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)pyob->ob_type, "__name__")));
+	//if ( name==std::string("instance")) {
+	//	auto classob = PyObject_GetAttrString(pyob, "__class__");
+	//	name = std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)classob->ob_type, "__name__")));
+	//}
+	auto name = std::string(PyString_AS_STRING(PyObject_GetAttrString(PyObject_GetAttrString(pyob,"__class__"), "__name__")));
+	if ( name==classname ) { return true; }
+	else { return false; }
+}
+'''
+
+CPYTHON_PYTYPE = '''
+std::string pytype(PyObject* pyob) { 
+	return std::string(PyString_AS_STRING(PyObject_GetAttrString(PyObject_GetAttrString(pyob,"__class__"), "__name__")));
+}
+'''
 
 class CPythonGenerator:
 	def gen_cpython_helpers(self):
@@ -59,13 +80,9 @@ class CPythonGenerator:
 		if 'str' in self._called_functions:
 			header.append('std::string str(PyObject* o) { return std::string( PyString_AS_STRING(PyObject_Str(o)) );} ')
 		if 'ispyinstance' in self._called_functions:
-			header.append('bool ispyinstance(PyObject* o, std::string s) {')
-			##header.append(' return PyObject_IsInstance(o, __cpython_get__(s.c_str()));} ')  ## TODO fix
-			header.append('  if ( std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")))==s ) { return true; }')
-			header.append('  else { return false; }')
-			header.append('} ')
+			header.append( CPYTHON_ISPYINSTANCE )
 		if 'pytype' in self._called_functions:
-			header.append('std::string pytype(PyObject* o) { return std::string(PyString_AS_STRING(PyObject_GetAttrString((PyObject*)o->ob_type, "__name__")));} ')
+			header.append( CPYTHON_PYTYPE )
 
 		return '\n'.join(header)
 
