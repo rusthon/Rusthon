@@ -569,8 +569,9 @@ Also implements extra syntax like `switch` and `select`.
 				## strip the bodies from function defs, that should be just defined as `def f(args):pass`
 				for b in node.body:
 					if isinstance(b, ast.FunctionDef):
-						b.body = []
-						b.declare_only = True
+						if b.body and len(b.body) <= 2 and isinstance(b.body[-1], ast.Pass):
+							b.body = []
+							b.declare_only = True
 
 			else:
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)
