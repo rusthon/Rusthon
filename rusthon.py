@@ -136,88 +136,6 @@ def java_to_rusthon( input ):
 	return rcode
 
 
-def hack_nuitka(data):
-	out = []
-	for line in data.splitlines():
-		if line.startswith('#include'):  ## do not include anything
-			pass
-		elif line.strip() == 'extern "C" const unsigned char constant_bin[];':
-			pass
-		else:
-			out.append(line)
-	return '\n'.join(out)
-
-def hack_nuitka_main(data, functions):
-	out = []
-	for line in data.splitlines():
-		if line.startswith('#include'):  ## do not include anything
-			pass
-		elif line.startswith('static PyObject *impl_function_'):
-			fname = line.split('impl_function_')[-1].split('(')[0]
-			findex = fname.split('_')[0]
-			fname  = fname.split('_')[1]
-			cname  = line.split('static PyObject *')[-1].split('(')[0]
-			func = {
-				'name':fname,
-				'cname': cname,
-			}
-			out.append(line)
-
-		elif line.strip()=='#ifdef _NUITKA_WINMAIN_ENTRY_POINT':
-			## cut away main ##
-			break
-		else:
-			out.append(line)
-
-	return '\n'.join(out)
-
-def nuitka_compile(source, functions):
-	'''
-	not: all the headers can be removed, except `__helpers.hpp`,
-	because that gets included from `calling.hpp` (part of the Nuitka public headers)
-	'''
-	tmp = tempfile.gettempdir()
-	file = os.path.join(tmp,'nuitka_build.py')
-	open(file, 'wb').write(source)
-	subprocess.check_call(['nuitka', '--generate-c++-only', '--module', file], cwd=tmp)
-	bdir = os.path.join(tmp, 'nuitka_build.build')
-	assert os.path.isdir(bdir)
-	constbin  = None
-	helpers   = None
-	headers   = [
-		'#include "Python.h"',
-		'#include "nuitka/prelude.hpp"',  ## from Nuitka
-		'#include "nuitka/compiled_frame.hpp"',  ## prelude.hpp already includes this, for some reason MAKE_FRAME is still missing
-		'#include "structseq.h"',         ## from CPython
-		'const unsigned char constant_bin[] = "TODO";',  ## TODO read the constants.bin and insert here.
-	]
-	sources   = []
-	buildfiles = os.listdir(bdir)
-	buildfiles.sort()
-	for name in buildfiles:
-		data = open(os.path.join(bdir,name), 'rb').read()
-		if name == '__constants.bin':
-			constbin = data
-		elif name == '__helpers.hpp':
-			helpers = data
-		elif name.endswith('.hpp'):
-			headers.append(data)
-		elif name.endswith('.cpp'):
-			if name.startswith('module.') and name.endswith('__main__.cpp'):
-				data = hack_nuitka_main(data, functions)
-			else:
-				data = hack_nuitka( data )
-			sources.append(data)
-		else:
-			raise RuntimeError('invalid file found in nuitka build: %s' %name)
-
-	assert helpers
-	return {
-		'files':[
-			{'name':'__helpers.hpp', 'data':helpers}
-		],
-		'main':'\n'.join(headers+sources)
-	}
 
 def convert_to_markdown_project(path, rust=False, python=False, asm=False, c=False, cpp=False, java=False, java2rusthon=False, giws=False, file_metadata=False):
 	files = []
@@ -767,6 +685,12 @@ def build( modules, module_path, datadirs=None ):
 				name = mod['tag']
 				if name == 'nuitka':
 					nuitka.append(mod['code'])
+					cpyembed.append('import os, sys')
+					## __file__ is undefined when CPython is embedded
+					#cpyembed.append('sys.path.append(os.path.dirname(__file__))')
+					#cpyembed.append('print sys.argv')  ## also undefined
+					cpyembed.append('sys.path.append("./")')
+					cpyembed.append('from my_nuitka_module import *')
 				elif name == 'embed' or name == 'embed:cpython':
 					cpyembed.append(mod['code'])
 				else:
@@ -792,11 +716,20 @@ def build( modules, module_path, datadirs=None ):
 			nim_wrappers.insert(1, 'with extern(abi="C"):')
 			merge.extend(nim_wrappers)
 		if nuitka:
-			npak = nuitka_compile('\n'.join(nuitka), nuitka_funcs)
-			for h in npak['files']:
-				modules['c++'].append(
-					{'code':h['data'], 'tag':h['name'], 'index':0}
-				)
+			#npak = nuitka_compile_integrated('\n'.join(nuitka), nuitka_funcs)
+			#for h in npak['files']:
+			#	modules['c++'].append(
+			#		{'code':h['data'], 'tag':h['name'], 'index':0}
+			#	)
+			nsrc = '\n'.join(nuitka)
+			output['c++'].append(
+				{
+					'staticlib'   : nuitka_compile( nsrc ),
+					'source-name' : 'my_nuitka_module.py',
+					'name'        : 'my_nuitka_module.so',
+					'source'      : nsrc,
+				}
+			)
 
 		merge.extend(cpp_merge)
 		script = '\n'.join(merge)
@@ -804,10 +737,11 @@ def build( modules, module_path, datadirs=None ):
 		pak = translate_to_cpp( pyjs )   ## pak contains: c_header and cpp_header
 		n = len(modules['c++']) + len(giws)
 		cppcode = pak['main']
-		if nuitka:
-			cppcode = npak['main'] + '\n' + cppcode
+		#if nuitka:
+		#	cppcode = npak['main'] + '\n' + cppcode
 		if cpyembed:
-			staticstr = 'const char* __python_main_script__ = "%s";\n' %('\n'.join(cpyembed)).replace('\n', '\\n')
+			inlinepy = ('\n'.join(cpyembed)).replace('\n', '\\n').replace('"', '\\"')
+			staticstr = 'const char* __python_main_script__ = "%s";\n' %inlinepy
 			cppcode = staticstr + cppcode
 		modules['c++'].append( {'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs})  ## gets compiled below
 
@@ -1042,10 +976,10 @@ def build( modules, module_path, datadirs=None ):
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
 
-		if nuitka:
-			if not nuitka_include_path:
-				nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
-			cmd.append('-I'+nuitka_include_path)  ## for `__helpers.hpp`
+		#if nuitka:
+		#	if not nuitka_include_path:
+		#		nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
+		#	cmd.append('-I'+nuitka_include_path)  ## for `__helpers.hpp`
 
 		cmd.extend(
 			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
@@ -1136,7 +1070,8 @@ def save_tar( package, path='build.tar' ):
 			s = StringIO.StringIO()
 			if 'staticlib' in info:
 				s.write(open(info['staticlib'],'rb').read())
-				source = info['source']
+				if 'source' in info:
+					source = info['source']
 			elif 'binary' in info:
 				s.write(open(info['binary'],'rb').read())
 				source = info['source']
@@ -1160,7 +1095,10 @@ def save_tar( package, path='build.tar' ):
 				s = StringIO.StringIO()
 				s.write(source)
 				s.seek(0)
-				ti = tarfile.TarInfo( name = name + '-source' + exts[lang] )
+				if 'source-name' in info:
+					ti = tarfile.TarInfo( name = info['source-name'] )
+				else:
+					ti = tarfile.TarInfo( name = name + '-source' + exts[lang] )
 				ti.size=len(s.buf)
 				tar.addfile(tarinfo=ti, fileobj=s)
 

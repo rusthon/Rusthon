@@ -10,14 +10,15 @@ Imports
 * [@import nim.md](nim.md)
 * [@import cppheader.md](cppheader.md)
 * [@import cpython.md](cpython.md)
+* [@import nuitka.md](nuitka.md)
 
 
 
 ```python
 
 NUITKA_HEAD = '''
-PyObject *get_nuitka_module() { return module___main__; }
-PyDictObject *get_nuitka_module_dict() { return moduledict___main__; }
+//PyObject *get_nuitka_module() { return module___main__; }
+//PyDictObject *get_nuitka_module_dict() { return moduledict___main__; }
 
 '''
 

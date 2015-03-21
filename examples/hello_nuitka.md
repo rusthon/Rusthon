@@ -14,22 +14,24 @@ def foo():
 
 ```
 
-Rusthon
--------
-
+Build Options
+-------------
+* @link:python2.7
+* @include:/usr/include/python2.7
 
 ```rusthon
 #backend:c++
-import nuitka
+import cpython
 
 with pointers:
 	def bar( pyob:PyObject ):
-		#pyob.o_dict()
-		method = PyObject_GetAttrString(pyob, cstr("pymethod"))
-		print method
+		pyob->pymethod()
 
 def main():
-	pyob = nuitka.foo()
-	bar( pyob )
+	s = cpython.initalize()
+	with gil:
+		pyob = cpython.foo()
+		bar( pyob )
+	cpython.finalize(s)
 
 ```
