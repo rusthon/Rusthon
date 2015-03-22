@@ -13,8 +13,10 @@ def nuitka_compile(source, name='my_nuitka_module'):
 	subprocess.check_call(['nuitka', '--module', file], cwd=tmp)
 	if sys.platform.startswith('linux'):
 		return os.path.join(tmp, '%s.so' %name)
-	else:
+	elif sys.platform.startswith('darwin'):
 		return os.path.join(tmp, '%s.dylib' %name)
+	else:
+		return os.path.join(tmp, '%s.dll' %name)
 
 
 ```

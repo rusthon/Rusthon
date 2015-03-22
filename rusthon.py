@@ -678,19 +678,25 @@ def build( modules, module_path, datadirs=None ):
 	cpyembed = []
 	nuitka = []
 	nuitka_include_path = None  ## TODO option for this
+	nuitka_module_name  = 'unnamed_nuitka_module'
 	if modules['python']:
 		mods_sorted_by_index = sorted(modules['python'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
 			if mod['tag']:
 				name = mod['tag']
-				if name == 'nuitka':
+				if name == 'nuitka' or name.startswith('nuitka:'):
+					if ':' in name:
+						nuitka_module_name = name.split(':')[-1]
+					if not len(nuitka):
+						## __file__ is undefined when CPython is embedded
+						#cpyembed.append('sys.path.append(os.path.dirname(__file__))')
+						#cpyembed.append('print sys.argv')  ## also undefined
+						cpyembed.append('import sys')
+						cpyembed.append('sys.path.append("./")')
+						cpyembed.append('from %s import *'%nuitka_module_name)
+
 					nuitka.append(mod['code'])
-					cpyembed.append('import os, sys')
-					## __file__ is undefined when CPython is embedded
-					#cpyembed.append('sys.path.append(os.path.dirname(__file__))')
-					#cpyembed.append('print sys.argv')  ## also undefined
-					cpyembed.append('sys.path.append("./")')
-					cpyembed.append('from my_nuitka_module import *')
+
 				elif name == 'embed' or name == 'embed:cpython':
 					cpyembed.append(mod['code'])
 				else:
@@ -724,7 +730,7 @@ def build( modules, module_path, datadirs=None ):
 			nsrc = '\n'.join(nuitka)
 			output['c++'].append(
 				{
-					'staticlib'   : nuitka_compile( nsrc ),
+					'staticlib'   : nuitka_compile( nsrc, nuitka_module_name ),
 					'source-name' : 'my_nuitka_module.py',
 					'name'        : 'my_nuitka_module.so',
 					'source'      : nsrc,

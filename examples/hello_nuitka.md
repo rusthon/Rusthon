@@ -1,13 +1,22 @@
-Nuitka
-------
+Nuitka Class
+------------
+Class `A`
 
-@nuitka
+@nuitka:mymodule
 ```python
 
 class A():
 	def pymethod(self):
 		print 'hello world'
 
+```
+
+Nuitka Function
+------------
+`foo` returns `A`
+
+@nuitka
+```python
 def foo():
 	print 'foo'
 	return A()
