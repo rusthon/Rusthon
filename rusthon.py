@@ -548,6 +548,7 @@ def build( modules, module_path, datadirs=None ):
 
 					## gets compiled below
 					cfg = {
+						'dynamic'   : True,
 						'link-dirs' :[nimcache, niminclude],
 						#'build-dirs':[nimcache],  ## not working
 						'index'    : mod['index'],
@@ -906,11 +907,14 @@ def build( modules, module_path, datadirs=None ):
 
 
 	if modules['c']:
+		dynamiclib = False
 		source   = []
 		cinclude = []
 		cbuild   = []
 		mods_sorted_by_index = sorted(modules['c'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
+			if 'dynamic' in mod and mod['dynamic']:
+				dynamiclib = True
 			if 'link-dirs' in mod:
 				cinclude.extend(mod['link-dirs'])
 			if 'build-dirs' in mod:
@@ -926,31 +930,68 @@ def build( modules, module_path, datadirs=None ):
 				raise RuntimeError('missing code')
 
 		if source:
-			libname = 'default-clib%s' %len(output['c'])
-			link.append(libname)
-			tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
 			data = '\n'.join(source)
+			cpak = {'source':data}
+			output['c'].append(cpak)
+
+			libname = 'default-clib%s' %len(output['c'])  ## TODO user named
+			link.append(libname)
+			dynamic_path = tempfile.gettempdir() + '/lib'+libname+'.so'
+			static_path = tempfile.gettempdir() + '/lib'+libname+'.a'
+			object_path = tempfile.gettempdir() + '/'+libname+'.o'
+
+
+			tmpfile = tempfile.gettempdir() + '/rusthon-build.c'
 			open(tmpfile, 'wb').write( data )
+
 			cmd = ['gcc']
 			for idir in cinclude:
 				cmd.append('-I'+idir)
-
 			cmd.extend(['-c', tmpfile])
 
-			if cbuild:
-				#gcc: fatal error: cannot specify -o with -c, -S or -E with multiple files
-				#cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
-				raise RuntimeError('TODO fix building multiple .c files at once using gcc option -o')
 
-			cmd.extend(['-o', tempfile.gettempdir() + '/'+libname+'.o' ])
+			if dynamiclib:
+				cmd.extend(
+					[
+						'-fPIC',
+						'-O3',
+						'-fomit-frame-pointer',
+						'-Wall', '-Wno-unused',
+						'-o', object_path
+					]
+				)
+				subprocess.check_call(cmd)
 
-			print('========== compiling C library =========')
-			print(' '.join(cmd))
-			subprocess.check_call( cmd )
-			print('========== ar : staticlib ==========')
-			cmd = ['ar', 'rcs', tempfile.gettempdir() + '/lib'+libname+'.a', tempfile.gettempdir() + '/'+libname+'.o']
-			subprocess.check_call( cmd )
-			output['c'].append({'source':data, 'staticlib':libname+'.a'})
+				cmd = [
+					'gcc',
+					'-shared',
+					'-Wl,-soname,lib%s.so' %libname,
+					#'-Wl,-rpath,/tmp',
+					'-Wl,--export-dynamic',
+					'-pthread', '-o', dynamic_path,
+					object_path
+				]
+				subprocess.check_call(cmd)
+				cpak['dynamiclib'] = dynamic_path
+				cpak['name']       = 'lib%s.so' %libname
+
+			else:
+
+				if cbuild:
+					#gcc: fatal error: cannot specify -o with -c, -S or -E with multiple files
+					#cmd.extend(cbuild)  ## extra c files `/some/path/*.c`
+					raise RuntimeError('TODO fix building multiple .c files at once using gcc option -o')
+
+				cmd.extend(['-o', object_path ])
+
+				print('========== compiling C static library =========')
+				print(' '.join(cmd))
+				subprocess.check_call( cmd )
+				print('========== ar : staticlib ==========')
+				cmd = ['ar', 'rcs', static_path, object_path]
+				subprocess.check_call( cmd )
+				cpak['staticlib'] = libname+'.a'
+				cpak['name']      = libname+'.a'
 
 
 	if modules['c++']:
@@ -981,6 +1022,9 @@ def build( modules, module_path, datadirs=None ):
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
 		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
+
+		cmd.append('-Wl,-rpath,./')  ## can not load dynamic libs from same directory without this
+
 
 		#if nuitka:
 		#	if not nuitka_include_path:
@@ -1025,8 +1069,8 @@ def build( modules, module_path, datadirs=None ):
 					os.environ['LD_LIBRARY_PATH'] += ':%s/%s'%(os.environ['JAVA_HOME'], jrepath)
 				#raise RuntimeError(os.environ['LD_LIBRARY_PATH'])
 
-			else:  ## TODO fix jvm with static c libs
-				cmd.append('-static')
+			#else:  ## TODO fix jvm with static c libs
+			#	cmd.append('-static')
 
 			if link:  ## c staticlibs or giws c++ wrappers ##
 				cmd.append('-L' + tempfile.gettempdir() + '/.')
@@ -1074,7 +1118,11 @@ def save_tar( package, path='build.tar' ):
 			source = False
 			is_bin = False
 			s = StringIO.StringIO()
-			if 'staticlib' in info:
+			if 'dynamiclib' in info:
+				s.write(open(info['dynamiclib'],'rb').read())
+				if 'source' in info:
+					source = info['source']
+			elif 'staticlib' in info:
 				s.write(open(info['staticlib'],'rb').read())
 				if 'source' in info:
 					source = info['source']
