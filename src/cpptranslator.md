@@ -330,38 +330,6 @@ user syntax `import cpython` and `->`
 
 ```
 
-Translate to C++
-----------------
-
-TODO save GCC PGO files.
-
-```python
-
-def translate_to_cpp(script, insert_runtime=True):
-	#raise SyntaxError(script)
-	if insert_runtime:
-		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, os.path.join('src', 'runtime'))
-		runtime = open( os.path.join(dirname, 'cpp_builtins.py') ).read()
-		script = runtime + '\n' + script
-
-	try:
-		tree = ast.parse(script)
-	except SyntaxError as err:
-		e = ['%s:	%s'%(i+1, line) for i,line in enumerate(script.splitlines())]
-		sys.stderr.write('\n'.join(e))
-		raise err
-
-	g = CppGenerator( source=script )
-	g.visit(tree) # first pass gathers classes
-	pass2 = g.visit(tree)
-	g.reset()
-	pass3 = g.visit(tree)
-	#open('/tmp/pass3.cpp', 'wb').write( pass3 )
-	return g.output_pak
-
-```
-
 Slice and List Comprehension `[:]`, `[]int(x for x in range(n))`
 ----------------------------------
 negative slice is not fully supported, only `-1` literal works.
@@ -452,6 +420,39 @@ negative slice is not fully supported, only `-1` literal works.
 
 			#return 'auto _ref_%s= *%s;%s;auto %s = &_ref_%s;' %(target, val, slice, target, target)
 			return ';\n'.join(slice) + ';'
+
+```
+
+
+Translate to C++
+----------------
+
+TODO save GCC PGO files.
+
+```python
+
+def translate_to_cpp(script, insert_runtime=True):
+	#raise SyntaxError(script)
+	if insert_runtime:
+		dirname = os.path.dirname(os.path.abspath(__file__))
+		dirname = os.path.join(dirname, os.path.join('src', 'runtime'))
+		runtime = open( os.path.join(dirname, 'cpp_builtins.py') ).read()
+		script = runtime + '\n' + script
+
+	try:
+		tree = ast.parse(script)
+	except SyntaxError as err:
+		e = ['%s:	%s'%(i+1, line) for i,line in enumerate(script.splitlines())]
+		sys.stderr.write('\n'.join(e))
+		raise err
+
+	g = CppGenerator( source=script )
+	g.visit(tree) # first pass gathers classes
+	pass2 = g.visit(tree)
+	g.reset()
+	pass3 = g.visit(tree)
+	#open('/tmp/pass3.cpp', 'wb').write( pass3 )
+	return g.output_pak
 
 ```
 

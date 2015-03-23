@@ -576,6 +576,7 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     if not requirejs:
         cmd.append( '--no-wrapper' )
 
+    print(' '.join(cmd))
     stdout, stderr = run_command(' '.join(cmd), returns_stdout_stderr=True)
     if stderr:
         return ''
@@ -903,7 +904,7 @@ def run_html_test( filename, sum_errors ):
         elif line.strip() == '</script>':
             if script:
                 open('/tmp/%s.js'%filename, 'wb').write( ('\n'.join(script)).encode('utf-8') )
-                js = translate_js( '/tmp/%s.js'%filename, requirejs=False )  ## inserts TestError and others
+                js = translate_js( '/tmp/%s.js'%filename, requirejs=False, javascript=True )  ## inserts TestError and others
                 doc.append( js )
             doc.append( line )
             script = None
@@ -988,7 +989,7 @@ def run_test_on(filename):
     if do_js_test:
         js = translate_js(
             filename,
-            javascript=False,
+            javascript=True,
             multioutput=filename.startswith('./threads/' or filename.startswith('./bench/webworker'))
         )
         if rhino_runnable:
