@@ -413,78 +413,6 @@ def hack_nim_stdlib(code):
 			out.append( line )
 	return '\n'.join(out)
 
-def hack_nim_code(code):
-	'''
-	this is required because nim outputs multiple c files that we merge into a single c file,
-	some functions in stdlib_system.c are inlined into the main code here, and they must be removed.
-	'''
-	out = []
-	skip_structs = ['TGenericSeq', 'NimStringDesc']
-	skip_struct = False
-	skip_inline = False
-
-	for line in code.splitlines():
-		if line.startswith('static N_INLINE('):
-			#if 'nimFrame' in line or 'popFrame' in line or 'initStackBottomWith' in line: --deadCodeElim:on removes initStackBottomWith
-			if 'nimFrame' in line or 'popFrame' in line:
-				if line.strip().endswith(';'):
-					continue
-				elif line.strip().endswith('{'):
-					skip_inline = True
-				else:
-					raise RuntimeError('error parsing nim c code')
-			else:
-				out.append(line)  ## TODO check these
-		elif line.startswith('struct '):
-			for s in skip_structs:
-				if s in line:
-					skip_struct = True
-					break
-			if skip_struct:
-				continue
-			else:
-				out.append(line)
-		elif skip_inline:
-			if line=='}':
-				skip_inline = False
-			continue
-		elif skip_struct:
-			if line=='};':
-				skip_struct = False
-			continue
-		else:
-			out.append(line)
-
-	return '\n'.join(out)
-
-
-def gen_nim_wrappers(src, out):
-	for line in src.splitlines():
-		## check if line is a function that exports to C ##
-		if line.startswith('proc ') and '{.' in line and '.}' in line and 'cdecl' in line and 'exportc' in line:
-			funcname = line.split('proc ')[-1].strip().split('(')[0]
-			restype  = line.split(':')[-1].split('{')[0].strip()
-			if not restype or not restype.startswith('c'):
-				raise RuntimeError('TODO: some other nim return type')
-			if restype=='cstring':
-				raise RuntimeError('TODO: nim function returns cstring')
-
-			restype = restype[1:] ## strip `c` prefix
-			args = line.split('(')[-1].split(')')[0]
-			wargs = []
-			for arg in args.split(','):
-				name, type = arg.split(':')
-				name = name.strip()
-				type = type.strip()
-				if not type=='cstring':  ## keep as cstring because we define that as `char*`
-					type = type[1:] # strip the `c` prefix
-				wargs.append( '%s:%s' %(name,type))
-
-			wrap = [
-				'	def %s(%s) ->%s:' %(funcname, ','.join(wargs), restype),
-				'		pass'
-			]
-			out.extend(wrap)
 
 def build( modules, module_path, datadirs=None ):
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs}
@@ -500,8 +428,11 @@ def build( modules, module_path, datadirs=None ):
 
 	if modules['nim']:
 		libdl = True
+		## if compile_nim_lib is False then use old hack to compile nim source by extracting it and forcing into a single file.
+		compile_nim_lib = True
 		nimbin = os.path.expanduser('~/Nim/bin/nim')
 		niminclude = os.path.expanduser('~/Nim/lib')
+
 		if os.path.isfile(nimbin):
 			mods_sorted_by_index = sorted(modules['nim'], key=lambda mod: mod.get('index'))
 			for mod in mods_sorted_by_index:
@@ -514,48 +445,60 @@ def build( modules, module_path, datadirs=None ):
 					nimsrc = mod['code'].replace('\t', '  ')  ## nim will not accept tabs, replace with two spaces.
 					gen_nim_wrappers( nimsrc, nim_wrappers )
 					open(tmpfile, 'wb').write( nimsrc )
-					#cmd = [nimbin, 'compile', '--noMain', '--app:staticlib', 'rusthon_build.nim']
-					cmd = [
-						nimbin,
-						'compile',
-						'--header',
-						'--noMain',
-						'--noLinking',
-						'--compileOnly',
-						'--genScript',   ## broken?
-						'--app:staticlib', ## Araq says staticlib and noMain will not work together.
-						'--deadCodeElim:on',
-						'rusthon_build.nim',
-					]
+					if compile_nim_lib:
+						## lets nim compile the library
+						#cmd = [nimbin, 'compile', '--app:staticLib', '--noMain', '--header']
+						cmd = [nimbin, 'compile', '--app:lib', '--noMain', '--header']
+					else:
+						cmd = [
+							nimbin,
+							'compile',
+							'--header',
+							'--noMain',
+							'--noLinking',
+							'--compileOnly',
+							'--genScript',   ## broken?
+							'--app:staticLib', ## Araq says staticlib and noMain will not work together.
+							'--deadCodeElim:on',
+						]
+					if 'import threadpool' in nimsrc:
+						cmd.append('--threads:on')
+					cmd.append('rusthon_build.nim')
+
 					print('-------- compile nim program -----------')
 					print(' '.join(cmd))
 					subprocess.check_call(cmd, cwd=tempfile.gettempdir())
 
-					## staticlib broken in nim? missing dlopen
-					#libname = 'rusthon_build.nim'
-					#link.append(libname)
-					#output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+					if compile_nim_lib:
+						## staticlib broken in nim? missing dlopen
+						libname = 'rusthon_build'
+						link.append(libname)
+						#output['c'].append({'source':mod['code'], 'staticlib':libname+'.a'})
+						output['c'].append(
+							{'source':mod['code'], 'dynamiclib':libname+'.so', 'name':'lib%s.so'%libname}
 
-					## get source from nim cache ##
-					nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
-					nim_stdlib = hack_nim_stdlib(
-						open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
-					)
-					#nim_header = open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
-					nim_code   = hack_nim_code(
-						open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
-					)
+						)
+					else:
+						## get source from nim cache ##
+						nimcache = os.path.join(tempfile.gettempdir(), 'nimcache')
+						nim_stdlib = hack_nim_stdlib(
+							open(os.path.join(nimcache,'stdlib_system.c'), 'rb').read()
+						)
+						#nim_header = open(os.path.join(nimcache,'rusthon_build.h'), 'rb').read()
+						nim_code   = hack_nim_code(
+							open(os.path.join(nimcache,'rusthon_build.c'), 'rb').read()
+						)
 
-					## gets compiled below
-					cfg = {
-						'dynamic'   : True,
-						'link-dirs' :[nimcache, niminclude],
-						#'build-dirs':[nimcache],  ## not working
-						'index'    : mod['index'],
-						'code'     : '\n'.join([nim_stdlib, nim_code])
-						#'code'     : header
-					}
-					modules['c'].append( cfg )
+						## gets compiled below
+						cfg = {
+							'dynamic'   : True,
+							'link-dirs' :[nimcache, niminclude],
+							#'build-dirs':[nimcache],  ## not working
+							'index'    : mod['index'],
+							'code'     : '\n'.join([nim_stdlib, nim_code])
+							#'code'     : header
+						}
+						modules['c'].append( cfg )
 		else:
 			print('WARNING: can not find nim compiler')
 
