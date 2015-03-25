@@ -64,7 +64,7 @@ def convert_to_markdown_project(path, rust=True, python=True, asm=True, c=True, 
 		pri_enums = []
 
 		code = [
-			file,
+			os.path.split(file)[-1],
 			'-----------',
 			'\n', 
 			'@%s'%os.path.split(file)[-1],
