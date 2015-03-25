@@ -177,8 +177,8 @@ def convert_to_markdown_project(path, rust=True, python=True, asm=True, c=True, 
 		code.append('___')
 
 		md = '\n'.join(header+code)
-		project.append(md)
+		project.append({'name':os.path.split(file)[-1], 'path':file, 'markdown':md})
 
-	return '\n'.join(project)
+	return project
 
 ```

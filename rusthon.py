@@ -1002,14 +1002,25 @@ def main():
 
 	if gen_md:
 		for path in paths:
-			md = convert_to_markdown_project(path)
+			mds = convert_to_markdown_project(path)
 			if not output_file:
-				raise RuntimeError('%s \n ERROR: no output file given `--output=myproject.md`'%md)
+				raise RuntimeError('%s \n ERROR: no output file given `--output=myproject.md`'%mds)
+			elif os.path.isdir(output_file):
+				## write as multiple markdowns into directory
+				for m in mds:
+					if m['name'].count('.')==1:
+						mname = m['name'].split('.')[0] + '.md'
+					else:
+						mname = m['name'] + '.md'
+					mpath = os.path.join(output_file, mname)
+					print('writing-> %s'%mpath)
+					open(mpath, 'wb').write(m['markdown'])
 			else:
 				if not output_file.endswith('.md'):
 					output_file += '.md'
+				md = '\n'.join([m['markdown'] for m in mds])
 				open(output_file, 'wb').write(md)
-				sys.exit()
+			sys.exit()
 
 
 	base_path = None
