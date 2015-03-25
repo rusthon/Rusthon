@@ -558,7 +558,8 @@ def translate_js(filename, javascript=False, dart=False, coffee=False, lua=False
     cmd = [
         os.path.join("..", "rusthon.py"),
         output_name,
-        '--output=/tmp/output'
+        '--output=/tmp/output',
+        '--dump',
     ]
     if dart:
         cmd.append( '--dart' )

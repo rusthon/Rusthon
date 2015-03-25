@@ -20,6 +20,7 @@ This is the top level that imports all the other submarkdown modules.
 
 Markdown Imports
 -------
+* [@import genmarkdown.md](genmarkdown.md)
 * [@import typedpython.md](typedpython.md)
 * [@import astutils.md](astutils.md)
 * [@import codewriter.md](codewriter.md)
