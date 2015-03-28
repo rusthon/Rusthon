@@ -263,6 +263,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._global_typed_dicts = dict()
 		self._global_typed_tuples = dict()
 		self._global_functions = dict()
+		self._autotyped_dicts  = dict()
 
 		self._js_classes = dict()
 		self._in_js_class = False
@@ -2060,6 +2061,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			t = self.visit(target)
 			v = self.visit(node.value)
 			writer.write('%s = __go__map__(%s, %s) << %s' %(t, key_type, val_type, v))
+			self._autotyped_dicts[t] = v
 
 
 		elif isinstance(node.value, ast.List) and (self._with_go or self._with_rust or self._with_cpp):
@@ -3935,6 +3937,18 @@ class PythonToPythonJS(NodeVisitorBase):
 				a = self.visit(b)
 				if a: writer.write(a)
 			writer.pull()
+
+		elif isinstance(node.context_expr, ast.Name) and node.context_expr.id=='syntax':
+			if isinstance(node.optional_vars, ast.Name):
+				writer.write('with syntax(%s):' %self._autotyped_dicts[node.optional_vars.id])
+			else:
+				writer.write('with syntax(%s):' %self.visit(node.optional_vars))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
+
 
 		elif isinstance(node.context_expr, ast.Name) or isinstance(node.context_expr, ast.Tuple):  ## assume that backend can support this
 			writer.write('with %s:' %self.visit(node.context_expr))
