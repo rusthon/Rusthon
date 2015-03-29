@@ -573,8 +573,22 @@ Also implements extra syntax like `switch` and `select`.
 							b.body = []
 							b.declare_only = True
 
+			elif node.context_expr.func.id == 'syntax':
+				assert len(node.context_expr.args)==1
+				assert isinstance(node.context_expr.args[0], ast.Dict)
+				self.usertypes = {'string':None}  ## force plain strings
+				self.usertypes = eval(self.visit(node.context_expr.args[0]))  ## use syntax config
+				r = []
+				for b in node.body:
+					a = self.visit(b)
+					if a: r.append(self.indent()+a)
+				self.usertypes = None  ## restore default types
+				#return '\n'.join(r)
+				raise SyntaxError('\n'.join(r))
+
 			else:
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)
+
 		elif isinstance(node.context_expr, ast.Str):
 			body = []
 			for b in node.body: body.append(self.visit(b))

@@ -2459,7 +2459,10 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				## external C++ libraries where the variable may or may not be a pointer.
 				## note: `arr.insert(index,value)` is implemented in visit_call_helper
 				if attr=='append' and name in self._known_arrays:
-					return '%s->push_back' %name
+					if self.usertypes and 'list' in self.usertypes:
+						return '%s->%s' %(name, self.usertypes['list']['append'])
+					else:
+						return '%s->push_back' %name
 				elif attr=='pop' and name in self._known_arrays:
 					## pop_back in c++ returns void, so this only works when `arr.pop()` is not used,
 					## in the case where the return is assigned `a=arr.pop()`, the workaround is done in visit_Assign, TODO `f(arr.pop())`

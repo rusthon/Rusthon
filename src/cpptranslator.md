@@ -213,6 +213,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_nuitka = False
 		self._has_cpython = False
 		self._known_pyobjects = dict()
+		self.usertypes = None
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
@@ -236,7 +237,13 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
-		return 'std::string("%s")' % s
+		if self.usertypes and 'string' in self.usertypes.keys():
+			if self.usertypes['string'] is None:
+				return '"%s"' % s
+			else:
+				return self.usertypes['string']['new'] % s
+		else:
+			return 'std::string("%s")' % s
 
 	def visit_Print(self, node):
 		r = []
