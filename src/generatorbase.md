@@ -583,8 +583,7 @@ Also implements extra syntax like `switch` and `select`.
 					a = self.visit(b)
 					if a: r.append(self.indent()+a)
 				self.usertypes = None  ## restore default types
-				#return '\n'.join(r)
-				raise SyntaxError('\n'.join(r))
+				return '\n'.join(r)
 
 			else:
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)

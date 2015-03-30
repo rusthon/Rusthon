@@ -1791,7 +1791,10 @@ TODO clean up go stuff.
 
 		if return_type == 'string':
 			if self._cpp:
-				return_type = 'std::string'
+				if self.usertypes and 'string' in self.usertypes:
+					return_type = self.usertypes['string']['type']
+				else:
+					return_type = 'std::string'
 			elif self._rust:
 				return_type = 'String'
 
@@ -1829,7 +1832,11 @@ TODO clean up go stuff.
 					a = '__gen__ %s' %arg_type
 				else:
 					if self._cpp:
-						if arg_type == 'string': arg_type = 'std::string'  ## standard string type in c++
+						if arg_type == 'string':
+							if self.usertypes and 'string' in self.usertypes:
+								arg_type = self.usertypes['string']['type']
+							else:
+								arg_type = 'std::string'  ## standard string type in c++
 						if arg_name in func_pointers:
 							## note C has funky function pointer syntax, where the arg name is in the middle
 							## of the type, the arg name gets put there when parsing above.
@@ -3051,9 +3058,26 @@ because they need some special handling in other places.
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
 							isprim = self.is_prim_type(T)
-							if T=='string': T = 'std::string'
+							if T=='string':
+								if self.usertypes and 'string' in self.usertypes:
+									T = self.usertypes['string']['type']
+								else:
+									T = 'std::string'
 							self._known_arrays[ target ] = T
-							if self._shared_pointers:
+
+							if self.usertypes and 'list' in self.usertypes:
+								vtemplate = self.usertypes['list']['template']
+								stemplate = 'std::shared_ptr<%s>'
+								if 'shared' in self.usertypes:
+									stemplate = self.usertypes['shared']
+								if isprim:
+									vectype = vtemplate%T
+								else:
+									vectype = vtemplate % stemplate % T
+								return '%s %s = {%s};' %(vectype, target, ','.join(args))
+
+
+							elif self._shared_pointers:
 								if isprim:
 									vectype = 'std::vector<%s>' %T
 								else:
