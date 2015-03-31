@@ -153,6 +153,7 @@ def new_module():
 		'java'    : [],
 		'nim'     : [],
 		'xml'     : [],
+		'json'    : [],
 		'javascript':[],
 	}
 
@@ -194,7 +195,7 @@ def import_md( url, modules=None, index_offset=0 ):
 					}
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
-						if ext in 'html js css py c h cpp hpp rust go java'.split():
+						if ext in 'html js css py c h cpp hpp rust go java json'.split():
 							mod['name'] = tag
 
 					modules[ lang ].append( mod )
@@ -259,6 +260,11 @@ def build( modules, module_path, datadirs=None ):
 	nim_wrappers = []
 
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
+
+	cached_json = {}
+	if modules['json']:
+		for mod in modules['json']:
+			cached_json[ mod['name'] ] = mod['code']
 
 	if modules['nim']:
 		libdl = True
@@ -518,7 +524,7 @@ def build( modules, module_path, datadirs=None ):
 		merge.extend(cpp_merge)
 		script = '\n'.join(merge)
 		pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
-		pak = translate_to_cpp( pyjs )   ## pak contains: c_header and cpp_header
+		pak = translate_to_cpp( pyjs, cached_json_files=cached_json )   ## pak contains: c_header and cpp_header
 		n = len(modules['c++']) + len(giws)
 		cppcode = pak['main']
 		#if nuitka:

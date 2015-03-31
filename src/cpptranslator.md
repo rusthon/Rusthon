@@ -200,7 +200,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 
 ```python
 
-	def __init__(self, source=None, requirejs=False, insert_runtime=False):
+	def __init__(self, source=None, requirejs=False, insert_runtime=False, cached_json_files=None):
 		RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._cpp = True
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
@@ -212,7 +212,8 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_nim = False
 		self._has_nuitka = False
 		self._has_cpython = False
-		self._known_pyobjects = dict()
+		self._known_pyobjects  = dict()
+		self.cached_json_files = cached_json_files or dict()
 		self.usertypes = None
 
 	def visit_Delete(self, node):
@@ -241,7 +242,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 			if self.usertypes['string'] is None:
 				return '"%s"' % s
 			else:
-				return self.usertypes['string']['new'] % s
+				return self.usertypes['string']['new'] % '"%s"' % s
 		else:
 			return 'std::string("%s")' % s
 
@@ -438,7 +439,7 @@ TODO save GCC PGO files.
 
 ```python
 
-def translate_to_cpp(script, insert_runtime=True):
+def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 	#raise SyntaxError(script)
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
@@ -453,7 +454,7 @@ def translate_to_cpp(script, insert_runtime=True):
 		sys.stderr.write('\n'.join(e))
 		raise err
 
-	g = CppGenerator( source=script )
+	g = CppGenerator( source=script, cached_json_files=cached_json_files )
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 	g.reset()

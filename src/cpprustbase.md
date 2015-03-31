@@ -2466,8 +2466,8 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				## external C++ libraries where the variable may or may not be a pointer.
 				## note: `arr.insert(index,value)` is implemented in visit_call_helper
 				if attr=='append' and name in self._known_arrays:
-					if self.usertypes and 'list' in self.usertypes:
-						return '%s->%s' %(name, self.usertypes['list']['append'])
+					if self.usertypes and 'vector' in self.usertypes:
+						return '%s->%s' %(name, self.usertypes['vector']['append'])
 					else:
 						return '%s->push_back' %name
 				elif attr=='pop' and name in self._known_arrays:
@@ -3065,8 +3065,8 @@ because they need some special handling in other places.
 									T = 'std::string'
 							self._known_arrays[ target ] = T
 
-							if self.usertypes and 'list' in self.usertypes:
-								vtemplate = self.usertypes['list']['template']
+							if self.usertypes and 'vector' in self.usertypes:
+								vtemplate = self.usertypes['vector']['template']
 								stemplate = 'std::shared_ptr<%s>'
 								if 'shared' in self.usertypes:
 									stemplate = self.usertypes['shared']

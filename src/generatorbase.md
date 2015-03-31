@@ -575,9 +575,20 @@ Also implements extra syntax like `switch` and `select`.
 
 			elif node.context_expr.func.id == 'syntax':
 				assert len(node.context_expr.args)==1
-				assert isinstance(node.context_expr.args[0], ast.Dict)
-				self.usertypes = {'string':None}  ## force plain strings
-				self.usertypes = eval(self.visit(node.context_expr.args[0]))  ## use syntax config
+				if isinstance(node.context_expr.args[0], ast.Dict):
+					self.usertypes = {'string':None}  ## force plain strings
+					self.usertypes = eval(self.visit(node.context_expr.args[0]))  ## use syntax config
+				else:
+					assert isinstance(node.context_expr.args[0], ast.Str)
+					jsonfile = node.context_expr.args[0].s
+					if jsonfile in self.cached_json_files:
+						jdata = self.cached_json_files[jsonfile]
+						self.usertypes = json.loads( jdata )
+					elif os.path.isfile(jsonfile):
+						self.usertypes = json.load(jsonfile)
+					else:
+						raise RuntimeError('can not load custom types json: %s' %jsonfile)
+
 				r = []
 				for b in node.body:
 					a = self.visit(b)
