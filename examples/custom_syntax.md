@@ -34,16 +34,17 @@ with syntax('unrealtypes.json'):
 			self.x = x
 			self.y = y
 
-	def foo( s:string ):
+	def foo( s:string, ob:A ) ->A:
 		print s
+		return ob
 
 	def main():
 		v1 = []int(1,2,3,4,5,6)
 		v2 = []string( "hello", "world" )
 		v1.append( 100 )
 		v2.append( "xxx" )
-		foo( v2[0] )
 
 		a = A()
+		foo( v2[0], a )
 
 ```

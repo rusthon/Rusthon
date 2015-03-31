@@ -253,7 +253,9 @@ Function Decorators
 						if self.is_prim_type(T):
 							args_typedefs[key.arg] = T
 						else:
-							if not self._shared_pointers:
+							if self.usertypes and 'shared' in self.usertypes:
+								args_typedefs[ key.arg ] = self.usertypes['shared'] %T
+							elif not self._shared_pointers:
 								args_typedefs[ key.arg ] = '%s*' %T
 							elif self._unique_ptr:
 								args_typedefs[ key.arg ] = 'std::unique_ptr<%s>' %T

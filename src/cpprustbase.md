@@ -1780,7 +1780,9 @@ TODO clean up go stuff.
 				if 'returns_array' in options and options['returns_array']:
 					pass
 				else:
-					if not self._shared_pointers:
+					if self.usertypes and 'shared' in self.usertypes:
+						return_type = self.usertypes['shared'] % return_type
+					elif not self._shared_pointers:
 						return_type = '%s*' %return_type
 						#return_type = '%s' %return_type  ## return copy of object
 
