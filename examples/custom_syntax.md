@@ -29,6 +29,11 @@ from the UnrealEngine C++ API.
 
 
 with syntax('unrealtypes.json'):
+	class A:
+		def __init__(self, x:int, y:string):
+			self.x = x
+			self.y = y
+
 	def foo( s:string ):
 		print s
 
@@ -38,5 +43,7 @@ with syntax('unrealtypes.json'):
 		v1.append( 100 )
 		v2.append( "xxx" )
 		foo( v2[0] )
+
+		a = A()
 
 ```

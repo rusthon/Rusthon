@@ -3948,7 +3948,13 @@ class PythonToPythonJS(NodeVisitorBase):
 				a = self.visit(b)
 				if a: writer.write(a)
 			writer.pull()
-
+		elif isinstance( node.context_expr, ast.Call ) and isinstance(node.context_expr.func, ast.Name) and node.context_expr.func.id == 'syntax':  ##
+			writer.write('with %s:' %self.visit(node.context_expr))
+			writer.push()
+			for b in node.body:
+				a = self.visit(b)
+				if a: writer.write(a)
+			writer.pull()
 
 		elif isinstance(node.context_expr, ast.Name) or isinstance(node.context_expr, ast.Tuple):  ## assume that backend can support this
 			writer.write('with %s:' %self.visit(node.context_expr))

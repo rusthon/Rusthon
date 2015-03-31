@@ -1351,7 +1351,9 @@ handles all special calls
 		elif self._cpp and fname in self._classes:
 			## create class instance - new clean style - TODO deprecate all the old _ref_hacks ##
 			prefix = ''
-			if self._shared_pointers:
+			if self.usertypes and 'shared' in self.usertypes:
+				prefix = self.usertypes['shared'] % fname
+			elif self._shared_pointers:
 				prefix = 'std::shared_ptr<%s>' %fname
 			elif self._unique_ptr:
 				prefix = 'std::unique_ptr<%s>' %fname
