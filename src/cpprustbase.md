@@ -3084,18 +3084,30 @@ because they need some special handling in other places.
 							elif self._shared_pointers:
 								if isprim:
 									vectype = 'std::vector<%s>' %T
+									constuct = '(new std::vector<%s>(%s))' %(T, ','.join(args))
 								else:
 									if self._unique_ptr:
 										vectype = 'std::vector<std::unique_ptr<%s>>' %T
 									else:
 										vectype = 'std::vector<std::shared_ptr<%s>>' %T
+										#constuct = '( new std::vector<std::shared_ptr<%s>>(new std::shared_ptr<%s>(%s)) )' %(T,T, ','.join(args))
+										constuct = '( new std::vector<std::shared_ptr<%s>>({%s}) )' %(T, ','.join(args))
 
-								r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
+								## old style using std::make_shared
+								#r = '%s _ref_%s = {%s};' %(vectype, target, ','.join(args))
+								#if self._unique_ptr:
+								#	r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
+								#else:
+								#	r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
+								#return r
+
+								## new style
 								if self._unique_ptr:
 									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
 								else:
-									r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s); /* 1D Array */' %(vectype, target, vectype, target)
-								return r
+									#return 'std::shared_ptr<%s> %s = std::shared_ptr<%s>( new %s(%s) ); /* 1D Array */' %(vectype, target,vectype, vectype, ','.join(args) )
+									return 'std::shared_ptr<%s> %s( %s ); /* 1D Array */' %(vectype, target,constuct )
+
 							else:  ## raw pointer
 								return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
 
