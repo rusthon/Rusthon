@@ -681,11 +681,17 @@ note: `nullptr` is c++11
 
 						if weakref:
 							node._weak_members.add(name)
-							out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
+							if self.usertypes and 'weakref' in self.usertypes:
+								out.append('	%s  %s;' %( self.usertypes['weakref']['template']%T, name ))
+							else:
+								out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
 						elif T.startswith('std::shared_ptr<'):
 							out.append('	%s  %s;' %(T, name ))
 						else:
-							out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
+							if self.usertypes and 'shared' in self.usertypes:
+								out.append('	%s  %s;' %(self.usertypes['shared']%T, name ))
+							else:
+								out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:
 				rust_struct_init.append('%s:%s' %(name, default_type(T)))
 				if T=='string': T = 'String'
