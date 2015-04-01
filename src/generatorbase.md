@@ -273,6 +273,8 @@ Function Decorators
 							if not self.is_prim_type(arrtype):
 								if not self._shared_pointers:
 									arrtype += '*'
+								elif self.usertypes and 'shared' in self.usertypes:
+									arrtype = self.usertypes['shared'] % arrtype
 								elif self._unique_ptr:
 									arrtype = 'std::unique_ptr<%s>' %arrtype
 								else:
@@ -283,13 +285,17 @@ Function Decorators
 								for i in range(dims):
 									if not self._shared_pointers:
 										T.append('std::vector<')
+									elif self.usertypes and 'vector' in self.usertypes:
+										sptr = self.usertypes['shared'].split("%s")[0]
+										vptr = self.usertypes['vector']['template'].split("%s")[0]
+										T.append('%s<%s<' %(sptr, vptr))									
 									elif self._unique_ptr:
 										T.append('std::unique_ptr<std::vector<')
 									else:
 										T.append('std::shared_ptr<std::vector<')
 								T.append( arrtype )
 
-								if self._shared_pointers:
+								if self._shared_pointers or 'vector' in self.usertypes:
 									for i in range(dims):
 										T.append('>>')
 								else:
