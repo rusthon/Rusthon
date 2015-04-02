@@ -288,7 +288,7 @@ Function Decorators
 									elif self.usertypes and 'vector' in self.usertypes:
 										sptr = self.usertypes['shared'].split("%s")[0]
 										vptr = self.usertypes['vector']['template'].split("%s")[0]
-										T.append('%s<%s<' %(sptr, vptr))									
+										T.append('%s%s' %(sptr, vptr))									
 									elif self._unique_ptr:
 										T.append('std::unique_ptr<std::vector<')
 									else:
@@ -362,6 +362,8 @@ Function Decorators
 						if self._cpp:
 							if not self._shared_pointers:
 								args_typedefs[ key.arg ] = '%s*' %classname
+							elif self.usertypes and 'shared' in self.usertypes:
+								args_typedefs[ key.arg ] = self.usertypes['shared']['template'] % classname
 							elif self._unique_ptr:
 								args_typedefs[ key.arg ] = 'std::unique_ptr<%s>' %classname
 							else:

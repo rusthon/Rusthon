@@ -521,13 +521,24 @@ note: `nullptr` is c++11
 							if t.startswith('['):
 								dims = t.count('[')
 								t = t.split(']')[-1]
-							if t=='string': key_type = 'std::string'
+							if t=='string':
+								if self.usertypes and 'string' in self.usertypes:
+									key_type = self.usertypes['string']['type']
+								else:
+									key_type = 'std::string'
+
 							if not self.is_prim_type(t):
-								t = 'std::shared_ptr<%s>' %t
+								if self.usertypes and 'shared' in self.usertypes:
+									t = self.usertypes['shared'] % t
+								else:
+									t = 'std::shared_ptr<%s>' %t
 
 							if not dims or dims==1:
-								v = 'std::vector<%s>' %t
-							elif dims == 2:
+								if self.usertypes and 'vector' in self.usertypes:
+									v = self.usertypes['vector']['template'] % t
+								else:
+									v = 'std::vector<%s>' %t
+							elif dims == 2:  ## TODO clean this up, support more dims, and self.usertypes
 								v = 'std::vector<std::shared_ptr<std::vector<%s>>>' %t
 
 						else:
@@ -664,7 +675,7 @@ note: `nullptr` is c++11
 				else:
 					otherclass = T.split('<')[-1].split('>')[0]
 
-					if 'std::vector' in T or 'std::map' in T:
+					if self.is_container_type(T):
 						node._contains_classes.add( otherclass )
 
 					weakref = False
@@ -685,8 +696,10 @@ note: `nullptr` is c++11
 								out.append('	%s  %s;' %( self.usertypes['weakref']['template']%T, name ))
 							else:
 								out.append('	std::weak_ptr<%s>  %s;' %(T, name ))
-						elif T.startswith('std::shared_ptr<'):
+
+						elif T.startswith('std::shared_ptr<'):  ## TODO check this
 							out.append('	%s  %s;' %(T, name ))
+
 						else:
 							if self.usertypes and 'shared' in self.usertypes:
 								out.append('	%s  %s;' %(self.usertypes['shared']%T, name ))

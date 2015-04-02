@@ -34,6 +34,15 @@ TODO: make inline cpp-channel.h an option.
 
 class CppGenerator( RustGenerator, CPythonGenerator ):
 
+	def is_container_type(self, T):
+		## TODO better parsing
+		if 'std::vector' in T or 'std::map' in T:
+			return True
+		elif self.usertypes and 'vector' in self.usertypes:
+			if self.usertypes['vector']['template'].split('<')[0] in T:
+				return True
+		return False
+
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		includes = []
