@@ -230,11 +230,12 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		if len(targets)==0:
 			raise RuntimeError('no delete targets')
 		r = []
-		if self._shared_pointers:
+		if self.usertypes and 'weakref' in self.usertypes:  ## TODO this should be called something like `smart-pointer-reset`
 			for t in targets:
-				## shared_ptr.reset only releases if no there are no other references,
-				## is there a way to force the delete on all shared pointers to something?
-				#r.append('delete %s;' %t)  ## only works on pointers
+				r.append('%s.%s();' %(t, self.usertypes['weakref']['reset']))
+
+		elif self._shared_pointers:
+			for t in targets:
 				r.append('%s.reset();' %t)
 		else:
 			for t in targets:
