@@ -1031,6 +1031,17 @@ handles all special calls
 				lock_name = self.usertypes['weakref']['lock']
 			if not w.endswith('.%s()'%lock_name): w += '.%s()' %lock_name
 			return w
+
+		elif fname=='weak->valid':
+			## this is needed for cases where we do not know if its a weakptr, `self.a.b.c.parent`,
+			## it is also useful for the user to simply make their code more clear.
+			w = self.visit(node.args[0])
+			if self.usertypes and 'weakref' in self.usertypes:
+				return '%s.%s()' %(w,self.usertypes['weakref']['valid'])
+			else:
+				return '%s != nullptr' %w
+
+
 		elif fname.endswith('->insert') and fname.split('->insert')[0] in self._known_arrays:  ## todo proper way to know if this is an array
 			arr = fname.split('->insert')[0]
 			idx = self.visit(node.args[0])
