@@ -16,13 +16,20 @@ for vectors, strings, and shared references.
 		"type": "FString",
 		"new" : "TEXT(%s)"
 	},
-	"shared": "TSharedRef<%s>"
+	"shared" : {
+		"template" : "TSharedRef<%s>",
+		"type"     : "TSharedRef",
+		"reset"    : "Reset"
+	}
 }
 ```
 
 The code below inside the `with syntax` block uses the custom template above.
 Instead of the default `std::vector` the vectors below will be constructed as `TArray`
 from the UnrealEngine C++ API.
+
+https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Containers/TArray/index.html
+
 
 ```rusthon
 #backend:c++
@@ -46,5 +53,6 @@ with syntax('unrealtypes.json'):
 
 		a = A()
 		foo( v2[0], a )
+		v3 = []A( a, a, a )
 
 ```

@@ -230,10 +230,12 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		if len(targets)==0:
 			raise RuntimeError('no delete targets')
 		r = []
-		if self.usertypes and 'weakref' in self.usertypes:  ## TODO this should be called something like `smart-pointer-reset`
+		if self.usertypes and 'weakref' in self.usertypes and 'reset' in self.usertypes['weakref']:
 			for t in targets:
 				r.append('%s.%s();' %(t, self.usertypes['weakref']['reset']))
-
+		elif self.usertypes and 'shared' in self.usertypes and 'reset' in self.usertypes['shared']:
+			for t in targets:
+				r.append('%s.%s();' %(t, self.usertypes['shared']['reset']))
 		elif self._shared_pointers:
 			for t in targets:
 				r.append('%s.reset();' %t)

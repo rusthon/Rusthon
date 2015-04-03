@@ -529,7 +529,7 @@ note: `nullptr` is c++11
 
 							if not self.is_prim_type(t):
 								if self.usertypes and 'shared' in self.usertypes:
-									t = self.usertypes['shared'] % t
+									t = self.usertypes['shared']['template'] % t
 								else:
 									t = 'std::shared_ptr<%s>' %t
 
@@ -702,7 +702,7 @@ note: `nullptr` is c++11
 
 						else:
 							if self.usertypes and 'shared' in self.usertypes:
-								out.append('	%s  %s;' %(self.usertypes['shared']%T, name ))
+								out.append('	%s  %s;' %(self.usertypes['shared']['template']%T, name ))
 							else:
 								out.append('	std::shared_ptr<%s>  %s;' %(T, name ))
 			else:
@@ -1385,7 +1385,7 @@ handles all special calls
 			## create class instance - new clean style - TODO deprecate all the old _ref_hacks ##
 			prefix = ''
 			if self.usertypes and 'shared' in self.usertypes:
-				prefix = self.usertypes['shared'] % fname
+				prefix = self.usertypes['shared']['template'] % fname
 			elif self._shared_pointers:
 				prefix = 'std::shared_ptr<%s>' %fname
 			elif self._unique_ptr:
@@ -1814,7 +1814,7 @@ TODO clean up go stuff.
 					pass
 				else:
 					if self.usertypes and 'shared' in self.usertypes:
-						return_type = self.usertypes['shared'] % return_type
+						return_type = self.usertypes['shared']['template'] % return_type
 					elif not self._shared_pointers:
 						return_type = '%s*' %return_type
 						#return_type = '%s' %return_type  ## return copy of object
@@ -3109,7 +3109,7 @@ because they need some special handling in other places.
 								vtemplate = self.usertypes['vector']['template']
 								stemplate = 'std::shared_ptr<%s>'
 								if 'shared' in self.usertypes:
-									stemplate = self.usertypes['shared']
+									stemplate = self.usertypes['shared']['template']
 								if isprim:
 									vectype = vtemplate%T
 								else:

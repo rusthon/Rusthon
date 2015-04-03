@@ -15,7 +15,11 @@ https://docs.unrealengine.com/latest/INT/Programming/UnrealArchitecture/SmartPoi
 		"type": "FString",
 		"new" : "TEXT(%s)"
 	},
-	"shared": "TSharedRef<%s>",
+	"shared" : {
+		"template" : "TSharedRef<%s>",
+		"type"     : "TSharedRef",
+		"reset"    : "Reset"
+	},
 	"weakref": {
 		"template": "TWeakPtr<%s>",
 		"type": "TWeakRef",

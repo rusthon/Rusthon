@@ -254,7 +254,7 @@ Function Decorators
 							args_typedefs[key.arg] = T
 						else:
 							if self.usertypes and 'shared' in self.usertypes:
-								args_typedefs[ key.arg ] = self.usertypes['shared'] %T
+								args_typedefs[ key.arg ] = self.usertypes['shared']['template'] %T
 							elif not self._shared_pointers:
 								args_typedefs[ key.arg ] = '%s*' %T
 							elif self._unique_ptr:
@@ -274,7 +274,7 @@ Function Decorators
 								if not self._shared_pointers:
 									arrtype += '*'
 								elif self.usertypes and 'shared' in self.usertypes:
-									arrtype = self.usertypes['shared'] % arrtype
+									arrtype = self.usertypes['shared']['template'] % arrtype
 								elif self._unique_ptr:
 									arrtype = 'std::unique_ptr<%s>' %arrtype
 								else:
@@ -286,7 +286,7 @@ Function Decorators
 									if not self._shared_pointers:
 										T.append('std::vector<')
 									elif self.usertypes and 'vector' in self.usertypes:
-										sptr = self.usertypes['shared'].split("%s")[0]
+										sptr = self.usertypes['shared']['type']
 										vptr = self.usertypes['vector']['template'].split("%s")[0]
 										T.append('%s%s' %(sptr, vptr))									
 									elif self._unique_ptr:
