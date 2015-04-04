@@ -4,6 +4,8 @@ Custom Types Json
 Custom syntax for Unreal Engine4 configures the C++ output to use these types
 for vectors, strings, and shared references.
 
+https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Containers/FString/index.html
+
 @unrealtypes.json
 ```json
 {
@@ -14,7 +16,8 @@ for vectors, strings, and shared references.
 	},
 	"string" : {
 		"type": "FString",
-		"new" : "TEXT(%s)"
+		"new" : "TEXT(%s)",
+		"len" : "Len"
 	},
 	"shared" : {
 		"template" : "TSharedRef<%s>",
@@ -50,6 +53,9 @@ with syntax('unrealtypes.json'):
 		v2 = []string( "hello", "world" )
 		v1.append( 100 )
 		v2.append( "xxx" )
+		len(v1)
+		s = "foobar"
+		len(s)
 
 		a = A()
 		foo( v2[0], a )

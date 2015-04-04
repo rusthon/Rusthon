@@ -1268,9 +1268,14 @@ handles all special calls
 			if self._cpp:
 				arg = self.visit(node.args[0])
 				if arg in self._known_strings:
-					return '%s.size()' %arg
+					if self.usertypes and 'string' in self.usertypes:
+						return '%s.%s()' %(arg, self.usertypes['string']['len'])
+					else:
+						return '%s.size()' %arg
 				elif arg.startswith('PyObject_GetAttrString(') and arg.endswith(')'):
 					return '(long)PySequence_Length(%s)' %arg
+				elif self.usertypes and 'vector' in self.usertypes:
+					return '%s->%s()' %(arg, self.usertypes['vector']['len'])
 				else:
 					return '%s->size()' %arg
 			else:
