@@ -250,7 +250,7 @@ def hack_nim_stdlib(code):
 
 
 def build( modules, module_path, datadirs=None ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs, 'datafiles':{}}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged  = {}
@@ -398,11 +398,16 @@ def build( modules, module_path, datadirs=None ):
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
-				cpp_merge.append(script)
-				if 'links' in mod:
-					cpp_links.extend(mod['links'])
-				if 'include-dirs' in mod:
-					cpp_idirs.extend(mod['include-dirs'])
+				if mod['tag'] and (mod['tag'].endswith('.h') or mod['tag'].endswith('.hpp') or mod['tag'].endswith('.cpp')):
+					pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
+					pak = translate_to_cpp( pyjs, cached_json_files=cached_json, insert_runtime=False )   ## pak contains: c_header and cpp_header
+					output['datafiles'][ mod['tag'] ] = pak['main']
+				else:
+					cpp_merge.append(script)
+					if 'links' in mod:
+						cpp_links.extend(mod['links'])
+					if 'include-dirs' in mod:
+						cpp_idirs.extend(mod['include-dirs'])
 
 			elif backend == 'rust':
 				pyjs = python_to_pythonjs(script, rust=True, module_path=module_path)
@@ -891,6 +896,16 @@ def save_tar( package, path='build.tar' ):
 					tar.add(a)  ## files and folders
 			elif os.path.isfile(datadir):
 				tar.add(datadir)
+
+	if package['datafiles']:
+		for fpath in package['datafiles']:
+			fdata = package['datafiles'][fpath]
+			s = StringIO.StringIO()
+			w.write( fdata )
+			s.seek(0)
+			ti = tarfile.TarInfo(name=fpath)
+			ti.size=len(s.buf)
+			tar.addfile(tarinfo=ti, fileobj=s)
 
 	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java', 'dart':'.dart', 'lua':'.lua'}
 	for lang in 'rust c++ go javascript python html verilog java nim dart lua'.split():
