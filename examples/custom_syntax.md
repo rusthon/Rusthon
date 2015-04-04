@@ -12,7 +12,8 @@ https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Containers/FString/ind
 	"vector"   : {
 		"template": "TArray<%s>",
 		"append"  : "Emplace",
-		"len"     : "Num"
+		"len"     : "Num",
+		"pop"     : "Pop"
 	},
 	"string" : {
 		"type": "FString",
@@ -23,6 +24,9 @@ https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Containers/FString/ind
 		"template" : "TSharedRef<%s>",
 		"type"     : "TSharedRef",
 		"reset"    : "Reset"
+	},
+	"map"    : {
+		"template" : "TMap<%s, %s>"
 	}
 }
 ```
@@ -33,6 +37,8 @@ from the UnrealEngine C++ API.
 
 https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Containers/TArray/index.html
 
+Unreal's template arrays, maps, and sets work with c++11 range based for loops.
+https://www.unrealengine.com/blog/ranged-based-for-loops
 
 ```rusthon
 #backend:c++
@@ -56,9 +62,19 @@ with syntax('unrealtypes.json'):
 		len(v1)
 		s = "foobar"
 		len(s)
+		v1.pop()
 
 		a = A()
 		foo( v2[0], a )
 		v3 = []A( a, a, a )
+		for ob in v3:
+			print ob
+		for i in range(len(v3)):
+			print i
+
+		m = map[string]int{
+			'foo' : 100,
+			'bar' : 200,
+		}
 
 ```

@@ -2518,7 +2518,10 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				elif attr=='pop' and name in self._known_arrays:
 					## pop_back in c++ returns void, so this only works when `arr.pop()` is not used,
 					## in the case where the return is assigned `a=arr.pop()`, the workaround is done in visit_Assign, TODO `f(arr.pop())`
-					return '%s->pop_back' %name
+					if self.usertypes and 'vector' in self.usertypes:
+						return '%s->%s' %(name, self.usertypes['vector']['pop'])
+					else:
+						return '%s->pop_back' %name
 				else:
 					return '%s->%s' % (name, attr)
 
@@ -3069,21 +3072,41 @@ because they need some special handling in other places.
 					if S == '__go__map__':
 						key_type = self.visit(node.value.left.args[0])
 						value_type = self.visit(node.value.left.args[1])
-						if key_type=='string': key_type = 'std::string'
-						if value_type=='string': value_type = 'std::string'
+						if key_type=='string':
+							if self.usertypes and 'string' in self.usertypes:
+								key_type = self.usertypes['string']['type']
+							else:
+								key_type = 'std::string'
+						if value_type=='string':
+							if self.usertypes and 'string' in self.usertypes:
+								value_type = self.usertypes['string']['type']
+							else:
+								value_type = 'std::string'
 
 						self._known_maps[ target ] = (key_type, value_type)
 
+						keyvalues = []
 						a = []
 						for i in range( len(node.value.right.keys) ):
 							k = self.visit( node.value.right.keys[ i ] )
 							v = self.visit( node.value.right.values[i] )
 							a.append( '{%s,%s}'%(k,v) )
+							keyvalues.append( (k,v) )
 						v = ', '.join( a )
 
 
 						## c++11 shared pointer
-						if self._shared_pointers:
+						if self.usertypes and 'map' in self.usertypes:
+							maptype = self.usertypes['map']['template'] % (key_type, value_type)
+							st = self.usertypes['shared']['template']
+							r = ['%s _ref_%s();' %(maptype, target)]
+							if keyvalues:
+								for key,val in keyvalues:
+									r.append('_ref_%s[%s] = %s;' %(target,key,val))
+							r.append('%s %s(&_ref_%s);' %(st%maptype, target, target))
+							return '\n'.join(r)
+
+						elif self._shared_pointers:
 							maptype = 'std::map<%s, %s>' %(key_type, value_type)
 							r = '%s _ref_%s = {%s};' %(maptype, target, v)
 							if self._unique_ptr:
