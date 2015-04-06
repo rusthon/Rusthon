@@ -2473,9 +2473,11 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 		parent_node = self._stack[-2]
 		name = self.visit(node.value)
 		attr = node.attr
-		if attr == '__right_arrow__':
+		if attr == '__doublecolon__':
+			return '%s::' %name
+		elif attr == '__right_arrow__':
 			return 'PyObject_GetAttrString(%s,' %name
-		elif name.endswith('->'):
+		elif name.endswith('->') or name.endswith('::'):
 			return '%s%s' %(name,attr)
 		elif name in ('self','this') and self._cpp and self._class_stack:
 			if attr in self._class_stack[-1]._weak_members:
@@ -3148,7 +3150,7 @@ because they need some special handling in other places.
 							elif self._shared_pointers:
 								if isprim:
 									vectype = 'std::vector<%s>' %T
-									constuct = '(new std::vector<%s>(%s))' %(T, ','.join(args))
+									constuct = '(new std::vector<%s>({%s}))' %(T, ','.join(args))
 								else:
 									if self._unique_ptr:
 										vectype = 'std::vector<std::unique_ptr<%s>>' %T

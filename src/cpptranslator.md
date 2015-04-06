@@ -56,6 +56,8 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 					self._has_nuitka = True
 				elif name == 'cpython':
 					self._has_cpython = True
+				elif name.endswith('.h'):
+					includes.append('#include "%s"' %name)
 				else:
 					includes.append('#include <%s>' %name)
 		return '\n'.join(includes)

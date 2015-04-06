@@ -441,16 +441,19 @@ class typedpython:
 						args.append(x)
 				c = head +'(' + ','.join(args) + ')'+tailend  ## restores to python2 syntax
 
-			elif '::' in c or ('<' in c and '>' in c and c.count('<')==c.count('>')):  ## c++ syntax `('std::bla<T>')(foo)`
-				##  could auto quote here so `(std::<T>)` becomes `('std::<T>')
-				left = c.index('::')
-				while c[left]!='`':
-					left -= 1
-				if ">`" in c:
-					c = c.replace(">`", ">')<<")
-				elif c.endswith('`'):
-					c = c[:-1] + "')"
-				c = c[ :left-1 ] + " inline('" + c[left+1:]
+			#elif '::' in c or ('<' in c and '>' in c and c.count('<')==c.count('>')):  ## c++ syntax `('std::bla<T>')(foo)`
+			#	##  could auto quote here so `(std::<T>)` becomes `('std::<T>')
+			#	left = c.index('::')
+			#	while c[left]!='`':
+			#		left -= 1
+			#	if ">`" in c:
+			#		c = c.replace(">`", ">')<<")
+			#	elif c.endswith('`'):
+			#		c = c[:-1] + "')"
+			#	c = c[ :left-1 ] + " inline('" + c[left+1:]
+
+			if '::' in c:
+				c = c.replace('::', '.__doublecolon__.')
 
 			## jquery ##
 			## TODO ensure this is not inside quoted text
