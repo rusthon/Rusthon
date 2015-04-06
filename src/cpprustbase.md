@@ -2260,6 +2260,7 @@ TODO clean up go stuff.
 			out.append( self.indent()+'};' )
 		else:
 			if is_declare:
+				raise RuntimeError('oops')
 				return out[0].replace('{', ';')
 			else:
 				out.append( self.indent()+'}' )

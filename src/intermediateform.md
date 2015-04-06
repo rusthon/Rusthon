@@ -2485,6 +2485,8 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		elif self._with_go or self._with_rust or self._with_cpp:  ## pass-thru unchanged to next stage for Go, Rust and C++
 			args = list( map(self.visit, node.args) )
+			if None in args:
+				raise RuntimeError( self.format_error('invalid argument: %s' %node.args))
 			if node.keywords:
 				args.extend( ['%s=%s'%(x.arg,self.visit(x.value)) for x in node.keywords] )
 			if node.starargs:
@@ -3957,7 +3959,12 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.pull()
 
 		elif isinstance(node.context_expr, ast.Name) or isinstance(node.context_expr, ast.Tuple):  ## assume that backend can support this
-			writer.write('with %s:' %self.visit(node.context_expr))
+			#if isinstance(node.optional_vars, ast.Subscript) and isinstance(node.optional_vars.slice, ast.Index):
+			if node.optional_vars:
+				writer.write('with %s as %s:' %(self.visit(node.context_expr), self.visit(node.optional_vars)))
+			else:
+				writer.write('with %s:' %self.visit(node.context_expr))
+
 			writer.push()
 			for b in node.body:
 				a = self.visit(b)
@@ -3965,7 +3972,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.pull()
 
 		else:
-			raise SyntaxError('invalid use of "with" statement')
+			raise SyntaxError('invalid use of "with" statement: %s' %self.visit(node.context_expr))
 
 EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
 

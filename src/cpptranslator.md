@@ -155,8 +155,9 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 			for idef in self._cpp_class_impl:
 				lines.insert(main_index,idef)
 		else:
-			## might want to warn user there is no main
-			pass
+			## option to split this part into the cpp body TODO
+			for idef in self._cpp_class_impl:
+				lines.append(idef)
 
 		lines = header + list(self._imports) + lines
 		pak['main'] = '\n'.join( lines )

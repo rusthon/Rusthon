@@ -24,31 +24,44 @@
 }
 ```
 
+* [FModuleManager](https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Modules/FModuleManager/index.html)
+* [Fname](https://docs.unrealengine.com/latest/INT/API/Runtime/Core/UObject/FName/index.html)
+
 @Source/TestPlugin/Public/ITestPlugin.h
+
+
 ```rusthon
-#pragma once
+#backend:c++
+inline('#pragma once')
 
 import ModuleManager.h
 
-class ITestPlugin( IModuleIterface ):
-	@classmethod
-	def Get() -> ITestPlugin:
-		return `FModuleManager::LoadModuleChecked< ITestPlugin >( "TestPlugin" )`
-	@classmethod
-	def IsAvailable() -> bool:
-		return `FModuleManager::Get().IsModuleLoaded( "TestPlugin" )`
+with pointers:
+	class ITestPlugin( IModuleIterface ):
+		@classmethod
+		def Get() -> ITestPlugin:
+			print 'get plugin...'
+			with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
+				return T( cstr("TestPlugin") )
+
+		@classmethod
+		def IsAvailable() -> bool:
+			print 'check plugin...'
+			with modloaded as 'FModuleManager::Get().IsModuleLoaded':
+				return modloaded( cstr("TestPlugin") )
+
 
 ```
 
 
 @Source/TestPlugin/Private/TestPluginPrivatePCH.h
-```rusthon
+```
 import ITestPlugin.h
 ```
 
 
 @Source/TestPlugin/Private/TestPlugin.cpp
-```rusthon
+```
 import TestPluginPrivatePCH.h
 
 class FTestPlugin( ITestPlugin ):
@@ -69,8 +82,8 @@ class FTestPlugin( ITestPlugin ):
 Static Library
 --------------
 
-
-```rusthon
+@mymodule.cpp
+```
 #backend:c++
 
 

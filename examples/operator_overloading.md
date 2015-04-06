@@ -56,7 +56,8 @@ __unwrap__ overloads the c++ operator `->` deference.
 __copy__ overloads the c++ operator '=' copy.
 This can be used for making custom pointer-like objects.
 
-```
+```rusthon
+
 class MyProxy:
 	def __init__(self, id:int):
 		self.id = id

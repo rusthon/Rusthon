@@ -901,7 +901,7 @@ def save_tar( package, path='build.tar' ):
 		for fpath in package['datafiles']:
 			fdata = package['datafiles'][fpath]
 			s = StringIO.StringIO()
-			w.write( fdata )
+			s.write( fdata )
 			s.seek(0)
 			ti = tarfile.TarInfo(name=fpath)
 			ti.size=len(s.buf)
