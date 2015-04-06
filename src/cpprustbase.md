@@ -23,6 +23,7 @@ class CppRustBase( GoGenerator ):
 		self._root_classes = {}
 		self._java_classpaths = []
 		self._known_strings = set()
+		self.macros = {}
 
 
 	def _inline_code_helper(self, s):
@@ -923,6 +924,13 @@ handles all special calls
 
 	def _visit_call_helper(self, node, force_name=None):
 		fname = force_name or self.visit(node.func)
+		if fname in self.macros:
+			macro = self.macros[fname]
+			args = ','.join([self.visit(arg) for arg in node.args])
+			if '%s' in macro:
+				return macro % args
+			else:
+				return '%s(%s)' %(macro,args)
 
 		if self._stack and fname in self._classes:
 			if not isinstance(self._stack, ast.Assign):

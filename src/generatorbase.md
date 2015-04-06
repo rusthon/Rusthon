@@ -614,6 +614,20 @@ Also implements extra syntax like `switch` and `select`.
 			for b in node.body: body.append(self.visit(b))
 			return node.context_expr.s + ';'.join(body)
 
+		elif isinstance(node.context_expr, ast.Name) and node.optional_vars:
+			assert isinstance(node.optional_vars, ast.Subscript)
+			assert isinstance(node.optional_vars.slice, ast.Index)
+			assert node.optional_vars.slice.value.id == 'MACRO'
+			assert isinstance(node.optional_vars.value, ast.Str)
+			s = node.optional_vars.value.s.replace('.__doublecolon__.', '::')
+			self.macros[ node.context_expr.id ] = s  ## set macro
+			r = []
+			for b in node.body:
+				a = self.visit(b)
+				if a: r.append(self.indent()+a)
+			self.macros.pop(node.context_expr.id)  ## remove macro
+			return '\n'.join(r)
+
 		elif isinstance(node.context_expr, ast.Name):
 			if node.context_expr.id == 'pointers':
 				self._shared_pointers = False

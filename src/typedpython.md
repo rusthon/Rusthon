@@ -455,6 +455,18 @@ class typedpython:
 			if '::' in c:
 				c = c.replace('::', '.__doublecolon__.')
 
+			if c.strip().startswith('with ') and ' as ' in c and c.endswith(':'):
+				x,y = c.split(' as ')
+				if "'" in y or '"' in y:
+					y = y[:-1] + '[MACRO]:'
+					c = ' as '.join([x,y])
+			elif not c.startswith('except ') and ' as ' in c:
+				if (c.strip().startswith('return ') or '(' in c or ')' in c or '=' in c or c.strip().startswith('print')):
+					c = c.replace(' as ', '<<__as__<<')
+				elif c.strip().startswith('for '):
+					c = c.replace('for ', 'for (').replace(' in ', ') in ').replace(' as ', ',__as__,')
+
+
 			## jquery ##
 			## TODO ensure this is not inside quoted text
 			if '$(' in c:
@@ -466,12 +478,6 @@ class typedpython:
 
 			if c.strip().startswith('nonlocal '):  ## Python3 syntax
 				c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global
-
-			if not c.startswith('except ') and ' as ' in c:
-				if (c.strip().startswith('return ') or '(' in c or ')' in c or '=' in c or c.strip().startswith('print')):
-					c = c.replace(' as ', '<<__as__<<')
-				elif c.strip().startswith('for '):
-					c = c.replace('for ', 'for (').replace(' in ', ') in ').replace(' as ', ',__as__,')
 
 			if c.strip().startswith('with asm('):
 				asm_block = True
