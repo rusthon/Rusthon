@@ -1826,7 +1826,9 @@ TODO clean up go stuff.
 				if 'returns_array' in options and options['returns_array']:
 					pass
 				else:
-					if self.usertypes and 'shared' in self.usertypes:
+					if return_type.endswith('&') or return_type.endswith('*'):
+						pass
+					elif self.usertypes and 'shared' in self.usertypes:
 						return_type = self.usertypes['shared']['template'] % return_type
 					elif not self._shared_pointers:
 						return_type = '%s*' %return_type

@@ -27,6 +27,18 @@
 * [FModuleManager](https://docs.unrealengine.com/latest/INT/API/Runtime/Core/Modules/FModuleManager/index.html)
 * [Fname](https://docs.unrealengine.com/latest/INT/API/Runtime/Core/UObject/FName/index.html)
 
+
+@fname.json
+```json
+{
+	"string" : {
+		"type": "FName",
+		"new" : "FName(%s)",
+		"len" : "Len"
+	}
+}
+```
+
 @Source/TestPlugin/Public/ITestPlugin.h
 
 
@@ -36,18 +48,19 @@ inline('#pragma once')
 
 import ModuleManager.h
 
-with pointers:
-	class ITestPlugin( IModuleIterface ):
-		@classmethod
-		def Get() -> ITestPlugin:
-			print 'get plugin...'
-			with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
-				return T( cstr("TestPlugin") )
+class ITestPlugin( IModuleIterface ):
+	@classmethod
+	def Get() -> "ITestPlugin&":
+		print 'get plugin...'
+		with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
+			with syntax('fname.json'):
+				return T( "TestPlugin" )
 
-		@classmethod
-		def IsAvailable() -> bool:
-			print 'check plugin...'
-			return FModuleManager::Get().IsModuleLoaded( cstr("TestPlugin") )
+	@classmethod
+	def IsAvailable() -> bool:
+		print 'check plugin...'
+		with syntax('fname.json'):
+			return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
 
 
 ```
