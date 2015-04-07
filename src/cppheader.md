@@ -26,14 +26,29 @@ typedef double f64;
 typedef float  f32;
 typedef const char*  cstring;
 
-template<class T>
-std::shared_ptr<T> pointer(T* ob) {return std::make_shared<T>(ob);}
 
 template<class T>
-std::shared_ptr<T> pointer(T& ob) {return std::make_shared<T>(&ob);}
+std::shared_ptr<T> __shared__(T* ob) {return std::make_shared<T>(ob);}
 
 template<class T>
-std::shared_ptr<T> pointer(std::shared_ptr<T> ob) {return ob;}
+std::shared_ptr<T> __shared__(T& ob) {return std::make_shared<T>(&ob);}
+
+template<class T>
+std::shared_ptr<T> __shared__(std::shared_ptr<T> ob) {return ob;}
+
+std::shared_ptr<std::string> __shared__(std::string ob) {
+	return std::make_shared<std::string>(ob);
+}
+
+
+template<class T>
+T* __pointer__(T* ob) {return ob;}
+
+template<class T>
+T* __pointer__(T& ob) {return &ob;}
+
+template<class T>
+T* __pointer__(std::shared_ptr<T> ob) {return ob.get();}
 
 
 """

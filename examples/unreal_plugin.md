@@ -47,8 +47,7 @@ with pointers:
 		@classmethod
 		def IsAvailable() -> bool:
 			print 'check plugin...'
-			with modloaded as 'FModuleManager::Get().IsModuleLoaded':
-				return modloaded( cstr("TestPlugin") )
+			return FModuleManager::Get().IsModuleLoaded( cstr("TestPlugin") )
 
 
 ```

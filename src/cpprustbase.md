@@ -2550,7 +2550,10 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 				return '%s"%s")' %(name, attr)
 			else:
 				#return '%s->%s' % (name, attr)
-				return 'pointer(%s)->%s' % (name, attr)
+				if self._shared_pointers:
+					return '__shared__(%s)->%s' % (name, attr)
+				else:
+					return '__pointer__(%s)->%s' % (name, attr)
 
 		else:
 			return '%s.%s' % (name, attr)

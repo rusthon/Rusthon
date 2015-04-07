@@ -115,6 +115,10 @@ def main():
 	vc.somevec.show()
 	print('change .somevec')
 
+	s = 'foobar'
+	s2 = s
+	print s2.data()
+
 ```
 calling an object requires a manual pointer dereference using `[...]`
 
