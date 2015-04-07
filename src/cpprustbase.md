@@ -2260,7 +2260,6 @@ TODO clean up go stuff.
 			out.append( self.indent()+'};' )
 		else:
 			if is_declare:
-				raise RuntimeError('oops')
 				return out[0].replace('{', ';')
 			else:
 				out.append( self.indent()+'}' )
@@ -2535,6 +2534,7 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 						return '%s->pop_back' %name
 				else:
 					return '%s->%s' % (name, attr)
+					#return 'pointer(%s)->%s' % (name, attr)
 
 			else:  ## rust
 				return '%s.borrow_mut().%s' % (name, attr)
@@ -2549,7 +2549,8 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 			elif name.endswith(',') and name.startswith('PyObject_GetAttrString('):
 				return '%s"%s")' %(name, attr)
 			else:
-				return '%s->%s' % (name, attr)
+				#return '%s->%s' % (name, attr)
+				return 'pointer(%s)->%s' % (name, attr)
 
 		else:
 			return '%s.%s' % (name, attr)

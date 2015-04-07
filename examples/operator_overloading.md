@@ -135,7 +135,8 @@ testing the special __unwrap__ and __copy__ overloads
 
 	p1 = MyProxy(1)
 	p2 = MyProxy(2)
-	p1[...].show()
+	#p1[...].show()
+	#p1.show()
 	print 'testing copy'
 	p2[...] = p1
 

@@ -26,6 +26,15 @@ typedef double f64;
 typedef float  f32;
 typedef const char*  cstring;
 
+template<class T>
+std::shared_ptr<T> pointer(T* ob) {return std::make_shared<T>(ob);}
+
+template<class T>
+std::shared_ptr<T> pointer(T& ob) {return std::make_shared<T>(&ob);}
+
+template<class T>
+std::shared_ptr<T> pointer(std::shared_ptr<T> ob) {return ob;}
+
 
 """
 
