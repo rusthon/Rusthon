@@ -44,7 +44,7 @@
 
 ```rusthon
 #backend:c++
-inline('#pragma once')
+pragma('once')
 
 import ModuleManager.h
 
@@ -84,7 +84,9 @@ class FTestPlugin( ITestPlugin ):
 	def ShutdownModule():
 		print 'plugin exit'
 
-`IMPLEMENT_MODULE( FTestPlugin, TestPlugin )`
+inline("IMPLEMENT_MODULE( FTestPlugin, TestPlugin )")
+
+
 
 ```
 

@@ -948,7 +948,9 @@ handles all special calls
 			fname = fname.replace('->__exec__', '->exec')
 
 		###########################################
-		if fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
+		if fname == 'pragma':
+			return '#pragma %s //;' %node.args[0].s
+		elif fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
 			return self.gen_cpy_call(node.func.value.id, node)  ## TODO test this
 		elif fname.startswith('PyObject_GetAttrString(') and fname.endswith(')') and isinstance(node.func, ast.Attribute):
 			return self.gen_cpy_call(fname, node)
