@@ -40,8 +40,6 @@
 ```
 
 @Source/TestPlugin/Public/ITestPlugin.h
-
-
 ```rusthon
 #backend:c++
 pragma('once')
@@ -67,39 +65,38 @@ class ITestPlugin( IModuleIterface ):
 
 
 @Source/TestPlugin/Private/TestPluginPrivatePCH.h
-```
+```rusthon
 import ITestPlugin.h
 ```
 
 
 @Source/TestPlugin/Private/TestPlugin.cpp
-```
+```rusthon
 import TestPluginPrivatePCH.h
 
 class FTestPlugin( ITestPlugin ):
+	@classmethod
 	def StartupModule():
 		print 'plugin startup'
 		a = hello_rusthon()
 		print a
+	@classmethod
 	def ShutdownModule():
 		print 'plugin exit'
 
-inline("IMPLEMENT_MODULE( FTestPlugin, TestPlugin )")
-
+macro("IMPLEMENT_MODULE( FTestPlugin, TestPlugin )")
 
 
 ```
-
-
 
 
 Static Library
 --------------
+TODO link this with the build script.
 
 @mymodule.cpp
 ```
 #backend:c++
-
 
 with syntax('unrealtypes.json'):
 	def hello_rusthon() -> string:
