@@ -1,9 +1,13 @@
 UnrealEngine4 Plugin
 --------------------
 
-https://docs.unrealengine.com/latest/INT/Programming/Plugins/index.html
+If have never made a plugin for Unreal, first read these docs:
+* https://docs.unrealengine.com/latest/INT/Engine/Basics/DirectoryStructure/index.html
+* https://docs.unrealengine.com/latest/INT/Programming/Plugins/index.html
 
 compile and install this plugin with the command below.
+note that `MyProject` is a project you have already created in Unreal,
+the plugin source will be written to the `Plugins` folder in your project.
 
 `./rusthon.py ./examples/unreal_plugin.md --run=install-plugin.py --output-dir=~/Documents/Unreal\ Projects/MyProject/`
 
@@ -26,7 +30,7 @@ if len(projects)==1:
 		if mod['Name'] == 'TestPlugin':
 			installed = True
 			break
-	if not installed:
+	if not installed and False:
 		print('installing plugin...')
 		cfg['Modules'].append(
 			{
@@ -47,7 +51,12 @@ if len(projects)==1:
 
 ```
 
-@TestPlugin.uplugin
+uplugin
+--------
+
+plugin config file
+
+@Plugins/TestPlugin/TestPlugin.uplugin
 ```json
 {
 	"FileVersion" : 3,
@@ -116,14 +125,14 @@ https://github.com/rusthon/Rusthon/wiki/Custom-Type-Templates
 }
 ```
 
-ITestPlugin.h
--------------
+Public ITestPlugin.h
+--------------------
 
 Below `with T as "FModuleManager::LoadModuleChecked<ITestPlugin>"` defines a macro,
 for more info see:
 https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 
-@Source/TestPlugin/Public/ITestPlugin.h
+@Plugins/TestPlugin/Source/TestPlugin/Public/ITestPlugin.h
 ```rusthon
 #backend:c++
 pragma('once')
@@ -148,25 +157,25 @@ class ITestPlugin( IModuleIterface ):
 ```
 
 
-@Source/TestPlugin/Private/TestPluginPrivatePCH.h
+@Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
 ```rusthon
 import ITestPlugin.h
 ```
 
 
-@Source/TestPlugin/Private/TestPlugin.cpp
+@Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
 ```rusthon
 import TestPluginPrivatePCH.h
 
 class FTestPlugin( ITestPlugin ):
 	@classmethod
 	def StartupModule():
-		print 'plugin startup'
-		a = hello_rusthon()
-		print a
+		print 'myplugin startup'
+		#a = hello_rusthon()
+		#print a
 	@classmethod
 	def ShutdownModule():
-		print 'plugin exit'
+		print 'myplugin exit'
 
 macro("IMPLEMENT_MODULE( FTestPlugin, TestPlugin )")
 
@@ -193,7 +202,7 @@ Unreal Build File
 -----------------
 Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 
-@Source/TestPlugin/TestPlugin.Build.cs
+@Plugins/TestPlugin/Source/TestPlugin/TestPlugin.Build.cs
 ```c#
 
 using System;
@@ -207,7 +216,7 @@ namespace UnrealBuildTool.Rules
 		public TestPlugin(TargetInfo target)
 		{
 			/** Setup an external C++ module */
-			LoadLibrary(target, "3rdparty", "3rdparty", "mymodule");
+			//LoadLibrary(target, "3rdparty", "3rdparty", "mymodule");
 			/** Setup files in this plugin locally */
 			SetupLocal(target);
 		}
