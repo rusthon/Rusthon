@@ -585,17 +585,24 @@ Also implements extra syntax like `switch` and `select`.
 
 			elif node.context_expr.func.id == 'syntax':
 				assert len(node.context_expr.args)==1
+				keys = []
 				if isinstance(node.context_expr.args[0], ast.Dict):
-					self.usertypes = {'string':None}  ## force plain strings
-					self.usertypes = eval(self.visit(node.context_expr.args[0]))  ## use syntax config
+					#self.usertypes = {'string':None}  ## force plain strings
+					cfg = eval(self.visit(node.context_expr.args[0]))
+					keys.extend( cfg.keys() )
+					self.usertypes.update( cfg )
 				else:
 					assert isinstance(node.context_expr.args[0], ast.Str)
 					jsonfile = node.context_expr.args[0].s
 					if jsonfile in self.cached_json_files:
 						jdata = self.cached_json_files[jsonfile]
-						self.usertypes = json.loads( jdata )
+						cfg   = json.loads( jdata )
+						keys.extend( cfg.keys() )
+						self.usertypes.update( cfg )
 					elif os.path.isfile(jsonfile):
-						self.usertypes = json.load(jsonfile)
+						cfg   = json.load(jsonfile)
+						keys.extend( cfg.keys() )
+						self.usertypes.update( cfg )
 					else:
 						raise RuntimeError('can not load custom types json: %s' %jsonfile)
 
@@ -603,7 +610,12 @@ Also implements extra syntax like `switch` and `select`.
 				for b in node.body:
 					a = self.visit(b)
 					if a: r.append(self.indent()+a)
-				self.usertypes = None  ## restore default types
+
+				#self.usertypes = None  ## restore default types
+				for k in keys:
+					if k in self.usertypes:
+						self.usertypes.pop(k)
+
 				return '\n'.join(r)
 
 			else:

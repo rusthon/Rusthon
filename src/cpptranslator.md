@@ -226,7 +226,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_cpython = False
 		self._known_pyobjects  = dict()
 		self.cached_json_files = cached_json_files or dict()
-		self.usertypes = None
+		self.usertypes = dict()
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
