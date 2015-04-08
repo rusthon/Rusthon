@@ -1,3 +1,26 @@
+@TestPlugin.uplugin
+```json
+{
+	"FileVersion" : 3,
+	"FriendlyName" : "Test Example Plugin",
+	"Version" : 1,
+	"VersionName" : "1.0",
+	"CreatedBy" : "Epic Games, Inc.",
+	"CreatedByURL" : "http://epicgames.com",
+	"EngineVersion" : "4.2.0",
+	"Description" : "An example of a minimal plugin.  This can be used as a starting point when creating your own plugin.",
+	"Category" : "Examples",
+	"EnabledByDefault" : true,
+	"Modules" :
+	[
+		{
+			"Name" : "TestPlugin",
+			"Type" : "Developer"
+		}
+	]
+}
+```
+
 
 @unrealtypes.json
 ```json

@@ -196,8 +196,8 @@ def import_md( url, modules=None, index_offset=0 ):
 					}
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
-						if ext in 'xml html js css py c cs h cpp hpp rust go java json'.split():
-							mod['name'] = tag
+						#if ext in 'xml html js css py c cs h cpp hpp rust go java json'.split():
+						mod['name'] = tag
 
 					modules[ lang ].append( mod )
 				in_code = False
@@ -942,7 +942,7 @@ def save_tar( package, path='build.tar' ):
 				s.write(info['script'])
 			s.seek(0)
 
-			if not is_bin and not source and not name.endswith( exts[lang] ):
+			if not is_bin and not source and not name.endswith( exts[lang] ) and '.' not in name:
 				name += exts[lang]
 
 			ti = tarfile.TarInfo(name=name)
