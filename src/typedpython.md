@@ -311,7 +311,7 @@ class typedpython:
 				c, rtype = c.split('->')
 				c += ':'
 				rtype = rtype.strip()[:-1].strip()
-				if rtype.startswith('*'):
+				if rtype.endswith('*') or rtype.endswith('&'):
 					rtype = '"%s"' %rtype
 				elif rtype.startswith('['):
 					rtype = '"%s"' %rtype

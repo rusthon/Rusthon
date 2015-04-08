@@ -132,7 +132,7 @@ import ModuleManager.h
 
 class ITestPlugin( IModuleIterface ):
 	@classmethod
-	def Get() -> "ITestPlugin&":
+	def Get() -> ITestPlugin&:
 		print 'get plugin...'
 		with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
 			with syntax('fname.json'):
