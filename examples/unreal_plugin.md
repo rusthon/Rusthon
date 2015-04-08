@@ -1,3 +1,51 @@
+UnrealEngine4 Plugin
+--------------------
+
+https://docs.unrealengine.com/latest/INT/Programming/Plugins/index.html
+
+compile and install this plugin with the command below.
+
+`./rusthon.py ./examples/unreal_plugin.md --run=install-plugin.py --output-dir=~/Documents/Unreal\ Projects/MyProject/`
+
+you may need to edit the line to point to where you installed UE4Editor
+
+@install-plugin.py
+```python
+import os, subprocess, json
+exe = os.path.expanduser('~/UnrealEngine/Engine/Binaries/Linux/UE4Editor')
+#subprocess.check_call([exe])
+print exe
+projects = []
+for file in os.listdir('.'):
+	if file.endswith('.uproject'):
+		projects.append(file)
+
+if len(projects)==1:
+	file = projects[0]
+	print file
+	cfg = json.loads(open(file,'rb').read())
+	installed = False
+	for mod in cfg['Modules']:
+		if mod['Name'] == 'TestPlugin':
+			installed = True
+			break
+	if not installed:
+		print('installing plugin...')
+		cfg['Modules'].append(
+			{
+				'Type':'Runtime', 
+				'Name':'TestPlugin', 
+				'LoadingPhase':'Default'
+			}
+		)
+		open(file, 'wb').write(
+			json.dumps(cfg)
+		)
+	else:
+		print 'TestPlugin already installed'
+
+```
+
 @TestPlugin.uplugin
 ```json
 {
@@ -18,6 +66,28 @@
 			"Type" : "Developer"
 		}
 	]
+}
+```
+
+@Source/TestPluginEditor.Target.cs
+```c#
+using UnrealBuildTool;
+using System.Collections.Generic;
+
+public class MyProjectEditorTarget : TargetRules
+{
+	public MyProjectEditorTarget(TargetInfo Target)
+	{
+		Type = TargetType.Editor;
+	}
+	public override void SetupBinaries(
+		TargetInfo Target,
+		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
+		ref List<string> OutExtraModuleNames
+		)
+	{
+		OutExtraModuleNames.AddRange( new string[] { "TestPlugin" } );
+	}
 }
 ```
 

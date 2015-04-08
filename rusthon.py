@@ -988,6 +988,7 @@ def main():
 	markdowns = []
 	gen_md = False
 	output_tar  = 'rusthon-build.tar'
+	output_dir  = None
 	output_file = None
 	launch = []
 	datadirs = []
@@ -1004,6 +1005,10 @@ def main():
 			save = True
 		elif arg.startswith('--output='):
 			output_file = arg.split('=')[-1]
+		elif arg.startswith('--output-dir='):
+			output_dir = arg.split('=')[-1]
+			if output_dir.startswith('~'):
+				output_dir = os.path.expanduser(output_dir)
 
 		elif arg.endswith('.py'):
 			scripts.append(arg)
@@ -1116,7 +1121,7 @@ def main():
 		print(output_tar)
 
 		if launch:
-			tmpdir = tempfile.gettempdir()
+			tmpdir = output_dir or tempfile.gettempdir()
 			tmptar = os.path.join(tmpdir, 'temp.tar')
 			open(tmptar, 'wb').write(
 				open(output_tar, 'rb').read()
