@@ -12,9 +12,6 @@ you may need to edit the line to point to where you installed UE4Editor
 @install-plugin.py
 ```python
 import os, subprocess, json
-exe = os.path.expanduser('~/UnrealEngine/Engine/Binaries/Linux/UE4Editor')
-#subprocess.check_call([exe])
-print exe
 projects = []
 for file in os.listdir('.'):
 	if file.endswith('.uproject'):
@@ -44,6 +41,10 @@ if len(projects)==1:
 	else:
 		print 'TestPlugin already installed'
 
+	exe = os.path.expanduser('~/UnrealEngine/Engine/Binaries/Linux/UE4Editor')
+	print exe
+	subprocess.check_call([exe, os.path.abspath(file)])
+
 ```
 
 @TestPlugin.uplugin
@@ -69,28 +70,11 @@ if len(projects)==1:
 }
 ```
 
-@Source/TestPluginEditor.Target.cs
-```c#
-using UnrealBuildTool;
-using System.Collections.Generic;
 
-public class MyProjectEditorTarget : TargetRules
-{
-	public MyProjectEditorTarget(TargetInfo Target)
-	{
-		Type = TargetType.Editor;
-	}
-	public override void SetupBinaries(
-		TargetInfo Target,
-		ref List<UEBuildBinaryConfiguration> OutBuildBinaryConfigurations,
-		ref List<string> OutExtraModuleNames
-		)
-	{
-		OutExtraModuleNames.AddRange( new string[] { "TestPlugin" } );
-	}
-}
-```
+Unreal Types Template
+---------------------
 
+https://github.com/rusthon/Rusthon/wiki/Custom-Type-Templates
 
 @unrealtypes.json
 ```json
@@ -131,6 +115,13 @@ public class MyProjectEditorTarget : TargetRules
 	}
 }
 ```
+
+ITestPlugin.h
+-------------
+
+Below `with T as "FModuleManager::LoadModuleChecked<ITestPlugin>"` defines a macro,
+for more info see:
+https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 
 @Source/TestPlugin/Public/ITestPlugin.h
 ```rusthon
