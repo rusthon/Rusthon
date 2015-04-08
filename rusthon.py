@@ -146,6 +146,7 @@ def new_module():
 		'rust'    : [],
 		'c'       : [],
 		'c++'     : [],
+		'c#'      : [],
 		'go'      : [],
 		'html'    : [],
 		'verilog' : [],
@@ -195,7 +196,7 @@ def import_md( url, modules=None, index_offset=0 ):
 					}
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
-						if ext in 'html js css py c h cpp hpp rust go java json'.split():
+						if ext in 'xml html js css py c cs h cpp hpp rust go java json'.split():
 							mod['name'] = tag
 
 					modules[ lang ].append( mod )
@@ -250,7 +251,7 @@ def hack_nim_stdlib(code):
 
 
 def build( modules, module_path, datadirs=None ):
-	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs, 'datafiles':{}}
+	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'c#':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'json':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs, 'datafiles':{}}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
 	tagged  = {}
@@ -265,6 +266,12 @@ def build( modules, module_path, datadirs=None ):
 	if modules['json']:
 		for mod in modules['json']:
 			cached_json[ mod['name'] ] = mod['code']
+			output['json'].append(mod)
+
+	if modules['c#']:
+		for mod in modules['c#']:
+			output['c#'].append(mod)
+
 
 	if modules['nim']:
 		libdl = True
@@ -907,8 +914,8 @@ def save_tar( package, path='build.tar' ):
 			ti.size=len(s.buf)
 			tar.addfile(tarinfo=ti, fileobj=s)
 
-	exts = {'rust':'.rs', 'c++':'.cpp', 'javascript':'.js', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java', 'dart':'.dart', 'lua':'.lua'}
-	for lang in 'rust c++ go javascript python html verilog java nim dart lua'.split():
+	exts = {'rust':'.rs', 'c++':'.cpp', 'c#':'.cs', 'javascript':'.js', 'json':'.json', 'python':'.py', 'go':'.go', 'html': '.html', 'verilog':'.sv', 'nim':'.nim', 'java':'.java', 'dart':'.dart', 'lua':'.lua'}
+	for lang in 'rust c c++ c# go javascript json python xml html verilog java nim dart lua'.split():
 		for info in package[lang]:
 			name = 'untitled'
 			if 'name' in info: name = info['name']
