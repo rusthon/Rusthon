@@ -208,10 +208,10 @@ Copyright 1998-2015 Epic Games, Inc. All Rights Reserved.
 using UnrealBuildTool;
 using System.IO;
  
-public class StandAlone : ModuleRules {
-	public StandAlone(TargetInfo Target) {
+public class TestPlugin : ModuleRules {
+	public TestPlugin(TargetInfo Target) {
 		PrivateIncludePaths.AddRange(new string[] { "TestPlugin/Private" });
-		PublicIncludePaths.AddRange(new string[] { "TestPlugin/Public" });
+		PublicIncludePaths.AddRange(new string[] { "TestPlugin/Public", "/usr/include/c++/4.9.2/" });
 		PublicDependencyModuleNames.AddRange(new string[] { "Engine", "Core" });
 	}
 }
