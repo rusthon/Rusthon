@@ -134,20 +134,22 @@ for more info see:
 https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 
 @Plugins/TestPlugin/Source/TestPlugin/Public/ITestPlugin.h
+
 ```rusthon
 #backend:c++
 pragma('once')
 
 import ModuleManager.h
 
-class ITestPlugin( IModuleIterface ):
+class ITestPlugin( IModuleInterface ):
+	@virtualoverride
 	@classmethod
 	def Get() -> ITestPlugin&:
 		print 'get plugin...'
 		with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
 			with syntax('fname.json'):
 				return T( "TestPlugin" )
-
+	@virtualoverride
 	@classmethod
 	def IsAvailable() -> bool:
 		print 'check plugin...'
