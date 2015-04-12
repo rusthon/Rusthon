@@ -2931,6 +2931,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		for decorator in reversed(node.decorator_list):
 			if isinstance(decorator, Name) and decorator.id == 'classmethod':
 				writer.write('@classmethod')
+			elif isinstance(decorator, Name) and decorator.id == 'virtualoverride':
+				writer.write('@virtualoverride')
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
 				## js function expressions are now the default, because hoisting is not pythonic.

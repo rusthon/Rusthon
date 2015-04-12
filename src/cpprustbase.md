@@ -1787,6 +1787,8 @@ TODO clean up go stuff.
 
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
 
+		virtualoverride = False
+
 		for decor in node.decorator_list:
 			self._visit_decorator(
 				decor,
@@ -1805,6 +1807,8 @@ TODO clean up go stuff.
 				node.name = self.visit(decor.args[0])
 			elif isinstance(decor, ast.Name) and decor.id=='jvm':
 				raise RuntimeError('TODO @jvm for function')
+			elif isinstance(decor, ast.Name) and decor.id=='virtualoverride':
+				virtualoverride = True
 
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]
@@ -2012,6 +2016,9 @@ TODO clean up go stuff.
 					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, fname, ', '.join(args))
+						if virtualoverride:
+							sig = 'virtual %s override' %sig
+
 						if self._noexcept:
 							out.append( self.indent() + '%s noexcept {\n' % sig )
 							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
@@ -2067,6 +2074,8 @@ TODO clean up go stuff.
 
 						else:
 							sig = 'void %s::%s(%s)' %(classname, fname, ', '.join(args))
+							if virtualoverride:
+								sig = 'virtual %s override' %sig
 							if self._noexcept:
 								out.append( self.indent() + '%s noexcept {\n' % sig  )
 								sig = '%svoid %s(%s)' % (prefix,fname, ', '.join(args))
