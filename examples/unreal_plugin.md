@@ -150,18 +150,18 @@ https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 pragma('once')
 
 import ModuleManager.h
+with pointers:
+	class ITestPlugin( IModuleInterface ):
+		@classmethod
+		def Get() -> ITestPlugin&:
+			with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
+				with syntax('fname.json'):
+					return T( "TestPlugin" )
 
-class ITestPlugin( IModuleInterface ):
-	@classmethod
-	def Get() -> ITestPlugin&:
-		with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
+		@classmethod
+		def IsAvailable() -> bool:
 			with syntax('fname.json'):
-				return T( "TestPlugin" )
-
-	@classmethod
-	def IsAvailable() -> bool:
-		with syntax('fname.json'):
-			return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
+				return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
 
 
 ```
