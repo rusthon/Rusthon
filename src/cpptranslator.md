@@ -43,6 +43,16 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 				return True
 		return False
 
+	def visit_ImportFrom(self, node):
+		# print node.module
+		# print node.names[0].name
+		# print node.level
+		if node.module=='runtime':
+			self._use_runtime = True
+
+		return ''
+
+
 	def visit_Import(self, node):
 		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		includes = []
@@ -159,7 +169,11 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 			for idef in self._cpp_class_impl:
 				lines.append(idef)
 
-		lines = header + list(self._imports) + lines
+		if self._use_runtime:
+			lines = header + list(self._imports) + lines
+		else:
+			lines = list(self._imports) + lines
+
 		pak['main'] = '\n'.join( lines )
 		return pak['main']
 
@@ -225,6 +239,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._has_nuitka = False
 		self._has_cpython = False
 		self._known_pyobjects  = dict()
+		self._use_runtime = insert_runtime
 		self.cached_json_files = cached_json_files or dict()
 		self.usertypes = dict()
 
@@ -469,7 +484,7 @@ def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 		sys.stderr.write('\n'.join(e))
 		raise err
 
-	g = CppGenerator( source=script, cached_json_files=cached_json_files )
+	g = CppGenerator( source=script, insert_runtime=insert_runtime, cached_json_files=cached_json_files )
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 	g.reset()
