@@ -19,12 +19,13 @@ Docs
 Quick Start
 -----------
 
-After git cloning this repo, try example-project.md, it is a multi-language project in a single markdown file.
-```
+After git cloning this repo, try async_channels.md, you just need Python2 and g++ installed.  The command below will save the compiled exe to your temp folder and run it.
+
+```bash
 cd Rusthon
-./rusthon.py ./examples/example-project.md
+./rusthon.py ./examples/async_channels.md
 ```
-see [example-project.md](https://github.com/rusthon/Rusthon/blob/master/examples/example-project.md)
+see [async_channels.md](https://github.com/rusthon/Rusthon/blob/master/examples/async_channels.md)
 
 The option `--tar` can be used to save the source code of the translated code,
 javascripts and python scripts inside the markdown, and compiled exes.
@@ -32,12 +33,10 @@ javascripts and python scripts inside the markdown, and compiled exes.
 ./rusthon.py myproject.md --tar project.tar
 ```
 
-Docs
-----
 
+C++ and Rust - Classes and Callbacks
+=====================================
 
-Example
--------
 ```python
 class A:
 	def __init__(self, x:int, y:int, z:int=1):

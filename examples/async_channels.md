@@ -4,6 +4,8 @@ Async Channels
 Below works with the C++ and Go backends.
 Channels are implemented in C++ using [cpp-channel](https://github.com/ahorn/cpp-channel).
 
+See the Wiki doc for more info on channels and spawn [here](https://github.com/rusthon/Rusthon/wiki/concurrency).
+
 ```rusthon
 #backend:c++
 
