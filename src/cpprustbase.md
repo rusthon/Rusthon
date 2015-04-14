@@ -1983,6 +1983,9 @@ TODO clean up go stuff.
 			if args and 'object ' in args[0]:  ## classmethods output from java2python produces `cls:object`
 				args = args[1:]
 
+		if virtualoverride:
+			is_method = True
+
 		fname = node.name
 		if operator:
 			fname = 'operator ' + operator
@@ -2016,8 +2019,6 @@ TODO clean up go stuff.
 					if is_method or options['classmethod']:
 						classname = self._class_stack[-1].name
 						sig = '%s %s::%s(%s)' % (return_type, classname, fname, ', '.join(args))
-						if virtualoverride:
-							sig = 'virtual %s override' %sig
 
 						if self._noexcept:
 							out.append( self.indent() + '%s noexcept {\n' % sig )
@@ -2026,6 +2027,10 @@ TODO clean up go stuff.
 						else:
 							out.append( self.indent() + '%s {\n' % sig )
 							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
+
+							if virtualoverride:
+								sig = 'virtual %s override' %sig
+
 							self._cpp_class_header.append(sig + ';')
 							if node.args.defaults:
 								if len(args)==1:  ## all args have defaults, generate plain version with no defaults ##
@@ -2074,8 +2079,6 @@ TODO clean up go stuff.
 
 						else:
 							sig = 'void %s::%s(%s)' %(classname, fname, ', '.join(args))
-							if virtualoverride:
-								sig = 'virtual %s override' %sig
 							if self._noexcept:
 								out.append( self.indent() + '%s noexcept {\n' % sig  )
 								sig = '%svoid %s(%s)' % (prefix,fname, ', '.join(args))
@@ -2083,6 +2086,10 @@ TODO clean up go stuff.
 							else:
 								out.append( self.indent() + '%s {\n' % sig  )
 								sig = '%svoid %s(%s)' % (prefix,fname, ', '.join(args))
+
+								if virtualoverride:
+									sig = 'virtual %s override' %sig
+
 								self._cpp_class_header.append(sig + ';')
 					else:
 						if self._noexcept:

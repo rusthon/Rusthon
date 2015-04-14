@@ -149,7 +149,6 @@ do extra things like inline extra helper code for things like `hasattr`, etc.
 
 Import `import x` and `from x import y`
 --------------------------------------
-TODO move c++ backend import stuff here.
 
 
 ```python

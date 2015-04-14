@@ -126,6 +126,17 @@ https://github.com/rusthon/Rusthon/wiki/Custom-Type-Templates
 }
 ```
 
+Main Header
+-----------
+
+@Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
+```rusthon
+#backend:c++
+from runtime import *
+
+import ITestPlugin.h
+```
+
 Public ITestPlugin.h
 --------------------
 
@@ -134,7 +145,6 @@ for more info see:
 https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 
 @Plugins/TestPlugin/Source/TestPlugin/Public/ITestPlugin.h
-
 ```rusthon
 #backend:c++
 pragma('once')
@@ -142,28 +152,22 @@ pragma('once')
 import ModuleManager.h
 
 class ITestPlugin( IModuleInterface ):
-	@virtualoverride
 	@classmethod
 	def Get() -> ITestPlugin&:
-		print 'get plugin...'
 		with T as "FModuleManager::LoadModuleChecked<ITestPlugin>":
 			with syntax('fname.json'):
 				return T( "TestPlugin" )
-	@virtualoverride
+
 	@classmethod
 	def IsAvailable() -> bool:
-		print 'check plugin...'
 		with syntax('fname.json'):
 			return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
 
 
 ```
 
-
-@Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
-```rusthon
-import ITestPlugin.h
-```
+Plugin Main
+------------
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
@@ -171,12 +175,13 @@ import ITestPlugin.h
 import TestPluginPrivatePCH.h
 
 class FTestPlugin( ITestPlugin ):
-	@classmethod
+	@virtualoverride
 	def StartupModule():
 		print 'myplugin startup'
 		#a = hello_rusthon()
 		#print a
-	@classmethod
+
+	@virtualoverride
 	def ShutdownModule():
 		print 'myplugin exit'
 
