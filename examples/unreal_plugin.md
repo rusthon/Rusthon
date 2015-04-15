@@ -128,13 +128,14 @@ https://github.com/rusthon/Rusthon/wiki/Custom-Type-Templates
 
 Main Header
 -----------
+unreal pre compiled header
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
 ```rusthon
 #backend:c++
+#import ITestPlugin.h
 from runtime import *
 
-import ITestPlugin.h
 ```
 
 Public ITestPlugin.h
@@ -173,6 +174,7 @@ Plugin Main
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
 ```rusthon
 import TestPluginPrivatePCH.h
+import ITestPlugin.h
 
 class FTestPlugin( ITestPlugin ):
 	@virtualoverride
@@ -191,18 +193,17 @@ macro("IMPLEMENT_MODULE( FTestPlugin, TestPlugin )")
 ```
 
 
-Static Library
+Shared Library
 --------------
-TODO link this with the build script.
 
-@3rdparty/mymodule.cpp
+
+@3rdparty/mymodule
 ```rusthon
-#backend:c++
+#backend:c++ dynamiclib
 
-with syntax('unrealtypes.json'):
-	def hello_rusthon() -> string:
-		print 'hello world'
-		return 'OK'
+def hello_rusthon() -> int:
+	print 'hello world'
+	return 99
 
 ```
 

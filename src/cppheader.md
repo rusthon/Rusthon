@@ -7,7 +7,6 @@ includes typedefs for the standard types, like `f32`.
 ```python
 
 CPP_HEADER = """
-#include <cmath>
 #include <memory>
 #include <vector>
 #include <array>

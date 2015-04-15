@@ -386,6 +386,9 @@ def build( modules, module_path, datadirs=None ):
 	cpp_merge = []
 	cpp_links = []
 	cpp_idirs = []
+	compile_mode = 'binary'
+	exename = 'rusthon-test-bin'
+
 
 	if modules['rusthon']:
 		mods_sorted_by_index = sorted(modules['rusthon'], key=lambda mod: mod.get('index'))
@@ -396,21 +399,39 @@ def build( modules, module_path, datadirs=None ):
 			backend = 'c++'  ## default to c++ backend
 			if header.startswith('#backend:'):
 				backend = header.split(':')[-1].strip()
+				if ' ' in backend:
+					backend, compile_mode = backend.split(' ')
+				if '\t' in backend:
+					backend, compile_mode = backend.split('\t')
+
 				if backend not in 'c++ rust javascript go verilog dart lua'.split():
 					raise SyntaxError('invalid backend: %s' %backend)
 
+				if compile_mode and compile_mode not in 'binary staticlib dynamiclib'.split():
+					raise SyntaxError('invalid backend option <%s> (valid types: binary, staticlib, dynamiclib)' %backend)
 
 			if backend == 'verilog':
 				vcode = translate_to_verilog( script )
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
+				if '.' not in mod['tag']:
+					exename = mod['tag']
+
+				## user named output for external build tools that need .h,.hpp,.cpp, files output to hardcoded paths.
 				if mod['tag'] and (mod['tag'].endswith('.h') or mod['tag'].endswith('.hpp') or mod['tag'].endswith('.cpp')):
 					pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
-					pak = translate_to_cpp( pyjs, cached_json_files=cached_json, insert_runtime=False )   ## pak contains: c_header and cpp_header
+					pak = translate_to_cpp(
+						pyjs, 
+						cached_json_files=cached_json, 
+						insert_runtime=False
+					)
+					## pak contains: c_header and cpp_header
 					output['datafiles'][ mod['tag'] ] = pak['main']
+
 				else:
 					cpp_merge.append(script)
+
 					if 'links' in mod:
 						cpp_links.extend(mod['links'])
 					if 'include-dirs' in mod:
@@ -795,15 +816,18 @@ def build( modules, module_path, datadirs=None ):
 		source = []
 		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
 		mainmod = None
+		builddir = tempfile.gettempdir()
+		#compile_mode = 'binary'
 		for mod in mods_sorted_by_index:
 			if 'tag' in mod and mod['tag'] and mod['tag'].endswith('.hpp'):
 				## allows plain header files to be included in build directory ##
 				open(
-					os.path.join(tempfile.gettempdir(), mod['tag']), 'wb'
+					os.path.join(builddir, mod['tag']), 'wb'
 				).write( mod['code'] )
 				output['c++'].append( mod )
 			else:
 				source.append( mod['code'] )
+
 			if 'name' in mod and mod['name']=='main':
 				mainmod = mod
 			elif mainmod is None:
@@ -813,21 +837,34 @@ def build( modules, module_path, datadirs=None ):
 			if 'include-dirs' in mod:
 				idirs.extend(mod['include-dirs'])
 
-		tmpfile = tempfile.gettempdir() + '/rusthon-c++-build.cpp'
+			#if 'compile-mode' in mod:
+			#	compile_mode = mod['compile-mode']
+
+			if 'tag' in mod and '.' not in mod['tag']:
+				exename = mod['tag']
+
+		tmpfile = builddir + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
-		cmd = ['g++', '-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()]
-
+		cmd = ['g++', '-O3']
+		cmd.extend(['-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()])
 		cmd.append('-Wl,-rpath,./')  ## can not load dynamic libs from same directory without this
+		cmd.append(tmpfile)
 
+		if '/' in exename and not os.path.isdir( os.path.join(builddir,os.path.split(exename)[0]) ):
+			os.makedirs(os.path.join(builddir,os.path.split(exename)[0]))
 
-		#if nuitka:
-		#	if not nuitka_include_path:
-		#		nuitka_include_path = '/usr/local/lib/python2.7/dist-packages/nuitka/build/include'
-		#	cmd.append('-I'+nuitka_include_path)  ## for `__helpers.hpp`
+		if compile_mode == 'binary':
+			cmd.extend(['-o', os.path.join(builddir,exename)])
+		elif compile_mode == 'dynamiclib':
+			cmd.extend(
+				['-shared', '-fPIC']
+			)
+			exename += '.so'
+			cmd.extend(['-o', os.path.join(builddir,exename)])
 
 		cmd.extend(
-			[tmpfile, '-o', tempfile.gettempdir() + '/rusthon-c++-bin', '-pthread', '-std=c++11' ]
+			['-pthread', '-std=c++11' ]
 		)
 
 		if nuitka:
@@ -875,9 +912,16 @@ def build( modules, module_path, datadirs=None ):
 		print('========== g++ : compile main ==========')
 		print(' '.join(cmd))
 		subprocess.check_call( cmd )
-		mainmod['build'] = {'source':data, 'binary':tempfile.gettempdir() + '/rusthon-c++-bin', 'name':'rusthon-c++-bin'}
-		output['c++'].append( mainmod['build'] )
-		output['executeables'].append(tempfile.gettempdir() + '/rusthon-c++-bin')
+		mainmod['build'] = {
+			'source':data, 
+			'binary':tempfile.gettempdir() + '/' + exename, 
+			'name':exename
+		}
+		if compile_mode == 'binary':
+			output['c++'].append( mainmod['build'] )
+			output['executeables'].append(tempfile.gettempdir() + '/' + exename)
+		else:
+			output['datafiles'][ exename ] = open(tempfile.gettempdir() + '/' + exename, 'rb').read()
 
 	if python_main['script']:
 		python_main['script'] = '\n'.join(python_main['script'])
