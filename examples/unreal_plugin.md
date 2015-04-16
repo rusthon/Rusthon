@@ -31,7 +31,7 @@ Installer Script
 If your plugin requires building external libraries, you could add it here.
 note: this script is triggered after compile by `--run=install-plugin.py` above.
 
-TODO fix, how come this is not forcing Unreal to fully rebuild the plugin?
+unreal build note: `libUE4Editor-TestPlugin.so` and `TestPlugin.cpp.o`
 
 
 @install-plugin.py
@@ -42,11 +42,20 @@ os.environ['LD_LIBRARY_PATH'] = os.path.abspath('./3rdparty')
 
 UNREAL = os.path.expanduser('~/UnrealEngine/Engine/Binaries/Linux/UE4Editor')
 UNREAL_BUILD = './Plugins/TestPlugin/Binaries/Linux/libUE4Editor-TestPlugin.so'
+UNREAL_CACHE_DIR  = 'Intermediate/Build/Linux/x86_64-unknown-linux-gnu'
+UNREAL_CACHE_FILE = UNREAL_CACHE_DIR +'/%s/Development/Plugins/Dynamic/TestPlugin/TestPlugin.cpp.o'
 
 if os.path.isfile(UNREAL_BUILD):
 	print('<test plugin installer - removing previous build>')
 	os.unlink(UNREAL_BUILD)
-	print('<unreal will rebuild plugin...>')
+if os.path.isdir(UNREAL_CACHE_DIR):
+	for name in os.listdir(UNREAL_CACHE_DIR):
+		cachepath = os.path.join(UNREAL_CACHE_DIR,name)
+		if name.endswith('Editor') and os.path.isdir(cachepath):
+			if os.path.isfile(UNREAL_CACHE_FILE % name):
+				print('<test plugin installer - removing previous build cache>')
+				os.unlink(UNREAL_CACHE_FILE % name)
+
 
 projects = []
 for file in os.listdir('.'):
@@ -54,7 +63,9 @@ for file in os.listdir('.'):
 		projects.append(file)
 
 if len(projects)==1:
-	subprocess.check_call([UNREAL, os.path.abspath(projects[0])])
+	cmd = [UNREAL, os.path.abspath(projects[0])]
+	print cmd
+	subprocess.check_call(cmd)
 else:
 	print '<error loading your .uproject file, the output folder may not be an Unreal project>'
 
@@ -195,6 +206,7 @@ TODO fix calling shared libraries, for some reason calling `hello_rusthon()` seg
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
 ```rusthon
+import TestPluginPrivatePCH.h
 import ITestPlugin.h
 
 @extern
@@ -204,12 +216,11 @@ def hello_rusthon() -> int:
 class FTestPlugin( ITestPlugin ):
 	@virtualoverride
 	def StartupModule():
-		print 'HELLO MYPLUGIN'
+		print 'HELLO MYPLUGIN XXXXX'
 		a = hello_rusthon()
 		print a  ## should print 99
 		print 'GOING TO QUIT UNREAL NOW'
-		with Q as 'GetWorld()->Exec(GetWorld(), TEXT("%s"))':
-			Q("quit")
+		raise std::exception()
 
 	@virtualoverride
 	def ShutdownModule():

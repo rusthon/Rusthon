@@ -631,7 +631,7 @@ Also implements extra syntax like `switch` and `select`.
 			assert node.optional_vars.slice.value.id == 'MACRO'
 			assert isinstance(node.optional_vars.value, ast.Str)
 			s = node.optional_vars.value.s.replace('.__doublecolon__.', '::')  ## TODO fix
-			s = node.optional_vars.value.s.replace('.__right_arrow__.', '->')   ## TODO fix
+			s = s.replace('.__right_arrow__.', '->')   ## TODO fix
 			self.macros[ node.context_expr.id ] = s  ## set macro
 			r = []
 			for b in node.body:
