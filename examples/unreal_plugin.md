@@ -1,7 +1,7 @@
 UnrealEngine4 Plugin
 --------------------
 
-If have never made a plugin for Unreal, first read these docs:
+If you have never made a plugin for Unreal, first read these docs:
 * [directory structure](https://docs.unrealengine.com/latest/INT/Engine/Basics/DirectoryStructure/index.html)
 * [plugin basics](https://docs.unrealengine.com/latest/INT/Programming/Plugins/index.html)
 
@@ -30,6 +30,8 @@ Installer Script
 
 If your plugin requires building external libraries, you could add it here.
 note: this script is triggered after compile by `--run=install-plugin.py` above.
+
+TODO fix, how come this is not forcing Unreal to fully rebuild the plugin?
 
 
 @install-plugin.py
@@ -141,7 +143,7 @@ Main Header
 The Unreal build tool requires this pre-compiled header (PCH), it is a single header that includes any imports you need.
 Here the Rusthon runtime and helper functions are imported with `from runtime import *`.
 note: Rusthon will not include the runtime when you have defined an output file name ending with `.h` or `.cpp`,
-that is why the runtime is imported here and `TestPluginPrivatePCH.h` get imported by the other files.
+that is why the runtime is imported here and gets automatically included in the rest of your plugin code by the Unreal build system.
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
@@ -163,9 +165,8 @@ https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 @Plugins/TestPlugin/Source/TestPlugin/Public/ITestPlugin.h
 ```rusthon
 #backend:c++
-pragma('once')
+#pragma('once')
 import ModuleManager.h
-import TestPluginPrivatePCH.h
 
 with pointers:
 	class ITestPlugin( IModuleInterface ):
@@ -194,12 +195,11 @@ TODO fix calling shared libraries, for some reason calling `hello_rusthon()` seg
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
 ```rusthon
-import TestPluginPrivatePCH.h
 import ITestPlugin.h
 
-with extern():
-	def hello_rusthon() -> int:
-		pass
+@extern
+def hello_rusthon() -> int:
+	pass
 
 class FTestPlugin( ITestPlugin ):
 	@virtualoverride
@@ -207,6 +207,9 @@ class FTestPlugin( ITestPlugin ):
 		print 'HELLO MYPLUGIN'
 		a = hello_rusthon()
 		print a  ## should print 99
+		print 'GOING TO QUIT UNREAL NOW'
+		with Q as 'GetWorld()->Exec(GetWorld(), TEXT("%s"))':
+			Q("quit")
 
 	@virtualoverride
 	def ShutdownModule():
@@ -248,7 +251,7 @@ public class TestPlugin : ModuleRules {
 		PublicLibraryPaths.Add( base_path );
 		PublicIncludePaths.Add( base_path );
 		var path = Path.Combine(base_path, "libmymodule.so");
-		PublicAdditionalLibraries.Add(path);
+		PublicAdditionalLibraries.Add(path); // TODO FIXME
 	}
 }
 ```

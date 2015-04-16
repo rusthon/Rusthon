@@ -927,6 +927,8 @@ handles all special calls
 		if fname in self.macros:
 			macro = self.macros[fname]
 			args = ','.join([self.visit(arg) for arg in node.args])
+			if '"%s"' in macro:
+				return macro % tuple([s.s for s in node.args])
 			if '%s' in macro:
 				return macro % args
 			else:
@@ -1788,6 +1790,7 @@ TODO clean up go stuff.
 		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
 
 		virtualoverride = False
+		extern = False
 
 		for decor in node.decorator_list:
 			self._visit_decorator(
@@ -1809,6 +1812,8 @@ TODO clean up go stuff.
 				raise RuntimeError('TODO @jvm for function')
 			elif isinstance(decor, ast.Name) and decor.id=='virtualoverride':
 				virtualoverride = True
+			elif isinstance(decor, ast.Name) and decor.id=='extern':
+				extern = True
 
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]
@@ -1982,6 +1987,9 @@ TODO clean up go stuff.
 			prefix += 'static '
 			if args and 'object ' in args[0]:  ## classmethods output from java2python produces `cls:object`
 				args = args[1:]
+		if extern:
+			prefix += 'extern '
+			is_declare = True
 
 		if virtualoverride:
 			is_method = True

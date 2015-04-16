@@ -2934,6 +2934,8 @@ class PythonToPythonJS(NodeVisitorBase):
 				writer.write('@classmethod')
 			elif isinstance(decorator, Name) and decorator.id == 'virtualoverride':
 				writer.write('@virtualoverride')
+			elif isinstance(decorator, Name) and decorator.id == 'extern':
+				writer.write('@extern')
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'expression':
 				## js function expressions are now the default, because hoisting is not pythonic.
@@ -3042,6 +3044,8 @@ class PythonToPythonJS(NodeVisitorBase):
 					raise RuntimeError( op, self._custom_operators )
 				self._custom_operators[ op ] = node.name
 
+			elif self._with_cpp or self._with_rust:
+				writer.write('@%s' %self.visit(decorator))
 
 			else:
 				decorators.append( decorator )
