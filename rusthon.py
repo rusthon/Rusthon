@@ -155,6 +155,7 @@ def new_module():
 		'nim'     : [],
 		'xml'     : [],
 		'json'    : [],
+		'rapydscript':[],
 		'javascript':[],
 	}
 
@@ -259,10 +260,9 @@ def build( modules, module_path, datadirs=None ):
 	giws    = []   ## xml jni generator so c++ can call into java, blocks tagged with @gwis are compiled and linked with the final exe.
 	java2rusthon = []
 	nim_wrappers = []
-
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
-
 	cached_json = {}
+
 	if modules['json']:
 		for mod in modules['json']:
 			cached_json[ mod['name'] ] = mod['code']
@@ -272,6 +272,13 @@ def build( modules, module_path, datadirs=None ):
 		for mod in modules['c#']:
 			output['c#'].append(mod)
 
+	if modules['rapydscript']:
+		for mod in modules['rapydscript']:
+			tmprapyd = tempfile.gettempdir() + '/temp.rapyd'
+			tmpjs = tempfile.gettempdir() + '/rapyd-output.js'
+			open(tmprapyd, 'wb').write(mod['code'])
+			subprocess.check_call(['rapydscript', tmprapyd, '--output', tmpjs])
+			output['datafiles'][mod['tag']] = open(tmpjs,'rb').read()
 
 	if modules['nim']:
 		libdl = True
@@ -415,7 +422,7 @@ def build( modules, module_path, datadirs=None ):
 				modules['verilog'].append( {'code':vcode, 'index': index})  ## gets compiled below
 
 			elif backend == 'c++':
-				if '.' not in mod['tag']:
+				if mod['tag'] and mod['tag'] and '.' not in mod['tag']:
 					exename = mod['tag']
 
 				## user named output for external build tools that need .h,.hpp,.cpp, files output to hardcoded paths.
@@ -846,8 +853,11 @@ def build( modules, module_path, datadirs=None ):
 		tmpfile = builddir + '/rusthon-c++-build.cpp'
 		data = '\n'.join(source)
 		open(tmpfile, 'wb').write( data )
-		cmd = ['g++', '-O3']
-		cmd.extend(['-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()])
+		cmd = ['g++']
+
+		if compile_mode=='binary':
+			cmd.extend(['-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()])
+
 		cmd.append('-Wl,-rpath,./')  ## can not load dynamic libs from same directory without this
 		cmd.append(tmpfile)
 
