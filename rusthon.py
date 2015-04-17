@@ -165,6 +165,7 @@ def import_md( url, modules=None, index_offset=0 ):
 	code = []
 	code_links = []
 	code_idirs = []
+	code_defines = []
 	lang = False
 	in_code = False
 	index = 0
@@ -176,9 +177,11 @@ def import_md( url, modules=None, index_offset=0 ):
 
 	for line in data.splitlines():
 		if line.startswith('* @link:'):
-			code_links.append( line.split(':')[-1] )
+			code_links.append( os.path.expanduser(line.split(':')[-1]) )
 		elif line.startswith('* @include:'):
-			code_idirs.append( line.split(':')[-1] )
+			code_idirs.append( os.path.expanduser(line.split(':')[-1]) )
+		elif line.startswith('* @define:'):
+			code_defines.extend( line.split(':')[-1].strip().split() )
 		# Start or end of a code block.
 		elif line.strip().startswith('```'):
 			fences += 1
@@ -193,7 +196,8 @@ def import_md( url, modules=None, index_offset=0 ):
 						'index':index+index_offset, 
 						'tag':tag,
 						'links':code_links,
-						'include-dirs':code_idirs
+						'include-dirs':code_idirs,
+						'defines':code_defines,
 					}
 					if tag and '.' in tag:
 						ext = tag.split('.')[-1].lower()
@@ -393,6 +397,7 @@ def build( modules, module_path, datadirs=None ):
 	cpp_merge = []
 	cpp_links = []
 	cpp_idirs = []
+	cpp_defines = []
 	compile_mode = 'binary'
 	exename = 'rusthon-test-bin'
 
@@ -443,6 +448,8 @@ def build( modules, module_path, datadirs=None ):
 						cpp_links.extend(mod['links'])
 					if 'include-dirs' in mod:
 						cpp_idirs.extend(mod['include-dirs'])
+					if 'defines' in mod:
+						cpp_defines.extend(mod['defines'])
 
 			elif backend == 'rust':
 				pyjs = python_to_pythonjs(script, rust=True, module_path=module_path)
@@ -573,7 +580,9 @@ def build( modules, module_path, datadirs=None ):
 			inlinepy = ('\n'.join(cpyembed)).replace('\n', '\\n').replace('"', '\\"')
 			staticstr = 'const char* __python_main_script__ = "%s";\n' %inlinepy
 			cppcode = staticstr + cppcode
-		modules['c++'].append( {'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs})  ## gets compiled below
+		modules['c++'].append(
+			{'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs, 'defines':cpp_defines}
+		)  ## gets compiled below
 
 
 
@@ -821,6 +830,7 @@ def build( modules, module_path, datadirs=None ):
 		links = []
 		idirs = []
 		source = []
+		defines = []
 		mods_sorted_by_index = sorted(modules['c++'], key=lambda mod: mod.get('index'))
 		mainmod = None
 		builddir = tempfile.gettempdir()
@@ -843,6 +853,8 @@ def build( modules, module_path, datadirs=None ):
 				links.extend(mod['links'])
 			if 'include-dirs' in mod:
 				idirs.extend(mod['include-dirs'])
+			if 'defines' in mod:
+				defines.extend(mod['defines'])
 
 			#if 'compile-mode' in mod:
 			#	compile_mode = mod['compile-mode']
@@ -876,6 +888,9 @@ def build( modules, module_path, datadirs=None ):
 		cmd.extend(
 			['-pthread', '-std=c++11' ]
 		)
+
+		for D in defines:
+			cmd.append('-D%s' %D)
 
 		if nuitka:
 			## note: linking happens after the object-bin above is created `-o ruston-c++-bin`,

@@ -2,9 +2,39 @@ Caffe Deep Learning Framework
 ------------------
 
 http://caffe.berkeleyvision.org/
-based on: https://gist.github.com/onauparc/dd80907401b26b602885
+
+I am using Fedora, here is how to get Caffe to build properly.
+Follow the offical Fedora install instructions [here](http://caffe.berkeleyvision.org/install_yum.html)
+except do not install Atlas, instead install OpenBlas (yum install openblas),
+and change your Makefile.config as described [here](http://caffe.berkeleyvision.org/installation.html)
+to use OpenBlas.  You may also want to disable GPU support, if not then edit
+the define below and remove `CPU_ONLY`.
+
+```
+cd
+git clone https://github.com/BVLC/caffe.git
+cd caffe
+nano Makefile.config
+make all
+```
+
+After you have edited your Makefile.config, simply run `make all`,
+and this will give you libcaffe.so ready to link into this Rusthon program.
+
+note: blob.hpp requires caffe.pb.h (google protocol buffer),
+this is file is generated when building Caffe, and because the offical
+make file for Caffe is super bare-bones, its missing a "make install"
+target, and this file is not normally found when building an external binary
+that includes and links to Caffe.  As a simple workaround, the `.build_release`
+folder is set as one of the include folders.
+
+note: based on: https://gist.github.com/onauparc/dd80907401b26b602885
 
 
+* @define: CPU_ONLY
+* @link:caffe
+* @include:~/caffe/include
+* @include:~/caffe/.build_release/src
 ```rusthon
 #backend:c++
 import caffe/caffe.hpp
