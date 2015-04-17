@@ -954,6 +954,8 @@ handles all special calls
 			return '%s //;' %node.args[0].s
 		elif fname == 'pragma':
 			return '#pragma %s //;' %node.args[0].s
+		elif fname == 'addr':
+			return '&%s' %self.visit(node.args[0])
 		elif fname.startswith('PyObject_GetAttrString') and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in self._known_pyobjects:
 			return self.gen_cpy_call(node.func.value.id, node)  ## TODO test this
 		elif fname.startswith('PyObject_GetAttrString(') and fname.endswith(')') and isinstance(node.func, ast.Attribute):
