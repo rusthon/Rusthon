@@ -21,6 +21,20 @@ make all
 After you have edited your Makefile.config, simply run `make all`,
 and this will give you libcaffe.so ready to link into this Rusthon program.
 
+Running
+-------
+This is the command to compile and run this example.
+note: libcaffe.so is given as a data file so it will be copied into the output tar package,
+the binary will load dynamic libraries from the same directory.
+
+```
+cd Rusthon
+./rusthon.py ./examples/hello_caffe.md --data=~/caffe/.build_release/lib/libcaffe.so
+```
+
+Source Code
+-----------
+
 note: blob.hpp requires caffe.pb.h (google protocol buffer),
 this is file is generated when building Caffe, and because the offical
 make file for Caffe is super bare-bones, its missing a "make install"
@@ -50,7 +64,6 @@ IMAGE = "some.png"
 with pointers:
 	def main():
 		print('caffe hello world')
-		#Caffe::set_phase( Caffe::TEST ) # old API
 		Caffe::set_mode( Caffe::CPU )
 
 		with N as "Net<float>(%s, caffe::TEST)":
@@ -85,21 +98,18 @@ with pointers:
 		for i in range(dsizedat):
 			bproto.add_data(0.0)
 
-		#blob.FromProto(addr(bproto[...]))
 		blob.FromProto(bproto[...])
-
-		#bottom = []Blob(blob,)
-		#bottom = []Blob()
 		bottom.append( blob )
 
 		ftype  = 0.0
 		result = net.Forward( bottom[...] )
+
+		#cdata = result[0].cpu_data()  ## this syntax will not work with external libraries
 		with C as "result[0]->cpu_data":
 			ref = C()
 			cdata = addr(ref)
 
 		for i in range(1000):
-			#cdata = result[0].cpu_data()
 			value = cdata[i]
 			print value
 

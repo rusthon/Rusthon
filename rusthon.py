@@ -1165,11 +1165,14 @@ def main():
 
 	elif not save:
 		tmpdir = tempfile.gettempdir()
-		## copy jar files ##
+		## copy jar and other extra libraries files files ##
 		for p in datadirs:
-			if p.endswith('.jar'):
+			## saves jar and other files like dynamic libraries,
+			## needed to do quick testing.
+			if '.' in p:
 				dpath,dname = os.path.split(p)
 				open(os.path.join(tmpdir,dname),'wb').write(open(p,'rb').read())
+
 		for exe in package['executeables']:
 			print('running: %s' %exe)
 			subprocess.check_call(
