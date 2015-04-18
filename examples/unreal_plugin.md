@@ -6,7 +6,7 @@ If you have never made a plugin for Unreal, first read these docs:
 * [plugin basics](https://docs.unrealengine.com/latest/INT/Programming/Plugins/index.html)
 
 The Unreal build system requires you name your header, source and classes correctly, using the Public/Private folders, 
-and using the special PCH header file that imports everything.  
+and using the special PCH header file that imports everything.
 Having to keep in sync folder names, source files, and class names is a pain in the ass.
 In the following example plugin, you can simply use "text-replace" on `TestPlugin` to `YourPlugin` in a text editor
 to rename everything at once.
@@ -154,7 +154,7 @@ Main Header
 The Unreal build tool requires this pre-compiled header (PCH), it is a single header that includes any imports you need.
 Here the Rusthon runtime and helper functions are imported with `from runtime import *`.
 note: Rusthon will not include the runtime when you have defined an output file name ending with `.h` or `.cpp`,
-that is why the runtime is imported here and gets automatically included in the rest of your plugin code by the Unreal build system.
+that is why the runtime is imported here and gets included below.
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
@@ -199,9 +199,7 @@ Plugin Main
 ------------
 Main plugin code is here, this is a good place to write your GUI code using [Slate](https://docs.unrealengine.com/latest/INT/Programming/Slate/Overview/index.html)
 
-This example calls an external function from a dynamic library created below, broken,
-TODO fix calling shared libraries, for some reason calling `hello_rusthon()` segfaults at runtime.
-`undefined symbol: hello_rusthon`
+This example calls an external function `hello_rusthon` from a dynamic library created below.
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp

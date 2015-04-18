@@ -193,10 +193,7 @@ with pointers:
 Plugin Main
 ------------
 Main plugin code is here, this is a good place to write your GUI code using [Slate](https://docs.unrealengine.com/latest/INT/Programming/Slate/Overview/index.html)
-
-This example calls an external function from a dynamic library created below, broken,
-TODO fix calling shared libraries, for some reason calling `hello_rusthon()` segfaults at runtime.
-`undefined symbol: hello_rusthon`
+This example calls an external function `hello_rusthon` from a dynamic library created below.
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPlugin.cpp
