@@ -3172,6 +3172,8 @@ because they need some special handling in other places.
 
 						if S=='__go__array__':
 							T = self.visit(node.value.left.args[0])
+							if T in self.macros:
+								T = self.macros[T]
 							isprim = self.is_prim_type(T)
 							if T=='string':
 								if self.usertypes and 'string' in self.usertypes:
@@ -3220,7 +3222,10 @@ because they need some special handling in other places.
 									return 'std::shared_ptr<%s> %s( %s ); /* 1D Array */' %(vectype, target,constuct )
 
 							else:  ## raw pointer
-								return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
+								if isprim:
+									return 'std::vector<%s>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
+								else:
+									return 'std::vector<%s*>  _ref_%s = {%s}; auto %s = &_ref_%s;' %(T, target, ','.join(args), target, target)
 
 						elif S=='__go__arrayfixed__':
 							asize = self.visit(node.value.left.args[0])

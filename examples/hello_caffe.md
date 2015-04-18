@@ -43,19 +43,19 @@ import caffe/blob.hpp
 
 namespace("caffe")
 
-NET = "..."
+NET = "foo.prototxt"
 NET_LAYERS = ".."
 IMAGE = "some.png"
 
 with pointers:
 	def main():
 		print('caffe hello world')
-		Caffe::set_phase( Caffe::TEST )
+		#Caffe::set_phase( Caffe::TEST ) # old API
 		Caffe::set_mode( Caffe::CPU )
 
-		with N as "Net<float>(%s)":
+		with N as "Net<float>(%s, caffe::TEST)":
 			net = new(N(NET))
-		net.CopyTrainedLayerFrom(NET_LAYERS)
+		net.CopyTrainedLayersFrom(NET_LAYERS)
 
 		dat = new( Datum() )
 		ok = ReadImageToDatum(IMAGE, 1, 227, 227, addr(dat[...]) )
@@ -63,10 +63,12 @@ with pointers:
 			#raise std::exception  ## TODO fix
 			raise std::exception()
 
-		with B as "Blob<float>(%s)":
+		with FloatBlob as "Blob<float>":
 			blob = new(
-				B(1,dat.channels(), dat.height(), dat.width())
+				FloatBlob(1,dat.channels(), dat.height(), dat.width())
 			)
+			bottom = []FloatBlob()
+
 
 		bproto = new( BlobProto() )
 		bproto.set_num(1)
@@ -83,14 +85,21 @@ with pointers:
 		for i in range(dsizedat):
 			bproto.add_data(0.0)
 
-		blob.FromProto(bproto)
+		#blob.FromProto(addr(bproto[...]))
+		blob.FromProto(bproto[...])
 
-		bottom = []Blob(blob,)
+		#bottom = []Blob(blob,)
+		#bottom = []Blob()
+		bottom.append( blob )
 
 		ftype  = 0.0
-		result = net.Forward( bottom )
+		result = net.Forward( bottom[...] )
+		with C as "result[0]->cpu_data":
+			ref = C()
+			cdata = addr(ref)
+
 		for i in range(1000):
-			cdata = result[0].cpu_data()
+			#cdata = result[0].cpu_data()
 			value = cdata[i]
 			print value
 
