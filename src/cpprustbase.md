@@ -472,6 +472,7 @@ note: `nullptr` is c++11
 
 		## class decorators ##
 		is_jvm_class = False
+		external_header = None
 		for decor in node.decorator_list:
 			## __struct__ is generated in python_to_pythonjs.py
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id=='__struct__':
@@ -484,7 +485,12 @@ note: `nullptr` is c++11
 					## subclasses from a Java class ##
 					self._jvm_classes[ node.name ] = node
 					is_jvm_class = True
-
+				elif isinstance(decor, ast.Name) and decor.id in self._user_class_headers:
+					external_header = self._user_class_headers[ decor.id ]
+				elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'macro':
+					out.append( decor.args[0].s )
+				else:
+					raise RuntimeError('TODO class decorator')
 
 		init = None
 		method_names = set()
@@ -603,6 +609,13 @@ note: `nullptr` is c++11
 				out.append( 'class %s:  %s {' %(node.name, parents))
 			else:
 				out.append( 'class %s {' %node.name)
+
+			## body macros come before public ##
+			for b in node.body:
+				if isinstance(b, ast.Expr) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id=='macro':
+					out.append(b.value.args[0].s)
+
+
 			out.append( '  public:')
 
 			#if not base_classes:
@@ -768,8 +781,11 @@ note: `nullptr` is c++11
 
 		if self._cpp:
 			for idef in impl:
-				#out.append( impl_def )  ## can not write c++ method implementations before other class headers
-				self._cpp_class_impl.append( idef )
+				if external_header:
+					#out.append( impl_def )
+					pass
+				else:  ## can not write c++ method implementations before other class headers
+					self._cpp_class_impl.append( idef )
 
 		else:
 			## using a trait is not required, because a struct type can be directly implemented.
@@ -807,7 +823,13 @@ note: `nullptr` is c++11
 
 		self.catch_call = set()
 		self._class_stack.pop()
-		return '\n'.join(out)
+		if external_header:
+			external_header['source'].extend( out )
+			out.append( '// header saved to: %s'  % external_header['file'])
+			return '\n'.join(out)
+
+		else:
+			return '\n'.join(out)
 
 ```
 
@@ -1816,6 +1838,10 @@ TODO clean up go stuff.
 				virtualoverride = True
 			elif isinstance(decor, ast.Name) and decor.id=='extern':
 				extern = True
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'macro':
+				#out.append(decor.args[0].s)
+				if self._cpp:
+					self._cpp_class_header.append(decor.args[0].s)
 
 		for name in arrays:
 			self._known_arrays[ name ] = arrays[ name ]

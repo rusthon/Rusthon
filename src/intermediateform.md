@@ -432,7 +432,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		for alias in node.names:
 			if self._with_go or self._with_rust or self._with_cpp:
-				writer.write('import %s' %alias.name)
+				if alias.asname:
+					writer.write('import %s as %s' %(alias.name, alias.asname))
+				else:
+					writer.write('import %s' %alias.name)
 			elif alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
 			elif alias.name == 'tempfile':
@@ -979,6 +982,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		props = set()     ## type info for the backend and Dart (old)
 		struct_types = dict()
 
+		body_macros = []
+
 		for item in node.body:
 			if isinstance(item, ast.Expr) and isinstance(item.value, ast.Str):
 				comments.append(item.value.s)
@@ -1007,6 +1012,10 @@ class PythonToPythonJS(NodeVisitorBase):
 					sdef.append( '%s=%s'%(k,v) )
 
 				writer.write('@__struct__(%s)' %','.join(sdef))
+
+			elif isinstance(item, ast.Expr) and isinstance(item.value, ast.Call) and isinstance(item.value.func, ast.Name) and item.value.func.id=='macro':
+				body_macros.append("macro('%s')" %item.value.args[0].s)
+
 
 		if comments:
 			# Get comment lines.
@@ -1063,6 +1072,9 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		if comments:
 			writer.write("'''%s'''" %comments[0])
+		if body_macros:
+			for macro in body_macros:
+				writer.write(macro)
 
 		## constructor
 		if init:
@@ -2997,6 +3009,9 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					raise SyntaxError('invalid @returns argument')
 
+			elif self._with_cpp or self._with_rust:
+				writer.write('@%s' %self.visit(decorator))
+
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
 
@@ -3043,9 +3058,6 @@ class PythonToPythonJS(NodeVisitorBase):
 				if op not in self._custom_operators:
 					raise RuntimeError( op, self._custom_operators )
 				self._custom_operators[ op ] = node.name
-
-			elif self._with_cpp or self._with_rust:
-				writer.write('@%s' %self.visit(decorator))
 
 			else:
 				decorators.append( decorator )

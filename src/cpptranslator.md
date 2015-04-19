@@ -54,23 +54,31 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 
 
 	def visit_Import(self, node):
-		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
 		includes = []
-		if r:
-			for name in r:
-				if name == 'jvm':
-					self._has_jvm = True
-				elif name == 'nim':
-					self._has_nim = True
-				elif name == 'nuitka':
-					self._has_nuitka = True
-				elif name == 'cpython':
-					self._has_cpython = True
-				elif name.endswith('.h'):
-					includes.append('#include "%s"' %name)
-				else:
-					includes.append('#include <%s>' %name)
+
+		for alias in node.names:
+			name = alias.name.replace('__SLASH__', '/')
+			if alias.asname:
+				self._user_class_headers[ alias.asname ] = {
+					'file':name,
+					'source':[]
+				}
+
+			if name == 'jvm':
+				self._has_jvm = True
+			elif name == 'nim':
+				self._has_nim = True
+			elif name == 'nuitka':
+				self._has_nuitka = True
+			elif name == 'cpython':
+				self._has_cpython = True
+			elif name.endswith('.h'):
+				includes.append('#include "%s"' %name)
+			else:
+				includes.append('#include <%s>' %name)
+
 		return '\n'.join(includes)
+
 
 	def visit_Module(self, node):
 		header = [ CPP_HEADER ]
@@ -160,14 +168,15 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 		if cppheader:
 			pak['header.cpp'] = '\n'.join( cppheader )
 
-		if 'int main() {' in lines:
-			main_index = lines.index('int main() {')
-			for idef in self._cpp_class_impl:
-				lines.insert(main_index,idef)
-		else:
-			## option to split this part into the cpp body TODO
-			for idef in self._cpp_class_impl:
-				lines.append(idef)
+		if not self._user_class_headers:
+			if 'int main() {' in lines:
+				main_index = lines.index('int main() {')
+				for idef in self._cpp_class_impl:
+					lines.insert(main_index,idef)
+			else:
+				## option to split this part into the cpp body TODO
+				for idef in self._cpp_class_impl:
+					lines.append(idef)
 
 		if self._use_runtime:
 			lines = header + list(self._imports) + lines
@@ -242,6 +251,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self._use_runtime = insert_runtime
 		self.cached_json_files = cached_json_files or dict()
 		self.usertypes = dict()
+		self._user_class_headers = dict()
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
