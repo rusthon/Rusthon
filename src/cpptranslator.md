@@ -49,9 +49,10 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 		# print node.level
 		if node.module=='runtime':
 			self._use_runtime = True
-
 		return ''
 
+	def get_user_class_headers(self):
+		return self._user_class_headers
 
 	def visit_Import(self, node):
 		includes = []
@@ -168,8 +169,10 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 		if cppheader:
 			pak['header.cpp'] = '\n'.join( cppheader )
 
-		if not self._user_class_headers:
-			if 'int main() {' in lines:
+		if self._user_class_headers:
+			pass ## see get_user_class_headers
+		else:
+			if 'int main() {' in lines:  ## old hack to insert method defs before main
 				main_index = lines.index('int main() {')
 				for idef in self._cpp_class_impl:
 					lines.insert(main_index,idef)
@@ -499,7 +502,9 @@ def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 	pass2 = g.visit(tree)
 	g.reset()
 	pass3 = g.visit(tree)
-	#open('/tmp/pass3.cpp', 'wb').write( pass3 )
+	userheaders = g.get_user_class_headers()
+	if userheaders:
+		g.output_pak['user-headers'] = userheaders
 	return g.output_pak
 
 ```

@@ -439,7 +439,16 @@ def build( modules, module_path, datadirs=None ):
 						insert_runtime=False
 					)
 					## pak contains: c_header and cpp_header
-					output['datafiles'][ mod['tag'] ] = pak['main']
+					output['datafiles'][ mod['tag'] ] = pak['main']  ## save to output c++ to tar
+
+					if 'user-headers' in pak:
+						for classtag in pak['user-headers'].keys():
+							classheader = pak['user-headers'][ classtag ]
+							headerfile  = classheader['file']
+							if headerfile in output['datafiles']:
+								output['datafiles'][ headerfile ] += '\n' + '\n'.join(classheader['source'])
+							else:
+								output['datafiles'][ headerfile ] = '\n'  + '\n'.join(classheader['source'])
 
 				else:
 					cpp_merge.append(script)

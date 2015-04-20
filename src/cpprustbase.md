@@ -778,12 +778,11 @@ note: `nullptr` is c++11
 		else: ## rust
 			out.append('}')
 
-
+		cpp_method_impl = []
 		if self._cpp:
 			for idef in impl:
 				if external_header:
-					#out.append( impl_def )
-					pass
+					cpp_method_impl.append( idef )
 				else:  ## can not write c++ method implementations before other class headers
 					self._cpp_class_impl.append( idef )
 
@@ -826,7 +825,7 @@ note: `nullptr` is c++11
 		if external_header:
 			external_header['source'].extend( out )
 			out.append( '// header saved to: %s'  % external_header['file'])
-			return '\n'.join(out)
+			return '\n'.join(cpp_method_impl)
 
 		else:
 			return '\n'.join(out)
