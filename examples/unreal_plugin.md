@@ -22,7 +22,14 @@ get it [here](https://github.com/rusthon/UnrealEngine).
 note that `MyProject` is a project you have already created in Unreal Editor,
 the plugin source will be written to the `Plugins` folder in your project.
 
-`./rusthon.py ./examples/unreal_plugin.md --run=install-plugin.py --output-dir=~/Documents/Unreal\ Projects/MyProject/`
+To be safe, you should remove the previous extracted source, if it is also named "TestPlugin",
+this is because the Unreal build tool scans the plugin folder, and will add to the build any .h or .cpp files it finds,
+and it may find some file that you have removed, or was dropped there by another plugin example using the same name.
+
+```
+rm -rf ~/Documents/Unreal\ Projects/MyProject/Plugins/TestPlugin
+./rusthon.py ./examples/unreal_plugin.md --run=install-plugin.py --output-dir=~/Documents/Unreal\ Projects/MyProject/
+```
 
 
 Installer Script
@@ -42,7 +49,7 @@ os.environ['LD_LIBRARY_PATH'] = os.path.abspath('./3rdparty')
 
 UNREAL = os.path.expanduser('~/UnrealEngine/Engine/Binaries/Linux/UE4Editor')
 UNREAL_BUILD = './Plugins/TestPlugin/Binaries/Linux/libUE4Editor-TestPlugin.so'
-UNREAL_CACHE_DIR  = 'Intermediate/Build/Linux/x86_64-unknown-linux-gnu'
+UNREAL_CACHE_DIR  = './Intermediate/Build/Linux/x86_64-unknown-linux-gnu'
 UNREAL_CACHE_FILE = UNREAL_CACHE_DIR +'/%s/Development/Plugins/Dynamic/TestPlugin/TestPlugin.cpp.o'
 
 if os.path.isfile(UNREAL_BUILD):
@@ -56,6 +63,12 @@ if os.path.isdir(UNREAL_CACHE_DIR):
 				print('<test plugin installer - removing previous build cache>')
 				os.unlink(UNREAL_CACHE_FILE % name)
 
+## to make sure the cache is fully cleared,
+## just remove the entire Intermediate folder.
+## this should not be required, but currently UE4Editor4.7 is flakey.
+if os.path.isdir('./Intermediate'):
+	print('<removing all build cache>')
+	os.system('rm -rf ./Intermediate')
 
 projects = []
 for file in os.listdir('.'):
@@ -153,13 +166,18 @@ Main Header
 -----------
 The Unreal build tool requires this pre-compiled header (PCH), it is a single header that includes any imports you need.
 Here the Rusthon runtime and helper functions are imported with `from runtime import *`.
-note: Rusthon will not include the runtime when you have defined an output file name ending with `.h` or `.cpp`,
-that is why the runtime is imported here and gets included below.
+
+notes:
+* Rusthon will not include the runtime when you have defined an output file name ending with `.h` or `.cpp`,
+that is why the runtime is imported here and gets included here in the PCH.
+* Unreal build tools require the PCH is only included once, `pragma("once")` enables this non-standard macro,
+if you forget to use this, then you see build errors that complain some of Rusthons helper functions have been redeclared.
 
 
 @Plugins/TestPlugin/Source/TestPlugin/Private/TestPluginPrivatePCH.h
 ```rusthon
 #backend:c++
+pragma('once')
 from runtime import *
 ```
 
@@ -176,7 +194,7 @@ https://github.com/rusthon/Rusthon/wiki/Macro-Functions
 @Plugins/TestPlugin/Source/TestPlugin/Public/ITestPlugin.h
 ```rusthon
 #backend:c++
-#pragma('once')
+pragma('once')
 import ModuleManager.h
 
 with pointers:
@@ -189,9 +207,10 @@ with pointers:
 
 		@classmethod
 		def IsAvailable() -> bool:
-			with syntax('fname.json'):
-				return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
-
+			#with syntax('fname.json'):
+			#	return FModuleManager::Get().IsModuleLoaded( "TestPlugin" )
+			with T as 'FModuleManager::Get().IsModuleLoaded("%s")':
+				return T("TestPlugin")
 
 ```
 
