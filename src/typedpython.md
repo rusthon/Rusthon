@@ -407,16 +407,16 @@ class typedpython:
 						else:
 							arg_name = arg
 
-						if typedef.startswith('*'):
-							typedef = '"%s"' %typedef.strip()
-						elif typedef.startswith('[]'):
-							#typedef = '"*%s"' %typedef.strip()  ## the pointer hack should not be forced here for arrays
+						if typedef.startswith('[]'):
 							typedef = '__arg_array__("%s")' %typedef.strip()  ## this parses the go syntax and converts it for each backend
 
 						elif typedef.startswith('map['):
-							#typedef = '"*%s"' %typedef.strip()  ## the pointer hack should not be forced here for maps
 							typedef = '__arg_map__("%s")' %typedef.strip()  ## this parses the go syntax and converts it for each backend
 
+						elif typedef.endswith('*'):
+							typedef = '"%s"' %typedef.strip()
+						elif typedef.endswith('&'):
+							typedef = '"%s"' %typedef.strip()
 						elif typedef.startswith('func('):
 							typedef = '"%s"' %typedef.strip()
 						elif typedef.startswith('lambda('):
