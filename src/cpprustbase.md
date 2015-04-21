@@ -1924,11 +1924,17 @@ TODO clean up go stuff.
 					a = '__gen__ %s' %arg_type
 				else:
 					if self._cpp:
-						if arg_type == 'string':
+						if arg_type in ('string', 'string&', 'string*'):
 							if self.usertypes and 'string' in self.usertypes:
-								arg_type = self.usertypes['string']['type']
+								if arg_type.endswith('&'):
+									arg_type = self.usertypes['string']['type'] + '&'
+								elif arg_type.endswith('*'):
+									arg_type = self.usertypes['string']['type'] + '*'
+								else:
+									arg_type = self.usertypes['string']['type']
 							else:
 								arg_type = 'std::string'  ## standard string type in c++
+
 						if arg_name in func_pointers:
 							## note C has funky function pointer syntax, where the arg name is in the middle
 							## of the type, the arg name gets put there when parsing above.
