@@ -1131,9 +1131,12 @@ def translate_to_go(script, insert_runtime=True):
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 
-	exe = os.path.expanduser('~/go/bin/go')
+	## default path on linux from the offical Go docs ##
+	exe = '/usr/local/go/bin/go'  
 	if not os.path.isfile(exe):
-		raise RuntimeError('go not found in ~/go/bin/go')
+		exe = os.path.expanduser('~/go/bin/go')  ## fall back to user home directory
+		if not os.path.isfile(exe):
+			raise RuntimeError('go not found in ~/go/bin/go')
 
 	## this hack runs the code generated in the second pass into the Go compiler to check for errors,
 	## where an interface could not be type asserted, because Go found that the variable was not an interface,

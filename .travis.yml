@@ -7,6 +7,10 @@ install:
   - sudo apt-get install -qq gcc-4.8 g++-4.8 
 # We want to compile with g++ 4.8 when rather than the default g++
   - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
+  - wget https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz
+  - sudo tar -C /usr/local -xzf go1.4.2.linux-amd64.tar.gz
+  - curl -s https://static.rust-lang.org/rustup.sh | sudo sh
+  - sudo apt-get install python-numpy
 
 language: python
 python:
@@ -14,4 +18,4 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 #install: 
 # command to run tests, e.g. python setup.py test
-script:  "./rusthon.py ./examples/callbacks.md"
+script:  "python ./regtests/test-markdowns.py"

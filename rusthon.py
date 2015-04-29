@@ -9,6 +9,12 @@ import os, sys, subprocess, hashlib
 #import pythonjs.typedpython as typedpython
 import tempfile
 
+GO_EXE = None
+if os.path.isfile('/usr/local/go/bin/go'):
+	GO_EXE = '/usr/local/go/bin/go'
+elif os.path.isfile(os.path.expanduser('~/go/bin/go')):
+	GO_EXE = os.path.expanduser('~/go/bin/go')
+
 
 def compile_js( script, module_path, main_name='main', directjs=False, directloops=False ):
 	'''
@@ -709,10 +715,11 @@ def build( modules, module_path, datadirs=None ):
 		source = [ mod['source'] for mod in output['go'] ]
 		tmpfile = tempfile.gettempdir() + '/rusthon-go-build.go'
 		open(tmpfile, 'wb').write( '\n'.join(source) )
-		cmd = ['go', 'build', tmpfile]
-		subprocess.check_call(['go', 'build', tmpfile], cwd=tempfile.gettempdir() )
-		mod['binary'] = tempfile.gettempdir() + '/rusthon-go-build'
-		output['executeables'].append(tempfile.gettempdir() + '/rusthon-go-build')
+		if GO_EXE:
+			cmd = [GO_EXE, 'build', tmpfile]
+			subprocess.check_call([GO_EXE, 'build', tmpfile], cwd=tempfile.gettempdir() )
+			mod['binary'] = tempfile.gettempdir() + '/rusthon-go-build'
+			output['executeables'].append(tempfile.gettempdir() + '/rusthon-go-build')
 
 
 	if modules['rust']:
@@ -868,7 +875,7 @@ def build( modules, module_path, datadirs=None ):
 			#if 'compile-mode' in mod:
 			#	compile_mode = mod['compile-mode']
 
-			if 'tag' in mod and '.' not in mod['tag']:
+			if 'tag' in mod and mod['tag'] and '.' not in mod['tag']:
 				exename = mod['tag']
 
 		tmpfile = builddir + '/rusthon-c++-build.cpp'
