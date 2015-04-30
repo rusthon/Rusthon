@@ -1216,7 +1216,14 @@ def main():
 			)
 			subprocess.check_call( ['tar', '-xvf', tmptar], cwd=tmpdir )
 
+			run = subprocess.call
+
 			for name in launch:
+				if name==launch[-1]:
+					run = subprocess.check_call
+				else:
+					run = subprocess.Popen
+
 				if name.endswith('.py'):
 					firstline = open(os.path.join(tmpdir, name), 'rb').readlines()[0]
 					python = 'python'
@@ -1230,30 +1237,30 @@ def main():
 						if not os.path.isdir(anabin):
 							raise RuntimeError('Anaconda Python not installed to default location: %s' %anabin)
 
-						subprocess.call( [os.path.join(anabin,python), name], cwd=tmpdir )
+						run( [os.path.join(anabin,python), name], cwd=tmpdir )
 
 					else:
-						subprocess.call( [python, name], cwd=tmpdir )
+						run( [python, name], cwd=tmpdir )
 
 				elif name.endswith('.js'):
-					subprocess.call( ['node', name],   cwd=tmpdir )
+					run( ['node', name],   cwd=tmpdir )
 
 				elif name.endswith('.nim'):
-					subprocess.call( ['nim', 'compile', '--run', name],   cwd=tmpdir )
+					run( ['nim', 'compile', '--run', name],   cwd=tmpdir )
 
 				elif name.endswith('.go'):
-					subprocess.call( ['go', 'run', name],   cwd=tmpdir )
+					run( ['go', 'run', name],   cwd=tmpdir )
 
 				elif name.endswith('.lua'):
-					subprocess.call( ['luajit', name],   cwd=tmpdir )
+					run( ['luajit', name],   cwd=tmpdir )
 
 				elif name.endswith('.dart'):
 					dartbin = os.path.expanduser('~/dart-sdk/bin/dart')
-					subprocess.call( [dartbin, name],   cwd=tmpdir )
+					run( [dartbin, name],   cwd=tmpdir )
 
 				else:
 					print 'running: %s' %name
-					subprocess.call( [os.path.join(tmpdir,name)], cwd=tmpdir )
+					run( [os.path.join(tmpdir,name)], cwd=tmpdir )
 
 
 def bootstrap_rusthon():
