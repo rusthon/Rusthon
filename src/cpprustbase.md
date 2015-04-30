@@ -1326,7 +1326,7 @@ handles all special calls
 
 		elif fname == '__open__':
 			if self._cpp:
-				return '__open__(%s)' %self.visit(node.args[0])
+				return '__open__(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))
 			else:
 				return 'File::open_mode( &Path::new(%s.to_string()), Open, Read )' %self.visit(node.args[0])
 

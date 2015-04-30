@@ -1252,7 +1252,8 @@ def main():
 					subprocess.call( [dartbin, name],   cwd=tmpdir )
 
 				else:
-					subprocess.call( [name], cwd=tmpdir )
+					print 'running: %s' %name
+					subprocess.call( [os.path.join(tmpdir,name)], cwd=tmpdir )
 
 
 def bootstrap_rusthon():

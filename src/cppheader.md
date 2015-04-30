@@ -49,6 +49,9 @@ T* __pointer__(T& ob) {return &ob;}
 template<class T>
 T* __pointer__(T ob) {return &ob;}  // compiler optimizes away the copy?
 
+std::string* __pointer__(std::string ob) {
+	return &ob;
+}
 
 template<class T>
 T* __pointer__(std::shared_ptr<T> ob) {return ob.get();}

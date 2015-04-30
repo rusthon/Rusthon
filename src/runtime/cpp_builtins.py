@@ -73,11 +73,19 @@ std::string str( int s ) {
 	return std::to_string(s);
 }
 
-std::ofstream* __open__(const std::string name) {
-	std::ofstream *f;
-	f = new std::ofstream;
-	f->open( name.c_str(), std::ofstream::in | std::ofstream::binary );
-	return f;
+std::fstream* __open__(const std::string name, const std::string mode) {
+	if (mode==std::string("rb")) {
+		return new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
+	} else {
+		return new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
+	}
+}
+
+std::string readfile(std::fstream* f) {
+	std::ostringstream c;
+	c << f->rdbuf();
+	f->close();
+	return c.str();
 }
 
 // a pointer version is also required for `range` because it could be called inside
