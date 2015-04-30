@@ -950,7 +950,7 @@ handles all special calls
 			args = ','.join([self.visit(arg) for arg in node.args])
 			if '"%s"' in macro:
 				return macro % tuple([s.s for s in node.args])
-			if '%s' in macro:
+			elif '%s' in macro:
 				return macro % tuple([self.visit(s) for s in node.args])
 			else:
 				return '%s(%s)' %(macro,args)

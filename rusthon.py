@@ -852,7 +852,7 @@ def build( modules, module_path, datadirs=None ):
 		builddir = tempfile.gettempdir()
 		#compile_mode = 'binary'
 		for mod in mods_sorted_by_index:
-			if 'tag' in mod and mod['tag'] and mod['tag'].endswith('.hpp'):
+			if 'tag' in mod and mod['tag'] and ( mod['tag'].endswith('.hpp') or mod['tag'].endswith('.hpp') ):
 				## allows plain header files to be included in build directory ##
 				open(
 					os.path.join(builddir, mod['tag']), 'wb'

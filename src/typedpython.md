@@ -97,9 +97,9 @@ class typedpython:
 					a.append('"] << ')
 					a.append( char )
 
-				elif char == '(' and nextchar in ('&','@'):
-					inline_wrap = True
-					a.append('(inline("')
+				#elif char == '(' and nextchar in ('&','@'):  ## DEPRECATED
+				#	inline_wrap = True
+				#	a.append('(inline("')
 				elif char in '),' and inline_wrap:
 					inline_wrap = False
 					for u,_ in enumerate(a):
@@ -595,11 +595,13 @@ a = []string(x,y,z)
 ## becomes: __go__arrayfixed__(3, string) << (x,y,z)
 a = [ 3 ]int(x,y,z)
 
-## Rust
+## Rust - DEPRECATED (replaced by minimacro with syntax)
 ## f(inline('&mut *x'))
-f(&mut *x)
+#f(&mut *x)
 ## f(inline('ref mut *x'), y.z())
-f(@mut *x, y.z())
+#f(@mut *x, y.z())
+
+
 ## f(x << __as__ << uint)
 f(x as uint)
 
