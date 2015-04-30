@@ -951,7 +951,7 @@ handles all special calls
 			if '"%s"' in macro:
 				return macro % tuple([s.s for s in node.args])
 			if '%s' in macro:
-				return macro % args
+				return macro % tuple([self.visit(s) for s in node.args])
 			else:
 				return '%s(%s)' %(macro,args)
 
@@ -1632,6 +1632,8 @@ regular Python has no support for.
 				return '%s%s' %(node.left.args[0].s, right)
 			else:
 				## TODO this is hackish
+				if type(left) is tuple:
+					raise RuntimeError(left)
 				atype = left.split('<')[-1].split('>')[0]
 				if isinstance(node.right, ast.Tuple):
 					r = ['new std::vector<%s> %s' %(atype, self.visit(elt)) for elt in node.right.elts]
@@ -3331,7 +3333,7 @@ because they need some special handling in other places.
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name):
 
 				## creation of a new class instance and assignment to a local variable
-				if node.value.func.id in self._classes or (node.value.func.id=='new' and isinstance(node.value.args[0],ast.Call) and not node.value.args[0].func.id.startswith('_') ):
+				if node.value.func.id in self._classes or (node.value.func.id=='new' and isinstance(node.value.args[0],ast.Call) and isinstance(node.value.args[0].func, ast.Name) and not node.value.args[0].func.id.startswith('_') ):
 					if node.value.func.id=='new':
 						classname = node.value.args[0].func.id
 						if not self._cpp:

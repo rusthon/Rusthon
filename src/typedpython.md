@@ -421,6 +421,8 @@ class typedpython:
 							typedef = '"%s"' %typedef.strip()
 						elif typedef.startswith('lambda('):
 							typedef = '"%s"' %typedef.strip()
+						elif '::' in typedef:
+							typedef = '"%s"' %typedef.strip()
 						elif '<' in typedef and '>' in typedef: ## rust and c++ template/generics syntax
 							typedef = '"%s"' %typedef.strip()
 						elif ':' in typedef and typedef.strip().startswith('[') and typedef.strip().endswith(']'): ## verilog [bit:index] syntax
