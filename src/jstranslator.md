@@ -157,11 +157,6 @@ TODO: regenerate pythonjs.js each time.
 		header = mod['header']
 
 
-		if self._insert_runtime:
-			dirname = os.path.dirname(os.path.abspath(__file__))
-			runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
-			lines.append( runtime )  #.replace('\n', ';') )
-
 		for b in node.body:
 			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id == '__new_module__':
 				mod = self._new_module( '%s.js' %b.value.args[0].id )
@@ -172,6 +167,13 @@ TODO: regenerate pythonjs.js each time.
 			else:
 				line = self.visit(b)
 				if line: lines.append( line )
+
+
+		if self._insert_runtime:
+			dirname = os.path.dirname(os.path.abspath(__file__))
+			runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
+			lines.insert( 0, runtime )
+
 
 		if self._requirejs and not self._webworker:
 			for name in self._exports:

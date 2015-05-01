@@ -533,7 +533,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		elif self._with_rust:  ## allow `import xx` to be translated to `extern crate xx`
 			writer.write('from %s import %s' %(node.module, ','.join([n.name for n in node.names])))
-		elif self._with_cpp and node.module == 'runtime':
+		elif node.module == 'runtime':
 			writer.write('from runtime import *')
 		else:
 			msg = 'invalid import - file not found: %s'%path

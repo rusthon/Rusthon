@@ -160,6 +160,8 @@ Import `import x` and `from x import y`
 			crate = self._crates[node.module]
 			for alias in node.names:
 				crate.add( alias.name )
+		if node.module=='runtime':
+			self._insert_runtime = True
 
 		return ''
 
