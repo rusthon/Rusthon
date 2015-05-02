@@ -12,6 +12,7 @@ CPP_HEADER = """
 #include <array>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <map>
 #include <algorithm>

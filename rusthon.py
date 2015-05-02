@@ -600,7 +600,7 @@ def build( modules, module_path, datadirs=None ):
 		)  ## gets compiled below
 
 
-
+	## HTML ##
 	if modules['html']:
 		mods_sorted_by_index = sorted(modules['html'], key=lambda mod: mod.get('index'))
 		for mod in mods_sorted_by_index:
@@ -615,7 +615,7 @@ def build( modules, module_path, datadirs=None ):
 						html.append( open(url, 'rb').read() )
 						html.append('</script>')
 					else:
-						print('WARNING: could not find file: %s' %url)
+						print('ERROR: could not find file to inline: %s' %url)
 						html.append( line )
 				else:
 					html.append( line )
