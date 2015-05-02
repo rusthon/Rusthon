@@ -21,8 +21,8 @@ html
 ```html
 <html>
 <head>
-<script src="~/Rusthon/pythonjs/pythonjs-minimal.js"></script>
 <script src="~/angular.js/angular.min.js"></script>
+
 <@myscript>
 
 </head>
@@ -60,6 +60,7 @@ Below `@myscript` is given on the line just before the fenced rusthon code block
 @myscript
 ```rusthon
 #backend:javascript
+from runtime import *
 
 module = angular.module('invoice1', [])
 

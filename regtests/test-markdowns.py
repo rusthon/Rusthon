@@ -1,7 +1,7 @@
 import os, sys, subprocess
 
 passed = []
-ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_')
+ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_', 'cpython_')
 
 ## rust is broken on fedora? Travis uses Debian.
 TODO_FIX = (
