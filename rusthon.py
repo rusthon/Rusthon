@@ -273,6 +273,11 @@ def build( modules, module_path, datadirs=None ):
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
 	cached_json = {}
 
+	if modules['javascript']:
+		for mod in modules['javascript']:
+			if 'tag' in mod and mod['tag'] and '.' in mod['tag']:
+				output['datafiles'][mod['tag']] = mod['code']
+
 	if modules['json']:
 		for mod in modules['json']:
 			cached_json[ mod['name'] ] = mod['code']
@@ -598,6 +603,7 @@ def build( modules, module_path, datadirs=None ):
 		modules['c++'].append(
 			{'code':cppcode, 'index':n+1, 'links':cpp_links, 'include-dirs':cpp_idirs, 'defines':cpp_defines}
 		)  ## gets compiled below
+
 
 
 	## HTML ##
