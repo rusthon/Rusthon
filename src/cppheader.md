@@ -4,6 +4,8 @@ C++ Header
 notes: new in c++11: algorithm, functional, thread, and chrono.
 includes typedefs for the standard types, like `f32`.
 
+note: OSX requires cmath, because std::pow and std::round is used in the builtins.
+
 ```python
 
 CPP_HEADER = """
@@ -19,6 +21,7 @@ CPP_HEADER = """
 #include <functional>
 #include <thread>
 #include <chrono>
+#include <cmath>
 
 typedef long   i64;
 typedef int    i32;

@@ -2,6 +2,7 @@ import os, sys, subprocess
 
 passed = []
 ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_', 'cpython_')
+ignoreosx = ['hello_cpython.md']
 
 ## rust is broken on fedora? Travis uses Debian.
 TODO_FIX = (
@@ -22,7 +23,9 @@ for md in files:
 	if md in TODO_FIX:
 		print 'skip test: %s (TODO fix later)' %md
 		continue
-	if not md.endswith('.md'):
+	elif not md.endswith('.md'):
+		continue
+	elif sys.platform=='darwin' and md in ignoreosx:
 		continue
 
 	print md
