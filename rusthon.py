@@ -1219,7 +1219,10 @@ def main():
 			for i,page in enumerate(package['html']):
 				tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
 				open(tmp, 'wb').write( page['code'] )
-				webbrowser.open(tmp)
+				if sys.platform=='darwin':
+					subprocess.call(['open', tmp])
+				else:
+					webbrowser.open(tmp)
 
 	else:
 		save_tar( package, output_tar )
