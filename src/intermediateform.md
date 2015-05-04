@@ -2546,8 +2546,8 @@ class PythonToPythonJS(NodeVisitorBase):
 				if anode.attr == 'update' and len(args) == 1:
 					return '__jsdict_update(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
-				elif anode.attr == 'get' and len(args) > 0 and len(args) <= 2:
-					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+				#elif anode.attr == 'get' and len(args) > 0 and len(args) <= 2:  ## TODO fix this, fails with some API/object types.
+				#	return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				elif anode.attr == 'set' and len(args)==2:
 					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))

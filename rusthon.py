@@ -8,6 +8,8 @@ import os, sys, subprocess, hashlib
 #import pythonjs.pythonjs_to_verilog
 #import pythonjs.typedpython as typedpython
 import tempfile
+import webbrowser
+
 
 GO_EXE = None
 if os.path.isfile('/usr/local/go/bin/go'):
@@ -1214,7 +1216,6 @@ def main():
 			)
 
 		if package['html']:
-			import webbrowser
 			for i,page in enumerate(package['html']):
 				tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
 				open(tmp, 'wb').write( page['code'] )
@@ -1274,6 +1275,9 @@ def main():
 				elif name.endswith('.dart'):
 					dartbin = os.path.expanduser('~/dart-sdk/bin/dart')
 					run( [dartbin, name],   cwd=tmpdir )
+
+				elif name.endswith('.html'):
+					webbrowser.open(tmpdir+'/'+name)
 
 				else:
 					print 'running: %s' %name
