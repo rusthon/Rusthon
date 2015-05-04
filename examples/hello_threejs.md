@@ -17,7 +17,6 @@ This is triggered by using `~/` at the start of the path in the `src` attribute 
 ```html
 <html>
 <head>
-<script src="~/Rusthon/pythonjs/pythonjs-minimal.js"></script>
 <script src="~/three.js/build/three.min.js"></script>
 <@myscript>
 
@@ -36,6 +35,7 @@ Below `@myscript` is given on the line just before the fenced rusthon code block
 @myscript
 ```rusthon
 #backend:javascript
+from runtime import *
 
 Meshes = []
 ren = None
