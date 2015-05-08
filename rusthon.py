@@ -625,8 +625,12 @@ def build( modules, module_path, datadirs=None ):
 					else:
 						print('ERROR: could not find file to inline: %s' %url)
 						html.append( line )
-				elif line.strip().startswith('<link ') and 'href="~/' in line:
-					url = line.split('href="')[-1].split('"')[0]
+				elif line.strip().startswith('<link ') and ('href="~/' in line or "href='~/" in line):
+					if 'href="' in line:
+						url = line.split('href="')[-1].split('"')[0]
+					else:
+						url = line.split("href='")[-1].split("'")[0]
+
 					url = os.path.expanduser( url )
 					if os.path.isfile(url):
 						html.append('<style>')
