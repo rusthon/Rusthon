@@ -54,7 +54,7 @@ def init():
 	scene.add( mesh );
 	mesh.receiveShadow = true;
 
-	renderer = new THREE.WebGLRenderer(alpha=True);
+	renderer = new THREE.WebGLRenderer(alpha=True, antialiasing=True);
 	renderer.shadowMapEnabled = true
 	renderer.shadowMapType = THREE.PCFSoftShadowMap
 	renderer.shadowMapSoft = true
@@ -375,11 +375,10 @@ init()
 
 
 <link href='~/bootstrap-3.3.4-dist/css/bootstrap.css' rel='stylesheet' />
-<link href='~/js/css/darkstrap.css' rel='stylesheet' />
 
 <style>
 	body {
-		background: rgb(43,45,48); /* Old browsers */
+		background: rgb(93,95,98); /* Old browsers */
 		margin: 0;
 		font-family: Arial;
 		overflow: hidden;

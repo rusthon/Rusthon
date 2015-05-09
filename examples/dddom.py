@@ -282,13 +282,15 @@ class SelectManager:
 		document.addEventListener('mouseup', self.on_mouse_up.bind(self), false)
 
 	def on_mouse_up(self, evt):
-		x = ( event.clientX / window.innerWidth ) * 2 - 1;
-		y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-		vector = new THREE.Vector3( x, y, 0.5 );
-		projector = new THREE.Projector();
-		projector.unprojectVector( vector, self.camera );
-		raycaster = new THREE.Raycaster( self.camera.position, vector.sub( self.camera.position ).normalize() );
-		intersects = raycaster.intersectObjects( CLICKABLES );
+		x = ( event.clientX / window.innerWidth ) * 2 - 1
+		y = - ( event.clientY / window.innerHeight ) * 2 + 1
+		#vector = new THREE.Vector3( x, y, 0.5 );
+		#projector = new THREE.Projector();
+		#projector.unprojectVector( vector, self.camera )
+		#raycaster = new THREE.Raycaster( self.camera.position, vector.sub( self.camera.position ).normalize() );
+		raycaster = new(THREE.Raycaster())
+		raycaster.setFromCamera( new(THREE.Vector2(x,y)), self.camera )
+		intersects = raycaster.intersectObjects( CLICKABLES )
 		#if intersects.length > 0:
 		#	ob = intersects[0].object
 		for inter in intersects:
