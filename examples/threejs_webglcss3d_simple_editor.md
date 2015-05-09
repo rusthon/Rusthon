@@ -61,9 +61,10 @@ def init():
 	print renderer
 
 	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.domElement.style.position = 'absolute';
-	renderer.domElement.style.top = 0;
-	renderer.domElement.style.zIndex = 1;
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = 0
+	renderer.domElement.style.zIndex = 10
+	renderer.domElement.style.pointerEvents = 'none'
 
 	gizmo = new THREE.TransformControls( camera, renderer.domElement )
 	scene.add( gizmo )
@@ -212,17 +213,17 @@ def init():
 	renderer2.setSize( window.innerWidth, window.innerHeight );
 	renderer2.domElement.style.position = 'absolute';
 	renderer2.domElement.style.top = 0;
-	renderer2.domElement.style.zIndex = 0;
-	document.body.appendChild( renderer2.domElement );
+	renderer2.domElement.style.zIndex = -2;
+	#document.body.appendChild( renderer2.domElement );
 
 	renderer3 = new THREE.CSS3DRenderer();
 	renderer3.setSize( window.innerWidth, window.innerHeight );
 	renderer3.domElement.style.position = 'absolute';
 	renderer3.domElement.style.top = 0;
-	renderer3.domElement.style.opacity = 0.1;
-	renderer3.domElement.style.zIndex=4;
+	#renderer3.domElement.style.opacity = 0.5;
+	renderer3.domElement.style.zIndex=0;
 
-	document.body.appendChild( renderer2.domElement );
+	#document.body.appendChild( renderer2.domElement );
 	document.body.appendChild( renderer.domElement );
 	document.body.appendChild( renderer3.domElement );
 
@@ -355,7 +356,7 @@ def animate():
 		#e.object.rotation.z += 0.001
 		e.update()
 
-	renderer2.render( scene2, camera )
+	#renderer2.render( scene2, camera )
 
 	renderer.clear()
 	composer.render( scene, camera )
