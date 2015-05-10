@@ -1309,6 +1309,16 @@ class rusthon(object):
 		if mode=='javascript':
 			js = compile_js( code, '/tmp', main_name='main' )
 			return js['main']
+
+		elif mode=='c++':
+			pyjs = python_to_pythonjs(code, cpp=True)
+			pak = translate_to_cpp(
+				pyjs, 
+				insert_runtime=False
+			)
+			## pak contains: c_header and cpp_header
+			return pak['main']
+
 		else:
 			#modules = new_module()
 			#import_md( path, modules=modules )

@@ -1,11 +1,16 @@
 Tornado Server
 -------------
 
+for local testing run:
+```
+./rusthon.py ./examples/threejs_webglcss3d_simple_editor.md --run=myserver.py
+```
+
 @myserver.py
 ```python
 #!/usr/bin/python
 
-PORT  = 8000
+PORT = int(os.environ.get("PORT", 8000))
 
 ## inlines rusthon into script ##
 from rusthon import *
@@ -13,17 +18,18 @@ import tornado
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-import os, sys, subprocess, datetime, json, time
+import os, sys, subprocess, datetime, json, time, mimetypes
 
 
 class MainHandler( tornado.web.RequestHandler ):
-	'''
-	Main page request handler for normal HTTP requests.
-	index.html and myscript.js are hardcoded to run the
-	websocket test.
-	'''
+
 	def get(self, path=None):
 		print('path', path)
+		guess = path
+		if not path or path == '/': guess = 'index.html'
+		mime_type, encoding = mimetypes.guess_type(guess)
+		if mime_type: self.set_header("Content-Type", mime_type)
+
 		if path == 'favicon.ico' or path.endswith('.map'):
 			self.write('')
 		elif path and '.' in path:
@@ -33,15 +39,7 @@ class MainHandler( tornado.web.RequestHandler ):
 
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
-	'''
-	Websocket, note that data from the client comes in as a plain string,
-	here we always assume the client is sending JSON, so json.loads
-	is used to unpack the data, this adds some overhead.
 
-	To ensure the the first message is flushed to the client,
-	and processed as its own event, time.sleep(FUDGE) is used
-	here to force a small delay, before the data is written back
-	'''
 	def open(self):
 		print( 'websocket open' )
 		print( self.request.connection )
@@ -60,9 +58,14 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 				code = ob['code']
 				if ob['translate'] == 'python to javascript':
 					js = rusthon.translate( code, mode='javascript' )
-					self.write_message(json.dumps({'type':'javascript', 'data':js}))
+					reply = {'type':'javascript', 'data':js, 'id':ob['id']}
+					self.write_message(json.dumps(reply))
+
 				elif ob['translate'] == 'python to c++':
-					pass
+					js = rusthon.translate( code, mode='c++' )
+					reply = {'type':'c++', 'data':js, 'id':ob['id']}
+					self.write_message(json.dumps(reply))
+
 				print code
 
 
@@ -111,6 +114,13 @@ renderer2 = renderer3 = None
 controls = gizmo = composer = None
 Elements = []
 
+TUTORIALS = [
+	'print "hi"',
+	'self.window.rotation.x += 0.1',
+	"self.container.appendChild(document.createTextNode('hi'))",
+	'window.alert("hi")',
+]
+
 ws = None
 
 def on_open_ws():
@@ -133,9 +143,15 @@ def on_message_ws(event):
 		if event.data[0] == '{':
 			print 'got json data'
 			msg = JSON.parse(event.data)
+			ta = document.getElementById( msg.id )
+			while ta.firstChild:
+				ta.removeChild( ta.firstChild )
+			ta.appendChild(document.createTextNode(msg.data))
+
 			if msg.type=='javascript':
 				print msg.data
 				eval( msg.data )
+
 		else:
 			print 'got unknown data'
 
@@ -157,8 +173,6 @@ def init():
 	global camera, scene, scene3, renderer, renderer2, renderer3
 	global geometry, material, mesh
 	global controls, gizmo, composer
-
-	connect_ws()
 
 	SCREEN_WIDTH = window.innerWidth
 	SCREEN_HEIGHT = window.innerHeight
@@ -254,7 +268,7 @@ def init():
 	hblur = new(THREE.ShaderPass( THREE.HorizontalTiltShiftShader ))
 	vblur = new(THREE.ShaderPass( THREE.VerticalTiltShiftShader ))
 
-	bluriness = 1.7;
+	bluriness = 1.5;
 	hblur.uniforms[ 'h' ].value = bluriness / SCREEN_WIDTH
 	vblur.uniforms[ 'v' ].value = bluriness / SCREEN_HEIGHT
 
@@ -302,6 +316,8 @@ def init():
 		this.parentNode.appendChild(con)
 		ta = create_textarea()
 		con.appendChild( ta )
+		if TUTORIALS.length:
+			ta.appendChild(document.createTextNode(TUTORIALS.pop()))
 
 		#pointlight.position.copy( this.element3D.object.position )
 		#pointlight.position.z += 40
@@ -334,13 +350,18 @@ def init():
 			if m == 'javascript':
 				eval( ta.value )
 			else:
+				if this._output_ta is None:
+					this._output_ta = create_textarea()
+					con.appendChild( this._output_ta )
 				msg = {
 					'translate' : m,
-					'code': ta.value
+					'code': ta.value,
+					'id'  : this._output_ta.getAttribute('id')
 				}
 				ws.send(JSON.stringify(msg))
 
-		this.onclick = click2
+		this._output_ta = None
+		this.onclick = click2.bind(this)
 
 
 	for i in range(10):
@@ -376,6 +397,11 @@ def init():
 	document.body.appendChild( renderer3.domElement );
 
 	print 'init done.'
+	try:
+		connect_ws()
+	except:
+		print 'connect to websocket failed'
+
 	animate()
 
 
@@ -533,7 +559,7 @@ HTML
 
 <style>
 	body {
-		background: rgb(123,125,128); /* Old browsers */
+		background: rgb(223,225,228); /* Old browsers */
 		margin: 0;
 		font-family: Arial;
 		overflow: hidden;
@@ -583,8 +609,14 @@ HTML
 		<script src="~/three.js/examples/js/loaders/ColladaLoader.js"></script>
 
 
-
 <@myapp>
+
+<div style="position:absolute">
+	<h3><a href="http://rusthon.github.io/Rusthon/">Created with Rusthon</a>
+	</h3>
+	<h5><a href="https://github.com/rusthon/Rusthon/blob/master/examples/threejs_webglcss3d_simple_editor.md">source code</a>
+	</h5>
+</div>
 
 </body>
 </html>

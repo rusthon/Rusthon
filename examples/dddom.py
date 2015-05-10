@@ -557,7 +557,7 @@ class Window3D:
 	def create_windowframe(self):
 		geo = new THREE.BoxGeometry( 1, 1, 1 );
 		#mat = new THREE.MeshBasicMaterial( color=0x505060, opacity=0 )
-		mat = new THREE.MeshPhongMaterial( color=0x303040, opacity=0, shininess=3, specular=0x202030 )
+		mat = new THREE.MeshPhongMaterial( color=0x303090, opacity=0, shininess=3, specular=0x202030 )
 		mat.blending = THREE.NoBlending
 		self.mask = r = new THREE.Mesh( geo, mat )
 		self.root.add( r )
