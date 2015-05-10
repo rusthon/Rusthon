@@ -554,24 +554,35 @@ class Window3D:
 
 	def create_windowframe(self):
 		geo = new THREE.BoxGeometry( 1, 1, 1 );
-		mat = new THREE.MeshBasicMaterial( color=0x000000, opacity=0 )
+		mat = new THREE.MeshBasicMaterial( color=0x505060, opacity=0 )
 		mat.blending = THREE.NoBlending
 		self.mask = r = new THREE.Mesh( geo, mat );
 		self.root.add( r );
 		#r.position.copy( self.object.position )
 		r.position.z -= 5
 
-		geo = new THREE.BoxGeometry( 0.7, 1, 20 );
-		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } );
-		self.shaded_border = m = new THREE.Mesh( geo, mat );
+
+		geo = create_cube_lines( 1 )
+		geo.computeLineDistances()
+		self.outline = new THREE.Line(
+			geo, 
+			new THREE.LineDashedMaterial( { color: 0xffaa00, dashSize: 0.05, gapSize: 0.01, linewidth: 2 } ), 
+			THREE.LinePieces 
+		)
+		self.outline.scale.z = 50
+		self.root.add(self.outline)
+
+		geo = new THREE.BoxGeometry( 0.7, 1.2, 10 )
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.8, 'blending':THREE.AdditiveBlending } )
+		self.shaded_border = m = new THREE.Mesh( geo, mat )
 		r.add( m );
 		m.position.z -= 12
 		m.castShadow = true;
 		m.receiveShadow = true;
 
 		geo = new THREE.BoxGeometry( 1.1, 1.1, 1 );
-		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
-		self.glowing_border = m = new THREE.Mesh( geo, mat );
+		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } )
+		self.glowing_border = m = new THREE.Mesh( geo, mat )
 		r.add( m );
 		m.position.z -= 2
 
@@ -582,9 +593,15 @@ class Window3D:
 		m.position.z -= 40
 
 
-		geo = new THREE.BoxGeometry( 0.025, 0.5, 30 );
-		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff } );
-		self.right_bar = m = new THREE.Mesh( geo, mat );
+		geo = new THREE.BoxGeometry( 0.025, 0.5, 30 )
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffffff } )
+		mat.color.r = 1.0
+		mat.color.g = 1.0
+		mat.color.b = 2.0
+		mat.emissive.r = 0.8
+		mat.emissive.g = 0.5
+		mat.emissive.b = 0.5
+		self.right_bar = m = new THREE.Mesh( geo, mat )
 		r.add( m );
 		m.position.y += 0.3
 		m.position.x -= 0.55
@@ -595,8 +612,12 @@ class Window3D:
 			self.expand()
 		m.onclick = expand.bind(self)
 
-		geo = new THREE.BoxGeometry( 0.9, 0.1, 20 );
+		geo = new THREE.BoxGeometry( 0.9, 0.1, 1 );
 		mat = new THREE.MeshPhongMaterial( color=0xffff00, transparent=True, opacity=0.84 );
+		mat.emissive.r = 0.8
+		mat.emissive.g = 0.8
+		mat.emissive.b = 0.5
+
 		self.footer = m = new THREE.Mesh( geo, mat );
 		r.add( m );
 		m.position.y -= 0.6
@@ -610,9 +631,16 @@ class Window3D:
 				self.expand()
 		m.onclick = clickfooter.bind(self)
 
-		geo = new THREE.BoxGeometry( 0.2, 0.1, 10 );
-		mat = new THREE.MeshPhongMaterial( {'color': 0xffff00 } );
-		self.minimize_object = m = new THREE.Mesh( geo, mat );
+		geo = new THREE.BoxGeometry( 0.2, 0.1, 10 )
+		mat = new THREE.MeshPhongMaterial( {'color': 0xffff00 } )
+		mat.color.r = 100.0
+		mat.color.g = 400.0
+		mat.color.b = 400.0
+		mat.emissive.r = 100.0
+		mat.emissive.g = 400.0
+		mat.emissive.b = 400.0
+
+		self.minimize_object = m = new THREE.Mesh( geo, mat )
 		r.add( m );
 		m.position.y += 0.8
 		m.position.x += 0.45
@@ -652,6 +680,9 @@ class Window3D:
 		self.mask.scale.x = w*99
 		self.mask.scale.y = h*99
 
+		self.outline.scale.x = w*111
+		self.outline.scale.y = h*111
+
 		#a = self.element.getElementsByTagName('SELECT')
 		#a = self.element.getElementsByTagName('TEXTAREA')
 
@@ -660,3 +691,50 @@ class Window3D:
 		#	if video.readyState == video.HAVE_ENOUGH_DATA:
 		#		d['context'].drawImage( video, 0, 0 )
 		#		d['texture'].needsUpdate = True
+
+
+def create_cube_lines( size ):
+
+	h = size * 0.5
+	geometry = new(THREE.Geometry())
+
+	geometry.vertices.push(
+		new THREE.Vector3( -h, -h, -h ),
+		new THREE.Vector3( -h, h, -h ),
+
+		new THREE.Vector3( -h, h, -h ),
+		new THREE.Vector3( h, h, -h ),
+
+		new THREE.Vector3( h, h, -h ),
+		new THREE.Vector3( h, -h, -h ),
+
+		new THREE.Vector3( h, -h, -h ),
+		new THREE.Vector3( -h, -h, -h ),
+
+
+		new THREE.Vector3( -h, -h, h ),
+		new THREE.Vector3( -h, h, h ),
+
+		new THREE.Vector3( -h, h, h ),
+		new THREE.Vector3( h, h, h ),
+
+		new THREE.Vector3( h, h, h ),
+		new THREE.Vector3( h, -h, h ),
+
+		new THREE.Vector3( h, -h, h ),
+		new THREE.Vector3( -h, -h, h ),
+
+		new THREE.Vector3( -h, -h, -h ),
+		new THREE.Vector3( -h, -h, h ),
+
+		new THREE.Vector3( -h, h, -h ),
+		new THREE.Vector3( -h, h, h ),
+
+		new THREE.Vector3( h, h, -h ),
+		new THREE.Vector3( h, h, h ),
+
+		new THREE.Vector3( h, -h, -h ),
+		new THREE.Vector3( h, -h, h )
+	)
+
+	return geometry

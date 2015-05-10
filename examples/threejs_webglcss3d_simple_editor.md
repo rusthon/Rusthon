@@ -114,39 +114,46 @@ def init():
 	vblur = new(THREE.ShaderPass( THREE.VerticalTiltShiftShader ))
 
 	bluriness = 1.7;
-	hblur.uniforms[ 'h' ].value = bluriness / SCREEN_WIDTH;
-	vblur.uniforms[ 'v' ].value = bluriness / SCREEN_HEIGHT;
+	hblur.uniforms[ 'h' ].value = bluriness / SCREEN_WIDTH
+	vblur.uniforms[ 'v' ].value = bluriness / SCREEN_HEIGHT
 
 	hblur.uniforms[ 'r' ].value = 0.1
 	vblur.uniforms[ 'r' ].value = 0.1
+
+	## broken with rgba ##
+	#effectFXAA = new THREE.ShaderPass( THREE.FXAAShader )
+	#effectFXAA.uniforms[ 'resolution' ].value.set( 1.0 / SCREEN_WIDTH, 1.0 / SCREEN_HEIGHT )
+
+	effectBloom = new(THREE.BloomPass( 0.75 ))
+	effectCopy = new(THREE.ShaderPass( THREE.CopyShader ))
 
 	print 'setup composer'
 	composer = new(THREE.EffectComposer( renderer, renderTarget ))
 
 	renderModel = new(THREE.RenderPass( scene, camera ))
 
-	vblur.renderToScreen = true;
-	composer.addPass( renderModel );
-	composer.addPass( hblur );
-	composer.addPass( vblur );
+	#vblur.renderToScreen = true;
+	composer.addPass( renderModel )
+	#composer.addPass( effectFXAA )
+	composer.addPass( hblur )
+	composer.addPass( vblur )
+
+	composer.addPass( effectBloom )
+	effectCopy.renderToScreen = True
+	composer.addPass( effectCopy )
 
 
-
-	test_options = ['javascript', 'python']
-	for i in range(15):
-		test_options.append( 'some-option-'+i )
+	test_options = ['javascript', 'python to javascript', 'python to c++']
 
 	def onclick():
 		this.firstChild.nodeValue='run script'
 		this.setAttribute('class', 'btn btn-warning btn-small')
 		this.parentNode.appendChild(document.createTextNode(' mode:'))
-		this.parentNode.appendChild( this.element3D.create_select_dropdown(test_options) )
+		modedd = this.element3D.create_select_dropdown(test_options)
+		this.parentNode.appendChild( modedd )
 
 		this.parentNode.appendChild( document.createTextNode('mycheckbox:') )
 		this.parentNode.appendChild( create_checkbox(true) )
-
-		## TODO fix drop down button
-		#this.parentNode.appendChild( create_dropdown_button('drop-button'), ['my-opt1', 'my-opt2', 'my-opt3'] )
 
 		this.parentNode.appendChild(document.createElement('br'))
 
@@ -182,7 +189,14 @@ def init():
 			'window': this.element3D
 		}
 		def click2(evt):
-			eval( ta.value )
+			m = modedd.options[modedd.selectedIndex].value
+			if m == 'javascript':
+				eval( ta.value )
+			elif m == 'python to javascript':
+				print 'todo py to js'
+			else:
+				print 'todo py to c++'
+
 		this.onclick = click2
 
 
