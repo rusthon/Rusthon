@@ -302,42 +302,28 @@ class SelectManager:
 
 
 class Window3D:
-	def __init__(self, element, scene, shadow_scene, interact_scene, position, scale ):
-		## required for select dropdowns because `selectedIndex` is not updated by `e.cloneNode()` ##
+	def __init__(self, element, scene, interact_scene, position, scale ):
 		self._sid = 0
 		self.interact_scene = interact_scene
-		self.shadow_scene = shadow_scene
 		self.object = object = new THREE.CSS3DObject( element )
 		self.position = object.position
 		self.rotation = object.rotation
 		self.scale = object.scale
 
-		self.shadow = new THREE.CSS3DObject( element.cloneNode() )
 		self.element = element
 		self.active = False
 		self.collasped = False
 
-		## shadow_images is required because every frame the entire dom is cloned to be rendered under webgl layer,
-		## image data is lazy loaded, so even if the image is shown on the top interactive layer and cloned,
-		## it still takes time before the clone will lazy load the image data,
-		## below shadow_images holds a mapping of url and image, these must be inserted into the cloned dom each update.
-		self.shadow_images = {}
-		self.clone_videos = {}
 		self._video_textures = []  ## list of : {texture, video, context}
-		self.clone_iframes = {}    ## this will not work, iframes are not lazy in the same way as images and videos.
 
 		self.dropdown = None
-		self._scrollbars = {}
 
 		x,y,z = position
 		self.object.position.set(x,y,z+1)
-		self.shadow.position.set(x,y,z)
 
 		x,y,z = scale
 		self.object.scale.set(x,y,z)
-		self.shadow.scale.set(x,y,z)
 
-		shadow_scene.add( self.shadow )
 		interact_scene.add( self.object )
 
 		self.root = new THREE.Object3D()
@@ -382,21 +368,7 @@ class Window3D:
 		id = '__vid'+self._sid
 		v = document.createElement('video')
 		v.setAttribute('id', id)
-		#v.setAttribute('autoplay', 'true')  ## this must not be set, otherwise the clone will also play
-		#v.setAttribute('style', "color: rgba(255, 255, 0, 1)")  ## this will not work
-		#v.setAttribute('style', "opacity: 2")  ## this will not work either
-
-		## for some reason play/pause can not be forced on the clone,
-		## this might have something to do with the clone always being reparented.
-		#def onclick_not_working(evt):
-		#	vclone = self.clone_videos[ id ]
-		#	print(vclone)
-		#	if vclone.paused:
-		#		print('playing...')
-		#		vclone.play()
-		#	else:
-		#		vclone.pause()
-		#		print('pause!')
+		v.setAttribute('autoplay', 'true')
 
 		def onclick(evt):
 			print('video clicked')
@@ -442,8 +414,8 @@ class Window3D:
 
 			self._video_textures.append( {'texture':texture, 'video':v, 'context':imageContext, 'image':image} )
 
-
-		v.addEventListener('loadedmetadata', onmetaload.bind(self), false)
+		## old stuff
+		#v.addEventListener('loadedmetadata', onmetaload.bind(self), false)
 
 		if mp4:
 			s = document.createElement('source')
@@ -464,14 +436,16 @@ class Window3D:
 			self.create_dropdown( e, options )
 		else:
 			self.object.remove( self.dropdown )
-			self.shadow.remove( self.dropdown_clone )
 			self.root.remove( self._ddmesh1 )
 			self.root.remove( self._ddmesh2 )
 			self.dropdown = None
 
-	def hide_dropdown(self):  ## not working, three.js bug?
-		self.dropdown.visible = false
-		self.dropdown_clone.visible = false
+	def hide_dropdown(self):
+		self.dropdown.visible = false  ## not working, three.js bug?
+		self.object.remove( self.dropdown )
+		self.root.remove( self._ddmesh1 )
+		self.root.remove( self._ddmesh2 )
+		self.dropdown = None
 
 
 	def create_dropdown(self, e, options):
@@ -479,11 +453,6 @@ class Window3D:
 		#g = e
 		sel = document.createElement('select')
 		sel.setAttribute('multiple', 'multiple')
-		self._sid += 1
-		id = '_sid'+self._sid
-		sel.setAttribute('id', id)
-		self._scrollbars[ id ] = 0
-
 
 		for i,opt in enumerate(options):
 			o = document.createElement('option')
@@ -507,14 +476,10 @@ class Window3D:
 		## it is also needs its own shadow clone to be updated.
 		self.dropdown = new THREE.CSS3DObject( sel )
 		self.object.add( self.dropdown )
-		self.dropdown_clone = new THREE.CSS3DObject(sel.cloneNode())
-		self.shadow.add( self.dropdown_clone )
 
 		self.dropdown.position.x = X
 		self.dropdown.position.y = Y
 		self.dropdown.position.z += 20
-		self.dropdown_clone.position.copy( self.dropdown.position )
-		self.dropdown_clone.position.z -= 1
 
 		sel.focus()  # required?
 
@@ -531,32 +496,36 @@ class Window3D:
 			## inside of onchange.
 			if e.onchange:
 				e.onchange( evt )
-		sel.onclick = onclick
+			self.hide_dropdown()
+
+		sel.onclick = onclick.bind(self)
 
 		def onscroll(evt):  ## this hack is required to capture the scroll position
 			self.dropdown_clone.element.scrollTop = sel.scrollTop
-		sel.onscroll = onscroll.bind(self)
 
-		geo = new THREE.BoxGeometry( 1.1, H*1.1, 3 );
-		mat = new THREE.MeshBasicMaterial( {'color': 0x00ffff, 'transparent':true, 'opacity':0.18, 'blending':THREE.AdditiveBlending } );
-		self._ddmesh1 = m = new THREE.Mesh( geo, mat );
-		self.root.add( m );
-		m.castShadow = true;
+		## DEPRECATED
+		#sel.onscroll = onscroll.bind(self)
+
+
+		geo = new THREE.BoxGeometry( 1.01, H, 1 )
+		mat = new THREE.MeshBasicMaterial( {'color': 0x000000, 'transparent':true, 'opacity':0, 'blending':THREE.NoBlending } )
+		self._ddmesh1 = m = new THREE.Mesh( geo, mat )
+		self.root.add( m )
+		m.castShadow = true
 		m.position.x = X
 		m.position.y = Y
-		m.position.y += 10
-		m.position.z = 1
+		m.position.z = 18
 		m.scale.x = e.clientWidth
 
-		geo = new THREE.BoxGeometry( 1.07, H, 3 );
-		mat = new THREE.MeshBasicMaterial( {'color': 0xffffff, 'transparent':true, 'opacity':0.48, 'blending':THREE.SubtractiveBlending } );
-		self._ddmesh2 = m = new THREE.Mesh( geo, mat );
-		self.root.add( m );
-		m.castShadow = true;
+		geo = new THREE.BoxGeometry( 1.07, H*10, 1 )
+		mat = new THREE.MeshBasicMaterial( {'color': 0x00bbff, 'transparent':true, 'opacity':0.38, 'blending':THREE.AdditiveBlending } )
+		self._ddmesh2 = m = new THREE.Mesh( geo, mat )
+		self.root.add( m )
+		m.castShadow = true
 		m.position.x = X
 		m.position.y = Y
 		m.position.y += 10
-		m.position.z = 15
+		m.position.z = 5
 		m.scale.x = e.clientWidth
 
 
@@ -568,6 +537,7 @@ class Window3D:
 		def onclick(e):
 			a.focus()  ## allows the enter key to display options
 			self.display_dropdown(a, options)
+		
 		a.onclick = onclick.bind(self)
 
 		for opt in options:
@@ -668,17 +638,13 @@ class Window3D:
 		self.object.rotation.y += Math.PI / 2
 
 	def update(self):
-		if self.shadow.element.parentNode:
-			self.shadow.element.parentNode.removeChild( self.shadow.element )
-
+		## raise window up if active
 		if self.active and self.object.position.y < 400:
 			self.object.position.y += 10
 
 		self.root.position.copy( self.object.position )
 		self.root.rotation.copy( self.object.rotation )
 
-		self.shadow.position.copy( self.object.position )
-		self.shadow.rotation.copy( self.object.rotation )
 
 		w = self.element.clientWidth * 0.01
 		h = self.element.clientHeight * 0.01
@@ -686,114 +652,11 @@ class Window3D:
 		self.mask.scale.x = w*99
 		self.mask.scale.y = h*99
 
-		## this is just to display content, cloneNode(true) ensures deep copy
-		self.shadow.element = self.element.cloneNode(true)
+		#a = self.element.getElementsByTagName('SELECT')
+		#a = self.element.getElementsByTagName('TEXTAREA')
 
-		## sync scrollbars of any div with an id,
-		## note: this will not work with tab-content div's.
-		a = self.element.getElementsByTagName('DIV')
-		b = self.shadow.element.getElementsByTagName('DIV')
-		c = {}
-		for d in b:
-			if not d.id: continue
-			c[ d.id ] = d
-
-		for d in a:
-			if not d.id: continue
-			clone = c[ d.id ]
-			#d._clone = clone ## no help for tab-content
-			if d.scrollTop:
-				clone.scrollTop = d.scrollTop
-
-		################################################
-
-		a = self.element.getElementsByTagName('SELECT')
-		b = self.shadow.element.getElementsByTagName('SELECT')
-		c = {}
-		for sel in b:
-			c[ sel.getAttribute('id') ] = sel
-
-		for sel in a:
-			id = sel.getAttribute('id')
-			clone = c[ id ]
-			clone.selectedIndex = sel.selectedIndex
-			if sel.scrollTop:  ## select `multiple` type boxes. (note: self.dropdown is not updated here)
-				clone.scrollTop = sel.scrollTop
-
-
-		a = self.element.getElementsByTagName('TEXTAREA')
-		b = self.shadow.element.getElementsByTagName('TEXTAREA')
-		c = {}
-		for sel in b:
-			c[ sel.getAttribute('id') ] = sel
-
-		for sel in a:
-			c[ sel.getAttribute('id') ].value = sel.value
-
-
-		## do not load iframes in the clone ##
-		iframes = self.shadow.element.getElementsByTagName('IFRAME')
-		for iframe in iframes:
-			iframe.src = None
-
-		## insert lazy loading iframes into shadow dom ##
-		## it appears that this will not work, because when an iframe is reparented,
-		## it triggers a reload of the iframe, there might be a way to cheat around this,
-		## (possible workaround: block dom clone update until iframe has fully loaded)
-		## but it would be better to have a different solution anyways that only single
-		## renders the iframe - workaround: on mouse enter/leave adjust opacity of top css3d layer.
-		if False:
-			iframes = self.shadow.element.getElementsByTagName('IFRAME')
-			for frame in iframes:
-				#if frame.src in self.clone_iframes:
-				#	lazy = self.clone_iframes[ frame.src ]
-				#	frame.parentNode.replaceChild(lazy, frame)
-				if frame.getAttribute('srcHACK') in self.clone_iframes:
-					#lazy = self.clone_iframes[ frame.getAttribute('srcHACK') ]
-					#frame.parentNode.replaceChild(lazy, frame)
-					pass
-				else:
-					#self.clone_iframes[ frame.src ] = frame
-					iframe = document.createElement('iframe')
-					#iframe.setAttribute('src', frame.src)
-					#iframe.setAttribute('src', frame.getAttribute('srcHACK'))
-					#iframe.src = 'file://'+frame.getAttribute('srcHACK')
-					iframe.setAttribute('src','http://localhost:8000/')
-					iframe.style.width = '100%'
-					iframe.style.height = '100%'
-					iframe.style.zIndex = 100
-					#self.clone_iframes[ frame.src ] = iframe
-					self.clone_iframes[ frame.getAttribute('srcHACK') ] = iframe
-					print('new iframe---')
-					print(iframe)
-
-
-
-
-		## insert lazy loading images into shadow dom ##
-		images = self.shadow.element.getElementsByTagName('IMG')
-		for img in images:
-			if img.src in self.shadow_images:
-				lazy = self.shadow_images[ img.src ]
-				img.parentNode.replaceChild(lazy, img)
-			else:
-				self.shadow_images[ img.src ] = img
-
-		## this is still required because when the video lazy loads it sets
-		## the proper size for the clone.
-		videos = self.shadow.element.getElementsByTagName('VIDEO')
-		for vid in videos:
-			id = vid.getAttribute('id')
-			if id in self.clone_videos:
-				lazy = self.clone_videos[ id ]
-				vid.parentNode.replaceChild(lazy, vid)
-			else:
-				#vid.setAttribute('autoplay', 'true')  ## no help
-				#vid.play()                            ## no help
-				self.clone_videos[ id ] = vid
-
-		for d in self._video_textures:
-			video = d['video']
-			if video.readyState == video.HAVE_ENOUGH_DATA:
-				d['context'].drawImage( video, 0, 0 )
-				d['texture'].needsUpdate = True
+		#for d in self._video_textures:
+		#	video = d['video']
+		#	if video.readyState == video.HAVE_ENOUGH_DATA:
+		#		d['context'].drawImage( video, 0, 0 )
+		#		d['texture'].needsUpdate = True

@@ -8,14 +8,14 @@ from dddom import *
 
 camera = scene = renderer = None
 geometry = material = mesh = None
-scene2 = renderer2 = renderer3 = None
+renderer2 = renderer3 = None
 controls = gizmo = composer = None
 Elements = []
 
 
 def init():
 	print 'init...'
-	global camera, scene, scene2, scene3, renderer, renderer2, renderer3
+	global camera, scene, scene3, renderer, renderer2, renderer3
 	global geometry, material, mesh
 	global controls, gizmo, composer
 
@@ -43,7 +43,6 @@ def init():
 
 	scene = new THREE.Scene();
 	scene3 = new THREE.Scene();
-
 
 
 	geometry = new THREE.BoxGeometry( 800, 400, 3800 );
@@ -132,7 +131,6 @@ def init():
 	composer.addPass( vblur );
 
 
-	scene2 = new THREE.Scene();
 
 	test_options = ['javascript', 'python']
 	for i in range(15):
@@ -203,18 +201,12 @@ def init():
 		z = Math.random() * 1800 - 1000;
 
 		## the Window3D instance is set as this.element3D ##
-		e = Window3D( element, scene, scene2, scene3, [x,y,z], [1,1,1] )
+		e = Window3D( element, scene, scene3, [x,y,z], [1,1,1] )
 		b.element3D = e
 		Elements.append( e )
 
 
 	print 'setup css3d renderer'
-	renderer2 = new THREE.CSS3DRenderer();
-	renderer2.setSize( window.innerWidth, window.innerHeight );
-	renderer2.domElement.style.position = 'absolute';
-	renderer2.domElement.style.top = 0;
-	renderer2.domElement.style.zIndex = -2;
-	#document.body.appendChild( renderer2.domElement );
 
 	renderer3 = new THREE.CSS3DRenderer();
 	renderer3.setSize( window.innerWidth, window.innerHeight );
@@ -223,7 +215,6 @@ def init():
 	#renderer3.domElement.style.opacity = 0.5;
 	renderer3.domElement.style.zIndex=0;
 
-	#document.body.appendChild( renderer2.domElement );
 	document.body.appendChild( renderer.domElement );
 	document.body.appendChild( renderer3.domElement );
 
@@ -356,7 +347,6 @@ def animate():
 		#e.object.rotation.z += 0.001
 		e.update()
 
-	#renderer2.render( scene2, camera )
 
 	renderer.clear()
 	composer.render( scene, camera )
@@ -379,7 +369,7 @@ init()
 
 <style>
 	body {
-		background: rgb(93,95,98); /* Old browsers */
+		background: rgb(123,125,128); /* Old browsers */
 		margin: 0;
 		font-family: Arial;
 		overflow: hidden;
