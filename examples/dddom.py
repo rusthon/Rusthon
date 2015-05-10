@@ -157,7 +157,7 @@ class TabMenuWrapper:
 		if len(self._tab_pages)==0: a += ' active'
 		page.setAttribute('class', a)
 
-		#page.setAttribute('id', self.manager.newid() )  ## required to sync scrollbars
+		page.setAttribute('id', self.manager.newid() )  ## required to sync scrollbars
 
 		self.pages_container.appendChild( page )
 		self._tab_pages.append( page )
@@ -319,7 +319,7 @@ class Window3D:
 		self.dropdown = None
 
 		x,y,z = position
-		self.object.position.set(x,y,z+1)
+		self.object.position.set(x,y,z)
 
 		x,y,z = scale
 		self.object.scale.set(x,y,z)
@@ -328,6 +328,8 @@ class Window3D:
 
 		self.root = new THREE.Object3D()
 		scene.add( self.root )
+		self.root.position.copy( self.object.position )
+		self.root.rotation.copy( self.object.rotation )
 
 		self.create_windowframe()
 
@@ -554,11 +556,11 @@ class Window3D:
 
 	def create_windowframe(self):
 		geo = new THREE.BoxGeometry( 1, 1, 1 );
-		mat = new THREE.MeshBasicMaterial( color=0x505060, opacity=0 )
+		#mat = new THREE.MeshBasicMaterial( color=0x505060, opacity=0 )
+		mat = new THREE.MeshPhongMaterial( color=0x303040, opacity=0, shininess=3, specular=0x202030 )
 		mat.blending = THREE.NoBlending
-		self.mask = r = new THREE.Mesh( geo, mat );
-		self.root.add( r );
-		#r.position.copy( self.object.position )
+		self.mask = r = new THREE.Mesh( geo, mat )
+		self.root.add( r )
 		r.position.z -= 5
 
 
@@ -673,15 +675,16 @@ class Window3D:
 		self.root.position.copy( self.object.position )
 		self.root.rotation.copy( self.object.rotation )
 
-
 		w = self.element.clientWidth * 0.01
 		h = self.element.clientHeight * 0.01
+		if w <= 0 or h <=0:
+			print 'ERROR: element client size is zero'
+		else:
+			self.mask.scale.x = w*99
+			self.mask.scale.y = h*99
 
-		self.mask.scale.x = w*99
-		self.mask.scale.y = h*99
-
-		self.outline.scale.x = w*111
-		self.outline.scale.y = h*111
+			self.outline.scale.x = w*111
+			self.outline.scale.y = h*111
 
 		#a = self.element.getElementsByTagName('SELECT')
 		#a = self.element.getElementsByTagName('TEXTAREA')

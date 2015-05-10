@@ -196,6 +196,18 @@ def import_md( url, modules=None, index_offset=0 ):
 			# End of a code block.
 			if in_code:
 				if lang:
+					if lang=='python' and 'from rusthon import *' in code:
+						rusthonpy = []
+						for rln in open(__file__, 'rb').read().splitlines():
+							if rln == 'if __name__ == "__main__":':
+								break
+							else:
+								rusthonpy.append(rln)
+						rusthonpy = '\n'.join(rusthonpy)
+						utfheader = '# -*- coding: utf-8 -*-\n'
+						code.insert(0, utfheader + BOOTSTRAPED + '\n' + rusthonpy)
+						code.pop(code.index('from rusthon import *'))
+
 					p, n = os.path.split(url)
 					mod = {
 						'path':p, 
@@ -1290,8 +1302,24 @@ def main():
 					print 'running: %s' %name
 					run( [os.path.join(tmpdir,name)], cwd=tmpdir )
 
+BOOTSTRAPED = None
+class rusthon(object):
+	@classmethod
+	def translate( cls, code, mode='markdown' ):
+		if mode=='javascript':
+			js = compile_js( code, '/tmp', main_name='main' )
+			return js['main']
+		else:
+			#modules = new_module()
+			#import_md( path, modules=modules )
+			base_path = None
+			package = build(modules, base_path )
+			raise RuntimeError(package)
+			return 
+
 
 def bootstrap_rusthon():
+	global BOOTSTRAPED
 	localdir = os.path.dirname(unicode(__file__, sys.getfilesystemencoding()))
 	mods = new_module()
 	import_md( os.path.join(localdir,'src/main.md'), modules=mods )
@@ -1300,6 +1328,7 @@ def bootstrap_rusthon():
 	for mod in mods_sorted_by_index:  ## this is simplified because rusthon's source is pure python
 		src.append( mod['code'] )
 	src = '\n'.join(src)
+	BOOTSTRAPED = src
 	if '--dump' in sys.argv: open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
 	exec(src, globals())
 
@@ -1313,8 +1342,8 @@ def bootstrap_rusthon():
 		print('creating new runtime: pythonjs-minimal.js')
 		open('pythonjs-minimal.js', 'wb').write( generate_minimal_js_runtime() )
 
-
-if __name__ == '__main__':
+#MAIN#
+if __name__ == "__main__":
 	bootstrap_rusthon()
 	main()
 

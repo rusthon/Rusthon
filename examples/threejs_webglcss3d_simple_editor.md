@@ -1,3 +1,102 @@
+Tornado Server
+-------------
+
+@myserver.py
+```python
+#!/usr/bin/python
+
+PORT  = 8000
+
+## inlines rusthon into script ##
+from rusthon import *
+import tornado
+import tornado.ioloop
+import tornado.web
+import tornado.websocket
+import os, sys, subprocess, datetime, json, time
+
+
+class MainHandler( tornado.web.RequestHandler ):
+	'''
+	Main page request handler for normal HTTP requests.
+	index.html and myscript.js are hardcoded to run the
+	websocket test.
+	'''
+	def get(self, path=None):
+		print('path', path)
+		if path == 'favicon.ico' or path.endswith('.map'):
+			self.write('')
+		elif path and '.' in path:
+			self.write( open(path).read() )
+		else:
+			self.write( open('index.html').read() )
+
+
+class WebSocketHandler(tornado.websocket.WebSocketHandler):
+	'''
+	Websocket, note that data from the client comes in as a plain string,
+	here we always assume the client is sending JSON, so json.loads
+	is used to unpack the data, this adds some overhead.
+
+	To ensure the the first message is flushed to the client,
+	and processed as its own event, time.sleep(FUDGE) is used
+	here to force a small delay, before the data is written back
+	'''
+	def open(self):
+		print( 'websocket open' )
+		print( self.request.connection )
+
+	def on_message(self, msg):
+		print 'got %s bytes' %len(msg)
+
+		ob = json.loads( msg )
+		## if a simple test string ##
+		if isinstance(ob, str):
+			self.write_message('hello client')
+		## otherwise a object
+		elif isinstance(ob, dict):
+			print 'got object from client'
+			if 'translate' in ob:
+				code = ob['code']
+				if ob['translate'] == 'python to javascript':
+					js = rusthon.translate( code, mode='javascript' )
+					self.write_message(json.dumps({'type':'javascript', 'data':js}))
+				elif ob['translate'] == 'python to c++':
+					pass
+				print code
+
+
+	def on_close(self):
+		print('websocket closed')
+		if self.ws_connection:
+			self.close()
+
+
+
+## Tornado Handlers ##
+Handlers = [
+	(r'/websocket', WebSocketHandler),
+	(r'/(.*)', MainHandler),  ## order is important, this comes last.
+]
+
+## main ##
+def main():
+	print('<starting tornado server>')
+	app = tornado.web.Application(
+		Handlers,
+		#cookie_secret = 'some random text',
+		#login_url = '/login',
+		#xsrf_cookies = False,
+	)
+	app.listen( PORT )
+	tornado.ioloop.IOLoop.instance().start()
+
+## start main ##
+main()
+
+```
+
+
 
 @myapp
 ```rusthon
@@ -12,12 +111,54 @@ renderer2 = renderer3 = None
 controls = gizmo = composer = None
 Elements = []
 
+ws = None
+
+def on_open_ws():
+	print 'websocket open'
+	#ws.send(JSON.stringify('hello server'))
+
+def on_close_ws():
+	print 'websocket close'
+
+def on_message_ws(event):
+	print 'on message', event
+
+	if instanceof(event.data, ArrayBuffer):
+		print 'got binary bytes', event.data.byteLength
+		arr = new(Uint8Array(event.data))
+		txt = String.fromCharCode.apply(None, arr)
+		print txt
+	else:
+		now = new(Date())
+		if event.data[0] == '{':
+			print 'got json data'
+			msg = JSON.parse(event.data)
+			if msg.type=='javascript':
+				print msg.data
+				eval( msg.data )
+		else:
+			print 'got unknown data'
+
+def connect_ws():
+	global ws
+	print location.host
+	addr = 'ws://' + location.host + '/websocket'
+	print 'websocket test connecting to:', addr
+	ws = new( WebSocket(addr) )
+	ws.binaryType = 'arraybuffer'
+	ws.onmessage = on_message_ws
+	ws.onopen = on_open_ws
+	ws.onclose = on_close_ws
+	print ws
+
 
 def init():
 	print 'init...'
 	global camera, scene, scene3, renderer, renderer2, renderer3
 	global geometry, material, mesh
 	global controls, gizmo, composer
+
+	connect_ws()
 
 	SCREEN_WIDTH = window.innerWidth
 	SCREEN_HEIGHT = window.innerHeight
@@ -73,23 +214,23 @@ def init():
 	)
 	light.position.set( 0, 1400, 400 )
 	light.target.position.set( 0, 0, 0 )
+	light.rotation.set(0.75,0,0)
+	print 'light rot'
+	print light.rotation
 
 	light.castShadow = True
 	light.shadowCameraNear = 400
 	light.shadowCameraFar = 1900
 	light.shadowCameraFov = 64
 	light.shadowCameraVisible = True
-
 	light.shadowBias = 0.0001
 	light.shadowDarkness = 0.4
-
 	light.shadowMapWidth = 512
 	light.shadowMapHeight = 512
-
-	scene.add( light );
+	#camera.add( light )
 
 	global pointlight
-	pointlight = new( THREE.PointLight(0xffffff, 2, 500) )
+	pointlight = new( THREE.PointLight(0xffffff, 0.75, 1500) )
 	pointlight.position.set( 10, 100, 300 )
 	scene.add( pointlight )
 
@@ -124,7 +265,7 @@ def init():
 	#effectFXAA = new THREE.ShaderPass( THREE.FXAAShader )
 	#effectFXAA.uniforms[ 'resolution' ].value.set( 1.0 / SCREEN_WIDTH, 1.0 / SCREEN_HEIGHT )
 
-	effectBloom = new(THREE.BloomPass( 0.75 ))
+	effectBloom = new(THREE.BloomPass( 0.45 ))
 	effectCopy = new(THREE.ShaderPass( THREE.CopyShader ))
 
 	print 'setup composer'
@@ -162,8 +303,8 @@ def init():
 		ta = create_textarea()
 		con.appendChild( ta )
 
-		pointlight.position.copy( this.element3D.object.position )
-		pointlight.position.z += 40
+		#pointlight.position.copy( this.element3D.object.position )
+		#pointlight.position.z += 40
 		gizmo.attach( this.element3D.right_bar )
 		camera.smooth_target.copy( this.element3D.object.position )
 		camera.smooth_target.y = 400
@@ -192,10 +333,12 @@ def init():
 			m = modedd.options[modedd.selectedIndex].value
 			if m == 'javascript':
 				eval( ta.value )
-			elif m == 'python to javascript':
-				print 'todo py to js'
 			else:
-				print 'todo py to c++'
+				msg = {
+					'translate' : m,
+					'code': ta.value
+				}
+				ws.send(JSON.stringify(msg))
 
 		this.onclick = click2
 
@@ -356,6 +499,9 @@ def animate():
 	d.sub(controls.target)
 	controls.target.add( d.multiplyScalar(0.03) )
 	controls.update()
+	pointlight.position.copy( controls.target )
+	pointlight.position.z += 140
+	pointlight.position.x += 40
 
 	for e in Elements:
 		#e.object.rotation.z += 0.001
@@ -373,6 +519,10 @@ init()
 
 ```
 
+HTML
+-----
+
+@index.html
 ```html
 <html>
 	<head>
