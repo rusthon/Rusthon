@@ -289,8 +289,10 @@ def build( modules, module_path, datadirs=None ):
 
 	if modules['javascript']:
 		for mod in modules['javascript']:
-			if 'tag' in mod and mod['tag'] and '.' in mod['tag']:
-				output['datafiles'][mod['tag']] = mod['code']
+			if 'tag' in mod and mod['tag']:
+				tagged[ mod['tag'] ] = mod['code']
+				if '.' in mod['tag']:
+					output['datafiles'][mod['tag']] = mod['code']
 
 	if modules['json']:
 		for mod in modules['json']:
