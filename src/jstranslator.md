@@ -446,6 +446,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			return 'false'
 		elif node.id == 'null':
 			return 'null'
+		elif node.id == '__DOLLAR__':
+			return '$'
 		return node.id
 
 	def visit_Attribute(self, node):

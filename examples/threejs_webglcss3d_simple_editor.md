@@ -99,7 +99,12 @@ main()
 
 ```
 
+Three.js App
+-----------
 
+Below is translated to javascript and inserted into the html at the bottom.
+
+note: most of the code is in [dddom.py](https://github.com/rusthon/Rusthon/blob/master/examples/dddom.py)
 
 @myapp
 ```rusthon
@@ -118,6 +123,7 @@ TUTORIALS = [
 	'print "hi"',
 	'self.window.rotation.x += 0.1',
 	"self.container.appendChild(document.createTextNode('hi'))",
+	'self.window.collada.scale.x *= 0.88',
 	'window.alert("hi")',
 ]
 
@@ -226,11 +232,8 @@ def init():
 	light = new(
 		THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 )
 	)
-	light.position.set( 0, 1400, 400 )
+	light.position.set( 0, 1400, 100 )
 	light.target.position.set( 0, 0, 0 )
-	light.rotation.set(0.75,0,0)
-	print 'light rot'
-	print light.rotation
 
 	light.castShadow = True
 	light.shadowCameraNear = 400
@@ -241,7 +244,7 @@ def init():
 	light.shadowDarkness = 0.4
 	light.shadowMapWidth = 512
 	light.shadowMapHeight = 512
-	#camera.add( light )
+	scene.add( light )
 
 	global pointlight
 	pointlight = new( THREE.PointLight(0xffffff, 0.75, 1500) )
@@ -406,25 +409,21 @@ def init():
 
 
 def handle_drop_event(files, container, element3D):
-	images = []
-	videos = []
 	for file in files:
 		## note: `file.path` is only available in NodeWebkit,
 		## for simple testing we will fake it here.
-		file.path = '/home/brett/Desktop/'+file.name
+		file.path = file.name
 
 		if file.path.endswith('.dae'):
 			loader = new THREE.ColladaLoader();
 			loader.options.convertUpAxis = true;
-			#def on_load(collada):
-			#	print(collada)
-			#	element3D.root.add( collada.scene )
-			#loader.load( 'http://localhost:8000'+file.path, on_load )
 	
 			def onload(evt):
 				parser = new DOMParser()
-				collada = loader.parse( parser.parseFromString(evt.target.result, "application/xml") )
-				print(collada.scene)
+				collada = loader.parse(
+					parser.parseFromString(evt.target.result, "application/xml") 
+				)
+				print(collada)
 				collada.scene.scale.set(0.25, 0.25, 0.25)
 				collada.scene.position.set(0, -100, 200)
 				element3D.root.add( collada.scene )
@@ -433,87 +432,33 @@ def handle_drop_event(files, container, element3D):
 				menu = element3D.create_tab_menu()
 				container.appendChild( menu.root )
 
-
-				for i,model in enumerate(collada.scene.children):
-					print(model)
+				for i,model in enumerate(collada.skins):
 					page = menu.add_tab( model.name )
 					div = document.createElement('div')
 					div.setAttribute('class', 'well')
 					page.appendChild( div )
-					#div.id = element3D.newid()
-
-					h3 = document.createElement('h3')
-					h3.appendChild( document.createTextNode(model.name) )
-					div.appendChild( h3 )
-
+					
 					if hasattr(model, 'material'): ## could be THREE.Mesh or THREE.SkinnedMesh
 						print(model.material)
 						ui = gen_material_ui(model)
 						div.appendChild( ui )
+					else:
+						print 'model missing material'
 
 			reader = new FileReader()
 			reader.onload = onload
 			reader.readAsText( file )
 
-		elif file.path.endswith('.html'):
-			iframe = element3D.create_iframe( file.path, renderer3.domElement )
-			container.appendChild(iframe)
+		else:
+			window.alert('can only load collada files')
 
-		elif file.path.endswith('.css'):
-			print( 'TODO css' )
-		elif file.path.endswith('.js'):
-			print( 'TODO js' )
-		elif file.path.endswith('.jpg') or file.path.endswith('.png'):
-
-			li = document.createElement('li')
-			images.append(li)
-			img = document.createElement('img')
-			img.setAttribute('src', file.path)
-			img.setAttribute('class', 'well img-rounded')
-			li.appendChild( img )
-
-
-		elif file.path.endswith('.mp4'):
-			li = document.createElement('li')
-			video = element3D.create_video( mp4=file.path )
-			li.appendChild( video )
-			videos.append( li )
-
-		elif file.path.endswith('.ogv'):
-			#li = document.createElement('li')
-			video = element3D.create_video( ogv=file.path )
-			container.appendChild(video)
-			#li.appendChild( video )
-			#videos.append( li )
-
-		elif file.path.endswith('.py'):
-			def on_load(event):
-				contents = event.target.result
-				py_body_editor.setValue( contents )
-
-			Reader.onload = on_load
-			Reader.readAsText( file )
-
-	if images:
-		print('loading images')
-		ul = document.createElement('ul')
-		container.appendChild(ul)
-		for li in images:
-			ul.appendChild(li)
-
-	if videos:
-		print('loading videos')
-		ul = document.createElement('ul')
-		container.appendChild(ul)
-		for li in videos:
-			ul.appendChild(li)
 
 
 def gen_material_ui(model):
 	print('gen material ui')
 	def onchange(val):
 		model.material.opacity = val
-	slider = create_slider( model.material.opacity, onchange=onchange )
+	slider = create_slider( model.material.opacity, onchange=onchange, name='opacity' )
 	return slider
 
 def animate():
@@ -567,8 +512,8 @@ HTML
 	}
 
     .pp-slider { width: 150px; float:left;  -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -o-user-select: none; user-select: none; height: 30px; }
-    .pp-slider .pp-slider-scale { background-color: #aaa; height: 1px; border-bottom: 1px solid #efefef; width: 120px; margin-top: 6px; float: left; }
-    .pp-slider .pp-slider-scale .pp-slider-button { width: 12px; border-radius: 2px; border: 1px solid #adadad; height: 26px; position: relative; top: -7px; left: 0px; background-color: #efefef; cursor: pointer; }
+    .pp-slider .pp-slider-scale { background-color: #aaa; height: 10px; border-bottom: 1px solid #efefef; width: 120px; margin-top: 6px; float: left; }
+    .pp-slider .pp-slider-scale .pp-slider-button { width: 12px; border-radius: 4px; border: 3px solid #adadad; height: 26px; position: relative; top: -7px; left: 0px; background-color: #efefef; cursor: pointer; }
     .pp-slider .pp-slider-scale .pp-slider-button .pp-slider-divies { border-left: 1px solid #adadad; border-right: 1px solid #adadad; position: relative; left: 3px; top: 3px; width: 4px; height: 10px; }
     .pp-slider .pp-slider-scale .pp-slider-button:hover { border-color: #777; background-color: #eee;  }
     .pp-slider .pp-slider-scale .pp-slider-tooltip { width: 24px; height: 20px; position: relative; top: -5px; left: 0px; text-align: center; font-size: 10px; color: #aaa; }
@@ -612,8 +557,8 @@ HTML
 <@myapp>
 
 <div style="position:absolute">
-	<h3><a href="http://rusthon.github.io/Rusthon/">Created with Rusthon</a>
-	</h3>
+	<h3><a href="http://rusthon.github.io/Rusthon/">created with Rusthon</a></h3>
+	<h4><a href="http://threejs.org/">and THREE.js</a></h4>
 	<h5><a href="https://github.com/rusthon/Rusthon/blob/master/examples/threejs_webglcss3d_simple_editor.md">source code</a>
 	</h5>
 </div>

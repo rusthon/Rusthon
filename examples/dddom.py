@@ -179,8 +179,9 @@ class TabMenuWrapper:
 
 
 
-def create_slider(value, onchange=None, width=200):
+def create_slider(value, onchange=None, width=200, name=None):
 	slider = document.createElement('input')
+	slider.setAttribute('class', 'well')
 
 	## the native slider looks different on each platform,
 	## and it is not clickable, because the camera controls preventDefault?
@@ -196,6 +197,10 @@ def create_slider(value, onchange=None, width=200):
 	#$("#"+id).PPSlider( width=300, onInput=onchange, value=value )
 
 	div = document.createElement('div')  ## a parent container is required
+	if name:
+		h = document.createElement('h5')
+		div.appendChild(h)
+		h.appendChild(document.createTextNode(name))
 	div.appendChild( slider )
 	$( slider ).PPSlider( width=width, onInput=onchange, value=value )
 
