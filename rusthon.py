@@ -1319,6 +1319,14 @@ class rusthon(object):
 			## pak contains: c_header and cpp_header
 			return pak['main']
 
+		elif mode=='go':
+			pyjs = python_to_pythonjs(code, go=True)
+			return translate_to_go( pyjs )
+
+		elif mode=='rust':
+			pyjs = python_to_pythonjs(code, rust=True)
+			return translate_to_rust( pyjs )
+
 		else:
 			#modules = new_module()
 			#import_md( path, modules=modules )

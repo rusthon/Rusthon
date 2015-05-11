@@ -221,8 +221,12 @@ def translate_to_rust(script, insert_runtime=True):
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, 'src/runtime')
-		runtime = open( os.path.join(dirname, 'rust_builtins.py') ).read()
-		script = runtime + '\n' + script
+		runtimepath = os.path.join(dirname, 'rust_builtins.py')
+		if os.path.isfile(runtimepath):
+			runtime = open(  ).read()
+			script = runtime + '\n' + script
+		else:
+			print 'WARNING: can not find rust_builtins.py'
 
 	try:
 		tree = ast.parse(script)

@@ -1118,8 +1118,12 @@ def translate_to_go(script, insert_runtime=True):
 	if insert_runtime:
 		dirname = os.path.dirname(os.path.abspath(__file__))
 		dirname = os.path.join(dirname, os.path.join('src','runtime'))
-		runtime = open( os.path.join(dirname, 'go_builtins.py') ).read()
-		script = runtime + '\n' + script
+		runtimepath = os.path.join(dirname, 'go_builtins.py')
+		if os.path.isfile(runtimepath):
+			runtime = open(  ).read()
+			script = runtime + '\n' + script
+		else:
+			print 'WARNING: can not find go_builtins.py'
 
 	try:
 		tree = ast.parse(script)
@@ -1136,7 +1140,9 @@ def translate_to_go(script, insert_runtime=True):
 	if not os.path.isfile(exe):
 		exe = os.path.expanduser('~/go/bin/go')  ## fall back to user home directory
 		if not os.path.isfile(exe):
-			raise RuntimeError('go not found in ~/go/bin/go')
+			#raise RuntimeError('go not found in ~/go/bin/go')
+			print 'WARNING could not find go compiler, the generated code may not compile'
+			return pass2
 
 	## this hack runs the code generated in the second pass into the Go compiler to check for errors,
 	## where an interface could not be type asserted, because Go found that the variable was not an interface,

@@ -66,6 +66,16 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 					reply = {'type':'c++', 'data':js, 'id':ob['id']}
 					self.write_message(json.dumps(reply))
 
+				elif ob['translate'] == 'python to go':
+					data = rusthon.translate( code, mode='go' )
+					reply = {'type':'go', 'data':data, 'id':ob['id']}
+					self.write_message(json.dumps(reply))
+
+				elif ob['translate'] == 'python to rust':
+					data = rusthon.translate( code, mode='rust' )
+					reply = {'type':'rust', 'data':data, 'id':ob['id']}
+					self.write_message(json.dumps(reply))
+
 				print code
 
 
@@ -115,16 +125,24 @@ from dddom import *
 
 camera = scene = renderer = None
 geometry = material = mesh = None
-renderer2 = renderer3 = None
+renderer2 = renderer3 = renderer_canvas = None
 controls = gizmo = composer = None
 Elements = []
 
+_PY_TUT = '''
+def myfunc(x):
+	window.alert(x)
+
+myfunc( "hello world" )
+'''
+
 TUTORIALS = [
-	'print "hi"',
-	'self.window.rotation.x += 0.1',
-	"self.container.appendChild(document.createTextNode('hi'))",
-	'self.window.collada.scale.x *= 0.88',
-	'window.alert("hi")',
+	{'code': _PY_TUT, 'mode':'py2js'},
+	{'code': 'print "hi"', 'mode':'py2c++'},
+	{'code':'self.window.rotation.x += 0.1', 'help':'note: rotation is a THREE.Vector3 object with x,y,z attributes'},
+	{'code':"self.container.appendChild(document.createTextNode('hi'))", 'help': 'simple HTML DOM example'},
+	{'code':'self.window.collada.scale.x *= 0.88', 'help': 'after you have loaded a DAE model, you can script here using "self.window.collada"'},
+	{'code':'window.alert("hi")', 'help': 'click "run script" above to execute javascript'},
 ]
 
 ws = None
@@ -174,9 +192,51 @@ def connect_ws():
 	print ws
 
 
+def initParticle( particle, delay ):
+	particle.position.set( (Math.random()*1000)-500, 100 + Math.random()*200, Math.random()*1000 )
+	particle.scale.x = particle.scale.y = Math.random() * 32 + 160
+
+	#t = new(TWEEN.Tween( particle ))
+	#t.delay( delay ).to( {}, 100000 )
+	#t.start()
+
+	t = new(TWEEN.Tween( particle.position ))
+	t.delay( delay ).to( { x: Math.random() * 4000 - 2000, y: Math.random() * 1000 - 500, z: Math.random() * 4000 - 2000 }, 100000 )
+	t.start()
+
+	r = Math.random()*100
+	t = new(TWEEN.Tween( particle.scale ))
+	t.delay( delay ).to( { x: r, y: r }, 50000 ).delay( delay ).to( { x: 0, y: 0 }, 50000 )
+	t.start()
+
+
+def generateSprite():
+	canvas = document.createElement( 'canvas' )
+	canvas.width = 64
+	canvas.height = 64
+	context = canvas.getContext( '2d' )
+	gradient = context.createRadialGradient( canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2 )
+	gradient.addColorStop( 0, 'rgba(255,255,255,1)' )
+	gradient.addColorStop( 0.2, 'rgba(0,255,255,0.75)' )
+	gradient.addColorStop( 0.4, 'rgba(0,0,64,0.5)' )
+	gradient.addColorStop( 1, 'rgba(0,0,0,0)' )
+	context.fillStyle = gradient
+	context.fillRect( 0, 0, canvas.width, canvas.height )
+	return canvas
+
+def init_canvas_scene( scene ):
+	material = new THREE.SpriteMaterial(
+		map=new(THREE.Texture( generateSprite() )),
+		blending= THREE.AdditiveBlending
+	)
+	for i in range(100):
+		particle = new THREE.Sprite( material )
+		initParticle( particle, i * 10 )
+		scene.add( particle )
+
 def init():
 	print 'init...'
-	global camera, scene, scene3, renderer, renderer2, renderer3
+	global camera, scene, scene3, scene_canvas, renderer, renderer2, renderer3, renderer_canvas
 	global geometry, material, mesh
 	global controls, gizmo, composer
 
@@ -187,50 +247,42 @@ def init():
 	camera.position.set( 200, 150, 800 );
 	selectman = SelectManager( camera )
 
-	controls = new THREE.TrackballControls( camera );
+	controls = new THREE.TrackballControls( camera )
 	camera.smooth_target = controls.target.clone()
+	controls.rotateSpeed = 0.6
+	controls.zoomSpeed = 1.2
+	controls.panSpeed = 0.8
+	controls.noZoom = false
+	controls.noPan = false
+	controls.staticMoving = false
+	controls.dynamicDampingFactor = 0.3
+	controls.keys = [ 65, 83, 68 ]
 
-	controls.rotateSpeed = 1.0;
-	controls.zoomSpeed = 1.2;
-	controls.panSpeed = 0.8;
-
-	controls.noZoom = false;
-	controls.noPan = false;
-
-	controls.staticMoving = false;
-	controls.dynamicDampingFactor = 0.3;
-
-	controls.keys = [ 65, 83, 68 ];
-
-	scene = new THREE.Scene();
-	scene3 = new THREE.Scene();
+	scene = new THREE.Scene()
+	scene3 = new THREE.Scene()
+	#scene_canvas = new THREE.Scene()
+	#init_canvas_scene( scene_canvas )
 
 
-	geometry = new THREE.BoxGeometry( 800, 400, 3800 );
-	material = new THREE.MeshPhongMaterial( color=0xc1c1c1, transparent=true, opacity=0.27 );
-	mesh = new THREE.Mesh( geometry, material );
+	geometry = new THREE.BoxGeometry( 800, 400, 3800 )
+	material = new THREE.MeshPhongMaterial( color=0xc1c1c1, transparent=true, opacity=0.27 )
+	mesh = new THREE.Mesh( geometry, material )
 	mesh.position.z = -400
 	mesh.position.y = -220
-	scene.add( mesh );
-	mesh.receiveShadow = true;
+	scene.add( mesh )
+	mesh.receiveShadow = true
 
-	renderer = new THREE.WebGLRenderer(alpha=True, antialiasing=True);
+	renderer = new THREE.WebGLRenderer(alpha=True, antialiasing=True)
 	renderer.shadowMapEnabled = true
 	renderer.shadowMapType = THREE.PCFSoftShadowMap
 	renderer.shadowMapSoft = true
-	print renderer
-
-	renderer.setSize( window.innerWidth, window.innerHeight );
-	renderer.domElement.style.position = 'absolute'
-	renderer.domElement.style.top = 0
-	renderer.domElement.style.zIndex = 10
-	renderer.domElement.style.pointerEvents = 'none'
 
 	gizmo = new THREE.TransformControls( camera, renderer.domElement )
 	scene.add( gizmo )
 
+	intensity = 0.2
 	light = new(
-		THREE.SpotLight( 0xffffff, 1, 0, Math.PI / 2, 1 )
+		THREE.SpotLight( 0xffffff, intensity, 0, Math.PI / 2, 1 )
 	)
 	light.position.set( 0, 1400, 100 )
 	light.target.position.set( 0, 0, 0 )
@@ -241,7 +293,7 @@ def init():
 	light.shadowCameraFov = 64
 	light.shadowCameraVisible = True
 	light.shadowBias = 0.0001
-	light.shadowDarkness = 0.4
+	light.shadowDarkness = 0.8
 	light.shadowMapWidth = 512
 	light.shadowMapHeight = 512
 	scene.add( light )
@@ -301,7 +353,8 @@ def init():
 	composer.addPass( effectCopy )
 
 
-	test_options = ['javascript', 'python to javascript', 'python to c++']
+	test_options = ['javascript', 'python to javascript', 'python to c++', 'python to go']
+	#test_options.append( 'python to rust' )  ## too buggy right now may11, 2015
 
 	def onclick():
 		this.firstChild.nodeValue='run script'
@@ -320,7 +373,23 @@ def init():
 		ta = create_textarea()
 		con.appendChild( ta )
 		if TUTORIALS.length:
-			ta.appendChild(document.createTextNode(TUTORIALS.pop()))
+			tcfg = TUTORIALS.pop()
+			ta.appendChild(document.createTextNode(tcfg['code']))
+			if tcfg['mode'] == 'py2js':
+				modedd.selectedIndex = 1
+			elif tcfg['mode'] == 'py2c++':
+				modedd.selectedIndex = 2
+			elif tcfg['mode'] == 'py2go':
+				modedd.selectedIndex = 3
+			elif tcfg['mode'] == 'py2rust':
+				modedd.selectedIndex = 4
+
+			if tcfg['help']:
+				p = document.createElement('p')
+				p.setAttribute('class', 'well')
+				p.appendChild(document.createTextNode(tcfg['help']))
+				con.appendChild( p )
+
 
 		#pointlight.position.copy( this.element3D.object.position )
 		#pointlight.position.z += 40
@@ -387,17 +456,46 @@ def init():
 		Elements.append( e )
 
 
-	print 'setup css3d renderer'
+	print 'renderer setup'
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.domElement.style.position = 'absolute'
+	renderer.domElement.style.top = 0
+	renderer.domElement.style.zIndex = 10
+	renderer.domElement.style.pointerEvents = 'none'
 
-	renderer3 = new THREE.CSS3DRenderer();
-	renderer3.setSize( window.innerWidth, window.innerHeight );
-	renderer3.domElement.style.position = 'absolute';
-	renderer3.domElement.style.top = 0;
+	renderer3 = new THREE.CSS3DRenderer()
+	renderer3.setSize( window.innerWidth, window.innerHeight )
+	renderer3.domElement.style.position = 'absolute'
+	renderer3.domElement.style.top = 0
 	#renderer3.domElement.style.opacity = 0.5;
-	renderer3.domElement.style.zIndex=0;
+	renderer3.domElement.style.zIndex=0
 
-	document.body.appendChild( renderer.domElement );
-	document.body.appendChild( renderer3.domElement );
+	document.body.appendChild( renderer.domElement )
+	document.body.appendChild( renderer3.domElement )
+
+
+	if False:
+		renderer_canvas = new THREE.CanvasRenderer(alpha=True)
+		renderer_canvas.setSize( window.innerWidth, window.innerHeight )
+		renderer_canvas.setClearColor( 0x000040, 0 )
+		renderer_canvas.setPixelRatio( window.devicePixelRatio )
+		renderer_canvas.domElement.style.position = 'absolute'
+		renderer_canvas.domElement.style.top = 0
+		renderer_canvas.domElement.style.zIndex=-2
+		renderer_canvas.domElement.style.pointerEvents = 'none'
+		renderer_canvas.domElement.style.opacity = 0.95
+		document.body.appendChild( renderer_canvas.domElement )
+
+		global effect
+		effect = new THREE.AsciiEffect( renderer_canvas, ' usthonRUSTHON', block=true )
+		effect.setSize( window.innerWidth, window.innerHeight )
+		effect.domElement.style.opacity = 0.15
+		effect.domElement.style.position = 'absolute'
+		effect.domElement.style.top = 0
+		effect.domElement.style.zIndex=-1
+		effect.domElement.style.pointerEvents = 'none'
+		effect.domElement.style.color = 'red'
+		document.body.appendChild( effect.domElement )
 
 	print 'init done.'
 	try:
@@ -463,7 +561,7 @@ def gen_material_ui(model):
 
 def animate():
 	requestAnimationFrame( animate )
-
+	TWEEN.update()
 	gizmo.update()
 
 	d = camera.smooth_target.clone()
@@ -484,6 +582,9 @@ def animate():
 
 	renderer3.render( scene3, camera )
 
+
+	#renderer_canvas.render( scene_canvas, camera )
+	#effect.render(scene_canvas, camera )
 
 init()
 
@@ -532,6 +633,10 @@ HTML
 		<script src="~/three.js/examples/js/controls/TransformControls.js"></script>
 
 		<script src="~/three.js/examples/js/renderers/CSS3DRenderer.js"></script>
+		<script src="~/three.js/examples/js/renderers/Projector.js"></script>
+		<script src="~/three.js/examples/js/renderers/CanvasRenderer.js"></script>
+		<script src="~/three.js/examples/js/libs/tween.min.js"></script>
+		<script src="~/three.js/examples/js/effects/AsciiEffect.js"></script>
 
 		<script src="~/three.js/examples/js/postprocessing/RenderPass.js"></script>
 		<script src="~/three.js/examples/js/postprocessing/ShaderPass.js"></script>
