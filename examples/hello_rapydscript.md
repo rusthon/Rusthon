@@ -33,7 +33,7 @@ html
 rapydscript
 -----------
 You need to install RapydScript for this to work.
-http://rapydscript.pyjeon.com/
+http://www.rapydscript.com/
 
 Test calling Rusthon translated JS from RapydScript.
 
