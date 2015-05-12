@@ -308,8 +308,10 @@ def build( modules, module_path, datadirs=None ):
 			tmprapyd = tempfile.gettempdir() + '/temp.rapyd'
 			tmpjs = tempfile.gettempdir() + '/rapyd-output.js'
 			open(tmprapyd, 'wb').write(mod['code'])
-			subprocess.check_call(['rapydscript', tmprapyd, '--output', tmpjs])
-			output['datafiles'][mod['tag']] = open(tmpjs,'rb').read()
+			subprocess.check_call(['rapydscript', tmprapyd, '--bare', '--output', tmpjs])
+			rapydata = open(tmpjs,'rb').read()
+			output['datafiles'][mod['tag']] = rapydata
+			tagged[ mod['tag'] ] = rapydata
 
 	if modules['nim']:
 		libdl = True
