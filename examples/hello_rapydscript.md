@@ -43,7 +43,7 @@ Test calling Rusthon translated JS from RapydScript.
 def hi_from_rapyd():
 	window.alert('hey rapydscript!')
 	a = [1,2,3]
-	hi_from_rusthon()
+	hi_from_rusthon(a)
 
 ```
 
