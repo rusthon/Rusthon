@@ -17,6 +17,18 @@ if os.path.isfile('/usr/local/go/bin/go'):
 elif os.path.isfile(os.path.expanduser('~/go/bin/go')):
 	GO_EXE = os.path.expanduser('~/go/bin/go')
 
+## special case for linux, just for debugging, look for google-chrome,
+## if found then use it to launch tests, with the --disable-gpu-sandbox
+## otherwise webgl may fail on some graphics cards, this is dangerous
+## and can lockup the desktop, this was an issue on Fedora21 with intel graphics,
+## but is no longer an issue in Fedora22.  Enable this at your own risk.
+CHROME_EXE = None
+#if os.path.isfile('/opt/google/chrome-unstable/google-chrome-unstable'):
+#	CHROME_EXE = '/opt/google/chrome-unstable/google-chrome-unstable'
+#elif os.path.isfile('/opt/google/chrome-beta/google-chrome-beta'):
+#	CHROME_EXE = '/opt/google/chrome-beta/google-chrome-beta'
+#elif os.path.isfile('/opt/google/chrome/google-chrome'):
+#	CHROME_EXE = '/opt/google/chrome/google-chrome'
 
 def compile_js( script, module_path, main_name='main', directjs=False, directloops=False ):
 	'''
@@ -1241,6 +1253,8 @@ def main():
 				open(tmp, 'wb').write( page['code'] )
 				if sys.platform=='darwin':
 					subprocess.call(['open', tmp])
+				elif CHROME_EXE:
+					subprocess.call([CHROME_EXE, '--disable-gpu-sandbox', tmp])
 				else:
 					webbrowser.open(tmp)
 
@@ -1300,7 +1314,12 @@ def main():
 					run( [dartbin, name],   cwd=tmpdir )
 
 				elif name.endswith('.html'):
-					webbrowser.open(tmpdir+'/'+name)
+					if sys.platform=='darwin':
+						subprocess.call(['open', tmpdir+'/'+name])
+					elif CHROME_EXE:
+						subprocess.call([CHROME_EXE, '--disable-gpu-sandbox', tmpdir+'/'+name])
+					else:
+						webbrowser.open(tmpdir+'/'+name)
 
 				else:
 					print 'running: %s' %name
