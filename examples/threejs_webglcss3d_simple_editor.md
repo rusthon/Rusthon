@@ -138,11 +138,31 @@ myfunc( "hello world" )
 
 TUTORIALS = [
 	{'code': _PY_TUT, 'mode':'py2js'},
-	{'code': 'print "hi"', 'mode':'py2c++'},
-	{'code':'self.window.rotation.x += 0.1', 'help':'note: rotation is a THREE.Vector3 object with x,y,z attributes'},
-	{'code':"self.container.appendChild(document.createTextNode('hi'))", 'help': 'simple HTML DOM example'},
-	{'code':'self.window.collada.scale.x *= 0.88', 'help': 'after you have loaded a DAE model, you can script here using "self.window.collada"'},
-	{'code':'window.alert("hi")', 'help': 'click "run script" above to execute javascript'},
+	{
+		'code': 'print "hi"', 
+		'mode':'py2c++',
+		'html' : '<iframe width="420" height="315" src="https://www.youtube.com/embed/W_fiZCpAW6I" frameborder="0"></iframe>',
+	},
+	{
+		'code':'self.window.rotation.x += 0.1', 
+		'help':'note: rotation is a THREE.Vector3 object with x,y,z attributes',
+		'html':'<iframe width="420" height="315" src="https://www.youtube.com/embed/dC8iS1CcFJQ" frameborder="0"></iframe>'
+	},
+	{
+		'code':"self.container.appendChild(document.createTextNode('hi'))", 
+		'help': 'simple HTML DOM example',
+		'html':'<iframe width="420" height="315" src="https://www.youtube.com/embed/w5RdUjwftmE" frameborder="0"></iframe>'
+	},
+	{
+		'code':'self.window.collada.scale.x *= 0.88', 
+		'help': 'after you have loaded a DAE model, you can script here using "self.window.collada"',
+		'html':'<iframe width="420" height="315" src="https://www.youtube.com/embed/UDIn8T4H7xE" frameborder="0"></iframe>',
+	},
+	{
+		'code':'window.alert("hi")', 
+		'help': 'click "run script" above to execute javascript',
+		'html' : '<iframe width="560" height="315" src="https://www.youtube.com/embed/29JB7uqo58E" frameborder="0"></iframe>',
+	},
 ]
 
 ws = None
@@ -388,6 +408,13 @@ def init():
 				p = document.createElement('p')
 				p.setAttribute('class', 'well')
 				p.appendChild(document.createTextNode(tcfg['help']))
+				con.appendChild( p )
+
+			if tcfg['html']:
+				p = document.createElement('p')
+				p.setAttribute('class', 'well')
+				p.innerHTML = tcfg['html']
+				print tcfg['html']
 				con.appendChild( p )
 
 
@@ -667,6 +694,17 @@ HTML
 	<h5><a href="https://github.com/rusthon/Rusthon/blob/master/examples/threejs_webglcss3d_simple_editor.md">source code</a>
 	</h5>
 </div>
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-63438904-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
 
 </body>
 </html>
