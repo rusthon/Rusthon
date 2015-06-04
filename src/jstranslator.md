@@ -737,10 +737,10 @@ If Test
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
-		if test.startswith('(') and test.endswith(')'):
-			out.append( 'if %s' %test )
-		else:
-			out.append( 'if (%s)' %test )
+		#if test.startswith('(') and test.endswith(')'):
+		#	out.append( 'if %s' %test )
+		#else:
+		out.append( 'if (%s)' %test )
 		out.append( self.indent() + '{' )
 
 		self.push()
