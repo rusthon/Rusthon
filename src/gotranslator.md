@@ -1120,7 +1120,7 @@ def translate_to_go(script, insert_runtime=True):
 		dirname = os.path.join(dirname, os.path.join('src','runtime'))
 		runtimepath = os.path.join(dirname, 'go_builtins.py')
 		if os.path.isfile(runtimepath):
-			runtime = open(  ).read()
+			runtime = open( runtimepath,'rb' ).read()
 			script = runtime + '\n' + script
 		else:
 			print 'WARNING: can not find go_builtins.py'
