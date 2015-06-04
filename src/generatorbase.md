@@ -544,8 +544,8 @@ Also implements extra syntax like `switch` and `select`.
 					else:
 						r.append(self.indent()+'}, %s => { ' %case_match )
 				else:
-					assert self._cpp
-					r.append(self.indent()+'case %s: {' %case_match) ## extra scope
+					if self._cpp or True:
+						r.append(self.indent()+'case %s: {' %case_match) ## extra scope
 
 				self._match_stack[-1].append(case_match)
 

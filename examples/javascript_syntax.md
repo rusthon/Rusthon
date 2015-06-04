@@ -7,7 +7,7 @@ To run this example run these commands in your shell:
 cd
 git clone https://github.com/rusthon/Rusthon.git
 cd Rusthon/
-./rusthon.py ./examples/hello_javascript.md
+./rusthon.py ./examples/javascript_syntax.md
 ```
 
 html
@@ -29,13 +29,13 @@ html
 </html>
 ```
 
-Above a special syntax is used `@myscript` this tells Rusthon where to insert the output of scripts it translates using the javascript backend below.
-
 
 rusthon javascript backend
 --------------------------
 
 Below `@myscript` is given on the line just before the fenced rusthon code block.  This allows you to insert multiple scripts into your html, in the head or body.
+
+The extra syntax `switch` and `default` is also supported.
 
 @myscript
 ```rusthon
@@ -52,6 +52,23 @@ def test():
 		print 'ok'
 	else:
 		print 'error'
+
+	switch a:
+		case 0:
+			print 'no'
+		case 1:
+			print 'yes'
+			print 'switch syntax ok'
+
+	switch b:
+		case 0:
+			print 'error'
+		case 1 or 10:
+			print 'error'
+		default:
+			print 'switch default ok'
+
+
 
 window.setTimeout(test, 1000)
 
