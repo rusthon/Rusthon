@@ -77,6 +77,7 @@ class typedpython:
 			prevchar = None
 
 			for i,char in enumerate(line):
+
 				if isindef is False and len(a) and ''.join(a).strip().startswith('def '):
 					isindef = True
 				if isinlet is False and len(a) and ''.join(a).strip().startswith('let '):
@@ -480,12 +481,14 @@ class typedpython:
 
 			## jquery ##
 			## TODO ensure this is not inside quoted text
-			if '$(' in c:
-				c = c.replace('$(', '__DOLLAR__(')
-			if '$' in c and 'def ' in c:  ## $ as function parameter
+			#if '$(' in c:
+			#	c = c.replace('$(', '__DOLLAR__(')
+			#if '$' in c and 'def ' in c:  ## $ as function parameter
+			#	c = c.replace('$', '__DOLLAR__')
+			#if '$.' in c:
+			#	c = c.replace('$.', '__DOLLAR__.')
+			if '$' in c:
 				c = c.replace('$', '__DOLLAR__')
-			if '$.' in c:
-				c = c.replace('$.', '__DOLLAR__.')
 
 			if c.strip().startswith('nonlocal '):  ## Python3 syntax
 				c = c.replace('nonlocal ', 'global ')  ## fake nonlocal with global

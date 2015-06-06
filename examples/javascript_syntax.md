@@ -43,7 +43,7 @@ The extra syntax `switch` and `default` is also supported.
 from runtime import *
 
 def hello_world():
-	window.alert("hi")
+	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
 
 def test():
 	a = 1

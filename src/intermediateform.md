@@ -2300,6 +2300,8 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_Str(self, node):
 		s = node.s.replace('\\','\\\\').replace('\n', '\\n').replace('\r', '\\r').replace('\0', '\\0')
 		s = s.replace('\"', '\\"')
+		s = s.replace('.__right_arrow__.', '->').replace('= __go__send__<<', '<-')
+		s = s.replace('__DOLLAR__', '$')
 
 		if self._with_dart and s == '\\0':  ## TODO other numbers
 			return 'new(String.fromCharCode(0))'
