@@ -15,6 +15,7 @@ TODO_FIX = (
 	'hello_java.md',
 	'hello_caffe.md',
 	'hello_nuitka.md',
+	'hello_rapydscript.md',
 )
 
 files = os.listdir('./examples')
