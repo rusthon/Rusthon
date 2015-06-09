@@ -161,6 +161,7 @@ def java_to_rusthon( input ):
 def new_module():
 	return {
 		'markdown': '',
+		'coffee'  : [],
 		'python'  : [],
 		'rusthon' : [],
 		'rust'    : [],
@@ -314,6 +315,16 @@ def build( modules, module_path, datadirs=None ):
 	if modules['c#']:
 		for mod in modules['c#']:
 			output['c#'].append(mod)
+
+	if modules['coffee']:
+		for mod in modules['coffee']:
+			tmpcoff = tempfile.gettempdir() + '/temp.coffee'
+			tmpjs = tempfile.gettempdir() + '/coffee-output.js'
+			open(tmpcoff, 'wb').write(mod['code'])
+			subprocess.check_call(['coffee', '--compile', '--bare', '--output', tmpjs, tmpcoff])
+			coffdata = open(tmpjs+'/temp.js','rb').read()
+			output['datafiles'][mod['tag']] = coffdata
+			tagged[ mod['tag'] ] = coffdata
 
 	if modules['rapydscript']:
 		for mod in modules['rapydscript']:
