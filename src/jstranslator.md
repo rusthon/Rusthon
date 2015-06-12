@@ -116,7 +116,14 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		if op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s --;' %target
 		else:
-			a = '%s %s= %s;' %(target, op, value)
+			#a = '%s %s= %s;' %(target, op, value)  ## direct
+			## supports += syntax for arrays ##
+			x = [
+				'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
+				'else { %s %s= %s; }'%(target, op, value)
+			]
+			a = '\n'.join(x)
+
 		return a
 
 ```

@@ -45,7 +45,10 @@ from runtime import *
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
 
+X = []
+
 def test():
+	global X
 	a = 1
 	b = 2
 	if a <= b-1:
@@ -67,6 +70,13 @@ def test():
 			print 'error'
 		default:
 			print 'switch default ok'
+
+	X = [1,2]
+	arr = [3,4]
+	X += arr
+	print X
+
+
 
 
 
