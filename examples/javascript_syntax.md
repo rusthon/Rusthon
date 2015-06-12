@@ -46,9 +46,10 @@ def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
 
 X = []
+Z = None
 
 def test():
-	global X
+	global X, Z
 	a = 1
 	b = 2
 	if a <= b-1:
@@ -71,10 +72,18 @@ def test():
 		default:
 			print 'switch default ok'
 
-	X = [1,2]
-	arr = [3,4]
-	X += arr
+
+	with operator_overloading:
+		X = [1,2]
+		arr = [3,4]
+		X += arr
+
+	## `oo` is an alias for `operator_overloading`
+	with oo:
+		Z = [10,20] + [30,40]
+
 	print X
+	print Z
 
 
 

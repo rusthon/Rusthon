@@ -31,6 +31,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		assert source
 		NodeVisitorBase.__init__(self, source)
 
+		self._with_oo = False
 		self._fast_js = fast_javascript
 		self._fast_loops = fast_loops
 		self._func_expressions = function_expressions
@@ -659,12 +660,17 @@ TODO clean this up
 						atype = self.visit(node.left.args[1])
 						return ' new Array(%s) /*array of: %s*/' %(asize, atype)
 
-		if left in self._typed_vars and self._typed_vars[left] == 'numpy.float32':
-			left += '[_id_]'
-		if right in self._typed_vars and self._typed_vars[right] == 'numpy.float32':
-			right += '[_id_]'
-
-		return '(%s %s %s)' % (left, op, right)
+		if self._with_oo:
+			methodnames = {
+				'+': 'add',
+				'-': 'sub',
+				'*': 'mul',
+				'/': 'div',
+				'%': 'mod'
+			}
+			return '(%s.__%s__(%s))' % (left, methodnames[op], right)
+		else:
+			return '(%s %s %s)' % (left, op, right)
 
 
 	def visit_Return(self, node):
@@ -862,17 +868,16 @@ def generate_minimal_js_runtime():
 	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
 def generate_js_runtime():
-	from python_to_pythonjs import main as py2pyjs
-	builtins = py2pyjs(
-		open('src/runtime/builtins.py', 'rb').read(),
-		module_path = 'runtime',
-		fast_javascript = True
+	a = open('src/runtime/pythonpythonjs.py', 'rb').read()
+	b = open('src/runtime/builtins_core.py', 'rb').read()
+	builtins = translate_to_javascript(
+		a + '\n' + b,
+		requirejs = False,
+		insert_runtime = False,
+		fast_javascript = True,
+		fast_loops = True,
 	)
-	lines = [
-		main( open('src/runtime/pythonpythonjs.py', 'rb').read(), requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True ), ## lowlevel pythonjs
-		main( builtins, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
-	]
-	return '\n'.join( lines )
+	return builtins
 
 ```
 

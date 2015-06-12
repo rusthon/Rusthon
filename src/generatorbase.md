@@ -482,7 +482,14 @@ Also implements extra syntax like `switch` and `select`.
 		is_extern = False
 		has_default = False
 
-		if isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
+		if isinstance(node.context_expr, ast.Name) and node.context_expr.id in ('oo', 'operator_overloading'):
+			self._with_oo = True
+			body = []
+			for b in node.body: body.append(self.visit(b))
+			self._with_oo = False
+			return '\n'.join(body)
+
+		elif isinstance( node.context_expr, ast.Name ) and node.context_expr.id == '__default__':
 			has_default = True
 			if self._rust and not self._cpp:
 				r.append(self.indent()+'}, _ => {')

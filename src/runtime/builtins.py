@@ -7,10 +7,6 @@ pythonjs.configure( direct_operator='+' )
 pythonjs.configure( direct_operator='*' )
 pythonjs.configure( direct_keys=True )
 
-from builtins_core import *
-
-_PythonJS_UID = 0
-
 
 with lowlevel:
 	def __getfast__(ob, attr):

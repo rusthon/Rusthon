@@ -1389,10 +1389,10 @@ def bootstrap_rusthon():
 
 	if '--runtime' in sys.argv:
 		print('creating new runtime: pythonjs.js')
-		open('pythonjs.js', 'wb').write( generate_js_runtime() )
+		open('pythonjs/pythonjs.js', 'wb').write( generate_js_runtime() )
 	if '--miniruntime' in sys.argv:
 		print('creating new runtime: pythonjs-minimal.js')
-		open('pythonjs-minimal.js', 'wb').write( generate_minimal_js_runtime() )
+		open('pythonjs/pythonjs-minimal.js', 'wb').write( generate_minimal_js_runtime() )
 
 #MAIN#
 if __name__ == "__main__":
