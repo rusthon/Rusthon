@@ -1,10 +1,44 @@
-requires
--------
-https://github.com/rusthon/Rusthon/blob/master/pythonjs/pythonjs-minimal.js
+Overview
+--------
+https://github.com/rusthon/Rusthon/wiki/JavaScript-Backend
+
+
+PythonJS Runtime
+----------------
+If you include in your script the line `from runtime import *`,
+it will trigger pythonjs.js to be included with your transpiled output.
+You can also manually include it from here instead:
 https://github.com/rusthon/Rusthon/blob/master/pythonjs/pythonjs.js
 
-You need one of the above, pythonjs.js is complete and 58K, less pythonic
-code might be able to get by with just including pythonjs-minimal.js thats only 14K.
+To regenerate pythonjs.js run these commands:
+```bash
+cd Rusthon
+./rusthon.py --runtime
+```
+
+Operator Overloading
+-------------------
+To use operator overloading you need to be explicit when you are using it.
+You can also use `with oo:`
+
+```python
+with operator_overloading:
+	a = [1,2]
+	a += [3,4]
+	b = a + [5.6]
+
+```
+
+Examples
+--------
+* https://github.com/rusthon/Rusthon/blob/master/examples/hello_javascript.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/hello_angular.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/hello_peerjs.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/hello_rapydscript.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/hello_threejs.md
+
+
 
 Classes
 -----------
@@ -148,21 +182,14 @@ javascript
 Inline JavaScript
 ---------------
 
-There are times that JavaScript needs to be directly inlined
-into PythonJS code, this is done with the special
-`JS([str])` function that takes a string literal as its only
-argument.  The compiler will insert the string directly into
-the final output JavaScript.
+Use `inline(str)` to inline javascript code
 
 ####JS Example
-
-	JS("var arr = new Array()")
-	JS("var ob = new Object()")
-	JS("ob['key'] = 'value'")
-	if JS("Object.prototype.toString.call( arr ) === '[object Array]'"):
-		JS("arr.push('hello world')")
-		JS("arr.push( ob )")
-
-In the example above we create a new JavaScript Array.
-Notice that the if-statement above has a condition that is
-inlined JavaScript.
+```javascript
+	inline("var arr = new Array()")
+	inline("var ob = new Object()")
+	inline("ob['key'] = 'value'")
+	if inline("Object.prototype.toString.call( arr ) === '[object Array]'"):
+		inline("arr.push('hello world')")
+		inline("arr.push( ob )")
+```

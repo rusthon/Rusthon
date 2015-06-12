@@ -1,11 +1,24 @@
 [![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
-![highleveloverview](http://rusthon.github.io/Rusthon/images/RusthonC++.svg)
-
-Docs
------------
+Getting Started
+-----------------
 * [markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
-* [syntax overview](https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md)
+* [javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
+* [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
+
+JavaScript Frontends
+--------------------
+To use these frontends install them on your system, they will be used as subprocesses
+to output the final javascript.
+* [coffee script](https://github.com/rusthon/Rusthon/blob/master/examples/hello_coffee.md)
+* [rapydscript](https://github.com/rusthon/Rusthon/blob/master/examples/hello_rapydscript.md)
+
+
+C++ Backend Docs
+-----------
+note: the other backends are still a work in progress.
+
+* [typed backend extra syntax](https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md)
 * [vectors](https://github.com/rusthon/Rusthon/wiki/Lists-and-Arrays)
 * [concurrency](https://github.com/rusthon/Rusthon/wiki/concurrency)
 * [cpython integration](https://github.com/rusthon/Rusthon/wiki/CPython-Integration)
@@ -13,11 +26,13 @@ Docs
 * [java frontend](https://github.com/rusthon/Rusthon/wiki/Java-Frontend)
 * [memory and reference counting](https://github.com/rusthon/Rusthon/blob/master/doc/memory.md)
 * [weak references](https://github.com/rusthon/Rusthon/wiki/Weak-References)
-* [javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [nim integration](https://github.com/rusthon/Rusthon/wiki/Nim-Integration)
 
-Quick Start
+Getting Started - C++ Backend
 -----------
+
+![highleveloverview](http://rusthon.github.io/Rusthon/images/RusthonC++.svg)
+
 
 After git cloning this repo, try async_channels.md, you just need Python2 and g++ installed.  The command below will save the compiled exe to your temp folder and run it.
 
