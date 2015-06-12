@@ -26,6 +26,7 @@ KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Obj
 ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";
 AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";
 RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";
+json = { "loads":(function (s) {return JSON.parse(s);}), "dumps":(function (o) {return JSON.stringify(o);}) };
 var hasattr = function(ob, attr)
 {
 	return Object.hasOwnProperty.call(ob, attr);
@@ -674,4 +675,31 @@ var __jsdict_update = function(ob, other)
 			ob[key] = other[key];
 		}
 	}
+}
+
+/* This returns an array that is a minimal implementation of set.
+	Often sets are used simply to remove duplicate entries from a list, 
+	and then it get converted back to a list, it is safe to use fastset for this.
+
+	The array prototype is overloaded with basic set functions:
+		difference
+		intersection
+		issubset */
+var set = function(a)
+{
+	s = [];
+	for (var __i12=0; __i12 < a.length; __i12++)
+	{
+		var item = a[ __i12 ];
+		if ((s.indexOf(item)===-1))
+		{
+			s.push(item);
+		}
+	}
+	return s;
+}
+
+var frozenset = function(a)
+{
+	return set(a);
 }

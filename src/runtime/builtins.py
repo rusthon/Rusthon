@@ -707,74 +707,7 @@ with javascript:
 
 
 
-def set(a):
-	'''
-	This returns an array that is a minimal implementation of set.
-	Often sets are used simply to remove duplicate entries from a list, 
-	and then it get converted back to a list, it is safe to use fastset for this.
 
-	The array prototype is overloaded with basic set functions:
-		difference
-		intersection
-		issubset
-
-	Note: sets in Python are not subscriptable, but can be iterated over.
-
-	Python docs say that set are unordered, some programs may rely on this disorder
-	for randomness, for sets of integers we emulate the unorder only uppon initalization 
-	of the set, by masking the value by bits-1. Python implements sets starting with an 
-	array of length 8, and mask of 7, if set length grows to 6 (3/4th), then it allocates 
-	a new array of length 32 and mask of 31.  This is only emulated for arrays of 
-	integers up to an array length of 1536.
-
-	'''
-	with javascript:
-
-		hashtable = null
-		if a.length <= 1536:
-			hashtable = {}
-			keys = []
-			if a.length < 6:  ## hash array length 8
-				mask = 7
-			elif a.length < 22: ## 32
-				mask = 31
-			elif a.length < 86: ## 128
-				mask = 127
-			elif a.length < 342: ## 512
-				mask = 511
-			else: 				## 2048
-				mask = 2047
-
-		fallback = False
-		if hashtable:
-			for b in a:
-				if typeof(b)=='number' and b is (b|0):  ## set if integer
-					key = b & mask
-					hashtable[ key ] = b
-					keys.push( key )
-				else:
-					fallback = True
-					break
-
-		else:
-			fallback = True
-
-		s = []
-
-		if fallback:
-			for item in a:
-				if s.indexOf(item) == -1:
-					s.push( item )
-		else:
-			keys.sort()
-			for key in keys:
-				s.push( hashtable[key] )
-
-	return s
-
-
-def frozenset(a):
-	return set(a)
 
 
 
@@ -987,67 +920,6 @@ class array:
 		return s
 
 with javascript:
-
-	## file IO ##
-	class file:
-		'''
-		TODO, support multiple read/writes.  Currently this just reads all data,
-		and writes all data.
-		'''
-		def __init__(self, path, flags):
-			self.path = path
-
-			if flags == 'rb':
-				self.flags = 'r'
-				self.binary = True
-			elif flags == 'wb':
-				self.flags = 'w'
-				self.binary = True
-			else:
-				self.flags = flags
-				self.binary = False
-
-			self.flags = flags
-
-		def read(self, binary=False):
-			_fs = require('fs')
-			path = self.path
-			if binary or self.binary:
-				return _fs.readFileSync( path, encoding=None )
-			else:
-				return _fs.readFileSync( path, {'encoding':'utf8'} )
-
-		def write(self, data, binary=False):
-			_fs = require('fs')
-			path = self.path
-			if binary or self.binary:
-				binary = binary or self.binary
-				if binary == 'base64':  ## TODO: fixme, something bad in this if test
-					#print('write base64 data')
-					buff = new Buffer(data, 'base64')
-					_fs.writeFileSync( path, buff, {'encoding':None})
-
-				else:
-					#print('write binary data')
-					#print(binary)
-					_fs.writeFileSync( path, data, {'encoding':None})
-			else:
-				#print('write utf8 data')
-				_fs.writeFileSync( path, data, {'encoding':'utf8'} )
-
-		def close(self):
-			pass
-
-	def __open__( path, mode=None):  ## this can not be named `open` because it replaces `window.open`
-		return file( path, mode )
-
-
-
-	## mini json library ##
-	json = {
-		'loads': lambda s: JSON.parse(s),
-		'dumps': lambda o: JSON.stringify(o)
-	}
 
 
 	def __get_other_workers_with_shared_arg( worker, ob ):

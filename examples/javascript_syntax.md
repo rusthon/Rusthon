@@ -42,8 +42,17 @@ The extra syntax `switch` and `default` is also supported.
 #backend:javascript
 from runtime import *
 
+## the runtime provides some fake python libs ##
+J = json.loads( '{"x":1}' )  
+print  J 
+
+s = set( [1,2,3,1,2])
+print s
+print frozenset( [0,1,1,1,1,20])
+
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
+
 
 X = []
 Z = None
@@ -85,6 +94,8 @@ def test():
 	print X
 	print Z
 
+	for i,e in enumerate(X):
+		print i, e
 
 
 

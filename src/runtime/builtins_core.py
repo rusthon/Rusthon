@@ -6,6 +6,12 @@ inline('AttributeError = function(msg) {this.message = msg || "";}; AttributeErr
 inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
 
 
+## mini fake json library ##
+json = {
+	'loads': lambda s: JSON.parse(s),
+	'dumps': lambda o: JSON.stringify(o)
+}
+
 def hasattr(ob, attr):
 	## TODO check parent classes for attr, this fails on for methods because those are are on the .prototype ?
 	return Object.hasOwnProperty.call(ob, attr)
@@ -365,3 +371,28 @@ def __jsdict_update(ob, other):
 	else:
 		for key in __object_keys__(other):
 			ob[key]=other[key]
+
+
+def set(a):
+	'''
+	This returns an array that is a minimal implementation of set.
+	Often sets are used simply to remove duplicate entries from a list, 
+	and then it get converted back to a list, it is safe to use fastset for this.
+
+	The array prototype is overloaded with basic set functions:
+		difference
+		intersection
+		issubset
+
+	'''
+
+	s = []  ## the fake set ##
+	for item in a:
+		if s.indexOf(item) == -1:
+			s.push( item )
+
+	return s
+
+
+def frozenset(a):
+	return set(a)
