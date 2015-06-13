@@ -113,6 +113,16 @@ def test():
 	print 'axbxc'.replace('x', 'Z')
 
 	print dir(X)
+
+	print 'testing isdigit'
+	print '1'.isdigit()
+	print 'A'.isdigit()
+
+	try:
+		getattr(X, 'notthere')  ## throws exception
+	except AttributeError:
+		print 'caught attribute error OK'
+
 	getattr(X, 'notthere')  ## throws exception
 
 window.setTimeout(test, 1000)

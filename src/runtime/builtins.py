@@ -287,25 +287,6 @@ def _setup_str_prototype():
 			return this.length
 
 
-		@String.prototype.find
-		def func(a):
-			return this.indexOf(a)
-
-		@String.prototype.isdigit
-		def func():
-			digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-			for char in this:
-				if char in digits: pass
-				else: return False
-			return True
-
-		@String.prototype.isnumber
-		def func():
-			digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
-			for char in this:
-				if char in digits: pass
-				else: return False
-			return True
 
 		## TODO - for now these are just dummy functions.
 		@String.prototype.decode
@@ -315,14 +296,6 @@ def _setup_str_prototype():
 		def func(encoding):
 			return this
 
-		@String.prototype.format
-		def func(fmt):
-			r = this
-			keys = Object.keys(fmt)
-			for key in keys:
-				r = r.split(key).join(fmt[key])
-			r = r.split('{').join('').split('}').join('')
-			return r
 
 
 _setup_str_prototype()

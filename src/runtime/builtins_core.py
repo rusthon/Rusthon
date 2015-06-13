@@ -469,6 +469,34 @@ def round(a, places=0):
 def str(s):
 	return ''+s
 
+def func(fmt):
+	r = this
+	keys = Object.keys(fmt)
+	for key in keys:
+		r = r.split(key).join(fmt[key])
+	r = r.split('{').join('').split('}').join('')
+	return r
+String.prototype.format = func
+
+
+String.prototype.find = lambda a : this.indexOf(a)
+
+def func():
+	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+	for char in this:
+		if char in digits: pass
+		else: return False
+	return True
+String.prototype.isdigit = func
+
+def func():
+	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
+	for char in this:
+		if char in digits: pass
+		else: return False
+	return True
+String.prototype.isnumber = func
+
 def __replace_method(ob, a, b):
 	## this is required because string.replace in javascript only replaces the first occurrence
 	if typeof(ob) == 'string':
