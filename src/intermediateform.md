@@ -155,6 +155,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		## must be fully broken down into flat functions.
 		self._with_js = True
 		if self._with_lua:
+			print 'WARN: OLD LUA MODE'
 			self._with_js = False
 
 
@@ -535,6 +536,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('from %s import %s' %(node.module, ','.join([n.name for n in node.names])))
 		elif node.module == 'runtime':
 			writer.write('from runtime import *')
+		elif node.module == 'nodejs':
+			writer.write('from nodejs import *')
 		else:
 			msg = 'invalid import - file not found: %s'%path
 			raise SyntaxError( self.format_error(msg) )
@@ -1335,8 +1338,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			elif isinstance(item, ast.With) and isinstance( item.context_expr, Name ) and item.context_expr.id == 'javascript':
-				self._with_js = True
-				writer.with_javascript = True
+				#self._with_js = True
+				#writer.with_javascript = True
 				for sub in item.body:
 					if isinstance(sub, Assign) and isinstance(sub.targets[0], Name):
 						item_name = sub.targets[0].id
@@ -1346,8 +1349,8 @@ class PythonToPythonJS(NodeVisitorBase):
 						self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
 					else:
 						raise NotImplementedError( sub )
-				writer.with_javascript = False
-				self._with_js = False
+				#writer.with_javascript = False
+				#self._with_js = False
 
 			else:
 				raise NotImplementedError( item )
@@ -2428,14 +2431,14 @@ class PythonToPythonJS(NodeVisitorBase):
 		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
-					if kw.value.id == 'True':
-						self._with_js = True
-						writer.with_javascript = True
-					elif kw.value.id == 'False':
-						self._with_js = False
-						writer.with_javascript = False
-					else:
-						raise SyntaxError( self.format_error(node) )
+					#if kw.value.id == 'True':
+					#	self._with_js = True
+					#	writer.with_javascript = True
+					#elif kw.value.id == 'False':
+					#	self._with_js = False
+					#	writer.with_javascript = False
+					#else:
+					raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'dart':
 					if kw.value.id == 'True':
@@ -2707,10 +2710,10 @@ class PythonToPythonJS(NodeVisitorBase):
 				return 'JS("new %s(%s)")' %(name, ','.join(args))
 
 		elif name == 'new':
-			tmp = self._with_js
-			self._with_js = True
+			#tmp = self._with_js
+			#self._with_js = True
 			args = list( map(self.visit, node.args) )
-			self._with_js = tmp
+			#self._with_js = tmp
 			assert len(args) == 1
 			return 'new(%s)' %args[0]
 

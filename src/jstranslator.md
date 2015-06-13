@@ -42,6 +42,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		self._function_stack = []
 		self._requirejs = requirejs
 		self._insert_runtime = insert_runtime
+		self._insert_nodejs_runtime = False
 		self._webworker = webworker
 		self._exports = set()
 		self._inline_lambda = False
@@ -184,7 +185,7 @@ TODO: regenerate pythonjs.js each time.
 			#runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
 
 			## always regenerate the runtime, in case the user wants to hack it ##
-			runtime = generate_js_runtime()
+			runtime = generate_js_runtime( nodejs=self._insert_nodejs_runtime )
 			lines.insert( 0, runtime )
 
 
@@ -887,16 +888,28 @@ def generate_minimal_js_runtime():
 	)
 	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
-def generate_js_runtime():
-	a = open('src/runtime/pythonpythonjs.py', 'rb').read()
-	b = open('src/runtime/builtins_core.py', 'rb').read()
+def generate_js_runtime( nodejs=False ):
+	r = [
+		open('src/runtime/pythonpythonjs.py', 'rb').read(),
+		open('src/runtime/builtins_core.py', 'rb').read()
+	]
+	if nodejs:  ## TODO fix me
+		r.append(
+			python_to_pythonjs(
+				open('src/runtime/builtins_nodejs.py', 'rb').read(),
+				fast_javascript = True,
+				pure_javascript = False
+			)
+		)
+
 	builtins = translate_to_javascript(
-		a + '\n' + b,
+		'\n'.join(r),
 		requirejs = False,
 		insert_runtime = False,
 		fast_javascript = True,
 		fast_loops = True,
 	)
+
 	return builtins
 
 ```

@@ -162,6 +162,8 @@ Import `import x` and `from x import y`
 				crate.add( alias.name )
 		if node.module=='runtime':
 			self._insert_runtime = True
+		elif node.module=='nodejs':
+			self._insert_nodejs_runtime = True
 
 		return ''
 
