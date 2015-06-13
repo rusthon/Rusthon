@@ -109,6 +109,8 @@ def test():
 		print i, e
 
 
+	print 'a b c'.split()
+	print 'axbxc'.replace('x', 'Z')
 
 
 window.setTimeout(test, 1000)

@@ -290,42 +290,7 @@ def isinstance( ob, klass):
 
 
 
-def int(a):
-	with javascript:
-		a = Math.round(a)
-		if isNaN(a):
-			raise ValueError('not a number')
-		return a
 
-
-
-def float(a):
-	with javascript:
-		if typeof(a)=='string':
-			if a.lower()=='nan':
-				return NaN
-			elif a.lower()=='inf':
-				return Infinity
-
-		b = Number(a)
-		if isNaN(b):
-			## invalid strings also convert to NaN, throw error ##
-			raise ValueError('can not convert to float: '+a)
-		return b
-
-def round(a, places=0):
-	with javascript:
-		b = '' + a
-		if b.indexOf('.') == -1:
-			return a
-		else:
-			## this could return NaN with large numbers and large places,
-			## TODO check for NaN and instead fallback to `a.toFixed(places)`
-			p = Math.pow(10, places)
-			return Math.round(a * p) / p
-
-def str(s):
-	return ''+s
 
 def _setup_str_prototype():
 	'''

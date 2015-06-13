@@ -432,3 +432,60 @@ def func(other):
 			return False
 	return True
 Array.prototype.issubset = func
+
+
+
+def int(a):
+	a = Math.round(a)
+	if isNaN(a):
+		raise ValueError('not a number')
+	return a
+
+
+
+def float(a):
+	if typeof(a)=='string':
+		if a.lower()=='nan':
+			return NaN
+		elif a.lower()=='inf':
+			return Infinity
+
+	b = Number(a)
+	if isNaN(b):
+		## invalid strings also convert to NaN, throw error ##
+		raise ValueError('can not convert to float: '+a)
+	return b
+
+def round(a, places=0):
+	b = '' + a
+	if b.indexOf('.') == -1:
+		return a
+	else:
+		## this could return NaN with large numbers and large places,
+		## TODO check for NaN and instead fallback to `a.toFixed(places)`
+		p = Math.pow(10, places)
+		return Math.round(a * p) / p
+
+def str(s):
+	return ''+s
+
+def __replace_method(ob, a, b):
+	## this is required because string.replace in javascript only replaces the first occurrence
+	if typeof(ob) == 'string':
+		return ob.split(a).join(b)
+	else:
+		return ob.replace(a,b)
+
+def __split_method( ob, delim ):
+	## special case because calling string.split() without args its not the same as python,
+	## and we do not want to touch the default string.split implementation.
+	if typeof(ob) == 'string':
+		if delim is undefined:
+			return ob.split(' ')
+		else:
+			return ob.split( delim )
+	else:
+		if delim is undefined:
+			return ob.split()
+		else:
+			return ob.split( delim )
