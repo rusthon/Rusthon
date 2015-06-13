@@ -1,7 +1,7 @@
 import os, sys, subprocess
 
 passed = []
-ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_', 'cpython_')
+ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_', 'cpython_', 'nodejs_')
 ignoreosx = ['hello_cpython.md']
 
 ## rust is broken on fedora? Travis uses Debian.
