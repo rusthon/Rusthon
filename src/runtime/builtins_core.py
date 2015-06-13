@@ -377,7 +377,7 @@ def set(a):
 	'''
 	This returns an array that is a minimal implementation of set.
 	Often sets are used simply to remove duplicate entries from a list, 
-	and then it get converted back to a list, it is safe to use fastset for this.
+	and then it get converted back to a list, it is safe to use set for this.
 
 	The array prototype is overloaded with basic set functions:
 		difference
@@ -396,3 +396,39 @@ def set(a):
 
 def frozenset(a):
 	return set(a)
+
+## set-like features ##
+
+def func(x, low, high):
+	if low is undefined: low = 0
+	if high is undefined: high = this.length
+	while low < high:
+		a = low+high
+		mid = Math.floor(a/2)
+		if x < this[mid]:
+			high = mid
+		else:
+			low = mid + 1
+	return low
+Array.prototype.bisect = func
+
+## `-` operator
+def func(other):
+	f = lambda i: other.indexOf(i)==-1
+	return this.filter( f )
+Array.prototype.difference = func
+
+## `&` operator
+def func(other):
+	f = lambda i: other.indexOf(i)!=-1
+	return this.filter( f )
+Array.prototype.intersection = func
+
+
+## `<=` operator
+def func(other):
+	for item in this:
+		if other.indexOf(item) == -1:
+			return False
+	return True
+Array.prototype.issubset = func

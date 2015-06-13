@@ -46,9 +46,12 @@ from runtime import *
 J = json.loads( '{"x":1}' )  
 print  J 
 
-s = set( [1,2,3,1,2])
-print s
-print frozenset( [0,1,1,1,1,20])
+s1 = set( [1,2,3,1,2])
+print s1
+s2 = frozenset( [0,1,1,1,1,20])
+print s2
+s3 = s1.difference(s2)
+print s3
 
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")

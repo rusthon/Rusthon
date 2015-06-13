@@ -178,8 +178,11 @@ TODO: regenerate pythonjs.js each time.
 
 
 		if self._insert_runtime:
-			dirname = os.path.dirname(os.path.abspath(__file__))
-			runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
+			#dirname = os.path.dirname(os.path.abspath(__file__))
+			#runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
+
+			## always regenerate the runtime, in case the user wants to hack it ##
+			runtime = generate_js_runtime()
 			lines.insert( 0, runtime )
 
 

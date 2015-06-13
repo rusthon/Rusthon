@@ -457,39 +457,6 @@ def _setup_array_prototype():
 
 
 
-		## set-like features ##
-
-		@Array.prototype.bisect
-		def func(x, low, high):
-			if low is undefined: low = 0
-			if high is undefined: high = this.length
-			while low < high:
-				a = low+high
-				mid = Math.floor(a/2)
-				if x < this[mid]:
-					high = mid
-				else:
-					low = mid + 1
-			return low
-
-		## `-` operator
-		@Array.prototype.difference
-		def func(other):
-			f = lambda i: other.indexOf(i)==-1
-			return this.filter( f )
-		## `&` operator
-		@Array.prototype.intersection
-		def func(other):
-			f = lambda i: other.indexOf(i)!=-1
-			return this.filter( f )
-		## `<=` operator
-		@Array.prototype.issubset
-		def func(other):
-			for item in this:
-				if other.indexOf(item) == -1:
-					return False
-			return True
-
 		## non-standard utils ##
 		@Array.prototype.copy
 		def func():

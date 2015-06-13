@@ -1,13 +1,26 @@
 [![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
+Easily mix multiple languages, frontends, backends, compilers, and transpilers inside markdown files.
+Markdown is the container format for your multi-language application that can contain: server backend logic and config files,
+and frontend javascript with html and css, all in a single markdown file.
+Rusthon compiles the markdown into tar files for release, or runs it for testing.
+
+The integrated Python transpiler targets multiple backend languages, like: JavaScript and C++.
+The JavaScript backend implements most of the dynamic and some builtin functions of Python.
+The C++ backend is less dynamic and uses an extended static type syntax based on Go, Rust and C++.
+The other backends are experimental.
+
 Getting Started
 -----------------
 * [markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
 * [javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
 
-JavaScript Frontends
+Extra JavaScript Frontends
 --------------------
+CoffeeScript and Rapydscript are great languages to use to avoid the pains of writing JavaScript by hand.
+They can be directly included in the markdown files, and will get compiled to javascript.
+
 To use these frontends install them on your system, they will be used as subprocesses
 to output the final javascript.
 * [coffee script](https://github.com/rusthon/Rusthon/blob/master/examples/hello_coffee.md)
@@ -16,7 +29,7 @@ to output the final javascript.
 
 C++ Backend Docs
 -----------
-note: the other backends are still a work in progress.
+note: this and other backends are still a work in progress.
 
 * [typed backend extra syntax](https://github.com/rusthon/Rusthon/blob/master/doc/syntax.md)
 * [vectors](https://github.com/rusthon/Rusthon/wiki/Lists-and-Arrays)
