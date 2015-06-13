@@ -53,6 +53,14 @@ print s2
 s3 = s1.difference(s2)
 print s3
 
+class Channel():
+	def send(self,ob):
+		print 'sending:' + ob
+
+chan = Channel()
+with mymacro as "chan.send(JSON.stringify(%s))":
+	mymacro( s3 )
+
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
 

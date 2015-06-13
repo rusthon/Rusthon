@@ -10,9 +10,24 @@ The JavaScript backend implements most of the dynamic and some builtin functions
 The C++ backend is less dynamic and uses an extended static type syntax based on Go, Rust and C++.
 The other backends are experimental.
 
-Getting Started
------------------
 * [markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
+
+
+Getting Started Javascript
+-----------------
+Transpile from a subset of Python to Javascript with extended syntax like mini macros.
+
+```python
+class Channel():
+    def send(self,ob):
+        print 'sending:' + ob
+
+chan = Channel()
+with mymacro as "chan.send(JSON.stringify(%s))":
+    mymacro( s3 )
+
+```
+
 * [javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
 

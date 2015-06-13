@@ -31,6 +31,8 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		assert source
 		NodeVisitorBase.__init__(self, source)
 
+		self.macros = {}
+
 		self._with_oo = False
 		self._fast_js = fast_javascript
 		self._fast_loops = fast_loops
@@ -490,9 +492,24 @@ Call Helper
 			args = ', '.join([e for e in args if e])
 		else:
 			args = ''
+
 		fname = self.visit(node.func)
 		if fname=='__DOLLAR__': fname = '$'
-		return '%s(%s)' % (fname, args)
+
+		if fname in self.macros:
+			macro = self.macros[fname]
+			args = ','.join([self.visit(arg) for arg in node.args])
+			if '"%s"' in macro:
+				return macro % tuple([s.s for s in node.args])
+			elif '%s' in macro:
+				if macro.count('%s')==1:
+					return macro % args
+				else:
+					return macro % tuple([self.visit(s) for s in node.args])
+			else:
+				return '%s(%s)' %(macro,args)
+		else:
+			return '%s(%s)' % (fname, args)
 
 	def inline_helper_remap_names(self, remap):
 		return "var %s;" %','.join(remap.values())
