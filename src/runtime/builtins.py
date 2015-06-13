@@ -8,17 +8,7 @@ pythonjs.configure( direct_operator='*' )
 pythonjs.configure( direct_keys=True )
 
 
-with lowlevel:
-	def __getfast__(ob, attr):
-		v = ob[ attr ]
-		if v is undefined:
-			if ob.__class__:
-				v = ob.__class__[attr]
-				if v is not undefined:
-					return v
-			raise AttributeError(attr)
-		else:
-			return v
+
 
 
 with javascript:
@@ -57,26 +47,7 @@ with lowlevel:
 		else:
 			return True
 
-	def __replace_method(ob, a, b):
-		## this is required because string.replace in javascript only replaces the first occurrence
-		if typeof(ob) == 'string':
-			return ob.split(a).join(b)
-		else:
-			return ob.replace(a,b)
 
-	def __split_method( ob, delim ):
-		## special case because calling string.split() without args its not the same as python,
-		## and we do not want to touch the default string.split implementation.
-		if typeof(ob) == 'string':
-			if delim is undefined:
-				return ob.split(' ')
-			else:
-				return ob.split( delim )
-		else:
-			if delim is undefined:
-				return ob.split()
-			else:
-				return ob.split( delim )
 
 with javascript:
 
@@ -118,11 +89,6 @@ with javascript:
 
 
 
-	def dir(ob):
-		if instanceof(ob, Object):
-			return JS("Object.keys( ob )")
-		else:
-			return __object_keys__(ob)
 
 
 
@@ -249,11 +215,7 @@ def type(ob_or_class_name, bases=None, class_dict=None):
 			return create_class(ob_or_class_name, bases, class_dict)  ## TODO rename create_class to _pyjs_create_class
 
 
-def getattr(ob, attr):
-	return __getfast__(ob, attr)
 
-def setattr(ob, attr, value):
-	ob[attr] = value
 
 def issubclass(C, B):
 	if C is B:

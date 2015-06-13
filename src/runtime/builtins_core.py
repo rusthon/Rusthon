@@ -489,3 +489,28 @@ def __split_method( ob, delim ):
 			return ob.split()
 		else:
 			return ob.split( delim )
+
+
+
+def dir(ob):
+	if instanceof(ob, Object):
+		return inline("Object.keys( ob )")
+	else:
+		return __object_keys__(ob)
+
+def __getfast__(ob, attr):
+	v = ob[ attr ]
+	if v is undefined:
+		if ob.__class__:
+			v = ob.__class__[attr]
+			if v is not undefined:
+				return v
+		raise AttributeError(attr)
+	else:
+		return v
+
+def getattr(ob, attr):
+	return __getfast__(ob, attr)
+
+def setattr(ob, attr, value):
+	ob[attr] = value

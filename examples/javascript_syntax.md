@@ -112,6 +112,8 @@ def test():
 	print 'a b c'.split()
 	print 'axbxc'.replace('x', 'Z')
 
+	print dir(X)
+	getattr(X, 'notthere')  ## throws exception
 
 window.setTimeout(test, 1000)
 
