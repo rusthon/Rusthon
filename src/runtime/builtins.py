@@ -282,9 +282,7 @@ def _setup_str_prototype():
 			else:
 				return this[ idx ]
 
-		@String.prototype.__len__
-		def func():
-			return this.length
+
 
 
 

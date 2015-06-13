@@ -61,6 +61,10 @@ chan = Channel()
 with mymacro as "chan.send(JSON.stringify(%s))":
 	mymacro( s3 )
 
+print 'chan is an isinstance of Channel'
+print isinstance(chan, Channel)
+print isinstance(chan, Array)
+
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
 
@@ -117,6 +121,10 @@ def test():
 	print 'testing isdigit'
 	print '1'.isdigit()
 	print 'A'.isdigit()
+	print len('123')
+
+	print 'X is list:', isinstance(Z, list)
+	print 'X is really a js Array:', isinstance(Z, Array)
 
 	try:
 		getattr(X, 'notthere')  ## throws exception

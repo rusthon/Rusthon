@@ -16,6 +16,24 @@ def hasattr(ob, attr):
 	## TODO check parent classes for attr, this fails on for methods because those are are on the .prototype ?
 	return Object.hasOwnProperty.call(ob, attr)
 
+def list(ob):
+	a = []
+	if ob is not undefined:
+		for e in ob:
+			a.push(e)
+	return a
+
+def isinstance( ob, klass):
+	if ob is undefined or ob is null:
+		return False
+	elif instanceof(ob, Array):
+		if klass is list:
+			return True
+		elif klass is Array:
+			return True
+	else:
+		return instanceof(ob, klass)
+
 def len(ob):
 	if instanceof(ob, Array):
 		return ob.length
@@ -45,6 +63,8 @@ String.prototype.__getslice__ = func
 String.prototype.splitlines = lambda : this.split('\n')
 
 String.prototype.strip = lambda : this.trim()  ## missing in IE8
+
+String.prototype.__len__ = lambda : this.length
 
 def func(a):
 	if this.substring(0, a.length) == a:
