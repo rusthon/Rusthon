@@ -10,7 +10,9 @@ The JavaScript backend implements most of the dynamic and some builtin functions
 The C++ backend is less dynamic and uses an extended static type syntax based on Go, Rust and C++.
 The other backends are experimental.
 
-* [markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
+* [highlevel overview](http://rusthon-lang.blogspot.com/2015/06/rusthon-overview.html)
+* [multiple markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
+* [professional training and support](http://rusthon-lang.blogspot.com/p/contract-me.html)
 
 
 Getting Started Javascript
