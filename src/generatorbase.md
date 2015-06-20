@@ -750,8 +750,20 @@ TODO clean up.
 				return 'Thread::spawn( move || {%s;} );' % self.visit(node.args[0])
 			elif self._dart:
 				return 'Isolate.spawn(%s);' %self.visit(node.args[0])
-			else:
+			elif self._go:
 				return 'go %s' %self.visit(node.args[0])
+			else:  ## javascript
+				r = self.visit(node.args[0])
+				mode = 'call'
+				fname = self.visit(node.args[0].func)
+				args = [self.visit(a) for a in node.args[0].args]
+				if fname == 'new':
+					mode = 'new'
+					fname = self.visit(node.args[0].args[0].func)
+					args = [self.visit(a) for a in node.args[0].args[0].args]
+
+				return '__workerpool__.spawn({%s:"%s", args:%s})' %(mode,fname, args)
+
 		elif name == '__go_make__':
 			if len(node.args)==2:
 				return 'make(%s, %s)' %(self.visit(node.args[0]), self.visit(node.args[1]))

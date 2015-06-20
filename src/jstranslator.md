@@ -32,7 +32,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		NodeVisitorBase.__init__(self, source)
 
 		self.macros = {}
-
+		self._func_recv = 0
 		self._with_oo = False
 		self._fast_js = fast_javascript
 		self._fast_loops = fast_loops
@@ -105,9 +105,19 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
-			code = '%s = %s;' % (target, value)
+			if value.startswith('__workerpool__.send('):
+				code = value % target
+			elif value.startswith('__workerpool__.recv('):
+				self._func_recv += 1
+				self.push()
+				code = value % target
+			else:
+				code = '%s = %s;' % (target, value)
+
+
 			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
 				self._exports.add( target )
+
 			return code
 
 	def visit_AugAssign(self, node):
@@ -395,23 +405,27 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( self.indent()+v)
 
-		#buffer += '\n'.join(body)
-		self.pull()
-		#buffer += '\n%s}' %self.indent()
+		if self._func_recv:
+			while self._func_recv:
+				self.pull()
+				body.append( self.indent() + '});' )
+				self._func_recv -= 1
+			#body.append(');')
 
+		self.pull()
 		body.append( self.indent() + '}' )
 
 		buffer = '\n'.join( comments + body )
 
 		#if self._inline_lambda:
 		#	self._inline_lambda = False
-		if is_annon:
-			buffer = '__wrap_function__(' + buffer + ')'
-		elif is_pyfunc:
-			## TODO change .is_wrapper to .__pyfunc__
-			buffer += ';%s.is_wrapper = true;' %node.name
-		else:
-			buffer += '\n'
+		#if is_annon:
+		#	buffer = '__wrap_function__(' + buffer + ')'
+		#elif is_pyfunc:
+		#	## TODO change .is_wrapper to .__pyfunc__
+		#	buffer += ';%s.is_wrapper = true;' %node.name
+		#else:
+		buffer += '\n'
 
 		return self.indent() + buffer
 
@@ -643,11 +657,23 @@ TODO clean this up
 
 		elif op == '<<':
 
-			if left in ('__go__receive__', '__go__send__'):
+			if left == '__go__receive__':
 				self._has_channels = True
-				return '%s.recv()' %right
+				#return '%s.recv()' %right
+				r = [
+					'__workerpool__.recv( %s,'%right,
+					' function (%s) {'
+				]
+				return ''.join(r)
 
-			if isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
+			elif left == '__go__send__':
+				r = [
+					'__workerpool__.send({msg:%s,'%right,
+					'id:%s})'
+				]
+				return ''.join(r)
+
+			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
 					raise SyntaxError('TODO - go.func')
 				elif node.left.func.id == '__go__map__':

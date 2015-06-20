@@ -56,14 +56,16 @@ print s3
 class Channel():
 	def send(self,ob):
 		print 'sending:' + ob
+		return ob
 
 chan = Channel()
 with mymacro as "chan.send(JSON.stringify(%s))":
 	mymacro( s3 )
 
 print 'chan is an isinstance of Channel'
-print isinstance(chan, Channel)
-print isinstance(chan, Array)
+print isinstance(chan, Channel)  ## True
+print isinstance(chan, Array)    ## False
+
 
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
@@ -131,7 +133,38 @@ def test():
 	except AttributeError:
 		print 'caught attribute error OK'
 
-	getattr(X, 'notthere')  ## throws exception
+	#getattr(X, 'notthere')  ## throws exception
+
+	## in c++ becomes std::thread lambda wrapped
+	## here in js it becomes `worker1 = __workerpool__.spawn({'call|new':'Channel', 'args':[]})
+	worker1 = spawn(
+		Channel()
+	)
+
+	## in c++ this becomes worker1.send(msg)
+	## here in js it becomes __workerpool__.postMessage([worker.__workerid__, msg])
+	worker1 <- 'msg 1'
+	worker1 <- 'msg 2'
+	worker1 <- 'msg 3'
+	worker1 <- 'msg 4'
+
+	worker2 = spawn(
+		Channel()
+	)
+	worker2 <- 'msg 5'
+	worker2 <- 'msg 6'
+	worker2 <- 'msg 7'
+	worker2 <- 'msg 8'
+
+	## in c++ becomes worker1.recv()
+	## here it becomes a new callback that passes res1
+	## `__workerpool__.recv(worker.__workerid__, function(res1) { ...rest of function body...}
+	res1 = <- worker1
+	print res1
+	res2 = <- worker2
+	print res2
+
+
 
 window.setTimeout(test, 1000)
 
