@@ -32,6 +32,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		NodeVisitorBase.__init__(self, source)
 
 		self.macros = {}
+		self._has_channels = False
 		self._func_recv = 0
 		self._with_oo = False
 		self._fast_js = fast_javascript
@@ -189,6 +190,8 @@ TODO: regenerate pythonjs.js each time.
 				line = self.visit(b)
 				if line: lines.append( line )
 
+		if self._has_channels:
+			lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__);')
 
 		if self._insert_runtime:
 			#dirname = os.path.dirname(os.path.abspath(__file__))
@@ -197,6 +200,7 @@ TODO: regenerate pythonjs.js each time.
 			## always regenerate the runtime, in case the user wants to hack it ##
 			runtime = generate_js_runtime( nodejs=self._insert_nodejs_runtime )
 			lines.insert( 0, runtime )
+
 
 
 		if self._requirejs and not self._webworker:
@@ -667,6 +671,7 @@ TODO clean this up
 				return ''.join(r)
 
 			elif left == '__go__send__':
+				self._has_channels = True
 				r = [
 					'__workerpool__.send({msg:%s,'%right,
 					'id:%s})'
@@ -917,7 +922,13 @@ def generate_minimal_js_runtime():
 def generate_js_runtime( nodejs=False ):
 	r = [
 		open('src/runtime/pythonpythonjs.py', 'rb').read(),
-		open('src/runtime/builtins_core.py', 'rb').read()
+		#open('src/runtime/builtins_core.py', 'rb').read()
+		python_to_pythonjs(
+			open('src/runtime/builtins_core.py', 'rb').read(),
+			fast_javascript = True,
+			pure_javascript = False
+		)
+
 	]
 	if nodejs:  ## TODO fix me
 		r.append(

@@ -3072,30 +3072,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			if not jsfile: jsfile = 'worker.js'
 			writer_main.write('%s = "%s"' %(node.name, jsfile))
 			self._webworker_functions[ node.name ] = jsfile
-
-			writer = get_webworker_writer( jsfile )
-			if len(writer.functions) <= 1:
-				is_worker_entry = True
-				## TODO: two-way list and dict sync
-				writer.write('__wargs__ = []')
-				writer.write('def onmessage(e):')
-				writer.push()
-				## need a better way to quit the worker after work is done, check if threading._blocking_callback is waiting, else terminate
-				writer.write(  'if e.data.type=="execute":' )
-				writer.push()
-				writer.write(		'%s.apply(self, e.data.args)'%node.name )
-				writer.write(		'if not threading._blocking_callback: self.postMessage({"type":"terminate"})')
-				writer.pull()
-				writer.write(  'elif e.data.type=="append": __wargs__[ e.data.argindex ].push( e.data.value )' )
-				writer.write(  'elif e.data.type=="__setitem__": __wargs__[ e.data.argindex ][e.data.key] = e.data.value' )
-				writer.write(  'elif e.data.type=="return_to_blocking_callback": threading._blocking_callback( e.data.result )' )
-				#writer.push()
-				#writer.write(		'if instanceof(__wargs__[e.data.argindex], Array): __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
-				#writer.write(		'else: __wargs__[ e.data.argindex ][e.data.key] = e.data.value')
-				#writer.pull()
-
-				writer.pull()
-				writer.write('self.onmessage = onmessage' )
+			writer = get_webworker_writer( jsfile )  ## updates global `writer`
 
 
 

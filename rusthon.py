@@ -46,15 +46,29 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 	)
 
 	if isinstance(pyjs, dict):  ## split apart by webworkers
-		for jsfile in a:
-			result[ jsfile ] = translate_to_javascript(
-				a[jsfile],
-				webworker=jsfile != 'main',
+		workers = []
+		mainjs = None
+		for jsfile in pyjs:
+			js = translate_to_javascript(
+				pyjs[jsfile],
+				webworker=jsfile == 'worker.js',
 				requirejs=False,
 				insert_runtime=False,
 				fast_javascript = fastjs,
 				fast_loops      = directloops
 			)
+			result[ jsfile ] = js
+			if jsfile == 'worker.js':
+				workers.append(js)
+			else:
+				mainjs = jsfile
+
+		src = ['var __workersrc__ = [']
+		for line in workers[0].splitlines():
+			src.append(	'"%s",' % line.replace('"', '\\"'))
+		src.append(']')
+		src.append(result[mainjs])
+		result[mainjs] = '\n'.join(src)
 
 	else:
 

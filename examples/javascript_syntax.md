@@ -66,6 +66,12 @@ print 'chan is an isinstance of Channel'
 print isinstance(chan, Channel)  ## True
 print isinstance(chan, Array)    ## False
 
+with webworker:
+	class Worker():
+		def send(self,ob):
+			print 'sending:' + ob
+			return ob
+
 
 def hello_world():
 	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
@@ -138,7 +144,10 @@ def test():
 	## in c++ becomes std::thread lambda wrapped
 	## here in js it becomes `worker1 = __workerpool__.spawn({'call|new':'Channel', 'args':[]})
 	worker1 = spawn(
-		Channel()
+		Worker()
+	)
+	worker2 = spawn(
+		Worker()
 	)
 
 	## in c++ this becomes worker1.send(msg)
@@ -148,9 +157,6 @@ def test():
 	worker1 <- 'msg 3'
 	worker1 <- 'msg 4'
 
-	worker2 = spawn(
-		Channel()
-	)
 	worker2 <- 'msg 5'
 	worker2 <- 'msg 6'
 	worker2 <- 'msg 7'

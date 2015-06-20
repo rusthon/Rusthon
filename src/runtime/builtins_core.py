@@ -562,3 +562,31 @@ def getattr(ob, attr):
 
 def setattr(ob, attr, value):
 	ob[attr] = value
+
+
+class __WorkerPool__:
+	def __init__(self, src):  ## note src is an array
+		blob = new(Blob(src, type='application/javascript'))
+		url = URL.createObjectURL(blob)
+		self.thread = new(Worker(url))
+		self.workers = {}
+		self.thread.onmessage = self.update.bind(this)
+
+	def update(self, evt):
+		id = evt.data.id
+		cb = self.workers[id].pop()
+		cb( evt.data.message )
+
+	def spawn(self, cfg):
+		## cfg contains: call|new:func/classname, args:[]
+		id = 'worker' + len(self.workers)
+		self.workers[id] = []
+		cfg['id'] = id
+		self.thread.postMessage(id)
+		return id
+
+	def send(self, id, msg):
+		self.thread.postMessage({'send':id, 'message':msg})
+
+	def recv(self, id, callback):
+		self.workers[id].insert(0, callback)
