@@ -116,6 +116,7 @@ def test():
 
 	print X
 	print Z
+	print X.pop()
 
 	for i,e in enumerate(X):
 		print i, e
@@ -173,10 +174,23 @@ def test_workers(worker1, worker2):
 	## here it becomes a new callback that passes res1
 	## `__workerpool__.recv(worker.__workerid__, function(res1) { ...rest of function body...}
 	print 'getting data from workers'
-	res1 = <- worker1
-	print res1
-	res2 = <- worker2
-	print res2
+	res = <- worker1
+	print res
+	res = <- worker1
+	print res
+	res = <- worker1
+	print res
+	res = <- worker1
+	print res
+
+	res = <- worker2
+	print res
+	res = <- worker2
+	print res
+	res = <- worker2
+	print res
+	res = <- worker2
+	print res
 
 
 

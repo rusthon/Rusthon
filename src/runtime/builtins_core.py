@@ -575,6 +575,7 @@ class __WorkerPool__:
 		print url
 		self.thread = new(Worker(url))
 		self.workers = {}
+		self.pending = {}
 		self.thread.onmessage = self.update.bind(this)
 
 	def update(self, evt):
@@ -583,15 +584,20 @@ class __WorkerPool__:
 		else:
 			id = evt.data.id
 			if id in self.workers:
-				cb = self.workers[id].pop()
-				cb( evt.data.message )
+				callbacks = self.workers[id]
+				if len(callbacks):
+					cb = callbacks.pop()
+					cb( evt.data.message )
+				else:
+					self.pending[id].push(evt.data.message)
 			else:
 				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg):
 		## cfg contains: call|new:func/classname, args:[]
 		id = 'worker' + len(self.workers)
-		self.workers[id] = []
+		self.workers[id] = []  ## callbacks
+		self.pending[id] = []  ## early messages
 		cfg['spawn'] = id
 		print 'spawn->'
 		print cfg
@@ -602,4 +608,9 @@ class __WorkerPool__:
 		self.thread.postMessage({'send':id, 'message':msg})
 
 	def recv(self, id, callback):
+		if id in self.pending:
+			if self.pending[id].length:
+				res = self.pending[id].pop()
+				callback(res)
+				return
 		self.workers[id].insert(0, callback)
