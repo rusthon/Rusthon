@@ -566,26 +566,39 @@ def setattr(ob, attr, value):
 
 class __WorkerPool__:
 	def __init__(self, src):  ## note src is an array
+		print 'creating blob'
+		print src
 		blob = new(Blob(src, type='application/javascript'))
+		print blob
+		print 'creating URL'
 		url = URL.createObjectURL(blob)
+		print url
 		self.thread = new(Worker(url))
 		self.workers = {}
 		self.thread.onmessage = self.update.bind(this)
 
 	def update(self, evt):
-		id = evt.data.id
-		cb = self.workers[id].pop()
-		cb( evt.data.message )
+		if evt.data.debug:
+			print evt.data.debug
+		else:
+			id = evt.data.id
+			if id in self.workers:
+				cb = self.workers[id].pop()
+				cb( evt.data.message )
+			else:
+				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg):
 		## cfg contains: call|new:func/classname, args:[]
 		id = 'worker' + len(self.workers)
 		self.workers[id] = []
-		cfg['id'] = id
-		self.thread.postMessage(id)
+		cfg['spawn'] = id
+		print 'spawn->'
+		print cfg
+		self.thread.postMessage(cfg)
 		return id
 
-	def send(self, id, msg):
+	def send(self, id=None, msg=None):
 		self.thread.postMessage({'send':id, 'message':msg})
 
 	def recv(self, id, callback):

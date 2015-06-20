@@ -143,15 +143,22 @@ def test():
 
 	## in c++ becomes std::thread lambda wrapped
 	## here in js it becomes `worker1 = __workerpool__.spawn({'call|new':'Channel', 'args':[]})
+	print 'spawn workers'
 	worker1 = spawn(
 		Worker()
 	)
 	worker2 = spawn(
 		Worker()
 	)
+	window.setTimeout(
+		lambda: test_workers(worker1,worker2),
+		1500,
+	)
 
+def test_workers(worker1, worker2):
 	## in c++ this becomes worker1.send(msg)
 	## here in js it becomes __workerpool__.postMessage([worker.__workerid__, msg])
+	print 'sending data to workers'
 	worker1 <- 'msg 1'
 	worker1 <- 'msg 2'
 	worker1 <- 'msg 3'
@@ -165,6 +172,7 @@ def test():
 	## in c++ becomes worker1.recv()
 	## here it becomes a new callback that passes res1
 	## `__workerpool__.recv(worker.__workerid__, function(res1) { ...rest of function body...}
+	print 'getting data from workers'
 	res1 = <- worker1
 	print res1
 	res2 = <- worker2

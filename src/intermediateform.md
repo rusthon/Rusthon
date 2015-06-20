@@ -3851,10 +3851,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			self._with_webworker = True
 			writer = get_webworker_writer( 'worker.js' )
 
-			#writer.write('if typeof(process) != "undefined": requirejs = require("requirejs")')
-			#writer.write('if typeof(process) != "undefined": requirejs = require')
-			writer.write('if typeof(require) != "undefined": requirejs = require')  ## compatible with nodewebkit
-			writer.write('else: importScripts("require.js")')
+			#writer.write('if typeof(require) != "undefined": requirejs = require')  ## compatible with nodewebkit
+			#writer.write('else: importScripts("require.js")')
 
 			for b in node.body:
 				a = self.visit(b)

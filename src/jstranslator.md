@@ -410,11 +410,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				body.append( self.indent()+v)
 
 		if self._func_recv:
-			while self._func_recv:
+			while self._func_recv:  ## closes nested generated callbacks
 				self.pull()
 				body.append( self.indent() + '});' )
 				self._func_recv -= 1
-			#body.append(');')
 
 		self.pull()
 		body.append( self.indent() + '}' )

@@ -30,6 +30,27 @@ CHROME_EXE = None
 #elif os.path.isfile('/opt/google/chrome/google-chrome'):
 #	CHROME_EXE = '/opt/google/chrome/google-chrome'
 
+JS_WEBWORKER_HEADER = '''
+var __instances__ = {};
+self.onmessage = function (evt) {
+	var msg = evt.data;
+	var id;
+	if (msg['spawn']) {
+		id = msg.spawn;
+		self.postMessage({debug:"SPAWN:"+id});
+		self.postMessage({debug:"FUNC:"+msg['new']});
+		__instances__[id] = eval( 'new ' + msg['new'] + '()' );
+	}
+	if (msg['send']) {
+		id = msg.send;
+		self.postMessage({debug:"SEND:"+id});
+		var ob = __instances__[id];
+		self.postMessage({'id':id, 'message':ob.send(msg.message)});
+	}
+}
+
+'''
+
 def compile_js( script, module_path, main_name='main', directjs=False, directloops=False ):
 	'''
 	directjs = False     ## compatible with pythonjs-minimal.js
@@ -63,9 +84,10 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 			else:
 				mainjs = jsfile
 
-		src = ['var __workersrc__ = [']
-		for line in workers[0].splitlines():
-			src.append(	'"%s",' % line.replace('"', '\\"'))
+		src = [ 'var __workersrc__ = [' ]
+		a = JS_WEBWORKER_HEADER + workers[0]
+		for line in a.strip().splitlines():
+			src.append(	'"%s\\n",' % line.replace('"', '\\"'))
 		src.append(']')
 		src.append(result[mainjs])
 		result[mainjs] = '\n'.join(src)
