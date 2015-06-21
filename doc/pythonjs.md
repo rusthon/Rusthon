@@ -37,6 +37,7 @@ Examples
 * https://github.com/rusthon/Rusthon/blob/master/examples/hello_peerjs.md
 * https://github.com/rusthon/Rusthon/blob/master/examples/hello_rapydscript.md
 * https://github.com/rusthon/Rusthon/blob/master/examples/hello_threejs.md
+* https://github.com/rusthon/Rusthon/blob/master/examples/javascript_webworkers.md
 
 
 
@@ -103,6 +104,30 @@ javascript
 
 The above output Javascript shows how the constructor for `B` calls `B.__init__` which then calls `B.prototype.__init__`.
 `B.prototype.__init__` calls `A.__init__` passing `this` as the first argument.  This emulates in JavaScript how unbound methods work in Python.  When using the Dart backend, the output is different but the concept is the same - static "class methods" are created that implement the method body, the instance methods are just short stubs that call the static "class methods".
+
+
+WebWorkers
+-------------------
+Using webworkers directly, straight sucks.  PythonJS hides all that shit, so you can write clear code with a syntax inspired by Golang.  This syntax `A <- B`, sends data to `A` which is an instance that was spawned into the webworker-pool.  This syntax `N = <- A`, gets data from `A`, note that this appears to be blocking code, but it is actually not (the transpiler transforms it into async code)
+
+
+```python
+
+with webworker:
+	class MyClass:
+		def send(self, msg):
+			return msg
+
+
+w = spawn( MyClass() )
+w <- 'hello'
+w <- 'world'
+
+a = <- w
+b = <- w
+print a + b
+
+```
 
 
 Generator Functions
