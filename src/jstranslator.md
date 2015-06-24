@@ -108,10 +108,13 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			value = self.visit(node.value)
 			if value.startswith('__workerpool__.send('):
 				code = value % target
-			elif value.startswith('__workerpool__.recv('):
+			elif value.startswith('__workerpool__.recv') or value.startswith('__workerpool__.get') or value.startswith('__workerpool__.call'):
 				self._func_recv += 1
 				self.push()
+				print target
+				print value
 				code = value % target
+				print code
 			else:
 				code = '%s = %s;' % (target, value)
 
@@ -662,11 +665,26 @@ TODO clean this up
 
 			if left == '__go__receive__':
 				self._has_channels = True
-				#return '%s.recv()' %right
-				r = [
-					'__workerpool__.recv( %s,'%right,
-					' function (%s) {'
-				]
+				r = []
+				if isinstance(node.right, ast.Name):
+					r.append('__workerpool__.recv( %s,'%right)
+				elif isinstance(node.right, ast.Attribute):
+					wid = node.right.value.id
+					attr = node.right.attr
+					r.append('__workerpool__.get( %s, "%s", '%(wid, attr))
+				elif isinstance(node.right, ast.Call):
+					if isinstance(node.right.func, ast.Name):
+						fname = node.right.func.id
+						r.append('__workerpool__.call( "%s",'%(fname,))
+
+					else:
+						wid = node.right.func.value.id
+						attr = node.right.func.attr
+						r.append('__workerpool__.callmeth( %s, "%s", '%(wid, attr))
+				else:
+					raise RuntimeError(node.right)
+
+				r.append(' function (%s) {')  ## gets filled in later
 				return ''.join(r)
 
 			elif left == '__go__send__':

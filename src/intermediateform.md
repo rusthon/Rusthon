@@ -3070,7 +3070,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		if threaded:
 			if not jsfile: jsfile = 'worker.js'
-			writer_main.write('%s = "%s"' %(node.name, jsfile))
+			#writer_main.write('%s = "%s"' %(node.name, jsfile))
 			self._webworker_functions[ node.name ] = jsfile
 			writer = get_webworker_writer( jsfile )  ## updates global `writer`
 

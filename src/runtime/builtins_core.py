@@ -576,6 +576,8 @@ class __WorkerPool__:
 		self.thread = new(Worker(url))
 		self.workers = {}
 		self.pending = {}
+		self._get  = None
+		self._call = None
 		self.thread.onmessage = self.update.bind(this)
 
 	def update(self, evt):
@@ -583,7 +585,17 @@ class __WorkerPool__:
 			print evt.data.debug
 		else:
 			id = evt.data.id
-			if id in self.workers:
+			if evt.data.GET:
+				self._get( evt.data.message )
+				self._get = None
+			elif evt.data.CALL:
+				self._call( evt.data.message )
+				self._call = None
+			elif evt.data.CALLMETH:
+				self._callmeth( evt.data.message )
+				self._callmeth = None
+
+			elif id in self.workers:  ## channels
 				callbacks = self.workers[id]
 				if len(callbacks):
 					cb = callbacks.pop()
@@ -614,3 +626,16 @@ class __WorkerPool__:
 				callback(res)
 				return
 		self.workers[id].insert(0, callback)
+
+	def get(self, id, attr, callback):
+		self.thread.postMessage({'id':id, 'get':attr})
+		self._get = callback
+
+	def call(self, func, callback):
+		self.thread.postMessage({'call':func, 'args':[]})
+		self._call = callback
+
+
+	def callmeth(self, id, func, callback):
+		self.thread.postMessage({'id':id, 'callmeth':func})
+		self._callmeth = callback
