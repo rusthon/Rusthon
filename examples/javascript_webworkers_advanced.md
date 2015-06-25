@@ -106,6 +106,17 @@ def test_workers(worker1, worker2):
 	show('worker1.z:' + res)
 
 	show('worker2')
+	res = <- worker2.getsum()
+	show( 'worker2.getsum:' + res)
+	res = <- worker2.x
+	show('worker2.x:' + res)
+	res = <- worker2.y
+	show('worker2.y:' + res)
+	res = <- worker2.z
+	show('worker2.z:' + res)
+
+
+
 	res = <- worker2
 	show(res)
 	res = <- worker2

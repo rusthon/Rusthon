@@ -762,7 +762,7 @@ TODO clean up.
 					fname = self.visit(node.args[0].args[0].func)
 					args = [self.visit(a) for a in node.args[0].args[0].args]
 
-				return '__workerpool__.spawn({%s:"%s", args:%s})' %(mode,fname, args)
+				return '__workerpool__.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
 
 		elif name == '__go_make__':
 			if len(node.args)==2:
