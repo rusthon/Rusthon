@@ -31,6 +31,14 @@ CHROME_EXE = None
 #	CHROME_EXE = '/opt/google/chrome/google-chrome'
 
 JS_WEBWORKER_HEADER = '''
+var __construct__ = function(constructor, args) {
+	function F() {
+		return constructor.apply(this, args);
+	}
+	F.prototype = constructor.prototype;
+	return new F();
+};
+
 var __instances__ = {};
 self.onmessage = function (evt) {
 	var msg = evt.data;
@@ -38,8 +46,11 @@ self.onmessage = function (evt) {
 	if (msg['spawn']) {
 		id = msg.spawn;
 		self.postMessage({debug:"SPAWN:"+id});
-		self.postMessage({debug:"FUNC:"+msg['new']});
-		__instances__[id] = eval( 'new ' + msg['new'] + '()' );
+		self.postMessage({debug:"CLASS:"+msg['new']});
+		self.postMessage({debug:"ARGS:"+msg['args']});
+		//__instances__[id] = eval( 'new ' + msg['new'] + '()' );
+		__instances__[id] = __construct__(eval(msg['new']), msg.args );
+
 	}
 	if (msg['send']) {
 		id = msg.send;

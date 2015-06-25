@@ -92,8 +92,8 @@ def test_workers(worker1, worker2):
 		'z':3
 	}
 
-	for i in range(10):
-		worker1 <- msg
+	#for i in range(10):
+	#	worker1 <- msg
 
 	show('getting data from workers')
 	res = <- worker1.getsum()
