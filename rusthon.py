@@ -56,7 +56,10 @@ self.onmessage = function (evt) {
 		id = msg.send;
 		self.postMessage({debug:"SEND:"+id});
 		var ob = __instances__[id];
-		self.postMessage({'id':id, 'message':ob.send(msg.message)});
+		var re = ob.send(msg.message);
+		if (re !== undefined) {
+			self.postMessage({'id':id, 'message':re});
+		}
 	}
 	if (msg['call']) {
 		self.postMessage({'CALL':1, 'message':self[msg.call]() });

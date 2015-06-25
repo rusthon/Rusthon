@@ -507,9 +507,11 @@ Also implements extra syntax like `switch` and `select`.
 				r.append(self.indent()+'select! (')
 			elif self._cpp:
 				r.append(self.indent()+'cpp::select _select_;')  ## TODO nested, _select_N
-			else:
-				assert self._go
+			elif self._go:
 				r.append(self.indent()+'select {')
+			else:  ## javascript
+				r.append('while (1) {')
+
 
 		elif isinstance( node.context_expr, ast.Call ):
 			if not isinstance(node.context_expr.func, ast.Name):
@@ -535,9 +537,15 @@ Also implements extra syntax like `switch` and `select`.
 					kw = node.context_expr.keywords[0]
 					if self._go:
 						case_match = '%s := %s' %(kw.arg, self.visit(kw.value))
-					elif self._cpp and hasattr(self, '_in_select_hack') and self._in_select_hack:
+					elif hasattr(self, '_in_select_hack') and self._in_select_hack:
 						select_hack = True
-						case_match = '_select_.recv(%s, %s);' %(self.visit(kw.value), kw.arg)						
+						if self._cpp:
+							case_match = '_select_.recv(%s, %s);' %(self.visit(kw.value), kw.arg)						
+						else:
+							#self.visit(kw.value)
+							cid = kw.value.right.id
+							case_match = 'if (__workerpool__.pending[%s] !== undefined &&  __workerpool__.pending[%s].length) {var %s = __workerpool__.pending[%s].pop();' %(cid, cid, kw.arg, cid)
+
 					else:
 						case_match = '%s = %s' %(kw.arg, self.visit(kw.value))
 				else:
@@ -545,7 +553,7 @@ Also implements extra syntax like `switch` and `select`.
 						raise SyntaxError('"case x==n:" is not allowed in a case statement, use "case n:" instead.')
 					case_match = self.visit(node.context_expr.args[0])
 
-				if self._cpp and select_hack:
+				if select_hack:
 					r.append(self.indent()+case_match)
 				elif self._rust and not self._cpp:
 					if len(self._match_stack[-1])==0:
@@ -553,8 +561,7 @@ Also implements extra syntax like `switch` and `select`.
 					else:
 						r.append(self.indent()+'}, %s => { ' %case_match )
 				else:
-					if self._cpp or True:
-						r.append(self.indent()+'case %s: {' %case_match) ## extra scope
+					r.append(self.indent()+'case %s: {' %case_match) ## extra scope
 
 				self._match_stack[-1].append(case_match)
 

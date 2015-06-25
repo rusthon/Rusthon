@@ -60,6 +60,7 @@ with webworker:
 			self.x += x
 			self.y += y
 			self.z += z
+			return x+y+z
 
 		def getsum(self):
 			return self.x + self.y + self.z
@@ -92,8 +93,9 @@ def test_workers(worker1, worker2):
 		'z':3
 	}
 
-	#for i in range(10):
-	#	worker1 <- msg
+	for i in range(10):
+		worker1 <- msg
+		worker2 <- msg
 
 	show('getting data from workers')
 	res = <- worker1.getsum()
@@ -115,16 +117,20 @@ def test_workers(worker1, worker2):
 	res = <- worker2.z
 	show('worker2.z:' + res)
 
+	select:
+		case res = <- worker1:
+			show('case-worker1:' + res)
+		case res = <- worker2:
+			show('case-worker2:' + res)
 
-
-	res = <- worker2
-	show(res)
-	res = <- worker2
-	show(res)
-	res = <- worker2
-	show(res)
-	res = <- worker2
-	show(res)
+	#res = <- worker2
+	#show(res)
+	#res = <- worker2
+	#show(res)
+	#res = <- worker2
+	#show(res)
+	#res = <- worker2
+	#show(res)
 
 
 
