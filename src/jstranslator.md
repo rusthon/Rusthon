@@ -111,10 +111,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			elif value.startswith('__workerpool__.recv') or value.startswith('__workerpool__.get') or value.startswith('__workerpool__.call'):
 				self._func_recv += 1
 				self.push()
-				print target
-				print value
 				code = value % target
-				print code
 			else:
 				code = '%s = %s;' % (target, value)
 

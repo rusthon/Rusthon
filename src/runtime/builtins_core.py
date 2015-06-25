@@ -567,8 +567,15 @@ def setattr(ob, attr, value):
 class __WorkerPool__:
 	def __init__(self, src):  ## note src is an array
 		print 'creating blob'
+		header = []
+		for name in dir(window):
+			ob = window[name]
+			if typeof(ob) == 'function':
+				header.append( 'var ' + name + '=' + ob.toString() + ';' )
+
+		header.extend( src )
 		print src
-		blob = new(Blob(src, type='application/javascript'))
+		blob = new(Blob(header, type='application/javascript'))
 		print blob
 		print 'creating URL'
 		url = URL.createObjectURL(blob)
@@ -578,6 +585,7 @@ class __WorkerPool__:
 		self.pending = {}
 		self._get  = None
 		self._call = None
+		self._callmeth = None
 		self.thread.onmessage = self.update.bind(this)
 
 	def update(self, evt):
@@ -587,13 +595,13 @@ class __WorkerPool__:
 			id = evt.data.id
 			if evt.data.GET:
 				self._get( evt.data.message )
-				self._get = None
+				#self._get = None
 			elif evt.data.CALL:
 				self._call( evt.data.message )
-				self._call = None
+				#self._call = None
 			elif evt.data.CALLMETH:
 				self._callmeth( evt.data.message )
-				self._callmeth = None
+				#self._callmeth = None
 
 			elif id in self.workers:  ## channels
 				callbacks = self.workers[id]
@@ -628,14 +636,20 @@ class __WorkerPool__:
 		self.workers[id].insert(0, callback)
 
 	def get(self, id, attr, callback):
-		self.thread.postMessage({'id':id, 'get':attr})
+		print 'threadpool: get'
+		print attr
 		self._get = callback
+		self.thread.postMessage({'id':id, 'get':attr})
 
 	def call(self, func, callback):
-		self.thread.postMessage({'call':func, 'args':[]})
+		print 'threadpool: call'
+		print func
 		self._call = callback
+		self.thread.postMessage({'call':func, 'args':[]})
 
 
 	def callmeth(self, id, func, callback):
-		self.thread.postMessage({'id':id, 'callmeth':func})
+		print 'threadpool: callmeth'
+		print func
 		self._callmeth = callback
+		self.thread.postMessage({'id':id, 'callmeth':func})

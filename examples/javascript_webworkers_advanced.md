@@ -50,7 +50,7 @@ with webworker:
 	def somefunc():
 		return 'hello'
 
-	class Worker():
+	class WorkerX():
 		def __init__(self, x,y,z):
 			self.x = x
 			self.y = y
@@ -64,16 +64,15 @@ with webworker:
 		def getsum(self):
 			return self.x + self.y + self.z
 
-def fixme(): pass
 
 def test():
 	show('spawn workers')
 	worker1 = spawn(
-		Worker(1,1,1)
+		WorkerX(1,1,1)
 	)
 	a = 100
 	worker2 = spawn(
-		Worker(a,a,a)
+		WorkerX(a,a,a)
 	)
 	## wait for awhile before sending messages ##
 	window.setTimeout(
@@ -84,6 +83,7 @@ def test():
 def test_workers(worker1, worker2):
 	show('testing simple call')
 	res = <- somefunc()
+	show('somefunc:' + res)
 
 	show('sending data to workers')
 	msg = {
@@ -97,14 +97,15 @@ def test_workers(worker1, worker2):
 
 	show('getting data from workers')
 	res = <- worker1.getsum()
-	show(res)
+	show( 'worker1.getsum:' + res)
 	res = <- worker1.x
-	show(res)
+	show('worker1.x:' + res)
 	res = <- worker1.y
-	show(res)
+	show('worker1.y:' + res)
 	res = <- worker1.z
-	show(res)
+	show('worker1.z:' + res)
 
+	show('worker2')
 	res = <- worker2
 	show(res)
 	res = <- worker2

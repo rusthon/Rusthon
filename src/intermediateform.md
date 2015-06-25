@@ -3469,7 +3469,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._typedef_vars = dict()  ## clear typed variables
 
 		if self._in_js_class:  ## used when making multiple output javascripts, like main.js and webworker.js
-			writer = writer_main
+			#writer = writer_main
 			return
 
 
@@ -3547,7 +3547,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		#	writer.write('self.termintate()')
 
 
-		writer = writer_main
+		#writer = writer_main
 
 
 	#################### loops ###################

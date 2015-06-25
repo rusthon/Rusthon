@@ -47,8 +47,24 @@ self.onmessage = function (evt) {
 		var ob = __instances__[id];
 		self.postMessage({'id':id, 'message':ob.send(msg.message)});
 	}
-}
+	if (msg['call']) {
+		self.postMessage({'CALL':1, 'message':self[msg.call]() });
+	}
+	if (msg['callmeth']) {
+		id = msg.id;
+		self.postMessage({debug:"CALLM:"+id});
+		var ob = __instances__[id];
+		self.postMessage({'CALLMETH':1, 'message':ob[msg.callmeth]() });
+	}
 
+	if (msg['get']) {
+		id = msg.id;
+		self.postMessage({debug:"GET:"+id});
+		var ob = __instances__[id];
+		self.postMessage({'GET':1, 'message':ob[msg.get]});
+	}
+
+}
 '''
 
 def compile_js( script, module_path, main_name='main', directjs=False, directloops=False ):
