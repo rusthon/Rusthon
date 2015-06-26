@@ -32,8 +32,16 @@ html
 Webworker Syntax
 --------------------------
 
-The Javascript backend uses some syntax inspired by Golang to simplify using WebSockets.
-Below the class `Worker` must define a `send` method that takes a message and returns something to the main thread.
+The class `WorkerX` defines a `send` method that takes a message and returns something to the main thread.
+Spawn is used to create two instances of `WorkerX`, these become the channels for passing data and messages.
+
+The control loop `select:` allows you to select from multiple channels at once for reading data, 
+this syntax is inspired by the Golang [select statement](http://golangtutorials.blogspot.com/2011/06/channels-in-go-range-and-select.html)
+
+Methods and attributes can be accessed on the channel by copying the data into the main thread,
+this is done with `a = <- worker.somemethod()` for methods and `a = <- worker.x` for attributes.
+
+Functions declared inside the webworker can be called from the main thread by: `a = <- somefunction()`
 
 @myscript
 ```rusthon
@@ -60,7 +68,7 @@ with webworker:
 			self.x += x
 			self.y += y
 			self.z += z
-			return x+y+z
+			return self.getsum()
 
 		def getsum(self):
 			return self.x + self.y + self.z
@@ -117,11 +125,13 @@ def test_workers(worker1, worker2):
 	res = <- worker2.z
 	show('worker2.z:' + res)
 
-	select:
-		case res = <- worker1:
-			show('case-worker1:' + res)
-		case res = <- worker2:
-			show('case-worker2:' + res)
+	for i in range(20):
+		print 'trying to select on workers'
+		select:
+			case res = <- worker1:
+				show('case-worker1:' + res)
+			case res = <- worker2:
+				show('case-worker2:' + res)
 
 	#res = <- worker2
 	#show(res)

@@ -510,7 +510,7 @@ Also implements extra syntax like `switch` and `select`.
 			elif self._go:
 				r.append(self.indent()+'select {')
 			else:  ## javascript
-				r.append('while (1) {')
+				r.append('while (true) {		/* select loop */')
 
 
 		elif isinstance( node.context_expr, ast.Call ):
@@ -707,7 +707,10 @@ Also implements extra syntax like `switch` and `select`.
 			if a: r.append(self.indent()+a)
 
 		if is_case and not self._rust:  ## always break after each case - do not fallthru to default: block
-			r.append(self.indent()+'} break;')  ## } extra scope
+			if select_hack:
+				r.append(self.indent()+' break;}')
+			else:
+				r.append(self.indent()+'} break;')  ## } extra scope
 		###################################
 
 		if is_extern:
