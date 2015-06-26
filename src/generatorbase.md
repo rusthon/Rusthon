@@ -635,6 +635,27 @@ Also implements extra syntax like `switch` and `select`.
 
 				return '\n'.join(r)
 
+			elif node.context_expr.func.id == 'timeout':
+				assert len(node.context_expr.args)==1
+				timeout = self.visit(node.context_expr.args[0])
+				r = [
+					'var __clk__ = (new Date()).getTime();',
+					'while (true) {',
+				]
+				self._in_timeout = True
+				for b in node.body:
+					a = self.visit(b)
+					if a:
+						r.append(self.indent()+a)
+						if '(' in a and ')' in a:
+							r.append(
+								'if ( (new Date()).getTime() - __clk__ >= %s )  {console.log((new Date()).getTime() - __clk__); break;}' %timeout
+							)
+				r.append('console.log((new Date()).getTime() - __clk__); break; }')
+				self._in_timeout = False
+				return '\n'.join(r)
+
+
 			else:
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)
 
