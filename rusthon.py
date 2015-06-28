@@ -48,7 +48,6 @@ self.onmessage = function (evt) {
 		self.postMessage({debug:"SPAWN:"+id});
 		self.postMessage({debug:"CLASS:"+msg['new']});
 		self.postMessage({debug:"ARGS:"+msg['args']});
-		//__instances__[id] = eval( 'new ' + msg['new'] + '()' );
 		__instances__[id] = __construct__(eval(msg['new']), msg.args );
 
 	}
@@ -62,15 +61,15 @@ self.onmessage = function (evt) {
 		}
 	}
 	if (msg['call']) {
-		var func = self[ msg.call ];
-		self.postMessage({'CALL':1, 'message':func.call(null,msg.args) });
+		self.postMessage({'CALL':1, 'message':self[ msg.call ].apply(null,msg.args) });
 	}
 	if (msg['callmeth']) {
 		id = msg.id;
 		self.postMessage({debug:"CALLM:"+id});
 		var ob = __instances__[id];
 		var func = ob[msg.callmeth];
-		self.postMessage({'CALLMETH':1, 'message':func.call(ob, msg.args) });
+		self.postMessage({'CALLMETH':1, 'message':ob[msg.callmeth].apply(ob,
+			msg.args) });
 	}
 
 	if (msg['get']) {
