@@ -62,13 +62,15 @@ self.onmessage = function (evt) {
 		}
 	}
 	if (msg['call']) {
-		self.postMessage({'CALL':1, 'message':self[msg.call]() });
+		var func = self[ msg.call ];
+		self.postMessage({'CALL':1, 'message':func.call(null,msg.args) });
 	}
 	if (msg['callmeth']) {
 		id = msg.id;
 		self.postMessage({debug:"CALLM:"+id});
 		var ob = __instances__[id];
-		self.postMessage({'CALLMETH':1, 'message':ob[msg.callmeth]() });
+		var func = ob[msg.callmeth];
+		self.postMessage({'CALLMETH':1, 'message':func.call(ob, msg.args) });
 	}
 
 	if (msg['get']) {

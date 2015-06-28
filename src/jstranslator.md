@@ -672,12 +672,14 @@ TODO clean this up
 				elif isinstance(node.right, ast.Call):
 					if isinstance(node.right.func, ast.Name):
 						fname = node.right.func.id
-						r.append('__workerpool__.call( "%s",'%(fname,))
+						args  = [self.visit(a) for a in node.right.args]
+						r.append('__workerpool__.call( "%s", [%s], ' % (fname, ','.join(args)))
 
 					else:
 						wid = node.right.func.value.id
 						attr = node.right.func.attr
-						r.append('__workerpool__.callmeth( %s, "%s", '%(wid, attr))
+						args  = [self.visit(a) for a in node.right.args]
+						r.append('__workerpool__.callmeth( %s, "%s", [%s], '%(wid, attr, ','.join(args)))
 				else:
 					raise RuntimeError(node.right)
 

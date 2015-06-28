@@ -641,15 +641,15 @@ class __WorkerPool__:
 		self._get = callback
 		self.thread.postMessage({'id':id, 'get':attr})
 
-	def call(self, func, callback):
+	def call(self, func, args, callback):
 		print 'threadpool: call'
 		print func
 		self._call = callback
-		self.thread.postMessage({'call':func, 'args':[]})
+		self.thread.postMessage({'call':func, 'args':args})
 
 
-	def callmeth(self, id, func, callback):
+	def callmeth(self, id, func, args, callback):
 		print 'threadpool: callmeth'
 		print func
 		self._callmeth = callback
-		self.thread.postMessage({'id':id, 'callmeth':func})
+		self.thread.postMessage({'id':id, 'callmeth':func, 'args':args})

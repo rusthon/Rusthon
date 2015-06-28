@@ -649,9 +649,9 @@ Also implements extra syntax like `switch` and `select`.
 						r.append(self.indent()+a)
 						if '(' in a and ')' in a:
 							r.append(
-								'if ( (new Date()).getTime() - __clk__ >= %s )  {console.log((new Date()).getTime() - __clk__); break;}' %timeout
+								'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' %timeout
 							)
-				r.append('console.log((new Date()).getTime() - __clk__); break; }')
+				r.append('break; }')
 				self._in_timeout = False
 				return '\n'.join(r)
 

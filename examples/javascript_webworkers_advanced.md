@@ -55,8 +55,8 @@ def show(txt):
 
 with webworker:
 
-	def somefunc():
-		return 'hello'
+	def somefunc( a ):
+		return 'hello' + a
 
 	class WorkerX():
 		def __init__(self, x,y,z):
@@ -72,6 +72,9 @@ with webworker:
 
 		def getsum(self):
 			return self.x + self.y + self.z
+
+		def mymethod(self, a,b,c):
+			return a*b*c
 
 
 def test():
@@ -91,7 +94,8 @@ def test():
 
 def test_workers(worker1, worker2):
 	show('testing simple call')
-	res = <- somefunc()
+
+	res = <- somefunc( 'world' )
 	show('somefunc:' + res)
 
 	show('sending data to workers')
@@ -106,8 +110,10 @@ def test_workers(worker1, worker2):
 		worker2 <- msg
 
 	show('getting data from workers')
-	res = <- worker1.getsum()
-	show( 'worker1.getsum:' + res)
+
+	res = <- worker1.mymethod(10, 10, 2)
+	show( 'worker1.mymethod:' + res)
+
 	res = <- worker1.x
 	show('worker1.x:' + res)
 	res = <- worker1.y
