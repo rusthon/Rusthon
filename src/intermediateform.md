@@ -3662,8 +3662,11 @@ class PythonToPythonJS(NodeVisitorBase):
 				iter_name = target.id
 				writer.write('var(%s, %s__end__)' %(iter_name, iter_name))
 				writer.write('%s = %s' %(iter_name, iter_start))
-				writer.write('%s__end__ = %s' %(iter_name, iter_end))
-				writer.write('while %s < %s__end__:' %(iter_name, iter_name))
+				if '(' in iter_end:
+					writer.write('%s__end__ = %s' %(iter_name, iter_end))
+					writer.write('while %s < %s__end__:' %(iter_name, iter_name))
+				else:
+					writer.write('while %s < %s:' %(iter_name, iter_end))
 
 				writer.push()
 				map(self.visit, node.body)
