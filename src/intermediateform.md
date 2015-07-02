@@ -3667,10 +3667,15 @@ class PythonToPythonJS(NodeVisitorBase):
 
 				writer.push()
 				map(self.visit, node.body)
-				writer.write('%s += 1' %iter_name )
 
-				if enumtar:
-					writer.write('%s += 1'%enumtar.id)
+				if self._with_js:
+					writer.write('inline("%s += 1")' %iter_name )
+					if enumtar:
+						writer.write('inline("%s += 1")'%enumtar.id)
+				else:
+					writer.write('%s += 1' %iter_name )
+					if enumtar:
+						writer.write('%s += 1'%enumtar.id)
 
 				writer.pull()
 
