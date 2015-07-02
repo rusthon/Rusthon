@@ -629,6 +629,11 @@ TODO clean this up
 	def visit_While(self, node):
 		body = [ 'while (%s)' %self.visit(node.test), self.indent()+'{']
 		self.push()
+		if hasattr(self, '_in_timeout') and self._in_timeout:
+			body.append(
+				'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
+			)
+
 		for line in list( map(self.visit, node.body) ):
 			body.append( self.indent()+line )
 		self.pull()
@@ -901,7 +906,14 @@ when fast_loops is off much of python `for in something` style of looping is los
 			out.append( self.indent() + 'for (var %s=0; %s < %s.length; %s++) {' % (index, index, iname, index) )
 		self.push()
 
+		if hasattr(self, '_in_timeout') and self._in_timeout:
+			body.append(
+				'if ( (new Date()).getTime() - __clk__ >= %s )  { break; }' % self._timeout
+			)
+
+
 		body.append( self.indent() + 'var %s = %s[ %s ];' %(target, iname, index) )
+
 
 		for line in list(map(self.visit, node.body)):
 			body.append( self.indent() + line )

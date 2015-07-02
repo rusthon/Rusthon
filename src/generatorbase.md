@@ -637,7 +637,8 @@ Also implements extra syntax like `switch` and `select`.
 
 			elif node.context_expr.func.id == 'timeout':
 				assert len(node.context_expr.args)==1
-				timeout = self.visit(node.context_expr.args[0])
+				self._timeout = self.visit(node.context_expr.args[0])
+
 				r = [
 					'var __clk__ = (new Date()).getTime();',
 					'while (true) {',
@@ -649,7 +650,7 @@ Also implements extra syntax like `switch` and `select`.
 						r.append(self.indent()+a)
 						if '(' in a and ')' in a:
 							r.append(
-								'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' %timeout
+								'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
 							)
 				r.append('break; }')
 				self._in_timeout = False

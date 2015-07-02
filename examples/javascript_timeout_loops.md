@@ -55,18 +55,38 @@ def test():
 	show('start async test')
 	que = []
 
+	show( 'LOOP1 - 10ms' )
 	with timeout( 10 ):
+		show( 'calc fib 16-32' )
 		for i in range(16, 32):
 			que.append( CalcFib(i) )
+
+		show( 'calc fib 8-16' )
+
 		for i in range(8,16):
 			que.append( CalcFib(i) )
+
+		show( 'calc fib 8' )
+
 		for i in range(8):
 			que.append( CalcFib(i) )
 
 
 	show( len(que) )
 	print que
+
+	show( 'LOOP2 - 10ms' )
+	show( 'calc fib 32' )
+	q = []
+	with timeout( 10 ):
+		for i in range(32):
+			q.append( CalcFib(i) )
+
+	show( len(q) )
+	print q
+
 	show('end async test')
+
 
 window.setTimeout(test, 1000)
 
