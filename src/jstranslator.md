@@ -128,16 +128,20 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		value = self.visit(node.value)
 		if op=='+' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s ++;' %target
-		if op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
+		elif op=='-' and isinstance(node.value, ast.Num) and node.value.n == 1:
 			a = '%s --;' %target
-		else:
-			#a = '%s %s= %s;' %(target, op, value)  ## direct
+		elif op=='+' and isinstance(node.value, ast.Num):
+			a = '%s %s= %s;' %(target, op, value)  ## direct
+		elif op == '+':
 			## supports += syntax for arrays ##
 			x = [
 				'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
 				'else { %s %s= %s; }'%(target, op, value)
 			]
 			a = '\n'.join(x)
+		else:
+			a = '%s %s= %s;' %(target, op, value)  ## direct
+
 
 		return a
 
