@@ -641,7 +641,7 @@ Also implements extra syntax like `switch` and `select`.
 
 				r = [
 					'var __clk__ = (new Date()).getTime();',
-					'while (true) {',
+					'while (true) {		/* timeout: %s */' %self._timeout,
 				]
 				self._in_timeout = True
 				for b in node.body:
@@ -745,8 +745,10 @@ Also implements extra syntax like `switch` and `select`.
 				r.append(self.indent()+'_select_.wait();')
 			elif self._rust:
 				r.append(self.indent()+'})')  ## rust needs extra closing brace for the match-block
-			else:
+			elif self._go:
 				r.append(self.indent()+'}')
+			else:
+				r.append(self.indent()+'break; }')
 
 		elif is_switch:
 			if self._rust and not self._cpp:
