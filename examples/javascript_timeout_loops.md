@@ -85,6 +85,18 @@ def test():
 	show( len(q) )
 	print q
 
+	show( 'WHILE LOOP - 10ms' )
+	show( 'calc fib 32' )
+	q = []
+	with timeout( 10 ):
+		i = 0
+		while True:
+			q.append( CalcFib(i) )
+			i += 1
+
+	show( len(q) )
+	print q
+
 	show('end async test')
 
 

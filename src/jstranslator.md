@@ -631,7 +631,7 @@ TODO clean this up
 		self.push()
 		if hasattr(self, '_in_timeout') and self._in_timeout:
 			body.append(
-				'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
+				self.indent() +  'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
 			)
 
 		for line in list( map(self.visit, node.body) ):
@@ -908,7 +908,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 		if hasattr(self, '_in_timeout') and self._in_timeout:
 			body.append(
-				'if ( (new Date()).getTime() - __clk__ >= %s )  { break; }' % self._timeout
+				self.indent() + 'if ( (new Date()).getTime() - __clk__ >= %s )  { break; }' % self._timeout
 			)
 
 

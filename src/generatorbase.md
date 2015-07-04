@@ -648,9 +648,11 @@ Also implements extra syntax like `switch` and `select`.
 					a = self.visit(b)
 					if a:
 						r.append(self.indent()+a)
+						if b is node.body[-1]:
+							break
 						if '(' in a and ')' in a:
 							r.append(
-								'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
+								self.indent()+'if ( (new Date()).getTime() - __clk__ >= %s )  { break;}' % self._timeout
 							)
 				r.append('break; }')
 				self._in_timeout = False
