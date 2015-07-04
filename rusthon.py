@@ -49,7 +49,7 @@ self.onmessage = function (evt) {
 		self.postMessage({debug:"CLASS:"+msg['new']});
 		self.postMessage({debug:"ARGS:"+msg['args']});
 		__instances__[id] = __construct__(eval(msg['new']), msg.args );
-
+		__instances__[id].__uid__ = id;
 	}
 	if (msg['send']) {
 		id = msg.send;

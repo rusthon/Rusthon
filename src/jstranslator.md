@@ -107,6 +107,9 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			target = self.visit(target)
 			value = self.visit(node.value)
 			if value.startswith('__workerpool__.send('):
+				if target=='this':  ## should assert that this is on the webworker side
+					target = 'this.__uid__'
+					value = value.replace('__workerpool__.send(', 'self.postMessage(')
 				code = value % target
 			elif value.startswith('__workerpool__.recv') or value.startswith('__workerpool__.get') or value.startswith('__workerpool__.call'):
 				self._func_recv += 1
@@ -194,7 +197,7 @@ TODO: regenerate pythonjs.js each time.
 				line = self.visit(b)
 				if line: lines.append( line )
 
-		if self._has_channels:
+		if self._has_channels and not self._webworker:
 			lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__);')
 
 		if self._insert_runtime:
@@ -593,6 +596,8 @@ Call Helper
 					fnode._local_vars.add( arg )
 			for arg in rem:
 				args.remove( arg )
+		if 'this' in args:
+			args.remove('this')
 		out = []
 		if args:
 			out.append( 'var ' + ','.join(args) )

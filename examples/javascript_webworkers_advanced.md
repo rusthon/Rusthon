@@ -58,11 +58,18 @@ with webworker:
 	def somefunc( a, b ):
 		return 'hello' + a + b
 
+	def CalcFib(n):
+		if n == 0: return 0
+		elif n == 1: return 1
+		else: return CalcFib(n-1)+CalcFib(n-2)
+
+
 	class WorkerX():
 		def __init__(self, x,y,z):
 			self.x = x
 			self.y = y
 			self.z = z
+			setTimeout( self.dowork, 1000 )
 
 		def send(self, x=None, y=None, z=None):
 			self.x += x
@@ -79,6 +86,10 @@ with webworker:
 			print b
 			print 'C::' + c
 			return a*b*c
+
+		def dowork(self):
+			for i in range(32):
+				self <- CalcFib(i)
 
 
 def test():
