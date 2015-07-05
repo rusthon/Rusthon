@@ -43,6 +43,10 @@ this is done with `a = <- worker.somemethod()` for methods and `a = <- worker.x`
 
 Functions declared inside the webworker can be called from the main thread by: `a = <- somefunction()`
 
+Channel objects (any class defined in the webworker and spawned from the main thread) can also send data
+back to the main thread using: `self <- message`.  The main thread can receive these messages inside a select loop,
+or simply by getting the next message off the queue with the blocking assignment syntax: `message = <- channel`.
+
 @myscript
 ```rusthon
 #backend:javascript
@@ -69,7 +73,7 @@ with webworker:
 			self.x = x
 			self.y = y
 			self.z = z
-			setTimeout( self.dowork, 1000 )
+			setTimeout( self.dowork.bind(this), 1000 )
 
 		def send(self, x=None, y=None, z=None):
 			self.x += x
@@ -88,7 +92,10 @@ with webworker:
 			return a*b*c
 
 		def dowork(self):
+			print 'doing work'
 			for i in range(32):
+				print 'working...'
+				print i
 				self <- CalcFib(i)
 
 
@@ -110,19 +117,18 @@ def test():
 def test_workers(worker1, worker2):
 	show('testing simple call')
 
+	for i in range(64):
+		print 'trying to select on workers'
+		select:
+			case res = <- worker1:
+				show('case-worker1:' + res)
+			case res = <- worker2:
+				show('case-worker2:' + res)
+
+
 	res = <- somefunc( 'foo', 'bar' )
 	show('somefunc:' + res)
 
-	show('sending data to workers')
-	msg = {
-		'x':1, 
-		'y':2,
-		'z':3
-	}
-
-	for i in range(10):
-		worker1 <- msg
-		worker2 <- msg
 
 	show('getting data from workers')
 
@@ -145,6 +151,19 @@ def test_workers(worker1, worker2):
 	show('worker2.y:' + res)
 	res = <- worker2.z
 	show('worker2.z:' + res)
+
+	show('sending data to workers')
+	msg = {
+		'x':1, 
+		'y':2,
+		'z':3
+	}
+
+	for i in range(10):
+		worker1 <- msg
+		worker2 <- msg
+
+	sleep(1.0)
 
 	for i in range(20):
 		print 'trying to select on workers'

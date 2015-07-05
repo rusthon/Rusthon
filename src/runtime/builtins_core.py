@@ -624,8 +624,8 @@ class __WorkerPool__:
 		self.thread.postMessage(cfg)
 		return id
 
-	def send(self, id=None, msg=None):
-		self.thread.postMessage({'send':id, 'message':msg})
+	def send(self, id=None, message=None):
+		self.thread.postMessage({'send':id, 'message':message})
 
 	def recv(self, id, callback):
 		if id in self.pending:

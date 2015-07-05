@@ -32,6 +32,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		NodeVisitorBase.__init__(self, source)
 
 		self.macros = {}
+		self._sleeps = 0
 		self._has_channels = False
 		self._func_recv = 0
 		self._with_oo = False
@@ -416,6 +417,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( self.indent()+v)
 
+		if self._sleeps:
+			body.append( '}' * self._sleeps)
+			self._sleeps = 0
+
 		if self._func_recv:
 			while self._func_recv:  ## closes nested generated callbacks
 				self.pull()
@@ -533,6 +538,9 @@ Call Helper
 					return macro % tuple([self.visit(s) for s in node.args])
 			else:
 				return '%s(%s)' %(macro,args)
+		elif fname == 'sleep':
+			self._sleeps += 1
+			return 'setTimeout(__sleep__, %s*1000); function __sleep__(){' % args[0]
 		else:
 			return '%s(%s)' % (fname, args)
 
@@ -703,7 +711,7 @@ TODO clean this up
 			elif left == '__go__send__':
 				self._has_channels = True
 				r = [
-					'__workerpool__.send({msg:%s,'%right,
+					'__workerpool__.send({message:%s,'%right,
 					'id:%s})'
 				]
 				return ''.join(r)
