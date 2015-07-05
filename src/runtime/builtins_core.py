@@ -564,6 +564,70 @@ def setattr(ob, attr, value):
 	ob[attr] = value
 
 
+def range(num, stop, step):
+	"""Emulates Python's range function"""
+	if stop is not undefined:
+		i = num
+		num = stop
+	else:
+		i = 0
+	if step is undefined:
+		step = 1
+	with javascript:
+		arr = []
+		while i < num:
+			arr.push(i)
+			i += step
+	return arr
+
+def xrange(num, stop, step):
+	return range(num, stop, step)
+
+def sum( arr ):
+	a = 0
+	for b in arr:
+		inline('a += b')
+	return a
+
+def map(func, objs):
+	arr = []
+	for ob in objs:
+		v = func(ob)
+		arr.push( v )
+	return arr
+
+def filter(func, objs):
+	arr = []
+	for ob in objs:
+		if func( ob ):
+			arr.push( ob )
+	return arr
+
+
+def min( lst ):
+	a = None
+	for value in lst:
+		if a is None: a = value
+		elif value < a: a = value
+	return a
+
+def max( lst ):
+	a = None
+	for value in lst:
+		if a is None: a = value
+		elif value > a: a = value
+	return a
+
+def abs( num ):
+	return Math.abs(num)
+
+def ord( char ):
+	char.charCodeAt(0)
+
+def chr( num ):
+	return String.fromCharCode(num)
+
+
 class __WorkerPool__:
 	def __init__(self, src):  ## note src is an array
 		print 'creating blob'
