@@ -33,6 +33,8 @@ Timeout Syntax
 --------------------------
 `with timeout( ms ):`, where `ms` is the number of milliseconds allowed to try to finish the block.
 
+note the use of the builtin `sleep(0.5)`, this pauses the main thread for half a second, so the webworker has time
+to process the input events and fill up its output message queue.
 
 @myscript
 ```rusthon
@@ -75,6 +77,14 @@ def test():
 	)
 	show('workers spawned')
 
+	## wait for awhile before getting messages ##
+	window.setTimeout(
+		lambda: test_workers(worker1,worker2),
+		1500,
+	)
+
+
+def test_workers(worker1, worker2):
 	show('sending data to workers')
 	msg = {
 		'x':1, 
@@ -86,14 +96,8 @@ def test():
 		worker1 <- msg
 		worker2 <- msg
 
-	## wait for awhile before getting messages ##
-	window.setTimeout(
-		lambda: test_workers(worker1,worker2),
-		1500,
-	)
+	sleep(0.5)
 
-
-def test_workers(worker1, worker2):
 	show('testing workers')
 
 	results = []

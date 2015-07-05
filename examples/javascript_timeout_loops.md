@@ -7,7 +7,7 @@ To run this example run these commands in your shell:
 cd
 git clone https://github.com/rusthon/Rusthon.git
 cd Rusthon/
-./rusthon.py ./examples/javascript_timeout.md
+./rusthon.py ./examples/javascript_timeout_loops.md
 ```
 
 html
