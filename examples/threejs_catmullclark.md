@@ -14,6 +14,7 @@ Extract r66.tar.gz to your home directory, then run:
 #backend:javascript
 from runtime import *
 
+BaseGeom = None
 ren = None
 scn = None
 cam = None
@@ -45,7 +46,7 @@ class CatmullClark:
 		v2 = Math.max(a,b)
 		return v1+':'+v2
 
-	def __init__(self, geo, parent=None):
+	def __init__(self, geo, parent=None, replace=None, wire=False, wiresize=4, color=0x00ff00):
 		self.input_geom = geo
 		geo.computeCentroids()  ## requires three.js R66
 
@@ -146,35 +147,63 @@ class CatmullClark:
 			sgeo.faces.push( new THREE.Face3(i+4,i+1,i) )
 			sgeo.faces.push( new THREE.Face3(i+5,i+2,i+1) )
 
-
 			i += 6
 
 
-
-		pmat = new THREE.ParticleSystemMaterial( size=1, color=0x0000ff )
+		pmat = new THREE.ParticleSystemMaterial( size=0.2, color=0x0000ff )
 		p = new THREE.ParticleSystem( egeo, pmat )
-		parent.add( p )
+		self._p1 = p
+		if parent:
+			parent.add( p )
 
-		pmat = new THREE.ParticleSystemMaterial( size=0.5, color=0xffff00 )
+		pmat = new THREE.ParticleSystemMaterial( size=0.3, color=0xffff00 )
 		p = new THREE.ParticleSystem( rgeo, pmat )
-		parent.add( p )
+		self._p2 = p
+		if parent:
+			parent.add( p )
 
 		pmat = new THREE.ParticleSystemMaterial( size=0.4, color=0xff0000 )
 		p = new THREE.ParticleSystem( fgeo, pmat )
-		parent.add( p )
+		self._p2 = p
+		if parent:
+			parent.add( p )
 
 		sgeo.mergeVertices()
 		#sgeo.computeCentroids();
 		sgeo.computeFaceNormals();
 		sgeo.computeVertexNormals()
-		mat = new THREE.MeshLambertMaterial( color=0x00ff00, wireframe=false, wireframeLinewidth=3 )
+		mat = new THREE.MeshLambertMaterial( color=color, wireframe=wire, wireframeLinewidth=wiresize )
 		self.mesh = new THREE.Mesh( sgeo, mat )
-		parent.add( self.mesh )
+
+		if parent:
+			parent.add( self.mesh )
+
 		self.output_geom = sgeo
 		self.mesh = mesh
+		self.parent = parent
+
+		if replace:
+			replace.geometry.vertices = sgeo.vertices
+			replace.geometry.verticesNeedUpdate = True
+
+	def remove(self):
+		self.parent.remove(self._p1)
+		self.parent.remove(self._p2)
+		self.parent.remove(self._p2)
+		self.parent.remove(self.mesh)
+
+
 
 def main():
-	global ren, scn, cam, mesh, controls
+	global ren, scn, cam, mesh, controls, stats
+	global BaseGeom
+	global WireMesh
+
+	stats = new Stats()
+	stats.domElement.style.position = 'absolute'
+	stats.domElement.style.left = '0px'
+	stats.domElement.style.top = '60px'
+	document.body.appendChild(stats.domElement)
 
 	div = document.createElement( 'div' )
 	document.body.appendChild(div)
@@ -186,7 +215,7 @@ def main():
 	cam.position.x = 5
 	controls = new THREE.TrackballControls( cam )
 
-	ren = new( THREE.WebGLRenderer() )
+	ren = new( THREE.WebGLRenderer(antialias=True) )
 	ren.setSize( width, height )
 
 	div.appendChild( ren.domElement )
@@ -195,19 +224,41 @@ def main():
 	light.position.set( 0, 100, 90 )
 	scn.add( light )
 
-	geo = new THREE.BoxGeometry( 20,20,20 )
+	BaseGeom = new THREE.BoxGeometry( 20,20,20 )
 	mat = new THREE.MeshBasicMaterial( wireframe=True )
-	mesh = new THREE.Mesh( geo, mat )
+	mesh = new THREE.Mesh( BaseGeom, mat )
 	scn.add( mesh )
-
-	ss1 = CatmullClark( geo, parent=mesh )
-	ss2 = CatmullClark( ss1.output_geom, parent=scn )
-	ss2.mesh.position.x += 30
+	WireMesh = mesh
 
 	animate()
 
+SS1 = SS2 = None
+def update_subdivs():
+	global SS1, SS2
+
+	WireMesh.geometry.verticesNeedUpdate = True
+	for v in WireMesh.geometry.vertices:
+		#print v
+		r = (Math.random() - 0.5) * 0.3
+		v.x += r
+		v.y += r
+		v.z += r
+
+	children = [child for child in WireMesh.children]
+	for child in children:
+		WireMesh.remove(child)
+
+	SS1 = CatmullClark( WireMesh.geometry, parent=WireMesh, wire=True )
+	SS2 = CatmullClark( SS1.output_geom, parent=WireMesh, wire=True, wiresize=2, color=0x00ffff )
+	SS3 = CatmullClark( SS2.output_geom, parent=WireMesh, wire=True, wiresize=1, color=0xff0000 )
+	if document.getElementById('SS4').checked:
+		SS4 = CatmullClark( SS3.output_geom, parent=WireMesh, wire=document.getElementById('WIRE').checked, wiresize=1, color=0x0000ff )
+
+
 def animate():
 	requestAnimationFrame( animate )
+	stats.update()
+	update_subdivs()
 	controls.update()
 	ren.render( scn, cam )
 
@@ -220,11 +271,14 @@ def animate():
 <head>
 <script src="~/three.js-r66/build/three.min.js"></script>
 <script src="~/three.js-r66/examples/js/controls/TrackballControls.js"></script>
+<script src="~/three.js-r66/examples/js/libs/stats.min.js"></script>
 
 <@myscript>
 
 </head>
 <body onload="main()">
+<input id="SS4" type="checkbox" checked="true"/>
+<input id="WIRE" type="checkbox" checked="true"/>
 </body>
 </html>
 ```
