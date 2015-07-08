@@ -4,6 +4,7 @@ inline('KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototy
 inline('ValueError = function(msg) {this.message = msg || "";}; ValueError.prototype = Object.create(Error.prototype); ValueError.prototype.name = "ValueError";')
 inline('AttributeError = function(msg) {this.message = msg || "";}; AttributeError.prototype = Object.create(Error.prototype);AttributeError.prototype.name = "AttributeError";')
 inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError.prototype = Object.create(Error.prototype);RuntimeError.prototype.name = "RuntimeError";')
+inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 
 
 ## mini fake json library ##
@@ -629,13 +630,22 @@ def chr( num ):
 
 
 class __WorkerPool__:
-	def __init__(self, src):  ## note src is an array
+	def __init__(self, src, extras):  ## note src is an array
 		print 'creating blob'
 		header = []
 		for name in dir(window):
 			ob = window[name]
 			if typeof(ob) == 'function':
 				header.append( 'var ' + name + '=' + ob.toString() + ';' )
+
+		for name in extras:
+			ob = eval(name)  ## name may contain a dot
+			header.append(name + '=' + ob.toString() + ';' )
+			if ob.prototype: ## copy methods
+				for sname in dir(ob.prototype):
+					sub = ob[sname]
+					if typeof(sub) == 'function':
+						header.append( name + '.prototype.' + sname + '=' + ob.toString() + ';' )
 
 		header.extend( src )
 		print src
@@ -697,7 +707,13 @@ class __WorkerPool__:
 				res = self.pending[id].pop()
 				callback(res)
 				return
-		self.workers[id].insert(0, callback)
+		elif id in self.workers:
+			self.workers[id].insert(0, callback)
+		else:
+			if id is undefined:
+				raise WebWorkerError("undefined id")
+			else:
+				raise WebWorkerError(id)
 
 	def get(self, id, attr, callback):
 		print 'threadpool: get'

@@ -199,7 +199,9 @@ TODO: regenerate pythonjs.js each time.
 				if line: lines.append( line )
 
 		if self._has_channels and not self._webworker:
-			lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__);')
+			#lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__, __workerimports__);')
+			# moved to intermediateform.md
+			pass
 
 		if self._insert_runtime:
 			#dirname = os.path.dirname(os.path.abspath(__file__))

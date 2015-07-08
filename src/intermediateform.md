@@ -229,6 +229,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._use_sleep = False  ## only for the js backend, makes while loops `sleep` using setTimeOut
 		self._use_array = False
 		self._webworker_functions = dict()
+		self._webworker_imports = list()
 		self._with_webworker = False
 		self._with_rpc = None
 		self._with_rpc_name = None
@@ -336,7 +337,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			for line in self._html_tail:
 				writer.write(line)
 
-
+	def get_webworker_imports(self):
+		return self._webworker_imports
 
 	def has_webworkers(self):
 		return len(self._webworker_functions.keys())
@@ -437,6 +439,8 @@ class PythonToPythonJS(NodeVisitorBase):
 					writer.write('import %s as %s' %(alias.name, alias.asname))
 				else:
 					writer.write('import %s' %alias.name)
+			elif self._with_webworker:
+				self._webworker_imports.append( alias.name )
 			elif alias.name in tornado:
 				pass  ## pythonjs/fakelibs/tornado.py
 			elif alias.name == 'tempfile':
@@ -4354,6 +4358,13 @@ def python_to_pythonjs(script, **kwargs):
 	code = writer.getvalue()
 
 	if translator.has_webworkers():
+		userimports = ['"%s"'%imp for imp in translator.get_webworker_imports()]
+		pre = [
+			'__workerimports__ = [%s]' %','.join(userimports),
+			'__workerpool__ = new(__WorkerPool__(__workersrc__, __workerimports__))',
+			''
+		]
+		code = '\n'.join(pre) + code
 		res = {'main':code}
 		for jsfile in translator.get_webworker_file_names():
 			res[ jsfile ] = get_webworker_writer( jsfile ).getvalue()
