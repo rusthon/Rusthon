@@ -636,16 +636,66 @@ class __WorkerPool__:
 		for name in dir(window):
 			ob = window[name]
 			if typeof(ob) == 'function':
-				header.append( 'var ' + name + '=' + ob.toString() + ';' )
+				header.append( 'var ' + name + '=' + ob.toString() + ';\n' )
+			#elif typeof(ob) == 'object':
+			#	header.append( 'var ' + name + '=' + ob.toString() + ';\n' )
 
+		xlibs = []
 		for name in extras:
-			ob = eval(name)  ## name may contain a dot
-			header.append(name + '=' + ob.toString() + ';' )
-			if ob.prototype: ## copy methods
-				for sname in dir(ob.prototype):
-					sub = ob[sname]
-					if typeof(sub) == 'function':
-						header.append( name + '.prototype.' + sname + '=' + ob.toString() + ';' )
+			if '.' in name:
+				print 'import webworker submodule: ' + name
+				mod = name.split('.')[0]
+				xname = name.split('.')[1]
+				ob = eval(name)
+				if typeof(ob) == 'object':  ## copy objects with static methods
+					print 'import object: ' + xname
+					header.append( name + '= {' )
+					for sname in Object.keys(ob):
+						subob = ob[sname]
+						ok = True
+						try:
+							tmp = eval("("+subob+")")
+						except:
+							ok = False
+						if ok:
+							print 'import->: ' + sname
+							header.append( '"'+sname + '":(' + ob[sname] +')' )
+							header.append(',\n')
+					header.pop()
+					header.append('};\n')
+
+				#if mod not in xlibs:
+				#	print 'new module: '+mod
+				#	header.append('var ' + mod + '= {};' )
+				#	xlibs.append(mod)
+			else:
+				print 'import webworker module: ' + name
+				header.append( 'var ' + name + '= {};\n' )
+				modulemain = window[name]
+
+				for xname in dir(modulemain):
+					ob = modulemain[xname]
+					if typeof(ob) == 'function':
+						print 'import class: ' + xname
+						header.append( name + '.' + xname + '=' + ob.toString() + ';\n' )
+						if ob.prototype: ## copy methods
+							#for method_name in dir(ob.prototype):
+							for method_name in Object.keys(ob.prototype):
+								if method_name == 'constructor': continue
+								ok = True
+								try:
+									## getting some properties can throw deprecation errors
+									sub = ob.prototype[method_name]
+								except:
+									ok = False
+
+								if ok and typeof(sub) == 'function':
+									print 'import method: ' + method_name
+									header.append(name + '.' + xname + '.prototype.' + method_name + '=' + sub.toString() + ';' )
+									#header.append(name + '.' + xname + '.' + method_name + '=' + ob.toString() + ';' )
+
+
+
 
 		header.extend( src )
 		print src
