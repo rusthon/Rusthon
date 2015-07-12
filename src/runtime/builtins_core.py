@@ -632,7 +632,10 @@ def chr( num ):
 class __WorkerPool__:
 	def __init__(self, src, extras):  ## note src is an array
 		print 'creating blob'
-		header = []
+		## TODO other builtins prototype hacks. see above.
+		header = [
+			'Array.prototype.append = function(a) {this.push(a);};',
+		]
 		for name in dir(window):
 			ob = window[name]
 			if typeof(ob) == 'function':
