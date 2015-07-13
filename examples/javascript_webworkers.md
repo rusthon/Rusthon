@@ -80,6 +80,7 @@ def test_workers(worker1, worker2):
 
 	show('getting data from workers')
 	res = <- worker1
+	show('got first reply from worker')
 	show(res)
 	res = <- worker1
 	show(res)
@@ -96,6 +97,8 @@ def test_workers(worker1, worker2):
 	show(res)
 	res = <- worker2
 	show(res)
+
+	show('ok')
 
 
 

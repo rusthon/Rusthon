@@ -755,11 +755,9 @@ class __WorkerPool__:
 		self.thread.postMessage({'send':id, 'message':message})
 
 	def recv(self, id, callback):
-		if id in self.pending:
-			if self.pending[id].length:
-				res = self.pending[id].pop()
-				callback(res)
-				return
+		if id in self.pending and self.pending[id].length:
+			res = self.pending[id].pop()
+			callback(res)
 		elif id in self.workers:
 			self.workers[id].insert(0, callback)
 		else:

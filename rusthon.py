@@ -46,8 +46,8 @@ self.onmessage = function (evt) {
 	if (msg['spawn']) {
 		id = msg.spawn;
 		self.postMessage({debug:"SPAWN:"+id});
-		self.postMessage({debug:"CLASS:"+msg['new']});
-		self.postMessage({debug:"ARGS:"+msg['args']});
+		self.postMessage({debug:"SPAWN-CLASS:"+msg['new']});
+		self.postMessage({debug:"SPAWN-ARGS:"+msg['args']});
 		__instances__[id] = __construct__(eval(msg['new']), msg.args );
 		__instances__[id].__uid__ = id;
 	}
@@ -57,7 +57,10 @@ self.onmessage = function (evt) {
 		var ob = __instances__[id];
 		var re = ob.send(msg.message);
 		if (re !== undefined) {
+			self.postMessage({debug:"SEND-BACK:"+re});
 			self.postMessage({'id':id, 'message':re});
+		} else {
+			self.postMessage({debug:"SEND-BACK-NONE:"});
 		}
 	}
 	if (msg['call']) {
