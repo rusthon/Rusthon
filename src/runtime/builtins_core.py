@@ -752,7 +752,12 @@ class __WorkerPool__:
 		return id
 
 	def send(self, id=None, message=None):
-		self.thread.postMessage({'send':id, 'message':message})
+		try:
+			self.thread.postMessage({'send':id, 'message':message})
+		except:
+			print 'DataCloneError: can not send data to webworker'
+			print message
+			raise RuntimeError('DataCloneError: can not send data to webworker')
 
 	def recv(self, id, callback):
 		if id in self.pending and self.pending[id].length:

@@ -563,6 +563,9 @@ Also implements extra syntax like `switch` and `select`.
 				else:
 					r.append(self.indent()+'case %s: {' %case_match) ## extra scope
 
+				if not len(self._match_stack):
+					raise SyntaxError('case statement used outside of a select or switch block')
+
 				self._match_stack[-1].append(case_match)
 
 
