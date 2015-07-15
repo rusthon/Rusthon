@@ -267,8 +267,14 @@ def __object_keys__(ob):
 		. this is different from Object.keys because it traverses the prototype chain.
 	'''
 	arr = []
-	inline('for (var key in ob) { arr.push(key) }')
-	return arr
+	isdigits = 0
+	inline('for (var key in ob) { arr.push(key); if (key.isdigit()) isdigits += 1; }')
+	if isdigits == arr.length:
+		iarr = []
+		for key in arr:
+			iarr.push( int(key) )
+	else:
+		return arr
 
 def __sprintf(fmt, args):
 	## note: '%sXXX%s'.split().length != args.length
