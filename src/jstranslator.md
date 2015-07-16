@@ -542,7 +542,7 @@ Call Helper
 				return '%s(%s)' %(macro,args)
 		elif fname == 'sleep':
 			self._sleeps += 1
-			return 'setTimeout(__sleep__, %s*1000); function __sleep__(){' % args[0]
+			return 'setTimeout(__sleep__%s.bind(this), %s*1000); function __sleep__%s(){' % (self._sleeps, args[0], self._sleeps)
 		else:
 			return '%s(%s)' % (fname, args)
 

@@ -268,11 +268,12 @@ def __object_keys__(ob):
 	'''
 	arr = []
 	isdigits = 0
-	inline('for (var key in ob) { arr.push(key); if (key.isdigit()) isdigits += 1; }')
+	inline('for (var key in ob) { arr.push(key); if (key.isdigit()) {isdigits += 1;} }')
 	if isdigits == arr.length:
 		iarr = []
 		for key in arr:
 			iarr.push( int(key) )
+		return iarr
 	else:
 		return arr
 
@@ -707,12 +708,8 @@ class __WorkerPool__:
 
 
 		header.extend( src )
-		print src
 		blob = new(Blob(header, type='application/javascript'))
-		print blob
-		print 'creating URL'
 		url = URL.createObjectURL(blob)
-		print url
 		self.thread = new(Worker(url))
 		self.workers = {}
 		self.pending = {}
@@ -752,8 +749,6 @@ class __WorkerPool__:
 		self.workers[id] = []  ## callbacks
 		self.pending[id] = []  ## early messages
 		cfg['spawn'] = id
-		print 'spawn->'
-		print cfg
 		self.thread.postMessage(cfg)
 		return id
 
@@ -778,20 +773,14 @@ class __WorkerPool__:
 				raise WebWorkerError(id)
 
 	def get(self, id, attr, callback):
-		print 'threadpool: get'
-		print attr
 		self._get = callback
 		self.thread.postMessage({'id':id, 'get':attr})
 
 	def call(self, func, args, callback):
-		print 'threadpool: call'
-		print func
 		self._call = callback
 		self.thread.postMessage({'call':func, 'args':args})
 
 
 	def callmeth(self, id, func, args, callback):
-		print 'threadpool: callmeth'
-		print func
 		self._callmeth = callback
 		self.thread.postMessage({'id':id, 'callmeth':func, 'args':args})

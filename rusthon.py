@@ -45,22 +45,22 @@ self.onmessage = function (evt) {
 	var id;
 	if (msg['spawn']) {
 		id = msg.spawn;
-		self.postMessage({debug:"SPAWN:"+id});
-		self.postMessage({debug:"SPAWN-CLASS:"+msg['new']});
-		self.postMessage({debug:"SPAWN-ARGS:"+msg['args']});
+		//self.postMessage({debug:"SPAWN:"+id});
+		//self.postMessage({debug:"SPAWN-CLASS:"+msg['new']});
+		//self.postMessage({debug:"SPAWN-ARGS:"+msg['args']});
 		__instances__[id] = __construct__(eval(msg['new']), msg.args );
 		__instances__[id].__uid__ = id;
 	}
 	if (msg['send']) {
 		id = msg.send;
-		self.postMessage({debug:"SEND:"+id});
+		//self.postMessage({debug:"SEND:"+id});
 		var ob = __instances__[id];
 		var re = ob.send(msg.message);
 		if (re !== undefined) {
-			self.postMessage({debug:"SEND-BACK:"+re});
+			//self.postMessage({debug:"SEND-BACK:"+re});
 			self.postMessage({'id':id, 'message':re});
 		} else {
-			self.postMessage({debug:"SEND-BACK-NONE:"});
+			//self.postMessage({debug:"SEND-BACK-NONE:"});
 		}
 	}
 	if (msg['call']) {
@@ -68,7 +68,7 @@ self.onmessage = function (evt) {
 	}
 	if (msg['callmeth']) {
 		id = msg.id;
-		self.postMessage({debug:"CALLM:"+id});
+		//self.postMessage({debug:"CALLM:"+id});
 		var ob = __instances__[id];
 		var func = ob[msg.callmeth];
 		self.postMessage({'CALLMETH':1, 'message':ob[msg.callmeth].apply(ob,
@@ -77,7 +77,7 @@ self.onmessage = function (evt) {
 
 	if (msg['get']) {
 		id = msg.id;
-		self.postMessage({debug:"GET:"+id});
+		//self.postMessage({debug:"GET:"+id});
 		var ob = __instances__[id];
 		self.postMessage({'GET':1, 'message':ob[msg.get]});
 	}
