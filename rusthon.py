@@ -250,7 +250,7 @@ def new_module():
 		'javascript':[],
 	}
 
-def import_md( url, modules=None, index_offset=0 ):
+def import_md( url, modules=None, index_offset=0, force_tagname=None ):
 	assert modules is not None
 	doc = []
 	code = []
@@ -261,7 +261,7 @@ def import_md( url, modules=None, index_offset=0 ):
 	in_code = False
 	index = 0
 	prevline = None
-	tag = None
+	tag = force_tagname or None
 	fences = 0
 	base_path, markdown_name = os.path.split(url)
 	data = open(url, 'rb').read()
@@ -594,7 +594,7 @@ def build( modules, module_path, datadirs=None ):
 				go_main['source'].append( gocode )
 
 			elif backend == 'javascript':
-				if mod['tag']:  ## saves to external js file
+				if mod['tag'] and mod['tag'].endswith('.js'):  ## saves to external js file
 					js = compile_js( mod['code'], module_path, main_name=mod['tag'] )
 					mod['build'] = {'script':js[mod['tag']]}
 					tagged[ mod['tag'] ] = js[mod['tag']]
@@ -631,7 +631,15 @@ def build( modules, module_path, datadirs=None ):
 			else:
 				src.append(mod['code'])
 
-			assert tagname
+			if not tagname:
+				#print mod['code']
+				for modd in js_merge:
+					print mod['code']
+					if modd == mod:
+						break
+
+				raise RuntimeError('fenced code block not given a tag-name')
+
 			js = compile_js( '\n'.join(src), module_path, main_name=tagname )
 			tagged[ tagname ] = js[ tagname ]
 			for name in js:
