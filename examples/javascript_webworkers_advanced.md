@@ -1,3 +1,8 @@
+Webworker Syntax
+--------------------------
+
+https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax
+
 testing
 -------
 
@@ -29,7 +34,7 @@ html
 </html>
 ```
 
-Webworker Syntax
+Example
 --------------------------
 
 The class `WorkerX` defines a `send` method that takes a message and returns something to the main thread.
