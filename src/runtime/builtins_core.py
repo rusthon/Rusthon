@@ -737,23 +737,27 @@ class __WorkerPool__:
 			print evt.data.debug
 		else:
 			id = evt.data.id
+			msg = evt.data.message
+			if evt.data.proto: msg.__proto__ = eval(evt.data.proto + '.prototype')
+
+
 			if evt.data.GET:
-				self._get( evt.data.message )
+				self._get( msg )
 				#self._get = None
 			elif evt.data.CALL:
-				self._call( evt.data.message )
+				self._call( msg )
 				#self._call = None
 			elif evt.data.CALLMETH:
-				self._callmeth( evt.data.message )
+				self._callmeth( msg )
 				#self._callmeth = None
 
 			elif id in self.workers:  ## channels
 				callbacks = self.workers[id]
 				if len(callbacks):
 					cb = callbacks.pop()
-					cb( evt.data.message )
+					cb( msg )
 				else:
-					self.pending[id].push(evt.data.message)
+					self.pending[id].push( msg )
 			else:
 				print 'ERROR: missing callback for:' + id
 

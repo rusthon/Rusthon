@@ -56,21 +56,27 @@ self.onmessage = function (evt) {
 		var re = ob.send(msg.message);
 		if (re !== undefined) {
 			//self.postMessage({debug:"SEND-BACK:"+re});
-			self.postMessage({'id':id, 'message':re});
+			self.postMessage({'id':id, 'message':re, 'proto':ob.send.returns});
 		} else {
 			//self.postMessage({debug:"SEND-BACK-NONE:"});
 		}
 	}
 	if (msg['call']) {
-		self.postMessage({'CALL':1, 'message':self[ msg.call ].apply(null,msg.args) });
+		self.postMessage({
+			'CALL'   : 1, 
+			'message': self[ msg.call ].apply(null,msg.args),
+			'proto'  : self[ msg.call ].returns
+		});
 	}
 	if (msg['callmeth']) {
 		id = msg.id;
 		//self.postMessage({debug:"CALLM:"+id});
 		var ob = __instances__[id];
-		var func = ob[msg.callmeth];
-		self.postMessage({'CALLMETH':1, 'message':ob[msg.callmeth].apply(ob,
-			msg.args) });
+		self.postMessage({
+			'CALLMETH': 1, 
+			'message' : ob[msg.callmeth].apply(ob,msg.args),
+			'proto'   : ob[msg.callmeth].returns
+		});
 	}
 
 	if (msg['get']) {

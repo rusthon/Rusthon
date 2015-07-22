@@ -336,6 +336,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
 		func_expr_var = True
+		returns = None
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
@@ -346,10 +347,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
-			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':  ## TODO deprecated
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
 				assert len(decor.args)==1
 				is_prototype = True
 				protoname = decor.args[0].id
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
+				returns = decor.args[0].id
 
 		args = self.visit(node.args)
 
@@ -432,18 +435,16 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		self.pull()
 		body.append( self.indent() + '}' )
 
+		if returns:
+			if is_prototype:
+				body.append(
+					'%s.prototype.%s.returns = "%s";' % (protoname, node.name, returns)
+				)
+			else:
+				body.append( node.name + '.returns = "%s";' %returns )
+
 		buffer = '\n'.join( comments + body )
-
-		#if self._inline_lambda:
-		#	self._inline_lambda = False
-		#if is_annon:
-		#	buffer = '__wrap_function__(' + buffer + ')'
-		#elif is_pyfunc:
-		#	## TODO change .is_wrapper to .__pyfunc__
-		#	buffer += ';%s.is_wrapper = true;' %node.name
-		#else:
 		buffer += '\n'
-
 		return self.indent() + buffer
 
 	def try_and_catch_swap_lambda(self, child, body):
