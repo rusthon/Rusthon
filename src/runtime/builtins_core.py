@@ -637,21 +637,30 @@ def chr( num ):
 
 
 class __WorkerPool__:
-	def __init__(self, src, extras):  ## note src is an array
+	def create_webworker(self):
+		## this is lazy because if the blob is created when the js is first executed,
+		## then it will pick all functions of `window` but they will be `undefined`
+		## if their definition comes after the construction of this singleton.
 		print 'creating blob'
 		## TODO other builtins prototype hacks. see above.
 		header = [
 			'Array.prototype.append = function(a) {this.push(a);};',
 		]
 		for name in dir(window):
+			print name
 			ob = window[name]
-			if typeof(ob) == 'function':
+			if ob is undefined:
+				print 'WARNING: object in toplevel namespace window is undefined ->' + name
+			elif typeof(ob) == 'function':
 				header.append( 'var ' + name + '=' + ob.toString() + ';\n' )
+				for subname in dir(ob.prototype):
+					sob = ob.prototype[subname]
+					header.append(name + '.prototype.' +subname + '=' + sob.toString() + ';\n' )
 			#elif typeof(ob) == 'object':
 			#	header.append( 'var ' + name + '=' + ob.toString() + ';\n' )
 
 		xlibs = []
-		for name in extras:
+		for name in self.extras:
 			if '.' in name:
 				print 'import webworker submodule: ' + name
 				mod = name.split('.')[0]
@@ -707,16 +716,21 @@ class __WorkerPool__:
 
 
 
-		header.extend( src )
+		header.extend( self.source )
 		blob = new(Blob(header, type='application/javascript'))
 		url = URL.createObjectURL(blob)
 		self.thread = new(Worker(url))
+		self.thread.onmessage = self.update.bind(this)
+
+	def __init__(self, src, extras):  ## note src is an array
+		self.source = src
+		self.extras = extras
+		self.thread = None
 		self.workers = {}
 		self.pending = {}
 		self._get  = None
 		self._call = None
 		self._callmeth = None
-		self.thread.onmessage = self.update.bind(this)
 
 	def update(self, evt):
 		if evt.data.debug:
@@ -744,6 +758,9 @@ class __WorkerPool__:
 				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg):
+		if not self.thread:
+			self.create_webworker()
+
 		## cfg contains: call|new:func/classname, args:[]
 		id = 'worker' + len(self.workers)
 		self.workers[id] = []  ## callbacks

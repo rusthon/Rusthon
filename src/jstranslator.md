@@ -613,6 +613,8 @@ Call Helper
 			out.append( 'var ' + ','.join(args) )
 		if node.keywords:
 			out.append( 'var ' + ','.join([key.arg for key in node.keywords]) )
+			for key in node.keywords:
+				out.append('%s.__proto__ = %s.prototype' %(key.arg, self.visit(key.value)))
 		return ';'.join(out)
 
 ```
@@ -1033,7 +1035,6 @@ def translate_to_javascript(source, requirejs=True, insert_runtime=True, webwork
 
 			else:
 				head.append( line )
-
 
 	try:
 		tree = ast.parse( source )

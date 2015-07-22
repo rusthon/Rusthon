@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 __version__ = '0.9.9'
 import os, sys, subprocess, hashlib
-#import pythonjs
-#import pythonjs.pythonjs
-#import pythonjs.python_to_pythonjs
-#import pythonjs.pythonjs_to_cpp
-#import pythonjs.pythonjs_to_verilog
-#import pythonjs.typedpython as typedpython
 import tempfile
 import webbrowser
 
@@ -16,6 +10,10 @@ if os.path.isfile('/usr/local/go/bin/go'):
 	GO_EXE = '/usr/local/go/bin/go'
 elif os.path.isfile(os.path.expanduser('~/go/bin/go')):
 	GO_EXE = os.path.expanduser('~/go/bin/go')
+
+nodewebkit_runnable = False
+nodewebkit = os.path.expanduser('~/nwjs-v0.12.2-linux-x64/nw')
+if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
 ## special case for linux, just for debugging, look for google-chrome,
 ## if found then use it to launch tests, with the --disable-gpu-sandbox
