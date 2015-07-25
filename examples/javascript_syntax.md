@@ -114,6 +114,25 @@ def test():
 	with oo:
 		Z = [10,20] + [30,40]
 
+
+	class Nested:
+		def foobar(self, x):
+			print x
+
+			class SubNested:
+				def submeth(self, x,y):
+					print x+y
+
+			snest = SubNested()
+			snest.submeth('testing sub', 'NESTED')
+			return snest
+
+
+	nest = Nested()
+	snest = nest.foobar('testing nexted class')
+	print snest
+	snest.submeth('called from outer scope','subnested')
+
 	print X
 	print Z
 	print X.pop()

@@ -21,29 +21,45 @@ class SharedClass:
 
 
 with webworker:
+	def somefunction() -> SharedClass:
+		s = SharedClass(10,20,30)
+		return s
+
 	class MyWorker:
-		def send(self, obj:SharedClass ):
+		def send(self, obj:SharedClass ) -> SharedClass:
 			print obj
 			print obj.foobar()
 			obj.x = 10
 			return obj
+
+		def somemethod(self) -> SharedClass:
+			s = SharedClass(100,200,300)
+			return s
+
 
 
 def main():
 	global WORKER
 	show('spawn worker...')
 	WORKER = spawn( MyWorker() )
+
 	show('creating SharedClass')
 	a = SharedClass(1,2,3)
 	print(a)
 	show(a.foobar())
+
 	show('sending data to worker')
 	WORKER <- a
+
 	show('getting data from worker')
 	b = <- WORKER
-	print(b)
-	#print b.foobar()
+	show(b.foobar())
 
+	c = <- somefunction()
+	show(c.foobar())
+
+	d = <- WORKER.somemethod()
+	show(d.foobar())
 
 ```
 
