@@ -981,7 +981,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		name = node.name
 		node._struct_vars = dict()
 		self._js_classes[ name ] = node
-		self._class_stack.append( node )
 
 		comments = []
 		methods  = {}
@@ -1138,11 +1137,11 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('}')
 
 		writer.pull()
-		self._class_stack.pop()
 
 
 	def _visit_js_classdef(self, node):
-		name = node.name
+		#name = node.name
+		name = '_'.join( [s.name for s in self._class_stack] )
 		self._js_classes[ name ] = node
 		self._in_js_class = True
 		class_decorators = []
@@ -1153,7 +1152,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		method_names = []  ## write back in order (required by GLSL)
 		methods = {}
 		class_vars = []
-
+		post_class_write = []
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
@@ -1165,11 +1164,17 @@ class PythonToPythonJS(NodeVisitorBase):
 						n.id = 'this'
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
+			elif isinstance(item, ast.ClassDef):
+				## support subclass namespaces ##
+				self.visit(item)
+				sets_namespace = '.'.join( [s.name for s in self._class_stack+[item]] )
+				sub_name = '_'.join( [s.name for s in self._class_stack+[item]] )
+				post_class_write.append('%s = %s' %(sets_namespace, sub_name) )
+
 			else:
 				class_vars.append( item )
 
 
-		#init = methods.pop('__init__')
 		init = methods.get( '__init__', None)
 		if init:
 			args = [self.visit(arg) for arg in init.args.args]
@@ -1222,6 +1227,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		writer.pull()
 
+		if post_class_write:
+			for postline in post_class_write:
+				writer.write(postline)
+
 		if not self._fast_js and not self._with_lua:
 			## class UID ##
 			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
@@ -1238,7 +1247,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
 			if not self._fast_js and not self._with_lua:
-				## allows subclass method to extend the parent's method by calling the parent by class name,
+				## allows subclass method to extend the parents method by calling the parent by class name,
 				## `MyParentClass.some_method(self)`
 				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
 				writer.write('%s.%s = JS("%s")'%(name,mname,f))
@@ -1269,19 +1278,25 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._in_js_class = False
 
 	def visit_ClassDef(self, node):
-		#raise SyntaxError( self._modules )
+		self._class_stack.append( node )
+
 		if self._modules:
 			writer.write('__new_module__(%s)' %node.name) ## triggers a new file in final stage of translation.
 
+		######## c++ and typed backends ########
 		if self._with_dart or self._with_go or self._with_rust or self._with_cpp:
 			self._visit_dart_classdef(node)
+			self._class_stack.pop()
 			return
 
-		elif self._with_js:
+		elif self._with_js:  ######## javascript backend #######
 			assert not self._with_lua
 			self._visit_js_classdef(node)
+			self._class_stack.pop()
 			return
 
+
+		## old lua backend ##
 		name = node.name
 		self._in_class = name
 		self._classes[ name ] = list()  ## method names
@@ -1342,20 +1357,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			elif isinstance(item, ast.With) and isinstance( item.context_expr, Name ) and item.context_expr.id == 'javascript':
-				#self._with_js = True
-				#writer.with_javascript = True
-				for sub in item.body:
-					if isinstance(sub, Assign) and isinstance(sub.targets[0], Name):
-						item_name = sub.targets[0].id
-						sub.targets[0].id = '__%s_%s' % (name, item_name)
-						self.visit(sub)  # this will output the code for the assign
-						writer.write('__%s_attrs.%s = %s' % (name, item_name, sub.targets[0].id))
-						self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
-					else:
-						raise NotImplementedError( sub )
-				#writer.with_javascript = False
-				#self._with_js = False
-
+				raise RuntimeError('with javascript is deprecated')
 			else:
 				raise NotImplementedError( item )
 
@@ -1809,10 +1811,11 @@ class PythonToPythonJS(NodeVisitorBase):
 			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
-			if self._in_catch_exception == 'AttributeError':
-				return '__getfast__(%s, "%s")' % (node_value, node.attr)
-			else:
-				return '%s.%s' %(node_value, node.attr)
+			## TODO enable get attribute - move to js backend ##
+			#if self._in_catch_exception == 'AttributeError':
+			#	return '__getfast__(%s, "%s")' % (node_value, node.attr)
+			#else:
+			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_lua and self._in_assign_target:  ## this is required because lua has no support for inplace assignment ops like "+="
 			return '%s.%s' %(node_value, node.attr)
@@ -2435,13 +2438,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
 			for kw in node.keywords:
 				if kw.arg == 'javascript':
-					#if kw.value.id == 'True':
-					#	self._with_js = True
-					#	writer.with_javascript = True
-					#elif kw.value.id == 'False':
-					#	self._with_js = False
-					#	writer.with_javascript = False
-					#else:
 					raise SyntaxError( self.format_error(node) )
 
 				elif kw.arg == 'dart':
@@ -2714,10 +2710,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				return 'JS("new %s(%s)")' %(name, ','.join(args))
 
 		elif name == 'new':
-			#tmp = self._with_js
-			#self._with_js = True
 			args = list( map(self.visit, node.args) )
-			#self._with_js = tmp
 			assert len(args) == 1
 			return 'new(%s)' %args[0]
 
@@ -3881,27 +3874,15 @@ class PythonToPythonJS(NodeVisitorBase):
 			self._with_ll = False
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'javascript':  ## deprecated
-			#self._with_js = True
-			map(self.visit, node.body)
-			#self._with_js = False
+			raise RuntimeError('with javascript deprecated')
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'python':  ## deprecated
-			#if not self._with_js:
-			#	raise SyntaxError('"with python:" is only used inside of a "with javascript:" block')
-			#self._with_js = False
-			map(self.visit, node.body)
-			#self._with_js = True
+			raise RuntimeError('with python deprecated')
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'fastdef':
-			raise RuntimeError('with fastdef: is deprecated')
-			#self._with_fastdef = True
-			#map(self.visit, node.body)
-			#self._with_fastdef = False
+			raise RuntimeError('with fastdef deprecated')
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id == 'static':
 			raise RuntimeError('with static: is deprecated')
-			#self._with_static_type = True
-			#map(self.visit, node.body)
-			#self._with_static_type = False
 
 		elif isinstance( node.context_expr, Name ) and node.context_expr.id in EXTRA_WITH_TYPES:
 			writer.write('with %s:' %self.visit(node.context_expr))

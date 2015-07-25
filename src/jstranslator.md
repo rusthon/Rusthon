@@ -7,6 +7,9 @@ This is also subclassed by these other backends:
 * [rusttranslator.md](rusttranslator.md)
 * [cpptranslator.md](cpptranslator.md)
 
+notes:
+* the implementation of `spawn` is in [generatorbase.md](generatorbase.md)
+* the builtin webworker pool spawn manager is in [builtins_core.py](runtime/builtins_core.py)
 
 ```python
 # PythonJS to JavaScript Translator
@@ -369,7 +372,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			if self._func_expressions or func_expr:
 				if func_expr_var:
-					fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
 				else:
 					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
 			else:
@@ -383,7 +386,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			if self._func_expressions or func_expr:
 				if func_expr_var:
-					fdef = 'var %s = function(%s)' % (node.name, ', '.join(args))
+					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
 				else:
 					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
 			else:

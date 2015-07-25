@@ -115,41 +115,12 @@ def test():
 		Z = [10,20] + [30,40]
 
 
-	class Nested:
-		def foobar(self, x):
-			print x
-
-			class SubNested:
-				def submeth(self, x,y):
-					print x+y
-
-			snest = SubNested()
-			snest.submeth('testing sub', 'NESTED')
-			return snest
-
-
-	nest = Nested()
-	snest = nest.foobar('testing nexted class')
-	print snest
-	snest.submeth('called from outer scope','subnested')
-
 	print X
 	print Z
 	print X.pop()
 
 	for i,e in enumerate(X):
 		print i, e
-
-
-	print 'a b c'.split()
-	print 'axbxc'.replace('x', 'Z')
-
-	print dir(X)
-
-	print 'testing isdigit'
-	print '1'.isdigit()
-	print 'A'.isdigit()
-	print len('123')
 
 	print 'X is list:', isinstance(Z, list)
 	print 'X is really a js Array:', isinstance(Z, Array)
@@ -161,14 +132,58 @@ def test():
 
 	#getattr(X, 'notthere')  ## throws exception
 
+
+	class Nested:
+		class SubClass:
+			def foo(self):
+				print 'calling Nested.Subclass.foo'
+				print Nested
+				print Nested.SubClass
+				print 'Nested.Subclass: foo OK'
+				return new(Nested.SubClass())
+
+		def foobar(self, x):
+			print x
+
+			class SubNested:
+				def submeth(self, x,y):
+					print x+y
+
+			snest = Nested_SubNested()  ## workaround prefix parent class name
+			snest.submeth('testing sub', 'NESTED')
+			return snest
+
+
+	nest = Nested()
+	snest = nest.foobar('testing nexted class')
+	print snest
+	snest.submeth('called from outer scope','subnested')
+
+	scls = new Nested.SubClass()
+	scls2 = scls.foo()
+
+	print 'a b c'.split()
+	print 'axbxc'.replace('x', 'Z')
+
+	print dir(X)
+
+	print 'testing isdigit'
+	print '1'.isdigit()
+	print 'A'.isdigit()
+	print len('123')
+
+
+def test_spawn():
 	## in c++ becomes std::thread lambda wrapped
 	## here in js it becomes `worker1 = __workerpool__.spawn({'call|new':'Channel', 'args':[]})
 	print 'spawn workers'
 	worker1 = spawn(
-		Worker()
+		Worker(),
+		cpu = 0
 	)
 	worker2 = spawn(
-		Worker()
+		Worker(),
+		cpu = 1
 	)
 	window.setTimeout(
 		lambda: test_workers(worker1,worker2),
