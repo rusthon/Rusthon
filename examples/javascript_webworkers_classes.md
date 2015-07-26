@@ -1,3 +1,15 @@
+WebWorker Transferable Class Instances
+--------------------------------------
+
+Functions and methods inside the webworker can have their arguments and return types declared using Python3 style annotation type syntax.
+The `SharedClass` prototype is restored each time it is send to/from the webworker.
+This allows you to send objects that contain data and keep methods on the the top level object.
+Note: sub-objects of the transported do not have their class types automatically restored.
+
+See Also
+--------
+* [javascript_timeout_loops.md](javascript_timeout_loops.md)
+* [javascript_timeout_webworkers.md](javascript_timeout_webworkers.md)
 
 
 @myapp

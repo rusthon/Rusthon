@@ -11,7 +11,7 @@ cd Rusthon/
 This will compile, and then open a web-browser, clicking "click me" will start the threejs scene, and you should see some 3D objects rotating.
 
 Rusthon allows you to assemble html files, inserting static javascripts, and output from Rusthon using the javascript backend.
-The example below inserts the pythonjs minimal runtime `pythonjs-minimal.js` and the THREE.js library `three.min.js` into the output html file.
+The example below inserts the pythonjs runtime `from runtime import *` and the THREE.js library `three.min.js` into the output html file.
 This is triggered by using `~/` at the start of the path in the `src` attribute of the script tag.  The path is relative to your home directory.
 
 ```html

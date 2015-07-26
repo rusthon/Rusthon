@@ -1,4 +1,4 @@
-testing
+JavaScript Backend - Basics
 -------
 
 To run this example run these commands in your shell:
@@ -9,6 +9,14 @@ git clone https://github.com/rusthon/Rusthon.git
 cd Rusthon/
 ./rusthon.py ./examples/javascript_syntax.md
 ```
+
+See Also
+--------
+* [hello_javascript.md](hello_javascript.md)
+* [javascript_classes.md](javascript_classes.md)
+* [hello_threejs.md](hello_threejs.md)
+
+
 
 html
 ----
@@ -132,58 +140,6 @@ def test():
 
 	#getattr(X, 'notthere')  ## throws exception
 
-	class Root:
-		def root(self):
-			return 'hi from root'
-
-	class Nested:
-		class SubClass(Root):
-			def foo(self):
-				print 'calling Nested.Subclass.foo'
-				print Nested
-				print Nested.SubClass
-				print 'Nested.Subclass: foo OK'
-				return new(Nested.SubClass())
-
-		def foobar(self, x):
-			print x
-
-			class SubNested:
-				def submeth(self, x,y):
-					print x+y
-
-			snest = SubNested()
-			snest.submeth('testing sub', 'NESTED')
-			return snest
-
-
-	nest = Nested()
-	snest = nest.foobar('testing nexted class')
-	print snest
-	snest.submeth('called from outer scope','subnested')
-
-	scls = new Nested.SubClass()
-	scls2 = scls.foo()
-
-	print 'TESTING META STUFF'
-	print scls.__class__
-	print scls.__class__.__name__
-	print 'testing isinstance'
-	print isinstance(scls, Nested.SubClass)
-	print isinstance(scls, scls.__class__)
-
-	class SubSubClass(Nested.SubClass):
-		def bar(self):
-			print 'SubSubClass.bar OK'
-
-	print 'testing issubclass'
-	print issubclass(SubSubClass, Nested.SubClass)
-	print issubclass(Nested.SubClass, Root)
-	print issubclass(SubSubClass, Root)
-	print 'testing SubSubClass...'
-	ssc = SubSubClass()
-	ssc.foo()
-	ssc.bar()
 
 	print "STRING TESTS"
 	print 'a b c'.split()
