@@ -1157,8 +1157,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		class_vars = []
 		post_class_write = [
 			'%s.prototype.__class__ = %s' %(name, name),
-			'%s.__name__ = "%s"' %(name,name)
-
+			'%s.__name__ = "%s"' %(name,name),
+			'%s.__bases__ = []' %name,
 		]
 		for item in node.body:
 			if isinstance(item, FunctionDef):
@@ -1258,7 +1258,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				## allows subclass method to extend the parents method by calling the parent by class name,
 				## `MyParentClass.some_method(self)`
 				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-				writer.write('%s.%s = JS("%s")'%(name,mname,f))
+				writer.write('%s.%s = inline("%s")'%(name,mname,f))
 
 		if not self._with_lua:
 			for base in node.bases:
@@ -1272,7 +1272,8 @@ class PythonToPythonJS(NodeVisitorBase):
 					'}'
 				]
 				a = ''.join(a)
-				writer.write( "JS('%s')" %a )
+				writer.write( "inline('%s')" %a )
+				writer.write( '%s.__bases__.push(%s)' %(name,base))
 
 			## class attributes
 			for item in class_vars:
@@ -2320,6 +2321,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		s = s.replace('\"', '\\"')
 		s = s.replace('.__right_arrow__.', '->').replace('= __go__send__<<', '<-')
 		s = s.replace('__DOLLAR__', '$')
+		s = s.replace('__new__>>', 'new ')
 
 		if self._with_dart and s == '\\0':  ## TODO other numbers
 			return 'new(String.fromCharCode(0))'

@@ -74,7 +74,7 @@ with webworker:
 
 
 def hello_world():
-	window.alert("hi R arrow -> and L arrow <- and $ $. $(")
+	window.alert(" new hi R arrow -> and L arrow <- and $ $. $(")
 
 
 X = []
@@ -132,9 +132,12 @@ def test():
 
 	#getattr(X, 'notthere')  ## throws exception
 
+	class Root:
+		def root(self):
+			return 'hi from root'
 
 	class Nested:
-		class SubClass:
+		class SubClass(Root):
 			def foo(self):
 				print 'calling Nested.Subclass.foo'
 				print Nested
@@ -173,6 +176,11 @@ def test():
 		def bar(self):
 			print 'SubSubClass.bar OK'
 
+	print 'testing issubclass'
+	print issubclass(SubSubClass, Nested.SubClass)
+	print issubclass(Nested.SubClass, Root)
+	print issubclass(SubSubClass, Root)
+	print 'testing SubSubClass...'
 	ssc = SubSubClass()
 	ssc.foo()
 	ssc.bar()
@@ -187,6 +195,8 @@ def test():
 	print '1'.isdigit()
 	print 'A'.isdigit()
 	print len('123')
+
+	test_spawn()
 
 
 def test_spawn():

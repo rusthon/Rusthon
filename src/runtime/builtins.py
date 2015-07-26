@@ -217,16 +217,7 @@ def type(ob_or_class_name, bases=None, class_dict=None):
 
 
 
-def issubclass(C, B):
-	if C is B:
-		return True
-	with javascript: bases = C.__bases__  ## js-array
-	i = 0
-	while i < bases.length:
-		if issubclass( bases[i], B ):
-			return True
-		i += 1
-	return False
+
 
 def isinstance( ob, klass):
 	with javascript:

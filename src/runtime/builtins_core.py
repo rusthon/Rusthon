@@ -35,6 +35,15 @@ def isinstance( ob, klass):
 	else:
 		return instanceof(ob, klass)
 
+def issubclass(C, B):
+	if C is B:
+		return True
+	else:
+		for base in C.__bases__:
+			if issubclass(base, B):
+				return True
+	return False
+
 def len(ob):
 	if instanceof(ob, Array):
 		return ob.length
@@ -581,11 +590,10 @@ def range(num, stop, step):
 		i = 0
 	if step is undefined:
 		step = 1
-	with javascript:
-		arr = []
-		while i < num:
-			arr.push(i)
-			i += step
+	arr = []
+	while i < num:
+		arr.push(i)
+		i += step
 	return arr
 
 def xrange(num, stop, step):
@@ -719,10 +727,21 @@ class __WorkerPool__:
 		header.extend( self.source )
 		blob = new(Blob(header, type='application/javascript'))
 		url = URL.createObjectURL(blob)
-		self.thread = new(Worker(url))
+		#self.thread = new(Worker(url))
+		#self.thread.onmessage = self.update.bind(this)
+		ww = new(Worker(url))
+		self.thread = ww  ## temp, TODO multiple threads
 		self.thread.onmessage = self.update.bind(this)
+		ww._stream_callbacks = {}
+		ww._stream_triggers  = {}
+		ww._get_callback  = None
+		ww._call_callback = None
+		ww._callmeth_callback = None
+		return ww
 
-	def __init__(self, src, extras):  ## note src is an array
+	def __init__(self, src, extras):
+		## note:  src is an array
+		## note: thread-ids = `cpu-id:spawned-id`
 		self.source = src
 		self.extras = extras
 		self.thread = None
@@ -762,8 +781,15 @@ class __WorkerPool__:
 				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg):
+		#tid = '0'
+		#if tid not in self.threads:
+		#	self.threads[tid] = self.create_webworker()
+		#cfg['thread-id'] = tid
+		#return tid + '|' + self.threads[tid].spawn_class(cfg)
+
 		if not self.thread:
-			self.create_webworker()
+				self.thread = self.create_webworker()
+
 
 		## cfg contains: call|new:func/classname, args:[]
 		id = 'worker' + len(self.workers)
@@ -774,8 +800,14 @@ class __WorkerPool__:
 		return id
 
 	def send(self, id=None, message=None):
+		#tid, sid = id.split('|')
+		#if tid not in self.threads:
+		#	raise RuntimeError('invalid thread-webworker id')
+
 		try:
 			self.thread.postMessage({'send':id, 'message':message})
+			#self.threads[tid].postMessage({'send':id, 'message':message})
+
 		except:
 			print 'DataCloneError: can not send data to webworker'
 			print message
