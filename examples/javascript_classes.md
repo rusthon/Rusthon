@@ -81,17 +81,21 @@ def test():
 	print scls.__class__
 	print scls.__class__.__name__
 	print 'testing isinstance'
-	print isinstance(scls, Nested.SubClass)
-	print isinstance(scls, scls.__class__)
+	assert isinstance(scls, Nested.SubClass)
+	assert isinstance(scls, scls.__class__)
+	assert isinstance(scls, Root)
+	assert isinstance(scls, Nested) is False
 
 	class SubSubClass(Nested.SubClass):
 		def bar(self):
 			print 'SubSubClass.bar OK'
 
 	print 'testing issubclass'
-	print issubclass(SubSubClass, Nested.SubClass)
-	print issubclass(Nested.SubClass, Root)
-	print issubclass(SubSubClass, Root)
+	assert issubclass(SubSubClass, Nested.SubClass)
+	assert issubclass(Nested.SubClass, Root)
+	assert issubclass(SubSubClass, Root)
+	assert issubclass(Root, Nested) is False
+
 	print 'testing SubSubClass...'
 	ssc = SubSubClass()
 	ssc.foo()

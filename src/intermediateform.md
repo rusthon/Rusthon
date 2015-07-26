@@ -547,11 +547,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			raise SyntaxError( self.format_error(msg) )
 
 	def visit_Assert(self, node):
-		## hijacking "assert isinstance(a,A)" as a type system ##
-		if isinstance( node.test, Call ) and isinstance(node.test.func, Name) and node.test.func.id == 'isinstance':
-			a,b = node.test.args
-			if b.id in self._classes:
-				self._instances[ a.id ] = b.id
+		writer.write('assert %s' %self.visit(node.test))
 
 	def visit_Dict(self, node):
 		node.returns_type = 'dict'
@@ -2546,11 +2542,17 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			elif name == 'isinstance':
 				assert len(args) == 2
-				if args[1] == 'dict':
-					args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
-				elif args[1] == 'list':
-					args[1] = 'Array'
-				return 'instanceof(%s, %s)' %(args[0], args[1])
+
+				if self._with_dart:
+					return 'instanceof(%s, %s)' %(args[0], args[1])
+
+				else:
+					if args[1] == 'dict':   ## TODO find better solution for dict test
+						args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
+					elif args[1] == 'list':
+						args[1] = 'Array'
+
+					return 'isinstance(%s, %s)' %(args[0], args[1])
 
 			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
 				anode = node.func

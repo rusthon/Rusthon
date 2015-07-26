@@ -103,6 +103,10 @@ class is not implemented here for javascript, it gets translated ahead of time i
 	def visit_Global(self, node):
 		return '/*globals: %s */' %','.join(node.names)
 
+	def visit_Assert(self, node):
+		return 'if (!(%s)) {throw new Error("assertion failed"); }' %self.visit(node.test)
+
+
 	def visit_Assign(self, node):
 		target = node.targets[0]
 		if isinstance(target, Tuple):
@@ -635,12 +639,7 @@ TODO clean this up
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
 		if s.strip().startswith('#'): s = '/*%s*/'%s
 
-		if '__new__>>' in s:
-			## hack that fixes inline `JS("new XXX")`,
-			## TODO improve typedpython to be aware of quoted strings
-			s = s.replace('__new__>>', ' new ')
-
-		elif '"' in s or "'" in s:  ## can not trust direct-replace hacks
+		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
 			pass
 		else:
 			if ' or ' in s:

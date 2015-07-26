@@ -14,8 +14,12 @@ json = {
 }
 
 def hasattr(ob, attr):
-	## TODO check parent classes for attr, this fails on for methods because those are are on the .prototype ?
-	return Object.hasOwnProperty.call(ob, attr)
+	if Object.hasOwnProperty.call(ob, attr):
+		return True
+	elif ob[attr] is not undefined:
+		return True
+	else:
+		return False
 
 def list(ob):
 	a = []
@@ -32,8 +36,15 @@ def isinstance( ob, klass):
 			return True
 		elif klass is Array:
 			return True
+		else:
+			return False
+	elif instanceof(ob, klass):
+		return True
+	elif hasattr(ob, '__class__'):
+		return issubclass(ob.__class__, klass)
 	else:
-		return instanceof(ob, klass)
+		return False
+
 
 def issubclass(C, B):
 	if C is B:

@@ -92,7 +92,7 @@ do extra things like inline extra helper code for things like `hasattr`, etc.
 		elif name in self.catch_call:
 			return self._visit_call_special( node )
 
-		elif name == 'instanceof':  ## this gets used by "with javascript:" blocks to test if an instance is a JavaScript type
+		elif name == 'instanceof':  ## it is safer to use the builtin `isinstance`
 			return self._visit_call_helper_instanceof( node )
 
 		elif name == 'new':
