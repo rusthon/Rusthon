@@ -969,9 +969,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 	def _get_js_class_base_init(self, node ):
 		for base in node.bases:
-			if base.id == 'object':
+			bid = self.visit(base).replace('.','_')
+			if bid == 'object':
 				continue
-			n = self._js_classes[ base.id ]
+			n = self._js_classes[ bid ]
 			if hasattr(n, '_cached_init'):
 				return n._cached_init
 			else:
@@ -1140,8 +1141,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 
 	def _visit_js_classdef(self, node):
-		#name = node.name
-		name = '_'.join( [s.name for s in self._class_stack] )
+		name = node.name
+		if hasattr(node, 'is_nested_class') and node.is_nested_class:
+			name = '_'.join( [s.name for s in self._class_stack] )
+
 		self._js_classes[ name ] = node
 		self._in_js_class = True
 		class_decorators = []
@@ -1152,7 +1155,11 @@ class PythonToPythonJS(NodeVisitorBase):
 		method_names = []  ## write back in order (required by GLSL)
 		methods = {}
 		class_vars = []
-		post_class_write = []
+		post_class_write = [
+			'%s.prototype.__class__ = %s' %(name, name),
+			'%s.__name__ = "%s"' %(name,name)
+
+		]
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
@@ -1166,6 +1173,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				pass
 			elif isinstance(item, ast.ClassDef):
 				## support subclass namespaces ##
+				item.is_nested_class = True
 				self.visit(item)
 				sets_namespace = '.'.join( [s.name for s in self._class_stack+[item]] )
 				sub_name = '_'.join( [s.name for s in self._class_stack+[item]] )

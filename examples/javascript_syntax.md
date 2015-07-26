@@ -149,7 +149,7 @@ def test():
 				def submeth(self, x,y):
 					print x+y
 
-			snest = Nested_SubNested()  ## workaround prefix parent class name
+			snest = SubNested()
 			snest.submeth('testing sub', 'NESTED')
 			return snest
 
@@ -162,6 +162,22 @@ def test():
 	scls = new Nested.SubClass()
 	scls2 = scls.foo()
 
+	print 'TESTING META STUFF'
+	print scls.__class__
+	print scls.__class__.__name__
+	print 'testing isinstance'
+	print isinstance(scls, Nested.SubClass)
+	print isinstance(scls, scls.__class__)
+
+	class SubSubClass(Nested.SubClass):
+		def bar(self):
+			print 'SubSubClass.bar OK'
+
+	ssc = SubSubClass()
+	ssc.foo()
+	ssc.bar()
+
+	print "STRING TESTS"
 	print 'a b c'.split()
 	print 'axbxc'.replace('x', 'Z')
 
