@@ -542,6 +542,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('from runtime import *')
 		elif node.module == 'nodejs':
 			writer.write('from nodejs import *')
+		elif node.module == 'nodejs.tornado':
+			writer.write('from nodejs.tornado import *')
 		else:
 			msg = 'invalid import - file not found: %s'%path
 			raise SyntaxError( self.format_error(msg) )
@@ -968,7 +970,13 @@ class PythonToPythonJS(NodeVisitorBase):
 			bid = self.visit(base).replace('.','_')
 			if bid == 'object':
 				continue
+
+			if bid not in self._js_classes:
+				print 'WARNING: can not find base class in translation unit <%s>' %bid
+				return None
+
 			n = self._js_classes[ bid ]
+
 			if hasattr(n, '_cached_init'):
 				return n._cached_init
 			else:
@@ -1156,6 +1164,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			'%s.__name__ = "%s"' %(name,name),
 			'%s.__bases__ = []' %name,
 		]
+		node._post_class_write = post_class_write
 		for item in node.body:
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
@@ -1173,11 +1182,13 @@ class PythonToPythonJS(NodeVisitorBase):
 				self.visit(item)
 				sets_namespace = '.'.join( [s.name for s in self._class_stack+[item]] )
 				sub_name = '_'.join( [s.name for s in self._class_stack+[item]] )
-				post_class_write.append('%s = %s' %(sets_namespace, sub_name) )
+				if len(self._class_stack) > 1:
+					self._class_stack[0]._post_class_write.insert(0, '%s = %s' %(sets_namespace, sub_name) )
+				else:
+					post_class_write.insert(0, '%s = %s' %(sets_namespace, sub_name) )
 
 			else:
 				class_vars.append( item )
-
 
 		init = methods.get( '__init__', None)
 		if init:

@@ -50,6 +50,10 @@ class Root:
 
 class Nested:
 	class SubClass(Root):
+		class XXX:
+			def bar(self):
+				print 'XXX'
+
 		def foo(self):
 			print 'calling Nested.Subclass.foo'
 			print Nested
@@ -76,6 +80,9 @@ def test():
 
 	scls = new Nested.SubClass()
 	scls2 = scls.foo()
+
+	xx = new Nested.SubClass.XXX()
+	xx.bar()
 
 	print 'TESTING META STUFF'
 	print scls.__class__

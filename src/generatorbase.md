@@ -164,6 +164,8 @@ Import `import x` and `from x import y`
 			self._insert_runtime = True
 		elif node.module=='nodejs':
 			self._insert_nodejs_runtime = True
+		elif node.module=='nodejs.tornado':
+			self._insert_nodejs_tornado = True
 
 		return ''
 

@@ -48,6 +48,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		self._requirejs = requirejs
 		self._insert_runtime = insert_runtime
 		self._insert_nodejs_runtime = False
+		self._insert_nodejs_tornado = False
 		self._webworker = webworker
 		self._exports = set()
 		self._inline_lambda = False
@@ -215,7 +216,10 @@ TODO: regenerate pythonjs.js each time.
 			#runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
 
 			## always regenerate the runtime, in case the user wants to hack it ##
-			runtime = generate_js_runtime( nodejs=self._insert_nodejs_runtime )
+			runtime = generate_js_runtime(
+				nodejs         = self._insert_nodejs_runtime,
+				nodejs_tornado = self._insert_nodejs_tornado
+			)
 			lines.insert( 0, runtime )
 
 
@@ -971,7 +975,7 @@ def generate_minimal_js_runtime():
 	)
 	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
-def generate_js_runtime( nodejs=False ):
+def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 	r = [
 		open('src/runtime/pythonpythonjs.py', 'rb').read(),
 		#open('src/runtime/builtins_core.py', 'rb').read()
@@ -982,7 +986,7 @@ def generate_js_runtime( nodejs=False ):
 		)
 
 	]
-	if nodejs:  ## TODO fix me
+	if nodejs:
 		r.append(
 			python_to_pythonjs(
 				open('src/runtime/builtins_nodejs.py', 'rb').read(),
@@ -990,6 +994,16 @@ def generate_js_runtime( nodejs=False ):
 				pure_javascript = False
 			)
 		)
+
+	if nodejs_tornado:
+		r.append(
+			python_to_pythonjs(
+				open('src/runtime/nodejs_tornado.py', 'rb').read(),
+				fast_javascript = True,
+				pure_javascript = False
+			)
+		)
+
 
 	builtins = translate_to_javascript(
 		'\n'.join(r),
