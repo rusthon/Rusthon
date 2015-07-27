@@ -162,9 +162,13 @@ class Popen:
 		self._stdout_buff = []
 		self._stderr_buff = []
 
+		if callback and stdout=='ignore':
+			stdout = None
+
 		if stdout is None:
 			stdout = 'pipe'
 			self._echo_stdout = True
+
 		if stderr is None:
 			stderr = process.stderr
 			self._echo_stderr = True
@@ -256,8 +260,11 @@ class Popen:
 class _fake_subprocess:
 	def __init__(self):
 		self.PIPE = -1 ## in python this is -1, nodejs has "pipe"
-		self.Popen = Popen
+		#self.Popen = Popen  ## this requires the user call `new subprocess.Popen`
 		
+	def Popen(self, executeable=None, args=[], callback=None, stdin='ignore', stdout='ignore', stderr='ignore', cwd=None, env=None):
+		p = Popen( executeable=executeable, args=args, callback=callback, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
+		return p
 
 	def call(self, executeable=None, args=[], callback=None, stdin='ignore', stdout=None, stderr='ignore', cwd=None, env=None):
 		p = Popen( executeable=executeable, args=args, callback=callback, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
@@ -265,3 +272,10 @@ class _fake_subprocess:
 
 
 subprocess = _fake_subprocess()
+
+
+__os__ = require('os')
+
+tempfile = {
+	'gettempdir' : lambda : __os__.tmpdir()
+}
