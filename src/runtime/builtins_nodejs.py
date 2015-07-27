@@ -187,7 +187,6 @@ class Popen:
 			self.stderr.setEncoding('utf8')  ## assume that errors are always text
 
 
-
 		if self._echo_stdout or self.stdout_callback:
 			if self.stdout_callback:
 				self._hookup_stdout( echo=False )
@@ -229,15 +228,15 @@ class Popen:
 		self._echo_stdout = echo
 		if self.stdout:
 			if not self._returns_binary: self.stdout.setEncoding( 'utf8' )
-			self.stdout.on('data', self._read_stdout )
-			self.stdout.on('end', self._end_stdout )
+			self.stdout.on('data', self._read_stdout.bind(self) )
+			self.stdout.on('end', self._end_stdout.bind(self) )
 		else:
 			print 'WARNING: tried to hookup stdout, but it is null'
 
 	def _hookup_stderr(self):
 		self._stderr_buff = []
-		self.stderr.on('data', self._read_stderr )
-		self.stderr.on('end', self._end_stderr )
+		self.stderr.on('data', self._read_stderr.bind(self) )
+		self.stderr.on('end', self._end_stderr.bind(self) )
 
 
 	def communicate(self, data, encoding='utf8', returns_binary=False, callback=None, error_callback=None):
@@ -261,8 +260,6 @@ class _fake_subprocess:
 		
 
 	def call(self, executeable=None, args=[], callback=None, stdin='ignore', stdout=None, stderr='ignore', cwd=None, env=None):
-		print 'subprocess.call'
-		print executeable
 		p = Popen( executeable=executeable, args=args, callback=callback, stdin=stdin, stdout=stdout, stderr=stderr, cwd=cwd, env=env )
 		return p
 
