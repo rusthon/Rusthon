@@ -626,7 +626,11 @@ Call Helper
 		if node.keywords:
 			out.append( 'var ' + ','.join([key.arg for key in node.keywords]) )
 			for key in node.keywords:
-				out.append('%s.__proto__ = %s.prototype' %(key.arg, self.visit(key.value)))
+				if self._webworker:  ## inside a webworker this is a type cast
+					out.append('%s.__proto__ = %s.prototype' %(key.arg, self.visit(key.value)))
+				else:  ## outside of a webworker this is a type assertion
+					out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed");}' %(key.arg, self.visit(key.value)))
+
 		return ';'.join(out)
 
 ```

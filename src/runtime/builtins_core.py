@@ -42,6 +42,8 @@ def isinstance( ob, klass):
 		return True
 	elif hasattr(ob, '__class__'):
 		return issubclass(ob.__class__, klass)
+	elif klass is int and typeof(ob)=='number':
+		return True
 	else:
 		return False
 
