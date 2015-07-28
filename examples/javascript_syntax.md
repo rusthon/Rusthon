@@ -15,6 +15,7 @@ See Also
 * [hello_javascript.md](hello_javascript.md)
 * [javascript_classes.md](javascript_classes.md)
 * [hello_threejs.md](hello_threejs.md)
+* [javascript_static_types.md](javascript_static_types.md)
 
 
 

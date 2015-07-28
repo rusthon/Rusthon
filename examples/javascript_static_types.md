@@ -52,6 +52,11 @@ class B:
 		for item in x:
 			print item
 
+	def test_2D_array_of_A( self, x:[][]A ):
+		print 'B.test_array_of_A...'
+		for item in x:
+			print item
+
 
 def test():
 	a = A()
@@ -72,6 +77,10 @@ def test():
 	#arra = [b,a,a,a,a]  ## not allowed, note only check first element
 	arra = [a,a,a,a]
 	b.test_array_of_A( arra )
+
+	b.test_2D_array_of_A(
+		[arra, arra, arra]
+	)
 
 test()
 

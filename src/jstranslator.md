@@ -632,10 +632,10 @@ Call Helper
 					if isinstance(key.value, ast.Call):
 						assert key.value.func.id == '__arg_array__'
 						s = key.value.args[0].s
-						dims = s.count('[')
+						dims = '[0]' * s.count('[')
 						t = s.split(']')[-1]
 						out.append('if (!(isinstance(%s,Array))) {throw new Error("type assertion failed - not an array")}' %key.arg)
-						out.append('if (%s.length > 0 && !( isinstance(%s[0], %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, t))
+						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, dims, t))
 
 					else:
 						out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed")}' %(key.arg, self.visit(key.value)))
