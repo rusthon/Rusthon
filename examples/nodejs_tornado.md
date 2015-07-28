@@ -13,6 +13,23 @@ cd Rusthon/
 ./rusthon.py ./examples/nodejs_tornado.md --run=myapp.js
 ```
 
+Then open a web browser and go to http://localhost:8000
+
+html
+-----
+
+@index.html
+```html
+<html>
+<head>
+</head>
+<body>
+hello world from nodejs tornado web server
+</body>
+</html>
+
+```
+
 
 @myapp.js
 ```rusthon
@@ -34,8 +51,6 @@ class MainHandler( tornado.web.RequestHandler ):
 
 		if path == 'favicon.ico' or path.endswith('.map'):
 			self.write('')
-		elif path and '.' in path:
-			self.write( open(path).read() )
 		else:
 			self.write( open('index.html').read() )
 
@@ -50,7 +65,7 @@ Handlers = [
 ## main ##
 def main():
 	print('<starting tornado server>')
-	app = tornado.web.Application( Handlers )
+	app = new tornado.web.Application( Handlers )
 	app.listen( PORT )
 	tornado.ioloop.IOLoop.instance().start()
 
