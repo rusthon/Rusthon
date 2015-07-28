@@ -1,30 +1,60 @@
 Callback Functions/Methods
 ----------------
-c function that takes a callback.
+
+hand written C example, two callback types.
+The C functions are redeclared below inside of `with extern(abi="C")`
 
 ```c
 
-float call_callback( float(*cb)(void) ) {
+float call_callback1( float(*cb)(void) ) {
 	return cb();
 }
 
+void call_callback2( void(*cb)(void) ) {
+	cb();
+}
+
+
 ```
 
-The C function `call_callback` is declared below inside of `with extern(abi="C")`
+Main Source
+-----------
+Interfacing with external C libraries requires you declare the function type, and link the library.
+The example above with hand written inlined C code is built with the final executeable.
+
+syntax - `func()()`
+------------
 External C functions are typed as `func(args)(returns)`.
+
+
+syntax - `lambda()()`
+------------
+
 C++11 lambda functions are typed instead with `lambda(args)(returns)`.
+This is required because C++11 lambda functions are different from standard C callback pointers.
+
 
 
 ```rusthon
 #backend:c++
 
 with extern(abi="C"):
-	def call_callback( cb:func()(float) ) -> float:
+
+	# cb takes no arguments and returns a float
+	def call_callback1( cb:func()(float) ) -> float:
+		pass
+
+	# cb takes no arguments and returns nothing
+	def call_callback2( cb:func()() ):
 		pass
 
 
-def mycb() ->float:
+def mycb1() ->float:
+	print 'callback1 returns float'
 	return 100.1
+def mycb2():
+	print 'callback2 returns nothing'
+	print 'OK'
 
 class Vec2:
 	def __init__(self, x:f32=4.0, y:f32=0.2):
@@ -60,12 +90,23 @@ def main():
 	print 'callback ok'
 	v4 = Vec2(x=99.9)
 	v4.show()
-	#v5 = Vec2(99.9)  ## TODO
+
+
+
+	## TODO - can not construct this way because at least one keyword argument is required.
+	#v5 = Vec2(99.9)
 	#v5.show()
+	## TODO - this is valid python but is bad style
+	#v5 = Vec2(420, y=-1000)
+	#v5.show()
+
+
 	print 'testing calling c function with callback'
-	t = call_callback( mycb )
+	t = call_callback1( mycb1 )
 	print t
 
-	print 'ok'
+	call_callback2( mycb2 )
+
+	print 'callback test ok'
 
 ```
