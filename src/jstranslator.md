@@ -629,7 +629,16 @@ Call Helper
 				if self._webworker:  ## inside a webworker this is a type cast
 					out.append('%s.__proto__ = %s.prototype' %(key.arg, self.visit(key.value)))
 				else:  ## outside of a webworker this is a type assertion
-					out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed");}' %(key.arg, self.visit(key.value)))
+					if isinstance(key.value, ast.Call):
+						assert key.value.func.id == '__arg_array__'
+						s = key.value.args[0].s
+						dims = s.count('[')
+						t = s.split(']')[-1]
+						out.append('if (!(isinstance(%s,Array))) {throw new Error("type assertion failed - not an array")}' %key.arg)
+						out.append('if (%s.length > 0 && !( isinstance(%s[0], %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, t))
+
+					else:
+						out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed")}' %(key.arg, self.visit(key.value)))
 
 		return ';'.join(out)
 

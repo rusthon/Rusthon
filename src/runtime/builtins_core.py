@@ -42,8 +42,18 @@ def isinstance( ob, klass):
 		return True
 	elif hasattr(ob, '__class__'):
 		return issubclass(ob.__class__, klass)
-	elif klass is int and typeof(ob)=='number':
-		return True
+	elif typeof(ob)=='number':
+		if klass is int and ob.toString().isdigit():
+			return True
+		elif klass is float:  ## must always be true because `0.0` becomes `0`
+			return True
+		else:
+			return False
+	elif typeof(ob)=='string':
+		if klass is str or klass is string:
+			return True
+		else:
+			return False
 	else:
 		return False
 
@@ -517,6 +527,8 @@ def round(a, places=0):
 		return Math.round(a * p) / p
 
 def str(s):
+	return ''+s
+def string(s):
 	return ''+s
 
 def func(fmt):
