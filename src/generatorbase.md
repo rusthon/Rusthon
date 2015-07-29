@@ -323,7 +323,8 @@ Function Decorators
 						## TODO - better parser
 						hack = funcdef.replace(')', '(').split('(')
 						lambda_args = []
-						for larg in hack[1].strip().split('|'):
+						TODO_REPLACE_PIPE_HACK = '|'  ## note new syntax is space separated
+						for larg in hack[1].strip().split(TODO_REPLACE_PIPE_HACK):
 							if self.is_prim_type(larg):
 								lambda_args.append(larg)
 							elif not larg:

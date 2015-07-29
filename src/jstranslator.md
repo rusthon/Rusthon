@@ -338,6 +338,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 ```python
 
 	def _visit_function(self, node):
+		node._func_typed_args = []
 		comments = []
 		body = []
 		is_main = node.name == 'main'
@@ -453,6 +454,17 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				)
 			else:
 				body.append( node.name + '.returns = "%s";' %returns )
+
+		if node._func_typed_args:
+			targs = ','.join( ['"%s"'%t for t in node._func_typed_args] )
+			if is_prototype:
+				body.append(
+					'%s.prototype.%s.args = [%s];' % (protoname, node.name, targs)
+				)
+			else:
+				body.append( node.name + '.args = [%s];' %targs )
+
+
 
 		buffer = '\n'.join( comments + body )
 		buffer += '\n'
@@ -632,12 +644,30 @@ Call Helper
 					if isinstance(key.value, ast.Call):
 						assert key.value.func.id == '__arg_array__'
 						s = key.value.args[0].s
+						self._function_stack[-1]._func_typed_args.append( s )
+
 						dims = '[0]' * s.count('[')
 						t = s.split(']')[-1]
 						out.append('if (!(isinstance(%s,Array))) {throw new Error("type assertion failed - not an array")}' %key.arg)
 						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, dims, t))
+					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
+						assert len(self._function_stack) >= 1
+						#F = self._function_stack[-1]
+						#if not hasattr(F, '_func_typed_args'):
+						#	F._func_typed_args = []
+						self._function_stack[-1]._func_typed_args.append( key.value.s )
+
+						out.append('if (!(%s instanceof Function)) {throw new Error("type assertion error - callback not a function")}' %key.arg)
+						targs = []
+						head,tail = key.value.s.split(')(')
+						head = head.split('func(')[-1]
+						for j, targ in enumerate(head.split('|')):  ## NOTE TODO replace `|` with space
+							out.append(
+								'if (!(%s.args[%s]=="%s")) {throw new Error("type error - invalid callback type")}' %(key.arg, j, targ)
+							)
 
 					else:
+						self._function_stack[-1]._func_typed_args.append( self.visit(key.value) )
 						out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed")}' %(key.arg, self.visit(key.value)))
 
 		return ';'.join(out)

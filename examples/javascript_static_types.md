@@ -42,6 +42,10 @@ class A:
 	def test_int32array( self, x:Int32Array):
 		print x
 
+	def test_intarray(self, x:[]int):
+		for item in x:
+			print item
+
 class B:
 	def bar( self, x:A ):
 		print 'bar'
@@ -56,6 +60,12 @@ class B:
 		print 'B.test_array_of_A...'
 		for item in x:
 			print item
+
+	def test_callback( self, x:Function ):
+		return x(1,2)
+
+	def test_callback_typed( self, x:func(int int)(int) ):
+		return x(1,2)
 
 
 def test():
@@ -81,6 +91,24 @@ def test():
 	b.test_2D_array_of_A(
 		[arra, arra, arra]
 	)
+
+	def f(x,y):
+		return x+y
+
+	assert b.test_callback( f )
+
+	def ftyped(x:int, y:int) -> int:
+		return x+y
+
+	assert b.test_callback_typed( ftyped )
+
+	def ftyped_invalid(x:float, y:float):
+		return x+y
+
+	#b.test_callback_typed( ftyped_invalid )  ## this fails properly
+
+
+
 
 test()
 
