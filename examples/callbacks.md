@@ -14,6 +14,13 @@ void call_callback2( void(*cb)(void) ) {
 	cb();
 }
 
+void call_callback3( void(*cb)(float) ) {
+	cb(101.1);
+}
+void call_callback4( void(*cb)(float,float) ) {
+	cb(400.0, 20.0);
+}
+
 
 ```
 
@@ -25,6 +32,10 @@ The example above with hand written inlined C code is built with the final execu
 syntax - `func()()`
 ------------
 External C functions are typed as `func(args)(returns)`.
+
+Note: the argument types given to `func` and `lambda` are not comma separated,
+instead they are space separated, so they are not confused with the containing function argument list.
+example: `func(int float)()` is a callback that takes two arguments, the first is an integer, and the second is a float.
 
 
 syntax - `lambda()()`
@@ -48,6 +59,14 @@ with extern(abi="C"):
 	def call_callback2( cb:func()() ):
 		pass
 
+	# cb takes one and returns nothing
+	def call_callback3( cb:func(float)() ):
+		pass
+
+	# cb takes two and returns nothing
+	# note func args are space separated
+	def call_callback4( cb:func(float float)() ):
+		pass
 
 def mycb1() ->float:
 	print 'callback1 returns float'
@@ -55,6 +74,12 @@ def mycb1() ->float:
 def mycb2():
 	print 'callback2 returns nothing'
 	print 'OK'
+def mycb3(a:f32):
+	print 'callback3 takes a float and returns nothing'
+	print a
+def mycb4(a:f32, b:f32):
+	print 'callback4 takes two floats and returns nothing'
+	print a+b
 
 class Vec2:
 	def __init__(self, x:f32=4.0, y:f32=0.2):
@@ -75,8 +100,20 @@ def call_method( callback:lambda(Vec2)(Vec2), other:Vec2 ) ->Vec2:
 	v = callback( other )
 	return v
 
+def test_c_callbacks():
+	print 'testing calling c function with callback'
+	t = call_callback1( mycb1 )
+	print t
+
+	call_callback2( mycb2 )
+
+	call_callback3( mycb3 )
+	call_callback4( mycb4 )
+
 
 def main():
+	test_c_callbacks()
+
 	v1 = Vec2( 1.0, 2.0 )
 	v2 = Vec2( 100.0, 200.0 )
 	v1.show()
@@ -91,21 +128,12 @@ def main():
 	v4 = Vec2(x=99.9)
 	v4.show()
 
-
-
 	## TODO - can not construct this way because at least one keyword argument is required.
 	#v5 = Vec2(99.9)
 	#v5.show()
 	## TODO - this is valid python but is bad style
 	#v5 = Vec2(420, y=-1000)
 	#v5.show()
-
-
-	print 'testing calling c function with callback'
-	t = call_callback1( mycb1 )
-	print t
-
-	call_callback2( mycb2 )
 
 	print 'callback test ok'
 

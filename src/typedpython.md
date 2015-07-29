@@ -201,6 +201,7 @@ class typedpython:
 							u = ''.join(a)
 							u = u.replace('func(', '__go__func__["func(')
 							u += '"]=\t\t\t\t'
+							raise RuntimeError(u)
 							a = [w for w in u]
 
 						else:
@@ -393,7 +394,7 @@ class typedpython:
 
 						chan = False
 						T = False
-						if len(typedef.strip().split()) >= 2:
+						if len(typedef.strip().split()) >= 2 and not typedef.startswith('func('):
 							parts = typedef.strip().split()
 							if 'chan' in parts:  ## go syntax
 								chan = True
@@ -420,6 +421,10 @@ class typedpython:
 							typedef = '"%s"' %typedef.strip()
 						elif typedef.startswith('func('):
 							typedef = '"%s"' %typedef.strip()
+							if ' ' in typedef or '\t' in typedef:
+								## TODO deprecate this old pipe-sep hack
+								typedef = '|'.join(typedef.split())
+
 						elif typedef.startswith('lambda('):
 							typedef = '"%s"' %typedef.strip()
 						elif '::' in typedef:
