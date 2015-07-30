@@ -1,7 +1,16 @@
 JavaScript Backend - Static Types
 -------
 
-Enables runtime static type checking.
+By adding static types to function arguments and its return type,
+this enables runtime static type checking, and when an invalid type is found,
+`TypeError` is raised.  This adds safety and helps in debugging your code,
+but has some runtime performance overhead.  Once you have tested and your program
+runs without errors, you can do the final compile using the option `--release`, example:
+
+```bash
+rusthon.py myinput.md --release myoutput.tar
+```
+
 
 To run this example, install nodejs, and run these commands in your shell:
 
@@ -103,12 +112,20 @@ def test():
 
 	assert b.test_callback_typed( ftyped )
 
-	def ftyped_invalid(x:float, y:float):
+	def ftyped_invalid1(x:float, y:float):
 		return x+y
 
-	#b.test_callback_typed( ftyped_invalid )  ## this fails properly
-	#b.test_callback_typed( 1 )  ## also fails properly
+	def ftyped_invalid2(x:int, y:float, z:string):
+		print x+y
 
+	try:
+		b.test_callback_typed( ftyped_invalid1 )  ## this fails properly
+	except TypeError:
+		print 'caught TypeError OK'
+
+	## these also fail properly ##
+	#b.test_callback_typed( ftyped_invalid2 )
+	#b.test_callback_typed( 1 )
 
 
 test()

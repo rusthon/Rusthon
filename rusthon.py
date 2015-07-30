@@ -114,7 +114,8 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 				requirejs=False,
 				insert_runtime=False,
 				fast_javascript = fastjs,
-				fast_loops      = directloops
+				fast_loops      = directloops,
+				runtime_checks  = '--release' not in sys.argv
 			)
 			result[ jsfile ] = js
 			if jsfile == 'worker.js':
@@ -137,7 +138,8 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 			requirejs=False,
 			insert_runtime=False,
 			fast_javascript = fastjs,
-			fast_loops      = directloops
+			fast_loops      = directloops,
+			runtime_checks  = '--release' not in sys.argv
 		)
 		if isinstance(code, dict):
 			result.update( code )

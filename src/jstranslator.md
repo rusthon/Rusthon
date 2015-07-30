@@ -30,10 +30,10 @@ class SwapLambda( RuntimeError ):
 		RuntimeError.__init__(self)
 
 class JSGenerator(NodeVisitorBase, GeneratorBase):
-	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
+	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
 		assert source
 		NodeVisitorBase.__init__(self, source)
-
+		self._runtime_type_checking = runtime_checks
 		self.macros = {}
 		self._sleeps = 0
 		self._has_channels = False
@@ -338,7 +338,6 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 ```python
 
 	def _visit_function(self, node):
-		node._func_typed_args = []
 		comments = []
 		body = []
 		is_main = node.name == 'main'
@@ -668,30 +667,40 @@ Call Helper
 		if node.keywords:
 			out.append( 'var ' + ','.join([key.arg for key in node.keywords]) )
 			for key in node.keywords:
-				if self._webworker:  ## inside a webworker this is a type cast
+				## inside a webworker this is a type cast
+				if self._webworker:
 					out.append('%s.__proto__ = %s.prototype' %(key.arg, self.visit(key.value)))
-				else:  ## outside of a webworker this is a type assertion
+
+				## outside of a webworker this is a type assertion
+				elif self._runtime_type_checking:
 					if isinstance(key.value, ast.Call):
 						assert key.value.func.id == '__arg_array__'
 						s = key.value.args[0].s
 
 						dims = '[0]' * s.count('[')
 						t = s.split(']')[-1]
-						out.append('if (!(isinstance(%s,Array))) {throw new Error("type assertion failed - not an array")}' %key.arg)
-						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, dims, t))
+						out.append('if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
+						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
+
 					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
 
-						out.append('if (!(%s instanceof Function)) {throw new Error("type error - `%s` is not a callback function: instead got type->"+typeof(%s))}' %(key.arg, key.arg, key.arg))
+						out.append('if (!(%s instanceof Function)) {throw new TypeError("`%s` is not a callback function: instead got type->"+typeof(%s))}' %(key.arg, key.arg, key.arg))
 						targs = []
 						head,tail = key.value.s.split(')(')
 						head = head.split('func(')[-1]
 						for j, targ in enumerate(head.split('|')):  ## NOTE TODO replace `|` with space
 							out.append(
-								'if (!(%s.args[%s]=="%s")) {throw new Error("type error - callback `%s` requires argument `%s` as type `%s`")}' %(key.arg, j, targ,   key.value.s.replace('|',' '), j, targ)
+								'if (!(%s.args[%s]=="%s")) {throw new TypeError("callback `%s` requires argument `%s` as type `%s`")}' %(key.arg, j, targ,   key.value.s.replace('|',' '), j, targ)
+							)
+
+						returns = tail.replace(')','')
+						if returns:
+							out.append(
+								'if (!(%s.returns=="%s")) {throw new TypeError("callback `%s` requires a return type of `%s`, instead got->" + typeof(%s.returns))}' %(key.arg, returns, key.arg, returns, key.arg)
 							)
 
 					else:
-						out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed")}' %(key.arg, self.visit(key.value)))
+						out.append('if ( !(isinstance(%s, %s))) {throw new TypeError("type assertion failed")}' %(key.arg, self.visit(key.value)))
 
 		return ';\n'.join(out)
 
@@ -1089,7 +1098,7 @@ html files can also be translated, it is parsed and checked for `<script type="t
 
 ```python
 
-def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False):
+def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
 	head = []
 	tail = []
 	script = False
@@ -1160,7 +1169,8 @@ def translate_to_javascript(source, requirejs=True, insert_runtime=True, webwork
 		webworker=webworker, 
 		function_expressions=function_expressions,
 		fast_javascript = fast_javascript,
-		fast_loops      = fast_loops
+		fast_loops      = fast_loops,
+		runtime_checks  = runtime_checks
 	)
 	output = gen.visit(tree)
 
