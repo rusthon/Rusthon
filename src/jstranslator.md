@@ -350,7 +350,32 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		func_expr_var = True
 		returns = None
 
+		## decorator specials ##
+		## note: only args_typedefs is used for now in the js backend ##
+		options = {'getter':False, 'setter':False, 'returns':None, 'returns_self':False, 'generic_base_class':None, 'classmethod':False}
+		args_typedefs = {}
+		chan_args_typedefs = {}
+		generics = set()
+		args_generics = dict()
+		func_pointers = set()
+		arrays = dict()
+		########################
+
 		for decor in node.decorator_list:
+
+			##note: `_visit_decorator` is defined in generatorbase.md
+			self._visit_decorator(
+				decor,
+				node=node,
+				options=options,
+				args_typedefs=args_typedefs,
+				chan_args_typedefs=chan_args_typedefs,
+				generics=generics,
+				args_generics=args_generics,
+				func_pointers=func_pointers,
+				arrays = arrays,
+			)
+
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'expression':
 				assert len(decor.args)==1
 				func_expr = True
@@ -455,8 +480,13 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( node.name + '.returns = "%s";' %returns )
 
-		if node._func_typed_args:
-			targs = ','.join( ['"%s"'%t for t in node._func_typed_args] )
+		_func_typed_args = []
+		for arg in node.args.args:
+			if arg.id in args_typedefs:
+				_func_typed_args.append( args_typedefs[arg.id] )
+
+		if _func_typed_args:
+			targs = ','.join( ['"%s"'%t for t in _func_typed_args] )
 			if is_prototype:
 				body.append(
 					'%s.prototype.%s.args = [%s];' % (protoname, node.name, targs)
@@ -644,33 +674,26 @@ Call Helper
 					if isinstance(key.value, ast.Call):
 						assert key.value.func.id == '__arg_array__'
 						s = key.value.args[0].s
-						self._function_stack[-1]._func_typed_args.append( s )
 
 						dims = '[0]' * s.count('[')
 						t = s.split(']')[-1]
 						out.append('if (!(isinstance(%s,Array))) {throw new Error("type assertion failed - not an array")}' %key.arg)
 						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new Error("type assertion failed - invalid array type")}' %(key.arg, key.arg, dims, t))
 					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
-						assert len(self._function_stack) >= 1
-						#F = self._function_stack[-1]
-						#if not hasattr(F, '_func_typed_args'):
-						#	F._func_typed_args = []
-						self._function_stack[-1]._func_typed_args.append( key.value.s )
 
-						out.append('if (!(%s instanceof Function)) {throw new Error("type assertion error - callback not a function")}' %key.arg)
+						out.append('if (!(%s instanceof Function)) {throw new Error("type error - `%s` is not a callback function: instead got type->"+typeof(%s))}' %(key.arg, key.arg, key.arg))
 						targs = []
 						head,tail = key.value.s.split(')(')
 						head = head.split('func(')[-1]
 						for j, targ in enumerate(head.split('|')):  ## NOTE TODO replace `|` with space
 							out.append(
-								'if (!(%s.args[%s]=="%s")) {throw new Error("type error - invalid callback type")}' %(key.arg, j, targ)
+								'if (!(%s.args[%s]=="%s")) {throw new Error("type error - callback `%s` requires argument `%s` as type `%s`")}' %(key.arg, j, targ,   key.value.s.replace('|',' '), j, targ)
 							)
 
 					else:
-						self._function_stack[-1]._func_typed_args.append( self.visit(key.value) )
 						out.append('if ( !(isinstance(%s, %s))) {throw new Error("type assertion failed")}' %(key.arg, self.visit(key.value)))
 
-		return ';'.join(out)
+		return ';\n'.join(out)
 
 ```
 

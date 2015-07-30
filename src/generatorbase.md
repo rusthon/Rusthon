@@ -257,7 +257,7 @@ Function Decorators
 						T = key.value.id
 						if self.is_prim_type(T):
 							args_typedefs[key.arg] = T
-						else:
+						elif self._cpp:
 							if self.usertypes and 'shared' in self.usertypes:
 								args_typedefs[ key.arg ] = self.usertypes['shared']['template'] %T
 							elif not self._shared_pointers:
@@ -267,26 +267,32 @@ Function Decorators
 							else:
 								args_typedefs[ key.arg ] = 'std::shared_ptr<%s>' %T
 
+						else:  ## javascript runtime checked types
+							args_typedefs[key.arg] = T
+
 					else:
 						if isinstance(key.value, ast.Call) and isinstance(key.value.func, ast.Name) and key.value.func.id=='__arg_array__':
 							arrays[ key.arg ] = key.value.args[0].s
 							dims = arrays[ key.arg ].count('[')
 							arrtype = arrays[ key.arg ].split(']')[-1]
 
-							## non primitive types (objects and arrays) can be None, `[]MyClass( None, None)`
-							## use a pointer or smart pointer. 
-							if not self.is_prim_type(arrtype):
-								if not self._shared_pointers:
-									arrtype += '*'
-								elif self.usertypes and 'shared' in self.usertypes:
-									arrtype = self.usertypes['shared']['template'] % arrtype
-								elif self._unique_ptr:
-									arrtype = 'std::unique_ptr<%s>' %arrtype
-								else:
-									arrtype = 'std::shared_ptr<%s>' %arrtype
 
 							if self._cpp:
+								## non primitive types (objects and arrays) can be None, `[]MyClass( None, None)`
+								## use a pointer or smart pointer. 
+								if not self.is_prim_type(arrtype):
+									if not self._shared_pointers:
+										arrtype += '*'
+									elif self.usertypes and 'shared' in self.usertypes:
+										arrtype = self.usertypes['shared']['template'] % arrtype
+									elif self._unique_ptr:
+										arrtype = 'std::unique_ptr<%s>' %arrtype
+									else:
+										arrtype = 'std::shared_ptr<%s>' %arrtype
+
+
 								T = []
+
 								for i in range(dims):
 									if not self._shared_pointers:
 										T.append('std::vector<')
@@ -311,8 +317,9 @@ Function Decorators
 
 								args_typedefs[ key.arg ] = ''.join(T)
 
-							else:
-								raise SyntaxError('TODO')
+							else:  ## javascript backend
+								args_typedefs[ key.arg ] = key.value.args[0].s
+
 						else:
 							args_typedefs[ key.arg ] = self.visit(key.value)
 
@@ -361,7 +368,8 @@ Function Decorators
 							args_typedefs[ key.arg ] = 'var'
 
 					## check for super classes - generics ##
-					if args_typedefs[ key.arg ] in self._classes:
+					## this was originally for the Go backend, still used in the c++ or rust backends?
+					if (self._go or self._cpp or self._rust) and args_typedefs[ key.arg ] in self._classes:
 						classname = args_typedefs[ key.arg ]
 						options['generic_base_class'] = classname
 

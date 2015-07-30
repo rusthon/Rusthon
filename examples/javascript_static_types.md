@@ -64,8 +64,8 @@ class B:
 	def test_callback( self, x:Function ):
 		return x(1,2)
 
-	def test_callback_typed( self, x:func(int int)(int) ):
-		return x(1,2)
+	def test_callback_typed( self, x:func(int float string)(float) ):
+		return x(1,2, 'callback typed OK')
 
 
 def test():
@@ -97,7 +97,8 @@ def test():
 
 	assert b.test_callback( f )
 
-	def ftyped(x:int, y:int) -> int:
+	def ftyped(x:int, y:float, z:string) -> float:
+		print z
 		return x+y
 
 	assert b.test_callback_typed( ftyped )
@@ -106,7 +107,7 @@ def test():
 		return x+y
 
 	#b.test_callback_typed( ftyped_invalid )  ## this fails properly
-
+	#b.test_callback_typed( 1 )  ## also fails properly
 
 
 
