@@ -673,6 +673,8 @@ Call Helper
 
 				## outside of a webworker this is a type assertion
 				elif self._runtime_type_checking:
+					funcname = self._function_stack[-1].name
+
 					if isinstance(key.value, ast.Call):
 						assert key.value.func.id == '__arg_array__'
 						s = key.value.args[0].s
@@ -700,7 +702,8 @@ Call Helper
 							)
 
 					else:
-						out.append('if ( !(isinstance(%s, %s))) {throw new TypeError("type assertion failed")}' %(key.arg, self.visit(key.value)))
+						val = self.visit(key.value)
+						out.append('if ( !(isinstance(%s, %s))) {throw new TypeError("in function `%s`, argument `%s` must of type `%s`, instead got->"+typeof(%s))}' %(key.arg, val, funcname, key.arg,val, key.arg))
 
 		return ';\n'.join(out)
 

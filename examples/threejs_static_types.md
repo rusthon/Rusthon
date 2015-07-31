@@ -1,6 +1,10 @@
 JavaScript Backend - Static Types
 -------
 
+Type errors most often happen when interfacing with external libraries, not the code you have written yourself.
+This example using Three.js shows you how to type arguments as class types from external javascript libraries.
+
+
 To run this example, run these commands in your shell:
 
 ```bash
@@ -10,23 +14,27 @@ cd Rusthon/
 ./rusthon.py ./examples/threejs_static_types.md
 ```
 
-
-```html
-<html>
-<head>
-<script src="~/three.js/build/three.min.js"></script>
-
-</head>
-<body>
-<@myscript>
-</body>
-</html>
-```
-
 Example
 --------
 
-The function below `add_mesh` has its arguments typed with two external types from THREE.js: `THREE.Scene` and `THREE.Mesh`
+In the function below `setup_camera`, the argument `c` is typed as `THREE.PerspectiveCamera`, if the function is called with `undefined`
+it will throw and error with this message:
+```
+Uncaught TypeError: in function `setup_camera`, 
+argument `c` must be of type `THREE.PerspectiveCamera`,
+instead got->undefined
+```
+This error message makes it easy for you to understand what went wrong in the function.
+
+The untyped version of the same function `setup_camera_untyped`, called with `undefined`, 
+prints an error message which offers little help in fixing the problem.
+```
+Uncaught TypeError: Cannot read property `position` of undefined
+```
+By default, above is all you get from the javascript debug console in Chrome,
+the variable name and function the error happened in is not printed!
+To find out the variable and function name you have to click on the error, 
+and it will take you to that line number in the source code, wasting your time.
 
 
 @myscript
@@ -43,6 +51,13 @@ def add_mesh( scn:THREE.Scene, mesh:THREE.Mesh ):
 	scn.add( mesh )
 	Meshes.append( mesh )
 
+def setup_camera( c:THREE.PerspectiveCamera ):
+	c.position.z = 60
+	c.position.x = 5
+
+def setup_camera_untyped( c ):
+	c.position.z = 60
+	c.position.x = 5
 
 
 def main():
@@ -56,9 +71,13 @@ def main():
 	scn = new( THREE.Scene() )
 	print(scn)
 	cam = new( THREE.PerspectiveCamera( 45, width/height, 0.01, 10000) )
-	print(cam)
-	cam.position.z = 60
-	cam.position.x = 5
+	setup_camera( cam )
+
+	## throws a readable error message
+	#setup_camera( undefined )
+
+	## throws a confusing error message
+	#setup_camera_untyped( undefined )
 
 	ren = new( THREE.WebGLRenderer() )
 	print(ren)
@@ -122,4 +141,20 @@ def animate():
 
 main()
 
+```
+
+
+html
+--------
+
+```html
+<html>
+<head>
+<script src="~/three.js/build/three.min.js"></script>
+
+</head>
+<body>
+<@myscript>
+</body>
+</html>
 ```
