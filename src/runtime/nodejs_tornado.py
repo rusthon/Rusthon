@@ -122,7 +122,11 @@ class tornado:
 
 			def on_ws_connection(self, ws):  ## ws is a websocket client
 				print 'new ws connection'
-				handler = self._ws_handler( ws )
+				handler = new(
+					self._ws_handler( ws )
+				)
+				## TODO fix base class init for subclasses that are unaware of their parent class init
+				handler.__init__(ws)
 				handler.open()
 				## handler.on_message will be called with: data, flags
 				## flags.binary = true/false

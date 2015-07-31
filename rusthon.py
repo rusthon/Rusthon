@@ -1393,7 +1393,7 @@ def main():
 						run( [python, name], cwd=tmpdir )
 
 				elif name.endswith('.js'):
-					run( ['node', name],   cwd=tmpdir )
+					run( ['node', name],   cwd=tmpdir, env={'NODE_PATH':'/usr/lib/node_modules/'} )
 
 				elif name.endswith('.nim'):
 					run( ['nim', 'compile', '--run', name],   cwd=tmpdir )

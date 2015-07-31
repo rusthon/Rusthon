@@ -3,6 +3,7 @@ NodeJS fake Tornado module
 
 see [nodejs_tornado.py](../src/runtime/nodejs_tornado.py)
 
+note: you need to install the nodejs module `ws`, run `sudo npm install -g ws`.
 
 To run this example run these commands in your shell, nodejs will be used to run it:
 
@@ -24,9 +25,42 @@ html
 <head>
 </head>
 <body>
-hello world from nodejs tornado web server
+<@myscript>
 </body>
 </html>
+```
+
+@myscript
+```rusthon
+#backend:javascript
+from runtime import *
+
+ws = None
+
+def on_open_ws():
+	print 'websocket open'
+	ws.send('hello server')
+
+def on_close_ws():
+	print 'websocket close'
+
+def on_message_ws(event):
+	print 'on message', event
+	print event.data
+
+def connect_ws():
+	global ws
+	document.body.appendChild( document.createTextNode('testing websocket') )
+	addr = 'ws://' + location.host + '/websocket'
+	print 'websocket test connecting to:', addr
+	ws = new( WebSocket(addr) )
+	ws.binaryType = 'arraybuffer'
+	ws.onmessage = on_message_ws
+	ws.onopen = on_open_ws
+	ws.onclose = on_close_ws
+	print ws
+
+connect_ws()
 
 ```
 
@@ -44,21 +78,31 @@ class MainHandler( tornado.web.RequestHandler ):
 
 	def get(self, path=None):
 		print('path', path)
-		guess = path
-		if not path or path == '/': guess = 'index.html'
-		#mime_type, encoding = mimetypes.guess_type(guess)
-		#if mime_type: self.set_header("Content-Type", mime_type)
-
 		if path == 'favicon.ico' or path.endswith('.map'):
 			self.write('')
 		else:
 			self.write( open('index.html').read() )
 
 
+class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
+	def open(self):
+		print( 'websocket open' )
+		print( self.request.connection )
+		self.write_message('hello client')
+
+	def on_message(self, msg):
+		print 'websocket - got %s bytes' %len(msg)
+		print msg
+
+	def on_close(self):
+		print('websocket closed')
+		if self.ws_connection:
+			self.close()
 
 ## Tornado Handlers ##
 Handlers = [
+	('/websocket', WebSocketHandler),
 	('/', MainHandler),  ## order is important, this comes last.
 ]
 
