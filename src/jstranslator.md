@@ -388,7 +388,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		func_pointers = set()
 		arrays = dict()
 		########################
-
+		decorators = []
 		for decor in node.decorator_list:
 
 			##note: `_visit_decorator` is defined in generatorbase.md
@@ -421,7 +421,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				protoname = decor.args[0].id
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				returns = decor.args[0].id
+			else:
+				decorators.append( self.visit(decor)+'(' )
 
+		dechead = ''.join(decorators)
+		dectail = ')' * len(decorators)
 		args = self.visit(node.args)
 
 		if is_prototype:
@@ -430,12 +434,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			fdef = '%s.prototype.%s = function(%s)' % (protoname, node.name, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
-			## this style will not make function global to the eval context in NodeJS ##
-			#buffer = self.indent() + 'function %s(%s) {\n' % (node.name, ', '.join(args))
-
-			## note if there is no var keyword and this function is at the global level,
-			## then it should be callable from eval in NodeJS - this is not correct.
-			## infact, var should always be used with function expressions.
+			## note: var should always be used with function expressions.
 
 			if self._func_expressions or func_expr:
 				if is_debugger:
@@ -450,7 +449,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					fdef = '\n'.join(d)
 					self.push()
 				else:
-					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
+					fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
 			else:  ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
@@ -464,7 +463,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				raise SyntaxError('the decorator `@debugger` is only used on top level functions in the global namespace')
 
 			if self._func_expressions or func_expr:
-				fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
+				fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
 			else: ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
@@ -509,6 +508,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			self.pull()
 			body.append( '}' )
 
+		if dectail:
+			body.append(dectail + ';')
 
 		## below is used for runtime type checking ##
 		if returns:
