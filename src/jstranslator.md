@@ -127,7 +127,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
 				a = '/***/ try {\n'
 				a += self.indent() + s + '\n'
-				a += '/***/ } catch (__err) { __debugger__.onerror(__err, %s); debugger; return; };' %self._function_stack[-1].name
+				a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{return;} };' %self._function_stack[-1].name
 				return a
 
 
@@ -443,6 +443,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 						'	function %s_wrapped(%s)' % (node.name, ', '.join(args)),  ## scope lifted ok here
 					]
 					fdef = '\n'.join(d)
+					self.push()
 				else:
 					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
 
@@ -454,6 +455,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				self._exports.add( node.name )
 
 		else:
+			if is_debugger:
+				raise SyntaxError('the decorator `@debugger` is only used on top level functions in the global namespace')
 
 			if self._func_expressions or func_expr:
 				fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
@@ -473,19 +476,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				comments.append('/* %s */' %child.value.s.strip() )
 				continue
 
-			#try:
-			#	v = self.visit(child)
-			#except SwapLambda as error:
-			#	error.node.__class__ = ast.FunctionDef
-			#	next = node.body[i+1]
-			#	if not isinstance(next, ast.FunctionDef):
-			#		raise SyntaxError('inline def is only allowed in javascript mode')
-			#	error.node.__dict__ = next.__dict__
-			#	error.node.name = ''
-			#	v = self.visit(child)
 
 			v = self.try_and_catch_swap_lambda(child, node.body)
-
 
 			if v is None:
 				msg = 'error in function: %s'%node.name
@@ -494,6 +486,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( self.indent()+v)
 
+		## todo fix when sleep comes before channel async _func_recv, should be a stack of ['}', '});']
 		if self._sleeps:
 			body.append( '}' * self._sleeps)
 			self._sleeps = 0
@@ -504,12 +497,15 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				body.append( self.indent() + '});' )
 				self._func_recv -= 1
 
+		## end of function ##
 		self.pull()
 		body.append( self.indent() + '}' )
 		if is_debugger:
+			self.pull()
 			body.append( '}' )
 
 
+		## below is used for runtime type checking ##
 		if returns:
 			if is_prototype:
 				body.append(

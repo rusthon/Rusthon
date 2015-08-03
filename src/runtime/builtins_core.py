@@ -8,7 +8,7 @@ inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerErr
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
 
-def __get_function_clean_source(f):
+def __debugger_clean_source(f):
 	source = []
 	for line in f.toString().splitlines():
 		if line.strip().startswith('/***/'):  ## skip injected try/catch for debugger
@@ -17,7 +17,7 @@ def __get_function_clean_source(f):
 			source.append(line)
 	return '\n'.join(source)
 
-def __debugger_onerror(e,f):
+def __debugger_log(e,f):
 	console.error('ERROR in function->' + f.name)
 	#console.warn(f.toString())
 	print __debugger__.getsource( f )
@@ -34,11 +34,14 @@ def __debugger_onerror(e,f):
 		else:
 			console.error(line)
 
+	return True  ## if returns True then halt (breakpoint)
+
 
 __debugger__ = {
-	'onerror' : __debugger_onerror,
-	'getsource' : __get_function_clean_source,
-	'showdevtools' : lambda : require('nw.gui').Window.get().showDevTools()
+	'log'     : __debugger_log,
+	'onerror' : __debugger_log,  ## by default use breakpoints
+	'getsource' : __debugger_clean_source,
+	'showdevtools' : lambda : require('nw.gui').Window.get().showDevTools(),
 }
 
 ## mini fake json library ##

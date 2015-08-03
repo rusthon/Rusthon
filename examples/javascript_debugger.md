@@ -18,7 +18,7 @@ where you can debug things, and then press unpause to resume your script.
 #backend:javascript
 from runtime import *
 
-#debugger.onerror = lambda e,f: show_error(e,f)
+debugger.onerror = lambda e,f: show_error(e,f)
 
 def show_error(err,f):
 	#show(err)
