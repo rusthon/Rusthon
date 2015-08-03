@@ -2399,6 +2399,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		if name in typedpython.GO_SPECIAL_CALLS:
 			name = typedpython.GO_SPECIAL_CALLS[ name ]
 			args = [self.visit(e) for e in node.args ]
+			args += ['%s=%s' %(k.arg, self.visit(k.value)) for k in node.keywords ]
 			return '%s( %s )' %(name, ','.join(args))
 
 		if self._with_rpc:
@@ -2967,7 +2968,9 @@ class PythonToPythonJS(NodeVisitorBase):
 			self._global_functions[ node.name ] = node  ## save ast-node
 
 		for decorator in reversed(node.decorator_list):
-			if isinstance(decorator, Name) and decorator.id == 'classmethod':
+			if isinstance(decorator, Name) and decorator.id == 'debugger':
+				writer.write('@debugger')
+			elif isinstance(decorator, Name) and decorator.id == 'classmethod':
 				writer.write('@classmethod')
 			elif isinstance(decorator, Name) and decorator.id == 'virtualoverride':
 				writer.write('@virtualoverride')

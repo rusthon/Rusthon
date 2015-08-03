@@ -8,6 +8,39 @@ inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerErr
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
 
+def __get_function_clean_source(f):
+	source = []
+	for line in f.toString().splitlines():
+		if line.strip().startswith('/***/'):  ## skip injected try/catch for debugger
+			continue
+		else:
+			source.append(line)
+	return '\n'.join(source)
+
+def __debugger_onerror(e,f):
+	console.error('ERROR in function->' + f.name)
+	#console.warn(f.toString())
+	print __debugger__.getsource( f )
+
+	badline = None
+	for line in e.stack.splitlines():
+		if line.strip().startswith('at '):
+			fname = line.split('(')[0][6:].strip()
+			console.warn('  error in function->' + fname)
+			if badline is None:
+				badline = fname
+			if fname == f.name:
+				break
+		else:
+			console.error(line)
+
+
+__debugger__ = {
+	'onerror' : __debugger_onerror,
+	'getsource' : __get_function_clean_source,
+	'showdevtools' : lambda : require('nw.gui').Window.get().showDevTools()
+}
+
 ## mini fake json library ##
 json = {
 	'loads': lambda s: JSON.parse(s),
@@ -114,12 +147,8 @@ def func(a):
 		return False
 String.prototype.endswith = func
 
-def func(a):
+def func(arr):
 	out = ''
-	if instanceof(a, Array):
-		arr = a
-	else:
-		arr = a[...]
 	i = 0
 	for value in arr:
 		out += value
@@ -676,12 +705,17 @@ class __WorkerPool__:
 		## then it will pick all functions of `window` but they will be `undefined`
 		## if their definition comes after the construction of this singleton.
 		print 'creating blob'
+
 		## TODO other builtins prototype hacks. see above.
 		header = [
+			'setInterval(',
+			'	function(){',
+			'		self.postMessage({time_update:(new Date()).getTime()});',
+			'	}, 500',
+			')',
 			'Array.prototype.append = function(a) {this.push(a);};',
 		]
 		for name in dir(window):
-			print name
 			ob = window[name]
 			if ob is undefined:
 				print 'WARNING: object in toplevel namespace window is undefined ->' + name
@@ -747,22 +781,57 @@ class __WorkerPool__:
 									header.append(name + '.' + xname + '.prototype.' + method_name + '=' + sub.toString() + ';' )
 									#header.append(name + '.' + xname + '.' + method_name + '=' + ob.toString() + ';' )
 
-
-
-
+		## Web Worker ##
 		header.extend( self.source )
 		blob = new(Blob(header, type='application/javascript'))
 		url = URL.createObjectURL(blob)
-		#self.thread = new(Worker(url))
-		#self.thread.onmessage = self.update.bind(this)
 		ww = new(Worker(url))
-		self.thread = ww  ## temp, TODO multiple threads
-		self.thread.onmessage = self.update.bind(this)
+		#self.thread = ww  ## temp, TODO multiple threads
+		#self.thread.onmessage = self.update.bind(this)
+
+		ww._last_time_update = 0
 		ww._stream_callbacks = {}
 		ww._stream_triggers  = {}
 		ww._get_callback  = None
 		ww._call_callback = None
 		ww._callmeth_callback = None
+
+		## if worker has not sent a time update in awhile ##
+		ww.busy = lambda : ww._last_time_update - time() < 1000
+
+
+		def onmessage_update(evt):
+			if evt.data.time_update:  ## the worker uses setInterval to report the time, see `worker.busy()`
+				ww._last_time_update = evt.data.time_update
+			elif evt.data.debug:
+				print evt.data.debug
+			else:
+				ww._last_time_update = time()
+
+				msg = evt.data.message
+				if evt.data.proto: msg.__proto__ = eval(evt.data.proto + '.prototype')
+
+
+				if evt.data.GET:
+					ww._get_callback( msg )
+				elif evt.data.CALL:
+					ww._call_callback( msg )
+				elif evt.data.CALLMETH:
+					ww._callmeth_callback( msg )
+				else:
+					id = evt.data.id
+					if id in ww._stream_callbacks:  ## channels
+						callbacks = ww._stream_callbacks[id]
+						if len(callbacks):
+							cb = callbacks.pop()
+							cb( msg )
+						else:
+							ww._stream_triggers[id].push( msg )
+					else:
+						print 'ERROR: missing callback for:' + id
+
+
+		ww.onmessage = onmessage_update
 		return ww
 
 	def __init__(self, src, extras):
@@ -806,16 +875,27 @@ class __WorkerPool__:
 			else:
 				print 'ERROR: missing callback for:' + id
 
-	def spawn(self, cfg):
-		#tid = '0'
+	def spawn(self, cfg, options):
+		cpu = '0'
+		if options is not undefined:
+			print options.cpu
+			cpu = options.cpu
+
 		#if tid not in self.threads:
 		#	self.threads[tid] = self.create_webworker()
 		#cfg['thread-id'] = tid
 		#return tid + '|' + self.threads[tid].spawn_class(cfg)
 
-		if not self.thread:
-				self.thread = self.create_webworker()
+		readythread = None
+		for thread in self.pool:
+			if not thread.busy():
+				readythread = thread
+				break
 
+		if not readythread:
+			self.pool.append(
+				self.create_webworker()
+			)
 
 		## cfg contains: call|new:func/classname, args:[]
 		id = 'worker' + len(self.workers)

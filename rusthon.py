@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __version__ = '0.9.9'
-import os, sys, subprocess, hashlib
+import os, sys, subprocess, hashlib, time
 import tempfile
 import webbrowser
 
@@ -1195,6 +1195,31 @@ def save_tar( package, path='build.tar' ):
 	tar.close()
 
 
+## this hack to force the devtools window to show first will not work because a body onload will execute
+## at the same time and the js debugger will also reload,
+## but because the debugger is in another process, it will the first debug events.
+NW_DEVTOOLS_HACK = '''
+<html>
+<script>
+require('nw.gui').Window.get().showDevTools();
+setTimeout(function (){
+		//require('nw.gui').Window.get().reloadDev();
+		require('nw.gui').Window.get().reload();
+	},
+	3000
+);
+</script>
+<body>opening devtools window....</body>
+</html>
+'''
+
+NW_STARTUP_HACK = '''
+exports.myinit = function() {
+	require('nw.gui').Window.get().showDevTools();
+}
+
+'''
+
 def main():
 	if len(sys.argv)==1:
 		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--anaconda] [--run=] [--data=]')
@@ -1346,10 +1371,26 @@ def main():
 			for i,page in enumerate(package['html']):
 				tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
 				open(tmp, 'wb').write( page['code'] )
-				if sys.platform=='darwin':
+
+				if sys.platform=='darwin':  ## hack for OSX
 					subprocess.call(['open', tmp])
-				elif CHROME_EXE:
-					subprocess.call([CHROME_EXE, '--disable-gpu-sandbox', tmp])
+				elif nodewebkit_runnable:
+					## nodewebkit looks for `package.json` in the folder it is given ##
+
+					open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)
+
+
+					nwcfg = '{"name":"test", "node-main":"nwstartup.js", "main":"%s", "window":{"width":800, "height":600, "toolbar":false}}' %os.path.split(tmp)[1]
+					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
+
+					subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
+
+					## this hack will not work ##
+					#open(tmp, 'wb').write( NW_DEVTOOLS_HACK )
+					#subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
+					#time.sleep(2)
+					#open(tmp, 'wb').write( page['code'] )  ## rewrite html this happens after devtools window is shown.
+
 				else:
 					webbrowser.open(tmp)
 
@@ -1411,8 +1452,9 @@ def main():
 				elif name.endswith('.html'):
 					if sys.platform=='darwin':
 						subprocess.call(['open', tmpdir+'/'+name])
-					elif CHROME_EXE:
-						subprocess.call([CHROME_EXE, '--disable-gpu-sandbox', tmpdir+'/'+name])
+					elif nodewebkit_runnable:
+						raise RuntimeError('todo nodewebkitxx')
+						subprocess.call([nodewebkit, tmp], cwd=tmpdir)
 					else:
 						webbrowser.open(tmpdir+'/'+name)
 

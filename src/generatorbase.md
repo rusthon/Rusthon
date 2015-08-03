@@ -12,7 +12,7 @@ Imports
 class GeneratorBase( CLikeLanguage ):
 
 	def visit_Expr(self, node):
-		# XXX: this is UGLY
+		## note: the javascript backend overloads this ##
 		s = self.visit(node.value)
 		if s is None:
 			raise RuntimeError('GeneratorBase ExpressionError: %s' %node.value)
@@ -811,8 +811,13 @@ TODO clean up.
 					mode = 'new'
 					fname = self.visit(node.args[0].args[0].func)
 					args = [self.visit(a) for a in node.args[0].args[0].args]
-
-				return '__workerpool__.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
+				if node.keywords:
+					if not node.keywords[0].arg=='cpu':
+						raise SyntaxError('invalid keyword argument to the builtin `spawn`')
+					cpuid = self.visit(node.keywords[0].value)
+					return '__workerpool__.spawn({%s:"%s", args:[%s]}, {cpu:%s})' %(mode,fname, ','.join(args), cpuid)
+				else:
+					return '__workerpool__.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
 
 		elif name == '__go_make__':
 			if len(node.args)==2:

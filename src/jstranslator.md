@@ -108,6 +108,29 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		return 'if (!(%s)) {throw new Error("assertion failed"); }' %self.visit(node.test)
 
 
+	def visit_Expr(self, node):
+		## note: the javascript backend overloads this ##
+		s = self.visit(node.value)
+		if s is None:
+			raise RuntimeError('GeneratorBase ExpressionError: %s' %node.value)
+		if s.strip() and not s.endswith(';'):
+			s += ';'
+
+		if s==';' or not s:
+			return ''
+		else:
+			if not len(self._function_stack) or s.startswith('var '):
+				return s
+			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='inline':
+				return s
+			else:
+				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
+				a = '/***/ try {\n'
+				a += self.indent() + s + '\n'
+				a += '/***/ } catch (__err) { __debugger__.onerror(__err, %s); debugger; return; };' %self._function_stack[-1].name
+				return a
+
+
 	def visit_Assign(self, node):
 		target = node.targets[0]
 		if isinstance(target, Tuple):
@@ -344,9 +367,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_annon = node.name == ''
 		is_pyfunc    = False
 		is_prototype = False
+		is_debugger  = False
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
-		func_expr_var = True
+		func_expr_var = True  ## this should always be true, was this false before for hacking nodejs namespace?
 		returns = None
 
 		## decorator specials ##
@@ -381,6 +405,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
 
+			elif isinstance(decor, ast.Name) and decor.id == 'debugger':
+				is_debugger = True
+
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
@@ -393,6 +420,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		args = self.visit(node.args)
 
 		if is_prototype:
+			if is_debugger:
+				raise SyntaxError('@debugger is not allowed on methods: %s.%s' %(protoname, node.name))
 			fdef = '%s.prototype.%s = function(%s)' % (protoname, node.name, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
@@ -404,11 +433,20 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			## infact, var should always be used with function expressions.
 
 			if self._func_expressions or func_expr:
-				if func_expr_var:
-					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
+				if is_debugger:
+					## first open devtools then wait two seconds and then run function  ##
+					d = [
+						'var %s = function debugger_entrypoint_%s() {' %(node.name, node.name),
+						'	/***/ var __entryargs__ = arguments;',
+						'	/***/ try {require("nw.gui").Window.get().showDevTools();} catch (__err) {console.log("debugger requires NW.js");};',
+						'	setTimeout(function(){%s_wrapped(__entryargs__)}, 2000);' %node.name,
+						'	function %s_wrapped(%s)' % (node.name, ', '.join(args)),  ## scope lifted ok here
+					]
+					fdef = '\n'.join(d)
 				else:
-					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
-			else:
+					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
+
+			else:  ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
 
@@ -418,11 +456,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		else:
 
 			if self._func_expressions or func_expr:
-				if func_expr_var:
-					fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
-				else:
-					fdef = '%s = function(%s)' % (node.name, ', '.join(args))
-			else:
+				fdef = 'var %s = function %s(%s)' % (node.name,node.name,  ', '.join(args))
+
+			else: ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
 		body.append( fdef )
@@ -431,7 +467,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		self.push()
 		next = None
 		for i,child in enumerate(node.body):
-			if isinstance(child, Str) or hasattr(child, 'SKIP'):
+			if isinstance(child, Str) or hasattr(child, 'SKIP'):  ## TODO check where the SKIP hack is coming from
 				continue
 			elif isinstance(child, ast.Expr) and isinstance(child.value, ast.Str):
 				comments.append('/* %s */' %child.value.s.strip() )
@@ -470,6 +506,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		self.pull()
 		body.append( self.indent() + '}' )
+		if is_debugger:
+			body.append( '}' )
+
 
 		if returns:
 			if is_prototype:
@@ -523,6 +562,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 	def _visit_subscript_ellipsis(self, node):
 		name = self.visit(node.value)
+		raise SyntaxError('ellipsis slice is deprecated in the javascript backend')
 		return '%s["$wrapped"]' %name
 
 
@@ -546,7 +586,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			return 'null'
 		elif node.id == '__DOLLAR__':
 			return '$'
-		return node.id
+		elif node.id == 'debugger':  ## keyword in javascript
+			return '__debugger__'
+		else:
+			return node.id
 
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
