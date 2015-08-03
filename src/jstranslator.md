@@ -33,6 +33,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
 		assert source
 		NodeVisitorBase.__init__(self, source)
+		self._in_try = False
 		self._runtime_type_checking = runtime_checks
 		self.macros = {}
 		self._sleeps = 0
@@ -119,7 +120,9 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		if s==';' or not s:
 			return ''
 		else:
-			if not len(self._function_stack) or s.startswith('var '):
+			if self._in_try:
+				return s
+			elif not len(self._function_stack) or s.startswith('var '):
 				return s
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='inline':
 				return s
@@ -291,6 +294,7 @@ TODO `finnally` for the javascript backend
 ```python
 
 	def visit_TryExcept(self, node):
+		self._in_try = True
 		out = []
 		out.append( self.indent() + 'try {' )
 		self.push()
@@ -305,6 +309,7 @@ TODO `finnally` for the javascript backend
 		)
 		self.pull()
 		out.append( '}' )
+		self._in_try = False
 		return '\n'.join( out )
 
 	def visit_Raise(self, node):
