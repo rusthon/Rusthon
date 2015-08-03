@@ -2941,7 +2941,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		is_worker_entry = False
 		property_decorator = None
 		decorators = []
-		with_js_decorators = []
 		with_dart_decorators = []
 		setter = False
 		return_type = None
@@ -3043,12 +3042,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			elif self._with_dart:
 				with_dart_decorators.append( self.visit(decorator) )
 
-			elif self._with_js:  ## decorators are special in with-js mode
-				self._in_assign_target = True
-				with_js_decorators.append( self.visit( decorator ) )
-				self._in_assign_target = False
-
-			elif isinstance(decorator, Name) and decorator.id == 'fastdef':
+			elif isinstance(decorator, Name) and decorator.id == 'fastdef':  ## TODO clean this up
 				fastdef = True
 				raise SyntaxError('@fast is deprecated')
 
@@ -3138,6 +3132,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				if args_typedefs:
 					writer.write('@__typedef__(%s)' %','.join(args_typedefs))
 
+
 		if func_expr:
 			writer.write('@expression(%s)' %func_expr)
 
@@ -3153,6 +3148,11 @@ class PythonToPythonJS(NodeVisitorBase):
 				writer.write('@returns(%s)' %','.join( ['%s=%s' %(k,v) for k,v in return_type_keywords.items()] ))
 			else:
 				writer.write('@returns(%s)' %return_type)
+
+		## apply decorators ##
+		for decorator in decorators:
+			writer.write('@%s' %self.visit(decorator))
+
 
 
 		if self._with_dart:
@@ -3213,10 +3213,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
 
 
-		elif self._with_js or javascript or self._with_ll or self._with_glsl:
-
-			if self._with_glsl:
-				writer.write('@__glsl__')
+		elif self._with_js or javascript or self._with_ll:
 
 			if node.args.vararg:
 				#raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
@@ -3272,7 +3269,7 @@ class PythonToPythonJS(NodeVisitorBase):
 					lines.append( 'var %s = {%s}' %(kwargs_name, a))
 					lines.append( '}')
 					for a in lines:
-						writer.write("JS('''%s''')" %a)
+						writer.write("inline('''%s''')" %a)
 
 				offset = len(node.args.args) - len(node.args.defaults)
 
@@ -3300,20 +3297,9 @@ class PythonToPythonJS(NodeVisitorBase):
 						spaces2 = ' ' * (maxlen2 - len(default_value))
 						a = (arg.id, spaces, kwargs_name, kwargs_name,arg.id, spaces, default_value, spaces2, kwargs_name, arg.id)
 						b = "var %s %s= (%s === undefined || %s.%s === undefined)%s?\t%s %s: %s.%s" %a
-						c = "JS('''%s''')" %b
+						c = "inline('''%s''')" %b
 						writer.write( c )
 
-		elif self._with_fastdef or fastdef:
-			offset = len(node.args.args) - len(node.args.defaults)
-			for i, arg in enumerate(node.args.args):
-				dindex = i - offset
-				if dindex >= 0 and node.args.defaults:
-					default_value = self.visit( node.args.defaults[dindex] )
-					writer.write('''JS("var %s = kwargs[ '%s' ]")''' % (arg.id, arg.id))
-					writer.write( '''JS("if (%s == undefined) %s = %s")'''%(arg.id, arg.id, default_value) )
-
-				else:
-					writer.write("""JS("var %s = args[ %s ]")""" % (arg.id, i))
 
 		elif self._with_lua:
 			writer.write( 'var(%s)' %','.join([arg.id for arg in node.args.args]))
@@ -3331,13 +3317,11 @@ class PythonToPythonJS(NodeVisitorBase):
 		################# function body #################
 
 
-		if threaded and is_worker_entry:
+		if threaded and is_worker_entry:  ## DEPRECATED - TODO REMOVE
 			for i,arg in enumerate(node.args.args):
 				writer.write( '%s = __webworker_wrap(%s, %s)' %(arg.id, arg.id, i))
 				writer.write('__wargs__.push(%s)'%arg.id)
 
-		#if self._cached_property:  ## DEPRECATED
-		#	writer.write('if self["__dict__"]["%s"]: return self["__dict__"]["%s"]' %(self._cached_property, self._cached_property))
 
 		self._return_type = None # tries to catch a return type in visit_Return
 
@@ -3348,7 +3332,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		#continues = []
 		for b in node.body:
 
-			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call):
+			if self._use_threading and isinstance(b, ast.Assign) and isinstance(b.value, ast.Call):  ## DEPRECATED - TODO REMOVE
 				if isinstance(b.value.func, ast.Attribute) and isinstance(b.value.func.value, Name) and b.value.func.value.id == 'threading':
 					if b.value.func.attr == 'start_new_thread':
 						self.visit(b)
@@ -3526,46 +3510,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 
 
-		if self._with_js and with_js_decorators:
-			for dec in with_js_decorators:
-				if '.prototype.' in dec:
-					## these with-js functions are assigned to a some objects prototype,
-					## here we assume that they depend on the special "this" variable,
-					## therefore this function can not be marked as f.pythonscript_function,
-					## because we need __get__(f,'__call__') to dynamically bind "this"
-					#writer.write( '%s=%s'%(dec,node.name) )
-
-					## TODO - @XXX.prototype.YYY sets properties with enumerable as False,
-					## this fixes external javascript that is using `for (var i in anArray)`
-					head, tail = dec.split('.prototype.')
-					a = (head, tail, node.name)
-					## these props need to be writeable so that webworkers can redefine methods like: push, __setitem__
-					## note to overwrite one of these props Object.defineProperty needs to be called again (ob.xxx=yyy will not work)
-					writer.write('Object.defineProperty(%s.prototype, "%s", {enumerable:False, value:%s, writeable:True, configurable:True})' %a)
-
-				elif dec == 'javascript':
-					pass
-				elif dec == 'fastdef':
-					pass
-				else:
-					## TODO: check ifdecorators in javascript mode are working properly
-					writer.write( '%s = __get__(%s,"__call__")( [%s], {} )' %(node.name, dec, node.name))
-
-
-
-		# apply decorators
-		for decorator in decorators:
-			assert not self._with_js
-			dec = self.visit(decorator)
-			if dec == 'classmethod':
-				writer.write( '%s.is_classmethod = True' %node.name)
-			elif dec == 'staticmethod':
-				writer.write( '%s.is_staticmethod = True' %node.name)
-				writer.write( '%s.is_wrapper = True' %node.name)
-			else:
-				writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (node.name, dec, node.name))
-
-		#if threaded:
+		#if threaded:  ## deprecated - todo remove
 		#	writer.write('%s()' %node.name)
 		#	writer.write('self.termintate()')
 
