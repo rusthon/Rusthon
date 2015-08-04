@@ -21,16 +21,35 @@ from runtime import *
 
 def show_error(err,f,c):
 	debugger.log(err,f,c)
+	errtype, errmsg = err.stack.splitlines()[0].split(':')
+	errmsg = errmsg.strip()
+	errvar = errmsg.split()[0]
+	if errtype == 'ReferenceError':
+		errvar += '.'
+	show(errvar)
 
 	for line in err.stack.splitlines():
 		show( line.split('(')[0] )
 
-	src = debugger.getsource(f)
-	editor.setValue(src)
+	src1 = debugger.getsource(f)
+	editor.setValue(src1)
 
 	if c is not undefined:
-		src = debugger.getsource(c)
-		editor2.setValue(src)
+		src2 = debugger.getsource(c)
+		editor2.setValue(src2)
+
+		for i,ln in enumerate(src2.splitlines()):
+			if errvar in ln:
+				editor2.selection.moveTo(i,ln.index(errvar))
+				editor2.selection.selectWord()
+				break
+
+
+		for i,ln in enumerate(src1.splitlines()):
+			if c.name in ln:
+				editor.selection.moveTo(i,ln.index(c.name))
+				editor.selection.selectWord()
+				break
 
 	return False  ## True sets breakpoint
 
