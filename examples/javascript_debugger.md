@@ -18,15 +18,96 @@ where you can debug things, and then press unpause to resume your script.
 #backend:javascript
 from runtime import *
 
+def get_debugger_overlay():
+	global editor, editor2
+
+	overlay = document.getElementById('DEBUG_OVERLAY')
+	if overlay is None:
+		print 'creating new debug overlay'
+		overlay = document.createElement('div')
+		document.body.appendChild(overlay)
+		overlay.style.position='absolute'
+		overlay.style.zIndex = 100
+		overlay.style.top = 0
+		overlay.style.left = 0
+		overlay.style.width = '100%'
+		overlay.style.height = '100%'
+		overlay.style.backgroundColor = 'black'
+		overlay.style.color = 'grey'
+		overlay.style.opacity = 0.9
+
+		header = document.createElement('h2')
+		header.appendChild(document.createTextNode('header...'))
+		overlay.appendChild(header)
+
+		def _set_header(txt):
+			header.firstChild.nodeValue=txt
+
+		overlay._set_header = _set_header
+
+		ediv1 = document.createElement('div')
+		ediv1.setAttribute('id', 'EDITOR1')
+		overlay.appendChild(ediv1)
+
+		header2 = document.createElement('h2')
+		header2.appendChild(document.createTextNode('header...'))
+		overlay.appendChild(header2)
+
+		def _set_header2(txt):
+			header2.firstChild.nodeValue=txt
+
+		overlay._set_header2 = _set_header2
+
+
+		ediv2 = document.createElement('div')
+		ediv2.setAttribute('id', 'EDITOR2')
+		overlay.appendChild(ediv2)
+		ediv2.style.fontSize='18px'
+
+		editor = ace.edit('EDITOR1')
+		editor.setTheme("ace/theme/monokai")
+		editor.getSession().setMode("ace/mode/javascript")
+		#editor.container.style.height = '50%'
+		editor.renderer.setOption('showLineNumbers', false)
+
+		editor.setOption("maxLines", 100)
+		editor.setOption("minLines", 2)
+
+		editor2 = ace.edit('EDITOR2')
+		editor2.setTheme("ace/theme/monokai")
+		editor2.getSession().setMode("ace/mode/javascript")
+		#editor2.container.style.height = '20%'
+		editor2.renderer.setOption('showLineNumbers', false)
+		editor2.setAutoScrollEditorIntoView(true)
+		editor2.resize()
+
+		editor2.setOption("maxLines", 100)
+		editor2.setOption("minLines", 2)
+
+	return overlay
 
 def show_error(err,f,c):
 	debugger.log(err,f,c)
+	overlay = get_debugger_overlay()
+
 	errtype, errmsg = err.stack.splitlines()[0].split(':')
 	errmsg = errmsg.strip()
 	errvar = errmsg.split()[0]
+
+	search = []
 	if errtype == 'ReferenceError':
 		errvar += '.'
-	show(errvar)
+		search.append( errvar + '.' )
+
+		a = ['the variable']
+		for i,word in enumerate(errmsg.split()):
+			if i==0:
+				a.append('`' + word + '`')
+			else:
+				a.append(word)
+		errmsg = ' '.join(a)
+
+	search.append(errvar)
 
 	for line in err.stack.splitlines():
 		show( line.split('(')[0] )
@@ -35,6 +116,9 @@ def show_error(err,f,c):
 	editor.setValue(src1)
 
 	if c is not undefined:
+		overlay._set_header( errtype + ' caused by function: `' + c.name + '`')
+		overlay._set_header2( errmsg )
+
 		src2 = debugger.getsource(c)
 		editor2.setValue(src2)
 
@@ -46,7 +130,7 @@ def show_error(err,f,c):
 
 
 		for i,ln in enumerate(src1.splitlines()):
-			if c.name in ln:
+			if c.name+'(' in ln:
 				editor.selection.moveTo(i,ln.index(c.name))
 				editor.selection.selectWord()
 				break
@@ -61,34 +145,31 @@ def show(txt):
 		document.createTextNode(txt + '\n')
 	)
 
-def throws_error():
-	a.x.y = 'oopps'
 
 ## this decorator opens chrome devtools, 
 ## and then calls the function after a timeout,
 ## to give devtools window time to open and connect.
 @debugger
 def main():
-	global editor, editor2
+	show('enter main')
+	show('calling foo')
+	foo()
+	show('everything OK')
 
-	editor = ace.edit('EDITOR1')
-	editor.setTheme("ace/theme/monokai")
-	editor.getSession().setMode("ace/mode/javascript")
-	editor.container.style.height = '50%'
-
-	editor2 = ace.edit('EDITOR2')
-	editor2.setTheme("ace/theme/monokai")
-	editor2.getSession().setMode("ace/mode/javascript")
-	editor2.container.style.height = '20%'
-
-
+def foo():
+	show('calling bar may fail...')
 	## expression
-	throws_error()
+	bar()
 
 	## assignment
-	#x = throws_error()
+	#x = bar()
 
-	show('everything OK')
+	show('foo OK')
+
+def bar():
+	show('calling bar')
+	a.x.y = 'oopps'
+	show('bar OK')
 
 
 ```
@@ -107,10 +188,8 @@ git clone into your home directory: `https://github.com/ajaxorg/ace-builds.git`
 
 <@myapp>
 </head>
-<body onload="main()" style="background-color:black; color:white">
-<div id="EDITOR1"></div>
+<body onload="main()" style="font-family:arial">
 <pre id="CONTAINER"></pre>
-<div id="EDITOR2"></div>
 </body>
 </html>
 ```
