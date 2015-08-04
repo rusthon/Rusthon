@@ -128,9 +128,17 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				return s
 			else:
 				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
+				caller = self._function_stack[-1].name
+				called = None
+				if isinstance(node.value, ast.Call):
+					called = self.visit(node.value.func)
+
 				a = '/***/ try {\n'
 				a += self.indent() + s + '\n'
-				a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{return;} };' %self._function_stack[-1].name
+				if called:
+					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{return;} };' %(caller, called)
+				else:
+					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{return;} };' %caller
 				return a
 
 

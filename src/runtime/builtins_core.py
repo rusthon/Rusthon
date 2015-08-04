@@ -17,8 +17,8 @@ def __debugger_clean_source(f):
 			source.append(line)
 	return '\n'.join(source)
 
-def __debugger_log(e,f):
-	console.error('ERROR in function->' + f.name)
+def __debugger_log(e,f, called):
+	console.error('ABORT function->' + f.name)
 	#console.warn(f.toString())
 	print __debugger__.getsource( f )
 
@@ -33,6 +33,10 @@ def __debugger_log(e,f):
 				break
 		else:
 			console.error(line)
+
+	if called is not undefined:
+		console.error('exception in function->'+called.name)
+		print __debugger__.getsource(called)
 
 	return True  ## if returns True then halt (breakpoint)
 
