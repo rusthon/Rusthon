@@ -45,12 +45,31 @@ def get_debugger_overlay():
 
 		overlay._set_header = _set_header
 
+		closebut = document.createElement('button')
+		closebut.appendChild(document.createTextNode('close'))
+		overlay.appendChild( closebut )
+		closebut.style.position='absolute'
+		closebut.style.top = 10
+		closebut.style.right = 20
+		def closecb(): overlay.style.visibility='hidden'
+		closebut.onclick = closecb
+
+
+		subheader = document.createElement('h4')
+		subheader.appendChild(document.createTextNode('subheader'))
+		overlay.appendChild(subheader)
+
+		def _set_subheader(txt):
+			subheader.firstChild.nodeValue=txt
+
+		overlay._set_subheader = _set_subheader
+
 		ediv1 = document.createElement('div')
 		ediv1.setAttribute('id', 'EDITOR1')
 		overlay.appendChild(ediv1)
 
 		header2 = document.createElement('h2')
-		header2.appendChild(document.createTextNode('header...'))
+		header2.appendChild(document.createTextNode('header2'))
 		overlay.appendChild(header2)
 
 		def _set_header2(txt):
@@ -96,16 +115,16 @@ def show_error(err,f,c):
 
 	search = []
 	if errtype == 'ReferenceError':
-		errvar += '.'
-		search.append( errvar + '.' )
+		search.append( errvar + '.' )  ## checks for attributes
+		search.append( errvar + '(' )  ## checks for func calls
+		search.append( errvar + '[' )  ## checks for func calls
 
-		a = ['the variable']
+		errmsg_custom = []
 		for i,word in enumerate(errmsg.split()):
 			if i==0:
-				a.append('`' + word + '`')
+				errmsg_custom.append('`' + word + '`')
 			else:
-				a.append(word)
-		errmsg = ' '.join(a)
+				errmsg_custom.append(word)
 
 	search.append(errvar)
 
@@ -116,24 +135,60 @@ def show_error(err,f,c):
 	editor.setValue(src1)
 
 	if c is not undefined:
-		overlay._set_header( errtype + ' caused by function: `' + c.name + '`')
-		overlay._set_header2( errmsg )
+		overlay._set_header( errtype + ' caused in call to: `' + c.name + '`')
 
 		src2 = debugger.getsource(c)
 		editor2.setValue(src2)
 
+		foundit = False
 		for i,ln in enumerate(src2.splitlines()):
-			if errvar in ln:
-				editor2.selection.moveTo(i,ln.index(errvar))
-				editor2.selection.selectWord()
+			for term in search:
+				if term in ln:
+					editor2.selection.moveTo(i,ln.index(term))
+					editor2.selection.selectWord()
+					if term.endswith('('):
+						errmsg_custom.insert(0, 'the function')
+					else:
+						errmsg_custom.insert(0, 'the variable')
+					errmsg = ' '.join(errmsg_custom)
+					foundit = True
+					break
+			if foundit:
 				break
+
+		if foundit:
+			overlay._set_header2( errmsg )
+		else:
+			overlay._set_header2( 'function: '+c.name )
+			editor2.selection.clearSelection()
 
 
 		for i,ln in enumerate(src1.splitlines()):
-			if c.name+'(' in ln:
-				editor.selection.moveTo(i,ln.index(c.name))
-				editor.selection.selectWord()
-				break
+			if not foundit:
+				for term in search:
+					if term in ln:
+						editor.selection.moveTo(i,ln.index(term))
+						editor.selection.selectWord()
+						if term.endswith('('):
+							errmsg_custom.insert(0, 'the function')
+						else:
+							errmsg_custom.insert(0, 'the variable')
+						errmsg = ' '.join(errmsg_custom)
+						foundit = True
+						break
+				if foundit:
+					break
+			else:
+				if c.name+'(' in ln:
+					editor.selection.moveTo(i,ln.index(c.name))
+					editor.selection.selectWord()
+					break
+
+		if foundit:
+			editor.container.style.fontSize='18px'
+			editor2.container.style.fontSize='12px'
+			overlay._set_header( errmsg )
+			overlay._set_subheader( errtype + ' caused in call to: `' + c.name + '`')
 
 	return False  ## True sets breakpoint
 
@@ -168,6 +223,8 @@ def foo():
 
 def bar():
 	show('calling bar')
+	#mytypo()
+	show( some_missing_object[ 'x' ] )
 	a.x.y = 'oopps'
 	show('bar OK')
 

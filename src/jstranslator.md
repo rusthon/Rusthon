@@ -450,7 +450,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					d = [
 						'var %s = function debugger_entrypoint_%s() {' %(node.name, node.name),
 						'	/***/ var __entryargs__ = arguments;',
-						'	/***/ try {require("nw.gui").Window.get().showDevTools();} catch (__err) {console.log("debugger requires NW.js");};',
+						'	/***/ try {var __win = require("nw.gui").Window.get(); __win.showDevTools(); __win.focus(); __win.moveTo(10,0);} catch (__err) {console.log("debugger requires NW.js");};',
 						'	setTimeout(function(){%s_wrapped(__entryargs__)}, 2000);' %node.name,
 						'	function %s_wrapped(%s)' % (node.name, ', '.join(args)),  ## scope lifted ok here
 					]
