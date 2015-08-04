@@ -120,7 +120,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		if s==';' or not s:
 			return ''
 		else:
-			if self._in_try:
+			if self._in_try or not self._runtime_type_checking:
 				return s
 			elif not len(self._function_stack) or s.startswith('var '):
 				return s
@@ -1134,6 +1134,7 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 		insert_runtime = False,
 		fast_javascript = True,
 		fast_loops = True,
+		runtime_checks = False
 	)
 
 	return builtins
