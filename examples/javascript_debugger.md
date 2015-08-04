@@ -18,19 +18,20 @@ where you can debug things, and then press unpause to resume your script.
 #backend:javascript
 from runtime import *
 
-debugger.onerror = lambda e,f: show_error(e,f)
 
 def show_error(err,f):
-	#show(err)
-	#show(err.stack)
-	#show(err.line)
+	debugger.log(err,f)
 
 	for line in err.stack.splitlines():
 		show( line.split('(')[0] )
-	show('---------------------------')
-	show(f)
-	print err
-	print f
+
+	src = debugger.getsource(f)
+	editor.setValue(src)
+
+	return False  ## True sets breakpoint
+
+debugger.onerror = show_error
+
 
 def show(txt):
 	document.getElementById('CONTAINER').appendChild(
@@ -45,24 +46,39 @@ def throws_error():
 ## to give devtools window time to open and connect.
 @debugger
 def main():
+	global editor
 	show('main..')
+	editor = ace.edit('EDITOR')
+	editor.setTheme("ace/theme/monokai")
+	editor.getSession().setMode("ace/mode/javascript")
+	editor.container.style.height = '70%'
+
 	## expression
 	throws_error()
+
 	## assignment
 	#x = throws_error()
 
 
 ```
+Get Ace Editor
+--------------
+git clone into your home directory: `https://github.com/ajaxorg/ace-builds.git`
 
 @index.html
 ```html
 <html>
 <head>
+<script src="~/ace-builds/src-min/ace.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/theme-monokai.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/mode-javascript.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/worker-javascript.js" type="text/javascript"></script>
+
 <@myapp>
 </head>
 <body onload="main()">
-<pre id="CONTAINER">
-</pre>
+<pre id="CONTAINER"></pre>
+<div id="EDITOR"></div>
 </body>
 </html>
 ```
