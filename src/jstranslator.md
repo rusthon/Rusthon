@@ -480,6 +480,18 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		body.append( self.indent() + '{' )
 		self.push()
+
+		if self._runtime_type_checking:		
+			## doing the recompile and eval inside the function itself allows it to pick
+			## up any variables from the outer scope if it is a nested function.
+			## note: the user calls `myfunc.redefine(src)` and then on next call it is recompiled.
+			body.append(
+				'/***/ if (%s.__recompile !== undefined) { eval("%s.__redef="+%s.__recompile); %s.__recompile=undefined; };' %(node.name, node.name, node.name, node.name)
+			)
+			body.append(
+				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(node.name, node.name)
+			)
+
 		next = None
 		for i,child in enumerate(node.body):
 			if isinstance(child, Str) or hasattr(child, 'SKIP'):  ## TODO check where the SKIP hack is coming from

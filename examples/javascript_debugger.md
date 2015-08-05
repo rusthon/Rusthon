@@ -28,8 +28,8 @@ def get_debugger_overlay():
 		document.body.appendChild(overlay)
 		overlay.style.position='absolute'
 		overlay.style.zIndex = 100
-		overlay.style.top = 0
-		overlay.style.left = 0
+		overlay.style.bottom = 0
+		overlay.style.right = 0
 		overlay.style.width = '100%'
 		overlay.style.height = '100%'
 		overlay.style.backgroundColor = 'black'
@@ -49,10 +49,21 @@ def get_debugger_overlay():
 		closebut.appendChild(document.createTextNode('close'))
 		overlay.appendChild( closebut )
 		closebut.style.position='absolute'
-		closebut.style.top = 10
-		closebut.style.right = 20
+		closebut.style.bottom = 4
+		closebut.style.right = 4
 		def closecb(): overlay.style.visibility='hidden'
 		closebut.onclick = closecb
+
+		mbut = document.createElement('button')
+		mbut.appendChild(document.createTextNode('-'))
+		overlay.appendChild( mbut )
+		mbut.style.position='absolute'
+		mbut.style.bottom = 4
+		mbut.style.right = 55
+		def mbutcb():
+			overlay.style.height='80%'
+			overlay.style.width='70%'
+		mbut.onclick = mbutcb
 
 
 		subheader = document.createElement('h4')
@@ -64,6 +75,23 @@ def get_debugger_overlay():
 
 		overlay._set_subheader = _set_subheader
 
+		cbut = document.createElement('button')
+		cbut.appendChild( document.createTextNode('call') )
+		cbut.style.position = 'absolute'
+		cbut.style.right = 100
+		header.appendChild( cbut )
+
+		input = document.createElement('input')
+		input.setAttribute('type', 'text')
+		input.size = 10
+		input.style.position = 'absolute'
+		input.style.right = 10
+		header.appendChild( input )
+
+		overlay._header1_controls = {'call':cbut, 'args':input}
+
+
+		#####################################
 		ediv1 = document.createElement('div')
 		ediv1.setAttribute('id', 'EDITOR1')
 		overlay.appendChild(ediv1)
@@ -71,6 +99,21 @@ def get_debugger_overlay():
 		header2 = document.createElement('h2')
 		header2.appendChild(document.createTextNode('header2'))
 		overlay.appendChild(header2)
+
+		cbut = document.createElement('button')
+		cbut.appendChild( document.createTextNode('call') )
+		cbut.style.position = 'absolute'
+		cbut.style.right = 100
+		header2.appendChild( cbut )
+
+		input = document.createElement('input')
+		input.setAttribute('type', 'text')
+		input.size = 10
+		input.style.position = 'absolute'
+		input.style.right = 10
+		header2.appendChild( input )
+
+		overlay._header2_controls = {'call':cbut, 'args':input}
 
 		def _set_header2(txt):
 			header2.firstChild.nodeValue=txt
@@ -83,7 +126,14 @@ def get_debugger_overlay():
 		overlay.appendChild(ediv2)
 		ediv2.style.fontSize='18px'
 
+		def __redef_on_edit(e,t):
+			if t.__editfunc is not None:
+				t.__editfunc.redefine( t.getValue() )
+
 		editor = ace.edit('EDITOR1')
+		editor.__function = None
+		editor.on('input', __redef_on_edit)
+
 		editor.setTheme("ace/theme/monokai")
 		editor.getSession().setMode("ace/mode/javascript")
 		#editor.container.style.height = '50%'
@@ -93,15 +143,22 @@ def get_debugger_overlay():
 		editor.setOption("minLines", 2)
 
 		editor2 = ace.edit('EDITOR2')
+		editor2.__function = None
+		editor2.on('input', __redef_on_edit)
+
 		editor2.setTheme("ace/theme/monokai")
 		editor2.getSession().setMode("ace/mode/javascript")
 		#editor2.container.style.height = '20%'
 		editor2.renderer.setOption('showLineNumbers', false)
 		editor2.setAutoScrollEditorIntoView(true)
-		editor2.resize()
+		#editor2.resize()
 
 		editor2.setOption("maxLines", 100)
 		editor2.setOption("minLines", 2)
+
+		#editor2.on('input', lambda e,t: console.log(t.getValue()) )
+		#editor2.on('input', lambda e,t: console.log(e) )
+
 
 	return overlay
 
@@ -132,13 +189,29 @@ def show_error(err,f,c):
 		show( line.split('(')[0] )
 
 	src1 = debugger.getsource(f)
+	editor.__editfunc = None
 	editor.setValue(src1)
+	editor.__editfunc = f
+
+	def callfunc1():
+		args = overlay._header1_controls['args'].value.split(',')
+		f.apply(None, args)
+	overlay._header1_controls['call'].onclick = callfunc1
+
 
 	if c is not undefined:
 		overlay._set_header( errtype + ' caused in call to: `' + c.name + '`')
 
+
+		def callfunc2():
+			args = overlay._header2_controls['args'].value.split(',')
+			c.apply(None, args)
+		overlay._header2_controls['call'].onclick = callfunc2
+
 		src2 = debugger.getsource(c)
+		editor2.__editfunc = None
 		editor2.setValue(src2)
+		editor2.__editfunc = c
 
 		foundit = False
 		for i,ln in enumerate(src2.splitlines()):

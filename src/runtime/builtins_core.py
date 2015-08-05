@@ -7,6 +7,10 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
+def __redef_function(src):
+	this.__recompile = src
+Function.prototype.redefine = __redef_function
+
 
 def __debugger_clean_source(f):
 	source = []
