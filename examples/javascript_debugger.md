@@ -25,6 +25,7 @@ def get_debugger_overlay():
 	if overlay is None:
 		print 'creating new debug overlay'
 		overlay = document.createElement('div')
+		overlay.setAttribute('id', 'DEBUG_OVERLAY')
 		document.body.appendChild(overlay)
 		overlay.style.position='absolute'
 		overlay.style.zIndex = 100
@@ -195,7 +196,10 @@ def show_error(err,f,c):
 
 	def callfunc1():
 		args = overlay._header1_controls['args'].value.split(',')
-		f.apply(None, args)
+		try: f.apply(None, args)
+		except:
+			print 'ERROR in edited function: '+f.name
+			debugger.onerror(__exception__, f,c)
 	overlay._header1_controls['call'].onclick = callfunc1
 
 
@@ -205,7 +209,11 @@ def show_error(err,f,c):
 
 		def callfunc2():
 			args = overlay._header2_controls['args'].value.split(',')
-			c.apply(None, args)
+			try: c.apply(None, args)
+			except:
+				print 'ERROR in edited function: '+c.name
+				debugger.onerror(__exception__, f,c)
+
 		overlay._header2_controls['call'].onclick = callfunc2
 
 		src2 = debugger.getsource(c)
@@ -263,6 +271,9 @@ def show_error(err,f,c):
 			overlay._set_header( errmsg )
 			overlay._set_subheader( errtype + ' caused in call to: `' + c.name + '`')
 
+		if src1.splitlines().length > 15:
+			editor.container.style.fontSize='14px'
+
 	return False  ## True sets breakpoint
 
 debugger.onerror = show_error
@@ -300,6 +311,16 @@ def bar():
 	show( some_missing_object[ 'x' ] )
 	a.x.y = 'oopps'
 	show('bar OK')
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
+	b = 1+1
 
 
 ```
