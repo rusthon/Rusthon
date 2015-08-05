@@ -935,44 +935,58 @@ TODO clean this up
 
 
 	def visit_Compare(self, node):
-		if isinstance(node.ops[0], ast.Eq):
-			left = self.visit(node.left)
-			right = self.visit(node.comparators[0])
-			if self._lua:
-				return '%s == %s' %(left, right)
-			elif self._fast_js:
-				return '(%s===%s)' %(left, right)
-			else:
-				return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
-		elif isinstance(node.ops[0], ast.NotEq):
-			left = self.visit(node.left)
-			right = self.visit(node.comparators[0])
-			if self._lua:
-				return '%s ~= %s' %(left, right)
-			elif self._fast_js:
-				return '(%s!==%s)' %(left, right)
-			else:
-				return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)
-
+		#if isinstance(node.ops[0], ast.Eq):
+		#	left = self.visit(node.left)
+		#	right = self.visit(node.comparators[0])
+		#	if self._lua:
+		#		return '%s == %s' %(left, right)
+		#	elif self._fast_js:
+		#		return '(%s===%s)' %(left, right)
+		#	else:
+		#		return '(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s)' %(left, left, right, left, right)
+		#elif isinstance(node.ops[0], ast.NotEq):
+		#	left = self.visit(node.left)
+		#	right = self.visit(node.comparators[0])
+		#	if self._lua:
+		#		return '%s ~= %s' %(left, right)
+		#	elif self._fast_js:
+		#		return '(%s!==%s)' %(left, right)
+		#	else:
+		#		return '(!(%s instanceof Array ? JSON.stringify(%s)==JSON.stringify(%s) : %s===%s))' %(left, left, right, left, right)
+		#		
+		#else:
+		comp = []
+		if isinstance( node.left, ast.BinOp ):
+			comp.append( '('+self.visit(node.left)+')' )
 		else:
-			comp = [ '(']
 			comp.append( self.visit(node.left) )
-			comp.append( ')' )
 
-			for i in range( len(node.ops) ):
-				comp.append( self.visit(node.ops[i]) )
+		for i in range( len(node.ops) ):
+			op = None
+			if isinstance(node.ops[i], ast.Eq):
+				op = '==='
+			elif isinstance(node.ops[i], ast.NotEq):
+				op = '!=='
+			else:
+				op = self.visit(node.ops[i])
 
-				if isinstance(node.ops[i], ast.Eq):
-					raise SyntaxError('TODO')
+			comp.append( op )
+			right = node.comparators[i]
 
-				elif isinstance(node.comparators[i], ast.BinOp):
-					comp.append('(')
-					comp.append( self.visit(node.comparators[i]) )
-					comp.append(')')
-				else:
-					comp.append( self.visit(node.comparators[i]) )
+			if op in ('===', '!==') and isinstance(right, ast.Name) and right.id=='undefined':
+				## this fixes `if x is not undefined:`
+				## the users expects above to work because this works: `if x.y is not undefined:`
+				comp[0] = 'typeof(%s)' %comp[0]
+				comp.append('"undefined"')
 
-			return ' '.join( comp )
+			elif isinstance(node.comparators[i], ast.BinOp):
+				comp.append('(')
+				comp.append( self.visit(node.comparators[i]) )
+				comp.append(')')
+			else:
+				comp.append( self.visit(node.comparators[i]) )
+
+		return ' '.join( comp )
 
 
 	def visit_UnaryOp(self, node):
@@ -994,9 +1008,6 @@ If Test
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
-		#if test.startswith('(') and test.endswith(')'):
-		#	out.append( 'if %s' %test )
-		#else:
 		out.append( 'if (%s)' %test )
 		out.append( self.indent() + '{' )
 
