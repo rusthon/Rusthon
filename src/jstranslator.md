@@ -381,6 +381,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_pyfunc    = False
 		is_prototype = False
 		is_debugger  = False
+		is_redef     = False
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
 		func_expr_var = True  ## this should always be true, was this false before for hacking nodejs namespace?
@@ -420,6 +421,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			elif isinstance(decor, ast.Name) and decor.id == 'debugger':
 				is_debugger = True
+			elif isinstance(decor, ast.Name) and decor.id == 'redef':
+				is_redef = True
 
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
@@ -450,7 +453,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					d = [
 						'var %s = function debugger_entrypoint_%s() {' %(node.name, node.name),
 						'	/***/ var __entryargs__ = arguments;',
-						'	/***/ try {var __win = require("nw.gui").Window.get(); __win.showDevTools(); __win.focus(); __win.moveTo(10,0);} catch (__err) {console.log("debugger requires NW.js");};',
+						'	/***/ try {var __win = require("nw.gui").Window.get(); __win.showDevTools(); __win.focus(); __win.moveTo(10,0);} catch (__err) {};',
 						'	setTimeout(function(){%s_wrapped(__entryargs__)}, 2000);' %node.name,
 						'	function %s_wrapped(%s)' % (node.name, ', '.join(args)),  ## scope lifted ok here
 					]
@@ -481,7 +484,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		body.append( self.indent() + '{' )
 		self.push()
 
-		if self._runtime_type_checking:		
+		if self._runtime_type_checking or is_redef:
 			## doing the recompile and eval inside the function itself allows it to pick
 			## up any variables from the outer scope if it is a nested function.
 			## note: the user calls `myfunc.redefine(src)` and then on next call it is recompiled.

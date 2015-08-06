@@ -8,7 +8,11 @@ inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerErr
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
 def __redef_function(src):
-	this.__recompile = src
+	if isinstance(src, Function):
+		this.__redef = src
+		this.__recompile = undefined
+	else:
+		this.__recompile = src
 Function.prototype.redefine = __redef_function
 
 
