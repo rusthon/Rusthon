@@ -1,6 +1,8 @@
 Debugging JavaScript
 --------------------
 
+https://github.com/rusthon/Rusthon/wiki/JavaScript-Debugger
+
 An issue with debugging javascript is having to press a hot key to bring up the devtools window each time chrome is opened.
 stackoverflow [is-there-a-command-line-argument-in-chrome-to-start-the-developer-tools-on-start](http://stackoverflow.com/questions/5425443/is-there-a-command-line-argument-in-chrome-to-start-the-developer-tools-on-start)
 
@@ -46,10 +48,10 @@ def foo():
 	show('foo OK')
 
 def bar():
-	show('calling bar')
-	#mytypo()
-	show( some_missing_object[ 'x' ] )
 	a.x.y = 'oopps'
+	show( some_missing_object[ 'x' ] )
+	mytypo()
+
 	show('bar OK')
 
 
@@ -57,6 +59,7 @@ def bar():
 Get Ace Editor
 --------------
 git clone into your home directory: `https://github.com/ajaxorg/ace-builds.git`
+
 
 
 @index.html

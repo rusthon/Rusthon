@@ -210,6 +210,7 @@ def __debugger_onerror_overlay(err,f,c):
 	search.append( errvar + '.' )  ## checks for attributes
 	search.append( errvar + '(' )  ## checks for func calls
 	search.append( errvar + '[' )  ## checks for func calls
+	#search.append(errvar)  ## the logic below needs to be smarter to fallback on this
 
 	errmsg_custom = []
 	for i,word in enumerate(errmsg.split()):
@@ -218,7 +219,6 @@ def __debugger_onerror_overlay(err,f,c):
 		else:
 			errmsg_custom.append(word)
 
-	search.append(errvar)
 
 	for line in err.stack.splitlines():
 		show( line.split('(')[0] )
@@ -275,12 +275,17 @@ def __debugger_onerror_overlay(err,f,c):
 
 		if foundit:
 			overlay._set_header2( errmsg )
+
+			for i,ln in enumerate(src1.splitlines()):
+				if c.name+'(' in ln:
+					editor.selection.moveTo(i,ln.index(c.name))
+					editor.selection.selectWord()
+					break
 		else:
 			overlay._set_header2( 'function: '+c.name )
 			editor2.selection.clearSelection()
 
-		for i,ln in enumerate(src1.splitlines()):
-			if not foundit:
+			for i,ln in enumerate(src1.splitlines()):
 				for term in search:
 					if term in ln:
 						editor.selection.moveTo(i,ln.index(term))
@@ -294,17 +299,12 @@ def __debugger_onerror_overlay(err,f,c):
 						break
 				if foundit:
 					break
-			else:
-				if c.name+'(' in ln:
-					editor.selection.moveTo(i,ln.index(c.name))
-					editor.selection.selectWord()
-					break
 
-		if foundit:
-			editor.container.style.fontSize='18px'
-			editor2.container.style.fontSize='12px'
-			overlay._set_header( errmsg )
-			overlay._set_subheader( errtype + ' caused in call to: `' + c.name + '`')
+			if foundit:
+				editor.container.style.fontSize='18px'
+				editor2.container.style.fontSize='12px'
+				overlay._set_header( errmsg )
+				overlay._set_subheader( errtype + ' caused in call to: `' + c.name + '`')
 
 		if src1.splitlines().length > 15:
 			editor.container.style.fontSize='14px'
@@ -326,6 +326,7 @@ def __debugger_clean_source(f):
 	return '\n'.join(source)
 
 def __debugger_log(e,f, called):
+	console.error(e.stack)
 	console.error('ABORT function->' + f.name)
 	#console.warn(f.toString())
 	print __debugger__.getsource( f )
