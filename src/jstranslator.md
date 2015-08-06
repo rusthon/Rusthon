@@ -382,6 +382,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_prototype = False
 		is_debugger  = False
 		is_redef     = False
+		bind_to      = None
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
 		func_expr_var = True  ## this should always be true, was this false before for hacking nodejs namespace?
@@ -432,6 +433,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				protoname = decor.args[0].id
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				returns = decor.args[0].id
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'bind':
+				assert len(decor.args)==1
+				bind_to = self.visit(decor.args[0])
+
 			else:
 				decorators.append( self.visit(decor)+'(' )
 
@@ -442,6 +447,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		if is_prototype:
 			if is_debugger:
 				raise SyntaxError('@debugger is not allowed on methods: %s.%s' %(protoname, node.name))
+			if bind_to:
+				raise SyntaxError('@bind is not allowed on methods: %s.%s' %(protoname, node.name))
 			fdef = '%s.prototype.%s = function(%s)' % (protoname, node.name, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
@@ -459,6 +466,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					]
 					fdef = '\n'.join(d)
 					self.push()
+				elif bind_to:
+					fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
 				else:
 					fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
@@ -474,7 +483,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				raise SyntaxError('the decorator `@debugger` is only used on top level functions in the global namespace')
 
 			if self._func_expressions or func_expr:
-				fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
+				if bind_to:
+					fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
+				else:
+					fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
 			else: ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))

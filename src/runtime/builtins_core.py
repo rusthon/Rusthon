@@ -7,15 +7,16 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
+@bind(Function.prototype.redefine)
 def __redef_function(src):
 	if isinstance(src, Function):
 		this.__redef = src
 		this.__recompile = undefined
 	else:
 		this.__recompile = src
-Function.prototype.redefine = __redef_function
+#Function.prototype.redefine = __redef_function
 
-
+## TODO clean up below using @bind
 
 def __debugger_overlay():
 	overlay = document.getElementById('DEBUG_OVERLAY')
