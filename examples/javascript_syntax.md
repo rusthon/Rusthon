@@ -48,29 +48,12 @@ The extra syntax `switch` and `default` is also supported.
 #backend:javascript
 from runtime import *
 
-## the runtime provides some fake python libs ##
-J = json.loads( '{"x":1}' )  
-print  J 
-
-s1 = set( [1,2,3,1,2])
-print s1
-s2 = frozenset( [0,1,1,1,1,20])
-print s2
-s3 = s1.difference(s2)
-print s3
 
 class Channel():
 	def send(self,ob):
 		print 'sending:' + ob
 		return ob
 
-chan = Channel()
-with mymacro as "chan.send(JSON.stringify(%s))":
-	mymacro( s3 )
-
-print 'chan is an isinstance of Channel'
-print isinstance(chan, Channel)  ## True
-print isinstance(chan, Array)    ## False
 
 with webworker:
 	class Worker():
@@ -96,6 +79,27 @@ Z = None
 @debugger
 def test():
 	global X, Z
+
+	## the runtime provides some fake python libs ##
+	J = json.loads( '{"x":1}' )  
+	print  J 
+
+	s1 = set( [1,2,3,1,2])
+	print s1
+	s2 = frozenset( [0,1,1,1,1,20])
+	print s2
+	s3 = s1.difference(s2)
+	print s3
+
+	chan = Channel()
+	## TODO fix macros
+	#with mymacro as "chan.send(JSON.stringify(%s))":
+	#	mymacro( s3 )
+
+	print 'chan is an isinstance of Channel'
+	print isinstance(chan, Channel)  ## True
+	print isinstance(chan, Array)    ## False
+
 	a = 1
 	b = 2
 	if a <= b-1:
@@ -118,6 +122,11 @@ def test():
 		default:
 			print 'switch default ok'
 
+	## get translated to the ternary operator in `test?truevalue:falsevalue`
+	print 'testing ternary'
+	tertest = a if True else b
+	assert tertest==1
+	print 'ternay OK'
 
 	with operator_overloading:
 		X = [1,2]

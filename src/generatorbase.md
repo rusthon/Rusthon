@@ -11,6 +11,14 @@ Imports
 
 class GeneratorBase( CLikeLanguage ):
 
+	def visit_IfExp(self, node):
+		## ternary operator ##
+		test    = self.visit(node.test)
+		iftrue  = self.visit(node.body)
+		iffalse = self.visit(node.orelse)
+		return '(%s ? %s : %s)' %(test, iftrue, iffalse)
+
+
 	def visit_Expr(self, node):
 		## note: the javascript backend overloads this ##
 		s = self.visit(node.value)

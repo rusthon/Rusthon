@@ -2343,6 +2343,13 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				return '"""%s"""' %s.encode('utf-8')
 
+	def visit_IfExp(self, node):
+		test    = self.visit(node.test)
+		iftrue  = self.visit(node.body)
+		iffalse = self.visit(node.orelse)
+		return '(%s if %s else %s)' %(iftrue, test, iffalse)
+
+
 	def visit_Expr(self, node):
 		if node.lineno < len(self._source):
 			src = self._source[ node.lineno ]
@@ -2350,36 +2357,15 @@ class PythonToPythonJS(NodeVisitorBase):
 			self._line_number = node.lineno
 			self._line = src
 
-		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
-		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
-
-		if use_runtime_errors:
-			writer.write('try:')
-			writer.push()
+		## note: runtime errors and checking generator has moved to `jstranslator.md`
+		## TODO clean this up
+		#use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
+		#use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		line = self.visit(node.value)
 		if line:
 			#writer.write('('+line+')')
 			writer.write( line )
-		elif use_runtime_errors:
-			writer.write('pass')
-
-		if use_runtime_errors:
-			writer.pull()
-			writer.write('except:')
-			writer.push()
-			if node.lineno-1 < len(self._source):
-				src = self._source[ node.lineno-1 ]
-				src = src.replace('"', '\\"')
-				src = 'line %s: %s'	%(node.lineno, src.strip())
-				writer.write('console.trace()')
-				writer.write('console.error(__exception__, __exception__.message)')
-				writer.write('console.error("""%s""")' %src)
-				writer.write('raise RuntimeError("""%s""")' %src)
-			else:
-				writer.write('raise RuntimeError("no source code")')
-
-			writer.pull()
 
 
 	def visit_Call(self, node):
