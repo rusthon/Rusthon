@@ -1374,7 +1374,7 @@ def main():
 
 				if sys.platform=='darwin':  ## hack for OSX
 					subprocess.call(['open', tmp])
-				elif nodewebkit_runnable:
+				elif nodewebkit_runnable and '--release' not in sys.argv:
 					## nodewebkit looks for `package.json` in the folder it is given ##
 
 					open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)
