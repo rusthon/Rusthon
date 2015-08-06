@@ -193,6 +193,9 @@ def __debugger_overlay():
 
 
 def __debugger_onerror_overlay(err,f,c):
+	if err._skip is not undefined:
+		return False
+	err._skip = True
 	debugger.log(err,f,c)
 	overlay = __debugger_overlay()
 	editor = overlay.editor1

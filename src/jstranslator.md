@@ -136,9 +136,9 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				a = '/***/ try {\n'
 				a += self.indent() + s + '\n'
 				if called:
-					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{return;} };' %(caller, called)
+					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
 				else:
-					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{return;} };' %caller
+					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
 				return a
 
 
