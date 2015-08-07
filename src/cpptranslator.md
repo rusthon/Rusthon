@@ -87,6 +87,8 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 
 		for b in node.body:
 			line = self.visit(b)
+			if line == 'main();':  ## to be compatible with other backends that need to call main directly
+				continue
 
 			if line is not None:
 				for sub in line.splitlines():

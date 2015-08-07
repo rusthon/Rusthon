@@ -1221,11 +1221,13 @@ exports.myinit = function() {
 '''
 
 def main():
-	if len(sys.argv)==1:
-		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--anaconda] [--run=] [--data=]')
+	if len(sys.argv)==1 or '--help' in sys.argv:
+		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--release] [--run=] [--data=]')
 		print('		[tar file] is the optional name of the output tar that contains the build')
 		print()
 		print('		source files, transpiled source, and output binaries.')
+		print()
+		print('		--release generates optimized output without extra runtime checks')
 		print()
 		print('		--run is given a list of programs to run, "--run=a.py,b.py"')
 		print('		a.py and b.py can be run this way by naming the code blocks in the markdown')
@@ -1234,6 +1236,11 @@ def main():
 		print('		--data is given a list of directories to include in the build dir and tarfile.')
 		print()
 		print('		--anaconda run scripts with Anaconda Python, must be installed to ~/anaconda')
+		print()
+		print('		note: when using regular python files (.py) as input instead of markdown (.md)')
+		print('		you can use these extra options to set which backend is used by the transpiler:')
+		for backend in '--c++ --javascript --go --rust'.split():
+			print('		'+backend)
 		return
 
 	modules = new_module()
@@ -1351,6 +1358,7 @@ def main():
 		print('saved output to: %s'%output_file)
 
 	elif not save:
+		print('testing build...')
 		tmpdir = tempfile.gettempdir()
 		## copy jar and other extra libraries files files ##
 		for p in datadirs:
@@ -1393,6 +1401,14 @@ def main():
 
 				else:
 					webbrowser.open(tmp)
+
+		elif package['javascript']:
+			tmpdir = tempfile.gettempdir()
+			for pak in package['javascript']:
+				fname = pak['name'] + '.js'
+				fpath = os.path.join(tmpdir, fname)
+				open(fpath, 'wb').write( pak['script'] )
+				subprocess.check_call(['node', fpath])
 
 	else:
 		save_tar( package, output_tar )
