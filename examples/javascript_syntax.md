@@ -49,9 +49,9 @@ The extra syntax `switch` and `default` is also supported.
 from runtime import *
 
 
-class Channel():
+class MyChannel():
 	def send(self,ob):
-		print 'sending:' + ob
+		print 'calling MyChannel.send:' + ob
 		return ob
 
 
@@ -91,13 +91,14 @@ def test():
 	s3 = s1.difference(s2)
 	print s3
 
-	chan = Channel()
-	## TODO fix macros
-	#with mymacro as "chan.send(JSON.stringify(%s))":
-	#	mymacro( s3 )
+	chan = MyChannel()
 
-	print 'chan is an isinstance of Channel'
-	print isinstance(chan, Channel)  ## True
+	## macros let you inline javascript and compress multiple things into one simple macro function
+	with mymacro as "chan.send(JSON.stringify(%s)); console.log('macro test OK');":
+		mymacro( s3 )
+
+	print 'chan is an isinstance of MyChannel'
+	print isinstance(chan, MyChannel)  ## True
 	print isinstance(chan, Array)    ## False
 
 	a = 1
