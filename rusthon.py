@@ -1405,7 +1405,9 @@ def main():
 		elif package['javascript']:
 			tmpdir = tempfile.gettempdir()
 			for pak in package['javascript']:
-				fname = pak['name'] + '.js'
+				fname = pak['name']
+				if not fname.endswith('.js'):
+					fname += '.js'
 				fpath = os.path.join(tmpdir, fname)
 				open(fpath, 'wb').write( pak['script'] )
 				subprocess.check_call(['node', fpath])

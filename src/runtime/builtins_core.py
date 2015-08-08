@@ -197,6 +197,10 @@ def __debugger_onerror_overlay(err,f,c):
 		return False
 	err._skip = True
 	debugger.log(err,f,c)
+
+	if document is undefined:  ## inside nodejs
+		return
+
 	overlay = __debugger_overlay()
 	editor = overlay.editor1
 	editor2 = overlay.editor2

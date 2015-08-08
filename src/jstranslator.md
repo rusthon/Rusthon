@@ -447,12 +447,15 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		dectail = ')' * len(decorators)
 		args = self.visit(node.args)
 
+		funcname = node.name
+
 		if is_prototype:
+			funcname = '%s_%s' %(protoname, node.name)
 			if is_debugger:
 				raise SyntaxError('@debugger is not allowed on methods: %s.%s' %(protoname, node.name))
 			if bind_to:
 				raise SyntaxError('@bind is not allowed on methods: %s.%s' %(protoname, node.name))
-			fdef = '%s.prototype.%s = function(%s)' % (protoname, node.name, ', '.join(args))
+			fdef = '%s.prototype.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
 			## note: var should always be used with function expressions.
@@ -504,10 +507,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			## up any variables from the outer scope if it is a nested function.
 			## note: the user calls `myfunc.redefine(src)` and then on next call it is recompiled.
 			body.append(
-				'/***/ if (%s.__recompile !== undefined) { eval("%s.__redef="+%s.__recompile); %s.__recompile=undefined; };' %(node.name, node.name, node.name, node.name)
+				'/***/ if (%s.__recompile !== undefined) { eval("%s.__redef="+%s.__recompile); %s.__recompile=undefined; };' %(funcname, funcname, funcname, funcname)
 			)
 			body.append(
-				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(node.name, node.name)
+				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(funcname, funcname)
 			)
 
 		next = None
@@ -764,29 +767,29 @@ Call Helper
 
 						dims = '[0]' * s.count('[')
 						t = s.split(']')[-1]
-						out.append('if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
-						out.append('if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
+						out.append('/***/ if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
+						out.append('/***/ if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
 
 					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
 
-						out.append('if (!(%s instanceof Function)) {throw new TypeError("`%s` is not a callback function: instead got type->"+typeof(%s))}' %(key.arg, key.arg, key.arg))
+						out.append('/***/ if (!(%s instanceof Function)) {throw new TypeError("`%s` is not a callback function: instead got type->"+typeof(%s))}' %(key.arg, key.arg, key.arg))
 						targs = []
 						head,tail = key.value.s.split(')(')
 						head = head.split('func(')[-1]
 						for j, targ in enumerate(head.split('|')):  ## NOTE TODO replace `|` with space
 							out.append(
-								'if (!(%s.args[%s]=="%s")) {throw new TypeError("callback `%s` requires argument `%s` as type `%s`")}' %(key.arg, j, targ,   key.value.s.replace('|',' '), j, targ)
+								'/***/ if (!(%s.args[%s]=="%s")) {throw new TypeError("callback `%s` requires argument `%s` as type `%s`")}' %(key.arg, j, targ,   key.value.s.replace('|',' '), j, targ)
 							)
 
 						returns = tail.replace(')','')
 						if returns:
 							out.append(
-								'if (!(%s.returns=="%s")) {throw new TypeError("callback `%s` requires a return type of `%s`, instead got->" + typeof(%s.returns))}' %(key.arg, returns, key.arg, returns, key.arg)
+								'/***/ if (!(%s.returns=="%s")) {throw new TypeError("callback `%s` requires a return type of `%s`, instead got->" + typeof(%s.returns))}' %(key.arg, returns, key.arg, returns, key.arg)
 							)
 
 					else:
 						val = self.visit(key.value)
-						out.append('if ( !(isinstance(%s, %s))) {throw new TypeError("in function `%s`, argument `%s` must of type `%s`, instead got->"+typeof(%s))}' %(key.arg, val, funcname, key.arg,val, key.arg))
+						out.append('/***/ if ( !(isinstance(%s, %s))) {throw new TypeError("in function `%s`, argument `%s` must of type `%s`, instead got->"+typeof(%s))}' %(key.arg, val, funcname, key.arg,val, key.arg))
 
 		return ';\n'.join(out)
 

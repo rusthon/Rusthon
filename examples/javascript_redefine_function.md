@@ -50,10 +50,24 @@ def redefine_bar():
 	print code
 	bar.redefine(code)
 
+class A:
+	@redef
+	def foo(self):
+		show('foo method')
+
 def main():
 	bar()
 	bar(1,1)
 	bar(2,2)
+
+	a = A()
+	a.foo()
+	def newfoo():
+		show('new foo method OK')
+	a.foo.redefine(newfoo)
+	a.foo()
+
+
 ```
 
 @index.html
