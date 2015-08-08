@@ -168,6 +168,19 @@ def test():
 	print 'A'.isdigit()
 	print len('123')
 
+	## jquery or some external library that uses `$` ##
+	def $(w):
+		print(w)
+	$.bla = $
+
+	if $ is not undefined:
+		$('testing calling $')
+		$.bla('testing bla')
+		$($)
+		$ = 1
+	else:
+		print 'missing jquery'
+
 	#test_spawn()
 
 

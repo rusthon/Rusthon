@@ -373,6 +373,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 ```python
 
 	def _visit_function(self, node):
+		if node.name == '__DOLLAR__':
+			node.name = '$'
 		comments = []
 		body = []
 		is_main = node.name == 'main'
