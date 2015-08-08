@@ -513,7 +513,8 @@ class typedpython:
 		try:
 			ast.parse(r)
 		except SyntaxError as e:
-			print 'ERROR: transpiler failed!'
+			print '-'*80
+			print 'Syntax Error on this line:'
 			eline = output[e.lineno-1]
 			if eline.strip().startswith('def '):
 				funcname = eline.strip().split('(')[0].split('def ')[-1]
@@ -528,6 +529,9 @@ class typedpython:
 								print 'the arguments are space separated, not comma separated.'
 								print 'example: "func(int int)()" is a callback that takes two ints and returns nothing.'
 								sys.exit(1)
+			else:
+				print eline
+			print '-'*80
 
 			raise e
 

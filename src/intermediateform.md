@@ -213,6 +213,10 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					writer.write( line )
 
+		## preprocess the input source that may contain extended syntax
+		## that the python AST parser can not deal with.
+		## note: `transform_source` translates into an intermediate form
+		## that is python AST compatible.
 		source = typedpython.transform_source( source )
 
 
