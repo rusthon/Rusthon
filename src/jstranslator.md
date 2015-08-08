@@ -55,10 +55,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		self._inline_lambda = False
 		self.catch_call = set()  ## subclasses can use this to catch special calls
 
-		self.special_decorators = set(['__typedef__', '__glsl__', '__pyfunction__', 'expression'])
-		self._glsl = False  ## TODO deprecate
-		self._has_glsl = False  ## TODO deprecate
-		self.glsl_runtime = 'int _imod(int a, int b) { return int(mod(float(a),float(b))); }'  ## TODO deprecate
+		self.special_decorators = set(['__typedef__', '__pyfunction__', 'expression'])
 
 		self._typed_vars = dict()
 
@@ -328,6 +325,8 @@ TODO `finnally` for the javascript backend
 			if T == 'RuntimeError()': T = 'std::exception'
 			return 'throw %s;' % T
 		else:
+			## TODO - when re-raising an error, it fails because it is an Error object
+			## TODO - inject some code here to check the type at runtime.
 			return 'throw new %s;' % self.visit(node.type)
 
 	def visit_ExceptHandler(self, node):
@@ -427,6 +426,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
+
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
+				pass
+
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__prototype__':
 				assert len(decor.args)==1
 				is_prototype = True
@@ -527,24 +530,24 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		## todo fix when sleep comes before channel async _func_recv, should be a stack of ['}', '});']
 		if self._sleeps:
-			body.append( '}' * self._sleeps)
+			body.append( '}/*end-sleep*/' * self._sleeps)
 			self._sleeps = 0
 
 		if self._func_recv:
 			while self._func_recv:  ## closes nested generated callbacks
 				self.pull()
-				body.append( self.indent() + '});' )
+				body.append( self.indent() + '});/*end-async*/' )
 				self._func_recv -= 1
 
 		## end of function ##
 		self.pull()
-		body.append( self.indent() + '}' )
+		body.append( self.indent() + '}/*end-function*/' )
 		if is_debugger:
 			self.pull()
-			body.append( '}' )
+			body.append( '}/*debugger*/' )
 
 		if dectail:
-			body.append(dectail + ';')
+			body.append(dectail + ';/*end-decorators*/')
 
 		## below is used for runtime type checking ##
 		if returns:
