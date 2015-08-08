@@ -107,9 +107,9 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 			## https://github.com/ahorn/cpp-channel
 			#header.append('#include <channel>')
 			## instead of including, just directly inline cpp-channel source
-			dirname = os.path.dirname(os.path.abspath(__file__))
+			#dirname = os.path.dirname(os.path.abspath(__file__))
 			header.append(
-				open( os.path.join(dirname, 'src/runtime/c++/cpp-channel.h') ).read()
+				open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/c++/cpp-channel.h') ).read()
 			)
 
 		if self._has_jvm:
@@ -487,9 +487,7 @@ TODO save GCC PGO files.
 def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 	#raise SyntaxError(script)
 	if insert_runtime:
-		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, os.path.join('src', 'runtime'))
-		runtime = open( os.path.join(dirname, 'cpp_builtins.py') ).read()
+		runtime = open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/cpp_builtins.py') ).read()
 		script = runtime + '\n' + script
 
 	try:

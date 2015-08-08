@@ -1153,11 +1153,11 @@ def generate_minimal_js_runtime():
 	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
 def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
+	## note: RUSTHON_LIB_ROOT gets defined in the entry of rusthon.py
 	r = [
-		open('src/runtime/pythonpythonjs.py', 'rb').read(),
-		#open('src/runtime/builtins_core.py', 'rb').read()
+		open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/pythonpythonjs.py'), 'rb').read(),
 		python_to_pythonjs(
-			open('src/runtime/builtins_core.py', 'rb').read(),
+			open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/builtins_core.py'), 'rb').read(),
 			fast_javascript = True,
 			pure_javascript = False
 		)
@@ -1166,7 +1166,7 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 	if nodejs:
 		r.append(
 			python_to_pythonjs(
-				open('src/runtime/builtins_nodejs.py', 'rb').read(),
+				open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/builtins_nodejs.py'), 'rb').read(),
 				fast_javascript = True,
 				pure_javascript = False
 			)
@@ -1175,7 +1175,7 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 	if nodejs_tornado:
 		r.append(
 			python_to_pythonjs(
-				open('src/runtime/nodejs_tornado.py', 'rb').read(),
+				open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/nodejs_tornado.py'), 'rb').read(),
 				fast_javascript = True,
 				pure_javascript = False
 			)

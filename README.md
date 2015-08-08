@@ -14,6 +14,32 @@ The other backends are experimental.
 * [multiple markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
 * [professional training and support](http://rusthon-lang.blogspot.com/p/contract-me.html)
 
+Installing
+----------
+
+comming soon: Fedora and Debian packages!
+
+```bash
+cd
+git clone https://github.com/rusthon/Rusthon.git
+cd Rusthon
+sudo ./install-dev.sh
+```
+
+This just creates a symbolic link `transpile` that points to the current location of `rusthon.py`.
+
+Using `transpile`
+-----------------
+
+```bash
+cd myproject
+transpile mymarkdown.md
+```
+
+Above will compile everything in mymarkdown.md and test it with NW.js or your system default web browser.
+To see all the command line options run `transpile --help`
+
+
 
 Getting Started Javascript
 -----------------
@@ -29,9 +55,9 @@ with mymacro as "chan.send(JSON.stringify(%s))":
     mymacro( s3 )
 
 ```
-
-* [javascript backend](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
+* [javascript backend wiki](https://github.com/rusthon/Rusthon/wiki/JavaScript-Backend)
+* [javascript backend doc](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 
 Extra JavaScript Frontends
 --------------------

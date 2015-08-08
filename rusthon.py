@@ -4,6 +4,9 @@ import os, sys, subprocess, hashlib, time
 import tempfile
 import webbrowser
 
+## if installed as a symbolic link, this ensures things can still be bootstrapped from the `src` subfolder
+RUSTHON_LIB_ROOT = os.path.dirname(unicode(os.path.realpath(__file__), sys.getfilesystemencoding()))
+
 
 GO_EXE = None
 if os.path.isfile('/usr/local/go/bin/go'):
@@ -338,6 +341,8 @@ def import_md( url, modules=None, index_offset=0, force_tagname=None ):
 				subpath = os.path.join(base_path, submarkdown)
 				if not os.path.isfile(subpath):
 					raise RuntimeError('error: can not find markdown file: '+subpath)
+				#print 'importing submarkdown'
+				#print subpath
 				index += import_md( subpath, modules, index_offset=index )
 
 			doc.append(line)
@@ -1513,10 +1518,10 @@ class rusthon(object):
 			raise RuntimeError(package)
 			return 
 
-
 def bootstrap_rusthon():
 	global BOOTSTRAPED
-	localdir = os.path.dirname(unicode(__file__, sys.getfilesystemencoding()))
+	localdir = os.path.dirname(unicode(os.path.realpath(__file__), sys.getfilesystemencoding()))
+	#raise RuntimeError(localdir)
 	mods = new_module()
 	import_md( os.path.join(localdir,'src/main.md'), modules=mods )
 	src = []
