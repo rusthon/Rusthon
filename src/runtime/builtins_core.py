@@ -1027,15 +1027,21 @@ class __WorkerPool__:
 		## if their definition comes after the construction of this singleton.
 		print 'creating blob'
 
-		## TODO other builtins prototype hacks. see above.
+		## having the worker report back the current time to the main thread allows
+		## some gauge of its CPU load, this can be average over time, and the user
+		## could call something like `worker.how_busy()` which is some relative value.
+
 		header = [
 			'setInterval(',
 			'	function(){',
 			'		self.postMessage({time_update:(new Date()).getTime()});',
-			'	}, 500',
+			'	}, 100',
 			')',
+			## TODO other builtins prototype hacks. see above.
 			'Array.prototype.append = function(a) {this.push(a);};',
 		]
+
+
 		for name in dir(window):
 			ob = window[name]
 			if ob is undefined:
@@ -1118,7 +1124,8 @@ class __WorkerPool__:
 		ww._callmeth_callback = None
 
 		## if worker has not sent a time update in awhile ##
-		ww.busy = lambda : ww._last_time_update - time() < 1000
+		ww.busy     = lambda : ww._last_time_update - time() < 200
+		ww.how_busy = lambda : 100.0 / (ww._last_time_update - time())
 
 
 		def onmessage_update(evt):
@@ -1130,6 +1137,7 @@ class __WorkerPool__:
 				ww._last_time_update = time()
 
 				msg = evt.data.message
+				## restore object class if `proto` was given (user static return type)
 				if evt.data.proto: msg.__proto__ = eval(evt.data.proto + '.prototype')
 
 
@@ -1160,14 +1168,19 @@ class __WorkerPool__:
 		## note: thread-ids = `cpu-id:spawned-id`
 		self.source = src
 		self.extras = extras
-		self.thread = None
-		self.workers = {}
-		self.pending = {}
-		self._get  = None
-		self._call = None
-		self._callmeth = None
+		#self.thread = None
+		#self.workers = {}
+		#self.pending = {}
+		#self._get  = None
+		#self._call = None
+		#self._callmeth = None
 
-	def update(self, evt):
+		## each worker in this pool runs on its own CPU core
+		## how to get number of CPU cores in JS?
+		self.pool = {}
+		self.num_spawned = 0
+
+	def update(self, evt):  ## DEPRECATED
 		if evt.data.debug:
 			print evt.data.debug
 		else:
@@ -1197,43 +1210,75 @@ class __WorkerPool__:
 				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg, options):
-		cpu = '0'
+		cpu = 0
+		autoscale = True
 		if options is not undefined:
-			print options.cpu
+			print 'using CPU:'+options.cpu
 			cpu = options.cpu
+			autoscale = False
+
+		id = str(cpu) + '|' + str(self.num_spawned)
+		cfg['spawn']     = id
+		self.num_spawned += 1
+
+		if cpu in self.pool:
+			## this thread could be busy, spawn into it anyways.
+			print 'reusing cpu already in pool'
+			self.pool[cpu].postMessage(cfg)
+			return id
+		elif autoscale:
+			print 'spawn auto scale up'
+			## first check if any of the other threads are not busy
+			readythread = None
+			cpu = len(self.pool.keys())
+			for cid in self.pool.keys():
+				thread = self.pool[ cid ]
+				if not thread.busy():
+					print 'reusing thread is not busy:' + cid
+					readythread = thread
+					cpu = cid
+					break
+
+			id = str(cpu) + '|' + str(self.num_spawned)
+			cfg['spawn'] = id
+
+			if not readythread:
+				assert cpu not in self.pool.keys()
+				readythread = self.create_webworker()
+				self.pool[cpu] = readythread
+
+			readythread.postMessage(cfg)
+			return id
+		else:
+			## user defined CPU ##
+			assert cpu not in self.pool.keys()
+			readythread = self.create_webworker()
+			self.pool[cpu] = readythread
+			self.pool[cpu].postMessage(cfg)
+			return id
 
 		#if tid not in self.threads:
 		#	self.threads[tid] = self.create_webworker()
 		#cfg['thread-id'] = tid
 		#return tid + '|' + self.threads[tid].spawn_class(cfg)
 
-		readythread = None
-		for thread in self.pool:
-			if not thread.busy():
-				readythread = thread
-				break
-
-		if not readythread:
-			self.pool.append(
-				self.create_webworker()
-			)
 
 		## cfg contains: call|new:func/classname, args:[]
-		id = 'worker' + len(self.workers)
-		self.workers[id] = []  ## callbacks
-		self.pending[id] = []  ## early messages
-		cfg['spawn'] = id
-		self.thread.postMessage(cfg)
-		return id
+		#id = 'worker' + len(self.workers)
+		#self.workers[id] = []  ## callbacks
+		#self.pending[id] = []  ## early messages
+		#cfg['spawn'] = id
+		#self.thread.postMessage(cfg)
+
 
 	def send(self, id=None, message=None):
-		#tid, sid = id.split('|')
-		#if tid not in self.threads:
-		#	raise RuntimeError('invalid thread-webworker id')
+		tid, sid = id.split('|')
+		if tid not in self.pool:
+			raise RuntimeError('send: invalid cpu id')
 
 		try:
-			self.thread.postMessage({'send':id, 'message':message})
-			#self.threads[tid].postMessage({'send':id, 'message':message})
+			#self.thread.postMessage({'send':id, 'message':message})
+			self.pool[tid].postMessage({'send':id, 'message':message})
 
 		except:
 			print 'DataCloneError: can not send data to webworker'
@@ -1241,16 +1286,35 @@ class __WorkerPool__:
 			raise RuntimeError('DataCloneError: can not send data to webworker')
 
 	def recv(self, id, callback):
-		if id in self.pending and self.pending[id].length:
-			res = self.pending[id].pop()
-			callback(res)
-		elif id in self.workers:
-			self.workers[id].insert(0, callback)
-		else:
-			if id is undefined:
+		#if id in self.pending and self.pending[id].length:
+		#	res = self.pending[id].pop()
+		#	callback(res)
+		#elif id in self.workers:
+		#	self.workers[id].insert(0, callback)
+		#else:
+		#	if id is undefined:
+		#		raise WebWorkerError("undefined id")
+		#	else:
+		#		raise WebWorkerError(id)
+
+		if id is undefined:
 				raise WebWorkerError("undefined id")
-			else:
-				raise WebWorkerError(id)
+
+		tid, sid = id.split('|')
+		if tid not in self.pool:
+			raise RuntimeError('send: invalid cpu id')
+
+
+		ww = self.pool[ tid ]
+		if sid in ww._stream_triggers and ww._stream_triggers[sid].length:
+			callback( ww._stream_triggers[sid].pop() )
+		elif sid in self._stream_callbacks:
+			ww._stream_callbacks[sid].insert(0, callback)
+		else:
+			raise WebWorkerError('webworker.recv: invaid id')
+
+
+
 
 	def get(self, id, attr, callback):
 		self._get = callback
