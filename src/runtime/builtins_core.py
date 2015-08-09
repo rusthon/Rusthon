@@ -1036,17 +1036,23 @@ class __WorkerPool__:
 			'	function(){',
 			'		self.postMessage({time_update:(new Date()).getTime()});',
 			'	}, 100',
-			')',
+			');',
 			## TODO other builtins prototype hacks. see above.
 			'Array.prototype.append = function(a) {this.push(a);};',
 		]
 
-
+		## this is something extra stuff injected from NW.js
+		## that should not be inserted into the webworker.
+		nwjs_skip = ('Buffer', 'AppView', 'WebView')
 		for name in dir(window):
+			if name in nwjs_skip:
+				continue
 			ob = window[name]
 			if ob is undefined:
 				print 'WARNING: object in toplevel namespace window is undefined ->' + name
 			elif typeof(ob) == 'function':
+				## should actually check function code for `[ native code ]` and skip those.
+
 				header.append( 'var ' + name + '=' + ob.toString() + ';\n' )
 				for subname in dir(ob.prototype):
 					sob = ob.prototype[subname]
@@ -1124,8 +1130,15 @@ class __WorkerPool__:
 		ww._callmeth_callback = None
 
 		## if worker has not sent a time update in awhile ##
-		ww.busy     = lambda : ww._last_time_update - time() < 200
-		ww.how_busy = lambda : 100.0 / (ww._last_time_update - time())
+		ww.busy     = lambda : ww._last_time_update - (new(Date())).getTime() < 200
+		ww.how_busy = lambda : 100.0 / (ww._last_time_update - (new(Date())).getTime())
+
+		@bind(ww.spawn_class)
+		def _spawn_class(cfg):
+			sid = cfg['spawn']
+			ww._stream_callbacks[sid] = []
+			ww._stream_triggers[sid]  = []
+			ww.postMessage(cfg)
 
 
 		def onmessage_update(evt):
@@ -1134,7 +1147,7 @@ class __WorkerPool__:
 			elif evt.data.debug:
 				print evt.data.debug
 			else:
-				ww._last_time_update = time()
+				ww._last_time_update = (new(Date())).getTime()
 
 				msg = evt.data.message
 				## restore object class if `proto` was given (user static return type)
@@ -1157,7 +1170,7 @@ class __WorkerPool__:
 						else:
 							ww._stream_triggers[id].push( msg )
 					else:
-						print 'ERROR: missing callback for:' + id
+						raise WebWorkerError('invalid id:' + id)
 
 
 		ww.onmessage = onmessage_update
@@ -1218,13 +1231,14 @@ class __WorkerPool__:
 			autoscale = False
 
 		id = str(cpu) + '|' + str(self.num_spawned)
-		cfg['spawn']     = id
+		cfg['spawn']     = self.num_spawned
 		self.num_spawned += 1
 
 		if cpu in self.pool:
 			## this thread could be busy, spawn into it anyways.
 			print 'reusing cpu already in pool'
-			self.pool[cpu].postMessage(cfg)
+			#self.pool[cpu].postMessage(cfg)
+			self.pool[cpu].spawn_class(cfg)
 			return id
 		elif autoscale:
 			print 'spawn auto scale up'
@@ -1240,21 +1254,22 @@ class __WorkerPool__:
 					break
 
 			id = str(cpu) + '|' + str(self.num_spawned)
-			cfg['spawn'] = id
 
 			if not readythread:
 				assert cpu not in self.pool.keys()
 				readythread = self.create_webworker()
 				self.pool[cpu] = readythread
 
-			readythread.postMessage(cfg)
+			#readythread.postMessage(cfg)
+			readythread.spawn_class(cfg)
 			return id
 		else:
 			## user defined CPU ##
 			assert cpu not in self.pool.keys()
 			readythread = self.create_webworker()
 			self.pool[cpu] = readythread
-			self.pool[cpu].postMessage(cfg)
+			#self.pool[cpu].postMessage(cfg)
+			self.pool[cpu].spawn_class(cfg)
 			return id
 
 		#if tid not in self.threads:
@@ -1278,7 +1293,7 @@ class __WorkerPool__:
 
 		try:
 			#self.thread.postMessage({'send':id, 'message':message})
-			self.pool[tid].postMessage({'send':id, 'message':message})
+			self.pool[tid].postMessage({'send':sid, 'message':message})
 
 		except:
 			print 'DataCloneError: can not send data to webworker'
@@ -1308,10 +1323,10 @@ class __WorkerPool__:
 		ww = self.pool[ tid ]
 		if sid in ww._stream_triggers and ww._stream_triggers[sid].length:
 			callback( ww._stream_triggers[sid].pop() )
-		elif sid in self._stream_callbacks:
+		elif sid in ww._stream_callbacks:
 			ww._stream_callbacks[sid].insert(0, callback)
 		else:
-			raise WebWorkerError('webworker.recv: invaid id')
+			raise WebWorkerError('webworker.recv - invaid id: '+id)
 
 
 

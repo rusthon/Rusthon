@@ -1,5 +1,7 @@
-testing
+WebWorkers
 -------
+
+WebWorkers is a browser standard that allows you to use the extra CPU cores on the client.
 
 To run this example run these commands in your shell:
 
@@ -18,8 +20,6 @@ html
 ```html
 <html>
 <head>
-
-
 </head>
 <body>
 <pre id="CONTAINER">
@@ -51,7 +51,7 @@ with webworker:
 			## do some long computation here ##
 			return ob
 
-
+@debugger
 def test():
 	show('spawn workers')
 	worker1 = spawn(

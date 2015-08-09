@@ -181,7 +181,7 @@ def test():
 	else:
 		print 'missing jquery'
 
-	#test_spawn()
+	test_spawn()
 
 
 def test_spawn():
