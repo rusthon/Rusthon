@@ -560,10 +560,12 @@ Also implements extra syntax like `switch` and `select`.
 						select_hack = True
 						if self._cpp:
 							case_match = '_select_.recv(%s, %s);' %(self.visit(kw.value), kw.arg)						
-						else:
-							#self.visit(kw.value)
+
+						else:  ## javascript backend ##
+							#self.visit(kw.value) ## TODO allow worker returned from some call
 							cid = kw.value.right.id
-							case_match = 'if (__workerpool__.pending[%s] !== undefined &&  __workerpool__.pending[%s].length) {var %s = __workerpool__.pending[%s].pop();' %(cid, cid, kw.arg, cid)
+							#case_match = 'if (__workerpool__.pending[%s] !== undefined &&  __workerpool__.pending[%s].length) {var %s = __workerpool__.pending[%s].pop();' %(cid, cid, kw.arg, cid)
+							case_match = 'if (__workerpool__.select(%s).length) {var %s = __workerpool__.select(%s).pop();' %(cid, kw.arg, cid)
 
 					else:
 						case_match = '%s = %s' %(kw.arg, self.visit(kw.value))

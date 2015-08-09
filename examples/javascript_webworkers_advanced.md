@@ -103,7 +103,7 @@ with webworker:
 				print i
 				self <- CalcFib(i)
 
-
+@debugger
 def test():
 	show('spawn workers')
 	worker1 = spawn(
@@ -131,8 +131,14 @@ def test_workers(worker1, worker2):
 				show('case-worker2:' + res)
 
 
-	res = <- somefunc( 'foo', 'bar' )
-	show('somefunc:' + res)
+	## TODO: need to rethink how this works
+	## because somefunc could be returning some important state,
+	## and with multiple workers on multiple cores, there are different states now.
+	## could be something like this: `res = <- worker1::somefunc( 'foo', 'bar' )`
+	## but that is ugly and in that case the user could have simply made a wrapper method to call the function.
+	## another options is this: `res = <- somefunc[ CPUID ]('foo', 'bar')` - this makes more sense.
+	#res = <- somefunc( 'foo', 'bar' )
+	#show('somefunc:' + res)
 
 
 	show('getting data from workers')

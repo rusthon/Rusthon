@@ -1125,9 +1125,9 @@ class __WorkerPool__:
 		ww._last_time_update = 0
 		ww._stream_callbacks = {}
 		ww._stream_triggers  = {}
-		ww._get_callback  = None
-		ww._call_callback = None
-		ww._callmeth_callback = None
+		ww._get_callback  = None  ## this should actually be a stack of callbacks, right now it assumes its synced
+		ww._call_callback = None  ## this should actually be a stack of callbacks.
+		ww._callmeth_callback = None  ## TODO also should be a stack
 
 		## if worker has not sent a time update in awhile ##
 		ww.busy     = lambda : ww._last_time_update - (new(Date())).getTime() < 200
@@ -1332,14 +1332,44 @@ class __WorkerPool__:
 
 
 	def get(self, id, attr, callback):
-		self._get = callback
-		self.thread.postMessage({'id':id, 'get':attr})
+		#self._get = callback
+		#self.thread.postMessage({'id':id, 'get':attr})
+
+		tid, sid = id.split('|')
+		if tid not in self.pool:
+			raise RuntimeError('get: invalid cpu id')
+		ww = self.pool[ tid ]
+		ww._get_callback = callback
+		ww.postMessage(
+			id  = sid,
+			get = attr
+		)
 
 	def call(self, func, args, callback):
-		self._call = callback
-		self.thread.postMessage({'call':func, 'args':args})
-
+		#self._call = callback
+		#self.thread.postMessage({'call':func, 'args':args})
+		## which CPU do we select? default to `0`, have extra option for CPU?
+		raise RuntimeError('TODO call plain function in webworker')
 
 	def callmeth(self, id, func, args, callback):
-		self._callmeth = callback
-		self.thread.postMessage({'id':id, 'callmeth':func, 'args':args})
+		#self._callmeth = callback
+		#self.thread.postMessage({'id':id, 'callmeth':func, 'args':args})
+
+		tid, sid = id.split('|')
+		if tid not in self.pool:
+			raise RuntimeError('callmeth: invalid cpu id')
+		ww = self.pool[ tid ]
+		ww._callmeth_callback = callback
+		ww.postMessage(
+			id       = sid,
+			callmeth = func,
+			args     = args
+		)
+
+	def select(self, id):
+		tid, sid = id.split('|')
+		if tid not in self.pool:
+			raise RuntimeError('select: invalid cpu id')
+		if sid not in self.pool[ tid ]._stream_triggers:
+			raise RuntimeError('select: invalid worker id')
+		return self.pool[ tid ]._stream_triggers[ sid ]

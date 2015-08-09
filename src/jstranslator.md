@@ -123,6 +123,8 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				return s
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='inline':
 				return s
+			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='sleep':
+				return s
 			else:
 				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
 				caller = self._function_stack[-1].name
