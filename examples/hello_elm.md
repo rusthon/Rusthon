@@ -3,6 +3,27 @@ Elm Language Frontend
 
 install elm transpiler: `sudo npm install --global elm`
 
+why is this not working?
+```
+import Html
+myfunc a =
+  Html.text a
+
+```
+
+the elm transpiler gives up with:
+```
+Error when searching for modules imported by module 'Main':
+    Could not find module 'Html'
+
+Potential problems could be:
+  * Misspelled the module name
+  * Need to add a source directory or new dependency to elm-package.json
+
+```
+
+Simple Clock Example
+--------------------
 
 @myscript
 ```elm
@@ -14,6 +35,7 @@ import Time exposing (..)
 
 main =
   Signal.map clock (every second)
+
 
 
 clock t =
@@ -41,7 +63,7 @@ javascript
 
 @myjs
 ```javascript
-Elm.embed( Elm.MyApp, document.getElementById('CONTAINER'));
+var myapp = Elm.embed( Elm.Main, document.getElementById('CONTAINER'));
 ```
 
 html
