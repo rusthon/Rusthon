@@ -75,11 +75,17 @@ self.onmessage = function (evt) {
 		id = msg.id;
 		//self.postMessage({debug:"CALLM:"+id});
 		var ob = __instances__[id];
-		self.postMessage({
-			'CALLMETH': 1, 
-			'message' : ob[msg.callmeth].apply(ob,msg.args),
-			'proto'   : ob[msg.callmeth].returns
-		});
+		if (typeof(ob) == "undefined") {
+			self.postMessage({debug:"invalid spawn instance id:"+id});
+			self.postMessage({debug:"instances:"+Object.keys(__instances__).length});
+		} else {
+			self.postMessage({
+				'CALLMETH': 1, 
+				'message' : ob[msg.callmeth].apply(ob,msg.args),
+				'proto'   : ob[msg.callmeth].returns
+			});
+
+		}
 	}
 
 	if (msg['get']) {

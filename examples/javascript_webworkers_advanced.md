@@ -90,37 +90,41 @@ with webworker:
 			return self.x + self.y + self.z
 
 		def mymethod(self, a,b,c):
-			print 'MYMETHOD:'
-			print 'A::' + a
-			print b
-			print 'C::' + c
+			print 'calling mymethod'
 			return a*b*c
 
 		def dowork(self):
-			print 'doing work'
+			print 'webworker doing work'
 			for i in range(32):
-				print 'working...'
-				print i
+				print 'calc fib degree:'+i
 				self <- CalcFib(i)
 
 @debugger
 def test():
+	## testing multiple cores ##
 	show('spawn workers')
 	worker1 = spawn(
-		WorkerX(1,1,1)
+		WorkerX(1,1,1),
+		cpu = 1
 	)
 	a = 100
 	worker2 = spawn(
-		WorkerX(a,a,a)
+		WorkerX(a,a,a),
+		cpu = 2
 	)
+
+	print worker1
+	print worker2
 	## wait for awhile before sending messages ##
 	window.setTimeout(
 		lambda: test_workers(worker1,worker2),
-		1500,
+		2000,
 	)
 
 def test_workers(worker1, worker2):
 	show('testing simple call')
+	#if worker1.is_busy():
+	#	raise RuntimeError('got busy')
 
 	for i in range(64):
 		print 'trying to select on workers'

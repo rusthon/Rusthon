@@ -1021,7 +1021,7 @@ def chr( num ):
 
 
 class __WorkerPool__:
-	def create_webworker(self):
+	def create_webworker(self, cpuid):
 		## this is lazy because if the blob is created when the js is first executed,
 		## then it will pick all functions of `window` but they will be `undefined`
 		## if their definition comes after the construction of this singleton.
@@ -1122,6 +1122,7 @@ class __WorkerPool__:
 		#self.thread = ww  ## temp, TODO multiple threads
 		#self.thread.onmessage = self.update.bind(this)
 
+		ww._cpuid = cpuid
 		ww._last_time_update = 0
 		ww._stream_callbacks = {}
 		ww._stream_triggers  = {}
@@ -1145,7 +1146,7 @@ class __WorkerPool__:
 			if evt.data.time_update:  ## the worker uses setInterval to report the time, see `worker.busy()`
 				ww._last_time_update = evt.data.time_update
 			elif evt.data.debug:
-				print evt.data.debug
+				console.warn( ww._cpuid + '|' + evt.data.debug)
 			else:
 				ww._last_time_update = (new(Date())).getTime()
 
@@ -1257,7 +1258,7 @@ class __WorkerPool__:
 
 			if not readythread:
 				assert cpu not in self.pool.keys()
-				readythread = self.create_webworker()
+				readythread = self.create_webworker(cpu)
 				self.pool[cpu] = readythread
 
 			#readythread.postMessage(cfg)
@@ -1266,7 +1267,7 @@ class __WorkerPool__:
 		else:
 			## user defined CPU ##
 			assert cpu not in self.pool.keys()
-			readythread = self.create_webworker()
+			readythread = self.create_webworker(cpu)
 			self.pool[cpu] = readythread
 			#self.pool[cpu].postMessage(cfg)
 			self.pool[cpu].spawn_class(cfg)
