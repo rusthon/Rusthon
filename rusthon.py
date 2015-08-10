@@ -250,6 +250,7 @@ def new_module():
 		'python'  : [],
 		'rusthon' : [],
 		'rust'    : [],
+		'elm'     : [],
 		'c'       : [],
 		'c++'     : [],
 		'c#'      : [],
@@ -402,6 +403,17 @@ def build( modules, module_path, datadirs=None ):
 	if modules['c#']:
 		for mod in modules['c#']:
 			output['c#'].append(mod)
+
+	if modules['elm']:
+		for mod in modules['elm']:
+			tmpelm = tempfile.gettempdir() + '/MyApp.elm'
+			tmpjs = tempfile.gettempdir() + '/elm-output.js'
+			open(tmpelm, 'wb').write(mod['code'])
+			subprocess.check_call(['elm-make', tmpelm, '--output', tmpjs])
+			elmdata = open(tmpjs,'rb').read()
+			output['datafiles'][mod['tag']] = elmdata
+			tagged[ mod['tag'] ] = elmdata
+
 
 	if modules['coffee']:
 		for mod in modules['coffee']:
