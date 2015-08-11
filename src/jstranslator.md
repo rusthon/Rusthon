@@ -465,7 +465,6 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		dechead = ''.join(decorators)
 		dectail = ')' * len(decorators)
 		args = self.visit(node.args)
-
 		funcname = node.name
 
 		if is_prototype:

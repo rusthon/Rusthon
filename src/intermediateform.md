@@ -1179,10 +1179,12 @@ class PythonToPythonJS(NodeVisitorBase):
 				## by dropping that bad style we can assume that any method whose first argument is
 				## not self is a static method, this way the user can omit using the decorator `@staticmethod`
 
+				item._has_self = False  ## used below to check if it is a staticmethod
 				if len(item.args.args):
-					has_self = self.visit(item.args.args[0]) in ('self', 'this')
-					if has_self:
-						item.args.args = item.args.args[1:]  ## removes self
+					item._has_self = self.visit(item.args.args[0]) in ('self', 'this')
+				if item._has_self:
+					item.args.args = item.args.args[1:]  ## removes self
+
 
 				finfo = inspect_function( item )
 				for n in finfo['name_nodes']:
@@ -1272,6 +1274,9 @@ class PythonToPythonJS(NodeVisitorBase):
 			method = methods[mname]
 			## this hack is required to assign the function to the class prototype `A.prototype.method=function`
 			writer.write('@__prototype__(%s)'%name)
+			if not method._has_self:
+				writer.write('@staticmethod')
+
 			line = self.visit(method)
 			if line: writer.write( line )
 			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable

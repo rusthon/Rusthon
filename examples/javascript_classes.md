@@ -53,6 +53,9 @@ class Root:
 	@staticmethod
 	def somefunc(v): return v*2
 
+	## any function without `self` as the first argument becomes a staticmethod ##
+	def otherfunc(v): return v*3
+
 	def root(self):
 		return 'hi from root'
 
@@ -92,6 +95,7 @@ def test():
 		print Root.MyOb[key]
 
 	assert Root.somefunc(2) == 4
+	assert Root.otherfunc(2) == 6
 
 	nest = Nested()
 	snest = nest.foobar('testing nexted class')
