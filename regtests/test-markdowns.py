@@ -18,6 +18,7 @@ TODO_FIX = (
 	'hello_rapydscript.md',
 	'hello_coffee.md',
 	'hello_elm.md',
+	'hello_fullstack.md',
 )
 
 files = os.listdir('./examples')
