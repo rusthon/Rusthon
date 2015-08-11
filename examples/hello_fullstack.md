@@ -1,5 +1,22 @@
+FullStack Single File Example
+-----------------------------
+
+Fullstack is just a buzz word for a single programmer who fully implements the frontend and backend,
+including webserver and database.  
+On the frontend they handle all the javascript, html, css and frameworks like:
+Angular.js.  In other words, it is a heavy job, with many things to manage.
+Andy Shora has some interesting thoughts on it, check out
+http://andyshora.com/full-stack-developers.html 
+
+Reducing a fullstack into a single file makes things much simpler,
+also using Python both on the backend and frontend greatly simplfies everything.
+
+
+
 Dataset
 --------
+Dataset is a database abstraction layer that makes using SQL dead simple.
+
 https://dataset.readthedocs.org/en/latest/
 
 ```
@@ -10,8 +27,10 @@ sudo python setup.py install
 
 Tornado Server
 -------------
+the tornado webserver saves objects into the database,
+it gets from the client over the websocket.
 
-for local testing run:
+
 ```
 ./rusthon.py ./examples/hello_fullstack.md --run=myserver.py
 ```
@@ -75,12 +94,17 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 				## `**search` unpacks to something like `name="foo"`
 				r = table.find_one( **search )
 				if r: results.append(r)
-			print results
+			if results:
+				print results
+				self.write_message(json.dumps(results))
+			else:
+				self.write_message(json.dumps("nothing found in databases"))
 
 		elif isinstance(ob, dict):
 			print 'saving object into database'
 			print ob
 			table.insert( ob )
+			self.write_message( json.dumps('updated database:'+str(len(table))) )
 
 
 	def on_close(self):
@@ -134,9 +158,18 @@ def on_message_ws(event):
 		print 'got binary bytes', event.data.byteLength
 		arr = new(Uint8Array(event.data))
 		txt = String.fromCharCode.apply(None, arr)
-		JSON.parse(txt)
+		msg = JSON.parse(txt)
 	else:
 		msg = JSON.parse(event.data)
+
+
+	pre = document.getElementById('RESULTS')
+	if isinstance(msg, list):
+		for res in msg:
+			s = JSON.stringify(res)
+			pre.appendChild( document.createTextNode(s+'\n') )
+	else:
+		pre.appendChild( document.createTextNode(msg+'\n') )
 
 	print msg
 
@@ -158,20 +191,23 @@ def connect_ws():
 def main():
 	## connect websocket
 	connect_ws()
-
+	con = document.getElementById('FORM')
+	h = document.createElement('h3')
+	h.appendChild(document.createTextNode('update database:'))
+	con.appendChild(h)
 	keys = ('first name', 'last name', 'age')
 	fields = {}
 	for key in keys:
 		input = document.createElement('input')
 		input.setAttribute('type', 'text')
 		fields[key] = input
-		document.body.appendChild(document.createTextNode(key))
-		document.body.appendChild(input)
-		document.body.appendChild(document.createElement('br'))
+		con.appendChild(document.createTextNode(key))
+		con.appendChild(input)
+		con.appendChild(document.createElement('br'))
 
 	button = document.createElement('button')
 	button.appendChild(document.createTextNode('submit'))
-	document.body.appendChild(button)
+	con.appendChild(button)
 	@bind(button.onclick)
 	def onclick():
 		ob = {}
@@ -181,6 +217,41 @@ def main():
 
 		jsondata = JSON.stringify(ob)
 		ws.send(jsondata)
+
+		searchform = document.getElementById('SEARCH')
+		if searchform is None:
+			searchform = document.createElement('div')
+			searchform.setAttribute('id', 'SEARCH')
+			document.body.appendChild(searchform)
+			h = document.createElement('h3')
+			h.appendChild(document.createTextNode('search database:'))
+			searchform.appendChild( h )
+
+			search_fields = {}
+			for key in keys:
+				input = document.createElement('input')
+				input.setAttribute('type', 'text')
+				search_fields[key] = input
+				searchform.appendChild(document.createTextNode(key))
+				searchform.appendChild(input)
+				searchform.appendChild(document.createElement('br'))
+
+
+			sbutton = document.createElement('button')
+			sbutton.appendChild(document.createTextNode('search'))
+			searchform.appendChild(sbutton)
+			@bind(sbutton.onclick)
+			def onsearch():
+				s = []
+				for key in search_fields.keys():
+					elt = search_fields[key]
+					## note: this would not work because in a literal the keys are forced into strings
+					#o = {key:elt.value}
+					o = {}
+					o[ key ] = elt.value
+					s.append( o )
+				ws.send( JSON.stringify(s) )
+
 
 
 ```
@@ -195,6 +266,9 @@ HTML
 <@myapp>
 </head>
 <body onload="main()">
+<div id="FORM"></div>
+<pre id="RESULTS">
+</pre>
 </body>
 </html>
 ```
