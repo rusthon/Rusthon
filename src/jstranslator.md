@@ -397,6 +397,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_debugger  = False
 		is_redef     = False
 		is_staticmeth= False
+		is_getter    = False
+		is_setter    = False
 		bind_to      = None
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
@@ -434,6 +436,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				func_expr = True
 				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
+
+			elif isinstance(decor, ast.Name) and decor.id == 'getter':
+				is_getter = True
+
+			elif isinstance(decor, ast.Name) and decor.id == 'setter':
+				is_setter = True
 
 			elif isinstance(decor, ast.Name) and decor.id == 'staticmethod':
 				is_staticmeth = True
@@ -474,7 +482,15 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			if bind_to:
 				raise SyntaxError('@bind is not allowed on methods: %s.%s' %(protoname, node.name))
 
-			if is_staticmeth:
+			if is_getter:
+				assert len(args)==0
+				funcname = '__getter__' + funcname
+				fdef = '%s function %s(%s)' % (dechead, funcname, ', '.join(args))
+			elif is_setter:
+				funcname = '__setter__' + funcname
+				fdef = '%s function %s(%s)' % (dechead, funcname, ', '.join(args))
+
+			elif is_staticmeth:
 				fdef = '%s.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
 			else:
 				fdef = '%s.prototype.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
@@ -573,6 +589,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		if dectail:
 			body.append(dectail + ';/*end-decorators*/')
+
+		if is_getter:
+			body.append('Object.defineProperty(%s.prototype, "%s", {get:%s});' %(protoname,node.name, funcname))
+		elif is_getter:
+			body.append('Object.defineProperty(%s.prototype, "%s", {set:%s});' %(protoname,node.name, funcname))
 
 		## below is used for runtime type checking ##
 		if returns:

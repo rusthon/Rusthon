@@ -2967,7 +2967,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		func_expr = None
 
 		## deprecated?
-		self._cached_property = None
 		self._func_typedefs = {}
 
 		if writer.is_at_global_level() and not self._with_webworker:
@@ -3058,27 +3057,38 @@ class PythonToPythonJS(NodeVisitorBase):
 				raise SyntaxError('@javascript is deprecated')
 
 			elif isinstance(decorator, Name) and decorator.id == 'property':
-				property_decorator = decorator
-				n = node.name + '__getprop__'
-				self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
-				node.name = n
-				#if decorator.id == 'cached_property':  ## TODO DEPRECATE
-				#	self._cached_property = node.original_name
+				## this old style is deprecated, it worked with the old js backend and lua backend
+				#property_decorator = decorator
+				#n = node.name + '__getprop__'
+				#self._decorator_properties[ node.original_name ] = dict( get=n, set=None )
+				#node.name = n
+
+				self._decorator_properties[ node.name ] = dict( get=decorator, set=None )
+				writer.write('@getter')
+
 
 			elif isinstance(decorator, Attribute) and isinstance(decorator.value, Name) and decorator.value.id in self._decorator_properties:
 				if decorator.attr == 'setter':
-					if self._decorator_properties[ decorator.value.id ]['set']:
+					if self._decorator_properties[ decorator.value.id ]['set'] is not None:
 						raise SyntaxError( self.format_error("decorator.setter is used more than once") )
-					n = node.name + '__setprop__'
-					self._decorator_properties[ decorator.value.id ]['set'] = n
-					node.name = n
-					setter = True
-					prop_name = node.original_name
+
+					## old deprecated stuff
+					#n = node.name + '__setprop__'
+					#self._decorator_properties[ decorator.value.id ]['set'] = n
+					#node.name = n
+					#setter = True
+					#prop_name = node.original_name
+
+					if node.name != decorator.value.id:
+						raise SyntaxError('TODO rename function setter')
+					self._decorator_properties[ decorator.value.id ]['set'] = decorator
+					writer.write('@setter')
 
 				elif decorator.attr == 'deleter':
-					raise NotImplementedError
+					## javascript has no deleter for properties?
+					raise NotImplementedError('TODO property deleter')
 				else:
-					raise RuntimeError
+					raise SyntaxError('invalid property type')
 
 			elif isinstance(decorator, Call) and decorator.func.id == 'custom_operator':
 				assert len(decorator.args) == 1

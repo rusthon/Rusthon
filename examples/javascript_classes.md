@@ -59,6 +59,15 @@ class Root:
 	def root(self):
 		return 'hi from root'
 
+	@property
+	def myprop(self):
+		return 100
+
+	## same as `@property`, just shorter and more clear
+	@getter
+	def otherprop(self):
+		return 200
+
 class Nested:
 	class SubClass(Root):
 		class XXX:
@@ -96,6 +105,10 @@ def test():
 
 	assert Root.somefunc(2) == 4
 	assert Root.otherfunc(2) == 6
+
+	r = Root()
+	assert r.myprop == 100
+	assert r.otherprop == 200
 
 	nest = Nested()
 	snest = nest.foobar('testing nexted class')
