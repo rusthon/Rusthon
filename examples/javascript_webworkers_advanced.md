@@ -99,18 +99,22 @@ with webworker:
 				print 'calc fib degree:'+i
 				self <- CalcFib(i)
 
+CPU_ID1 = "core1"
+CPU_ID2 = "core2"
+
 @debugger
 def test():
 	## testing multiple cores ##
 	show('spawn workers')
 	worker1 = spawn(
 		WorkerX(1,1,1),
-		cpu = 1
+		cpu = CPU_ID1
 	)
+	sleep(1)
 	a = 100
 	worker2 = spawn(
 		WorkerX(a,a,a),
-		cpu = 2
+		cpu = CPU_ID2
 	)
 
 	print worker1
@@ -118,7 +122,7 @@ def test():
 	## wait for awhile before sending messages ##
 	window.setTimeout(
 		lambda: test_workers(worker1,worker2),
-		2000,
+		1000,
 	)
 
 def test_workers(worker1, worker2):
@@ -180,22 +184,16 @@ def test_workers(worker1, worker2):
 
 	sleep(1.0)
 
-	for i in range(20):
-		print 'trying to select on workers'
+	for i in range(64):
+		print 'trying to select on workers again'
 		select:
 			case res = <- worker1:
 				show('case-worker1:' + res)
 			case res = <- worker2:
 				show('case-worker2:' + res)
 
-	#res = <- worker2
-	#show(res)
-	#res = <- worker2
-	#show(res)
-	#res = <- worker2
-	#show(res)
-	#res = <- worker2
-	#show(res)
+	print 'OK'
+	show('DONE')
 
 
 

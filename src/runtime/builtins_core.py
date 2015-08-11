@@ -1137,6 +1137,7 @@ class __WorkerPool__:
 		@bind(ww.spawn_class)
 		def _spawn_class(cfg):
 			sid = cfg['spawn']
+			print '_spawn_class:' + ww._cpuid + '|' + sid
 			ww._stream_callbacks[sid] = []
 			ww._stream_triggers[sid]  = []
 			ww.postMessage(cfg)
@@ -1192,7 +1193,7 @@ class __WorkerPool__:
 		## each worker in this pool runs on its own CPU core
 		## how to get number of CPU cores in JS?
 		self.pool = {}
-		self.num_spawned = 0
+		self.num_spawned = 1  ## TODO check why this fails when zero
 
 	def update(self, evt):  ## DEPRECATED
 		if evt.data.debug:
@@ -1266,6 +1267,7 @@ class __WorkerPool__:
 			return id
 		else:
 			## user defined CPU ##
+			print 'spawn user defined cpu:' + cpu
 			assert cpu not in self.pool.keys()
 			readythread = self.create_webworker(cpu)
 			self.pool[cpu] = readythread

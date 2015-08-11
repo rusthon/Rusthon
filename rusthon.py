@@ -46,7 +46,11 @@ self.onmessage = function (evt) {
 	var id;
 	if (msg['spawn']) {
 		id = msg.spawn;
-		//self.postMessage({debug:"SPAWN:"+id});
+		self.postMessage({debug:"SPAWN:"+id});
+		if (__instances__[id] !== undefined) {
+			self.postMessage({debug:"SPAWN ERROR - existing id:"+id});
+
+		}
 		//self.postMessage({debug:"SPAWN-CLASS:"+msg['new']});
 		//self.postMessage({debug:"SPAWN-ARGS:"+msg['args']});
 		__instances__[id] = __construct__(eval(msg['new']), msg.args );
