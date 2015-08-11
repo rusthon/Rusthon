@@ -124,6 +124,17 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='inline':
 				return s
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='sleep':
+				assert self._stack[-1] is node
+				if len(self._stack) < 3:
+					raise SyntaxError('the builtin `sleep` can not be used at the global level outside of a function.')
+				elif isinstance(self._stack[-2], ast.If):
+					raise SyntaxError('the builtin `sleep` can only be used in the function body, and not under an `if` block.')
+				elif isinstance(self._stack[-2], ast.For):
+					raise SyntaxError('the builtin `sleep` can only be used in the function body, and not inside a `for` loop.')
+				elif isinstance(self._stack[-2], ast.While):
+					raise SyntaxError('the builtin `sleep` can only be used in the function body, and not inside a `for` or `while` loop.')
+				elif not isinstance(self._stack[-2], ast.FunctionDef):
+					raise SyntaxError('the builtin `sleep` can only be used in the function body, and not nested under any blocks.')
 				return s
 			else:
 				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
