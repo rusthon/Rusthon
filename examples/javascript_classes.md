@@ -62,11 +62,18 @@ class Root:
 	@property
 	def myprop(self):
 		return 100
+	@myprop.setter
+	def f(self, v):
+		self._myprop = v
 
 	## same as `@property`, just shorter and more clear
 	@getter
 	def otherprop(self):
 		return 200
+	@setter
+	def otherprop(self, v):
+		print 'calling setter on `otherprop`:' + v
+		self.hidden = v
 
 class Nested:
 	class SubClass(Root):
@@ -108,7 +115,14 @@ def test():
 
 	r = Root()
 	assert r.myprop == 100
+	r.myprop = 'OK'
+	assert r._myprop == 'OK'
+
+	print r.otherprop
 	assert r.otherprop == 200
+	r.otherprop = 'OK'
+	assert r.hidden == 'OK'
+
 
 	nest = Nested()
 	snest = nest.foobar('testing nexted class')

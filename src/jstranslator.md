@@ -591,9 +591,15 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			body.append(dectail + ';/*end-decorators*/')
 
 		if is_getter:
-			body.append('Object.defineProperty(%s.prototype, "%s", {get:%s});' %(protoname,node.name, funcname))
-		elif is_getter:
-			body.append('Object.defineProperty(%s.prototype, "%s", {set:%s});' %(protoname,node.name, funcname))
+			#gtemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, enumerable:false, writable:false, configurable:false});'
+			gtemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, configurable:true});'
+			body.append( gtemplate%(protoname,node.name, funcname))
+		elif is_setter:
+			## assume that there is a getter
+			getterfunc = funcname.replace('__setter__', '__getter__')
+			#stemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, set:%s, enumerable:false, writable:false, configurable:true});'
+			stemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, set:%s, configurable:true});'
+			body.append( stemplate%(protoname,node.name, getterfunc, funcname))
 
 		## below is used for runtime type checking ##
 		if returns:

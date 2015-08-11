@@ -1161,7 +1161,9 @@ class PythonToPythonJS(NodeVisitorBase):
 			class_decorators.append( decorator )
 
 		method_names = []  ## write back in order (required by GLSL)
-		methods = {}
+		methods      = {}  ## same named functions get squashed in here (like getter/setters)
+		methods_all  = []  ## all methods of class
+
 		class_vars = []
 		post_class_write = [
 			'%s.prototype.__class__ = %s' %(name, name),
@@ -1173,6 +1175,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
 				methods[ item.name ] = item
+				methods_all.append( item )
 				## only remove `self` if it is the first argument,
 				## python actually allows `self` to be any name (whatever the first argument is named)
 				## but that is very bad style, and basically never used.
@@ -1268,10 +1271,12 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
 			writer.write('_PythonJS_UID += 1')
 
-		#keys = methods.keys()
-		#keys.sort()
-		for mname in method_names:
-			method = methods[mname]
+
+		#for mname in method_names:
+		#	method = methods[mname]
+		for method in methods_all:
+			mname = method.name
+
 			## this hack is required to assign the function to the class prototype `A.prototype.method=function`
 			writer.write('@__prototype__(%s)'%name)
 			if not method._has_self:
@@ -3080,7 +3085,8 @@ class PythonToPythonJS(NodeVisitorBase):
 					#prop_name = node.original_name
 
 					if node.name != decorator.value.id:
-						raise SyntaxError('TODO rename function setter')
+						node.name = decorator.value.id
+
 					self._decorator_properties[ decorator.value.id ]['set'] = decorator
 					writer.write('@setter')
 
