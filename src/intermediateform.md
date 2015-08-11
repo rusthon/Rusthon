@@ -1173,11 +1173,22 @@ class PythonToPythonJS(NodeVisitorBase):
 			if isinstance(item, FunctionDef):
 				method_names.append(item.name)
 				methods[ item.name ] = item
-				item.args.args = item.args.args[1:]  ## remove self
+				## only remove `self` if it is the first argument,
+				## python actually allows `self` to be any name (whatever the first argument is named)
+				## but that is very bad style, and basically never used.
+				## by dropping that bad style we can assume that any method whose first argument is
+				## not self is a static method, this way the user can omit using the decorator `@staticmethod`
+
+				if len(item.args.args):
+					has_self = self.visit(item.args.args[0]) in ('self', 'this')
+					if has_self:
+						item.args.args = item.args.args[1:]  ## removes self
+
 				finfo = inspect_function( item )
 				for n in finfo['name_nodes']:
 					if n.id == 'self':
 						n.id = 'this'
+
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			elif isinstance(item, ast.ClassDef):

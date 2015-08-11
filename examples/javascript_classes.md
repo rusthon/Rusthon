@@ -45,6 +45,14 @@ Example
 from runtime import *
 
 class Root:
+	MyClassVar = 1
+	MyOb = {'x':1, 'y':2 }
+	## TODO clean up list comps, here it leaks temp vars into the global namespace
+	SomeList = [a for a in ('hello', 'world')]
+
+	@staticmethod
+	def somefunc(v): return v*2
+
 	def root(self):
 		return 'hi from root'
 
@@ -72,7 +80,19 @@ class Nested:
 		snest.submeth('testing sub', 'NESTED')
 		return snest
 
+@debugger
 def test():
+	assert Root.MyClassVar == 1
+	assert len(Root.SomeList) == 2
+	for item in Root.SomeList:
+		print item
+
+	for key in Root.MyOb:
+		print key
+		print Root.MyOb[key]
+
+	assert Root.somefunc(2) == 4
+
 	nest = Nested()
 	snest = nest.foobar('testing nexted class')
 	print snest

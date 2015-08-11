@@ -396,6 +396,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_prototype = False
 		is_debugger  = False
 		is_redef     = False
+		is_staticmeth= False
 		bind_to      = None
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
@@ -434,6 +435,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
 
+			elif isinstance(decor, ast.Name) and decor.id == 'staticmethod':
+				is_staticmeth = True
+
 			elif isinstance(decor, ast.Name) and decor.id == 'debugger':
 				is_debugger = True
 			elif isinstance(decor, ast.Name) and decor.id == 'redef':
@@ -470,7 +474,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				raise SyntaxError('@debugger is not allowed on methods: %s.%s' %(protoname, node.name))
 			if bind_to:
 				raise SyntaxError('@bind is not allowed on methods: %s.%s' %(protoname, node.name))
-			fdef = '%s.prototype.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
+
+			if is_staticmeth:
+				fdef = '%s.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
+			else:
+				fdef = '%s.prototype.%s = %s function %s(%s)' % (protoname, node.name, dechead, funcname, ', '.join(args))
 
 		elif len(self._function_stack) == 1:
 			## note: var should always be used with function expressions.
