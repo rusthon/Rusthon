@@ -224,9 +224,6 @@ def __debugger_onerror_overlay(err,f,c):
 			errmsg_custom.append(word)
 
 
-	for line in err.stack.splitlines():
-		show( line.split('(')[0] )
-
 	src1 = debugger.getsource(f)
 	editor.__editfunc = None
 	editor.setValue(src1)
