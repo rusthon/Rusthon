@@ -80,6 +80,12 @@ Z = None
 def test():
 	global X, Z
 
+	mystring1 = "hello %s" %"world"
+	print mystring1
+
+	mystring2 = "%s %s" %("hello", "world")
+	print mystring2
+
 	## the runtime provides some fake python libs ##
 	J = json.loads( '{"x":1}' )  
 	print  J 
