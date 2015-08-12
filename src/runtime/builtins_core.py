@@ -716,14 +716,18 @@ def __jsdict_set(ob, key, value):
 		JS("ob.set(key,value)")
 
 def __jsdict_keys(ob):
-	if instanceof(ob, Object):
-		## in the case of tuple keys this would return stringified JSON instead of the original arrays,
-		## TODO, should this loop over the keys and convert the json strings back to objects?
-		## but then how would we know if a given string was json... special prefix character?
-		return JS("Object.keys( ob )")
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		return JS("ob.keys()")
+	if ob.__class__ is not undefined:  ## assume this is a PythonJS class and user defined `keys` method
+		return inline("ob.keys()")
+	elif instanceof(ob, Object):
+		## what is a good way to know when this an external class instance with a method `keys`
+		## versus an object where `keys` is is a function?
+		if ob.keys is not undefined and isinstance(ob.keys, Function):
+			return inline("ob.keys()")
+		else:
+			return inline("Object.keys( ob )")
+	else:  ## rare case ##
+		## something without a prototype - created using Object.create(null) ##
+		return inline("ob.keys()")
 
 def __jsdict_values(ob):
 	if instanceof(ob, Object):

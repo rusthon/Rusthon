@@ -53,6 +53,8 @@ class MyChannel():
 	def send(self,ob):
 		print 'calling MyChannel.send:' + ob
 		return ob
+	def keys(self):
+		return 420
 
 
 with webworker:
@@ -106,6 +108,20 @@ def test():
 	print 'chan is an isinstance of MyChannel'
 	print isinstance(chan, MyChannel)  ## True
 	print isinstance(chan, Array)    ## False
+
+	mydict = {keys:1}
+	assert mydict[ 'keys' ] == 1
+	print mydict.keys()
+
+	print chan.keys()
+	assert chan.keys() == 420
+
+	## TODO  - could be fixed by wrapping all dict literals with `__makedict` that sets `__class__` as nonenumerable property
+	#def f():
+	#	return 'FIXME'
+	#mydict2 = {keys: f}
+	#print mydict2['keys']()
+	#assert mydict2.keys() != 'FIXME'
 
 	a = 1
 	b = 2
@@ -234,7 +250,7 @@ def test_workers(worker1, worker2):
 	res = <- worker2
 	print res
 
-	worker1.terminate()
+	#worker1.terminate()  ## TODO
 
 
 
