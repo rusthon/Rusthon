@@ -7,6 +7,11 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
+def dict( d, copy=False ):
+	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
+	return d
+dict.__name__ = 'dict'
+
 @bind(Function.prototype.redefine)
 def __redef_function(src):
 	if isinstance(src, Function):
@@ -682,7 +687,7 @@ def __sprintf(fmt, args):
 
 
 
-def __jsdict( items ):
+def __jsdict( items ):	## DEPRECATED
 	d = inline("{}")
 	for item in items:
 		key = item[0]
@@ -717,10 +722,14 @@ def __jsdict_set(ob, key, value):
 
 def __jsdict_keys(ob):
 	if ob.__class__ is not undefined:  ## assume this is a PythonJS class and user defined `keys` method
-		return inline("ob.keys()")
+		if ob.__class__ is dict:
+			return inline("Object.keys( ob )")
+		else:
+			return inline("ob.keys()")
 	elif instanceof(ob, Object):
 		## what is a good way to know when this an external class instance with a method `keys`
 		## versus an object where `keys` is is a function?
+		## this only breaks with classes from external js libraries?
 		if ob.keys is not undefined and isinstance(ob.keys, Function):
 			return inline("ob.keys()")
 		else:

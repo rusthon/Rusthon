@@ -116,12 +116,15 @@ def test():
 	print chan.keys()
 	assert chan.keys() == 420
 
+	#copy = dict(mydict)
+
 	## TODO  - could be fixed by wrapping all dict literals with `__makedict` that sets `__class__` as nonenumerable property
-	#def f():
-	#	return 'FIXME'
-	#mydict2 = {keys: f}
-	#print mydict2['keys']()
-	#assert mydict2.keys() != 'FIXME'
+	def f():
+		return 'FIXME'
+	mydict2 = {keys: f}
+	print mydict2['keys']()
+	assert mydict2.keys() != 'FIXME'
+	print mydict2.keys()
 
 	a = 1
 	b = 2

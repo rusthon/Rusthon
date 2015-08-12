@@ -572,10 +572,14 @@ class PythonToPythonJS(NodeVisitorBase):
 				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## DEPRECATED
 
 
-		if self._with_dart or self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
+		if self._with_dart or self._with_ll or self._with_go or self._with_rust or self._with_cpp:
 			b = ','.join( a )
 			return '{%s}' %b
-		elif self._with_js:
+		elif self._fast_js:
+			b = ','.join( a )
+			return 'dict({%s}, copy=False)' %b
+
+		elif self._with_js:  ## DEPRECATED - note: this allowed for python style dict literals
 			b = ','.join( a )
 			return '__jsdict( [%s] )' %b
 		elif self._with_lua:
