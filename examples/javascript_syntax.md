@@ -118,13 +118,31 @@ def test():
 
 	#copy = dict(mydict)
 
-	## TODO  - could be fixed by wrapping all dict literals with `__makedict` that sets `__class__` as nonenumerable property
+	## this is a very rare case, but it still works ##
 	def f():
-		return 'FIXME'
+		return 'VERYRARE'
 	mydict2 = {keys: f}
-	print mydict2['keys']()
-	assert mydict2.keys() != 'FIXME'
-	print mydict2.keys()
+	assert mydict2['keys']() == 'VERYRARE'
+	assert mydict2.keys()    != 'VERYRARE'
+
+	## the key type of this dict can be determined at translation time as int
+	idict = {0:'a', 1:'b', 2:'c'}
+
+	## this returns an array of ints ##
+	print idict.keys()
+	for k in idict.keys():
+		assert isinstance(k, int)
+
+	## having numbers as keys allows you to use `max()` as you normally would in python
+	assert max( idict.keys() ) == 2
+
+	## this also restores `k` to type int from the hash keys ##
+	for k in idict:
+		assert isinstance(k, int)
+
+	## the hash keys are still actually strings and it needs
+	## to be this way to stay compatible with external js.
+	assert idict['0'] == 'a'
 
 	a = 1
 	b = 2

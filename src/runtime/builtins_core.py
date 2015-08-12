@@ -7,10 +7,81 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
-def dict( d, copy=False ):
+def dict( d, copy=False, keytype=None, valuetype=None ):
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
-	return d
+	if keytype is not None:
+		Object.defineProperty(d, '__keytype__', value=keytype, enumerable=False)
+	if valuetype is not None:
+		Object.defineProperty(d, '__valuetype__', value=valuetype, enumerable=False)
+	if not copy:
+		return d
+
 dict.__name__ = 'dict'
+
+
+def __object_keys__(ob):
+	'''
+	notes:
+		. promotes keys to integers, also works on external objects coming from js.
+		. Object.keys(ob) traverses the full prototype chain.
+	'''
+	arr = []
+	isdigits = False
+	if ob.__keytype__ is not undefined:
+		if ob.__keytype__ == 'int':
+			isdigits = True
+	else:
+		## this could be faster using maybe using this trick?
+		## (JSON.stringify(Object.keys(ob)).replace('"','').replace(',', '')[1:-1] + '').isdigit()
+		test = 0
+		inline('for (var key in ob) { arr.push(key); if (key.isdigit()) {test += 1;} }')
+		isdigits = test == arr.length
+
+	if isdigits:
+		iarr = []
+		for key in arr:
+			iarr.push( int(key) )
+		return iarr
+	else:
+		return arr
+
+
+def __jsdict_keys(ob):
+	if ob.__class__ is not undefined:  ## assume this is a PythonJS class and user defined `keys` method
+		if ob.__class__ is dict:
+			if ob.__keytype__ is not undefined and ob.__keytype__ == 'int':
+				return JSON.parse(
+					'[' + 
+					inline("Object.keys( ob ).toString()").replace('"','')
+					+ ']'
+				)
+			else:
+				return inline("Object.keys( ob )")
+		else:
+			return inline("ob.keys()")
+	elif instanceof(ob, Object):
+		## what is a good way to know when this an external class instance with a method `keys`
+		## versus an object where `keys` is is a function?
+		## this only breaks with classes from external js libraries?
+		if ob.keys is not undefined and isinstance(ob.keys, Function):
+			return inline("ob.keys()")
+		else:
+			return inline("Object.keys( ob )")
+	else:  ## rare case ##
+		## something without a prototype - created using Object.create(null) ##
+		return inline("ob.keys()")
+
+def __jsdict_values(ob):
+	if instanceof(ob, Object):
+		arr = []
+		for key in ob:
+			if ob.hasOwnProperty(key):
+				value = ob[key]
+				arr.push( value )
+		return arr
+	else:  ## PythonJS object instance ##
+		## this works because instances from PythonJS are created using Object.create(null) ##
+		return JS("ob.values()")
 
 @bind(Function.prototype.redefine)
 def __redef_function(src):
@@ -645,22 +716,7 @@ def __js_typed_array( t, a ):
 	arr.set( a )
 	return arr
 
-def __object_keys__(ob):
-	'''
-	notes:
-		. Object.keys(ob) will not work because we create PythonJS objects using `Object.create(null)`
-		. this is different from Object.keys because it traverses the prototype chain.
-	'''
-	arr = []
-	isdigits = 0
-	inline('for (var key in ob) { arr.push(key); if (key.isdigit()) {isdigits += 1;} }')
-	if isdigits == arr.length:
-		iarr = []
-		for key in arr:
-			iarr.push( int(key) )
-		return iarr
-	else:
-		return arr
+
 
 def __sprintf(fmt, args):
 	## note: '%sXXX%s'.split().length != args.length
@@ -720,35 +776,7 @@ def __jsdict_set(ob, key, value):
 		## this works because instances from PythonJS are created using Object.create(null) ##
 		JS("ob.set(key,value)")
 
-def __jsdict_keys(ob):
-	if ob.__class__ is not undefined:  ## assume this is a PythonJS class and user defined `keys` method
-		if ob.__class__ is dict:
-			return inline("Object.keys( ob )")
-		else:
-			return inline("ob.keys()")
-	elif instanceof(ob, Object):
-		## what is a good way to know when this an external class instance with a method `keys`
-		## versus an object where `keys` is is a function?
-		## this only breaks with classes from external js libraries?
-		if ob.keys is not undefined and isinstance(ob.keys, Function):
-			return inline("ob.keys()")
-		else:
-			return inline("Object.keys( ob )")
-	else:  ## rare case ##
-		## something without a prototype - created using Object.create(null) ##
-		return inline("ob.keys()")
 
-def __jsdict_values(ob):
-	if instanceof(ob, Object):
-		arr = []
-		for key in ob:
-			if ob.hasOwnProperty(key):
-				value = ob[key]
-				arr.push( value )
-		return arr
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		return JS("ob.values()")
 
 def __jsdict_items(ob):
 	## `ob.items is None` is for: "self.__dict__.items()" because self.__dict__ is not actually a dict

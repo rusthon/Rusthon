@@ -557,10 +557,20 @@ class PythonToPythonJS(NodeVisitorBase):
 
 	def visit_Dict(self, node):
 		node.returns_type = 'dict'
+		keytype = None
 		a = []
 		for i in range( len(node.keys) ):
+			if isinstance(node.keys[i], ast.Num):
+				if type(node.keys[i].n) is int:
+					if keytype is None:
+						keytype = 'int'
+					elif keytype != 'int':
+						keytype = 'DYNAMIC'
+
 			k = self.visit( node.keys[ i ] )
 			v = node.values[i]
+
+
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
@@ -577,7 +587,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			return '{%s}' %b
 		elif self._fast_js:
 			b = ','.join( a )
-			return 'dict({%s}, copy=False)' %b
+			if keytype is None or keytype == 'DYNAMIC':
+				return 'dict({%s}, {copy:False} )' %b
+			else:
+				return 'dict({%s}, {copy:False, keytype:"%s"} )' %(b, keytype)
 
 		elif self._with_js:  ## DEPRECATED - note: this allowed for python style dict literals
 			b = ','.join( a )
