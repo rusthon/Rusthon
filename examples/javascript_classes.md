@@ -50,6 +50,11 @@ class Root:
 	## TODO clean up list comps, here it leaks temp vars into the global namespace
 	SomeList = [a for a in ('hello', 'world')]
 
+	## note: this is valid python, but will not work in Rusthon
+	#OtherClassVar = MyClassVar + 10
+	## class-level variables that refer to another must prefix the class name
+	OtherClassVar = Root.MyClassVar + 10
+
 	@staticmethod
 	def somefunc(v): return v*2
 
@@ -102,6 +107,7 @@ class Nested:
 @debugger
 def test():
 	assert Root.MyClassVar == 1
+	assert Root.OtherClassVar == 11
 	assert len(Root.SomeList) == 2
 	for item in Root.SomeList:
 		print item
