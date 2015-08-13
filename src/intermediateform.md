@@ -1267,7 +1267,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write(code)
 
 		else:
-			writer.write('pass')
+			writer.write('inline("this.__𝕦𝕚𝕕__ = __𝕦𝕚𝕕__ ++")')
 
 		if self._with_lua:  ## lua requires __class__ as a string to switch on
 			writer.write('this.__class__ = "%s"' %name)  ## isinstance runtime builtin requires this
@@ -1290,6 +1290,11 @@ class PythonToPythonJS(NodeVisitorBase):
 			## class UID ##
 			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
 			writer.write('_PythonJS_UID += 1')
+
+
+		writer.write('@__prototype__(%s)'%name)
+		writer.write('def toString(): return inline("this.__𝕦𝕚𝕕__")')
+
 
 
 		#for mname in method_names:

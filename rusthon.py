@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 __version__ = '0.9.9'
 import os, sys, subprocess, hashlib, time
 import tempfile
@@ -31,7 +32,8 @@ CHROME_EXE = None
 #elif os.path.isfile('/opt/google/chrome/google-chrome'):
 #	CHROME_EXE = '/opt/google/chrome/google-chrome'
 
-JS_WEBWORKER_HEADER = '''
+JS_WEBWORKER_HEADER = u'''
+var __𝕦𝕚𝕕__ = 1;
 var __construct__ = function(constructor, args) {
 	function F() {
 		return constructor.apply(this, args);
@@ -137,7 +139,7 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 				mainjs = jsfile
 
 		src = [ 'var __workersrc__ = [' ]
-		a = JS_WEBWORKER_HEADER + workers[0]
+		a = JS_WEBWORKER_HEADER.encode('utf-8') + workers[0]
 		for line in a.strip().splitlines():
 			src.append(	'"%s\\n",' % line.replace('"', '\\"'))
 		src.append(']')

@@ -117,6 +117,7 @@ def test():
 	assert chan.keys() == 420
 
 	## using objects as keys ##
+	global chan2
 	mydict[ chan ] = 'foo'
 	chan2 = MyChannel()
 	mydict[ chan2 ] = 'bar'
