@@ -885,7 +885,7 @@ TODO clean this up
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		#if '"' in s:
 		#	return "'%s'" % s
-		return '"%s"' % s
+		return u'"%s"' % s.encode('utf-8')
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)

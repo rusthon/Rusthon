@@ -6,20 +6,21 @@ makes it simple to build output source with formatting, insert before, and appen
 ```python
 import sys
 
-if sys.version_info.major == 3:
-	import io
-	StringIO = io.StringIO
-else:
-	from StringIO import StringIO
+#if sys.version_info.major == 3:
+#	import io
+#	StringIO = io.StringIO
+#else:
+#	from StringIO import StringIO
+
+#import io  ## Python2.6+
+#StringIO = io.StringIO
 
 class CodeWriter(object):
 
 	def __init__(self):
-		self.inline_glsl = False
-		self.inline_skip = ('@', 'def ', 'while ', 'if ', 'for ', 'var(')
 		self.level = 0
 		self.buffer = list()
-		self.output = StringIO()
+		self.output = list() #StringIO()
 		self.functions = []
 
 	def is_at_global_level(self):
@@ -42,14 +43,19 @@ class CodeWriter(object):
 
 	def _write(self, code):
 		indentation = self.level * 4 * ' '
-		if self.inline_glsl and not code.startswith( self.inline_skip ):
-			code = "inline('''%s''')" %code
 		s = '%s%s\n' % (indentation, code)
-		self.output.write(s)
+		#self.output.write(s)
+		#try:
+		#	s.encode('utf-8')
+		#except:
+		#	raise RuntimeError(s)
+		self.output.append( s )
 
 	def getvalue(self):
-		s = self.output.getvalue()
-		self.output = StringIO()
+		#s = self.output.getvalue()
+		#self.output = StringIO()
+		s = '\n'.join(self.output)
+		self.output = []
 		return s
 
 ```

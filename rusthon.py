@@ -284,7 +284,9 @@ def import_md( url, modules=None, index_offset=0, force_tagname=None ):
 	tag = force_tagname or None
 	fences = 0
 	base_path, markdown_name = os.path.split(url)
-	data = open(url, 'rb').read()
+	#data = open(url, 'rb').read().decode('utf-8')
+	import codecs
+	data = codecs.open(url, 'r', 'utf-8').read()
 
 	for line in data.splitlines():
 		if line.startswith('* @link:'):
@@ -793,13 +795,16 @@ def build( modules, module_path, datadirs=None ):
 				else:
 					html.append( line )
 
-			html = '\n'.join(html)
+			html = unicode('\n'.join(html))
 
 			for tagname in tagged:
-				tag = '<@%s>' %tagname
+				tag = u'<@%s>' %tagname
 				js  = tagged[tagname]
 				if tag in html:
-					html = html.replace(tag, '<script type="text/javascript">\n%s</script>' %js)
+					#print js
+					#xxx = js.decode('utf-8') + ''
+					xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
+					html = html.replace(tag, xxx)
 			mod['code'] = html
 			output['html'].append( mod )
 
@@ -1405,7 +1410,12 @@ def main():
 		if package['html']:
 			for i,page in enumerate(package['html']):
 				tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
-				open(tmp, 'wb').write( page['code'] )
+				## note in Chrome UTF-8 javascript will fail with this error: 
+				## `Unexpected token ILLEGAL` with unicode variables
+				## the file must be written as UTF-16.
+				## http://stackoverflow.com/questions/22543354/how-well-is-node-js-support-for-unicode
+				#open(tmp, 'wb').write( page['code'].encode('utf-8') )
+				open(tmp, 'wb').write( page['code'].encode('utf-16') )
 
 				if sys.platform=='darwin':  ## hack for OSX
 					subprocess.call(['open', tmp])
@@ -1436,7 +1446,8 @@ def main():
 				if not fname.endswith('.js'):
 					fname += '.js'
 				fpath = os.path.join(tmpdir, fname)
-				open(fpath, 'wb').write( pak['script'] )
+				#open(fpath, 'wb').write( pak['script'].decode('utf-8').encode('utf-16') )
+				open(fpath, 'wb').write( pak['script'].encode('utf-16') )  ## TODO fix nodejs unicode
 				subprocess.check_call(['node', fpath])
 
 	else:
@@ -1553,7 +1564,7 @@ def bootstrap_rusthon():
 	src = '\n'.join(src)
 	BOOTSTRAPED = src
 
-	if '--dump' in sys.argv: open('/tmp/bootstrap-rusthon.py', 'wb').write(src)
+	if '--dump' in sys.argv: open('/tmp/bootstrap-rusthon.py', 'wb').write(src.encode('utf-8'))
 	exec(src, globals())
 
 	if '--test' in sys.argv:

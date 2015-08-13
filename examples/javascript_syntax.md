@@ -116,6 +116,13 @@ def test():
 	print chan.keys()
 	assert chan.keys() == 420
 
+	## using objects as keys ##
+	mydict[ chan ] = 'foo'
+	chan2 = MyChannel()
+	mydict[ chan2 ] = 'bar'
+	assert mydict[ chan ] == 'foo'
+	assert mydict[ chan2 ] == 'bar'
+
 	#copy = dict(mydict)
 
 	## this is a very rare case, but it still works ##

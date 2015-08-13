@@ -1244,20 +1244,23 @@ class PythonToPythonJS(NodeVisitorBase):
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
 		if init:
-			tail = ''
+			writer.write('inline("this.__𝕦𝕚𝕕__ = __𝕦𝕚𝕕__ ++")')
 
-			#for b in init.body:
-			#	line = self.visit(b)
-			#	if line: writer.write( line )
+			tail = ''  ## what was tail used for?
+
+			## note: this is just the constructor, the actual __init__
+			## body is moved along with all the other methods to functions
+			## that bind to CLASSNAME.prototype.METHODNAME
+			##for b in init.body:
+			##	line = self.visit(b)
+			##	if line: writer.write( line )
 
 			if hasattr(init, '_code'):  ## cached ##
 				code = init._code
 			elif args:
-				#code = '%s.__init__(this, %s); %s'%(name, ','.join(args), tail)
 				code = 'this.__init__(%s); %s'%(', '.join(args), tail)
 				init._code = code
 			else:
-				#code = '%s.__init__(this);     %s'%(name, tail)
 				code = 'this.__init__();     %s' % tail
 				init._code = code
 
@@ -2377,14 +2380,14 @@ class PythonToPythonJS(NodeVisitorBase):
 			return 'new(String.fromCharCode(0))'
 
 		elif self._with_js or self._with_dart:
-			return '"%s"' %s.encode('utf-8')
+			return '"%s"' %s#.encode('utf-8')
 		else:
 			if len(s) == 0:
 				return '""'
 			elif s.startswith('"') or s.endswith('"'):
-				return "'''%s'''" %s.encode('utf-8')
+				return "'''%s'''" %s#.encode('utf-8')
 			else:
-				return '"""%s"""' %s.encode('utf-8')
+				return '"""%s"""' %s#.encode('utf-8')
 
 	def visit_IfExp(self, node):
 		test    = self.visit(node.test)
