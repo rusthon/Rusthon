@@ -16,6 +16,10 @@ notes:
 # by Amirouche Boubekki and Brett Hartshorn - copyright 2013
 # License: "New BSD"
 
+## note this should be cleared after a full round of translation,
+## first the runtime is regenerated, and that is the first to populate
+## the unicode name mapping.
+UNICODE_NAME_MAP = {}
 
 from types import GeneratorType
 from ast import Str
@@ -33,6 +37,14 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
 		assert source
 		NodeVisitorBase.__init__(self, source)
+
+		self._unicode_name_map = UNICODE_NAME_MAP
+		#if UNICODE_NAME_MAP.keys():
+		#	#raise RuntimeError(UNICODE_NAME_MAP.keys())
+		#	pass
+		#if 'MyChannel' in source:
+		#	raise RuntimeError(UNICODE_NAME_MAP.keys())
+
 		self._in_try = False
 		self._runtime_type_checking = runtime_checks
 		self.macros = {}
@@ -146,9 +158,9 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				a = '/***/ try {\n'
 				a += self.indent() + s + '\n'
 				if called:
-					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+					a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
 				else:
-					a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
+					a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
 				return a
 
 
@@ -159,12 +171,12 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		else:
 			target = self.visit(target)
 			value = self.visit(node.value)
-			if value.startswith('__workerpool__.send('):
+			if value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send('):
 				if target=='this':  ## should assert that this is on the webworker side
 					target = 'this.__uid__'
-					value = value.replace('__workerpool__.send(', 'self.postMessage(')
+					value = value.replace('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send(', 'self.postMessage(')
 				code = value % target
-			elif value.startswith('__workerpool__.recv') or value.startswith('__workerpool__.get') or value.startswith('__workerpool__.call'):
+			elif value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.recv') or value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.get') or value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.call'):
 				self._func_recv += 1
 				self.push()
 				code = value % target
@@ -226,9 +238,17 @@ generate a generic or requirejs module.
 ```
 Module
 ------
-TODO: regenerate pythonjs.js each time.
+top level the module, this builds the output and returns the javascript string translation
 
 ```python
+
+	def _check_for_unicode_decorator(self, node):
+		if isinstance(node, ast.FunctionDef):
+			for decor in node.decorator_list:
+				if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'unicode':
+					assert len(decor.args)==1
+					self._unicode_name_map[ node.name ] = decor.args[0].s
+
 
 	def visit_Module(self, node):
 		modules = []
@@ -237,6 +257,26 @@ TODO: regenerate pythonjs.js each time.
 		modules.append( mod )
 		lines = mod['lines']
 		header = mod['header']
+
+		## first check for all the @unicode decorators,
+		## also check for special imports like `from runtime import *`
+		for b in node.body:
+			self._check_for_unicode_decorator(b)
+
+			if isinstance(b, ast.ImportFrom):
+				line = self.visit(b)
+				if line:
+					raise RuntimeError('import-from specials do not return a string!')
+
+
+		if self._insert_runtime:
+			## always regenerate the runtime, in case the user wants to hack it ##
+			runtime = generate_js_runtime(
+				nodejs         = self._insert_nodejs_runtime,
+				nodejs_tornado = self._insert_nodejs_tornado
+			)
+			lines.insert( 0, runtime )
+
 
 
 		for b in node.body:
@@ -254,18 +294,6 @@ TODO: regenerate pythonjs.js each time.
 			#lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__, __workerimports__);')
 			# moved to intermediateform.md
 			pass
-
-		if self._insert_runtime:
-			#dirname = os.path.dirname(os.path.abspath(__file__))
-			#runtime = open( os.path.join(dirname, 'pythonjs/pythonjs.js') ).read()
-
-			## always regenerate the runtime, in case the user wants to hack it ##
-			runtime = generate_js_runtime(
-				nodejs         = self._insert_nodejs_runtime,
-				nodejs_tornado = self._insert_nodejs_tornado
-			)
-			lines.insert( 0, runtime )
-
 
 
 		if self._requirejs and not self._webworker:
@@ -399,6 +427,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_staticmeth= False
 		is_getter    = False
 		is_setter    = False
+		is_unicode   = False
 		bind_to      = None
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
@@ -436,6 +465,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				func_expr = True
 				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
+
+
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'unicode':
+				assert len(decor.args)==1
+				is_unicode = True
+				node.name = decor.args[0].s
 
 			elif isinstance(decor, ast.Name) and decor.id == 'getter':
 				is_getter = True
@@ -679,7 +714,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		elif node.id == '__DOLLAR__':
 			return '$'
 		elif node.id == 'debugger':  ## keyword in javascript
-			return '__debugger__'
+			return '𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿'
+		elif node.id in self._unicode_name_map:
+			return self._unicode_name_map[node.id]
 		else:
 			return node.id
 
@@ -883,9 +920,7 @@ TODO clean this up
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
-		#if '"' in s:
-		#	return "'%s'" % s
-		return u'"%s"' % s.encode('utf-8')
+		return '"%s"' % s
 
 	def visit_BinOp(self, node):
 		left = self.visit(node.left)
@@ -910,22 +945,22 @@ TODO clean this up
 				self._has_channels = True
 				r = []
 				if isinstance(node.right, ast.Name):
-					r.append('__workerpool__.recv( %s,'%right)
+					r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.recv( %s,'%right)
 				elif isinstance(node.right, ast.Attribute):
 					wid = node.right.value.id
 					attr = node.right.attr
-					r.append('__workerpool__.get( %s, "%s", '%(wid, attr))
+					r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.get( %s, "%s", '%(wid, attr))
 				elif isinstance(node.right, ast.Call):
 					if isinstance(node.right.func, ast.Name):
 						fname = node.right.func.id
 						args  = [self.visit(a) for a in node.right.args]
-						r.append('__workerpool__.call( "%s", [%s], ' % (fname, ','.join(args)))
+						r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.call( "%s", [%s], ' % (fname, ','.join(args)))
 
 					else:
 						wid = node.right.func.value.id
 						attr = node.right.func.attr
 						args  = [self.visit(a) for a in node.right.args]
-						r.append('__workerpool__.callmeth( %s, "%s", [%s], '%(wid, attr, ','.join(args)))
+						r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.callmeth( %s, "%s", [%s], '%(wid, attr, ','.join(args)))
 				else:
 					raise RuntimeError(node.right)
 
@@ -935,7 +970,7 @@ TODO clean this up
 			elif left == '__go__send__':
 				self._has_channels = True
 				r = [
-					'__workerpool__.send({message:%s,'%right,
+					'𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send({message:%s,'%right,
 					'id:%s})'
 				]
 				return ''.join(r)

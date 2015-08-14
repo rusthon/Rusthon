@@ -8,6 +8,13 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
+# the unicode decorator is used in the global namespace to define
+# a mapping from the function name to the unicode version of the name.
+# the user is able to then define their own unicode scripting language,
+# that can have greater readablity, and will not having naming collisions
+# with external javascript libraries, because nobody has made js libraries
+# yet that use unicode variable names.
+@unicode('𝑫𝒊𝒄𝒕')
 def dict( d, copy=False, keytype=None, valuetype=None ):
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
 	if keytype is not None:
@@ -46,7 +53,9 @@ def __object_keys__(ob):
 	else:
 		return arr
 
-
+## this is not called ObjectKeys because this is used for `ob.keys()`
+## where `ob` could be a regular object, or python dict.
+@unicode('𝑲𝒆𝒚𝒔')
 def __jsdict_keys(ob):
 	if ob.__class__ is not undefined:  ## assume this is a PythonJS class and user defined `keys` method
 		if ob.__class__ is dict:
@@ -388,7 +397,7 @@ def __debugger_onerror_overlay(err,f,c):
 			editor.container.style.fontSize='14px'
 
 	## returns True uses injected breakpoints
-	if __debugger__.breakpoints:
+	if debugger.breakpoints:
 		return True
 	else:
 		return False
@@ -407,7 +416,7 @@ def __debugger_log(e,f, called):
 	console.error(e.stack)
 	console.error('ABORT function->' + f.name)
 	#console.warn(f.toString())
-	print __debugger__.getsource( f )
+	print debugger.getsource( f )
 
 	badline = None
 	for line in e.stack.splitlines():
@@ -423,12 +432,12 @@ def __debugger_log(e,f, called):
 
 	if called is not undefined:
 		console.error('exception in function->'+called.name)
-		print __debugger__.getsource(called)
+		print debugger.getsource(called)
 
 	return True  ## if returns True then halt (breakpoint)
 
 
-__debugger__ = {
+debugger = {
 	'log'     : __debugger_log,
 	'onerror' : __debugger_onerror_overlay,  ## by default do not use breakpoints
 	'getsource' : __debugger_clean_source,
@@ -450,6 +459,7 @@ def hasattr(ob, attr):
 	else:
 		return False
 
+@unicode('𝑳𝒊𝒔𝒕')
 def list(ob):
 	a = []
 	if ob is not undefined:
@@ -457,6 +467,7 @@ def list(ob):
 			a.push(e)
 	return a
 
+@unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
 	if ob is undefined or ob is null:
 		return False
@@ -486,7 +497,7 @@ def isinstance( ob, klass):
 	else:
 		return False
 
-
+@unicode('𝑰𝒔𝑺𝒖𝒃𝒄𝒍𝒂𝒔𝒔')
 def issubclass(C, B):
 	if C is B:
 		return True
@@ -496,6 +507,7 @@ def issubclass(C, B):
 				return True
 	return False
 
+@unicode('𝑳𝒆𝒏𝒈𝒕𝒉')
 def len(ob):
 	if instanceof(ob, Array):
 		return ob.length
@@ -656,6 +668,7 @@ def func(obj):
 	return a
 Array.prototype.count = func
 
+@unicode('𝑪𝒐𝒏𝒕𝒂𝒊𝒏𝒔')
 def __contains__( ob, a ):
 	t = typeof(ob)
 	if t == 'string':
@@ -822,7 +835,7 @@ def __jsdict_update(ob, other):
 		for key in __object_keys__(other):
 			ob[key]=other[key]
 
-
+@unicode('𝑺𝒆𝒕')
 def set(a):
 	'''
 	This returns an array that is a minimal implementation of set.
@@ -884,7 +897,7 @@ def func(other):
 Array.prototype.issubset = func
 
 
-
+@unicode('𝑰𝒏𝒕𝒆𝒈𝒓')
 def int(a):
 	a = Math.round(a)
 	if isNaN(a):
@@ -892,7 +905,7 @@ def int(a):
 	return a
 
 
-
+@unicode('𝑭𝒍𝒐𝒂𝒕')
 def float(a):
 	if typeof(a)=='string':
 		if a.lower()=='nan':
@@ -906,6 +919,7 @@ def float(a):
 		raise ValueError('can not convert to float: '+a)
 	return b
 
+
 def round(a, places=0):
 	b = '' + a
 	if b.indexOf('.') == -1:
@@ -916,8 +930,12 @@ def round(a, places=0):
 		p = Math.pow(10, places)
 		return Math.round(a * p) / p
 
+@unicode('𝑺𝒕𝒓𝒊𝒏𝒈')
 def str(s):
 	return ''+s
+
+## this is for compatablity with the other typed backends that use `string` instead of `str`
+## it makes more sense for the user to write: `isinstance(s, string)`
 def string(s):
 	return ''+s
 
@@ -989,9 +1007,11 @@ def __getfast__(ob, attr):
 	else:
 		return v
 
+@unicode('𝑮𝒆𝒕𝑨𝒕𝒕𝒓𝒊𝒃𝒖𝒕𝒆')
 def getattr(ob, attr):
 	return __getfast__(ob, attr)
 
+@unicode('𝑺𝒆𝒕𝑨𝒕𝒕𝒓𝒊𝒃𝒖𝒕𝒆')
 def setattr(ob, attr, value):
 	ob[attr] = value
 
@@ -1014,12 +1034,14 @@ def range(num, stop, step):
 def xrange(num, stop, step):
 	return range(num, stop, step)
 
+@unicode('𝑳𝒊𝒔𝒕𝑺𝒖𝒎')   ## in math its sigma ∑
 def sum( arr ):
 	a = 0
 	for b in arr:
 		inline('a += b')
 	return a
 
+@unicode('𝑳𝒊𝒔𝒕𝑴𝒂𝒑')
 def map(func, objs):
 	arr = []
 	for ob in objs:
@@ -1027,6 +1049,7 @@ def map(func, objs):
 		arr.push( v )
 	return arr
 
+@unicode('𝑳𝒊𝒔𝒕𝑭𝒊𝒍𝒕𝒆𝒓')
 def filter(func, objs):
 	arr = []
 	for ob in objs:
@@ -1034,7 +1057,7 @@ def filter(func, objs):
 			arr.push( ob )
 	return arr
 
-
+@unicode('𝑳𝒊𝒔𝒕𝑴𝒊𝒏')
 def min( lst ):
 	a = None
 	for value in lst:
@@ -1042,6 +1065,7 @@ def min( lst ):
 		elif value < a: a = value
 	return a
 
+@unicode('𝑳𝒊𝒔𝒕𝑴𝒂𝒙')
 def max( lst ):
 	a = None
 	for value in lst:
@@ -1049,6 +1073,7 @@ def max( lst ):
 		elif value > a: a = value
 	return a
 
+@unicode('𝑨𝒃𝒔𝒐𝒍𝒖𝒕𝒆')
 def abs( num ):
 	return Math.abs(num)
 

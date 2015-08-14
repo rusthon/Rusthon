@@ -4361,7 +4361,8 @@ def python_to_pythonjs(script, **kwargs):
 		userimports = ['"%s"'%imp for imp in translator.get_webworker_imports()]
 		pre = [
 			'__workerimports__ = [%s]' %','.join(userimports),
-			'__workerpool__ = new(__WorkerPool__(__workersrc__, __workerimports__))',
+			#'__workerpool__ = new(__WorkerPool__(__workersrc__, __workerimports__))',
+			'inline("var 𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍 = new __WorkerPool__(__workersrc__, __workerimports__)")',
 			''
 		]
 		code = '\n'.join(pre) + code

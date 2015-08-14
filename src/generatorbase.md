@@ -564,8 +564,7 @@ Also implements extra syntax like `switch` and `select`.
 						else:  ## javascript backend ##
 							#self.visit(kw.value) ## TODO allow worker returned from some call
 							cid = kw.value.right.id
-							#case_match = 'if (__workerpool__.pending[%s] !== undefined &&  __workerpool__.pending[%s].length) {var %s = __workerpool__.pending[%s].pop();' %(cid, cid, kw.arg, cid)
-							case_match = 'if (__workerpool__.select(%s).length) {var %s = __workerpool__.select(%s).pop();' %(cid, kw.arg, cid)
+							case_match = 'if (𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.select(%s).length) {var %s = 𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.select(%s).pop();' %(cid, kw.arg, cid)
 
 					else:
 						case_match = '%s = %s' %(kw.arg, self.visit(kw.value))
@@ -825,9 +824,9 @@ TODO clean up.
 					if not node.keywords[0].arg=='cpu':
 						raise SyntaxError('invalid keyword argument to the builtin `spawn`')
 					cpuid = self.visit(node.keywords[0].value)
-					return '__workerpool__.spawn({%s:"%s", args:[%s]}, {cpu:%s})' %(mode,fname, ','.join(args), cpuid)
+					return '𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.spawn({%s:"%s", args:[%s]}, {cpu:%s})' %(mode,fname, ','.join(args), cpuid)
 				else:
-					return '__workerpool__.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
+					return '𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
 
 		elif name == '__go_make__':
 			if len(node.args)==2:
