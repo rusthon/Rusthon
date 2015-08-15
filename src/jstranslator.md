@@ -858,11 +858,11 @@ Call Helper
 							t = s.split(']')[-1]
 							out.append('/***/ if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
 							out.append('/***/ if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
-						else:
+						else:  ## typed hash map
 							keytype   = key.value.args[0].s.split(']')[0].split('[')[1].strip()
 							valuetype = key.value.args[0].s.split(']')[1].strip()
-							out.append('/***/ if (!( isinstance(%s.__keytype__, %s) )) {throw new TypeError("invalid dict key type")}' %(key.arg, keytype))
-							out.append('/***/ if (!( isinstance(%s.__valuetype__, %s) )) {throw new TypeError("invalid dict value type")}' %(key.arg, valuetype))
+							out.append('/***/ if (%s.__keytype__ != "%s") {throw new TypeError("invalid dict key type")}' %(key.arg, keytype))
+							out.append('/***/ if (%s.__valuetype__ != "%s") {throw new TypeError("invalid dict value type")}' %(key.arg, valuetype))
 
 					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
 
@@ -986,11 +986,17 @@ TODO clean this up
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
 					raise SyntaxError('TODO - go.func')
-				elif node.left.func.id == '__go__map__':
-					key_type = self.visit(node.left.args[0])
-					value_type = self.visit(node.left.args[1])
-					if value_type == 'interface': value_type = 'interface{}'
-					return '&map[%s]%s%s' %(key_type, value_type, right)
+
+				elif node.left.func.id == '__go__map__':  ## typed hash maps for javascript
+					key_type = node.left.args[0].id
+					value_type = node.left.args[1].id
+					## right will take the form: `𝑫𝒊𝒄𝒕({  }, { copy:false })`
+					## here was simply clip off the end and inject the type options
+					clipped = right[:-2]
+					if 'keytype:' not in clipped:
+						clipped += ',keytype:"%s"'  % key_type 
+					clipped += ',valuetype:"%s" })' % value_type
+					return clipped
 				else:
 					if isinstance(node.right, ast.Name):
 						raise SyntaxError(node.right.id)

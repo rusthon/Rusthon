@@ -23,9 +23,11 @@ from runtime import *
 
 def foo( d:map[string]int ):
 	print d
+	print 'foo OK'
 
 def bar( d:map[int]string ):
 	print d
+	print 'bar OK'
 
 @debugger
 def test():
@@ -37,6 +39,14 @@ def test():
 		10 : 'w',
 		11 : 'z'
 	}
+
+	foo( a )
+	bar( b )
+
+	## below is not allowed by the type system
+	## uncomment these to see them throw TypeError
+	#foo( b )
+	#bar( a )
 
 test()
 
