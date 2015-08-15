@@ -26,6 +26,10 @@ def dict( d, copy=False, keytype=None, valuetype=None ):
 
 dict.__name__ = 'dict'
 
+@unicode('𝑷𝒓𝒊𝒏𝒕')
+def __print__():
+	for a in arguments:
+		console.log(a)
 
 def __object_keys__(ob):
 	'''
@@ -703,6 +707,7 @@ if typeof(NodeList) == 'function':  ## NodeList is only available in browsers
 	if typeof(ClientRectList) == 'function':        ## missing in Firefox-trunk
 		__dom_array_types__.push( ClientRectList )
 
+@unicode('𝑰𝒔𝑨𝒓𝒓𝒂𝒚')
 def __is_some_array( ob ):
 	if __dom_array_types__.length > 0:
 		for t in __dom_array_types__:
@@ -710,6 +715,7 @@ def __is_some_array( ob ):
 				return True
 	return False
 
+@unicode('𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚')
 def __is_typed_array( ob ):
 	#if instanceof( ob, Int8Array ) or instanceof( ob, Uint8Array ):  ## missing in safari
 	#	return True
@@ -897,7 +903,7 @@ def func(other):
 Array.prototype.issubset = func
 
 
-@unicode('𝑰𝒏𝒕𝒆𝒈𝒓')
+@unicode('𝑰𝒏𝒕𝒆𝒈𝒆𝒓')
 def int(a):
 	a = Math.round(a)
 	if isNaN(a):
@@ -1077,9 +1083,11 @@ def max( lst ):
 def abs( num ):
 	return Math.abs(num)
 
+@unicode('𝑶𝒓𝒅𝒊𝒏𝒂𝒍')
 def ord( char ):
 	char.charCodeAt(0)
 
+@unicode('𝑪𝒉𝒂𝒓𝒂𝒄𝒕𝒆𝒓')
 def chr( num ):
 	return String.fromCharCode(num)
 

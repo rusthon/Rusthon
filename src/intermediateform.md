@@ -279,7 +279,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		self._iter_ids = 0
 		self._addop_ids = 0
 
-		self._cache_for_body_calls = False
 		self._cache_while_body_calls = False
 		self._comprehensions = []
 		self._generator_functions = set()
@@ -3589,18 +3588,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		if node.orelse:
 			raise SyntaxError( self.format_error('the syntax for/else is deprecated') )
 
-		if self._cache_for_body_calls:  ## TODO add option for this
-			for n in node.body:
-				calls = collect_calls(n)
-				for c in calls:
-					if isinstance(c.func, ast.Name):  ## these are constant for sure
-						i = self._call_ids
-						writer.write( '''JS('var __call__%s = __get__(%s,"__call__")')''' %(i,self.visit(c.func)) )
-						c.func.id = '__call__%s'%i
-						c.constant = True
-						self._call_ids += 1
 
-		if self._with_glsl or self._with_go:
+		if self._with_go:
 			writer.write( 'for %s in %s:' %(self.visit(node.target), self.visit(node.iter)) )
 			writer.push()
 			map(self.visit, node.body)
@@ -3636,6 +3625,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			if isinstance(target, ast.Tuple):
 				enumtar = target.elts[0]
 				target = target.elts[1]
+			else:
+				raise SyntaxError('for enumerate loop, requires unpacking to a: index,value pair')
 		else:
 			iter = node.iter
 

@@ -39,12 +39,8 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 		NodeVisitorBase.__init__(self, source)
 
 		self._unicode_name_map = UNICODE_NAME_MAP
-		#if UNICODE_NAME_MAP.keys():
-		#	#raise RuntimeError(UNICODE_NAME_MAP.keys())
-		#	pass
-		#if 'MyChannel' in source:
-		#	raise RuntimeError(UNICODE_NAME_MAP.keys())
 
+		self._iter_id = 0  ## used by for loops
 		self._in_try = False
 		self._runtime_type_checking = runtime_checks
 		self.macros = {}
@@ -203,7 +199,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		elif op == '+':
 			## supports += syntax for arrays ##
 			x = [
-				'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
+				'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
 				'else { %s %s= %s; }'%(target, op, value)
 			]
 			a = '\n'.join(x)
@@ -510,6 +506,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		args = self.visit(node.args)
 		funcname = node.name
 
+
+		#if len(self._function_stack) == 1:
+		#	self._iter_id = 0
+
 		if is_prototype:
 			funcname = '%s_%s' %(protoname, node.name)
 			if is_debugger:
@@ -727,7 +727,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 	def visit_Print(self, node):
 		args = [self.visit(e) for e in node.values]
-		s = 'console.log(%s);' % ', '.join(args)
+		#s = 'console.log(%s);' % ', '.join(args)
+		s = '𝑷𝒓𝒊𝒏𝒕(%s);' % ', '.join(args)
 		return s
 
 	def visit_keyword(self, node):
@@ -1157,16 +1158,37 @@ when fast_loops is off much of python `for in something` style of looping is los
 ```python
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
-		## support "for key in JSObject" ##
-		#out.append( self.indent() + 'if (! (iter instanceof Array) ) { iter = Object.keys(iter) }' )
-		## new style - Object.keys only works for normal JS-objects, not ones created with `Object.create(null)`
 		if not self._fast_loops:
-			out.append(
-				self.indent() + 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_some_array(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
-			)
+			s = 'if (! (%s instanceof Array || typeof %s == "string" || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s) || 𝑰𝒔𝑨𝒓𝒓𝒂𝒚(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
+			if len(out):
+				out.append( self.indent() + s )
+			else:
+				out.append( s )
+
+	def remap_to_subscript(self, number):  ## NOT USED FOR NOW
+		## converts a regular number into a subscript number
+		## too bad these subscripts are not in the valid unicode range.
+		s = str(number)
+		assert '.' not in s
+		remap = {
+			'0' : '₀',
+			'1' : '₁',
+			'2' : '₂',
+			'3' : '₃',
+			'4' : '₄',
+			'5' : '₅',
+			'6' : '₆',
+			'7' : '₇',
+			'8' : '₈',
+			'9' : '₉',
+		}
+
+		r = ''
+		for char in s:
+			r += remap[ char ]
+		return r
 
 
-	_iter_id = 0
 	def visit_For(self, node):
 
 		target = node.target.id
@@ -1175,22 +1197,56 @@ when fast_loops is off much of python `for in something` style of looping is los
 		out = []
 		body = []
 
-		self._iter_id += 1
-		index = '__i%s' %self._iter_id
+		#index = '_i%s' % self._iter_id
+		#index = '𝘪𝘯𝘥𝘦𝘹%s' %self._iter_id
+		if self._iter_id == 0:
+			index = '𝓷'
+		else:
+			#index = '𝓷%s' % self.remap_to_subscript(self._iter_id)
+			index = '𝓷%s' % self._iter_id
+
+
+		##if not self._fast_loops and not isinstance(node.iter, ast.Name):
+		## note: above will fail with `for key in somedict:`, it can not
+		## be simply assumed that if its a name, to use that name as the
+		## iterator, because _visit_for_prep_iter_helper might break it,
+		## by reassigning the original dict, to its keys (an array),
+		## later code in the block will then fail when it expects a dict.
 		if not self._fast_loops:
-			iname = '__iter%s' %self._iter_id
-			out.append( self.indent() + 'var %s = %s;' % (iname, iter) )
+			if isinstance(node.iter, ast.Name):
+				iname = '𝕚𝕥𝕖𝕣%s' %iter
+			elif self._iter_id:
+				iname = '𝕚𝕥𝕖𝕣%s' %self._iter_id
+			else:
+				iname = '𝕚𝕥𝕖𝕣'
+
+			out.append( 'var %s = %s;' % (iname, iter) )
 		else:
 			iname = iter
 
+		self._iter_id += 1
+
+		## note this type of looping can break with _fast_loops on a dict,
+		## because it reassigns the dict when looping over it
+		## like this `for key in somedict:`, the only safe way
+		## to loop with _fast_loops is `for key in somedict.keys():`
+		if iter.startswith('𝑲𝒆𝒚𝒔'):
+			## in theory we can optimize away using _visit_for_prep_iter_helper,
+			## because we know almost for sure that the result of 𝑲𝒆𝒚𝒔
+			## is going to be an array of keys; however, it could still be
+			## a user defined class that is returning an object of something
+			## other than an array.
+			## the only safe way to omit _visit_for_prep_iter_helper is to check
+			## if the user had statically typed the iterator variable as a dict.
+			pass
 		self._visit_for_prep_iter_helper(node, out, iname)
 
 		if self._fast_loops:
-			out.append( 'for (var %s=0; %s < %s.length; %s++)' % (index, index, iname, index) )
+			out.append( 'for (var %s = 0; %s < %s.length; %s++)' % (index, index, iname, index) )
 			out.append( self.indent() + '{' )
 
 		else:
-			out.append( self.indent() + 'for (var %s=0; %s < %s.length; %s++) {' % (index, index, iname, index) )
+			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++) {' % (index, index, iname, index) )
 		self.push()
 
 		if hasattr(self, '_in_timeout') and self._in_timeout:
@@ -1208,6 +1264,8 @@ when fast_loops is off much of python `for in something` style of looping is los
 		self.pull()
 		out.extend( body )
 		out.append( self.indent() + '}' )
+
+		self._iter_id -= 1
 
 		return '\n'.join( out )
 
