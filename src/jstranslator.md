@@ -648,7 +648,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		_func_typed_args = []
 		for arg in node.args.args:
 			if arg.id in args_typedefs:
-				_func_typed_args.append( args_typedefs[arg.id] )
+				argtype = args_typedefs[arg.id]
+				if argtype.startswith('__arg_map__'):
+					argtype = argtype.split('"')[1]
+				_func_typed_args.append( argtype )
 
 		if _func_typed_args:
 			targs = ','.join( ['"%s"'%t for t in _func_typed_args] )
@@ -849,13 +852,17 @@ Call Helper
 					funcname = self._function_stack[-1].name
 
 					if isinstance(key.value, ast.Call):
-						assert key.value.func.id == '__arg_array__'
-						s = key.value.args[0].s
-
-						dims = '[0]' * s.count('[')
-						t = s.split(']')[-1]
-						out.append('/***/ if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
-						out.append('/***/ if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
+						if key.value.func.id == '__arg_array__':
+							s = key.value.args[0].s
+							dims = '[0]' * s.count('[')
+							t = s.split(']')[-1]
+							out.append('/***/ if (!(isinstance(%s,Array))) {throw new TypeError("invalid type - not an array")}' %key.arg)
+							out.append('/***/ if (%s.length > 0 && !( isinstance(%s%s, %s) )) {throw new TypeError("invalid array type")}' %(key.arg, key.arg, dims, t))
+						else:
+							keytype   = key.value.args[0].s.split(']')[0].split('[')[1].strip()
+							valuetype = key.value.args[0].s.split(']')[1].strip()
+							out.append('/***/ if (!( isinstance(%s.__keytype__, %s) )) {throw new TypeError("invalid dict key type")}' %(key.arg, keytype))
+							out.append('/***/ if (!( isinstance(%s.__valuetype__, %s) )) {throw new TypeError("invalid dict value type")}' %(key.arg, valuetype))
 
 					elif isinstance(key.value, ast.Str) and key.value.s.startswith('func('):
 
