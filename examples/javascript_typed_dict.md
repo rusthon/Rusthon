@@ -39,12 +39,14 @@ def test():
 		10 : 'w',
 		11 : 'z'
 	}
-
+	## these calls are ok ##
 	foo( a )
 	bar( b )
 
 	## below is not allowed by the type system
 	## uncomment these to see them throw TypeError
+	#a[ 0 ]   = 1     ## this is an invalid keytype
+	#a[ 'z' ] = 'bad' ## invalid value type
 	#foo( b )
 	#bar( a )
 

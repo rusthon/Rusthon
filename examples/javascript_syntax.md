@@ -109,6 +109,14 @@ def test():
 	print isinstance(chan, MyChannel)  ## True
 	print isinstance(chan, Array)    ## False
 
+	## as a special case for `isinstance` you can also pass a string as the type to test for ##
+	assert isinstance(chan, "MyChannel")
+	assert isinstance(1, 'int')
+	assert isinstance(1, '𝑰𝒏𝒕𝒆𝒈𝒆𝒓')
+	assert isinstance('hi', 'string')
+	assert isinstance('hi', 'str')
+	assert isinstance('hi', '𝑺𝒕𝒓𝒊𝒏𝒈')
+
 	mydict = {keys:1}
 	assert mydict[ 'keys' ] == 1
 	print mydict.keys()

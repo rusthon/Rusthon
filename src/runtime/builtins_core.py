@@ -16,13 +16,40 @@ inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototy
 # yet that use unicode variable names.
 @unicode('𝑫𝒊𝒄𝒕')
 def dict( d, copy=False, keytype=None, valuetype=None ):
+	## note: the chrome debugger will still show these hidden attributes
+	## when printing the object in the console, even when `enumerable` is false.
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
-	if keytype is not None:
-		Object.defineProperty(d, '__keytype__', value=keytype, enumerable=False)
-	if valuetype is not None:
-		Object.defineProperty(d, '__valuetype__', value=valuetype, enumerable=False)
+
+
+	if keytype is not None or valuetype is not None:
+
+		if keytype is not None:
+			Object.defineProperty(d, '__keytype__', value=keytype, enumerable=False)
+		if valuetype is not None:
+			Object.defineProperty(d, '__valuetype__', value=valuetype, enumerable=False)
+
+		def __setitem__(key, value):
+			#print 'calling __setitem__'
+			#print keytype
+			#print valuetype
+			#print key
+			#print value
+			if keytype is not None:
+				if not isinstance(key, keytype):
+					raise TypeError('invalid key type')
+			if valuetype is not None:
+				if not isinstance(value, valuetype):
+					raise TypeError('invalid value type')
+
+			inline('d[key] = value')
+
+		Object.defineProperty(d, '__setitem__', value=__setitem__, enumerable=False)
+
+
 	if not copy:
 		return d
+	else:
+		raise RuntimeError('TODO dict(copyme)')
 
 dict.__name__ = 'dict'
 
@@ -283,6 +310,10 @@ def __debugger_overlay():
 
 
 def __debugger_onerror_overlay(err,f,c):
+	if err.stack is undefined:
+		## why is the stack empty from TypeError thrown from the runtime type checking?
+		inline('throw err')
+
 	if err._skip is not undefined:
 		return False
 	err._skip = True
@@ -475,6 +506,33 @@ def list(ob):
 def isinstance( ob, klass):
 	if ob is undefined or ob is null:
 		return False
+	elif typeof(klass) is 'string':
+		T = typeof( ob )
+		if T == 'number':
+			if klass == 'int' or klass == '𝑰𝒏𝒕𝒆𝒈𝒆𝒓':
+				return True
+			elif klass == 'float' or klass == '𝑭𝒍𝒐𝒂𝒕':
+				return True
+			else:
+				return False
+		elif T == 'string':
+			if klass == 'string' or klass == 'str' or klass == '𝑺𝒕𝒓𝒊𝒏𝒈':
+				return True
+			else:
+				return False
+		elif klass == 'Array' or klass == 'list' or klass == '𝑳𝒊𝒔𝒕':
+			if instanceof(ob, Array):
+				return True
+			else:
+				return False
+		elif ob.__class__:
+			if ob.__class__.__name__ == klass:
+				return True
+			else:
+				return False
+		else:
+			return False
+
 	elif instanceof(ob, Array):
 		if klass is list:
 			return True

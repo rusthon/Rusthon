@@ -165,8 +165,20 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		if isinstance(target, Tuple):
 			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
 		else:
-			target = self.visit(target)
 			value = self.visit(node.value)
+
+			if self._runtime_type_checking and isinstance(target, ast.Subscript):
+				tar = self.visit(target.value)
+				key = self.visit(target.slice)
+				a = [
+					'if (%s.__setitem__) { %s.__setitem__(%s, %s) }' %(tar,tar,key,value),
+					self.indent() + 'else { %s = %s }' %(self.visit(target), value)
+				]
+				return '\n'.join(a)
+
+			else:
+				target = self.visit(target)
+
 			if value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send('):
 				if target=='this':  ## should assert that this is on the webworker side
 					target = 'this.__uid__'
