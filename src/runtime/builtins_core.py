@@ -20,7 +20,6 @@ def dict( d, copy=False, keytype=None, valuetype=None ):
 	## when printing the object in the console, even when `enumerable` is false.
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
 
-
 	if keytype is not None or valuetype is not None:
 
 		if keytype is not None:
@@ -29,11 +28,6 @@ def dict( d, copy=False, keytype=None, valuetype=None ):
 			Object.defineProperty(d, '__valuetype__', value=valuetype, enumerable=False)
 
 		def __setitem__(key, value):
-			#print 'calling __setitem__'
-			#print keytype
-			#print valuetype
-			#print key
-			#print value
 			if keytype is not None:
 				if not isinstance(key, keytype):
 					raise TypeError('invalid key type')
@@ -582,19 +576,19 @@ def len(ob):
 	else: #elif instanceof(ob, Object):
 		return Object.keys(ob).length
 
-def func(a):
+@bind(String.prototype.__contains__)
+def __string_contains(a):
 	if this.indexOf(a) == -1: return False
 	else: return True
-String.prototype.__contains__ = func
 
-def func(start, stop, step):
+@bind(String.prototype.__getslice__)
+def __string_slice(start, stop, step):
 	if start is undefined and stop is undefined and step == -1:
 		return this.split('').reverse().join('')
 	else:
 		if stop < 0:
 			stop = this.length + stop
 		return this.substring(start, stop)
-String.prototype.__getslice__ = func
 
 String.prototype.splitlines = lambda : this.split('\n')
 
@@ -602,21 +596,22 @@ String.prototype.strip = lambda : this.trim()  ## missing in IE8
 
 String.prototype.__len__ = lambda : this.length
 
-def func(a):
+@bind(String.prototype.startswith)
+def __string_startswith(a):
 	if this.substring(0, a.length) == a:
 		return True
 	else:
 		return False
-String.prototype.startswith = func
 
-def func(a):
+@bind(String.prototype.endswith)
+def __string_endswith(a):
 	if this.substring(this.length-a.length, this.length) == a:
 		return True
 	else:
 		return False
-String.prototype.endswith = func
 
-def func(arr):
+@bind(String.prototype.join)
+def __string_join(arr):
 	out = ''
 	i = 0
 	for value in arr:
@@ -625,26 +620,27 @@ def func(arr):
 		if i < arr.length:
 			out += this
 	return out
-String.prototype.join = func
 
 String.prototype.upper = lambda : this.toUpperCase()
 
 String.prototype.lower = lambda : this.toLowerCase()
 
-def func(a):
+@bind(String.prototype.index)
+def __string_index(a):
 	i = this.indexOf(a)
 	if i == -1:
 		raise ValueError(a + ' - not in string')
 	return i
-String.prototype.index = func
 
-def func(a):
+
+@bind(Array.prototype.__contains__)
+def __array_contains(a):
 	if this.indexOf(a) == -1: return False
 	else: return True
-Array.prototype.__contains__ = func
 
 
-def func(start, stop, step):
+@bind(Array.prototype.__getslice__)
+def __array_getslice(start, stop, step):
 	arr = []
 
 	start = start | 0
@@ -681,54 +677,52 @@ def func(start, stop, step):
 			arr.push( this[i] )
 			i += 1  ## this gets optimized to i++
 		return arr
-Array.prototype.__getslice__ = func
 
 
-def func(start, stop, step, items):
+@bind(Array.prototype.__setslice__)
+def __array_setslice(start, stop, step, items):
 	if start is undefined: start = 0
 	if stop is undefined: stop = this.length
 	arr = [start, stop-start]
 	for item in items: arr.push( item )
 	this.splice.apply(this, arr )
-Array.prototype.__setslice__ = func
 
-def func(item):
+@bind(Array.prototype.append)
+def __array_append(item):
 	this.push( item )
 	return this
-Array.prototype.append = func
 
-def func(other):
+@bind(Array.prototype.__add__)
+def __array_add(other):
 	a = []
 	a.extend(this)
 	a.extend(other)
 	return a
-Array.prototype.__add__ = func
 
-def func(other):
-	for obj in other:
-		this.push(obj)
+@bind(Array.prototype.extend)
+def __array_extend(other):
+	for obj in other: this.push(obj)
 	return this
-Array.prototype.extend = func
 
+@bind(Array.prototype.remove)
 def func(item):
 	index = this.indexOf( item )
 	this.splice(index, 1)
-Array.prototype.remove = func
 
+@bind(Array.prototype.insert)
 def func(index, obj):
 	if index < 0: index = this.length + index
 	this.splice(index, 0, obj)
-Array.prototype.insert = func
 
 Array.prototype.index = lambda obj : this.indexOf(obj)
 
+@bind(Array.prototype.count)
 def func(obj):
 	a = 0
 	for item in this:
 		if item is obj:  ## note that `==` will not work here, `===` is required for objects
 			a += 1
 	return a
-Array.prototype.count = func
 
 @unicode('𝑪𝒐𝒏𝒕𝒂𝒊𝒏𝒔')
 def __contains__( ob, a ):
@@ -790,7 +784,6 @@ def __is_typed_array( ob ):
 def __js_typed_array( t, a ):
 	if t == 'i':
 		arr = new( Int32Array(a.length) )
-
 	arr.set( a )
 	return arr
 
@@ -925,8 +918,8 @@ def frozenset(a):
 	return set(a)
 
 ## set-like features ##
-
-def func(x, low, high):
+@bind(Array.prototype.bisect)
+def __array_bisect(x, low, high):
 	if low is undefined: low = 0
 	if high is undefined: high = this.length
 	while low < high:
@@ -937,28 +930,27 @@ def func(x, low, high):
 		else:
 			low = mid + 1
 	return low
-Array.prototype.bisect = func
 
 ## `-` operator
-def func(other):
+@bind(Array.prototype.difference)
+def __array_difference(other):
 	f = lambda i: other.indexOf(i)==-1
 	return this.filter( f )
-Array.prototype.difference = func
 
 ## `&` operator
-def func(other):
+@bind(Array.prototype.intersection)
+def __array_intersection(other):
 	f = lambda i: other.indexOf(i)!=-1
 	return this.filter( f )
-Array.prototype.intersection = func
 
 
 ## `<=` operator
-def func(other):
+@bind(Array.prototype.issubset)
+def __array_issubset(other):
 	for item in this:
 		if other.indexOf(item) == -1:
 			return False
 	return True
-Array.prototype.issubset = func
 
 
 @unicode('𝑰𝒏𝒕𝒆𝒈𝒆𝒓')
@@ -1003,33 +995,33 @@ def str(s):
 def string(s):
 	return ''+s
 
-def func(fmt):
+@bind(String.prototype.format)
+def __string_format(fmt):
 	r = this
 	keys = Object.keys(fmt)
 	for key in keys:
 		r = r.split(key).join(fmt[key])
 	r = r.split('{').join('').split('}').join('')
 	return r
-String.prototype.format = func
 
 
 String.prototype.find = lambda a : this.indexOf(a)
 
-def func():
+@bind(String.prototype.isdigit)
+def __string_isdigit():
 	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 	for char in this:
 		if char in digits: pass
 		else: return False
 	return True
-String.prototype.isdigit = func
 
-def func():
+@bind(String.prototype.isnumber)
+def __string_isnumber():
 	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
 	for char in this:
 		if char in digits: pass
 		else: return False
 	return True
-String.prototype.isnumber = func
 
 def __replace_method(ob, a, b):
 	## this is required because string.replace in javascript only replaces the first occurrence
@@ -1313,46 +1305,11 @@ class __WorkerPool__:
 		## note: thread-ids = `cpu-id:spawned-id`
 		self.source = src
 		self.extras = extras
-		#self.thread = None
-		#self.workers = {}
-		#self.pending = {}
-		#self._get  = None
-		#self._call = None
-		#self._callmeth = None
-
 		## each worker in this pool runs on its own CPU core
 		## how to get number of CPU cores in JS?
 		self.pool = {}
 		self.num_spawned = 1  ## TODO check why this fails when zero
 
-	def update(self, evt):  ## DEPRECATED
-		if evt.data.debug:
-			print evt.data.debug
-		else:
-			id = evt.data.id
-			msg = evt.data.message
-			if evt.data.proto: msg.__proto__ = eval(evt.data.proto + '.prototype')
-
-
-			if evt.data.GET:
-				self._get( msg )
-				#self._get = None
-			elif evt.data.CALL:
-				self._call( msg )
-				#self._call = None
-			elif evt.data.CALLMETH:
-				self._callmeth( msg )
-				#self._callmeth = None
-
-			elif id in self.workers:  ## channels
-				callbacks = self.workers[id]
-				if len(callbacks):
-					cb = callbacks.pop()
-					cb( msg )
-				else:
-					self.pending[id].push( msg )
-			else:
-				print 'ERROR: missing callback for:' + id
 
 	def spawn(self, cfg, options):
 		cpu = 0
@@ -1369,7 +1326,6 @@ class __WorkerPool__:
 		if cpu in self.pool:
 			## this thread could be busy, spawn into it anyways.
 			print 'reusing cpu already in pool'
-			#self.pool[cpu].postMessage(cfg)
 			self.pool[cpu].spawn_class(cfg)
 			return id
 		elif autoscale:
@@ -1392,7 +1348,6 @@ class __WorkerPool__:
 				readythread = self.create_webworker(cpu)
 				self.pool[cpu] = readythread
 
-			#readythread.postMessage(cfg)
 			readythread.spawn_class(cfg)
 			return id
 		else:
@@ -1401,23 +1356,8 @@ class __WorkerPool__:
 			assert cpu not in self.pool.keys()
 			readythread = self.create_webworker(cpu)
 			self.pool[cpu] = readythread
-			#self.pool[cpu].postMessage(cfg)
 			self.pool[cpu].spawn_class(cfg)
 			return id
-
-		#if tid not in self.threads:
-		#	self.threads[tid] = self.create_webworker()
-		#cfg['thread-id'] = tid
-		#return tid + '|' + self.threads[tid].spawn_class(cfg)
-
-
-		## cfg contains: call|new:func/classname, args:[]
-		#id = 'worker' + len(self.workers)
-		#self.workers[id] = []  ## callbacks
-		#self.pending[id] = []  ## early messages
-		#cfg['spawn'] = id
-		#self.thread.postMessage(cfg)
-
 
 	def send(self, id=None, message=None):
 		tid, sid = id.split('|')
@@ -1425,7 +1365,6 @@ class __WorkerPool__:
 			raise RuntimeError('send: invalid cpu id')
 
 		try:
-			#self.thread.postMessage({'send':id, 'message':message})
 			self.pool[tid].postMessage({'send':sid, 'message':message})
 
 		except:
@@ -1434,24 +1373,13 @@ class __WorkerPool__:
 			raise RuntimeError('DataCloneError: can not send data to webworker')
 
 	def recv(self, id, callback):
-		#if id in self.pending and self.pending[id].length:
-		#	res = self.pending[id].pop()
-		#	callback(res)
-		#elif id in self.workers:
-		#	self.workers[id].insert(0, callback)
-		#else:
-		#	if id is undefined:
-		#		raise WebWorkerError("undefined id")
-		#	else:
-		#		raise WebWorkerError(id)
 
 		if id is undefined:
-				raise WebWorkerError("undefined id")
+			raise WebWorkerError("undefined id")
 
 		tid, sid = id.split('|')
 		if tid not in self.pool:
 			raise RuntimeError('send: invalid cpu id')
-
 
 		ww = self.pool[ tid ]
 		if sid in ww._stream_triggers and ww._stream_triggers[sid].length:
@@ -1462,12 +1390,7 @@ class __WorkerPool__:
 			raise WebWorkerError('webworker.recv - invaid id: '+id)
 
 
-
-
 	def get(self, id, attr, callback):
-		#self._get = callback
-		#self.thread.postMessage({'id':id, 'get':attr})
-
 		tid, sid = id.split('|')
 		if tid not in self.pool:
 			raise RuntimeError('get: invalid cpu id')
@@ -1485,9 +1408,6 @@ class __WorkerPool__:
 		raise RuntimeError('TODO call plain function in webworker')
 
 	def callmeth(self, id, func, args, callback):
-		#self._callmeth = callback
-		#self.thread.postMessage({'id':id, 'callmeth':func, 'args':args})
-
 		tid, sid = id.split('|')
 		if tid not in self.pool:
 			raise RuntimeError('callmeth: invalid cpu id')
