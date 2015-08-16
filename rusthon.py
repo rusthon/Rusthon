@@ -311,8 +311,8 @@ def import_md( url, modules=None, index_offset=0, force_tagname=None ):
 							else:
 								rusthonpy.append(rln)
 						rusthonpy = '\n'.join(rusthonpy)
-						utfheader = '# -*- coding: utf-8 -*-\n'
-						code.insert(0, utfheader + BOOTSTRAPED + '\n' + rusthonpy)
+						utfheader = u'# -*- coding: utf-8 -*-\n'
+						code.insert(0, utfheader + BOOTSTRAPED + '\n' + rusthonpy.decode('utf-8'))
 						code.pop(code.index('from rusthon import *'))
 
 					p, n = os.path.split(url)
