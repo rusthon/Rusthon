@@ -437,7 +437,7 @@ def build( modules, module_path, datadirs=None ):
 		for mod in modules['rapydscript']:
 			tmprapyd = tempfile.gettempdir() + '/temp.rapyd'
 			tmpjs = tempfile.gettempdir() + '/rapyd-output.js'
-			open(tmprapyd, 'wb').write(mod['code'])
+			open(tmprapyd, 'wb').write(mod['code'].encode('utf-8'))
 			subprocess.check_call(['rapydscript', tmprapyd, '--screw-ie8', '--bare', '--output', tmpjs])
 			rapydata = open(tmpjs,'rb').read()
 			output['datafiles'][mod['tag']] = rapydata
@@ -804,8 +804,15 @@ def build( modules, module_path, datadirs=None ):
 				js  = tagged[tagname]
 				if tag in html:
 					#print js
-					#xxx = js.decode('utf-8') + ''
-					xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
+					#xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
+					## TODO fix this ugly mess
+					try:
+						## javascript with unicode
+						xxx = u'<script type="text/javascript">\n%s</script>' %js
+					except UnicodeDecodeError:
+						## rusthon translated to js
+						xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
+
 					html = html.replace(tag, xxx)
 			mod['code'] = html
 			output['html'].append( mod )

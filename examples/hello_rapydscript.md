@@ -40,6 +40,8 @@ Test calling Rusthon translated JS from RapydScript.
 @my_rapydscript.js
 ```rapydscript
 
+𝑭𝑶𝑶𝒃𝒂𝒓 = 'UNICODE_OK'
+
 def hi_from_rapyd():
 	window.alert('hey rapydscript!')
 	a = [1,2,3]
@@ -57,7 +59,10 @@ rusthon javascript backend
 from runtime import *
 
 def hi_from_rusthon(v):
+	assert inline('𝑭𝑶𝑶𝒃𝒂𝒓') == 'UNICODE_OK'
+	assert len(v) == 3
+	assert v[0] == 1
 	for x in v:
-		window.alert(x)
+		print(x)
 
 ```

@@ -598,7 +598,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(funcname, funcname)
 			)
 
-		next = None
+		next = None  ## deprecated?
+		
 		for i,child in enumerate(node.body):
 			if isinstance(child, Str) or hasattr(child, 'SKIP'):  ## TODO check where the SKIP hack is coming from
 				continue
@@ -1053,7 +1054,7 @@ TODO clean this up
 			return 'return [%s];' % ', '.join(map(self.visit, node.value.elts))
 		if node.value:
 			return 'return %s;' % self.visit(node.value)
-		return 'return undefined;'
+		return 'return null;'
 
 	def visit_Pass(self, node):
 		return '/*pass*/'
