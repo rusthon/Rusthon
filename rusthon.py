@@ -1456,7 +1456,10 @@ def main():
 					fname += '.js'
 				fpath = os.path.join(tmpdir, fname)
 				#open(fpath, 'wb').write( pak['script'].decode('utf-8').encode('utf-16') )
-				open(fpath, 'wb').write( pak['script'].encode('utf-16') )  ## TODO fix nodejs unicode
+				xxx = pak['script'].decode('utf-8')
+				print xxx
+				open(fpath, 'wb').write( xxx.encode('utf-16') )  ## TODO fix nodejs unicode
+				#codecs.open(fpath, 'w', 'utf-8').write( pak['script'] )  ## TODO fix nodejs unicode
 				subprocess.check_call(['node', fpath])
 
 	else:

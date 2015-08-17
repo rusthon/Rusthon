@@ -719,6 +719,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		return out
 
 	def visit_Name(self, node):
+		escape_hack_start = '__x0s0x__'
+		escape_hack_end = '__x0e0x__'
+
 		if node.id == 'None':
 			return 'null'
 		elif node.id == 'True':
@@ -733,12 +736,40 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			return '𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿'
 		elif node.id in self._unicode_name_map:
 			return self._unicode_name_map[node.id]
+		elif escape_hack_start in node.id:
+			parts = []
+			for p in node.id.split(escape_hack_start):
+				if escape_hack_end in p:
+					id = int(p.split(escape_hack_end)[0].strip())
+					assert id in UnicodeEscapeMap.keys()
+					uchar = UnicodeEscapeMap[ id ]
+					parts.append(uchar)
+				else:
+					parts.append(p)
+			res = ''.join(parts)
+			return res.encode('utf-8')
 		else:
 			return node.id
 
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
+		escape_hack_start = '__x0s0x__'
+		escape_hack_end = '__x0e0x__'
+
+		if escape_hack_start in attr:
+			parts = []
+			for p in attr.split(escape_hack_start):
+				if escape_hack_end in p:
+					id = int(p.split(escape_hack_end)[0].strip())
+					assert id in UnicodeEscapeMap.keys()
+					uchar = UnicodeEscapeMap[ id ]
+					parts.append(uchar)
+				else:
+					parts.append(p)
+			res = ''.join(parts)
+			attr = res.encode('utf-8')
+
 		return '%s.%s' % (name, attr)
 
 	def visit_Print(self, node):
