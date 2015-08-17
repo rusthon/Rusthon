@@ -424,6 +424,24 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 	def _visit_function(self, node):
 		if node.name == '__DOLLAR__':
 			node.name = '$'
+
+		escape_hack_start = '__x0s0x__'
+		escape_hack_end = '__x0e0x__'
+
+		if escape_hack_start in node.name:
+			parts = []
+			for p in node.name.split(escape_hack_start):
+				if escape_hack_end in p:
+					id = int(p.split(escape_hack_end)[0].strip())
+					assert id in UnicodeEscapeMap.keys()
+					uchar = UnicodeEscapeMap[ id ]
+					parts.append(uchar)
+				else:
+					parts.append(p)
+			res = ''.join(parts)
+			node.name = res.encode('utf-8')
+
+
 		comments = []
 		body = []
 		is_main = node.name == 'main'

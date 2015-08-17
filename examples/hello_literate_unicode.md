@@ -37,16 +37,17 @@ function 𝓩add( x,y ) {
 	return {𝓩:x+y}
 }
 
-
-var 𝑭𝑶𝑶 = {
+var 𝑭𝑶𝑶𝒃𝒂𝒓 = {
 	𝓨 : function (x,y) {console.log(x+y); return 𝓩add(x,y)},
 	x : 20
 }
 var 𝒃𝒂𝒓 = 'UNICODE_OK';
 var 𝓦 = {
-		𝓧  : 𝑭𝑶𝑶,
-		𝒃𝒂𝒓 :
+		𝓧  : 𝑭𝑶𝑶𝒃𝒂𝒓,
+		𝒃𝒂𝒓 : 'xxx'
+};
 
+var W = 𝓦;
 
 ```
 
@@ -56,20 +57,22 @@ var 𝓦 = {
 #backend:javascript
 from runtime import *
 
-𝕬 = 1
+def 𝕬( a ):
+	return a * 2
 
 @debugger
 def test():
 	foobar = 𝑭𝑶𝑶𝒃𝒂𝒓
-	assert foobar == 'UNICODE_OK'
+	assert 𝒃𝒂𝒓 == 'UNICODE_OK'
 	print foobar
 
 	print 𝓦.𝓧.𝓨(foobar).𝓩
 	𝓦.𝓧.𝒃𝒂𝒓 = 'bar'
 
-	a.x.y = 'oopps'
-	#x( 𝓓𝓔𝓕 )
-	show( some_missing_object[ 'x' ] )
-	mytypo()
+	assert 𝕬( 2 ) == 4
+
+	#a.x.y = 'oopps'
+	#show( some_missing_object[ 'x' ] )
+	#mytypo()
 
 ```
