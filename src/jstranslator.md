@@ -425,22 +425,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		if node.name == '__DOLLAR__':
 			node.name = '$'
 
-		escape_hack_start = '__x0s0x__'
-		escape_hack_end = '__x0e0x__'
-
-		if escape_hack_start in node.name:
-			parts = []
-			for p in node.name.split(escape_hack_start):
-				if escape_hack_end in p:
-					id = int(p.split(escape_hack_end)[0].strip())
-					assert id in UnicodeEscapeMap.keys()
-					uchar = UnicodeEscapeMap[ id ]
-					parts.append(uchar)
-				else:
-					parts.append(p)
-			res = ''.join(parts)
-			node.name = res.encode('utf-8')
-
+		if typedpython.needs_escape(node.name):
+			node.name = typedpython.escape_text(node.name)
 
 		comments = []
 		body = []
@@ -522,8 +508,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				assert len(decor.args)==1
 				is_prototype = True
 				protoname = decor.args[0].id
+				if typedpython.needs_escape(protoname):
+					protoname = typedpython.escape_text(protoname)
+
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'returns':
 				returns = decor.args[0].id
+
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'bind':
 				assert len(decor.args)==1
 				bind_to = self.visit(decor.args[0])
@@ -772,21 +762,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 	def visit_Attribute(self, node):
 		name = self.visit(node.value)
 		attr = node.attr
-		escape_hack_start = '__x0s0x__'
-		escape_hack_end = '__x0e0x__'
 
-		if escape_hack_start in attr:
-			parts = []
-			for p in attr.split(escape_hack_start):
-				if escape_hack_end in p:
-					id = int(p.split(escape_hack_end)[0].strip())
-					assert id in UnicodeEscapeMap.keys()
-					uchar = UnicodeEscapeMap[ id ]
-					parts.append(uchar)
-				else:
-					parts.append(p)
-			res = ''.join(parts)
-			attr = res.encode('utf-8')
+		if typedpython.needs_escape(attr):
+			attr = typedpython.escape_text(attr)
 
 		return '%s.%s' % (name, attr)
 
@@ -990,6 +968,8 @@ TODO clean this up
 
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
+		if typedpython.needs_escape(s):
+			s = typedpython.escape_text(s)
 		return '"%s"' % s
 
 	def visit_BinOp(self, node):

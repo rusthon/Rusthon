@@ -414,6 +414,27 @@ class typedpython:
 	}
 
 	@classmethod
+	def needs_escape(cls,txt):
+		return '__x0s0x__' in txt
+
+	@classmethod
+	def escape_text(cls,txt):
+		escape_hack_start = '__x0s0x__'
+		escape_hack_end = '__x0e0x__'
+		parts = []
+		for p in txt.split(escape_hack_start):
+			if escape_hack_end in p:
+				id = int(p.split(escape_hack_end)[0].strip())
+				assert id in UnicodeEscapeMap.keys()
+				uchar = UnicodeEscapeMap[ id ]
+				parts.append(uchar)
+			else:
+				parts.append(p)
+		res = ''.join(parts)
+		return res.encode('utf-8')
+
+
+	@classmethod
 	def get_indent(cls, s):
 		indent = []
 		for char in s:

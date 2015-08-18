@@ -1166,6 +1166,8 @@ class PythonToPythonJS(NodeVisitorBase):
 
 	def _visit_js_classdef(self, node):
 		name = node.name
+
+		## nested classes 
 		if hasattr(node, 'is_nested_class') and node.is_nested_class:
 			name = '_'.join( [s.name for s in self._class_stack] )
 
