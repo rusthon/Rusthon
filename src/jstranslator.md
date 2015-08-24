@@ -210,10 +210,16 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			a = '%s %s= %s;' %(target, op, value)  ## direct
 		elif op == '+':
 			## supports += syntax for arrays ##
-			x = [
-				'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
-				'else { %s %s= %s; }'%(target, op, value)
-			]
+			if typedpython.unicode_vars:
+				x = [
+					'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
+					'else { %s %s= %s; }'%(target, op, value)
+				]
+			else:
+				x = [
+					'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
+					'else { %s %s= %s; }'%(target, op, value)
+				]
 			a = '\n'.join(x)
 		else:
 			a = '%s %s= %s;' %(target, op, value)  ## direct
@@ -269,7 +275,8 @@ top level the module, this builds the output and returns the javascript string t
 		## first check for all the @unicode decorators,
 		## also check for special imports like `from runtime import *`
 		for b in node.body:
-			self._check_for_unicode_decorator(b)
+			if typedpython.unicode_vars:
+				self._check_for_unicode_decorator(b)
 
 			if isinstance(b, ast.ImportFrom):
 				line = self.visit(b)
@@ -425,7 +432,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		if node.name == '__DOLLAR__':
 			node.name = '$'
 
-		if typedpython.needs_escape(node.name):
+		if typedpython.unicode_vars and typedpython.needs_escape(node.name):
 			node.name = typedpython.escape_text(node.name)
 
 		comments = []
@@ -480,9 +487,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'unicode':
-				assert len(decor.args)==1
-				is_unicode = True
-				node.name = decor.args[0].s
+				if typedpython.unicode_vars:
+					assert len(decor.args)==1
+					is_unicode = True
+					node.name = decor.args[0].s
 
 			elif isinstance(decor, ast.Name) and decor.id == 'getter':
 				is_getter = True
@@ -741,10 +749,14 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		elif node.id == '__DOLLAR__':
 			return '$'
 		elif node.id == 'debugger':  ## keyword in javascript
-			return '𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿'
+			if typedpython.unicode_vars:
+				return '𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿'
+			else:
+				return '__debugger__'
 		elif node.id in self._unicode_name_map:
 			return self._unicode_name_map[node.id]
 		elif escape_hack_start in node.id:
+			assert typedpython.unicode_vars
 			parts = []
 			for p in node.id.split(escape_hack_start):
 				if escape_hack_end in p:
@@ -770,8 +782,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 	def visit_Print(self, node):
 		args = [self.visit(e) for e in node.values]
-		#s = 'console.log(%s);' % ', '.join(args)
-		s = '𝑷𝒓𝒊𝒏𝒕(%s);' % ', '.join(args)
+		if typedpython.unicode_vars:
+			s = '𝑷𝒓𝒊𝒏𝒕(%s);' % ', '.join(args)
+		else:
+			s = 'console.log(%s);' % ', '.join(args)
 		return s
 
 	def visit_keyword(self, node):
@@ -1214,7 +1228,11 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 	def _visit_for_prep_iter_helper(self, node, out, iter_name):
 		if not self._fast_loops:
-			s = 'if (! (%s instanceof Array || typeof %s == "string" || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s) || 𝑰𝒔𝑨𝒓𝒓𝒂𝒚(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
+			if typedpython.unicode_vars:
+				s = 'if (! (%s instanceof Array || typeof %s == "string" || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s) || 𝑰𝒔𝑨𝒓𝒓𝒂𝒚(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
+			else:
+				s = 'if (! (%s instanceof Array || typeof %s == "string" || __is_typed_array(%s) || __is_some_array(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
+
 			if len(out):
 				out.append( self.indent() + s )
 			else:
@@ -1252,12 +1270,11 @@ when fast_loops is off much of python `for in something` style of looping is los
 		out = []
 		body = []
 
-		#index = '_i%s' % self._iter_id
-		#index = '𝘪𝘯𝘥𝘦𝘹%s' %self._iter_id
-		if self._iter_id == 0:
+		if not typedpython.unicode_vars:
+			index = '__n%s' % self._iter_id
+		elif self._iter_id == 0:
 			index = '𝓷'
 		else:
-			#index = '𝓷%s' % self.remap_to_subscript(self._iter_id)
 			index = '𝓷%s' % self._iter_id
 
 
@@ -1268,7 +1285,9 @@ when fast_loops is off much of python `for in something` style of looping is los
 		## by reassigning the original dict, to its keys (an array),
 		## later code in the block will then fail when it expects a dict.
 		if not self._fast_loops:
-			if isinstance(node.iter, ast.Name):
+			if not typedpython.unicode_vars:
+				iname = '__iter%s' %self._iter_id
+			elif isinstance(node.iter, ast.Name):
 				iname = '𝕚𝕥𝕖𝕣%s' %iter
 			elif self._iter_id:
 				iname = '𝕚𝕥𝕖𝕣%s' %self._iter_id

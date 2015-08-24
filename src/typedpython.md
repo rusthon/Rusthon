@@ -1,6 +1,8 @@
 
 ```python
 
+USE_UNICODE_VARS = '--literate-unicode' in sys.argv
+
 MathematicalAlphabet = {
 	u'𝐀' : 'A',
 	u'𝐁' : 'B',
@@ -390,6 +392,7 @@ MathematicalAlphabet = {
 UnicodeEscapeMap = {}  ## number : unichar
 
 class typedpython:
+	unicode_vars = USE_UNICODE_VARS
 	types = ['string', 'str', 'list', 'dict', 'bool']
 	native_number_types = ['int', 'float', 'double']  ## float and double are the same
 	simd_types = ['float32x4', 'int32x4']  ## dart
@@ -501,14 +504,17 @@ class typedpython:
 					j += 1
 
 				if char in MathematicalAlphabet.keys():
-					## note with unicode characters they can not
-					## be restored wth chr(ord(char))
-					ucord = ord(char)
-					if ucord not in UnicodeEscapeMap:
-						UnicodeEscapeMap[ ucord ] = char
+					if USE_UNICODE_VARS:
+						## note with unicode characters they can not
+						## be restored wth chr(ord(char))
+						ucord = ord(char)
+						if ucord not in UnicodeEscapeMap:
+							UnicodeEscapeMap[ ucord ] = char
 
-					## escape syntax ##
-					char = '__x0s0x__%s__x0e0x__' % ucord
+						## escape syntax ##
+						char = '__x0s0x__%s__x0e0x__' % ucord
+					else:
+						char = MathematicalAlphabet[ char ]
 
 
 				##################################

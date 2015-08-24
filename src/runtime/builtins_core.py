@@ -1,4 +1,4 @@
-inline('var __𝕦𝕚𝕕__ = 1')  ## used for object hashes, gets incremented by object constructors
+inline('var __$UID$__ = 1')  ## used for object hashes, gets incremented by object constructors
 
 inline('IndexError = function(msg) {this.message = msg || "";}; IndexError.prototype = Object.create(Error.prototype); IndexError.prototype.name = "IndexError";')
 inline('KeyError   = function(msg) {this.message = msg || "";}; KeyError.prototype = Object.create(Error.prototype); KeyError.prototype.name = "KeyError";')

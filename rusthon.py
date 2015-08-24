@@ -32,8 +32,15 @@ CHROME_EXE = None
 #elif os.path.isfile('/opt/google/chrome/google-chrome'):
 #	CHROME_EXE = '/opt/google/chrome/google-chrome'
 
+## on fedora nodejs command is `node`, but on others it can be `nodejs`
+nodejs_exe = 'node'
+if os.path.isfile('/usr/sbin/ax25-node'):
+	if os.path.isfile('/usr/sbin/node'):
+		if os.path.realpath('/usr/sbin/node') == '/usr/sbin/ax25-node':
+			nodejs_exe = 'nodejs'
+
 JS_WEBWORKER_HEADER = u'''
-var __𝕦𝕚𝕕__ = 1;
+var __$UID$__ = 1;
 var __construct__ = function(constructor, args) {
 	function F() {
 		return constructor.apply(this, args);
@@ -1455,12 +1462,11 @@ def main():
 				if not fname.endswith('.js'):
 					fname += '.js'
 				fpath = os.path.join(tmpdir, fname)
-				#open(fpath, 'wb').write( pak['script'].decode('utf-8').encode('utf-16') )
-				xxx = pak['script'].decode('utf-8')
-				print xxx
-				open(fpath, 'wb').write( xxx.encode('utf-16') )  ## TODO fix nodejs unicode
+				open(fpath, 'wb').write( pak['script'] )
+				#xxx = pak['script'].decode('utf-8')
+				#open(fpath, 'wb').write( xxx.encode('utf-16') )  ## TODO fix nodejs unicode
 				#codecs.open(fpath, 'w', 'utf-8').write( pak['script'] )  ## TODO fix nodejs unicode
-				subprocess.check_call(['node', fpath])
+				subprocess.check_call([nodejs_exe, fpath])
 
 	else:
 		save_tar( package, output_tar )

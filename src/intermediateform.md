@@ -1245,7 +1245,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
 		if init:
-			writer.write('inline("this.__𝕦𝕚𝕕__ = __𝕦𝕚𝕕__ ++")')
+			writer.write('inline("this.__$UID$__ = __$UID$__ ++")')
 
 			tail = ''  ## what was tail used for?
 
@@ -1268,18 +1268,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write(code)
 
 		else:
-			writer.write('inline("this.__𝕦𝕚𝕕__ = __𝕦𝕚𝕕__ ++")')
+			writer.write('inline("this.__$UID$__ = __$UID$__ ++")')
 
-		if self._with_lua:  ## lua requires __class__ as a string to switch on
-			writer.write('this.__class__ = "%s"' %name)  ## isinstance runtime builtin requires this
-
-		elif not self._fast_js and not self._with_lua:
-			## `self.__class__` pointer ##
-			writer.write('this.__class__ = %s' %name)  ## isinstance runtime builtin requires this
-
-			## instance UID ##
-			writer.write('this.__uid__ = "￼" + _PythonJS_UID')
-			writer.write('_PythonJS_UID += 1')
 
 		writer.pull()
 
@@ -1287,19 +1277,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			for postline in post_class_write:
 				writer.write(postline)
 
-		if not self._fast_js and not self._with_lua:
-			## class UID ##
-			writer.write('%s.__uid__ = "￼" + _PythonJS_UID' %name)
-			writer.write('_PythonJS_UID += 1')
-
 
 		writer.write('@__prototype__(%s)'%name)
-		writer.write('def toString(): return inline("this.__𝕦𝕚𝕕__")')
+		writer.write('def toString(): return inline("this.__$UID$__")')
 
-
-
-		#for mname in method_names:
-		#	method = methods[mname]
 		for method in methods_all:
 			mname = method.name
 
