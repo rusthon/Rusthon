@@ -153,10 +153,17 @@ class is not implemented here for javascript, it gets translated ahead of time i
 
 				a = '/***/ try {\n'
 				a += self.indent() + s + '\n'
-				if called:
-					a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+				if typedpython.unicode_vars:
+					if called:
+						a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+					else:
+						a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
 				else:
-					a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
+					if called:
+							a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+					else:
+						a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
+	
 				return a
 
 
