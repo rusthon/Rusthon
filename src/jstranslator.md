@@ -115,10 +115,11 @@ class is not implemented here for javascript, it gets translated ahead of time i
 
 
 	def visit_Expr(self, node):
-		## note: the javascript backend overloads this ##
+
 		s = self.visit(node.value)
 		if s is None:
 			raise RuntimeError('GeneratorBase ExpressionError: %s' %node.value)
+
 		if s.strip() and not s.endswith(';'):
 			s += ';'
 
@@ -130,7 +131,9 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			elif not len(self._function_stack) or s.startswith('var '):
 				return s
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='inline':
+				if typedpython.needs_escape(s):raise RuntimeError(s)
 				return s
+
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id=='sleep':
 				assert self._stack[-1] is node
 				if len(self._stack) < 3:
@@ -442,6 +445,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		if typedpython.unicode_vars and typedpython.needs_escape(node.name):
 			node.name = typedpython.escape_text(node.name)
 
+
 		comments = []
 		body = []
 		is_main = node.name == 'main'
@@ -653,7 +657,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		## end of function ##
 		self.pull()
-		body.append( self.indent() + '}/*end-function*/' )
+		body.append( self.indent() + '}/*end->	`%s`	*/' %node.name)
 		if is_debugger:
 			self.pull()
 			body.append( '}/*debugger*/' )
@@ -760,15 +764,18 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				return '𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿'
 			else:
 				return '__debugger__'
-		elif node.id in self._unicode_name_map:
+
+		elif node.id in self._unicode_name_map:  # from @unicode decorators
 			return self._unicode_name_map[node.id]
+
 		elif escape_hack_start in node.id:
-			assert typedpython.unicode_vars
+			#assert typedpython.unicode_vars
 			parts = []
 			for p in node.id.split(escape_hack_start):
 				if escape_hack_end in p:
 					id = int(p.split(escape_hack_end)[0].strip())
-					assert id in UnicodeEscapeMap.keys()
+					if id not in UnicodeEscapeMap.keys():
+						raise RuntimeError('id not in UnicodeEscapeMap')
 					uchar = UnicodeEscapeMap[ id ]
 					parts.append(uchar)
 				else:
@@ -839,7 +846,7 @@ Call Helper
 	def inline_helper_remap_names(self, remap):
 		return "var %s;" %','.join(remap.values())
 
-	def inline_helper_return_id(self, return_id):
+	def inline_helper_return_id(self, return_id):  ## what was this for?
 		return "var __returns__%s = null;"%return_id
 
 	def _visit_call_helper_numpy_array(self, node):
@@ -952,25 +959,30 @@ Call Helper
 
 Inline Code Helper
 ------------------
-
-TODO clean this up
+called from user: `inline(str)`
+old javascript backend also used `JS(str)`
 
 ```python
 
 	def _inline_code_helper(self, s):
 		## TODO, should newline be changed here?
 		s = s.replace('\n', '\\n').replace('\0', '\\0')  ## AttributeError: 'BinOp' object has no attribute 's' - this is caused by bad quotes
-		if s.strip().startswith('#'): s = '/*%s*/'%s
 
-		if '"' in s or "'" in s:  ## can not trust direct-replace hacks
-			pass
-		else:
-			if ' or ' in s:
-				s = s.replace(' or ', ' || ')
-			if ' not ' in s:
-				s = s.replace(' not ', ' ! ')
-			if ' and ' in s:
-				s = s.replace(' and ', ' && ')
+		## DEPRECATED
+		#if s.strip().startswith('#'): s = '/*%s*/'%s
+		#if '"' in s or "'" in s:  ## can not trust direct-replace hacks
+		#	pass
+		#else:
+		#	if ' or ' in s:
+		#		s = s.replace(' or ', ' || ')
+		#	if ' not ' in s:
+		#		s = s.replace(' not ', ' ! ')
+		#	if ' and ' in s:
+		#		s = s.replace(' and ', ' && ')
+		
+		if typedpython.needs_escape(s):
+			s = typedpython.escape_text(s)
+
 		return s
 
 	def visit_While(self, node):

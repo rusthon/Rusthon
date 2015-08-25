@@ -1,3 +1,5 @@
+command line: `--literate-unicode`
+
 https://github.com/rusthon/Rusthon/wiki/JavaScript-Unicode-Literate-Output
 
 
@@ -61,9 +63,16 @@ from runtime import *
 def 𝕬( a ):
 	return a * 2
 
-class 𝔇𝕆𝔊:
+
+class ꘐ:
+	def __init__(self):
+		self.name = '៘'
+
+class 𝔇𝕆𝔊( ꘐ ):
+
 	def bark(self, say):
 		print say
+		alert(self.name)
 
 @debugger
 def test():
@@ -81,7 +90,7 @@ def test():
 	#mytypo()
 
 	dog = 𝔇𝕆𝔊()
-	dog.bark()
+	dog.bark('woof')
 
 
 ```

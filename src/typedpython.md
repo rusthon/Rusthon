@@ -425,14 +425,29 @@ class typedpython:
 		escape_hack_start = '__x0s0x__'
 		escape_hack_end = '__x0e0x__'
 		parts = []
-		for p in txt.split(escape_hack_start):
+		chunks = txt.split(escape_hack_start)
+		if len(chunks)==1:
+			raise RuntimeError('invalid sequence')
+
+		for p in chunks:
 			if escape_hack_end in p:
+				#if p.endswith( escape_hack_end ):
 				id = int(p.split(escape_hack_end)[0].strip())
 				assert id in UnicodeEscapeMap.keys()
 				uchar = UnicodeEscapeMap[ id ]
+				#if '__x0' in uchar:
+				#	print UnicodeEscapeMap
+				#	raise RuntimeError('bad:'+uchar)
 				parts.append(uchar)
+				parts.append(p.split(escape_hack_end)[1])
 			else:
+				#if '__x0' in p:
+				#	raise RuntimeError('bad escape:'+p)
+				if not p:
+					continue
+					print chunks
 				parts.append(p)
+
 		res = ''.join(parts)
 		return res.encode('utf-8')
 
@@ -516,6 +531,11 @@ class typedpython:
 					else:
 						char = MathematicalAlphabet[ char ]
 
+				elif ord(char) > 255:
+					ucord = ord(char)
+					if ucord not in UnicodeEscapeMap:
+						UnicodeEscapeMap[ ucord ] = char
+					char = '__x0s0x__%s__x0e0x__' % ucord
 
 				##################################
 
