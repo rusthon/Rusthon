@@ -85,6 +85,24 @@ def test():
 
 	assert 𝕬( 2 ) == 4
 
+
+	with ꘚ as "console.log(%s)":
+		ꘚ( 'macro ok')
+
+	with ꗈ as "document.body.appendChild(%s)":
+		with ꗢ as "document.createElement(%s)":
+			with 𝕋𝕏𝕋 as "e.appendChild(document.createTextNode(%s))":
+				for i in range(10):
+
+					e = ꗢ('div')
+					ꗈ( e )
+					𝕋𝕏𝕋('macro:'+i)
+
+					e = ꗢ('button')
+					ꗈ( e )
+					𝕋𝕏𝕋('mybutton:'+i)
+
+
 	#a.x.y = 'oopps'
 	#show( some_missing_object[ 'x' ] )
 	#mytypo()
