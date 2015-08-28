@@ -3,6 +3,11 @@ map comprehensions
 '''
 
 def main():
-	m = map[int]string{ a:'xxx' for a in range(10)}
-	TestError( m[0]=='xxx' )
-	TestError( m[9]=='xxx' )
+	m = map[int]string{ 
+		key:'xxx' for key in range(10)
+	}
+	assert m[0]=='xxx'
+	assert m[9]=='xxx'
+	print m
+	print m[0]
+	print m[1]

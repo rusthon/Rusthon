@@ -632,12 +632,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			assert v is not None
 			a.append( v )
 
-		a = '[%s]' % ', '.join(a)
-		if self._with_ll:
-			pass
-		elif self._with_lua:
-			a = '__get__(list, "__call__")({}, {pointer:%s, length:%s})'%(a, len(node.elts))
-		return a
+		return '[%s]' % ', '.join(a)
 
 	def visit_GeneratorExp(self, node):
 		return self.visit_ListComp(node)
@@ -775,15 +770,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('%s=iter%s[idx%s]' %(gen.target.id, id,id) )
 
 		else:
-			writer.write('iter%s = %s' %(id, self.visit(gen.iter)) )
-			writer.write('get%s = __get__(iter%s, "__getitem__")'%(id,id) )
-
-
-			writer.write('while idx%s < __get__(len, "__call__")([iter%s], JSObject()):' %(id,id) )  ## TODO optimize
-			writer.push()
-
-			writer.write('var(%s)'%gen.target.id)
-			writer.write('%s=get%s( [idx%s], JSObject() )' %(gen.target.id, id,id) )
+			raise SyntaxError('deprecated - lua backend')
 
 		if generators:
 			self._gen_comp( generators, node )
@@ -851,51 +838,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		op = '%s=' %self.visit( node.op )
 
-		typedef = self.get_typedef( node.target )
-
-		if self._with_lua:
-
-			if isinstance(node.target, ast.Subscript):
-				name = self.visit(node.target.value)
-				slice = self.visit(node.target.slice)
-				op = self.visit(node.op)
-				a = '__get__(%s, "__setitem__")( [%s, __get__(%s, "__getitem__")([%s], {}) %s (%s)], {} )'
-				a = a %(name, slice, name, slice, op, self.visit(node.value))
-				writer.write( a )
-				return
-
-			elif op == '+=':
-				a = '__add_op(%s,%s)' %(target, self.visit(node.value))
-			elif op == '-=':
-				a = '(%s - %s)' %(target, self.visit(node.value))
-			elif op == '*=':
-				a = '(%s * %s)' %(target, self.visit(node.value))
-			elif op == '/=' or op == '//=':
-				a = '(%s / %s)' %(target, self.visit(node.value))
-			elif op == '%=':
-				a = '__mod__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '&=':
-				a = '__and__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '|=':
-				a = '__or__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '^=':
-				a = '__xor__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '<<=':
-				a = '__lshift__(%s,%s)' %(target, self.visit(node.value))
-			elif op == '>>=':
-				a = '__rshift__(%s,%s)' %(target, self.visit(node.value))
-			else:
-				raise NotImplementedError(op)
-
-			writer.write('%s=%s' %(target,a))
-
-
-		elif typedef and op in typedef.operators:
-			func = typedef.operators[ op ]
-			a = '%s( [%s, %s] )' %(func, target, self.visit(node.value))
-			writer.write( a )
-
-		elif op == '//=':
+		if op == '//=':
 			if isinstance(node.target, ast.Attribute):
 				name = self.visit(node.target.value)
 				attr = node.target.attr
@@ -903,45 +846,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			if self._with_go:
 				a = '%s /= %s' %(target, self.visit(node.value))
-
-			elif self._with_dart:
-				a = '%s = (%s/%s).floor()' %(target, target, self.visit(node.value))
 			else:
 				a = '%s = Math.floor(%s/%s)' %(target, target, self.visit(node.value))
 			writer.write(a)
 
-		elif self._with_dart:
-			if op == '+=':
-				a = '%s.__iadd__(%s)' %(target, self.visit(node.value))
-			elif op == '-=':
-				a = '%s.__isub__(%s)' %(target, self.visit(node.value))
-			elif op == '*=':
-				a = '%s.__imul__(%s)' %(target, self.visit(node.value))
-			elif op == '/=':
-				a = '%s.__idiv__(%s)' %(target, self.visit(node.value))
-			elif op == '%=':
-				a = '%s.__imod__(%s)' %(target, self.visit(node.value))
-			elif op == '&=':
-				a = '%s.__iand__(%s)' %(target, self.visit(node.value))
-			elif op == '|=':
-				a = '%s.__ior__(%s)' %(target, self.visit(node.value))
-			elif op == '^=':
-				a = '%s.__ixor__(%s)' %(target, self.visit(node.value))
-			elif op == '<<=':
-				a = '%s.__ilshift__(%s)' %(target, self.visit(node.value))
-			elif op == '>>=':
-				a = '%s.__irshift__(%s)' %(target, self.visit(node.value))
-			else:
-				raise NotImplementedError
-
-			b = '%s %s %s' %(target, op, self.visit(node.value))
-			if isinstance( node.target, ast.Name ) and node.target.id in self._typedef_vars and self._typedef_vars[node.target.id] in typedpython.native_number_types+typedpython.vector_types:
-				writer.write(b)
-
-			else:
-				## dart2js is smart enough to optimize this if/else away ##
-				writer.write('if instanceof(%s, Number) or instanceof(%s, String): %s' %(target,target,b) )
-				writer.write('else: %s' %a)
 
 		elif self._with_js:  ## no operator overloading in with-js mode
 			a = '%s %s %s' %(target, op, self.visit(node.value))
@@ -1587,8 +1495,8 @@ class PythonToPythonJS(NodeVisitorBase):
 						is_go_listcomp = True
 						node.right.go_listcomp_type = node.left.args[0].id
 					elif node.left.func.id=='__go__map__':
+						is_go_listcomp = True
 						if isinstance(node.left.args[1], ast.Call):  ## map comprehension
-							is_go_listcomp = True
 							node.right.go_dictcomp_type =  ( node.left.args[0].id, self.visit(node.left.args[1]) )
 						else:
 							node.right.go_dictcomp_type =  ( node.left.args[0].id, node.left.args[1].id )
@@ -1596,10 +1504,9 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		right = self.visit(node.right)
 
-		if self._with_glsl:
-			return '(%s %s %s)' % (left, op, right)
-		elif self._with_go:
+		if self._with_go:
 			if op == '//': op = '/'
+
 			if is_go_listcomp:
 				return right
 			else:
