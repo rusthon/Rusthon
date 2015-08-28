@@ -281,9 +281,12 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 
 		return '\n'.join(r)
 
-	def visit_Str(self, node):
+	def visit_Str(self, node, wrap=True):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
-		if self.usertypes and 'string' in self.usertypes.keys():
+		if wrap is False:
+			return s
+
+		elif self.usertypes and 'string' in self.usertypes.keys():
 			if self.usertypes['string'] is None:
 				return '"%s"' % s
 			else:

@@ -8,6 +8,7 @@ Below `T` becomes the macro `std::vector<int>({%s})` used by the transpiler when
 
 def main():
 	with T as "std::vector<int>({%s})":
+		print 'testing creating -> std::vector<int>'
 		vec = new( T(1,2,3) )
 		print vec
 		print vec[0]
