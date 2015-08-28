@@ -927,7 +927,16 @@ class GoGenerator( JSGenerator ):
 			#for b in node.body:
 		self._scope_stack = []
 
+		if is_method and return_type and node.name.endswith('__init__'):
+			## note: this could be `__init__` or `ParentClass__init__`.
+			has_return = False
+			for ln in out:
+				if ln.strip().startswith('return '):
+					has_return = True
+					break
 
+			if not has_return:
+				out.append('return self')
 
 		self.pull()
 		out.append( self.indent()+'}' )
