@@ -452,7 +452,15 @@ class GoGenerator( JSGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		if fname=='__let__':
+		if fname == '__arg_array__':
+			assert len(node.args)==1
+			T = self.parse_go_style_arg(node.args[0])
+			if self.is_prim_type(T):
+				return '*[]%s' %T
+			else:
+				return '*[]*%s' %T
+
+		elif fname=='__let__':
 			if len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
 				assert node.args[0].value.id == 'self'
 				assert len(node.args)==3
@@ -545,6 +553,9 @@ class GoGenerator( JSGenerator ):
 
 			return '%s(%s)' % (fname, args)
 
+
+	def visit_Assert(self, node):
+		return 'if (%s == false) { panic("assertion failed"); }' %self.visit(node.test)
 
 
 	def visit_BinOp(self, node):

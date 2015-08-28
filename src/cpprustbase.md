@@ -1333,7 +1333,7 @@ handles all special calls
 			else:
 				return 'File::open_mode( &Path::new(%s.to_string()), Open, Read )' %self.visit(node.args[0])
 
-		elif fname == '__arg_array__':  ## TODO make this compatible with Go backend, move to pythonjs.py
+		elif fname == '__arg_array__':
 			assert len(node.args)==1
 			T = self.parse_go_style_arg(node.args[0])
 			if self._rust:
