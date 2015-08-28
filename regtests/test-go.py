@@ -21,6 +21,7 @@ for md in files:
 	subprocess.check_call([
 		'python',
 		'../rusthon.py',
+		'--go',
 		os.path.join('./go', md)
 	])
 	passed.append( md )

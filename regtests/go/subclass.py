@@ -12,8 +12,8 @@ class A:
 
 class B(A):
 	def __init__(self, s:string):
-		string self.w = s
-		int    self.x = 1
+		let self.w : string = s
+		let self.x : int = 1
 
 	def method2(self, v:string) ->string:
 		print(self.x)

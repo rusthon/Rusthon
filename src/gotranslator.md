@@ -452,13 +452,29 @@ class GoGenerator( JSGenerator ):
 			is_append = True
 			arr = fname.split('.append')[0]
 
-		#if fname=='__DOLLAR__': fname = '$'
-		if fname == 'range':
+		if fname=='__let__':
+			if len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
+				assert node.args[0].value.id == 'self'
+				assert len(node.args)==3
+				T = None
+				value = self.visit(node.args[2])
+				if isinstance(node.args[1], ast.Str):
+					T = node.args[1].s
+				else:
+					T = self.visit(node.args[1])
+
+				return 'self.%s = %s' %(node.args[0].attr, self.visit(node.args[2]))
+			else:
+				raise RuntimeError('TODO let...')
+
+
+		elif fname == 'range':  ## hack to support range builtin, translates to `range1,2,3`
 			assert len(node.args)
 			fname += str(len(node.args))
 		elif fname == 'len':
 			return 'len(*%s)' %self.visit(node.args[0])
 		elif fname == 'go.type_assert':
+			raise RuntimeError('go.type_assert is deprecated')
 			val = self.visit(node.args[0])
 			type = self.visit(node.args[1])
 			raise GenerateTypeAssert( {'type':type, 'value':val} )
