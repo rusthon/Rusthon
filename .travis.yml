@@ -17,4 +17,4 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 #install: 
 # command to run tests, e.g. python setup.py test
-script:  "python ./regtests/test-markdowns.py"
+script:  "python ./regtests/test-all.py"

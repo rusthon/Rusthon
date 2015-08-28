@@ -1,7 +1,8 @@
 Go Translator
 -------------
 
-subclass'es from the javascript generator.
+note: The GoGenerator class subclasses from javascript generator.
+
 
 ```python
 
@@ -1116,14 +1117,8 @@ class GoGenerator( JSGenerator ):
 def translate_to_go(script, insert_runtime=True):
 
 	if insert_runtime:
-		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, os.path.join('src','runtime'))
-		runtimepath = os.path.join(dirname, 'go_builtins.py')
-		if os.path.isfile(runtimepath):
-			runtime = open( runtimepath,'rb' ).read()
-			script = runtime + '\n' + script
-		else:
-			print 'WARNING: can not find go_builtins.py'
+		runtime = open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/go_builtins.py') ).read()
+		script = runtime + '\n' + script
 
 	try:
 		tree = ast.parse(script)
@@ -1135,14 +1130,19 @@ def translate_to_go(script, insert_runtime=True):
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 
-	## default path on linux from the offical Go docs ##
-	exe = '/usr/local/go/bin/go'  
+
+	## linux package: apt-get install golang
+	exe = '/usr/bin/go'
 	if not os.path.isfile(exe):
-		exe = os.path.expanduser('~/go/bin/go')  ## fall back to user home directory
+		## default path on linux from the offical Go docs - installed with their installer ##
+		exe = '/usr/local/go/bin/go'  
 		if not os.path.isfile(exe):
-			#raise RuntimeError('go not found in ~/go/bin/go')
-			print 'WARNING could not find go compiler, the generated code may not compile'
-			return pass2
+			exe = os.path.expanduser('~/go/bin/go')  ## fall back to user home directory
+			if not os.path.isfile(exe):
+				print 'WARNING: could not find go compiler'
+				print 'only a single translation pass was performed'
+				print '(the generated code may not compile)'
+				return pass2
 
 	## this hack runs the code generated in the second pass into the Go compiler to check for errors,
 	## where an interface could not be type asserted, because Go found that the variable was not an interface,

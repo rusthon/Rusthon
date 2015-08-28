@@ -10,7 +10,9 @@ RUSTHON_LIB_ROOT = os.path.dirname(unicode(os.path.realpath(__file__), sys.getfi
 
 
 GO_EXE = None
-if os.path.isfile('/usr/local/go/bin/go'):
+if os.path.isfile('/usr/bin/go'):
+	GO_EXE = '/usr/bin/go'
+elif os.path.isfile('/usr/local/go/bin/go'):
 	GO_EXE = '/usr/local/go/bin/go'
 elif os.path.isfile(os.path.expanduser('~/go/bin/go')):
 	GO_EXE = os.path.expanduser('~/go/bin/go')
