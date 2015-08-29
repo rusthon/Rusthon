@@ -761,7 +761,7 @@ Also implements extra syntax like `switch` and `select`.
 			if a: r.append(self.indent()+a)
 
 		if is_case and not self._rust:  ## always break after each case - do not fallthru to default: block
-			if select_hack:
+			if select_hack or self._go:
 				r.append(self.indent()+' break;}')
 			else:
 				r.append(self.indent()+'} break;')  ## } extra scope

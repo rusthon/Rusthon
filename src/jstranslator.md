@@ -218,7 +218,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			a = '%s --;' %target
 		elif op=='+' and isinstance(node.value, ast.Num):
 			a = '%s %s= %s;' %(target, op, value)  ## direct
-		elif op == '+':
+		elif op == '+' and not self._go:
 			## supports += syntax for arrays ##
 			if typedpython.unicode_vars:
 				x = [
