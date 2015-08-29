@@ -256,7 +256,7 @@ class GoGenerator( JSGenerator ):
 			## used by generics to workaround the problem that a super method that returns `self`,
 			## may infact return wrong subclass type, because a struct to return that is not of type
 			## self will be cast to self - while this is ok if just reading attributes from it,
-			## it fails with method calls, because the casting operation on the struct changes it's
+			## it fails with method calls, because the casting operation on the struct changes its
 			## method pointers.  by storing the class name on the instance, it can be used in a generics
 			## type switch to get to the real class and call the right methods.
 			out.append( '  ob.__class__ = "%s"' %node.name)
@@ -1073,6 +1073,13 @@ class GoGenerator( JSGenerator ):
 
 		target = self.visit( node.targets[0] )
 
+
+		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Call) and node.value.left.func.id=='__go__map__':
+			if isinstance(node.value.right, ast.Name) and node.value.right.id.startswith('__comp__'):
+				value = self.visit(node.value.right)
+				return '%s := %s;' % (target, value)  ## copy the map comprehension from the temp var to the original.
+
+		################
 		if isinstance(node.value, ast.BinOp) and self.visit(node.value.op)=='<<' and isinstance(node.value.left, ast.Name) and node.value.left.id=='__go__send__':
 			value = self.visit(node.value.right)
 			return '%s <- %s;' % (target, value)

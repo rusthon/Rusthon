@@ -7,18 +7,19 @@ def main():
 		'z': 3,
 	}
 
-	#print( a['x'] )
-	TestError( a['x']==1 )
+	print( a['x'] )
+	assert a['x']==1
 
 	b = map[int]string{ 0:'a', 1:'b' }
-	#print( b[0] )
-	#print( b[1] )
-	TestError( b[0]=='a' )
-	TestError( b[1]=='b' )
+	print( b[0] )
+	print( b[1] )
+	assert b[0]=='a'
+	assert b[1]=='b'
 
+	## infers type of key and value ##
 	c = {'x':100, 'y':200}
-	#print( c['x'] )
-	#print( c['y'] )
+	print( c['x'] )
+	print( c['y'] )
 
-	TestError( c['x']==100 )
-	TestError( c['y']==200 )
+	assert c['x']==100
+	assert c['y']==200 

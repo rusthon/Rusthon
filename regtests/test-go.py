@@ -4,6 +4,8 @@ passed = []
 ignore = ()
 
 TODO_FIX = (
+	'generics_subcls_return_a_subcls.py',
+	'generics_mreturns.py',
 )
 
 files = os.listdir('./go')
