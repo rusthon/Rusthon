@@ -6,6 +6,7 @@ ignore = ()
 TODO_FIX = (
 	'generics_subcls_return_a_subcls.py',
 	'generics_mreturns.py',
+	'generics_init.py',
 )
 
 files = os.listdir('./go')

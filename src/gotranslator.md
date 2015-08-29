@@ -552,6 +552,8 @@ class GoGenerator( JSGenerator ):
 						if node.func.attr in self.method_returns_multiple_subclasses[ cname ]:
 							raise SyntaxError('%s(%s)' % (fname, args))
 
+			if fname in self._classes:
+				fname = '__new__%s' %fname
 
 			return '%s(%s)' % (fname, args)
 
@@ -566,7 +568,12 @@ class GoGenerator( JSGenerator ):
 		right = self.visit(node.right)
 
 		if op == '>>' and left == '__new__':
-			return ' new %s' %right
+			## calls generated class constructor: user example `new MyClass()` ##
+			## for rare cases where the translator is not aware of some transpiled class ##
+			if not right.startswith('__new__'):
+				return '__new__%s' %right
+			else:
+				return right
 
 		elif op == '<<':
 			if left in ('__go__receive__', '__go__send__'):
@@ -1090,7 +1097,7 @@ class GoGenerator( JSGenerator ):
 			value = self.visit(node.value)
 			#return 'var %s = %s;' % (target, value)
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:
-				value = '__new__' + value
+				#value = '__new__' + value
 				return 'var %s *%s = %s;' % (target, node.value.func.id, value)
 			else:
 				return 'var %s = %s;' % (target, value)
@@ -1125,9 +1132,8 @@ class GoGenerator( JSGenerator ):
 				if node.value.func.id in self._classes:
 					#raise SyntaxError(value+' in classes')
 					self._known_instances[ target ] = node.value.func.id
-					return '%s := __new__%s;' %(target, value)
-				else:
-					return '%s := %s;' % (target, value)
+
+				return '%s := %s;' % (target, value)
 
 			else:
 				return '%s := %s;' % (target, value)
@@ -1161,7 +1167,8 @@ class GoGenerator( JSGenerator ):
 
 
 def translate_to_go(script, insert_runtime=True):
-	#raise RuntimeError(script)
+	if '--debug-inter' in sys.argv:
+		raise RuntimeError(script)
 	if insert_runtime:
 		runtime = open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/go_builtins.py') ).read()
 		script = runtime + '\n' + script
