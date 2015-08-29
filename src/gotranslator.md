@@ -40,6 +40,8 @@ class GoGenerator( JSGenerator ):
 		self.uids = 0
 		self.unodes = dict()
 
+		self._slice_hack_id = 0
+
 	def uid(self):
 		self.uids += 1
 		return self.uids
@@ -1104,7 +1106,8 @@ class GoGenerator( JSGenerator ):
 
 			if value.startswith('&(*') and '[' in value and ']' in value:  ## slice hack
 				v = value[1:]
-				return '_tmp := %s; %s := &_tmp;' %(v, target)
+				self._slice_hack_id += 1
+				return '__slice%s := %s; %s := &__slice%s;' %(self._slice_hack_id, v, target, self._slice_hack_id)
 
 			elif isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
 				varname = node.value.func.value.id

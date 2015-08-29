@@ -13,4 +13,4 @@ def main():
 
 	x = <-c
 	print(x)
-	TestError(x==100)
+	assert x==100
