@@ -7,4 +7,5 @@ def main():
 		return x*2
 
 	a = F(10)
-	TestError(a==20)
+	print a
+	assert a==20

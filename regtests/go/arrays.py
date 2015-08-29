@@ -5,17 +5,18 @@ def test_pass_array_as_arg( arr:[]int ):
 
 def main():
 	a = []int(1,2,3)
-	TestError( a[0]==1 )
-	TestError( len(a)==3 )
+	print a
+	assert a[0]==1
+	assert len(a)==3
 	a.append( 4 )
-	TestError( len(a)==4 )
+	assert len(a)==4
 
 	test_pass_array_as_arg( a )
-	TestError( len(a)==5 )
+	assert len(a)==5
 
 	b = [2]int(100,200)
-	TestError( b[0]==100 )
-	TestError( b[1]==200 )
+	assert b[0]==100
+	assert b[1]==200
 
 	#c = a[:2]
 	#TestError( len(c)==2 )
