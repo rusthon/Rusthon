@@ -2617,7 +2617,7 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 			elif name.endswith(',') and name.startswith('PyObject_GetAttrString('):
 				return '%s"%s")' %(name, attr)
 			else:
-				if name in 'jvm nim cpython nuitka'.split():
+				if name in 'jvm nim cpython nuitka weak'.split():
 					return '%s->%s' % (name, attr)
 				elif self._shared_pointers:
 					return '__shared__(%s)->%s' % (name, attr)

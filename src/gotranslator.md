@@ -559,7 +559,7 @@ class GoGenerator( JSGenerator ):
 
 
 	def visit_Assert(self, node):
-		return 'if (%s == false) { panic("assertion failed"); }' %self.visit(node.test)
+		return 'if ((%s) == false) { panic("assertion failed"); }' %self.visit(node.test)
 
 
 	def visit_BinOp(self, node):
@@ -805,26 +805,23 @@ class GoGenerator( JSGenerator ):
 		out = []
 		if is_closure:
 			if return_type:
-				out.append( self.indent() + '%s := func (%s) %s {\n' % (node.name, ', '.join(args), return_type) )
+				out.append( '%s := func (%s) %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
-				out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
+				out.append( '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
-				out.append( self.indent() + 'func %s%s(%s) %s {\n' % (method, node.name, ', '.join(args), return_type) )
+				out.append( 'func %s%s(%s) %s {\n' % (method, node.name, ', '.join(args), return_type) )
 			else:
-				out.append( self.indent() + 'func %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
+				out.append( 'func %s%s(%s) {\n' % (method, node.name, ', '.join(args)) )
 		self.push()
 
 		if oargs:
 			for n,v in oargs:
-				out.append('%s := %s' %(n,v))
-				out.append('if __kwargs.__use__%s {' %n )
-				out.append( '  %s = __kwargs.%s' %(n,n))
-				out.append('}')
-				#out.append('} else { %s := %s }' %(n,v))
+				out.append(self.indent() + '%s := %s' %(n,v))
+				out.append(self.indent() + 'if __kwargs.__use__%s { %s = __kwargs.%s }' %(n,n,n))
 
 		if starargs:
-			out.append('%s := &__vargs__' %starargs)
+			out.append(self.indent() + '%s := &__vargs__' %starargs)
 
 		if generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
