@@ -43,6 +43,11 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 				return True
 		return False
 
+	def visit_Assert(self, node):
+		t = self.visit(node.test)
+		return 'if (!(%s)) {throw std::runtime_error("assertion failed: %s"); }' %(t,t)
+
+
 	def visit_ImportFrom(self, node):
 		# print node.module
 		# print node.names[0].name
@@ -317,6 +322,7 @@ TODO
 ```python
 
 	def visit_TryExcept(self, node, finallybody=None):
+		## TODO: check why `catch (...)` is not catching file errors
 		out = []
 
 		out.append( 'try {' )
@@ -325,25 +331,34 @@ TODO
 			out.append( self.indent()+self.visit(b) )
 
 		self.pull()
-		out.append( self.indent() + '} catch (const std::exception& e) {' )
+		out.append(self.indent()+ '}' )
+
+		#out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
+		#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
+		#out.append( self.indent() + 'catch (const std::exception& e) {' )
+
+		out.append( self.indent() + 'catch (...) {' )
 		self.push()
 		for h in node.handlers:
 			out.append(self.indent()+self.visit(h))
 		self.pull()
 
+		out.append(self.indent()+ '}' )
+
+		#out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
+
+
+		## wrap in another try that is silent
 		if finallybody:
-			## wrap in another try that is silent, always throw e
-			out.append('try {		// finally block')
+			self.push()
+			out.append(self.indent()+'try {		// finally block')
+			self.push()
 			for b in finallybody:
-				out.append(self.visit(b))
+				out.append(self.indent()+self.visit(b))
+			self.pull()
+			out.append(self.indent()+'} catch (...) {}')
+			self.pull()
 
-			out.append('} throw e;')
-
-		out.append( '}' )
-
-		out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
-		out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
-		out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
 
 		return '\n'.join( out )
 ```

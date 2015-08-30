@@ -24,5 +24,5 @@ def main():
 	# Do other work...
 	x = recv_wrapper(2, c)
 	print(x)
-	TestError(x==100)
+	assert x==100
 	print 'ok'

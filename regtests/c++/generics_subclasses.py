@@ -41,15 +41,15 @@ def main():
 	c = C( 100 )
 
 	x = my_generic( a )
-	TestError(a.x == x )
+	assert a.x == x
 	print(x)
 
 	y = my_generic( b )
-	TestError( y==200 )
+	assert y==200
 	print(y)
 
 	z = my_generic( c )
-	TestError( z==300 )
+	assert z==300
 	print(z)
 	print('----------------')
 	print( my_generic2(a,b))
