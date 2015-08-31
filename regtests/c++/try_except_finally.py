@@ -25,7 +25,11 @@ def myfunc():
 		print 'this should not happen'
 	except IOError:
 		print 'CAUGHT IOError OK'
-		raise RuntimeError('rethrowing error')
+		## it is ok to raise or return in the except block,
+		## the finally block will be run before any of this happens
+		#raise RuntimeError('rethrowing error')  ## this works
+		return
+
 	except:
 		print('CAUGHT UNKNOWN EXECEPTION')
 		## raise another exception
