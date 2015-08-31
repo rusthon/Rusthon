@@ -262,6 +262,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self.cached_json_files = cached_json_files or dict()
 		self.usertypes = dict()
 		self._user_class_headers = dict()
+		self._finally_id = 0
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
@@ -325,7 +326,13 @@ TODO
 		## TODO: check why `catch (...)` is not catching file errors
 		out = []
 
-		out.append( 'try {' )
+		if finallybody:
+			self._finally_id += 1
+			out.append('bool __finally_done_%s = false;' %self._finally_id)
+			out.append( self.indent()+'try {' )
+		else:
+			out.append( 'try {' )
+
 		self.push()
 		for b in node.body:
 			out.append( self.indent()+self.visit(b) )
@@ -333,24 +340,28 @@ TODO
 		self.pull()
 		out.append(self.indent()+ '}' )
 
-		#out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
-		#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
-		#out.append( self.indent() + 'catch (const std::exception& e) {' )
 
 		out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
 		self.push()
 		out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
 		for h in node.handlers:
-			out.append(self.indent()+self.visit(h))
+			out.append(
+				self.indent() + self.visit_ExceptHandler(h, finallybody=finallybody)
+			)
 		self.pull()
 
 		out.append(self.indent()+ '}' )
 
+		## TODO also catch these error that standard c++ libraries are likely to throw ##
+		#out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
+		#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
+		#out.append( self.indent() + 'catch (const std::exception& e) {' )
 		#out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
 
 
 		## wrap in another try that is silent
 		if finallybody:
+			out.append(self.indent()+'if (__finally_done_%s == false) {' %self._finally_id )
 			self.push()
 			out.append(self.indent()+'try {		// finally block')
 			self.push()
@@ -359,11 +370,13 @@ TODO
 			self.pull()
 			out.append(self.indent()+'} catch (...) {}')
 			self.pull()
+			out.append(self.indent()+'}')
 
+			self._finally_id -= 1
 
 		return '\n'.join( out )
 
-	def visit_ExceptHandler(self, node):
+	def visit_ExceptHandler(self, node, finallybody=None):
 		#out = ['catch (std::runtime_error* __error__) {']
 		T = 'Error'
 		if node.type:
@@ -375,6 +388,21 @@ TODO
 
 		if node.name:
 			out.append(self.indent()+'auto %s = __error__;' % self.visit(node.name))
+
+		## this happens before the exception body, while this is not strictly python
+		## it is close enough, because the main requirement is that the finally body
+		## is always run, even if there is a return or new exception raised.
+		if finallybody:
+			out.append(self.indent()+'__finally_done_%s = true;' %self._finally_id)
+			self.push()
+			out.append(self.indent()+'try {		// finally block')
+			self.push()
+			for b in finallybody:
+				out.append(self.indent()+self.visit(b))
+			self.pull()
+			out.append(self.indent()+'} catch (...) {}')
+			self.pull()
+
 
 		for b in node.body:
 			out.append(self.indent()+self.visit(b))
