@@ -3,6 +3,18 @@
 # License: "New BSD"
 
 
+## note the caller must catch and clean up using `free` on errors
+## `catch (...)` will leak memory, and should only be a fallback
+## from external c++ libs that throw const references of std::exception
+def RuntimeError( msg:string ) -> std::runtime_error*:
+	prefix = "RuntimeError|"
+	return inline('new std::runtime_error(prefix+msg)')
+
+def IOError( msg:string ) -> std::runtime_error*:
+	prefix = "IOError|"
+	return inline('new std::runtime_error(prefix+msg)')
+
+
 #def __split_string_py__(s:string, m:string) ->[]string:
 #	vec = []string("")
 #	for c in s:
@@ -11,6 +23,7 @@
 #		else:
 #			vec[-1] += c
 #	return vec
+
 
 inline("""
 
@@ -74,10 +87,17 @@ std::string str( int s ) {
 }
 
 std::fstream* __open__(const std::string name, const std::string mode) {
-	if (mode==std::string("rb")) {
-		return new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
-	} else {
-		return new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
+	try {
+		std::fstream* s;
+		if (mode==std::string("rb") || mode==std::string("r")) {
+			s = new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
+		} else {
+			s = new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
+		}
+		s->exceptions( std::ios::failbit | std::ios::badbit | std::ios::eofbit );
+		return s;	
+	} catch (...) {
+		throw IOError(std::string("No such file or directory: ")+name);
 	}
 }
 
@@ -138,4 +158,13 @@ std::string chr( int c ) {
 	return std::string( &s );
 }
 
+std::string __parse_error_type__( std::runtime_error* err) {
+	auto vec = __split_string__( std::string(err->what()), std::string("|") );
+	return (*vec)[0];
+}
+
 """)
+
+
+
+

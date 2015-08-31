@@ -388,7 +388,7 @@ TODO `finnally` for the javascript backend
 			return 'panic!("%s");'  % self.visit(node.type)
 		elif self._cpp:
 			T = self.visit(node.type)
-			if T == 'RuntimeError()': T = 'std::exception'
+			#if T == 'RuntimeError()': T = 'std::exception'
 			return 'throw %s;' % T
 		else:
 			## TODO - when re-raising an error, it fails because it is an Error object

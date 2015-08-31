@@ -337,8 +337,9 @@ TODO
 		#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
 		#out.append( self.indent() + 'catch (const std::exception& e) {' )
 
-		out.append( self.indent() + 'catch (...) {' )
+		out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
 		self.push()
+		out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
 		for h in node.handlers:
 			out.append(self.indent()+self.visit(h))
 		self.pull()
@@ -361,6 +362,28 @@ TODO
 
 
 		return '\n'.join( out )
+
+	def visit_ExceptHandler(self, node):
+		#out = ['catch (std::runtime_error* __error__) {']
+		T = 'Error'
+		if node.type:
+			T = self.visit(node.type)
+
+		out = ['if (__errorname__ == std::string("%s")) {' %T ]
+
+		self.push()
+
+		if node.name:
+			out.append(self.indent()+'auto %s = __error__;' % self.visit(node.name))
+
+		for b in node.body:
+			out.append(self.indent()+self.visit(b))
+
+		self.pull()
+		out.append(self.indent()+'}')
+		return '\n'.join(out)
+
+
 ```
 
 
@@ -506,6 +529,7 @@ def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 	#raise SyntaxError(script)
 	if insert_runtime:
 		runtime = open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/cpp_builtins.py') ).read()
+		runtime = python_to_pythonjs( runtime, cpp=True )
 		script = runtime + '\n' + script
 
 	try:
