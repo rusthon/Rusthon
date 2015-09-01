@@ -39,9 +39,15 @@ std::shared_ptr<T> __shared__(T& ob) {return std::make_shared<T>(&ob);}
 template<class T>
 std::shared_ptr<T> __shared__(std::shared_ptr<T> ob) {return ob;}
 
+
 std::shared_ptr<std::string> __shared__(std::string ob) {
 	return std::make_shared<std::string>(ob);
 }
+
+std::shared_ptr<std::runtime_error> __shared__(std::runtime_error ob) {
+	return std::make_shared<std::runtime_error>(ob);
+}
+
 
 
 template<class T>

@@ -3,8 +3,6 @@ c++ finally
 '''
 
 def myfunc():
-	## TODO - update __open__ so it throws an error
-	#f = open('/tmp/nosuchfile')
 
 	a = False
 	try:
@@ -14,6 +12,19 @@ def myfunc():
 		a = True
 
 	assert a == True
+
+
+	c = False
+	try:
+		raise IOError('my ioerror')
+
+	except IOError as err:
+		print 'caught my ioerr'
+		print err.what()
+		#raise err  ## rethrow works ok
+		c = True
+	assert c == True
+
 
 	b = False
 
@@ -39,6 +50,10 @@ def myfunc():
 		b = True
 
 	assert b == True
+
+
+
+
 
 def main():
 	myfunc()

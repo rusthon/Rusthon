@@ -387,7 +387,7 @@ TODO
 		self.push()
 
 		if node.name:
-			out.append(self.indent()+'auto %s = __error__;' % self.visit(node.name))
+			out.append(self.indent()+'auto %s = *__error__;' % self.visit(node.name))
 
 		## this happens before the exception body, while this is not strictly python
 		## it is close enough, because the main requirement is that the finally body
