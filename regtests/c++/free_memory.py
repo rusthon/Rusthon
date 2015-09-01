@@ -8,7 +8,7 @@ class A:
 		print( 'goodbye')
 
 def main():
-	a = A()
+	a = A(1)
 	print a
 	del a
 	print 'done'
