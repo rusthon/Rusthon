@@ -4,6 +4,8 @@ passed = []
 ignore = ()
 
 TODO_FIX = (
+	'chain.py',
+	'generics_subclasses.py',
 )
 
 files = os.listdir('./c++')

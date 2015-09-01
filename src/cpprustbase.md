@@ -1266,7 +1266,11 @@ handles all special calls
 
 			elif len(node.args) == 3:
 				if self._cpp:
-					T = node.args[1].s
+					if isinstance(node.args[1], ast.Name):
+						T = node.args[1].id
+					else:
+						T = node.args[1].s
+
 					if self.is_prim_type(T):
 						return '%s  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 					else:
@@ -3480,22 +3484,23 @@ because they need some special handling in other places.
 				if isclass:
 					classname = node.value.func.id
 					self._known_instances[ target ] = classname
-					## TODO move get-args-and-kwargs to its own helper function
-					constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
-					r = ''
-					if isglobal:
-						r += '/* global : %s, type:%s */\n' %(target, classname)
-					r += '%s  _ref_%s = %s{};' %(classname, target, classname)
-					if constructor_args:
-						r += '_ref_%s.__init__(%s);' %(target, constructor_args)
 
-					if not self._shared_pointers:
-						r += '\n%s = &_ref_%s;' %(target, target)
-					elif self._unique_ptr:
-						r += '\n%s = std::make_unique<%s>(_ref_%s);' %(target, classname, target)
-					else:
-						r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
-					return r
+					return '%s = %s;' %(target, value)
+					## TODO remove below
+					#constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
+					#r = ''
+					#if isglobal:
+					#	r += '/* global : %s, type:%s */\n' %(target, classname)
+					#r += '%s  _ref_%s = %s{};' %(classname, target, classname)
+					#if constructor_args:
+					#	r += '_ref_%s.__init__(%s);' %(target, constructor_args)
+					#if not self._shared_pointers:
+					#	r += '\n%s = &_ref_%s;' %(target, target)
+					#elif self._unique_ptr:
+					#	r += '\n%s = std::make_unique<%s>(_ref_%s);' %(target, classname, target)
+					#else:
+					#	r += '\n%s = std::make_shared<%s>(_ref_%s);' %(target, classname, target)
+					#return r
 
 				elif is_attr and target.startswith('PyObject_GetAttrString(') and target.endswith(')'):
 					pyob = self.visit(node.targets[0].value.value)
