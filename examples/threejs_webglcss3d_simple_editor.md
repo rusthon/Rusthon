@@ -628,7 +628,7 @@ HTML
 		<meta charset="utf-8">
 
 
-<link href='~/bootstrap-3.3.4-dist/css/bootstrap.css' rel='stylesheet' />
+<link href='~/bootstrap-3.3.5-dist/css/bootstrap.css' rel='stylesheet' zip="https://github.com/twbs/bootstrap/releases/download/v3.3.5/bootstrap-3.3.5-dist.zip"/>
 
 <style>
 	body {
@@ -649,12 +649,12 @@ HTML
     .pp-slider .pp-slider-max { float: left; width: 15px; color: #aaa; font-size: 10px; text-align: right; }
 </style>
 
-<script src="~/jquery/jquery-2.1.3.min.js"></script>
-<script src="~/bootstrap-3.3.4-dist/js/bootstrap.min.js"></script>
+<script src="~/rusthon_cache/jquery-2.1.4.min.js" source="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="~/bootstrap-3.3.5-dist/js/bootstrap.min.js"></script>
 
 	</head>
 	<body>
-		<script src="~/three.js/build/three.min.js"></script>
+		<script src="~/three.js/build/three.min.js" git="https://github.com/mrdoob/three.js.git"></script>
 
 		<script src="~/three.js/examples/js/controls/TrackballControls.js"></script>
 		<script src="~/three.js/examples/js/controls/TransformControls.js"></script>

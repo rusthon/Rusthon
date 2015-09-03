@@ -795,11 +795,28 @@ def build( modules, module_path, datadirs=None ):
 						html.append('<script type="text/javascript">')
 						html.append( open(url, 'rb').read() )
 						html.append('</script>')
+					elif 'source="' in line:
+						srcurl = line.split('source="')[-1].split('"')[0]
+						print 'downloading javascript-> ' + srcurl
+						import urllib
+						srcdata = urllib.urlopen(srcurl).read()
+						srcpath = os.path.split(url)[0]
+						if not os.path.isdir(srcpath):
+							os.makedirs(srcpath)
+						open(url, 'wb').write(srcdata)
+						assert os.path.isfile(url)
+						html.append('<script type="text/javascript">')
+						html.append( open(url, 'rb').read() )
+						html.append('</script>')
 
 					else:
 						print('ERROR: could not find file to inline: %s' %url)
 						html.append( line )
 				elif line.strip().startswith('<link ') and ('href="~/' in line or "href='~/" in line):
+					zipurl = None
+					if 'zip="' in line:
+						zipurl = line.split('zip="')[-1].split('"')[0]
+
 					if 'href="' in line:
 						url = line.split('href="')[-1].split('"')[0]
 					else:
@@ -810,6 +827,16 @@ def build( modules, module_path, datadirs=None ):
 						html.append('<style>')
 						html.append( open(url, 'rb').read() )
 						html.append('</style>')
+					elif zipurl:
+						import urllib
+						print 'downloading css library->' + zipurl
+						zipdata = urllib.urlopen(zipurl).read()
+						open('/tmp/csslib.zip', 'wb').write( zipdata )
+						subprocess.check_call(['unzip', '/tmp/csslib.zip'], cwd=os.environ['HOME'])
+						html.append('<style>')
+						html.append( open(url, 'rb').read() )
+						html.append('</style>')
+
 					else:
 						print('ERROR: could not find css file to inline: %s' %url)
 						html.append( line )

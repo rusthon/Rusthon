@@ -66,7 +66,7 @@ git clone into your home directory: `https://github.com/ajaxorg/ace-builds.git`
 ```html
 <html>
 <head>
-<script src="~/ace-builds/src-min/ace.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/ace.js" git="https://github.com/ajaxorg/ace-builds.git"></script>
 <script src="~/ace-builds/src-min/theme-monokai.js" type="text/javascript"></script>
 <script src="~/ace-builds/src-min/worker-javascript.js" type="text/javascript"></script>
 <script src="~/ace-builds/src-min/mode-javascript.js" type="text/javascript"></script>
