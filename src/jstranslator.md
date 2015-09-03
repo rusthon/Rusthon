@@ -609,7 +609,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else: ## scope lifted functions are not safe ##
 				fdef = 'function %s(%s)' % (node.name, ', '.join(args))
 
-		body.append( fdef )
+		if is_prototype or (bind_to and '.prototype.' in bind_to):
+			body.append( '/*BEGIN-METH:%s*/' %id(node))
+		else:
+			body.append( '/*BEGIN-FUNC:%s*/' %id(node))
+
+		body.append( self.indent() + fdef )
 
 		body.append( self.indent() + '{' )
 		self.push()
@@ -658,6 +663,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		## end of function ##
 		self.pull()
 		body.append( self.indent() + '}/*end->	`%s`	*/' %node.name)
+
+		if is_prototype or (bind_to and '.prototype.' in bind_to):
+			body.append( '/*END-METH:%s*/' %id(node))
+		else:
+			body.append( '/*END-FUNC:%s*/' %id(node))
+
 		if is_debugger:
 			self.pull()
 			body.append( '}/*debugger*/' )
@@ -1202,7 +1213,8 @@ If Test
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
-		out.append( 'if (%s)' %test )
+		out.append( '/*BEGIN-IF:%s*/' %id(node))
+		out.append( self.indent() + 'if (%s)' %test )
 		out.append( self.indent() + '{' )
 
 		self.push()
@@ -1224,6 +1236,7 @@ If Test
 			out.extend( orelse )
 
 		out.append( self.indent() + '}' )
+		out.append( self.indent() + '/*END-IF:%s*/' %id(node))
 
 		return '\n'.join( out )
 
@@ -1334,8 +1347,9 @@ when fast_loops is off much of python `for in something` style of looping is los
 			pass
 		self._visit_for_prep_iter_helper(node, out, iname)
 
+		out.append('/*BEGIN-FOR:%s*/' %id(node))
 		if self._fast_loops:
-			out.append( 'for (var %s = 0; %s < %s.length; %s++)' % (index, index, iname, index) )
+			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++)' % (index, index, iname, index) )
 			out.append( self.indent() + '{' )
 
 		else:
@@ -1357,6 +1371,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 		self.pull()
 		out.extend( body )
 		out.append( self.indent() + '}' )
+		out.append( self.indent() + '/*END-FOR:%s*/' %id(node))
 
 		self._iter_id -= 1
 

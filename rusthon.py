@@ -781,10 +781,21 @@ def build( modules, module_path, datadirs=None ):
 				if line.strip().startswith('<script ') and line.strip().endswith('</script>') and 'src="~/' in line:
 					url = line.split('src="')[-1].split('"')[0]
 					url = os.path.expanduser( url )
+
 					if os.path.isfile(url):
 						html.append('<script type="text/javascript">')
 						html.append( open(url, 'rb').read() )
 						html.append('</script>')
+					elif 'git="' in line:
+						giturl = line.split('git="')[-1].split('"')[0]
+						print 'downloading library-> ' + giturl
+						cmd = ['git', 'clone', giturl]
+						subprocess.check_call(cmd, cwd=os.environ['HOME'])
+						assert os.path.isfile(url)
+						html.append('<script type="text/javascript">')
+						html.append( open(url, 'rb').read() )
+						html.append('</script>')
+
 					else:
 						print('ERROR: could not find file to inline: %s' %url)
 						html.append( line )

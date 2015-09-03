@@ -17,7 +17,7 @@ This is triggered by using `~/` at the start of the path in the `src` attribute 
 ```html
 <html>
 <head>
-<script src="~/three.js/build/three.min.js"></script>
+<script src="~/three.js/build/three.min.js" git="https://github.com/mrdoob/three.js.git"></script>
 <@myscript>
 
 </head>
