@@ -14,7 +14,7 @@ type __type__int = Vec<int>;
 //fn range1<'caller>( lifetime : &'caller int, x : int ) -> &'caller Vec<uint> {
 fn range1( x : int ) -> Vec<int> {
 	let mut arr: Vec<int> = Vec::with_capacity(x as uint);
-	for i in range(0u, x as uint) { arr.push(i as int); }
+	for i in range(0u32, x as uint) { arr.push(i as int); }
 	return arr;
 }
 
@@ -37,7 +37,7 @@ fn __int__( n:String ) -> int {
 }
 
 fn round( n:f32, places:int ) -> f32 {
-	let p = (10i).pow( places as uint ) as f32;
+	let p = (10i32).pow( places as uint ) as f32;
 	return (n*p) / p;
 }
 

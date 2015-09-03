@@ -219,11 +219,9 @@ TODO: do not hard code rustc to /usr/local/bin
 def translate_to_rust(script, insert_runtime=True):
 	#raise SyntaxError(script)
 	if insert_runtime:
-		dirname = os.path.dirname(os.path.abspath(__file__))
-		dirname = os.path.join(dirname, 'src/runtime')
-		runtimepath = os.path.join(dirname, 'rust_builtins.py')
+		runtimepath = os.path.join(RUSTHON_LIB_ROOT,'src/runtime/rust_builtins.py')
 		if os.path.isfile(runtimepath):
-			runtime = open(  ).read()
+			runtime = open( runtimepath ).read()
 			script = runtime + '\n' + script
 		else:
 			print 'WARNING: can not find rust_builtins.py'
