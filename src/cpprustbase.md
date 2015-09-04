@@ -1525,7 +1525,7 @@ regular Python has no support for.
 					## cpp-channel API
 					return '%s.recv()' %right
 				elif self._rust:
-					return '%s.recv()' %right
+					return '%s.recv().unwrap()' %right
 
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
@@ -2905,7 +2905,7 @@ because they need some special handling in other places.
 				## cpp-channel API
 				return '%s.send(%s);' % (target, value)
 			elif self._rust:
-				return '%s.send(%s);' % (target, value)
+				return '%s.send(%s).unwrap();' % (target, value)  ## Rust1.2 API, must call unwrap after send.
 			else: ## Go
 				return '%s <- %s;' % (target, value)
 

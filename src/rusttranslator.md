@@ -135,7 +135,10 @@ TODO clean up go code.
 			#'use std::num::Int;',
 			'use std::rc::Rc;',
 			'use std::cell::RefCell;',
-			'use std::thread::Thread;',
+			'use std::thread;',
+			'use std::sync::mpsc::channel;',
+			'use std::sync::mpsc::Sender;',
+			'use std::sync::mpsc::Receiver;',
 		]
 		lines = []
 
