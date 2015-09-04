@@ -16,14 +16,14 @@ def test_pass_array_of_objects( arr:[]A, id:int ):
 
 def main():
 	a = []int(x for x in range(3))
-	TestError( len(a)==3 )
-	TestError( a[0]==0 )
-	TestError( a[1]==1 )
-	TestError( a[2]==2 )
+	assert len(a)==3
+	assert a[0]==0
+	assert a[1]==1
+	assert a[2]==2
 
 	test_pass_array( a )
-	TestError( len(a)==4 )
-	TestError( a[3]==3 )
+	assert len(a)==4
+	assert a[3]==3
 
 	#b = []A( A(x) for x in ['list', 'comp'])  ## TODO fix me, infer type
 
@@ -32,6 +32,6 @@ def main():
 	#b = []A( A(x) for x in ('list', 'comp'))  ## TODO fix strings
 
 	b = []A( A(x) for x in (1,2,3,4))
-	TestError( len(b)==4 )
+	assert len(b)==4
 	test_pass_array_of_objects( b, 5 )
-	TestError( len(b)==5 )
+	assert len(b)==5

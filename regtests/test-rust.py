@@ -4,6 +4,9 @@ passed = []
 ignore = ()
 
 TODO_FIX = (
+	'chan.py',
+	'chan_universal_style.py',
+	'ffi_hello.py',  ## libc is unstable as of Rust1.2
 )
 
 files = os.listdir('./rust')

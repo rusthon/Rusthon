@@ -15,4 +15,4 @@ def main():
 	# Do other work in the current goroutine until the channel has a result.
 	x = recv_wrapper(2, recver)
 	print(x)
-	TestError(x==100)
+	assert x==100

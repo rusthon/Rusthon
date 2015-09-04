@@ -1259,10 +1259,17 @@ handles all special calls
 						else:
 							return 'std::shared_ptr<%s>  %s' %(T, node.args[0].id)
 				else:
-					if mutable:
-						return '%s mut %s : %s' %(V, node.args[0].id, node.args[1].s)
+					varname = node.args[0].id
+					typename = None
+					if isinstance(node.args[1], ast.Str):
+						typename = node.args[1].s
 					else:
-						return '%s %s : %s' %(V, node.args[0].id, node.args[1].s)
+						typename = node.args[1].id
+
+					if mutable:
+						return '%s mut %s : %s' %(V, varname, typename)
+					else:
+						return '%s %s : %s' %(V, varname, typename)
 
 			elif len(node.args) == 3:
 				if self._cpp:
@@ -1526,9 +1533,9 @@ regular Python has no support for.
 				elif node.left.func.id == '__go__map__':
 					key_type = self.visit(node.left.args[0])
 					value_type = self.visit(node.left.args[1])
-					#if value_type == 'interface': value_type = 'interface{}'
-					#return '&map[%s]%s%s' %(key_type, value_type, right)
-					raise RuntimeError('TODO - map')
+					## TODO check where this is used,
+					## this should actually return the map wrapped in std::shared_ptr
+					return 'std::map<%s, %s>%s' %(key_type, value_type, right)
 				else:
 					if isinstance(node.right, ast.Name):
 						raise SyntaxError(node.right.id)
@@ -1886,6 +1893,9 @@ TODO clean up go stuff.
 					else:
 						return_type = 'std::shared_ptr<%s>' %return_type
 			else:
+				if return_type == 'self':  ## Rust 1.2 can not return keyword `self`
+					return_type = self._class_stack[-1].name
+
 				return_type = 'Rc<RefCell<%s>>' %return_type
 
 		if return_type == 'string':
@@ -2606,6 +2616,18 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 					#return 'pointer(%s)->%s' % (name, attr)
 
 			else:  ## rust
+				## note: this conflicts with the new Rust unstable API,
+				## where the `append` method acts like Pythons `extend` (but moves the contents)
+				## depending on how the Rust API develops, this may have to be deprecated,
+				## or a user option to control if known arrays that call `append` should be
+				## translated into `push`.
+				## note: as a workaround known arrays could have special method `merge`,
+				## that would be translated into `append`, while this would be more python,
+				## it breaks human readablity of the translation, and makes debugging harder,
+				## because the user has to be aware of this special case.
+				if attr=='append' and name in self._known_arrays:
+					attr = 'push'
+
 				return '%s.borrow_mut().%s' % (name, attr)
 
 		elif (name in self._known_strings) and not isinstance(parent_node, ast.Attribute):
@@ -2677,9 +2699,11 @@ List Comp
 		if self._rust:
 			if range_n:
 				if len(range_n)==1:
-					c = 'range(0u,%su)' %range_n[0]
+					#c = 'range(0u,%su)' %range_n[0]
+					c = '0u32..%su32' %range_n[0]
 				elif len(range_n)==2:
-					c = 'range(%su,%su)' %( range_n[0], range_n[1] )
+					#c = 'range(%su,%su)' %( range_n[0], range_n[1] )
+					c = '%su32..%su32' %( range_n[0], range_n[1] )
 				else:
 					raise SyntaxError('TODO list comp range(low,high,step)')
 
@@ -3023,7 +3047,7 @@ because they need some special handling in other places.
 					if self._cpp:
 						pass
 					else:
-						value += 'i'
+						value += 'i64'
 
 			if value=='None':
 				if self._cpp:

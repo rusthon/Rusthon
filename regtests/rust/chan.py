@@ -15,4 +15,4 @@ def main():
 	x = recv_wrapper(2, recver)
 	#x = <-recver
 	print(x)
-	TestError(x==100)
+	assert x==100
