@@ -208,7 +208,7 @@ or something that needs to be wrapped by a pointer/shared-reference.
 ```python
 
 	def is_prim_type(self, T):
-		prims = 'void bool int float double long string str char byte i32 i64 f32 f64 std::string cstring'.split()
+		prims = 'void bool int float double long string str char byte u32 u64 i32 i64 f32 f64 std::string cstring'.split()
 		if T in prims:
 			return True
 		else:
@@ -284,8 +284,13 @@ Function Decorators
 							dims = arrays[ key.arg ].count('[')
 							arrtype = arrays[ key.arg ].split(']')[-1]
 
+							if self._rust:
+								if not self.is_prim_type(arrtype):
+									arrtype = 'Rc<RefCell<%s>>' %arrtype
+								
+								args_typedefs[ key.arg ] = 'Rc<RefCell<Vec<%s>>>' %arrtype
 
-							if self._cpp:
+							elif self._cpp:
 								## non primitive types (objects and arrays) can be None, `[]MyClass( None, None)`
 								## use a pointer or smart pointer. 
 								if not self.is_prim_type(arrtype):

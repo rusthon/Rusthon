@@ -1345,7 +1345,9 @@ handles all special calls
 			assert len(node.args)==1
 			T = self.parse_go_style_arg(node.args[0])
 			if self._rust:
-				if T == 'int': ## TODO other ll types
+				if self.is_prim_type(T):
+					if T == 'int':
+						T = 'i64'
 					#return '&mut Vec<%s>' %T
 					return 'Rc<RefCell< Vec<%s> >>' %T
 				else:
@@ -1517,8 +1519,6 @@ regular Python has no support for.
 					return '%s.recv()' %right
 				elif self._rust:
 					return '%s.recv()' %right
-				else:  ## Go
-					return '<- %s' %right
 
 			elif isinstance(node.left, ast.Call) and isinstance(node.left.func, ast.Name) and node.left.func.id in go_hacks:
 				if node.left.func.id == '__go__func__':
@@ -1526,8 +1526,9 @@ regular Python has no support for.
 				elif node.left.func.id == '__go__map__':
 					key_type = self.visit(node.left.args[0])
 					value_type = self.visit(node.left.args[1])
-					if value_type == 'interface': value_type = 'interface{}'
-					return '&map[%s]%s%s' %(key_type, value_type, right)
+					#if value_type == 'interface': value_type = 'interface{}'
+					#return '&map[%s]%s%s' %(key_type, value_type, right)
+					raise RuntimeError('TODO - map')
 				else:
 					if isinstance(node.right, ast.Name):
 						raise SyntaxError(node.right.id)
@@ -1535,7 +1536,7 @@ regular Python has no support for.
 					right = []
 					for elt in node.right.elts:
 						if isinstance(elt, ast.Num) and self._rust:
-							right.append( str(elt.n)+'i' )
+							right.append( str(elt.n)+'i64' )
 						else:
 							right.append( self.visit(elt) )
 
@@ -1553,10 +1554,8 @@ regular Python has no support for.
 							#return '&mut vec!%s' %right
 							return 'Rc::new(RefCell::new(vec!%s))' %right
 
-						elif self._go:
-							## DEPRECATED
-							self._catch_assignment = {'class':T}  ## visit_Assign catches this
-							return '&[]*%s%s' %(T, right)
+						else:
+							raise RuntimeError('invalid backend')
 
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
@@ -1567,17 +1566,12 @@ regular Python has no support for.
 						elif self._rust:
 							#return '&vec!%s' %right
 							return 'Rc::new(RefCell::new(vec!%s))' %right
-						elif self._go:
-							raise SyntaxError('TODO merge go/rust/c++ backends')
-							if not isprim:
-								if right != '{}': raise SyntaxError(right)
-								return '&make([]*%s, %s)' %(atype, asize)
+						else:
+							raise RuntimeError('invalid backend')
 
 
 			elif isinstance(node.left, ast.Name) and node.left.id=='__go__array__':
-				if self._go:
-					return '*[]%s' %self.visit(node.right)
-				elif self._rust:
+				if self._rust:
 					raise RuntimeError('TODO array pointer')
 					return '&mut Vec<%s>' %self.visit(node.right)  ## TODO - test this
 				elif self._cpp:
@@ -1592,7 +1586,7 @@ regular Python has no support for.
 					else:
 						return 'std::shared_ptr<std::vector< std::shared_ptr<std::vector<%s>> >>'%mdtype
 				else:
-					raise RuntimeError('TODO array pointer')
+					raise RuntimeError('invalid backend')
 
 			elif isinstance(node.right, ast.Name) and node.right.id=='__as__':
 				if self._cpp:
@@ -1932,6 +1926,8 @@ TODO clean up go stuff.
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
+				if '[]' in arg_type:
+					raise SyntaxError(arg_type)
 				#if generics and (i==0 or (is_method and i==1)):
 				if self._go and generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
@@ -1990,9 +1986,6 @@ TODO clean up go stuff.
 						a = '%s : Receiver<%s>' %(arg_name, arg_type)
 					else:
 						a = '%s : Sender<%s>' %(arg_name, arg_type)
-
-				elif self._go:  ## TODO move go logic here?  currently this is done in pythonjs_to_go.py
-					a = '%s chan %s' %(arg_name, arg_type)
 
 				else:
 					raise RuntimeError('TODO chan for backend')

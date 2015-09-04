@@ -49,12 +49,20 @@ TODO fix try/finally
 		out.append('try_wrap_err!( try_lambda(), |_|{()});')
 		return '\n'.join( out )
 
+	def visit_Assert(self, node):
+		t = self.visit(node.test)
+		return 'if (!(%s)) {panic!("assertion failed: %s"); }' %(t,t)
+
+
 ```
 
 Slice `[:]`
 -----------------
 http://doc.rust-lang.org/std/slice/
 #![feature(slicing_syntax)]
+
+Note: the `feature` syntax is not allowed with the stable releases of Rust.
+TODO reimplement slice as a helper function.
 
 ```python
 
@@ -102,24 +110,29 @@ TODO clean up go code.
 
 
 	def visit_Module(self, node):
-		top_header = [
+		use_unstable = False
+		unstable = [  ## can not be used with Rust stable release
 			'#![allow(unknown_features)]',
 			'#![feature(slicing_syntax)]',
 			'#![feature(asm)]',
+			'#![feature(macro_rules)]',
+
+		]
+
+		top_header = [
 			'#![allow(unused_parens)]',
 			'#![allow(non_camel_case_types)]',
 			'#![allow(dead_code)]',
 			'#![allow(non_snake_case)]',
 			'#![allow(unused_mut)]',  ## if the compiler knows its unused - then it still can optimize it...?
 			'#![allow(unused_variables)]',
-			'#![feature(macro_rules)]',
 		]
 
 		header = [
 			'use std::collections::{HashMap};',
-			'use std::io::{File, Open, ReadWrite, Read, IoResult};',
-			'use std::num::Float;',
-			'use std::num::Int;',
+			#'use std::io::{File, Open, ReadWrite, Read, IoResult};',
+			#'use std::num::Float;',
+			#'use std::num::Int;',
 			'use std::rc::Rc;',
 			'use std::cell::RefCell;',
 			'use std::thread::Thread;',
@@ -172,9 +185,11 @@ TODO clean up go code.
 				raise SyntaxError(line)
 			header.append('}')
 
-		header.append( TRY_MACRO )
-
-		lines = top_header + header + list(self._imports) + lines
+		if use_unstable:
+			header.append( TRY_MACRO )
+			lines = unstable + top_header + header + list(self._imports) + lines
+		else:
+			lines = top_header + header + list(self._imports) + lines
 		return '\n'.join( lines )
 
 
