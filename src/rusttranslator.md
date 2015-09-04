@@ -235,7 +235,9 @@ TODO: do not hard code rustc to /usr/local/bin
 
 
 def translate_to_rust(script, insert_runtime=True):
-	#raise SyntaxError(script)
+	if '--debug-inter' in sys.argv:
+		raise SyntaxError(script)
+
 	if insert_runtime:
 		runtimepath = os.path.join(RUSTHON_LIB_ROOT,'src/runtime/rust_builtins.py')
 		if os.path.isfile(runtimepath):

@@ -679,6 +679,10 @@ class GoGenerator( JSGenerator ):
 		if self._function_stack[0] is node:
 			self._vars = set()
 			self._known_vars = set()
+			self._known_instances = dict()
+			self._known_arrays    = dict()
+
+
 		elif len(self._function_stack) > 1:
 			## do not clear self._vars and _known_vars inside of closure
 			is_closure = True

@@ -1021,7 +1021,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			if self._with_dart:
 				init.name = node.name
 
-			writer.write('@returns(self)')
+			if not self._with_rust:
+				## this is used for which backend? ##
+				writer.write('@returns(self)')
+
 			self.visit(init)
 			node._struct_vars.update( init._typed_args )
 

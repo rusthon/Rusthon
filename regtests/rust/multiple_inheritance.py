@@ -27,13 +27,13 @@ class C( A, B ):
 
 def main():
 	a = A()
-	TestError( a.foo()==1 )
+	assert a.foo()==1
 	b = B()
-	TestError( b.bar()==2 )
+	assert b.bar()==2
 
 	c = C()
-	TestError( c.foo()==100 )
-	TestError( c.bar()==200 )
+	assert c.foo()==100
+	assert c.bar()==200
 
-	TestError( c.call_foo_bar()==300 )
-	TestError( c.test_parents()==3 )
+	assert c.call_foo_bar()==300
+	assert c.test_parents()==3

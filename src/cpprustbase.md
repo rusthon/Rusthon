@@ -374,10 +374,10 @@ note: `nullptr` is c++11
 			return 'false'
 		elif node.id in self._rename_hacks:  ## TODO make the node above on the stack is not an attribute node.
 			return self._rename_hacks[ node.id ]
-		elif node.id=='self' and self._class_stack:
+		elif node.id=='self' and self._class_stack and self._cpp:
 			return 'this'
-
-		return node.id
+		else:
+			return node.id
 
 	def get_subclasses( self, C ):
 		'''
@@ -660,23 +660,15 @@ note: `nullptr` is c++11
 						rust_struct_init.append('%s:%s' %(key, default_type(bnode._struct_def[key])))
 
 				else:
-					assert self._go
-					raise SyntaxError('TODO mixed Go backend')
-					## Go only needs the name of the parent struct and all its items are inserted automatically ##
-					out.append('%s' %bnode.name)
-					## Go allows multiple variables redefined by the sub-struct,
-					## but this can throw an error: `invalid operation: ambiguous selector`
-					## removing the duplicate name here fixes that error.
-					for key in bnode._struct_def.keys():
-						#if key in sdef:
-						#	sdef.pop(key)
-						if key in unionstruct:
-							unionstruct.pop(key)
+					raise RuntimeError('invalid backend')
 
 		node._struct_init_names = []  ## save order of struct layout
 
 		for name in unionstruct:
-			if unionstruct[name]=='interface{}': raise SyntaxError('interface{} is just for the Go backend')
+
+			if unionstruct[name]=='interface{}':
+				raise SyntaxError('interface{} is just for the Go backend')
+
 			node._struct_init_names.append( name )
 			#if name=='__class__': continue
 
@@ -1766,6 +1758,13 @@ TODO clean up go stuff.
 ```python
 
 	def _visit_function(self, node):
+
+		if self._function_stack[0] is node:
+			self._vars = set()
+			self._known_vars = set()
+			self._known_instances = dict()
+			self._known_arrays    = dict()
+
 		out = []
 		is_declare = hasattr(node, 'declare_only') and node.declare_only  ## see pythonjs.py visit_With
 		is_closure = False
