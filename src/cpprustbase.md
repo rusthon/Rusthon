@@ -1924,16 +1924,19 @@ TODO clean up go stuff.
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
 				if self._cpp:
-					if arg_type in ('string', 'string&', 'string*'):
+					if arg_type in ('string', 'string*', 'string&', 'string&&'):
 						if self.usertypes and 'string' in self.usertypes:
-							if arg_type.endswith('&'):
+							if arg_type.endswith('&&'):
+								arg_type = self.usertypes['string']['type'] + '&&'
+							elif arg_type.endswith('&'):
 								arg_type = self.usertypes['string']['type'] + '&'
 							elif arg_type.endswith('*'):
 								arg_type = self.usertypes['string']['type'] + '*'
 							else:
 								arg_type = self.usertypes['string']['type']
 						else:
-							arg_type = 'std::string'  ## standard string type in c++
+							#arg_type = 'std::string'  ## standard string type in c++
+							arg_type = arg_type.replace('string', 'std::string')
 
 					if arg_name in func_pointers:
 						## note C has funky function pointer syntax, where the arg name is in the middle

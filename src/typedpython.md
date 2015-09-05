@@ -821,7 +821,6 @@ class typedpython:
 
 			## python3 annotations
 			if 'def ' in c and c.count(':') > 1:
-
 				#head, tail = c.split('(')
 				head = c[ : c.index('(') ]
 				tail = c[ c.index('(')+1 : ]
@@ -840,6 +839,7 @@ class typedpython:
 						#arg, typedef = y.split(':')
 						arg = y[ : y.index(':') ]
 						typedef = y[ y.index(':')+1 : ]
+						typedef = typedef.strip()
 
 						chan = False
 						T = False

@@ -10,6 +10,7 @@ http://en.cppreference.com/w/cpp/utility/move
 
 def foo( s:string&& ):
 	print 'string moved into foo'
+	s += 'z'
 	print s
 
 def main():
