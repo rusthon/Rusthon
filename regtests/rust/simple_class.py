@@ -2,7 +2,7 @@
 simple class
 '''
 class A:
-	def __init__(self, x:int, y:int, z:int=1):
+	def __init__(self, x:int, y:int, z:int):
 		self.x = x
 		self.y = y
 		self.z = z
@@ -14,10 +14,11 @@ def call_method( cb:lambda(int)(int), mx:int ) ->int:
 	return cb(mx)
 
 def main():
-	a = A( 100, 200, z=9999 )
-	print( a->x )  ## explicit C++ access member
+	a = A( 100, 200, 9999 )
+	print( a.x )
 	print( a.y )
 	print( a.z )
+	assert a.x == 100
 
 	b = a.mymethod(3)
 	print( b )

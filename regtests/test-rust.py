@@ -5,6 +5,9 @@ ignore = ()
 
 TODO_FIX = (
 	'ffi_hello.py',  ## libc is unstable as of Rust1.2
+	'pointer_syntax.py',
+	'rust_select.py',
+	'try.py',
 )
 
 files = os.listdir('./rust')

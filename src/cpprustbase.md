@@ -1345,8 +1345,6 @@ handles all special calls
 			T = self.parse_go_style_arg(node.args[0])
 			if self._rust:
 				if self.is_prim_type(T):
-					if T == 'int':
-						T = 'i64'
 					#return '&mut Vec<%s>' %T
 					return 'Rc<RefCell< Vec<%s> >>' %T
 				else:
@@ -1405,17 +1403,9 @@ handles all special calls
 		if node.keywords:
 			haskwargs = True
 			if args: args += ','
-			if self._go:
-				## This style works with Go because missing members are always initalized
-				## to their null value.  It also works in Rust and C++, but only when all
-				## keywords are always given - which is almost never the case.
-				args += '_kwargs_type_{'
-				x = ['%s:%s' %(kw.arg,self.visit(kw.value)) for kw in node.keywords]
-				x.extend( ['__use__%s:true' %kw.arg for kw in node.keywords] )
-				args += ','.join( x )
-				args += '}'
-			elif self._rust:
-				raise RuntimeError('TODO fix named params for rust backend')
+
+			if self._rust:
+				raise RuntimeError( self.format_error('TODO calling a function named params for rust backend') )
 			elif self._cpp:
 				## In the future we can easily optimize this away on plain functions,
 				## because it is simple to lookup the function here, and see the order
@@ -1758,25 +1748,22 @@ TODO clean up go stuff.
 ```python
 
 	def _visit_function(self, node):
+		out = []
+
+		is_declare = hasattr(node, 'declare_only') and node.declare_only  ## see pythonjs.py visit_With
+		is_closure = False
 
 		if self._function_stack[0] is node:
+
 			self._vars = set()
 			self._known_vars = set()
 			self._known_instances = dict()
 			self._known_arrays    = dict()
-
-		out = []
-		is_declare = hasattr(node, 'declare_only') and node.declare_only  ## see pythonjs.py visit_With
-		is_closure = False
-		if self._function_stack[0] is node:
-			self._vars = set()
-			self._known_vars = set()
-			self._known_strings = set()
+			self._known_strings   = set()
 			self._known_pyobjects = dict()
-			##TODO self._known_arrays = ... etc, double check this
 
 		elif len(self._function_stack) > 1:
-			## do not clear self._vars and _known_vars inside of closure
+			## do not clear self._known_* inside of closures ##
 			is_closure = True
 
 		comments = []
@@ -1915,6 +1902,7 @@ TODO clean up go stuff.
 		varargs_name = None
 		is_method = False
 		args_gens_indices = []
+		closures = []
 
 		for i, arg in enumerate(node.args.args):
 			arg_name = arg.id
@@ -1935,37 +1923,38 @@ TODO clean up go stuff.
 
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
-				if '[]' in arg_type:
-					raise SyntaxError(arg_type)
-				#if generics and (i==0 or (is_method and i==1)):
-				if self._go and generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
-					a = '__gen__ %s' %arg_type
-				else:
-					if self._cpp:
-						if arg_type in ('string', 'string&', 'string*'):
-							if self.usertypes and 'string' in self.usertypes:
-								if arg_type.endswith('&'):
-									arg_type = self.usertypes['string']['type'] + '&'
-								elif arg_type.endswith('*'):
-									arg_type = self.usertypes['string']['type'] + '*'
-								else:
-									arg_type = self.usertypes['string']['type']
+				if self._cpp:
+					if arg_type in ('string', 'string&', 'string*'):
+						if self.usertypes and 'string' in self.usertypes:
+							if arg_type.endswith('&'):
+								arg_type = self.usertypes['string']['type'] + '&'
+							elif arg_type.endswith('*'):
+								arg_type = self.usertypes['string']['type'] + '*'
 							else:
-								arg_type = 'std::string'  ## standard string type in c++
-
-						if arg_name in func_pointers:
-							## note C has funky function pointer syntax, where the arg name is in the middle
-							## of the type, the arg name gets put there when parsing above.
-							a = arg_type
+								arg_type = self.usertypes['string']['type']
 						else:
-							a = '%s %s' %(arg_type, arg_name)
+							arg_type = 'std::string'  ## standard string type in c++
 
-						if generics and arg_name in args_generics.keys():
-							args_gens_indices.append(i)
-
+					if arg_name in func_pointers:
+						## note C has funky function pointer syntax, where the arg name is in the middle
+						## of the type, the arg name gets put there when parsing above.
+						a = arg_type
 					else:
-						if arg_type == 'string': arg_type = 'String'  ## standard string type in rust
-						a = '%s:%s' %(arg_name, arg_type)
+						a = '%s %s' %(arg_type, arg_name)
+
+					if generics and arg_name in args_generics.keys():
+						args_gens_indices.append(i)
+
+				elif self._rust:  ## standard string type in rust `String`
+					if arg_type == 'string': arg_type = 'String'  
+					if '|' in arg_type:
+						x,y,z = arg_type.split('|')
+						arg_type = '__functype__%s'%len(closures)
+						closures.append('%s:Fn(%s) %s' %('__functype__%s'%len(closures), y,z))
+
+					a = '%s:%s' %(arg_name, arg_type)
+
+
 			else:
 				arg_type = chan_args_typedefs[arg_name]
 				is_sender = False
@@ -2016,9 +2005,7 @@ TODO clean up go stuff.
 			if self._cpp:
 				args.append( '_KwArgs_*  __kwargs')
 			elif self._rust:
-				raise SyntaxError('TODO kwargs for rust')
-			elif self._go:
-				args.append( '__kwargs : _kwargs_type_')
+				raise SyntaxError( self.format_error('TODO named keyword parameters') )
 			else:
 				raise SyntaxError('TODO kwargs for some backend')
 
@@ -2054,21 +2041,23 @@ TODO clean up go stuff.
 		else:
 			method = ''
 
+		clonames = ','.join(['__functype__%s'%ci for ci in range(len(closures))])
+
+
 		if is_closure:
+			if self._rust and closures:
+				raise SyntaxError('TODO: rust syntax for a lambda function that takes function pointers as arguments')
+
 			if return_type:
 				if self._rust:
 					out.append( self.indent() + 'let %s = |%s| -> %s {\n' % (node.name, ', '.join(args), return_type) )
 				elif self._cpp:
 					out.append( self.indent() + 'auto %s = [&](%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
-				elif self._go:
-					out.append( self.indent() + '%s := func (%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
 			else:
 				if self._rust:
 					out.append( self.indent() + 'let %s = |%s| {\n' % (node.name, ', '.join(args)) )
 				elif self._cpp:
 					out.append( self.indent() + 'auto %s = [&](%s) {\n' % (node.name, ', '.join(args)) )
-				elif self._go:
-					out.append( self.indent() + '%s := func (%s) {\n' % (node.name, ', '.join(args)) )
 		else:
 			if return_type:
 				if self._cpp: ## c++ ##
@@ -2101,7 +2090,7 @@ TODO clean up go stuff.
 									osig = '%s%s %s(%s) { return this->%s(%s); }' % (prefix,return_type, fname, ','.join(args), fname, okwargs)
 									self._cpp_class_header.append(osig)
 
-					else:
+					else:  ## regular function
 						if self._noexcept:
 							sig = '%s%s %s(%s)' % (prefix,return_type, fname, ', '.join(args))
 							out.append( self.indent() + '%s noexcept {\n' % sig )
@@ -2114,10 +2103,31 @@ TODO clean up go stuff.
 				else:  ## rust ##
 					if is_method:
 						self._rust_trait.append('fn %s(&mut self, %s) -> %s;' %(node.name, ', '.join(args), return_type) )
-						out.append( self.indent() + 'fn %s(&mut self, %s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
+						if closures:
+							out.append( self.indent() + 'fn %s<%s>(&mut self, %s) -> %s' % (node.name, clonames, ', '.join(args), return_type) )
+							out.append( self.indent() + '	where')
+							self.push()
+							for clo in closures:
+								out.append( self.indent() + '	%s,' %clo)
+							self.pull()
+							out.append( self.indent() + '{')
+
+						else:
+							out.append( self.indent() + 'fn %s(&mut self, %s) -> %s {' % (node.name, ', '.join(args), return_type) )
+
 					else:
-						out.append( self.indent() + 'fn %s(%s) -> %s {\n' % (node.name, ', '.join(args), return_type) )
-			else:
+						if closures:
+							out.append( self.indent() + 'fn %s<%s>(%s) -> %s' % (node.name, clonames, ', '.join(args), return_type) )
+							out.append( self.indent() + '	where')
+							self.push()
+							for clo in closures:
+								out.append( self.indent() + '	%s,' %clo)
+							self.pull()
+							out.append( self.indent() + '{')
+						else:
+							out.append( self.indent() + 'fn %s(%s) -> %s {' % (node.name, ', '.join(args), return_type) )
+
+			else:  ## function with no return type
 
 				if self._cpp: ## c++ ##
 					if is_method or options['classmethod']:
@@ -2160,9 +2170,29 @@ TODO clean up go stuff.
 				else:         ## rust ##
 					if is_method:
 						self._rust_trait.append('fn %s(&mut self, %s);' %(node.name, ', '.join(args)) )
-						out.append( self.indent() + 'fn %s(&mut self, %s) {\n' % (node.name, ', '.join(args)) )
+						if closures:
+							out.append( self.indent() + 'fn %s<%s>(&mut self, %s) ' % (node.name, clonames, ', '.join(args)) )
+							out.append( self.indent() + '	where')
+							self.push()
+							for clo in closures:
+								out.append( self.indent() + '	%s,' %clo)
+							self.pull()
+							out.append( self.indent() + '{')
+						else:
+							out.append( self.indent() + 'fn %s(&mut self, %s) {' % (node.name, ', '.join(args)) )
+
 					else:
-						out.append( self.indent() + 'fn %s(%s) {\n' % (node.name, ', '.join(args)) )
+						if closures:
+							out.append( self.indent() + 'fn %s<%s>(%s)' % (node.name, clonames, ', '.join(args)) )
+							out.append( self.indent() + '	where')
+							self.push()
+							for clo in closures:
+								out.append( self.indent() + '	%s,' %clo)
+							self.pull()
+							out.append( self.indent() + '{')
+						else:
+							out.append( self.indent() + 'fn %s(%s) {' % (node.name, ', '.join(args)) )
+
 		self.push()
 
 		if oargs:
