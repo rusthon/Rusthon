@@ -1256,7 +1256,7 @@ def save_tar( package, path='build.tar' ):
 				is_bin = True
 			elif 'code' in info:
 				if lang=='verilog': print(info['code'])  ## just for testing.
-				s.write(info['code'])
+				s.write(info['code'].encode('utf-8'))
 			elif 'script' in info:
 				s.write(info['script'])
 			s.seek(0)
@@ -1266,8 +1266,14 @@ def save_tar( package, path='build.tar' ):
 
 			ti = tarfile.TarInfo(name=name)
 			ti.size=len(s.buf)
-			if is_bin: ti.mode = 0o777
-			tar.addfile(tarinfo=ti, fileobj=s)
+			if is_bin:
+				ti.mode = 0o777
+			try:
+				tar.addfile(tarinfo=ti, fileobj=s)
+			except UnicodeEncodeError as err:
+				s.seek(0)
+				print s.getvalue()
+				raise err
 
 			if source:
 				s = StringIO.StringIO()
