@@ -15,7 +15,7 @@ inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototy
 # with external javascript libraries, because nobody has made js libraries
 # yet that use unicode variable names.
 @unicode('𝑫𝒊𝒄𝒕')
-def dict( d, copy=False, keytype=None, valuetype=None ):
+def dict( d, copy=False, keytype=None, valuetype=None, iterable=None ):
 	## note: the chrome debugger will still show these hidden attributes
 	## when printing the object in the console, even when `enumerable` is false.
 	if instanceof(d, Array):
@@ -30,6 +30,19 @@ def dict( d, copy=False, keytype=None, valuetype=None ):
 					raise TypeError('invalid valuetype')
 
 			inline('d[ pair[0] ] = pair[1]')
+
+	if iterable is not None:
+		for pair in iterable:
+			if keytype is not None:
+				if not isinstance(pair[0], keytype):
+					raise TypeError('invalid keytype')
+			if valuetype is not None:
+				if not isinstance(pair[1], valuetype):
+					raise TypeError('invalid valuetype')
+
+			inline('d[ pair[0] ] = pair[1]')
+
+
 
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
 

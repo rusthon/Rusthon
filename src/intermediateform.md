@@ -558,13 +558,14 @@ class PythonToPythonJS(NodeVisitorBase):
 		node.returns_type = 'dict'
 		keytype = None
 		a = []
+		alt = []
 		for i in range( len(node.keys) ):
 			if isinstance(node.keys[i], ast.Num):
 				if type(node.keys[i].n) is int:
 					if keytype is None:
 						keytype = 'int'
-					elif keytype != 'int':
-						keytype = 'DYNAMIC'
+					#elif keytype != 'int':
+					#	keytype = 'DYNAMIC'
 
 			k = self.visit( node.keys[ i ] )
 			v = node.values[i]
@@ -573,9 +574,15 @@ class PythonToPythonJS(NodeVisitorBase):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
+			if self._with_ll or self._with_go or self._with_rust or self._with_cpp:
 				a.append( '%s:%s'%(k,v) )
+			elif self._fast_js:
+				if not isinstance(node.keys[i], ast.Name):
+					alt.append( '[%s, %s]' %(k,v) )
+				else:
+					a.append( '%s:%s'%(k,v) )
 			elif self._with_js:
+				## TODO remove this
 				a.append( '[%s,%s]'%(k,v) )
 			else:
 				raise RuntimeError( self.format_error('invalid backend') )
@@ -586,10 +593,13 @@ class PythonToPythonJS(NodeVisitorBase):
 			return '{%s}' %b
 		elif self._fast_js:
 			b = ','.join( a )
-			if keytype is None or keytype == 'DYNAMIC':
-				return 'dict({%s}, {copy:False} )' %b
-			else:
-				return 'dict({%s}, {copy:False, keytype:"%s"} )' %(b, keytype)
+			opts = '{copy:False,'
+			if keytype is not None:
+				opts += 'keytype:"%s",' %keytype
+			if len(alt):
+				opts += 'iterable:[%s]' %','.join(alt)
+			opts += '}'
+			return 'dict({%s}, %s )' %(b, opts)
 
 		elif self._with_js:  ## DEPRECATED - note: this allowed for python style dict literals
 			b = ','.join( a )
