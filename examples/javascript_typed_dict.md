@@ -1,7 +1,15 @@
 JavaScript Backend - Static Typed Dictionary
 -------
 
-https://github.com/rusthon/Rusthon/issues/70
+Runtime checked typed hashmaps are implemented by attaching a two special hidden methods to
+each typed hashmap: `__setitem__` and `__getitem__`.
+
+Note class instances can be used as dict keys,
+this is done by inserting a special `toString` method into each class prototype,
+and in the constructor incrementing a hidden `uid` that `toString` returns.
+
+More info:
+https://github.com/rusthon/Rusthon/wiki/JavaScript-Static-Types
 
 To run this example, install nodejs, and run these commands in your shell:
 
@@ -29,8 +37,16 @@ def bar( d:map[int]string ):
 	print d
 	print 'bar OK'
 
+class MyClass:
+	def __init__(self,x:int, y:int):
+		self.x = x
+		self.y = y
+
+
 @debugger
 def test():
+	global a, b, c
+
 	a = map[string]int{}
 	a['x'] = 1
 	a['y'] = 2
@@ -50,20 +66,26 @@ def test():
 	#foo( b )
 	#bar( a )
 
+	v1 = MyClass(1,2)
+	v2 = MyClass(3,4)
+	v3 = MyClass(4,5)
+	c = map[MyClass]int{}
+	c[ v1 ] = 100
+	c[ v2 ] = 200
+
+	assert v1 in c
+	assert v2 in c
+	assert v3 not in c
+
+	assert c[v1] == 100
+	assert c[v2] == 200
+
+	## this fails
+	#c[ 'badkey' ] = 1
+
+	print 'typed hashmaps OK'
+
 test()
 
 ```
 
-HTML
---------
-
-@index.html
-```html
-<html>
-<head>
-</head>
-<body>
-<@myapp.js>
-</body>
-</html>
-```
