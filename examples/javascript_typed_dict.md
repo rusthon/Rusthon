@@ -53,7 +53,8 @@ def test():
 
 	b = map[int]string{
 		10 : 'w',
-		11 : 'z'
+		11 : 'z',
+		#'bad' : 'x'
 	}
 	## these calls are ok ##
 	foo( a )
@@ -69,7 +70,14 @@ def test():
 	v1 = MyClass(1,2)
 	v2 = MyClass(3,4)
 	v3 = MyClass(4,5)
-	c = map[MyClass]int{}
+	c = map[MyClass]int{
+		v1 : 10,
+		v2 : 20,
+		#'bad' : 30
+	}
+	assert c[v1] == 10
+	assert c[v2] == 20
+
 	c[ v1 ] = 100
 	c[ v2 ] = 200
 

@@ -1076,13 +1076,25 @@ old javascript backend also used `JS(str)`
 				elif node.left.func.id == '__go__map__':  ## typed hash maps for javascript
 					key_type = node.left.args[0].id
 					value_type = node.left.args[1].id
-					## right will take the form: `𝑫𝒊𝒄𝒕({  }, { copy:false })`
-					## here was simply clip off the end and inject the type options
-					clipped = right[:-2]
-					if 'keytype:' not in clipped:
-						clipped += ',keytype:"%s"'  % key_type 
-					clipped += ',valuetype:"%s" })' % value_type
-					return clipped
+					if key_type == 'string':
+						## right will take the form: `𝑫𝒊𝒄𝒕({  }, { copy:false })`
+						## here was simply clip off the end and inject the type options
+						clipped = right[:-2]
+						if 'keytype:' not in clipped:
+							clipped += ',keytype:"%s"'  % key_type 
+						clipped += ',valuetype:"%s" })' % value_type
+						return clipped
+					else:
+						assert isinstance(node.right, ast.Call)
+						dictnode = node.right.args[0]
+						dlist = []
+						for i in range( len(dictnode.keys) ):
+							k = self.visit( dictnode.keys[ i ] )
+							v = self.visit( dictnode.values[i] )
+							dlist.append( '[%s, %s]' %(k,v) )
+						return 'dict([%s], {copy:false, keytype:"%s", valuetype:"%s"})' %(','.join(dlist), key_type, value_type)
+
+
 				else:
 					if isinstance(node.right, ast.Name):
 						raise SyntaxError(node.right.id)

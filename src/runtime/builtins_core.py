@@ -18,6 +18,19 @@ inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototy
 def dict( d, copy=False, keytype=None, valuetype=None ):
 	## note: the chrome debugger will still show these hidden attributes
 	## when printing the object in the console, even when `enumerable` is false.
+	if instanceof(d, Array):
+		pairs = d
+		d = inline('{}')
+		for pair in pairs:
+			if keytype is not None:
+				if not isinstance(pair[0], keytype):
+					raise TypeError('invalid keytype')
+			if valuetype is not None:
+				if not isinstance(pair[1], valuetype):
+					raise TypeError('invalid valuetype')
+
+			inline('d[ pair[0] ] = pair[1]')
+
 	Object.defineProperty(d, '__class__', value=dict, enumerable=False)
 
 	if keytype is not None or valuetype is not None:

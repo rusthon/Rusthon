@@ -573,15 +573,15 @@ class PythonToPythonJS(NodeVisitorBase):
 			if isinstance(v, ast.Lambda):
 				v.keep_as_lambda = True
 			v = self.visit( v )
-			if self._with_dart or self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
+			if self._with_ll or self._with_go or self._fast_js or self._with_rust or self._with_cpp:
 				a.append( '%s:%s'%(k,v) )
 			elif self._with_js:
 				a.append( '[%s,%s]'%(k,v) )
 			else:
-				a.append( 'JSObject(key=%s, value=%s)'%(k,v) )  ## DEPRECATED
+				raise RuntimeError( self.format_error('invalid backend') )
 
 
-		if self._with_dart or self._with_ll or self._with_go or self._with_rust or self._with_cpp:
+		if self._with_ll or self._with_go or self._with_rust or self._with_cpp:
 			b = ','.join( a )
 			return '{%s}' %b
 		elif self._fast_js:
@@ -594,9 +594,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		elif self._with_js:  ## DEPRECATED - note: this allowed for python style dict literals
 			b = ','.join( a )
 			return '__jsdict( [%s] )' %b
-		elif self._with_lua:
-			b = '[%s]' %', '.join(a)
-			return '__get__(dict, "__call__")([], {"js_object":%s})' %b
 		else:
 			raise RuntimeError('dict - unknown backend')
 
