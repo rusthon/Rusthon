@@ -39,7 +39,8 @@ report = [
 print 'TESTS PASSED:'
 for md in passed:
 	print md
-	report.append('* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/%s](%s)' %(md,md))
+	report.append('* [%s](rust/%s)' %(md,md))
+	report.append('')
 	report.append('input:')
 	report.append('------')
 	report.append('```python')

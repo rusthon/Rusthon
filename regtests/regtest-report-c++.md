@@ -1,7 +1,8 @@
 C++11 Backend Regression Tests
 -----------------------------
 the following tests compiled, and the binary executed without any errors
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/pointers_returns_array2D.py](pointers_returns_array2D.py)
+* [pointers_returns_array2D.py](c++/pointers_returns_array2D.py)
+
 input:
 ------
 ```python
@@ -53,7 +54,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/pointers_returns_array.py](pointers_returns_array.py)
+* [pointers_returns_array.py](c++/pointers_returns_array.py)
+
 input:
 ------
 ```python
@@ -102,7 +104,8 @@ std::cout << a->size();std::cout << std::endl;
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/chan.py](chan.py)
+* [chan.py](c++/chan.py)
+
 input:
 ------
 ```python
@@ -167,7 +170,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/named_params.py](named_params.py)
+* [named_params.py](c++/named_params.py)
+
 input:
 ------
 ```python
@@ -217,7 +221,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_slice.py](array_slice.py)
+* [array_slice.py](c++/array_slice.py)
+
 input:
 ------
 ```python
@@ -386,7 +391,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/print_classname.py](print_classname.py)
+* [print_classname.py](c++/print_classname.py)
+
 input:
 ------
 ```python
@@ -488,7 +494,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_sized.py](array_sized.py)
+* [array_sized.py](c++/array_sized.py)
+
 input:
 ------
 ```python
@@ -569,7 +576,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/generics.py](generics.py)
+* [generics.py](c++/generics.py)
+
 input:
 ------
 ```python
@@ -606,7 +614,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/classmethod.py](classmethod.py)
+* [classmethod.py](c++/classmethod.py)
+
 input:
 ------
 ```python
@@ -674,7 +683,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/listcomp.py](listcomp.py)
+* [listcomp.py](c++/listcomp.py)
+
 input:
 ------
 ```python
@@ -716,7 +726,8 @@ auto a = std::make_shared<std::vector<int>>(_comp_a);
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/while.py](while.py)
+* [while.py](c++/while.py)
+
 input:
 ------
 ```python
@@ -746,7 +757,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/globals.py](globals.py)
+* [globals.py](c++/globals.py)
+
 input:
 ------
 ```python
@@ -802,7 +814,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_of_arrays.py](array_of_arrays.py)
+* [array_of_arrays.py](c++/array_of_arrays.py)
+
 input:
 ------
 ```python
@@ -899,7 +912,8 @@ std::shared_ptr<std::vector< std::shared_ptr<std::vector<int>> >> arr = std::mak
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/returns_object.py](returns_object.py)
+* [returns_object.py](c++/returns_object.py)
+
 input:
 ------
 ```python
@@ -956,7 +970,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_slice_assignment.py](array_slice_assignment.py)
+* [array_slice_assignment.py](c++/array_slice_assignment.py)
+
 input:
 ------
 ```python
@@ -1006,7 +1021,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/cyclic.py](cyclic.py)
+* [cyclic.py](c++/cyclic.py)
+
 input:
 ------
 ```python
@@ -1161,7 +1177,8 @@ std::cout << p;std::cout << std::endl;
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_methods.py](array_methods.py)
+* [array_methods.py](c++/array_methods.py)
+
 input:
 ------
 ```python
@@ -1212,7 +1229,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/generics_array_subclasses.py](generics_array_subclasses.py)
+* [generics_array_subclasses.py](c++/generics_array_subclasses.py)
+
 input:
 ------
 ```python
@@ -1386,7 +1404,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/subscript.py](subscript.py)
+* [subscript.py](c++/subscript.py)
+
 input:
 ------
 ```python
@@ -1436,7 +1455,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/returns_subclasses.py](returns_subclasses.py)
+* [returns_subclasses.py](c++/returns_subclasses.py)
+
 input:
 ------
 ```python
@@ -1684,7 +1704,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/free_memory.py](free_memory.py)
+* [free_memory.py](c++/free_memory.py)
+
 input:
 ------
 ```python
@@ -1734,7 +1755,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/array_of_arrays_objects.py](array_of_arrays_objects.py)
+* [array_of_arrays_objects.py](c++/array_of_arrays_objects.py)
+
 input:
 ------
 ```python
@@ -1815,7 +1837,8 @@ std::cout << (*arr)[0];std::cout << std::endl;
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/cyclic_simple.py](cyclic_simple.py)
+* [cyclic_simple.py](c++/cyclic_simple.py)
+
 input:
 ------
 ```python
@@ -1921,7 +1944,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/returns_array2D.py](returns_array2D.py)
+* [returns_array2D.py](c++/returns_array2D.py)
+
 input:
 ------
 ```python
@@ -1975,7 +1999,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/try_except_finally.py](try_except_finally.py)
+* [try_except_finally.py](c++/try_except_finally.py)
+
 input:
 ------
 ```python
@@ -2121,7 +2146,8 @@ int main() {
 	return 0;
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/if_else.py](if_else.py)
+* [if_else.py](c++/if_else.py)
+
 input:
 ------
 ```python

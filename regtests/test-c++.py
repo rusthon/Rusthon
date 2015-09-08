@@ -39,7 +39,8 @@ report = [
 
 for md in passed:
 	print md
-	report.append('* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/%s](%s)' %(md,md))
+	report.append('* [%s](c++/%s)' %(md,md))
+	report.append('')
 	report.append('input:')
 	report.append('------')
 	report.append('```python')

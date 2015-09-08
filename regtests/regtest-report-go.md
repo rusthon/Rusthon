@@ -1,7 +1,8 @@
 Go Backend Regression Tests
 -----------------------------
 the following tests compiled, and the binary executed without any errors
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/array_of_objects.py](array_of_objects.py)
+* [array_of_objects.py](go/array_of_objects.py)
+
 input:
 ------
 ```python
@@ -71,7 +72,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__
@@ -246,7 +247,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/print.py](print.py)
+* [print.py](go/print.py)
+
 input:
 ------
 ```python
@@ -267,7 +269,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 var XXX = "myglobal";
 func myprint(a string, b string) {
@@ -283,7 +285,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/func_calls.py](func_calls.py)
+* [func_calls.py](go/func_calls.py)
+
 input:
 ------
 ```python
@@ -313,7 +316,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func f(a int, b int, c int) int {
 
@@ -355,7 +358,8 @@ type _kwargs_type_ struct {
   __use__b bool
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/nested_func.py](nested_func.py)
+* [nested_func.py](go/nested_func.py)
+
 input:
 ------
 ```python
@@ -373,7 +377,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -388,7 +392,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/arrays.py](arrays.py)
+* [arrays.py](go/arrays.py)
+
 input:
 ------
 ```python
@@ -428,7 +433,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func test_pass_array_as_arg(arr *[]int) {
 
@@ -451,7 +456,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/vars.py](vars.py)
+* [vars.py](go/vars.py)
+
 input:
 ------
 ```python
@@ -466,7 +472,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -479,7 +485,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/chan.py](chan.py)
+* [chan.py](go/chan.py)
+
 input:
 ------
 ```python
@@ -502,7 +509,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func wrapper(a int, c chan int) {
 
@@ -520,7 +527,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/loop_map.py](loop_map.py)
+* [loop_map.py](go/loop_map.py)
+
 input:
 ------
 ```python
@@ -543,7 +551,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -562,7 +570,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/generics_subclasses.py](generics_subclasses.py)
+* [generics_subclasses.py](go/generics_subclasses.py)
+
 input:
 ------
 ```python
@@ -609,7 +618,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__
@@ -737,7 +746,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/list_comprehension.py](list_comprehension.py)
+* [list_comprehension.py](go/list_comprehension.py)
+
 input:
 ------
 ```python
@@ -778,7 +788,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__
@@ -840,7 +850,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/class.py](class.py)
+* [class.py](go/class.py)
+
 input:
 ------
 ```python
@@ -878,7 +889,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__
@@ -925,7 +936,8 @@ type _kwargs_type_ struct {
   __use__z bool
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/go_select.py](go_select.py)
+* [go_select.py](go/go_select.py)
+
 input:
 ------
 ```python
@@ -975,7 +987,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func send_data(A chan int, B chan int, X int, Y int) {
 
@@ -1022,7 +1034,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/generics_methods.py](generics_methods.py)
+* [generics_methods.py](go/generics_methods.py)
+
 input:
 ------
 ```python
@@ -1071,7 +1084,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type G struct {
 __object__
@@ -1211,7 +1224,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/subclass.py](subclass.py)
+* [subclass.py](go/subclass.py)
+
 input:
 ------
 ```python
@@ -1257,7 +1271,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__
@@ -1342,7 +1356,8 @@ type _kwargs_type_ struct {
   __use__z bool
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/maps.py](maps.py)
+* [maps.py](go/maps.py)
+
 input:
 ------
 ```python
@@ -1374,7 +1389,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -1395,7 +1410,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/loop_arrays.py](loop_arrays.py)
+* [loop_arrays.py](go/loop_arrays.py)
+
 input:
 ------
 ```python
@@ -1459,7 +1475,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -1510,7 +1526,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/map_comprehension.py](map_comprehension.py)
+* [map_comprehension.py](go/map_comprehension.py)
+
 input:
 ------
 ```python
@@ -1530,7 +1547,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 func main() {
 
@@ -1553,7 +1570,8 @@ func main() {
 type _kwargs_type_ struct {
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/callback_in_class.py](callback_in_class.py)
+* [callback_in_class.py](go/callback_in_class.py)
+
 input:
 ------
 ```python
@@ -1590,7 +1608,7 @@ def main():
 ```
 output:
 ------
-```c++
+```go
 
 type A struct {
 __object__

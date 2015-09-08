@@ -1,7 +1,8 @@
 Rust Backend Regression Tests
 -----------------------------
 the following tests compiled, and the binary executed without any errors
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/chan_universal_style.py](chan_universal_style.py)
+* [chan_universal_style.py](rust/chan_universal_style.py)
+
 input:
 ------
 ```python
@@ -44,7 +45,8 @@ fn main() {
 	if (!(( x == 100 ))) {panic!("assertion failed: ( x == 100 )"); }
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/simple_class.py](simple_class.py)
+* [simple_class.py](rust/simple_class.py)
+
 input:
 ------
 ```python
@@ -120,7 +122,8 @@ fn main() {
 	println!("{}", c);
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/arrays.py](arrays.py)
+* [arrays.py](rust/arrays.py)
+
 input:
 ------
 ```python
@@ -180,7 +183,8 @@ fn main() {
 	if (!(( b.borrow_mut()[1] == 200 ))) {panic!("assertion failed: ( b.borrow_mut()[1] == 200 )"); }
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/list_comp.py](list_comp.py)
+* [list_comp.py](rust/list_comp.py)
+
 input:
 ------
 ```python
@@ -267,7 +271,8 @@ let b : Rc<RefCell< Vec<Rc<RefCell<A>>> >> = Rc::new(RefCell::new(_comp_b));
 	if (!(( b.borrow().len() == 5 ))) {panic!("assertion failed: ( b.borrow().len() == 5 )"); }
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/chan.py](chan.py)
+* [chan.py](rust/chan.py)
+
 input:
 ------
 ```python
@@ -310,7 +315,8 @@ fn main() {
 	if (!(( x == 100 ))) {panic!("assertion failed: ( x == 100 )"); }
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/multiple_inheritance.py](multiple_inheritance.py)
+* [multiple_inheritance.py](rust/multiple_inheritance.py)
+
 input:
 ------
 ```python
@@ -420,7 +426,8 @@ fn main() {
 	if (!(( c.borrow_mut().test_parents() == 3 ))) {panic!("assertion failed: ( c.borrow_mut().test_parents() == 3 )"); }
 }
 ```
-* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/simple_subclass.py](simple_subclass.py)
+* [simple_subclass.py](rust/simple_subclass.py)
+
 input:
 ------
 ```python
