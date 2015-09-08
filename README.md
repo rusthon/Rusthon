@@ -81,9 +81,9 @@ C++/Rust/Go Backends
 The C++11 backend is the most mature of the native compiled backends.
 All the backends are regression tested, and the tests results are here:
 
-* [c++ regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-c++-report.md)
-* [go regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-go-report.md)
-* [rust regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-rust-report.md)
+* [c++ regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-c%2B%2B.md)
+* [go regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-go.md)
+* [rust regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-rust.md)
 
 
 C++ Backend Docs
