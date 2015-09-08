@@ -1,6 +1,6 @@
 import os, sys, subprocess
 
-passed = []
+passed = {}
 ignore = ()
 
 TODO_FIX = (
@@ -27,8 +27,29 @@ for md in files:
 		'--go',
 		os.path.join('./go', md)
 	])
-	passed.append( md )
+
+	passed[ md ] = open('/tmp/rusthon-go-build.go').read().split('/*end-builtins*/')[-1]
+
 
 print 'TESTS PASSED:'
+report = [
+	'Go Backend Regression Tests',
+	'-----------------------------',
+	'the following tests compiled, and the binary executed without any errors',
+]
+
 for md in passed:
-	print '	%s' %md
+	print md
+	report.append('* [https://github.com/rusthon/Rusthon/tree/master/regtests/go/%s](%s)' %(md,md))
+	report.append('input:')
+	report.append('------')
+	report.append('```python')
+	report.extend( open('./go/'+md, 'rb').read().splitlines() )
+	report.append('```')
+	report.append('output:')
+	report.append('------')
+	report.append('```c++')
+	report.extend( passed[md].splitlines() )
+	report.append('```')
+
+open('regtest-report-go.md', 'wb').write('\n'.join(report))

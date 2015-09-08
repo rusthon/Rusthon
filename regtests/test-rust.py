@@ -1,6 +1,6 @@
 import os, sys, subprocess
 
-passed = []
+passed = {}
 ignore = ()
 
 TODO_FIX = (
@@ -29,8 +29,26 @@ for md in files:
 		'--rust',
 		os.path.join('./rust', md)
 	])
-	passed.append( md )
+	passed[ md ] = open('/tmp/rusthon-build.rs').read().split('/*end-builtins*/')[-1]
 
+report = [
+	'Rust Backend Regression Tests',
+	'-----------------------------',
+	'the following tests compiled, and the binary executed without any errors',
+]
 print 'TESTS PASSED:'
 for md in passed:
-	print '	%s' %md
+	print md
+	report.append('* [https://github.com/rusthon/Rusthon/tree/master/regtests/rust/%s](%s)' %(md,md))
+	report.append('input:')
+	report.append('------')
+	report.append('```python')
+	report.extend( open('./rust/'+md, 'rb').read().splitlines() )
+	report.append('```')
+	report.append('output:')
+	report.append('------')
+	report.append('```rust')
+	report.extend( passed[md].splitlines() )
+	report.append('```')
+
+open('regtest-report-rust.md', 'wb').write('\n'.join(report))

@@ -1,6 +1,6 @@
 import os, sys, subprocess
 
-passed = []
+passed = {}
 ignore = ()
 
 TODO_FIX = (
@@ -26,8 +26,29 @@ for md in files:
 		'--c++',
 		os.path.join('./c++', md)
 	])
-	passed.append( md )
+
+	passed[ md ] = open('/tmp/rusthon-c++-build.cpp').read().split('/*end-builtins*/')[-1]
+
 
 print 'TESTS PASSED:'
+report = [
+	'C++11 Backend Regression Tests',
+	'-----------------------------',
+	'the following tests compiled, and the binary executed without any errors',
+]
+
 for md in passed:
-	print '	%s' %md
+	print md
+	report.append('* [https://github.com/rusthon/Rusthon/tree/master/regtests/c++/%s](%s)' %(md,md))
+	report.append('input:')
+	report.append('------')
+	report.append('```python')
+	report.extend( open('./c++/'+md, 'rb').read().splitlines() )
+	report.append('```')
+	report.append('output:')
+	report.append('------')
+	report.append('```c++')
+	report.extend( passed[md].splitlines() )
+	report.append('```')
+
+open('regtest-report-c++.md', 'wb').write('\n'.join(report))

@@ -163,6 +163,7 @@ std::string __parse_error_type__( std::runtime_error* err) {
 	return (*vec)[0];
 }
 
+/*end-builtins*/
 """)
 
 

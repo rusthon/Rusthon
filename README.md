@@ -17,7 +17,11 @@ The other backends are experimental.
 Installing
 ----------
 
-comming soon: Fedora and Debian packages!
+* [Debian Package](https://github.com/rusthon/Rusthon/releases/download/0.9.9l/rusthon_0.9.0_all.deb)
+* Fedora package comming soon
+
+If you want to stay in sync with the git-repo, use the `install-dev.sh` script instead of the Debian or Fedora package. note: `install-dev.sh` just creates a symbolic link `transpile` that points to the current location of `rusthon.py`.
+
 
 ```bash
 cd
@@ -26,38 +30,39 @@ cd Rusthon
 sudo ./install-dev.sh
 ```
 
-This just creates a symbolic link `transpile` that points to the current location of `rusthon.py`.
 
 Using `transpile`
 -----------------
+To see all the command line options run `transpile --help`
 
 ```bash
 cd myproject
 transpile mymarkdown.md
 ```
 
-Above will compile everything in mymarkdown.md and test it with NW.js or your system default web browser.
-To see all the command line options run `transpile --help`
-
+Above will compile everything in mymarkdown.md:
+* if the markdown contains an html page, it will be opened with NW.js or your system default web browser.
+* if the markdown contains a javascript file, it will be run with nodejs
+* otherwise, if the markdown contains: C++, Rust, or Go code, it will be compiled, and the exe is run.
 
 
 Getting Started Javascript
 -----------------
-Transpile from a subset of Python to Javascript with extended syntax like mini macros.
+Transpile from Python to Javascript, with specialized syntax for static types, and using [WebWorkers](https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax) and other extensions to the Python language like [mini-macros](https://github.com/rusthon/Rusthon/wiki/Macro-Functions)
 
+Mini-macros help you make your code more readable, and hide ugly API's like DOM.
+note: you can use unicode for macro names.
 ```python
-class Channel():
-    def send(self,ob):
-        print 'sending:' + ob
-
-chan = Channel()
-with mymacro as "chan.send(JSON.stringify(%s))":
-    mymacro( s3 )
+with 𝕄 as "_=document.createElement(%s); _.setAttribute('id',%s); %s.appendChild(_)":
+    𝕄( 'div', 'someid1', document.body )
+    𝕄( 'img', 'someid2', document.body )
 
 ```
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
 * [javascript backend wiki](https://github.com/rusthon/Rusthon/wiki/JavaScript-Backend)
 * [javascript backend doc](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
+* [javascript literate unicode](https://github.com/rusthon/Rusthon/wiki/JavaScript-Unicode-Literate-Output)
+
 
 Extra JavaScript Frontends
 --------------------
@@ -68,6 +73,17 @@ To use these frontends install them on your system, they will be used as subproc
 to output the final javascript.
 * [coffee script](https://github.com/rusthon/Rusthon/blob/master/examples/hello_coffee.md)
 * [rapydscript](https://github.com/rusthon/Rusthon/blob/master/examples/hello_rapydscript.md)
+
+
+C++/Rust/Go Backends
+--------------------
+
+The C++11 backend is the most mature of the native compiled backends.
+All the backends are regression tested, and the tests results are here:
+
+* [c++ regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-c++-report.md)
+* [go regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-go-report.md)
+* [rust regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-rust-report.md)
 
 
 C++ Backend Docs
