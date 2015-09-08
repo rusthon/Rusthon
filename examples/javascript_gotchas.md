@@ -1,6 +1,7 @@
 JavaScript Backend - Gotchas
 -------
 
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer#Computed_property_names
 
 @myapp.js
 ```rusthon
@@ -29,6 +30,15 @@ def test():
 	## in the construction of `d` that `foo()` is a function
 	## call and not an unquoted string literal.
 	assert d[foo()] == 1
+
+	## part of the new javascript standard ES6, allows for `Computed Property Names`,
+	## by wrapping your key in `[]` the key value becomes an expression, and not an unquoted string literal.
+	## Rusthon also supports this syntax, and transpiles it to javascript that will run in pre-ES6 browsers.
+	d = {
+		[a] : 1
+	}
+	assert d[a] == 1
+	print d
 
 	print 'test ok'
 

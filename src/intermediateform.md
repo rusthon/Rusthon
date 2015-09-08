@@ -578,6 +578,12 @@ class PythonToPythonJS(NodeVisitorBase):
 				a.append( '%s:%s'%(k,v) )
 			elif self._fast_js:
 				if not isinstance(node.keys[i], ast.Name):
+					if isinstance(node.keys[i], ast.List):
+						if len(node.keys[i].elts) != 1:
+							raise SyntaxError(
+								self.format_error('JavaScript ES6 Error: computed property name, `[]` wrapper not of length one.')
+							)
+						k = self.visit(node.keys[i].elts[0])
 					alt.append( '[%s, %s]' %(k,v) )
 				else:
 					a.append( '%s:%s'%(k,v) )
