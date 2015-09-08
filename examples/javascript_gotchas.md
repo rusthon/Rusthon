@@ -40,6 +40,21 @@ def test():
 	assert d[a] == 1
 	print d
 
+	print 'testing list'
+
+	lst1 = [1,2,3]
+	lst2 = [1,2,3]
+	## in regular python these would be equal,
+	## but in javascript this is not the case.
+	assert lst1 != lst2
+	## as a workaround you can use the method `equals`,
+	## this uses JSON.stringify, to convert the lists to strings,
+	## and tests if those strings are equal it returns true.
+	assert lst1.equals( lst2 )
+
+	lst2.append( 4 )
+	assert not lst1.equals( lst2 )
+
 	print 'test ok'
 
 test()

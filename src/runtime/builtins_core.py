@@ -658,6 +658,10 @@ def __string_index(a):
 		raise ValueError(a + ' - not in string')
 	return i
 
+@bind(Array.prototype.equals)
+def __array_equals(a):
+	return JSON.stringify(this) == JSON.stringify(a)
+
 
 @bind(Array.prototype.__contains__)
 def __array_contains(a):
