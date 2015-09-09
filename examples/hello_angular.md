@@ -1,27 +1,18 @@
-testing
+Angular.js Hello World
 -------
+https://angularjs.org/
 
-To run this example run these commands in your shell:
-
-```bash
-cd
-mkdir angular.js
-cd angular.js
-wget https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.min.js
-cd ..
-git clone https://github.com/rusthon/Rusthon.git
-cd Rusthon/
-./rusthon.py ./examples/hello_angular.md
-```
-
-html
-----
-
+Note: `angular.min.js` is automatically downloaded if not found in your home directory under `rusthon_cache`,
+see the special `source` attribute of the `script` tag below that instructs the transpiler to do the download.
 
 ```html
 <html>
 <head>
-<script src="~/angular.js/angular.min.js"></script>
+<link href='~/bootstrap-3.3.5-dist/css/bootstrap.css' rel='stylesheet' zip="https://github.com/twbs/bootstrap/releases/download/v3.3.5/bootstrap-3.3.5-dist.zip"/>
+<script src="~/rusthon_cache/jquery-2.1.4.min.js" source="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="~/bootstrap-3.3.5-dist/js/bootstrap.min.js"></script>
+
+<script src="~/rusthon_cache/angular.min.js" source="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.min.js"></script>
 
 <@myscript>
 
@@ -30,16 +21,16 @@ html
 
 <div ng-app="invoice1" ng-controller="InvoiceController as invoice">
   <b>Invoice:</b>
-  <div>
+  <div class="well">
     Quantity: <input type="number" min="0" ng-model="invoice.qty" required >
   </div>
-  <div>
+  <div class="well">
     Costs: <input type="number" min="0" ng-model="invoice.cost" required >
     <select ng-model="invoice.inCurr">
       <option ng-repeat="c in invoice.currencies">{{c}}</option>
     </select>
   </div>
-  <div>
+  <div class="well">
     <b>Total:</b>
     <span ng-repeat="c in invoice.currencies">
       {{invoice.total(c) | currency:c}}
