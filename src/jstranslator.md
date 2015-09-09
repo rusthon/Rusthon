@@ -459,6 +459,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_setter    = False
 		is_unicode   = False
 		bind_to      = None
+		bind_to_this = None
 		protoname    = None
 		func_expr    = False  ## function expressions `var a = function()` are not hoisted
 		func_expr_var = True  ## this should always be true, was this false before for hacking nodejs namespace?
@@ -534,9 +535,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				returns = decor.args[0].id
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'bind':
-				assert len(decor.args)==1
+				assert len(decor.args)<=2
 				bind_to = self.visit(decor.args[0])
-
+				if len(decor.args)==2:
+					bind_to_this = self.visit(decor.args[1])
 			else:
 				decorators.append( self.visit(decor)+'(' )
 
@@ -585,7 +587,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					fdef = '\n'.join(d)
 					self.push()
 				elif bind_to:
-					fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
+					if bind_to_this:
+						fdef = '%s = %s (function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
+					else:
+						fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
 				else:
 					fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
@@ -602,7 +607,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 			if self._func_expressions or func_expr:
 				if bind_to:
-					fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
+					if bind_to_this:
+						fdef = '%s = %s (function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
+					else:
+						fdef = '%s = %s function %s(%s)' % (bind_to,dechead, node.name,  ', '.join(args))
 				else:
 					fdef = 'var %s = %s function %s(%s)' % (node.name,dechead, node.name,  ', '.join(args))
 
@@ -663,6 +671,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		## end of function ##
 		self.pull()
 		body.append( self.indent() + '}/*end->	`%s`	*/' %node.name)
+
+		if bind_to_this:
+			body.append( self.indent() + ').bind(%s);' %bind_to_this)
+
 
 		if is_prototype or (bind_to and '.prototype.' in bind_to):
 			body.append( '/*END-METH:%s*/' %id(node))

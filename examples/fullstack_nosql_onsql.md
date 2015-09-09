@@ -190,25 +190,19 @@ class Proxy:
 	def __init__(self):
 		self.__id__ = Proxy.ids
 		Proxy.ids += 1
-		self._x = 0
-		self._y = 0
-		## build widgets ##
-		self._xe = document.createElement('input')
-		self._xe.setAttribute('type', 'text')
-		self._ye = document.createElement('input')
-		self._ye.setAttribute('type', 'text')
+		with 𝕚𝕟𝕡𝕦𝕥 as "%s=_=document.createElement('input');_.setAttribute('type','text');%s=0;":
+			𝕚𝕟𝕡𝕦𝕥( self._xe, self._x )
+			𝕚𝕟𝕡𝕦𝕥( self._ye, self._y )
 
-		#@bind(self._xe.onkeyup, self)  ## TODO extra param `self`
+		@bind(self._xe.onkeyup, self)
 		def update_xe(e):
 			print 'update xe:' + self._xe.value
 			self.x = self._xe.value
-		self._xe.onkeyup = update_xe.bind(self)
 
-		#@bind(self._ye.onkeyup, self)
+		@bind(self._ye.onkeyup, self)
 		def update_ye(e):
 			print 'update ye:' + self._ye.value
 			self.y = self._ye.value
-		self._ye.onkeyup = update_ye.bind(self)
 
 
 	def restore(self, restore):
@@ -218,12 +212,9 @@ class Proxy:
 
 	def getwidget(self):
 		div = document.createElement('div')
-		div.appendChild(document.createTextNode('some field X:'))
-		div.appendChild( self._xe )
-		div.appendChild(document.createElement('br'))
-		div.appendChild(document.createTextNode('some field Y:'))
-		div.appendChild( self._ye )
-		div.appendChild(document.createElement('br'))
+		with 𝓕 as "div.appendChild(document.createTextNode(%s));div.appendChild(%s);div.appendChild(document.createElement('br'))":
+			𝓕('some field X:', self._xe )
+			𝓕('some field Y:', self._ye )
 		return div
 
 	@getter
