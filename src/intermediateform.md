@@ -116,7 +116,7 @@ class PythonToPythonJS(NodeVisitorBase):
 	identifier = 0  ## clean up
 	_func_typedefs = ()  ## TODO clean up
 
-	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, lua=False, go=False, rust=False, cpp=False, fast_javascript=False, pure_javascript=False):
+	def __init__(self, source=None, modules=False, module_path=None, dart=False, coffee=False, go=False, rust=False, cpp=False, fast_javascript=False, pure_javascript=False):
 		#super(PythonToPythonJS, self).__init__()
 		NodeVisitorBase.__init__(self, source)  ## note self._source gets changed below
 
@@ -128,7 +128,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		self._modules = modules          ## split into mutiple files by class
 		self._module_path = module_path  ## used for user `from xxx import *` to load .py files in the same directory.
-		self._with_lua = lua
 		self._with_coffee = coffee
 		self._with_dart = dart
 		self._with_go = go
@@ -154,12 +153,9 @@ class PythonToPythonJS(NodeVisitorBase):
 		## However, the Lua backend still requires the old style full python mode, because in Lua classes
 		## must be fully broken down into flat functions.
 		self._with_js = True
-		if self._with_lua:
-			print 'WARN: OLD LUA MODE'
-			self._with_js = False
 
 
-		if self._with_rust or self._with_go or self._with_lua:
+		if self._with_rust or self._with_go:
 			self._use_destructured_assignment = True
 		else:
 			self._use_destructured_assignment = False
@@ -480,8 +476,6 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_ImportFrom(self, node):
 		if self._with_dart:
 			lib = fakestdlib.DART
-		elif self._with_lua:
-			lib = fakestdlib.LUA
 		elif self._with_go:
 			lib = fakestdlib.GO
 		elif self._with_cpp:
@@ -804,14 +798,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				self._gen_comp_helper(cname, node)
 
-		if self._with_lua:
-			writer.write('idx%s = idx%s + 1' %(id,id) )
-		else:
-			writer.write('idx%s+=1' %id )
+		writer.write('idx%s+=1' %id )
 		writer.pull()
-
-		if self._with_lua:  ## convert to list
-			writer.write('%s = list.__call__({},{pointer:%s, length:idx%s})' %(cname, cname, id))
 
 	def _gen_comp_helper(self, cname, node):
 		if isinstance(node, ast.DictComp):
@@ -825,8 +813,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		else:
 			if self._with_dart:
 				writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
-			elif self._with_lua:
-				writer.write('table.insert(%s, %s )' %(cname,self.visit(node.elt)) )
 			elif self._with_go:
 				writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
 			else:
@@ -1217,35 +1203,34 @@ class PythonToPythonJS(NodeVisitorBase):
 			if line: writer.write( line )
 			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
-			if not self._fast_js and not self._with_lua:
+			if not self._fast_js:
 				## allows subclass method to extend the parents method by calling the parent by class name,
 				## `MyParentClass.some_method(self)`
 				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
 				writer.write('%s.%s = inline("%s")'%(name,mname,f))
 
-		if not self._with_lua:
-			for base in node.bases:
-				base = self.visit(base)
-				if base == 'object': continue
-				a = [
-					'for (var n in %s.prototype) {'%base,
-					'  if (!(n in %s.prototype)) {'%name,
-					'    %s.prototype[n] = %s.prototype[n]'%(name,base),
-					'  }',
-					'}'
-				]
-				a = ''.join(a)
-				writer.write( "inline('%s')" %a )
-				writer.write( '%s.__bases__.push(%s)' %(name,base))
+		for base in node.bases:
+			base = self.visit(base)
+			if base == 'object': continue
+			a = [
+				'for (var n in %s.prototype) {'%base,
+				'  if (!(n in %s.prototype)) {'%name,
+				'    %s.prototype[n] = %s.prototype[n]'%(name,base),
+				'  }',
+				'}'
+			]
+			a = ''.join(a)
+			writer.write( "inline('%s')" %a )
+			writer.write( '%s.__bases__.push(%s)' %(name,base))
 
-			## class attributes
-			for item in class_vars:
-				if isinstance(item, Assign) and isinstance(item.targets[0], Name):
-					item_name = item.targets[0].id
-					#item.targets[0].id = '__%s_%s' % (name, item_name)
-					#self.visit(item)  # this will output the code for the assign
-					#writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
-					writer.write('%s.%s = %s' % (name, item_name, self.visit(item.value)))
+		## class attributes
+		for item in class_vars:
+			if isinstance(item, Assign) and isinstance(item.targets[0], Name):
+				item_name = item.targets[0].id
+				#item.targets[0].id = '__%s_%s' % (name, item_name)
+				#self.visit(item)  # this will output the code for the assign
+				#writer.write('%s.prototype.%s = %s' % (name, item_name, item.targets[0].id))
+				writer.write('%s.%s = %s' % (name, item_name, self.visit(item.value)))
 
 		self._in_js_class = False
 
@@ -1262,99 +1247,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			return
 
 		elif self._with_js:  ######## javascript backend #######
-			assert not self._with_lua
 			self._visit_js_classdef(node)
 			self._class_stack.pop()
 			return
 
-
-		## old lua backend ##
-		name = node.name
-		self._in_class = name
-		self._classes[ name ] = list()  ## method names
-		self._class_parents[ name ] = set()
-		self._class_attributes[ name ] = set()
-		self._catch_attributes = None
-		self._decorator_properties = dict() ## property names :  {'get':func, 'set':func}
-		self._decorator_class_props[ name ] = self._decorator_properties
-		self._instances[ 'self' ] = name
-
-		self._injector = []  ## DEPRECATED
-		class_decorators = []
-
-		for decorator in node.decorator_list:  ## class decorators
-			class_decorators.append( decorator )
-
-		## always catch attributes ##
-		self._catch_attributes = set()
-		self._instance_attributes[ name ] = self._catch_attributes
-
-		if not self._with_coffee:
-			writer.write('var(%s, __%s_attrs, __%s_parents)' % (name, name, name))
-		writer.write('__%s_attrs = JSObject()' % name)
-		writer.write('__%s_parents = JSArray()' % name)
-		writer.write('__%s_properties = JSObject()' % name)
-
-		for base in node.bases:
-			base = self.visit(base)
-			if base == 'object': continue
-			self._class_parents[ name ].add( base )
-			if self._with_lua:
-				writer.write('table.insert( __%s_parents, %s)' % (name, base))
-			else:
-				writer.write('__%s_parents.push(%s)' % (name, base))
-
-		for item in node.body:
-			if isinstance(item, FunctionDef):
-				self._classes[ name ].append( item.name )
-				item_name = item.name
-				item.original_name = item.name
-
-				item.name = '__%s_%s' % (name, item_name)
-				self.visit(item)  # this will output the code for the function
-
-				if item_name in self._decorator_properties:
-					pass
-				else:
-					writer.write('__%s_attrs.%s = %s' % (name, item_name, item.name))
-
-			elif isinstance(item, Assign) and isinstance(item.targets[0], Name):
-				item_name = item.targets[0].id
-				item.targets[0].id = '__%s_%s' % (name, item_name)
-				self.visit(item)  # this will output the code for the assign
-				writer.write('__%s_attrs.%s = %s' % (name, item_name, item.targets[0].id))
-				self._class_attributes[ name ].add( item_name )  ## should this come before self.visit(item) ??
-			elif isinstance(item, Pass):
-				pass
-			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
-				pass
-			elif isinstance(item, ast.With) and isinstance( item.context_expr, Name ) and item.context_expr.id == 'javascript':
-				raise RuntimeError('with javascript is deprecated')
-			else:
-				raise NotImplementedError( item )
-
-		for prop_name in self._decorator_properties:
-			getter = self._decorator_properties[prop_name]['get']
-			writer.write('__%s_properties["%s"] = JSObject()' %(name, prop_name))
-			writer.write('__%s_properties["%s"]["get"] = %s' %(name, prop_name, getter))
-			if self._decorator_properties[prop_name]['set']:
-				setter = self._decorator_properties[prop_name]['set']
-				writer.write('__%s_properties["%s"]["set"] = %s' %(name, prop_name, setter))
-
-		self._catch_attributes = None
-		self._decorator_properties = None
-		self._instances.pop('self')
-		self._in_class = False
-
-		writer.write('%s = __create_class__("%s", __%s_parents, __%s_attrs, __%s_properties)' % (name, name, name, name, name))
-
-		## DEPRECATED
-		#if 'init' in self._injector:
-		#	writer.write('%s.init_callbacks = JSArray()' %name)
-		#self._injector = []
-
-		for dec in class_decorators:
-			writer.write('%s = __get__(%s,"__call__")( [%s], JSObject() )' % (name, self.visit(dec), name))
 
 	def visit_And(self, node):
 		return ' and '
@@ -1370,8 +1266,6 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_If(self, node):
 		if self._with_dart and writer.is_at_global_level():
 			raise SyntaxError( self.format_error('if statements can not be used at module level in dart') )
-		elif self._with_lua:
-			writer.write('if __test_if_true__(%s):' % self.visit(node.test))
 
 		elif isinstance(node.test, ast.Dict):
 			if self._with_js:
@@ -1550,10 +1444,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
 				if self._with_dart:
 					return 'JS("__create_list(%s)")' %self.visit(node.right)
-				elif self._with_lua:
-					return 'JS("__create_list(%s)")' %self.visit(node.right)
 				else:
-					return 'JS("new Array(%s)")' %self.visit(node.right)
+					return 'inline("new Array(%s)")' %self.visit(node.right)
 			elif isinstance(node.right,ast.Num):
 				n = node.right.n
 			elif isinstance(node.right, Name):
@@ -1567,12 +1459,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			elts = [ self.visit(e) for e in node.left.elts ]
 			expanded = []
-			for i in range( n ): expanded.extend( elts )
+			for i in range( n ):
+				expanded.extend( elts )
 
-			if self._with_lua:
-				return 'list.__call__([], {pointer:[%s], length:%s})' %(','.join(expanded), n)
-			else:
-				return '[%s]' %','.join(expanded)
+			return '[%s]' %','.join(expanded)
 
 		elif not self._with_dart and left in self._typedef_vars and self._typedef_vars[left]=='long':
 			if op == '*':
@@ -1620,9 +1510,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
 				return '%s+%s'%(left, right)
 
-			elif self._with_lua or self._in_lambda or self._in_while_test:
+			elif self._in_lambda or self._in_while_test:
 				## this is also required when in an inlined lambda like "(lambda a,b: a+b)(1,2)"
-				return '__add_op(%s, %s)'%(left, right)
+				return '__add_op(%s, %s)'%(left, right)  ## TODO check deprecated
+
 			else:
 				## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
 				## used to check if the first variable is a number, and if so add the numbers, otherwise fallback to using the
@@ -1762,23 +1653,9 @@ class PythonToPythonJS(NodeVisitorBase):
 
 
 	def visit_Attribute(self, node):
-
-		## TODO check if this is always safe.
-		if isinstance(node.value, Name):
-			typedef = self.get_typedef( instance=node.value )
-		elif hasattr(node.value, 'returns_type'):
-			typedef = self.get_typedef( class_name=node.value.returns_type )
-		else:
-			typedef = None
-
-
 		node_value = self.visit(node.value)
-		if self._with_glsl:
-			#if node_value not in self._typedef_vars:  ## dynamic var  DEPRECATED
-			#	return 'glsl_inline(%s.%s)' %(node_value, node.attr)
-			#else:
-			return '%s.%s' %(node_value, node.attr)
-		elif self._with_dart or self._with_ll or self._with_go:
+
+		if self._with_dart or self._with_ll or self._with_go:
 			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
@@ -1786,12 +1663,6 @@ class PythonToPythonJS(NodeVisitorBase):
 			#if self._in_catch_exception == 'AttributeError':
 			#	return '__getfast__(%s, "%s")' % (node_value, node.attr)
 			#else:
-			return '%s.%s' %(node_value, node.attr)
-
-		elif self._with_lua and self._in_assign_target:  ## this is required because lua has no support for inplace assignment ops like "+="
-			return '%s.%s' %(node_value, node.attr)
-
-		elif typedef and node.attr in typedef.attributes:  ## optimize away `__get__`
 			return '%s.%s' %(node_value, node.attr)
 
 		elif hasattr(node, 'lineno'):
@@ -1810,7 +1681,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		name = self.visit(node.value)
 
 		if isinstance(node.slice, ast.Ellipsis):
-			#return '%s["$wrapped"]' %name
 			return '%s[...]' %name
 
 		elif self._with_ll or self._with_rust or self._with_go or self._with_cpp:
@@ -1839,7 +1709,9 @@ class PythonToPythonJS(NodeVisitorBase):
 				return '%s[ %s ]' %(name, self.visit(node.slice))
 
 
-			else:  ## ------------------ javascript mode ------------------------
+			else:  ## ------------------ old javascript mode ------------------------
+				## TODO clean this up ##
+
 				if self._in_catch_exception == 'KeyError':
 					value = self.visit(node.value)
 					slice = self.visit(node.slice)
@@ -1856,46 +1728,15 @@ class PythonToPythonJS(NodeVisitorBase):
 
 				else:
 					s = self.visit(node.slice)
-					## this is bad for chrome's jit because it trys to find `__uid__`
+					## this is bad for chromes jit because it trys to find `__uid__`
 					return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, s)
 
 					## TODO check why the JSON.stringify hack fails with arrays (fake tuples)
 					#check_array = '__ternary_operator__( instanceof(%s,Array), JSON.stringify(%s), %s )' %(s, s, s)
 					#return '%s[ __ternary_operator__(%s.__uid__, %s) ]' %(name, s, check_array)
 
-		elif isinstance(node.slice, ast.Slice):
-			return '__get__(%s, "__getslice__")([%s], __NULL_OBJECT__)' % (
-				self.visit(node.value),
-				self.visit(node.slice)
-			)
-
-		elif name in self._func_typedefs and self._func_typedefs[name] == 'list':
-			#return '%s[...][%s]'%(name, self.visit(node.slice))
-			return '%s[%s]'%(name, self.visit(node.slice))
-
-		elif name in self._instances:  ## support x[y] operator overloading
-			klass = self._instances[ name ]
-			if '__getitem__' in self._classes[ klass ]:
-				return '__%s___getitem__([%s, %s], JSObject())' % (klass, name, self.visit(node.slice))
-			else:
-				return '__get__(%s, "__getitem__")([%s], __NULL_OBJECT__)' % (
-					self.visit(node.value),
-					self.visit(node.slice)
-				)
 		else:
-			err = ""
-			if hasattr(node, 'lineno'):
-				src = self._source[ node.lineno-1 ]
-				src = src.replace('"', '\\"')
-				err = 'line %s: %s'	%(node.lineno, src.strip())
-
-			value = self.visit(node.value)
-			slice = self.visit(node.slice)
-			fallback = '__get__(%s, "__getitem__", "%s")([%s], __NULL_OBJECT__)' % (value, err, slice)
-			if not self._with_lua and isinstance(node.value, ast.Name):
-				return '__ternary_operator__(instanceof(%s, Array), %s[%s], %s)' %(value, value,slice, fallback)
-			else:
-				return fallback
+			raise RuntimeError( self.format_error('unknown backend') )
 
 	def visit_Slice(self, node):
 		if self._with_go or self._with_rust or self._with_cpp:
@@ -1934,7 +1775,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
-		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_go)
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		lineno = node.lineno
@@ -2122,118 +1963,21 @@ class PythonToPythonJS(NodeVisitorBase):
 			self._in_assign_target = True
 			target_value = self.visit(target.value)  ## target.value may have "returns_type" after being visited
 			self._in_assign_target = False
-			typedef = None
-			if isinstance(target.value, Name):
-				if target.value.id == 'self' and isinstance(self._catch_attributes, set):
-					self._catch_attributes.add( target.attr )
-				typedef = self.get_typedef( instance=target.value )
-			elif hasattr(target.value, 'returns_type'):
-				typedef = self.get_typedef( class_name=target.value.returns_type )
-
-			#####################################
 
 			if self._with_js or self._with_dart or self._with_go:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 
-			elif self._with_lua:  ## this could be better optimized for the lua backend.
-
-				if typedef and target.attr in typedef.properties and 'set' in typedef.properties[ target.attr ]:
-					setter = typedef.properties[ target.attr ]['set']
-					writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
-
-				elif typedef and target.attr in typedef.attributes:
-					writer.write( '%s.%s = %s' %(target_value, target.attr, self.visit(node.value)))
-
-				elif typedef and typedef.parents:
-					parent_prop = typedef.check_for_parent_with( property=target.attr )
-					#parent_classattr = typedef.check_for_parent_with( class_attribute=target.attr )
-					parent_setattr = typedef.check_for_parent_with( method='__setattr__' )
-					if parent_prop and 'set' in parent_prop.properties[target.attr]:
-						setter = parent_prop.properties[target.attr]['set']
-						writer.write( '%s( [%s, %s], JSObject() )' %(setter, target_value, self.visit(node.value)) )
-
-					#elif parent_classattr:
-					#	writer.write( "__%s_attrs.%s = %s" %(parent_classattr.name, target.attr, self.visit(node.value)) )
-
-					elif parent_setattr:
-						func = parent_setattr.get_pythonjs_function_name( '__setattr__' )
-						writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
-
-					elif '__setattr__' in typedef.methods:
-						func = typedef.get_pythonjs_function_name( '__setattr__' )
-						writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
-
-					else:
-						code = '__set__(%s, "%s", %s)' % (
-							target_value,
-							target.attr,
-							self.visit(node.value)
-						)
-						writer.write(code)
-
-				elif typedef and '__setattr__' in typedef.methods:
-					func = typedef.get_pythonjs_function_name( '__setattr__' )
-					writer.write( '%s([%s, "%s", %s], JSObject() )' %(func, target_value, target.attr, self.visit(node.value)) )
-
-
-				else:
-					code = '__set__(%s, "%s", %s)' % (
-						target_value,
-						target.attr,
-						self.visit(node.value)
-					)
-					writer.write(code)
-
-
 		elif isinstance(target, Name):  ## assignment to variable
 			node_value = self.visit( node.value )  ## node.value may have extra attributes after being visited
 
-			if writer.is_at_global_level():
-				self._globals[ target.id ] = None
-				self._global_nodes[ target.id ] = node.value
+			## note: self._globals and self._instances is DEPRECATED
+			## tracking of variable types has been moved to the next stage of translation,
+			## where each backend may have different requirements.
 
-			if isinstance(node.value, Call) and hasattr(node.value.func, 'id') and node.value.func.id in self._classes:
-				self._instances[ target.id ] = node.value.func.id  ## keep track of instances
-			elif isinstance(node.value, Call) and isinstance(node.value.func, Name) and node.value.func.id in self._function_return_types:
-				self._instances[ target.id ] = self._function_return_types[ node.value.func.id ]
-			elif isinstance(node.value, Name) and node_value in self._instances:  ## if this is a simple copy: "a = b" and "b" is known to be of some class
-				self._instances[ target.id ] = self._instances[ node_value ]
-			elif isinstance(node.value, BinOp) and hasattr(node.value, 'operator_overloading') and node.value.operator_overloading in self._function_return_types:
-				self._instances[ target.id ] = self._function_return_types[ node.value.operator_overloading ]
-			elif hasattr(node.value, 'returns_type'):
-				self._instances[ target.id ] = node.value.returns_type
-			elif target.id in self._instances:
-				if target.id in self._globals:
-					pass
-				else:
-					type = self._instances.pop( target.id )
-
-			if target.id in self._instances:
-				type = self._instances[ target.id ]
-				## typed assignment: %s is-type %s' %(target.id,type))
-				if writer.is_at_global_level():
-					self._globals[ target.id ] = type
-					## known global
-					if self._with_static_type:
-						if type == 'list':
-							self._global_typed_lists[ target.id ] = set()
-						elif type == 'tuple':
-							self._global_typed_tuples[ target.id ] = set()
-						elif type == 'dict':
-							self._global_typed_dicts[ target.id ] = set()
-
-					writer.write('%s = %s' % (self.visit(target), node_value))
-				else:
-					if target.id in self._globals and self._globals[target.id] is None:
-						self._globals[target.id] = type
-						self._instances[ target.id ] = type  ## needs more cleanup
-
-					writer.write('%s = %s' % (self.visit(target), node_value))
-			else:
-				writer.write('%s = %s' % (self.visit(target), node_value))
+			writer.write('%s = %s' % (self.visit(target), node_value))
 
 		elif isinstance(target, ast.Tuple):
-			if self._use_destructured_assignment:  ## Lua, Rust, Go, Dart
+			if self._use_destructured_assignment:  ## Rust, Go, Dart
 				elts = [self.visit(e) for e in target.elts]
 				writer.write('(%s) = %s' % (','.join(elts), self.visit(node.value)))
 
@@ -2265,14 +2009,11 @@ class PythonToPythonJS(NodeVisitorBase):
 						writer.write(code)
 					elif self._with_js or self._with_dart:
 						writer.write("%s = %s[%s]" % (self.visit(target), r, i))
-					elif self._with_lua:
-						writer.write("__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i))
 					else:
-						fallback = "__get__(__get__(%s, '__getitem__'), '__call__')([%s], __NULL_OBJECT__)" %(r, i)
-						writer.write("%s = __ternary_operator__(instanceof(%s,Array), %s[%s], %s)" % (self.visit(target), r, r,i, fallback ))
+						raise RuntimeError( self.format_error('unknown backend'))
 
 		else:
-			raise SyntaxError(target)
+			raise SyntaxError( self.format_error(target) )
 
 
 	def visit_Print(self, node):
@@ -2315,7 +2056,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		## note: runtime errors and checking generator has moved to `jstranslator.md`
 		## TODO clean this up
-		#use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_lua or self._with_go)
+		#use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_go)
 		#use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		line = self.visit(node.value)
@@ -2396,58 +2137,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				return 'numpy.array(%s)' %','.join(args)
 
 		elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'pythonjs' and node.func.attr == 'configure':
-			for kw in node.keywords:
-				if kw.arg == 'javascript':
-					raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'dart':
-					if kw.value.id == 'True':
-						self._with_dart = True
-					elif kw.value.id == 'False':
-						self._with_dart = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'coffee':
-					if kw.value.id == 'True':
-						self._with_coffee = True
-					elif kw.value.id == 'False':
-						self._with_coffee = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'lua':
-					if kw.value.id == 'True':
-						self._with_lua = True
-					elif kw.value.id == 'False':
-						self._with_lua = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'runtime_exceptions':
-					if kw.value.id == 'True':
-						self._with_runtime_exceptions = True
-					elif kw.value.id == 'False':
-						self._with_runtime_exceptions = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'direct_keys':
-					if kw.value.id == 'True':
-						self._with_direct_keys = True
-					elif kw.value.id == 'False':
-						self._with_direct_keys = False
-					else:
-						raise SyntaxError( self.format_error(node) )
-
-				elif kw.arg == 'direct_operator':
-					if kw.value.s.lower() == 'none':
-						self._direct_operators = set()
-					else:
-						self._direct_operators.add( kw.value.s )
-
-				else:
-					raise SyntaxError( self.format_error('invalid keyword option') )
+			raise RuntimeError( self.format_error('pythonjs.configure is deprecated'))
 
 		elif name == 'inline':
 			return 'inline(%s)' %self.visit(node.args[0])
@@ -2598,7 +2288,7 @@ class PythonToPythonJS(NodeVisitorBase):
 							return '%s(%s)' %( method, ','.join(args) )
 
 
-			elif isinstance(node.func, Name) and node.func.id in self._js_classes and not self._with_lua:
+			elif isinstance(node.func, Name) and node.func.id in self._js_classes:
 				if node.keywords:
 					kwargs = [ '%s:%s'%(x.arg, self.visit(x.value)) for x in node.keywords ]
 					if args:
@@ -2691,7 +2381,9 @@ class PythonToPythonJS(NodeVisitorBase):
 				args.extend(kwargs)
 			args = ', '.join(args)
 			return '%s(%s)' % (node.func.id, args)
+
 		else:
+			## TODO deprecate below ##
 
 			## check if pushing to a global typed list ##
 			if isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._global_typed_lists and node.func.attr == 'append':
@@ -2748,7 +2440,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			#######################################
 
 			## special method calls ##
-			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace', 'sort') and not self._with_lua:
+			if isinstance(node.func, ast.Attribute) and node.func.attr in ('get', 'keys', 'values', 'pop', 'items', 'split', 'replace', 'sort'):
 				anode = node.func
 				if anode.attr == 'get' and len(node.args) > 0 and len(node.args) <= 2:
 					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), args )
@@ -2783,64 +2475,6 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					return '%s(%s)' %( self.visit(node.func), args )
 
-			elif not self._with_lua and not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._func_typedefs:
-				type = self._func_typedefs[ node.func.value.id ]
-				if type == 'list' and node.func.attr == 'append':
-					return '%s.push(%s)' %(node.func.value.id, self.visit(node.args[0]))
-				else:
-					raise RuntimeError
-
-			elif hasattr(node,'constant') or name in self._builtin_functions:
-				if args and kwargs:
-					return '%s([%s], {%s})' %(name, args, kwargs)
-				elif args:
-					return '%s([%s], __NULL_OBJECT__)' %(name,args)
-				elif kwargs:
-					return '%s([], {%s})' %(name,kwargs)
-				else:
-					return '%s()' %name
-
-			elif call_has_args_only:
-				if name in self._global_functions:
-					return '%s( [%s], __NULL_OBJECT__)' %(name,args)
-				else:
-					return '__get__(%s, "__call__")([%s], __NULL_OBJECT__)' % (name, args)
-
-			elif call_has_args_kwargs_only:
-				if name in self._global_functions:
-					return '%s( [%s], {%s} )' %(name,args, kwargs)
-				else:
-					return '__get__(%s, "__call__")([%s], {%s} )' % (name, args, kwargs)
-
-
-			elif call_has_args:
-				if name == 'dict':
-					return '__get__(%s, "__call__")(%s, JSObject(pointer=%s))' % (name, args_name, kwargs_name)
-				else:
-					return '__get__(%s, "__call__")(%s, %s)' % (name, args_name, kwargs_name)
-
-			elif name in self._classes:
-				return '__get__(%s, "__call__")( )' %name
-
-			elif name in self._builtin_classes:
-				return '__get__(%s, "__call__")( )' %name
-
-			elif name in self._global_functions:
-				#return '__get__(%s, "__call__")( JSArray(), JSObject() )' %name  ## SLOW ##
-				return '%s( )' %name  ## this is much FASTER ##
-
-			else:
-				## if the user is trying to create an instance of some class
-				## and that class is define in an external binding,
-				## and they forgot to put "from mylibrary import *" in their script (an easy mistake to make)
-				## then this fails to call __call__ to initalize the instance,
-				## or a factory function was used that was passed the class to make,
-				## it will throw this confusing error:
-				## Uncaught TypeError: Property 'SomeClass' of object [object Object] is not a function
-				## TODO - remove this optimization, or provide the user with a better error message.
-
-				## So to be safe we still wrap with __get__ and "__call__"
-				return '__get__(%s, "__call__")( )' %name
 
 	def visit_Lambda(self, node):
 		args = []
@@ -3090,7 +2724,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('@expression(%s)' %func_expr)
 
 
-		if not self._with_dart and not self._with_lua and not self._with_js and not javascript and not self._with_glsl:
+		if not self._with_dart and not self._with_js and not javascript and not self._with_glsl:
 			writer.write('@__pyfunction__')
 
 		if return_type or return_type_keywords:
@@ -3210,7 +2844,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		if self._with_dart or self._with_glsl or self._with_go or self._with_rust or self._with_cpp:
 			pass
 
-		elif (self._with_js or javascript or self._with_ll) and not self._with_lua:
+		elif (self._with_js or javascript or self._with_ll):
 			if node.args.defaults:
 				if not self._fast_js:
 					## this trys to recover when called in a bad way,
@@ -3252,19 +2886,6 @@ class PythonToPythonJS(NodeVisitorBase):
 						b = "var %s %s= (%s === undefined || %s.%s === undefined)%s?\t%s %s: %s.%s" %a
 						c = "inline('''%s''')" %b
 						writer.write( c )
-
-
-		elif self._with_lua:
-			writer.write( 'var(%s)' %','.join([arg.id for arg in node.args.args]))
-			offset = len(node.args.args) - len(node.args.defaults)
-			for i,arg in enumerate(node.args.args):
-				dindex = i - offset
-				if dindex >= 0 and node.args.defaults:
-					default_value = self.visit( node.args.defaults[dindex] )
-					writer.write("%s = kwargs.%s or %s" % (arg.id, arg.id, default_value))
-				else:
-					writer.write( "%s = args[ %s ]" %(arg.id, i+1) )
-
 
 
 		################# function body #################
@@ -3444,31 +3065,19 @@ class PythonToPythonJS(NodeVisitorBase):
 			types.append( '%s : "%s"' %(self.visit(key), value) )
 
 
-		if not self._with_dart and not self._with_lua:  ## Dart functions can not have extra attributes?
-			if self._introspective_functions:
-				## note, in javascript function.name is a non-standard readonly attribute,
-				## the compiler creates anonymous functions with name set to an empty string.
-				writer.write('%s.NAME = "%s"' %(node.name,node.name))
+		if self._introspective_functions:
+			## note, in javascript function.name is a non-standard readonly attribute,
+			## the compiler creates anonymous functions with name set to an empty string.
+			writer.write('%s.NAME = "%s"' %(node.name,node.name))
 
-				writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
-				defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
-				writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
-				if self._with_fastdef or fastdef:
-					writer.write('%s.fastdef = True' %node.name)
+			writer.write( '%s.args_signature = [%s]' %(node.name, ','.join(['"%s"'%n.id for n in node.args.args])) )
+			defaults = ['%s:%s'%(self.visit(x[0]), self.visit(x[1])) for x in zip(node.args.args[-len(node.args.defaults):], node.args.defaults) ]
+			writer.write( '%s.kwargs_signature = {%s}' %(node.name, ','.join(defaults)) )
+			writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
 
-				writer.write( '%s.types_signature = {%s}' %(node.name, ','.join(types)) )
+			if return_type:
+				writer.write('%s.return_type = "%s"'%(node.name, return_type))
 
-				if return_type:
-					writer.write('%s.return_type = "%s"'%(node.name, return_type))
-
-
-
-		#if threaded:  ## deprecated - todo remove
-		#	writer.write('%s()' %node.name)
-		#	writer.write('self.termintate()')
-
-
-		#writer = writer_main
 
 
 	#################### loops ###################
@@ -3687,10 +3296,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 				writer.push()
 				map(self.visit, node.body)
-				if self._with_lua:
-					writer.write('%s = %s + 1' %(iter_name, iter_name) )
-				else:
-					writer.write('%s += 1' %iter_name )
+				writer.write('%s += 1' %iter_name )
 
 				if enumtar:
 					writer.write('%s += 1'%enumtar.id)
@@ -3707,10 +3313,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				if multi_target:
 					writer.write('__mtarget__%s = __next__%s()'%(iterid, iterid))
 					for i,elt in enumerate(multi_target):
-						if self._with_lua:
-							writer.write('%s = __mtarget__%s[...][%s]' %(elt,iterid,i+1))
-						else:
-							writer.write('%s = __mtarget__%s[%s]' %(elt,iterid,i))
+						writer.write('%s = __mtarget__%s[%s]' %(elt,iterid,i))
 				else:
 					writer.write('%s = __next__%s()' %(target.id, iterid))
 
@@ -4134,10 +3737,7 @@ class GeneratorFunctionTransformer( PythonToPythonJS ):
 		for b in loop_node.body:
 			self.visit(b)
 
-		if self._with_lua:
-			writer.write('this.__iter_index = this.__iter_index + 1')
-		else:
-			writer.write('this.__iter_index += 1')
+		writer.write('this.__iter_index += 1')
 
 		if not tail_yield:
 			writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')

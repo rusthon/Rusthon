@@ -28,7 +28,6 @@ Markdown Imports
 * [@import generatorbase.md](generatorbase.md)
 * [@import jstranslator.md](jstranslator.md)
 * [@import verilogtranslator.md](verilogtranslator.md)
-* [@import luatranslator.md](luatranslator.md)
 * [@import darttranslator.md](darttranslator.md)
 * [@import gotranslator.md](gotranslator.md)
 * [@import cpprustbase.md](cpprustbase.md)
