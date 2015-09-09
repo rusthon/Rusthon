@@ -1,17 +1,7 @@
-FullStack Single File Example
+FullStack Hello World
 -----------------------------
 
-Fullstack is just a buzz word for a single programmer who fully implements the frontend and backend,
-including webserver and database.  
-On the frontend they handle all the javascript, html, css and frameworks like:
-Angular.js.  In other words, it is a heavy job, with many things to manage.
-Andy Shora has some interesting thoughts on it, check out
-http://andyshora.com/full-stack-developers.html 
-
-Reducing a fullstack into a single file makes things much simpler,
-also using Python both on the backend and frontend greatly simplfies everything.
-
-
+http://rusthon-lang.blogspot.com/2015/09/fullstack-nosql-on-sql.html
 
 Dataset
 --------
@@ -190,67 +180,72 @@ def connect_ws():
 @debugger
 def main():
 	## connect websocket
-	connect_ws()
-	con = document.getElementById('FORM')
-	h = document.createElement('h3')
-	h.appendChild(document.createTextNode('update database:'))
-	con.appendChild(h)
-	keys = ('first name', 'last name', 'age')
-	fields = {}
-	for key in keys:
-		input = document.createElement('input')
-		input.setAttribute('type', 'text')
-		fields[key] = input
-		con.appendChild(document.createTextNode(key))
-		con.appendChild(input)
-		con.appendChild(document.createElement('br'))
+	try: connect_ws()
+	except: print 'could not connect to websocket'
 
-	button = document.createElement('button')
-	button.appendChild(document.createTextNode('submit'))
-	con.appendChild(button)
-	@bind(button.onclick)
-	def onclick():
-		ob = {}
-		for key in fields.keys():
-			elt = fields[key]
-			ob[key] = elt.value
+	with 𝔼 as "document.createElement(%s)":
+		with 𝕋 as "document.createTextNode(%s)":
 
-		jsondata = JSON.stringify(ob)
-		ws.send(jsondata)
-
-		searchform = document.getElementById('SEARCH')
-		if searchform is None:
-			searchform = document.createElement('div')
-			searchform.setAttribute('id', 'SEARCH')
-			document.body.appendChild(searchform)
-			h = document.createElement('h3')
-			h.appendChild(document.createTextNode('search database:'))
-			searchform.appendChild( h )
-
-			search_fields = {}
+			con = document.getElementById('FORM')
+			h = 𝔼('h3')
+			h.appendChild(𝕋('update database:'))
+			con.appendChild(h)
+			keys = ('first name', 'last name', 'age')
+			fields = {}
 			for key in keys:
-				input = document.createElement('input')
+				input = 𝔼('input')
 				input.setAttribute('type', 'text')
-				search_fields[key] = input
-				searchform.appendChild(document.createTextNode(key))
-				searchform.appendChild(input)
-				searchform.appendChild(document.createElement('br'))
+				fields[key] = input
+				con.appendChild(𝕋(key))
+				con.appendChild(input)
+				con.appendChild(𝔼('br'))
+
+			button = 𝔼('button')
+			button.appendChild(𝕋('submit'))
+			con.appendChild(button)
+			@bind(button.onclick)
+			def onclick():
+				ob = {}
+				for key in fields.keys():
+					elt = fields[key]
+					ob[key] = elt.value
+
+				jsondata = JSON.stringify(ob)
+				ws.send(jsondata)
+
+				searchform = document.getElementById('SEARCH')
+				if searchform is None:
+					searchform = 𝔼('div')
+					searchform.setAttribute('id', 'SEARCH')
+					document.body.appendChild(searchform)
+					h = 𝔼('h3')
+					h.appendChild(𝕋('search database:'))
+					searchform.appendChild( h )
+
+					search_fields = {}
+					for key in keys:
+						input = 𝔼('input')
+						input.setAttribute('type', 'text')
+						search_fields[key] = input
+						searchform.appendChild(𝕋(key))
+						searchform.appendChild(input)
+						searchform.appendChild(𝔼('br'))
 
 
-			sbutton = document.createElement('button')
-			sbutton.appendChild(document.createTextNode('search'))
-			searchform.appendChild(sbutton)
-			@bind(sbutton.onclick)
-			def onsearch():
-				s = []
-				for key in search_fields.keys():
-					elt = search_fields[key]
-					## note: this would not work because in a literal the keys are forced into strings
-					#o = {key:elt.value}
-					o = {}
-					o[ key ] = elt.value
-					s.append( o )
-				ws.send( JSON.stringify(s) )
+					sbutton = 𝔼('button')
+					sbutton.appendChild(𝕋('search'))
+					searchform.appendChild(sbutton)
+					@bind(sbutton.onclick)
+					def onsearch():
+						s = []
+						for key in search_fields.keys():
+							elt = search_fields[key]
+							## note ES6 syntax for a computed key name `[key]` ##
+							o = {
+								[key] : elt.value
+							}
+							s.append( o )
+						ws.send( JSON.stringify(s) )
 
 
 
