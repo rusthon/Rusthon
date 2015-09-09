@@ -11,7 +11,8 @@ http://en.cppreference.com/w/cpp/utility/move
 __unicode notes:__
 * macros can use unicode characters, these are replaced at compile time with the macro string
 * functions with unicode in the mathematical alphanumerics range will be translated into regular ASCII, so `𝓕𝓞𝓞` becomes `FOO`.
-* functions with other unicode will be obfuscated, so that `ੴ` beecomes `__x0s0x__2676__x0e0x__`
+* functions with other unicode will be obfuscated, so that `ੴ` beecomes `__x0s0x__N__x0e0x__`, where `N` is the ordinal of the character.
+* if the command line option `--obfuscate` is used then heavy obfuscation is used on unicode characters.
 
 ```rusthon
 #backend:c++

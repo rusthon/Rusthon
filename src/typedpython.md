@@ -2,6 +2,9 @@
 ```python
 
 USE_UNICODE_VARS = '--literate-unicode' in sys.argv
+OBFUSCATE_UNICODE = '--obfuscate' in sys.argv
+
+ObfuscationMap = {}  ## unichar : random string
 
 MathematicalAlphabet = {
 	u'𝐀' : 'A',
@@ -391,6 +394,11 @@ MathematicalAlphabet = {
 
 UnicodeEscapeMap = {}  ## number : unichar
 
+def _gen_random_id(size=16):
+	import random, string
+	chars = string.ascii_uppercase + string.digits
+	return ''.join(random.choice(chars) for _ in range(size))
+
 class typedpython:
 	unicode_vars = USE_UNICODE_VARS
 	types = ['string', 'str', 'list', 'dict', 'bool']
@@ -519,10 +527,16 @@ class typedpython:
 					j += 1
 
 				if char in MathematicalAlphabet.keys():
-					if USE_UNICODE_VARS:
+					if USE_UNICODE_VARS or OBFUSCATE_UNICODE:
 						## note with unicode characters they can not
 						## be restored wth chr(ord(char))
-						ucord = ord(char)
+						if OBFUSCATE_UNICODE:
+							if char not in ObfuscationMap:
+								ObfuscationMap[ char ] = _gen_random_id()
+							ucord = ObfuscationMap[ char ]
+						else:
+							ucord = ord(char)
+
 						if ucord not in UnicodeEscapeMap:
 							UnicodeEscapeMap[ ucord ] = char
 
@@ -532,7 +546,12 @@ class typedpython:
 						char = MathematicalAlphabet[ char ]
 
 				elif ord(char) > 255:
-					ucord = ord(char)
+					if OBFUSCATE_UNICODE:
+						if char not in ObfuscationMap:
+							ObfuscationMap[ char ] = _gen_random_id()
+						ucord = ObfuscationMap[ char ]
+					else:
+						ucord = ord(char)
 					if ucord not in UnicodeEscapeMap:
 						UnicodeEscapeMap[ ucord ] = char
 					char = '__x0s0x__%s__x0e0x__' % ucord
