@@ -133,6 +133,7 @@ tornado.ioloop.IOLoop.instance().start()
 Client Side
 -----------
 
+https://github.com/rusthon/Rusthon/wiki/JavaScript-DOM-Syntax
 
 @myapp
 ```rusthon
@@ -159,13 +160,13 @@ def on_message_ws(event):
 	else:
 		msg = JSON.parse(event.data)
 
-	pre = document.getElementById('RESULTS')
+	pre = document->('#RESULTS')
 	if isinstance(msg, list):
 		for res in msg:
 			s = JSON.stringify(res)
-			pre.appendChild( document.createTextNode(s+'\n') )
+			pre->(s+'\n')
 	elif isinstance(msg, string):
-		pre.appendChild( document.createTextNode(msg+'\n') )
+		pre->(msg+'\n')
 	else:
 		proxy = man.instances[ msg.id ]
 		#a = { msg['key'] : msg['value'] }  ## TODO support this syntax
@@ -253,12 +254,12 @@ def main():
 	## connect websocket
 	connect_ws()
 	man = Manager()
-	con = document.getElementById('FORM')
-	h = document.createElement('h3')
-	h.appendChild(document.createTextNode('update database:'))
-	con.appendChild(h)
 	p = man.makeproxy()
-	con.appendChild(p.getwidget())
+
+	document->('#FORM')->(
+		document->('h3')->('update database:'), 
+		p.getwidget()
+	)
 
 ```
 

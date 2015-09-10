@@ -29,6 +29,14 @@ if HTMLElement is not undefined:
 
 		return this
 
+	@bind(HTMLDocument.prototype.__right_arrow__)
+	def __htmldoc_rightarrow__(arg):
+		if arg.startswith('#'):
+			return this.getElementById(arg[1:])
+		else:
+			return this.createElement(arg)
+
+
 # the unicode decorator is used in the global namespace to define
 # a mapping from the function name to the unicode version of the name.
 # the user is able to then define their own unicode scripting language,
