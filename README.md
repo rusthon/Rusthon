@@ -50,7 +50,7 @@ Getting Started Javascript
 -----------------
 Transpile from Python to Javascript, with specialized syntax for static types, and using [WebWorkers](https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax) and other extensions to the Python language like [mini-macros](https://github.com/rusthon/Rusthon/wiki/Macro-Functions)
 
-Mini-macros help you make your code more readable, and hide ugly API's like DOM.
+Mini-macros help you make your code more readable, and hide ugly API's like HTML DOM.
 note: you can use unicode for macro names.
 ```python
 with 𝕄 as "_=document.createElement(%s); _.setAttribute('id',%s); %s.appendChild(_)":
@@ -58,6 +58,21 @@ with 𝕄 as "_=document.createElement(%s); _.setAttribute('id',%s); %s.appendCh
     𝕄( 'img', 'someid2', document.body )
 
 ```
+
+You can also use the `->` right arrow syntax as a shortcut on DOM elements for appending, setting attributes,
+and creating text nodes.  You can also define `__right_arrow__` on your own classes to customize what `->` will do,
+for more info see: [here](https://github.com/rusthon/Rusthon/wiki/JavaScript-DOM-Syntax)
+
+The example above could be rewritten as:
+```c++
+with 𝕄 as "document.createElement(%s)":
+    document.body->(
+        𝕄('div')->(id='someid1'),
+        𝕄('img')->(id='someid2')
+    )
+
+```
+
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)
 * [javascript backend wiki](https://github.com/rusthon/Rusthon/wiki/JavaScript-Backend)
 * [javascript backend doc](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
