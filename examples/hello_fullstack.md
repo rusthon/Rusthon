@@ -126,6 +126,9 @@ tornado.ioloop.IOLoop.instance().start()
 Client Side
 -----------
 
+note: the syntax `HTMLElement->(args)` is a shortcut for common HTML DOM calls,
+it quickly lets you create text-nodes, append multiple elements, or set attributes.
+
 
 @myapp
 ```rusthon
@@ -152,14 +155,13 @@ def on_message_ws(event):
 	else:
 		msg = JSON.parse(event.data)
 
-
 	pre = document.getElementById('RESULTS')
 	if isinstance(msg, list):
 		for res in msg:
 			s = JSON.stringify(res)
-			pre.appendChild( document.createTextNode(s+'\n') )
+			pre->(s+'\n')
 	else:
-		pre.appendChild( document.createTextNode(msg+'\n') )
+		pre->(msg+'\n')
 
 	print msg
 
@@ -183,70 +185,68 @@ def main():
 	try: connect_ws()
 	except: print 'could not connect to websocket'
 
-	with 𝔼 as "document.createElement(%s)":
-		with 𝕋 as "document.createTextNode(%s)":
+	with 𝕖𝕝𝕥 as "document.createElement(%s)":
 
-			con = document.getElementById('FORM')
-			h = 𝔼('h3')
-			h.appendChild(𝕋('update database:'))
-			con.appendChild(h)
-			keys = ('first name', 'last name', 'age')
-			fields = {}
-			for key in keys:
-				input = 𝔼('input')
-				input.setAttribute('type', 'text')
-				fields[key] = input
-				con.appendChild(𝕋(key))
-				con.appendChild(input)
-				con.appendChild(𝔼('br'))
+		con = document.getElementById('FORM')
+		h = 𝕖𝕝𝕥('h3')->('Update Database:')
+		con->(h)
 
-			button = 𝔼('button')
-			button.appendChild(𝕋('submit'))
-			con.appendChild(button)
-			@bind(button.onclick)
-			def onclick():
-				ob = {}
-				for key in fields.keys():
-					elt = fields[key]
-					ob[key] = elt.value
+		keys = ('first name', 'last name', 'age')
+		fields = {}
+		for key in keys:
+			input = 𝕖𝕝𝕥('input')->(type='text')
+			fields[key] = input
+			con->(
+				key,
+				input,
+				𝕖𝕝𝕥('br')
+			)
 
-				jsondata = JSON.stringify(ob)
-				ws.send(jsondata)
+		button = 𝕖𝕝𝕥('button')
+		button->('submit')
+		con->(button)
 
-				searchform = document.getElementById('SEARCH')
-				if searchform is None:
-					searchform = 𝔼('div')
-					searchform.setAttribute('id', 'SEARCH')
-					document.body.appendChild(searchform)
-					h = 𝔼('h3')
-					h.appendChild(𝕋('search database:'))
-					searchform.appendChild( h )
+		@bind(button.onclick)
+		def onclick():
+			ob = {}
+			for key in fields.keys():
+				elt = fields[key]
+				ob[key] = elt.value
 
-					search_fields = {}
-					for key in keys:
-						input = 𝔼('input')
-						input.setAttribute('type', 'text')
-						search_fields[key] = input
-						searchform.appendChild(𝕋(key))
-						searchform.appendChild(input)
-						searchform.appendChild(𝔼('br'))
+			jsondata = JSON.stringify(ob)
+			ws.send(jsondata)
+
+			searchform = document.getElementById('SEARCH')
+			if searchform is None:
+				searchform = 𝕖𝕝𝕥('div')->(id="SEARCH")
+				document.body.appendChild(searchform)
+				searchform->( 𝕖𝕝𝕥('h3')->('search database:') )
+
+				search_fields = {}
+				for key in keys:
+					input = 𝕖𝕝𝕥('input')->(type='text')
+					search_fields[key] = input
+					searchform->(
+						key,
+						input,
+						𝕖𝕝𝕥('br')
+					)
 
 
-					sbutton = 𝔼('button')
-					sbutton.appendChild(𝕋('search'))
-					searchform.appendChild(sbutton)
-					@bind(sbutton.onclick)
-					def onsearch():
-						s = []
-						for key in search_fields.keys():
-							elt = search_fields[key]
-							## note ES6 syntax for a computed key name `[key]` ##
-							o = {
-								[key] : elt.value
-							}
-							s.append( o )
-						ws.send( JSON.stringify(s) )
+				sbutton = 𝕖𝕝𝕥('button')->('search')
+				searchform->(sbutton)
 
+				@bind(sbutton.onclick)
+				def onsearch():
+					s = []
+					for key in search_fields.keys():
+						elt = search_fields[key]
+						## note ES6 syntax for a computed key name `[key]` ##
+						o = {
+							[key] : elt.value
+						}
+						s.append( o )
+					ws.send( JSON.stringify(s) )
 
 
 ```

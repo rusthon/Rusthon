@@ -835,6 +835,9 @@ class typedpython:
 				#this_name = a.split()[-1].split('=')[-1].split(':')[-1].split(',')[-1]
 				#method_name = b.split()[0].split('(')[0]
 				#c = c.replace('->'+method_name, '.__right_arrow__<<'+method_name)
+
+				c = c.replace('->(', '.__right_arrow__(')
+				c = c.replace('->[', '.__right_arrow__[')
 				c = c.replace('->', '.__right_arrow__.')
 
 
