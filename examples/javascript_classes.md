@@ -21,17 +21,24 @@ See Also
 html
 ----
 
+note the special HTML syntax `<!myscript>` embeds the original source in your html as
+`<script type="text/rusthon" id="myscript">SOURCE</script>`
 
 @index.html
 ```html
 <html>
 <head>
+<script src="~/ace-builds/src-min/ace.js" git="https://github.com/ajaxorg/ace-builds.git"></script>
+<script src="~/ace-builds/src-min/theme-monokai.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/worker-javascript.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/mode-javascript.js" type="text/javascript"></script>
+<script src="~/ace-builds/src-min/mode-python.js" type="text/javascript"></script>
 
+<!myscript>
 <@myscript>
 
 </head>
-<body>
-see the javascript console for test results
+<body onload="test()">
 </body>
 </html>
 ```
@@ -39,12 +46,19 @@ see the javascript console for test results
 Example
 --------
 
+Note the extra syntax `->` is used below, any class that defines a method named `__right_arrow__` can use this special operator.
+
+
 @myscript
 ```rusthon
 #backend:javascript
 from runtime import *
 
 class Root:
+	def __right_arrow__(self, a, b):
+		print a+b
+		return a+b
+
 	MyClassVar = 1
 	MyOb = {'x':1, 'y':2 }
 	## TODO clean up list comps, here it leaks temp vars into the global namespace
@@ -104,8 +118,28 @@ class Nested:
 		snest.submeth('testing sub', 'NESTED')
 		return snest
 
+def show_source_code():
+	document.body->(
+		document->('div')->(id='PY_CODE', style="position:absolute;height:100%;width:50%;top:0;left:0"),
+		document->('div')->(id='JS_CODE', style="position:absolute;height:100%;width:50%;top:0;right:0"),
+	)
+	editor = ace.edit('PY_CODE')
+	editor.setValue(document->('#myscript').firstChild.nodeValue)
+	editor.setTheme("ace/theme/monokai")
+	editor.getSession().setMode("ace/mode/python")
+	editor.gotoLine( editor.session.getLength()-1 )
+
+	editor = ace.edit('JS_CODE')
+	editor.setValue(document->('#myscript_transpiled').firstChild.nodeValue)
+	editor.setTheme("ace/theme/monokai")
+	editor.getSession().setMode("ace/mode/javascript")
+	editor.gotoLine( editor.session.getLength()-1 )
+
+
 @debugger
 def test():
+	show_source_code()
+
 	assert Root.MyClassVar == 1
 	assert Root.OtherClassVar == 11
 	assert len(Root.SomeList) == 2
@@ -120,6 +154,8 @@ def test():
 	assert Root.otherfunc(2) == 6
 
 	r = Root()
+	assert r->(1,2) == 3
+
 	assert r.myprop == 100
 	r.myprop = 'OK'
 	assert r._myprop == 'OK'
@@ -136,6 +172,7 @@ def test():
 	snest.submeth('called from outer scope','subnested')
 
 	scls = new Nested.SubClass()
+	assert scls->(100,100) == 200
 	scls2 = scls.foo()
 
 	xx = new Nested.SubClass.XXX()
@@ -165,7 +202,5 @@ def test():
 	ssc.foo()
 	ssc.bar()
 
-
-test()
 
 ```

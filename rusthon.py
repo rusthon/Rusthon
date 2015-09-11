@@ -568,6 +568,7 @@ def build( modules, module_path, datadirs=None ):
 	cpp_defines = []
 	compile_mode = 'binary'
 	exename = 'rusthon-test-bin'
+	tagged_trans_src = {}
 
 
 	if modules['rusthon']:
@@ -644,6 +645,7 @@ def build( modules, module_path, datadirs=None ):
 					js = compile_js( mod['code'], module_path, main_name=mod['tag'] )
 					mod['build'] = {'script':js[mod['tag']]}
 					tagged[ mod['tag'] ] = js[mod['tag']]
+					tagged_trans_src[ mod['tag'] ] = mod['code']  ## so user can embed original source using <!tagname>
 					for name in js:
 						output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 				else:
@@ -671,7 +673,7 @@ def build( modules, module_path, datadirs=None ):
 		for mod in js_merge:
 			if mod['tag']:
 				if tagname is not None:
-					raise RuntimeError('TODO multiple tag insertions')
+					raise RuntimeError('TODO multiple tag insertions: %s' %tagname)
 				tagname = mod['tag']
 				src.append( mod['code'] )
 			else:
@@ -690,6 +692,9 @@ def build( modules, module_path, datadirs=None ):
 			tagged[ tagname ] = js[ tagname ]
 			for name in js:
 				output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
+
+		if tagname:
+			tagged_trans_src[ tagname ] = '\n'.join(src)
 
 	cpyembed = []
 	nuitka = []
@@ -850,17 +855,26 @@ def build( modules, module_path, datadirs=None ):
 				tag = u'<@%s>' %tagname
 				js  = tagged[tagname]
 				if tag in html:
-					#print js
-					#xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
 					## TODO fix this ugly mess
 					try:
 						## javascript with unicode
-						xxx = u'<script type="text/javascript">\n%s</script>' %js
+						xxx = u'<script type="text/javascript" id="%s_transpiled">\n%s</script>' %(tagname, js)
 					except UnicodeDecodeError:
 						## rusthon translated to js
-						xxx = u'<script type="text/javascript">\n%s</script>' %js.decode('utf-8')
-
+						xxx = u'<script type="text/javascript" id="%s_transpiled">\n%s</script>' %(tagname, js.decode('utf-8'))
 					html = html.replace(tag, xxx)
+
+				stag = u'<!%s>' %tagname
+				py  = tagged_trans_src[tagname]
+				if stag in html:
+					## TODO fix this ugly mess
+					try:
+						xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py)
+					except UnicodeDecodeError:
+						xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py.decode('utf-8'))
+					html = html.replace(stag, xxx)
+
+
 			mod['code'] = html
 			output['html'].append( mod )
 
