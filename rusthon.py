@@ -864,15 +864,16 @@ def build( modules, module_path, datadirs=None ):
 						xxx = u'<script type="text/javascript" id="%s_transpiled">\n%s</script>' %(tagname, js.decode('utf-8'))
 					html = html.replace(tag, xxx)
 
-				stag = u'<!%s>' %tagname
-				py  = tagged_trans_src[tagname]
-				if stag in html:
-					## TODO fix this ugly mess
-					try:
-						xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py)
-					except UnicodeDecodeError:
-						xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py.decode('utf-8'))
-					html = html.replace(stag, xxx)
+				if tagname in tagged_trans_src.keys():
+					stag = u'<!%s>' %tagname
+					py  = tagged_trans_src[tagname]
+					if stag in html:
+						## TODO fix this ugly mess
+						try:
+							xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py)
+						except UnicodeDecodeError:
+							xxx = u'<script type="text/rusthon" id="%s">\n%s</script>' %(tagname, py.decode('utf-8'))
+						html = html.replace(stag, xxx)
 
 
 			mod['code'] = html
