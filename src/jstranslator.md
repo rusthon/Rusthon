@@ -1476,6 +1476,8 @@ html files can also be translated, it is parsed and checked for `<script type="t
 ```python
 
 def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
+	if '--debug-inter' in sys.argv:
+		raise RuntimeError(source)
 	head = []
 	tail = []
 	script = False

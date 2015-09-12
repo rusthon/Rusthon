@@ -1422,111 +1422,21 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				return '(%s %s %s)' % (left, op, right)
 
-		elif op == '|':
-			if isinstance(node.right, Str):
-				self._custom_op_hack = (node.right.s, left)
-				return ''
-			elif hasattr(self, '_custom_op_hack') and isinstance(node.left, BinOp):
-				op,left_operand = self._custom_op_hack
-				right_operand = self.visit(node.right)
-				#return '%s( %s, %s )' %(op, left_operand, right_operand)
-				if op.decode('utf-8') in self._custom_operators:  ## swap name to python function
-					op = self._custom_operators[ op.decode('utf-8') ]
-				return '%s( [%s, %s], JSObject() )' %(op, left_operand, right_operand)
+		elif op == '%' and isinstance(node.left, ast.Str) and self._with_js:
+			return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
 
-		elif op == '%' and isinstance(node.left, ast.Str):
-			if self._with_js:
-				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
-			else:
-				return '__sprintf( %s, %s )' %(left, right)  ## assumes that right is a tuple, or list.
-
-		elif op == '*' and isinstance(node.left, ast.List):
+		elif op == '*' and isinstance(node.left, ast.List) and self._with_js:
 			if len(node.left.elts) == 1 and isinstance(node.left.elts[0], ast.Name) and node.left.elts[0].id == 'None':
-				if self._with_dart:
-					return 'JS("__create_list(%s)")' %self.visit(node.right)
-				else:
-					return 'inline("new Array(%s)")' %self.visit(node.right)
-			elif isinstance(node.right,ast.Num):
-				n = node.right.n
-			elif isinstance(node.right, Name):
-				if node.right.id in self._global_nodes:
-					n = self._global_nodes[ node.right.id ].n
-				else:
-					raise SyntaxError( self.format_error(node) )
+				return 'inline("new Array(%s)")' %self.visit(node.right)
 			else:
-				#raise SyntaxError( self.format_error(node) )
-				return '__mul_op(%s,%s)'%(left, right)
+				return '%s.__mul__(%s)' %(left, right)
 
-			elts = [ self.visit(e) for e in node.left.elts ]
-			expanded = []
-			for i in range( n ):
-				expanded.extend( elts )
+		elif op == '//' and self._with_js:
+			return 'Math.floor(%s/%s)' %(left, right)
 
-			return '[%s]' %','.join(expanded)
-
-		elif not self._with_dart and left in self._typedef_vars and self._typedef_vars[left]=='long':
-			if op == '*':
-				return '%s.multiply(%s)'%(left, right)
-			elif op == '+':
-				return '%s.add(%s)'%(left, right)
-			elif op == '-':
-				return '%s.subtract(%s)'%(left, right)
-			elif op == '/' or op == '//':
-				return '%s.div(%s)'%(left, right)
-			elif op == '%':
-				return '%s.modulo(%s)'%(left, right)
-			else:
-				raise NotImplementedError('long operator: %s'%op)
-
-		elif not self._with_dart and op == '*' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
-			power = POWER_OF_TWO.index( node.right.n )
-			return '%s << %s'%(left, power)
-
-		elif not self._with_dart and op == '//' and left in self._typedef_vars and self._typedef_vars[left]=='int' and isinstance(node.right, ast.Num) and node.right.n in POWER_OF_TWO:
-			power = POWER_OF_TWO.index( node.right.n )
-			return '%s >> %s'%(left, power)
-
-		elif not self._with_dart and op == '*' and '*' in self._direct_operators:
-			return '(%s * %s)'%(left, right)
-
-		elif not self._with_dart and not self._with_js and op == '*':
-			if left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
-				return '(%s * %s)'%(left, right)
-			else:
-				return '__mul_op(%s,%s)'%(left, right)
-
-		elif op == '//':
-			if self._with_dart:
-				return '(%s/%s).floor()' %(left, right)
-			else:
-				return 'Math.floor(%s/%s)' %(left, right)
-
-		elif op == '**':
+		elif op == '**' and self._with_js:
 			return 'Math.pow(%s,%s)' %(left, right)
 
-		elif op == '+' and not (self._with_dart or self._with_go or self._with_rust or self._with_cpp):
-			if '+' in self._direct_operators:
-				return '%s+%s'%(left, right)
-			elif left in self._typedef_vars and self._typedef_vars[left] in typedpython.native_number_types:
-				return '%s+%s'%(left, right)
-
-			elif self._in_lambda or self._in_while_test:
-				## this is also required when in an inlined lambda like "(lambda a,b: a+b)(1,2)"
-				return '__add_op(%s, %s)'%(left, right)  ## TODO check deprecated
-
-			else:
-				## the ternary operator in javascript is fast, the add op needs to be fast for adding numbers, so here typeof is
-				## used to check if the first variable is a number, and if so add the numbers, otherwise fallback to using the
-				## __add_op function, the __add_op function checks if the first variable is an Array, and if so then concatenate;
-				## else __add_op will call the "__add__" method of the left operand, passing right as the first argument.
-				l = '__left%s' %self._addop_ids
-				self._addop_ids += 1
-				r = '__right%s' %self._addop_ids
-				writer.write('var(%s,%s)' %(l,r))
-				self._addop_ids += 1
-				writer.write('%s = %s' %(l,left))
-				writer.write('%s = %s' %(r,right))
-				return '__ternary_operator__( typeof(%s)=="number", %s + %s, __add_op(%s, %s))'%(l, l, r, l, r)
 
 		return '(%s %s %s)' % (left, op, right)
 
