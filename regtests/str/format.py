@@ -1,5 +1,8 @@
 """string.format"""
+from runtime import *
 
 def main():
 	a = '{x}{y}'.format( x='A', y='B')
-	TestError(a == 'AB')
+	assert(a == 'AB')
+
+main()

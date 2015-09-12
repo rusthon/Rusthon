@@ -1,14 +1,18 @@
 """compare"""
 
+from runtime import *
+
 def main():
 	a = 'XYZ'
 	b = 'XYZ'
-	TestError( a == b )
+	assert( a == b )
 
 	x = False
 	if 'a' < 'b':
 		x = True
 
-	TestError( x==True )
+	assert( x==True )
 
-	TestError( 'a' < 'b' )
+	assert( 'a' < 'b' )
+
+main()

@@ -551,6 +551,15 @@ def list(ob):
 			a.push(e)
 	return a
 
+@unicode('𝑻𝒖𝒑𝒍𝒆')
+def tuple(ob):
+	a = []
+	if ob is not undefined:
+		for e in ob:
+			a.push(e)
+	return a
+
+
 @unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
 	if ob is undefined or ob is null:
@@ -630,6 +639,12 @@ def len(ob):
 		return ob.__len__()
 	else: #elif instanceof(ob, Object):
 		return Object.keys(ob).length
+
+@bind(String.prototype.__mul__)
+def __string_multiply(a):
+	out = ''
+	for i in range(a): out += this
+	return out
 
 @bind(String.prototype.__contains__)
 def __string_contains(a):
@@ -1194,7 +1209,7 @@ def abs( num ):
 
 @unicode('𝑶𝒓𝒅𝒊𝒏𝒂𝒍')
 def ord( char ):
-	char.charCodeAt(0)
+	return char.charCodeAt(0)
 
 @unicode('𝑪𝒉𝒂𝒓𝒂𝒄𝒕𝒆𝒓')
 def chr( num ):

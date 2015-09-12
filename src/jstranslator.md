@@ -1142,6 +1142,8 @@ old javascript backend also used `JS(str)`
 				'%': 'mod'
 			}
 			return '(%s.__%s__(%s))' % (left, methodnames[op], right)
+		elif op=='*' and isinstance(node.left, ast.Str):
+			return '(%s.__mul__(%s))' % (left, right)
 		else:
 			return '(%s %s %s)' % (left, op, right)
 
@@ -1462,7 +1464,7 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 		fast_loops = True,
 		runtime_checks = False
 	)
-
+	builtins += '\n/*end-builtins*/\n'
 	return builtins
 
 ```

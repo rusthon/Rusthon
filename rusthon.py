@@ -789,7 +789,7 @@ def build( modules, module_path, datadirs=None ):
 
 					if os.path.isfile(url):
 						html.append('<script type="text/javascript">')
-						html.append( open(url, 'rb').read() )
+						html.append( open(url, 'rb').read().decode('utf-8') )
 						html.append('</script>')
 					elif 'git="' in line:
 						giturl = line.split('git="')[-1].split('"')[0]
@@ -798,7 +798,7 @@ def build( modules, module_path, datadirs=None ):
 						subprocess.check_call(cmd, cwd=os.environ['HOME'])
 						assert os.path.isfile(url)
 						html.append('<script type="text/javascript">')
-						html.append( open(url, 'rb').read() )
+						html.append( open(url, 'rb').read().decode('utf-8') )
 						html.append('</script>')
 					elif 'source="' in line:
 						srcurl = line.split('source="')[-1].split('"')[0]
@@ -811,7 +811,7 @@ def build( modules, module_path, datadirs=None ):
 						open(url, 'wb').write(srcdata)
 						assert os.path.isfile(url)
 						html.append('<script type="text/javascript">')
-						html.append( open(url, 'rb').read() )
+						html.append( open(url, 'rb').read().decode('utf-8') )
 						html.append('</script>')
 
 					else:
@@ -1435,6 +1435,11 @@ def main():
 	base_path = None
 	singleout = None
 	for path in scripts:
+		## note: .decode('utf-8') is not required here,
+		## should also check the strip to ensure the user has not
+		## used unicode strings starting with the `u` prefix,
+		## because that will break the translator, because it
+		## promotes those strings to unicode objects in the AST (which is written in Python2)
 		script = open(path,'rb').read()
 		if '--c++' in sys.argv:          script = '#backend:c++\n'+script
 		elif '--javascript' in sys.argv: script = '#backend:javascript\n'+script
@@ -1443,6 +1448,7 @@ def main():
 		elif '--dart' in sys.argv: script = '#backend:dart\n'+script
 		elif '--lua' in sys.argv:  script = '#backend:lua\n'+script
 		elif '--verilog' in sys.argv: script = '#backend:verilog\n'+script
+
 		fpath,fname = os.path.split(path)
 		tag = fname.split('.')[0]
 		singlemod = {'name':'main', 'tag':tag, 'code':script}

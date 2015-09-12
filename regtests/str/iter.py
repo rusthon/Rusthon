@@ -1,15 +1,18 @@
 """The string iterator"""
+from runtime import *
 
 def main():
 	a = list("abc")
-	TestError(a[0] == 'a')
-	TestError(a[1] == 'b')
-	TestError(a[2] == 'c')
+	assert(a[0] == 'a')
+	assert(a[1] == 'b')
+	assert(a[2] == 'c')
 
 	b = ['a']
 	for i in "xyz":
 		b.append(i)
-	TestError(b[0] == 'a')
-	TestError(b[1] == 'x')
-	TestError(b[2] == 'y')
-	TestError(b[3] == 'z')
+	assert(b[0] == 'a')
+	assert(b[1] == 'x')
+	assert(b[2] == 'y')
+	assert(b[3] == 'z')
+
+main()

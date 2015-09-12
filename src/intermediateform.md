@@ -1631,6 +1631,14 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				comp.append( self.visit(node.ops[i]) )
 				comp.append( self.visit(node.comparators[i]) )
+
+		try:
+			out = ' '.join(comp)
+		except UnicodeDecodeError as err:
+			print comp
+			for c in comp:
+				print c
+			raise err
 		return ' '.join( comp )
 
 	def visit_Not(self, node):

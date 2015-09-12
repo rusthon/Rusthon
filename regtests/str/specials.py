@@ -1,19 +1,25 @@
 """Specials chars in strings"""
+from runtime import *
 
 class C:
 	def __init__(self):
 		self.value = None
 
 def main():
-	TestError(len('\\') == 1)
-	TestError(u'éè' == u'é' + u'è')
+	print 'testing special strings'
+	assert(len('\\') == 1)
+	#a = u'éè'  ## prefixing `u` is invalid, and will cause UnicodeDecodeError
+
+	a = 'éè'
+	print a
+	assert( a == 'é' + 'è')
 
 	c = C()
-	c.value = u"é"
-	TestError( c.value == u'é')
+	c.value = "é"
+	assert( c.value == 'é')
 
-	if len(u'éè') == 2: # The interpreter assumes UTF8 (all except Python2)
-		TestError(u'éè'[::-1] == u'èé')
+	assert len('éè') == 2
+	assert('éè'[::-1] == 'èé')
+	print 'ok'
 
-	else:
-		TestError(tuple(u'éè'[::-1]) == (chr(168), chr(195), chr(169), chr(195)))
+main()
