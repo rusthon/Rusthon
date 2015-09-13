@@ -954,7 +954,7 @@ def __jsdict_items(ob):
 		for key in ob.keys():
 			items.push( [key,ob[key]] )
 		return items
-	elif typeof(ob.set)=='function':
+	elif typeof(ob.items)=='function':
 		return inline('ob.items()')
 	else:
 		print '[method error] missing `items`'
@@ -968,7 +968,7 @@ def __jsdict_values(ob):
 		for key in ob.keys():
 			items.push( ob[key] )
 		return items
-	elif typeof(ob.set)=='function':
+	elif typeof(ob.values)=='function':
 		return inline('ob.values()')
 	else:
 		print '[method error] missing `values`'
@@ -1007,7 +1007,7 @@ def __jsdict_pop(ob, key, __default__):
 			inline('delete ob[key]')
 			return p
 
-	elif typeof(ob.set)=='function':
+	elif typeof(ob.pop)=='function':
 		return inline('ob.pop(key,__default__)')
 	else:
 		print '[method error] missing `pop`'
@@ -1016,11 +1016,18 @@ def __jsdict_pop(ob, key, __default__):
 
 
 def __jsdict_update(ob, other):
-	if typeof(ob['update'])=='function':
+	if ob.__class__ == dict:
+		keys = []  ## extra syntax: `for newkey in mydict.update(otherdict):`
+		for key in other.keys():
+			ob[key] = other[key]
+			keys.push(key)
+		return keys
+	elif typeof(ob.update)=='function':
 		return inline('ob.update(other)')
 	else:
-		for key in __object_keys__(other):
-			ob[key]=other[key]
+		print '[method error] missing `update`'
+		print ob
+		raise RuntimeError('object has no method named `update`')
 
 @unicode('𝑺𝒆𝒕')
 def set(a):

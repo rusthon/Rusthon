@@ -70,4 +70,18 @@ def main():
 
 	assert g.pop(100)==100
 
+	print 'testing dict.update'
+	u = {1:'x', 2:'y'}
+	newkeys = a.update( u )
+	print newkeys
+	assert 1 in a.keys()
+	assert 2 in a.keys()
+	assert 'x' in a.values()
+	assert 'y' in a.values()
+
+	for newkey in a.update({66:'XXX', 99:'YYY'}):
+		print 'new key:' + newkey
+
+	print 'ok'
+
 main()
