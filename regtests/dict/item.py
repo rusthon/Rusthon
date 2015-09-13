@@ -1,3 +1,4 @@
+from runtime import *
 """__getitem__"""
 def f():
     pass
@@ -11,11 +12,13 @@ def main():
 	a[f] = 44
 	a[g] = 66
 	a[G] = 55
-	TestError(a['2'] == 22)
-	TestError(a[3] == 33)
-	TestError(a[f] == 44)
-	TestError(a[G] == 55)
-	TestError(a[g] == 66)
+	assert(a['2'] == 22)
+	assert(a[3] == 33)
+	assert(a[f] == 44)
+	assert(a[G] == 55)
+	assert(a[g] == 66)
 
-	TestError(a.get('none', 'default') == 'default')
+	assert(a.get('none', 'default') == 'default')
 
+
+main()

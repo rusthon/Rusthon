@@ -1,3 +1,4 @@
+from runtime import *
 """variable keywords"""
 class A:
 	def __init__(self, **kw):
@@ -8,4 +9,5 @@ class A:
 
 def main():
 	a = A(x=1,y=2)
-	TestError( a.value == 3 )
+	assert( a.value == 3 )
+main()

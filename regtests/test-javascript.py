@@ -7,12 +7,13 @@ report = [
 ]
 
 
-passed = {}
 ignore = ()
 
 TODO_FIX = (
 )
 for folder in 'calling str dict loop lang set'.split():
+	passed = {}
+
 	print 'testing folder: '+folder
 	files = os.listdir('./'+folder)
 	files.sort()

@@ -10,5 +10,4 @@ def main():
 	b = 'X%sX' %1.1
 	assert(b == 'X1.1X')
 
-main()123456
-vr unithon-flowspace, ace.js rust servo user custom debugger+docker.
+main()
