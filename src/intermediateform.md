@@ -2720,9 +2720,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		elif self._with_js or javascript or self._with_ll:
 
-			if node.args.vararg:
-				#raise SyntaxError( 'pure javascript functions can not take variable arguments (*args)' )
-				writer.write('#WARNING - NOT IMPLEMENTED: javascript-mode functions with (*args)')
 			kwargs_name = node.args.kwarg or '_kwargs_'
 
 			args = []
@@ -2735,7 +2732,15 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					args.append( a )
 
-			if len(node.args.defaults) or node.args.kwarg:
+			if node.args.vararg:
+				if len(node.args.defaults) or node.args.kwarg:
+					if args:
+						writer.write( 'def %s( %s, %s, *%s ):' % (node.name, ','.join(args), kwargs_name, node.args.vararg))
+					else:
+						writer.write( 'def %s( %s, *%s ):' % (node.name, kwargs_name, node.args.vararg))
+				else:
+					writer.write( 'def %s( %s, *%s ):' % (node.name, ','.join(args), node.args.vararg))
+			elif len(node.args.defaults) or node.args.kwarg:
 				if args:
 					writer.write( 'def %s( %s, %s ):' % (node.name, ','.join(args), kwargs_name ) )
 				else:

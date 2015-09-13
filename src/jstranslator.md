@@ -638,6 +638,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(funcname, funcname)
 			)
 
+		if node.args.vararg:
+			body.append('var %s = Array.prototype.splice.call(arguments,%s, arguments.length);' %(node.args.vararg, len(node.args.args)) )
+
 		next = None  ## deprecated?
 		
 		for i,child in enumerate(node.body):
