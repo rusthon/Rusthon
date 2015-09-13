@@ -558,8 +558,14 @@ class PythonToPythonJS(NodeVisitorBase):
 				if type(node.keys[i].n) is int:
 					if keytype is None:
 						keytype = 'int'
-					#elif keytype != 'int':
-					#	keytype = 'DYNAMIC'
+					elif keytype != 'int':
+						raise SyntaxError(self.format_error('dictionary can not have mixed string and number keys'))
+			elif isinstance(node.keys[i], ast.Str):
+				if keytype is None:
+					keytype = 'string'
+				elif keytype != 'string':
+					raise SyntaxError(self.format_error('dictionary can not have mixed string and number keys'))
+
 
 			k = self.visit( node.keys[ i ] )
 			v = node.values[i]
@@ -2080,7 +2086,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			return '%s(%s)' %( self.visit(node.func), ','.join(args) )
 
-		elif self._with_js or self._with_dart:
+		elif self._with_js:
 			args = list( map(self.visit, node.args) )
 
 			if name in self._generator_functions:
@@ -2104,19 +2110,14 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			elif name == 'isinstance':
 				assert len(args) == 2
+				#if args[1] == 'dict':   ## TODO find better solution for dict test
+				#	args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
+				#elif args[1] == 'list':
+				#	args[1] = 'Array'
+				return 'isinstance(%s, %s)' %(args[0], args[1])
 
-				if self._with_dart:
-					return 'instanceof(%s, %s)' %(args[0], args[1])
-
-				else:
-					if args[1] == 'dict':   ## TODO find better solution for dict test
-						args[1] = 'Object'  ## this fails when testing "isinstance(a, dict)==False" when a is an instance of some class.
-					elif args[1] == 'list':
-						args[1] = 'Array'
-
-					return 'isinstance(%s, %s)' %(args[0], args[1])
-
-			elif isinstance(node.func, ast.Attribute) and not self._with_dart:  ## special method calls
+			elif isinstance(node.func, ast.Attribute):
+				## special method calls that collide with javascript internal methods on native types ##
 				anode = node.func
 				self._in_assign_target = True
 				method = self.visit( node.func )
@@ -2125,8 +2126,8 @@ class PythonToPythonJS(NodeVisitorBase):
 				if anode.attr == 'update' and len(args) == 1:
 					return '__jsdict_update(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
-				#elif anode.attr == 'get' and len(args) > 0 and len(args) <= 2:  ## TODO fix this, fails with some API/object types.
-				#	return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+				elif anode.attr == 'get' and len(args) > 0 and len(args) <= 2 and not node.keywords:
+					return '__jsdict_get(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				elif anode.attr == 'set' and len(args)==2:
 					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))

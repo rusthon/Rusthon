@@ -15,6 +15,88 @@ def __invalid_call__(msg, args):
 			print '	argument:' + i + ' -> ' + args[i]
 	raise RuntimeError(msg)
 
+
+@unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
+def isinstance( ob, klass):
+	if ob is undefined or ob is null:
+		return False
+	elif typeof(klass) is 'string':
+		T = typeof( ob )
+		if T == 'number':
+			if klass == 'int' or klass == '𝑰𝒏𝒕𝒆𝒈𝒆𝒓':
+				return True
+			elif klass == 'float' or klass == '𝑭𝒍𝒐𝒂𝒕':
+				return True
+			else:
+				return False
+		elif T == 'string':
+			if klass == 'string' or klass == 'str' or klass == '𝑺𝒕𝒓𝒊𝒏𝒈':
+				return True
+			else:
+				return False
+		elif klass == 'Array' or klass == 'list' or klass == '𝑳𝒊𝒔𝒕':
+			if instanceof(ob, Array):
+				return True
+			else:
+				return False
+		elif ob.__class__:
+			if ob.__class__.__name__ == klass:
+				return True
+			else:
+				return False
+		else:
+			return False
+
+	elif instanceof(ob, Array):
+		if klass is list:
+			return True
+		elif klass is Array:
+			return True
+		else:
+			return False
+	elif instanceof(ob, klass):
+		return True
+	elif hasattr(ob, '__class__'):
+		return issubclass(ob.__class__, klass)
+	elif typeof(ob)=='number':
+		if klass is int and ob.toString().isdigit():
+			return True
+		elif klass is float:  ## must always be true because `0.0` becomes `0`
+			return True
+		else:
+			return False
+	elif typeof(ob)=='string':
+		if klass is str or klass is string:
+			return True
+		else:
+			return False
+	else:
+		return False
+
+@unicode('𝑰𝒔𝑺𝒖𝒃𝒄𝒍𝒂𝒔𝒔')
+def issubclass(C, B):
+	if C is B:
+		return True
+	else:
+		for base in C.__bases__:
+			if issubclass(base, B):
+				return True
+	return False
+
+@unicode('𝑳𝒆𝒏𝒈𝒕𝒉')
+def len(ob):
+	if instanceof(ob, Array):
+		return ob.length
+	elif __is_typed_array(ob):
+		return ob.length
+	#elif instanceof(ob, ArrayBuffer):  ## missing in safari
+	#	return ob.byteLength
+	elif ob.__len__:
+		return ob.__len__()
+	else: #elif instanceof(ob, Object):
+		return Object.keys(ob).length
+
+
 if HTMLElement is not undefined:
 	@bind(HTMLElement.prototype.__right_arrow__)
 	def __auto_dom__():
@@ -60,10 +142,12 @@ def dict( d, copy=False, keytype=None, valuetype=None, iterable=None ):
 		for pair in pairs:
 			if keytype is not None:
 				if not isinstance(pair[0], keytype):
-					raise TypeError('invalid keytype')
+					msg = 'INVALID KEY-TYPE: `%s` - expected type `%s`' %(typeof(pair[0]), keytype)
+					raise TypeError(msg)
 			if valuetype is not None:
 				if not isinstance(pair[1], valuetype):
-					raise TypeError('invalid valuetype')
+					msg = 'INVALID VALUE-TYPE: `%s` - expected type `%s`' %(typeof(pair[1]), valuetype)
+					raise TypeError(msg)
 
 			inline('d[ pair[0] ] = pair[1]')
 
@@ -71,10 +155,13 @@ def dict( d, copy=False, keytype=None, valuetype=None, iterable=None ):
 		for pair in iterable:
 			if keytype is not None:
 				if not isinstance(pair[0], keytype):
-					raise TypeError('invalid keytype')
+					msg = 'INVALID KEY-TYPE: `%s` - expected type `%s`' %(typeof(pair[0]), keytype)
+					raise TypeError(msg)
+
 			if valuetype is not None:
 				if not isinstance(pair[1], valuetype):
-					raise TypeError('invalid valuetype')
+					msg = 'INVALID VALUE-TYPE: `%s` - expected type `%s`' %(typeof(pair[1]), valuetype)
+					raise TypeError(msg)
 
 			inline('d[ pair[0] ] = pair[1]')
 
@@ -92,10 +179,15 @@ def dict( d, copy=False, keytype=None, valuetype=None, iterable=None ):
 		def __setitem__(key, value):
 			if keytype is not None:
 				if not isinstance(key, keytype):
-					raise TypeError('invalid key type')
+					print 'TypeError-KEY:' + key
+					msg = 'INVALID KEY-TYPE: `%s` - expected type `%s`' %(typeof(key), keytype)
+					raise TypeError(msg)
+
 			if valuetype is not None:
 				if not isinstance(value, valuetype):
-					raise TypeError('invalid value type')
+					print 'TypeError-VALUE:' + value
+					msg = 'INVALID VALUE-TYPE: `%s` - expected type `%s`' %(typeof(value), valuetype)
+					raise TypeError(msg)
 
 			inline('d[key] = value')
 
@@ -567,85 +659,6 @@ def tuple(ob):
 	return a
 
 
-@unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
-def isinstance( ob, klass):
-	if ob is undefined or ob is null:
-		return False
-	elif typeof(klass) is 'string':
-		T = typeof( ob )
-		if T == 'number':
-			if klass == 'int' or klass == '𝑰𝒏𝒕𝒆𝒈𝒆𝒓':
-				return True
-			elif klass == 'float' or klass == '𝑭𝒍𝒐𝒂𝒕':
-				return True
-			else:
-				return False
-		elif T == 'string':
-			if klass == 'string' or klass == 'str' or klass == '𝑺𝒕𝒓𝒊𝒏𝒈':
-				return True
-			else:
-				return False
-		elif klass == 'Array' or klass == 'list' or klass == '𝑳𝒊𝒔𝒕':
-			if instanceof(ob, Array):
-				return True
-			else:
-				return False
-		elif ob.__class__:
-			if ob.__class__.__name__ == klass:
-				return True
-			else:
-				return False
-		else:
-			return False
-
-	elif instanceof(ob, Array):
-		if klass is list:
-			return True
-		elif klass is Array:
-			return True
-		else:
-			return False
-	elif instanceof(ob, klass):
-		return True
-	elif hasattr(ob, '__class__'):
-		return issubclass(ob.__class__, klass)
-	elif typeof(ob)=='number':
-		if klass is int and ob.toString().isdigit():
-			return True
-		elif klass is float:  ## must always be true because `0.0` becomes `0`
-			return True
-		else:
-			return False
-	elif typeof(ob)=='string':
-		if klass is str or klass is string:
-			return True
-		else:
-			return False
-	else:
-		return False
-
-@unicode('𝑰𝒔𝑺𝒖𝒃𝒄𝒍𝒂𝒔𝒔')
-def issubclass(C, B):
-	if C is B:
-		return True
-	else:
-		for base in C.__bases__:
-			if issubclass(base, B):
-				return True
-	return False
-
-@unicode('𝑳𝒆𝒏𝒈𝒕𝒉')
-def len(ob):
-	if instanceof(ob, Array):
-		return ob.length
-	elif __is_typed_array(ob):
-		return ob.length
-	#elif instanceof(ob, ArrayBuffer):  ## missing in safari
-	#	return ob.byteLength
-	elif ob.__len__:
-		return ob.__len__()
-	else: #elif instanceof(ob, Object):
-		return Object.keys(ob).length
 
 @bind(String.prototype.__mul__)
 def __string_multiply(a):
@@ -907,26 +920,41 @@ def __jsdict( items ):	## DEPRECATED
 	return d
 
 def __jsdict_get(ob, key, default_value):
-	if instanceof(ob, Object):
-		if instanceof(key, Array):
-			key = JSON.stringify(key)
-		if inline("key in ob"): return ob[key]
-		return default_value
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		if default_value is not undefined:
-			return JS("ob.get(key, default_value)")
+	if ob.__class__ == dict:
+		v = inline('ob[key]')
+		if default_value is undefined and v is undefined:
+			print 'KeyError: key not found in object:'
+			print ob
+			raise KeyError('invalid key:' + key)
+		elif v is not undefined:
+			return v
 		else:
-			return JS("ob.get(key)")
+			return default_value
+
+	elif typeof(ob.get)=='function':
+		return inline('ob.get(key,default_value)')
+
+	else:  ## object from an external js library.
+		v = inline('ob.get(key,default_value)')
+		if default_value is undefined and v is undefined:
+			print 'KeyError: key not found in object:'
+			print ob
+			raise KeyError('invalid key:' + key)
+		elif v is not undefined:
+			return v
+		else:
+			return default_value
+
 
 def __jsdict_set(ob, key, value):
-	if instanceof(ob, Object):
-		if instanceof(key, Array):
-			key = JSON.stringify(key)
-		ob[ key ] = value
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		JS("ob.set(key,value)")
+	if ob.__class__ == dict:
+		inline('ob[key]=value')
+	elif typeof(ob.set)=='function':
+		return inline('ob.set(key,value)')
+	else:
+		print '[method error] missing `set`'
+		print ob
+		raise RuntimeError('object has no method named `set`')
 
 
 
