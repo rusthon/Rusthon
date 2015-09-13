@@ -2800,8 +2800,19 @@ class PythonToPythonJS(NodeVisitorBase):
 						#b = "if (%s === undefined || %s.%s === undefined) {var %s = %s} else {var %s=%s.%s}" %a
 						spaces = ' ' * (maxlen - len(arg.id))
 						spaces2 = ' ' * (maxlen2 - len(default_value))
-						a = (arg.id, spaces, kwargs_name, kwargs_name,arg.id, spaces, default_value, spaces2, kwargs_name, arg.id)
-						b = "var %s %s= (%s === undefined || %s.%s === undefined)%s?\t%s %s: %s.%s" %a
+
+						## this is fast, but fails in the case where the user has called a function that takes
+						## named keyword args, and called it without giving those keyword names. This case can
+						## easily popup when the user has refactored the function to use named keyword args,
+						## but did not update all code that calls that function.
+						#a = (arg.id, spaces, kwargs_name, kwargs_name,arg.id, spaces, default_value, spaces2, kwargs_name, arg.id)
+						#b = "var %s %s= (%s === undefined || %s.%s === undefined)%s?\t%s %s: %s.%s" %a
+
+						## new version throws a runtime error if the function was called improperly.
+						ERR = 'function `%s` requires named keyword arguments, invalid parameter for `%s`' %(node.name, arg.id)
+						a = (arg.id, spaces, kwargs_name, kwargs_name, kwargs_name,arg.id, spaces, default_value, spaces2, kwargs_name, kwargs_name, arg.id,ERR)
+						b = "var %s %s= (%s===undefined || (typeof(%s)=='object' && %s.%s===undefined))%s?\t%s %s:   typeof(%s)=='object'?%s.%s: __invalid_call__('%s',arguments)" %a
+
 						c = "inline('''%s''')" %b
 						writer.write( c )
 

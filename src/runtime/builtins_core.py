@@ -8,6 +8,13 @@ inline('RuntimeError   = function(msg) {this.message = msg || "";}; RuntimeError
 inline('WebWorkerError = function(msg) {this.message = msg || "";}; WebWorkerError.prototype = Object.create(Error.prototype);WebWorkerError.prototype.name = "WebWorkerError";')
 inline('TypeError = function(msg) {this.message = msg || "";}; TypeError.prototype = Object.create(Error.prototype);TypeError.prototype.name = "TypeError";')
 
+def __invalid_call__(msg, args):
+	print '[INVALID CALL ARGUMENTS]'
+	if args is not undefined:
+		for i in range(args.length):
+			print '	argument:' + i + ' -> ' + args[i]
+	raise RuntimeError(msg)
+
 if HTMLElement is not undefined:
 	@bind(HTMLElement.prototype.__right_arrow__)
 	def __auto_dom__():
