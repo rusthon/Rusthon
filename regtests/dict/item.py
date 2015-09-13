@@ -10,6 +10,8 @@ class G(object):
 		print 'set method ok'
 		print x, y
 		return True
+	def items(self):
+		return True
 
 def main():
 	g = G()
@@ -42,5 +44,11 @@ def main():
 
 	assert g.set(1,2)
 	print 'ok'
+
+	i = a.items()
+	print i
+	assert len(i)==3
+
+	assert g.items()
 
 main()

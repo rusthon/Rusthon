@@ -959,16 +959,18 @@ def __jsdict_set(ob, key, value):
 
 
 def __jsdict_items(ob):
-	## `ob.items is None` is for: "self.__dict__.items()" because self.__dict__ is not actually a dict
-	if instanceof(ob, Object) or ob.items is undefined:  ## in javascript-mode missing attributes do not raise AttributeError
-		arr = []
-		for key in ob:
-			if Object.hasOwnProperty.call(ob, key):
-				value = ob[key]
-				arr.push( [key,value] )
-		return arr
-	else:  ## PythonJS object instance ##
-		return JS("ob.items()")
+	if ob.__class__ == dict:
+		items = []
+		for key in ob.keys():
+			items.push( [key,ob[key]] )
+		return items
+	elif typeof(ob.set)=='function':
+		return inline('ob.items()')
+	else:
+		print '[method error] missing `items`'
+		print ob
+		raise RuntimeError('object has no method named `items`')
+
 
 def __jsdict_pop(ob, key, _default=None):
 	if instanceof(ob, Array):

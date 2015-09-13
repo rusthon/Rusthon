@@ -2133,19 +2133,19 @@ class PythonToPythonJS(NodeVisitorBase):
 					return '__jsdict_set(%s, %s)' %(self.visit(anode.value), ','.join(args))
 
 				elif anode.attr == 'keys' and not args:
-					if self._strict_mode:
-						raise SyntaxError( self.format_error('method `keys` is not allowed without arguments') )
+					#if self._strict_mode:
+					#	raise SyntaxError( self.format_error('method `keys` is not allowed without arguments') )
 
 					return '__jsdict_keys(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'values' and not args:
-					if self._strict_mode:
-						raise SyntaxError( self.format_error('method `values` is not allowed without arguments') )
+					#if self._strict_mode:
+					#	raise SyntaxError( self.format_error('method `values` is not allowed without arguments') )
 					return '__jsdict_values(%s)' %self.visit(anode.value)
 
-				elif anode.attr == 'items' and not args:
-					if self._strict_mode:
-						raise SyntaxError( self.format_error('method `items` is not allowed without arguments') )
+				elif anode.attr == 'items' and not args and not node.keywords:
+					#if self._strict_mode:
+					#	raise SyntaxError( self.format_error('method `items` is not allowed without arguments') )
 
 					return '__jsdict_items(%s)' %self.visit(anode.value)
 
