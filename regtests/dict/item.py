@@ -13,6 +13,9 @@ class G(object):
 	def items(self):
 		return True
 
+	def pop(self, x):
+		return x
+
 def main():
 	g = G()
 
@@ -50,5 +53,21 @@ def main():
 	assert len(i)==3
 
 	assert g.items()
+
+	v = a.values()
+	print v
+	assert len(v)==3
+
+	p = a.pop(2)
+	assert p==22
+	assert 2 not in a.keys()
+
+	o = a.pop('missing', 'X')
+	assert o=='X'
+
+	print a.keys()
+	assert a.keys().length == 2
+
+	assert g.pop(100)==100
 
 main()

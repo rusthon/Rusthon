@@ -260,17 +260,6 @@ def __jsdict_keys(ob):
 		## something without a prototype - created using Object.create(null) ##
 		return inline("ob.keys()")
 
-def __jsdict_values(ob):
-	if instanceof(ob, Object):
-		arr = []
-		for key in ob:
-			if ob.hasOwnProperty(key):
-				value = ob[key]
-				arr.push( value )
-		return arr
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		return JS("ob.values()")
 
 @bind(Function.prototype.redefine)
 def __redef_function(src):
@@ -958,6 +947,7 @@ def __jsdict_set(ob, key, value):
 
 
 
+@unicode('')
 def __jsdict_items(ob):
 	if ob.__class__ == dict:
 		items = []
@@ -971,30 +961,59 @@ def __jsdict_items(ob):
 		print ob
 		raise RuntimeError('object has no method named `items`')
 
+@unicode('')
+def __jsdict_values(ob):
+	if ob.__class__ == dict:
+		items = []
+		for key in ob.keys():
+			items.push( ob[key] )
+		return items
+	elif typeof(ob.set)=='function':
+		return inline('ob.values()')
+	else:
+		print '[method error] missing `values`'
+		print ob
+		raise RuntimeError('object has no method named `values`')
 
-def __jsdict_pop(ob, key, _default=None):
+
+@unicode('')
+def __jsdict_pop(ob, key, __default__):
 	if instanceof(ob, Array):
 		if ob.length:
 			## note: javascript array.pop only pops the end of an array
+			## Array.splice changes the array inplace.
 			if key is undefined:
-				return inline("ob.pop()")
+				#return inline("ob.pop()")
+				raise RuntimeError('Array.pop(undefined)')
 			else:
-				return ob.splice( key, 1 )[0]
+				popped = ob.splice( key, 1 )
+				if popped.length == 0:
+					if __default__ is not undefined:  ## extra syntax: list.pop(item, default)
+						return __default__
+					else:
+						raise IndexError(key)
+				else:
+					return popped[0]
 		else:
 			raise IndexError(key)
-
-	elif instanceof(ob, Object):
-		if JS("key in ob"):
-			v = ob[key]
-			JS("delete ob[key]")
-			return v
-		elif _default is undefined:
-			raise KeyError(key)
+	elif ob.__class__ == dict:
+		p = ob[key]
+		if p is undefined:
+			if __default__ is not undefined:
+				return __default__
+			else:
+				raise KeyError(key)
 		else:
-			return _default
-	else:  ## PythonJS object instance ##
-		## this works because instances from PythonJS are created using Object.create(null) ##
-		return JS("ob.pop(key, _default)")
+			inline('delete ob[key]')
+			return p
+
+	elif typeof(ob.set)=='function':
+		return inline('ob.pop(key,__default__)')
+	else:
+		print '[method error] missing `pop`'
+		print ob
+		raise RuntimeError('object has no method named `items`')
+
 
 def __jsdict_update(ob, other):
 	if typeof(ob['update'])=='function':
