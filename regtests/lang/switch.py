@@ -1,3 +1,4 @@
+from runtime import *
 '''
 switch case default
 '''
@@ -19,5 +20,7 @@ def main():
 			x = 'default'
 			break
 	print(x)
-	TestError( x=='ok' )
+	assert( x=='ok' )
 
+
+main()

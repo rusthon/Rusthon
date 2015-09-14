@@ -1,3 +1,4 @@
+from runtime import *
 '''
 while else loop (DEPRECATED)
 '''
@@ -11,7 +12,7 @@ def main():
 	else:
 		a = True
 
-	TestError( a==True )
+	assert( a==True )
 
 	b = False
 	i = 0
@@ -21,5 +22,7 @@ def main():
 	else:
 		b = True
 
-	TestError( b==False )
+	assert( b==False )
 
+
+main()

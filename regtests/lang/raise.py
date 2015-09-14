@@ -1,3 +1,4 @@
+from runtime import *
 '''
 raise and catch error
 '''
@@ -9,7 +10,7 @@ def main():
 	except TypeError:
 		a = True
 
-	TestError( a==True )
+	assert( a==True )
 
 	b = False
 	try:
@@ -17,7 +18,7 @@ def main():
 	except:
 		b = False
 
-	TestError( b==True )
+	assert( b==True )
 
 	c = False
 	try:
@@ -25,4 +26,6 @@ def main():
 	except AttributeError:
 		c = True
 
-	TestError( c==True )
+	assert( c==True )
+
+main()

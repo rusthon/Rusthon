@@ -48,6 +48,9 @@ Above will compile everything in mymarkdown.md:
 
 Getting Started Javascript
 -----------------
+* [javascript regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-javascript.md)
+
+
 Transpile from Python to Javascript, with specialized syntax for static types, and using [WebWorkers](https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax) and other extensions to the Python language like [mini-macros](https://github.com/rusthon/Rusthon/wiki/Macro-Functions)
 
 Mini-macros help you make your code more readable, and hide ugly API's like HTML DOM.

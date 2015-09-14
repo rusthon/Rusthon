@@ -1,3 +1,4 @@
+from runtime import *
 '''
 try except
 '''
@@ -10,5 +11,7 @@ def main():
 		b = 'this should not happen'
 	except:
 		b = True
-	TestError( b == True )
+	assert( b == True )
 
+
+main()

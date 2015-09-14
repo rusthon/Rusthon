@@ -1,3 +1,4 @@
+from runtime import *
 '''
 list passed to function
 '''
@@ -11,7 +12,8 @@ def main():
 		'y' : 2,
 		'z' : 3
 	}
-	TestError( a['x']==1 )
+	assert( a['x']==1 )
 	f( a )
-	TestError( a['x']==100 )
-	#TestError( len(a)==4 )
+	assert( a['x']==100 )
+	#assert( len(a)==4 )
+main()
