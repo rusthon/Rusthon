@@ -1,3 +1,4 @@
+from runtime import *
 '''
 evaluation order
 '''
@@ -5,4 +6,5 @@ evaluation order
 
 def main():
 	a = False and (False or True)
-	TestError( a==False )
+	assert( a==False )
+main()

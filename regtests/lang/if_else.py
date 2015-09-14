@@ -1,3 +1,4 @@
+from runtime import *
 '''
 if/else
 '''
@@ -10,20 +11,20 @@ def func(x:bool=False, callback:lambda()(int)=None ):
 	else:
 		a = True
 
-	TestError( a==True )
+	assert( a==True )
 
 	a = False
 	if callback:
 		a = True
 	else:
 		a = False
-	TestError( a==True )
+	assert( a==True )
 
 def main():
 	a = False
 	if 1:
 		a = True
-	TestError( a==True )
+	assert( a==True )
 
 	a = False
 	if False:
@@ -31,7 +32,7 @@ def main():
 	else:
 		a = True
 
-	TestError( a==True )
+	assert( a==True )
 
 	a = False
 	if None:
@@ -39,9 +40,11 @@ def main():
 	else:
 		a = True
 
-	TestError( a==True )
+	assert( a==True )
 
 	cb = lambda : 1+1
 	func( callback=cb )
 
 
+
+main()

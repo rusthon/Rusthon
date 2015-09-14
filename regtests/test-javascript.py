@@ -10,10 +10,13 @@ report = [
 ignore = (
 	'tuple_keys.py',
 	'for_else.py',
+	'while_else.py',
 )
 
 TODO_FIX = (
+	'yield.py'
 )
+
 for folder in 'calling str dict loop lang set'.split():
 	passed = {}
 

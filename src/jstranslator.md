@@ -1116,25 +1116,22 @@ old javascript backend also used `JS(str)`
 
 					right = []
 					for elt in node.right.elts:
-						if isinstance(elt, ast.Num):
-							right.append( str(elt.n)+'i' )
-						else:
-							right.append( self.visit(elt) )
-					right = '(%s)' %','.join(right)
+						right.append( self.visit(elt) )
 
 					if node.left.func.id == '__go__array__':
 						T = self.visit(node.left.args[0])
-						if T in go_types:
-							#return '&mut vec!%s' %right
-							return 'Rc::new(RefCell::new(vec!%s))' %right
-						else:
-							self._catch_assignment = {'class':T}  ## visit_Assign catches this
-							return '&[]*%s%s' %(T, right)
+						## TODO redefine `.append` on this instance to do runtime type checking
+						return '[%s] /*array of: %s*/' %(','.join(right), T)
 
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
-						return ' new Array(%s) /*array of: %s*/' %(asize, atype)
+						#return ' new Array(%s) /*array of: %s*/' %(asize, atype)
+						if atype in ('int', 'int32', 'i32'):
+							r = ' new Int32Array(%s)' %asize
+
+						if len(right):
+							return '__array_fill__(%s, [%s])' %(r, ','.join(right))
 
 		if self._with_oo:
 			methodnames = {

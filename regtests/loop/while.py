@@ -1,3 +1,4 @@
+from runtime import *
 '''
 while loop
 '''
@@ -15,11 +16,13 @@ def main():
 			j += 1
 		i += 1
 
-	TestError( a==100 )
+	assert( a==100 )
 
 	while len(arr1)+len(arr2) < 10:
 		arr1.append( 1 )
 		arr2.append( 2 )
 
-	TestError( len(arr1)==5 )
-	TestError( len(arr2)==5 )
+	assert( len(arr1)==5 )
+	assert( len(arr2)==5 )
+
+main()

@@ -1,11 +1,12 @@
+from runtime import *
 '''
-generator function
+generator function, requires javascript ES6.
 '''
 
 def fib(n:int) -> int:
-	int a = 0
-	int b = 1
-	int c = 0
+	a = 0
+	b = 1
+	c = 0
 
 	for x in range(n):
 		#print('looping')
@@ -22,14 +23,16 @@ def main():
 		#print(n)
 		arr.append( n )
 
-	TestError( arr[0]==0 )
-	TestError( arr[1]==1 )
-	TestError( arr[2]==1 )
-	TestError( arr[3]==2 )
-	TestError( arr[4]==3 )
-	TestError( arr[5]==5 )
-	TestError( arr[6]==8 )
-	TestError( arr[7]==13 )
-	TestError( arr[8]==21 )
-	TestError( arr[9]==34 )
-	TestError( arr[10]==55 )
+	assert( arr[0]==0 )
+	assert( arr[1]==1 )
+	assert( arr[2]==1 )
+	assert( arr[3]==2 )
+	assert( arr[4]==3 )
+	assert( arr[5]==5 )
+	assert( arr[6]==8 )
+	assert( arr[7]==13 )
+	assert( arr[8]==21 )
+	assert( arr[9]==34 )
+	assert( arr[10]==55 )
+
+main()

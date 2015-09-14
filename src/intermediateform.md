@@ -2423,13 +2423,14 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_FunctionDef(self, node):
 		global writer
 
-		if node in self._generator_function_nodes:
-			self._generator_functions.add( node.name )
-			if '--native-yield' in sys.argv:
-				raise NotImplementedError  ## TODO
-			else:
-				GeneratorFunctionTransformer( node, compiler=self )
-				return
+		## deprecated
+		#if node in self._generator_function_nodes:
+		#	self._generator_functions.add( node.name )
+		#	if '--native-yield' in sys.argv:
+		#		raise NotImplementedError  ## TODO
+		#	else:
+		#		GeneratorFunctionTransformer( node, compiler=self )
+		#		return
 
 		writer.functions.append(node.name)
 
@@ -3275,6 +3276,7 @@ class PythonToPythonJS(NodeVisitorBase):
 						self._call_ids += 1
 
 		if node.orelse:
+			raise SyntaxError( self.format_error('while/else loop is not allowed') )
 			self._in_loop_with_else = True
 			writer.write('var(__break__)')
 			writer.write('__break__ = False')
@@ -3434,260 +3436,6 @@ EXTRA_WITH_TYPES = ('__switch__', '__default__', '__case__', '__select__')
 
 
 
-class GeneratorFunctionTransformer( PythonToPythonJS ):
-	'''
-	Translates a simple generator function into a class with state-machine that can be iterated over by
-	calling its next method.
-
-	A `simple generator` is one with no more than three yield statements, and a single for loop:
-		. the first yield comes before the for loop
-		. the second yield is the one inside the loop
-		. the third yield comes after the for loop
-
-	'''
-	def __init__(self, node, compiler=None):
-		assert '_stack' in dir(compiler)
-		#self.__dict___ = compiler.__dict__  ## share all state
-		for name in dir(compiler):
-			if name not in dir(self):
-				setattr(self, name, (getattr(compiler, name)))
-
-		self._head_yield = False
-		self.visit( node )
-		compiler._addop_ids = self._addop_ids ## note: need to keep id index insync
-
-	def visit_Yield(self, node):
-		if self._in_head:
-			if self._with_go:
-				writer.write('self.__head_yield = %s'%self.visit(node.value))
-				writer.write('self.__head_returned = 0')
-			else:
-				writer.write('this.__head_yield = %s'%self.visit(node.value))
-				writer.write('this.__head_returned = 0')
-			self._head_yield = True
-		else:
-			writer.write('__yield_return__ = %s'%self.visit(node.value))
-
-	def visit_Name(self, node):
-		## this hack should be replaced to support globals
-		if self._with_go:
-			return 'self.%s' %node.id
-		else:
-			return 'this.%s' %node.id
-
-
-	def visit_FunctionDef(self, node):
-		if self._with_go:
-			self._visit_genfunc_go(node)
-		else:
-			self._visit_genfunc_js(node)
-
-
-	def _visit_genfunc_go(self, node):
-		writer.write('class %s:' %node.name)
-		writer.push()  ## push class
-
-
-		typedefs = dict()
-		stypes = dict()  ## go struct
-		return_type = None
-		for decorator in reversed(node.decorator_list):
-			if isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
-				if decorator.keywords:
-					raise SyntaxError('invalid go return type')
-				elif isinstance(decorator.args[0], ast.Name):
-					return_type = decorator.args[0].id
-				else:
-					return_type = decorator.args[0].s
-
-			elif isinstance(decorator, Call) and decorator.func.id in ('typedef', 'typedef_chan'):
-				c = decorator
-				assert len(c.args) == 0 and len(c.keywords)
-				for kw in c.keywords:
-					#assert isinstance( kw.value, Name)
-					kwval = kw.value.id
-					#self._typedef_vars[ kw.arg ] = kwval
-					#self._instances[ kw.arg ] = kwval
-					#self._func_typedefs[ kw.arg ] = kwval
-					#local_typedefs.append( '%s=%s' %(kw.arg, kwval))
-					if decorator.func.id=='typedef_chan':
-						#typedef_chans.append( kw.arg )
-						writer.write('@__typedef_chan__(%s=%s)' %(kw.arg, kwval))
-					else:
-						typedefs[ kw.arg ] = kwval
-						stypes[ kw.arg ] = kwval
-
-		assert return_type
-		args = [a.id for a in node.args.args]
-
-		for name in typedefs:
-			kwval = typedefs[name]
-			writer.write('@__typedef__(%s=%s)' %(name, kwval))
-
-		writer.write('def __init__(self, %s):' %','.join(args))
-		writer.push()
-		for arg in args:
-			assert arg in typedefs
-			writer.write('self.%s = %s'%(arg,arg))
-
-		self._in_head = True
-		loop_node = None
-		tail_yield = []
-		for b in node.body:
-			if loop_node:
-				tail_yield.append( b )
-
-			elif isinstance(b, ast.For):
-				iter_start = '0'
-				iter = b.iter
-				if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
-					if len(iter.args) == 2:
-						iter_start = self.visit(iter.args[0])
-						iter_end = self.visit(iter.args[1])
-					else:
-						iter_end = self.visit(iter.args[0])
-				else:
-					iter_end = self.visit(iter)
-
-				writer.write('self.__iter_start = %s'%iter_start)
-				writer.write('self.__iter_index = %s'%iter_start)
-				writer.write('self.__iter_end = %s'%iter_end)
-				writer.write('self.__done__ = 0')
-				loop_node = b
-				self._in_head = False
-
-			else:
-				if isinstance(b, ast.Assign) and isinstance(b.targets[0], ast.Name) and len(b.targets)==2:  ## typed local
-					stypes[ b.targets[1].id ] = b.targets[0].id
-				self.visit(b)
-
-		writer.pull()  ## end of init
-
-		## write typedef go struct ##
-
-		for intype in '__iter_start __iter_index __iter_end __done__'.split():
-			stypes[ intype ] = 'int'
-
-		writer.write('{')
-		for n in stypes:
-			writer.write( '%s : %s,' %(n, stypes[n]))
-		writer.write('}')
-
-		## iterator function `next`
-		writer.write('@returns(%s)' %return_type)
-		writer.write('def next(self):')
-		writer.push()
-
-		writer.write('inline("var __yield_return__ %s")' %return_type)
-
-		if self._head_yield:
-			writer.write('if self.__head_returned == 0:')
-			writer.push()
-			writer.write('self.__head_returned = 1')
-			writer.write('return self.__head_yield')
-			writer.pull()
-			writer.write('elif self.__iter_index < self.__iter_end:')
-
-		else:
-			writer.write('if self.__iter_index < self.__iter_end:')
-
-		writer.push()
-		for b in loop_node.body:
-			self.visit(b)
-
-		writer.write('self.__iter_index += 1')
-
-		if not tail_yield:
-			writer.write('if self.__iter_index == self.__iter_end: self.__done__ = 1')
-
-		writer.write('return __yield_return__')
-		writer.pull()
-		writer.write('else:')
-		writer.push()
-		writer.write('self.__done__ = 1')
-		if tail_yield:
-			for b in tail_yield:
-				self.visit(b)
-			writer.write('return __yield_return__')
-		writer.pull()
-
-		writer.pull()  ## end of next
-		writer.pull()  ## pull class
-
-
-	def _visit_genfunc_js(self, node):
-		args = [a.id for a in node.args.args]
-		writer.write('def %s(%s):' %(node.name, ','.join(args)))
-		writer.push()
-		for arg in args:
-			writer.write('this.%s = %s'%(arg,arg))
-
-		self._in_head = True
-		loop_node = None
-		tail_yield = []
-		for b in node.body:
-			if loop_node:
-				tail_yield.append( b )
-
-			elif isinstance(b, ast.For):
-				iter_start = '0'
-				iter = b.iter
-				if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
-					if len(iter.args) == 2:
-						iter_start = self.visit(iter.args[0])
-						iter_end = self.visit(iter.args[1])
-					else:
-						iter_end = self.visit(iter.args[0])
-				else:
-					iter_end = self.visit(iter)
-
-				writer.write('this.__iter_start = %s'%iter_start)
-				writer.write('this.__iter_index = %s'%iter_start)
-				writer.write('this.__iter_end = %s'%iter_end)
-				writer.write('this.__done__ = 0')
-				loop_node = b
-				self._in_head = False
-
-			else:
-				self.visit(b)
-
-		writer.pull()
-
-		writer.write('@%s.prototype'%node.name)
-		writer.write('def next():')
-		writer.push()
-
-		if self._head_yield:
-			writer.write('if this.__head_returned == 0:')
-			writer.push()
-			writer.write('this.__head_returned = 1')
-			writer.write('return this.__head_yield')
-			writer.pull()
-			writer.write('elif this.__iter_index < this.__iter_end:')
-
-		else:
-			writer.write('if this.__iter_index < this.__iter_end:')
-
-		writer.push()
-		for b in loop_node.body:
-			self.visit(b)
-
-		writer.write('this.__iter_index += 1')
-
-		if not tail_yield:
-			writer.write('if this.__iter_index == this.__iter_end: this.__done__ = 1')
-
-		writer.write('return __yield_return__')
-		writer.pull()
-		writer.write('else:')
-		writer.push()
-		writer.write('this.__done__ = 1')
-		if tail_yield:
-			for b in tail_yield:
-				self.visit(b)
-			writer.write('return __yield_return__')
-		writer.pull()
-		writer.pull()
 
 
 class CollectCalls(NodeVisitor):

@@ -1,3 +1,4 @@
+from runtime import *
 '''
 builtin functions
 '''
@@ -5,31 +6,34 @@ builtin functions
 
 def main():
 	o = ord('x')
-	TestError( o == 120 )
+	assert( o == 120 )
 
 	n = float('1.1')
-	TestError( n==1.1 )
+	assert( n==1.1 )
 
 	n = float('NaN')
 	print( n )
-	#TestError( isNaN(n)==True )
+	assert( isNaN(n)==True )
 
 	r = round( 1.1234, 2)
 	print(r)
-	TestError( str(r) == '1.12' )
+	assert( str(r) == '1.12' )
 
 	x = chr(120)
 	print(x)
+	assert x == 'x'
 
-	#r = round( 100.001, 2)
-	#TestError( r == 100 )
+	r = round( 100.001, 2)
+	assert( r == 100 )
 
-	#i = int( 100.1 )
-	#TestError( i == 100 )
+	i = int( 100.1 )
+	assert( i == 100 )
 
-	#r = round( 5.49 )
-	#TestError( r == 5 )
+	r = round( 5.49 )
+	assert( r == 5 )
 
-	#r = round( 5.49, 1 )
-	#TestError( r == 5.5 )
+	r = round( 5.49, 1 )
+	assert( r == 5.5 )
 
+
+main()

@@ -15,6 +15,10 @@ def __invalid_call__(msg, args):
 			print '	argument:' + i + ' -> ' + args[i]
 	raise RuntimeError(msg)
 
+def __array_fill__(arr, items):
+	for i in range(items.length):
+		arr[i] = items[i]
+	return arr
 
 @unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
@@ -1116,7 +1120,9 @@ def float(a):
 	return b
 
 
-def round(a, places=0):
+def round(a, places):
+	if places is undefined:
+		places = 0
 	b = '' + a
 	if b.indexOf('.') == -1:
 		return a

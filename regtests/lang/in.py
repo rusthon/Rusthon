@@ -1,3 +1,4 @@
+from runtime import *
 '''
 in (dict contains)
 '''
@@ -5,8 +6,10 @@ in (dict contains)
 def main():
 	d = {'x':1}
 	a = 'x' in d
-	TestError( a==True )
+	assert( a==True )
 	b = 'y' in d
-	TestError( b==False )
+	assert( b==False )
 
 
+
+main()

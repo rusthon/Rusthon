@@ -1,3 +1,4 @@
+from runtime import *
 """if not"""
 
 def main():
@@ -6,25 +7,27 @@ def main():
 	if not a:
 		b = True
 
-	TestError( b == True )
+	assert( b == True )
 
 	a = 0
 	b = False
 	if not a:
 		b = True
 
-	TestError( b == True )
+	assert( b == True )
 
 	a = 0.0
 	b = False
 	if not a:
 		b = True
 
-	TestError( b == True )
+	assert( b == True )
 
 	a = None
 	b = False
 	if not a:
 		b = True
 
-	TestError( b == True )
+	assert( b == True )
+
+main()
