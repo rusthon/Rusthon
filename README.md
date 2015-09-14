@@ -17,7 +17,7 @@ The other backends are experimental.
 Installing
 ----------
 
-* [Debian Package](https://github.com/rusthon/Rusthon/releases/download/0.9.9m/rusthon_0.9.1_all.deb)
+* [Debian Package](https://github.com/rusthon/Rusthon/releases/download/0.9.9n/rusthon_0.9.2_all.deb)
 * Fedora package comming soon
 
 If you want to stay in sync with the git-repo, use the `install-dev.sh` script instead of the Debian or Fedora package. note: `install-dev.sh` just creates a symbolic link `transpile` that points to the current location of `rusthon.py`.
