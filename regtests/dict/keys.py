@@ -1,6 +1,9 @@
+from runtime import *
 """dict.keys()"""
 
 def main():
 	a = {'foo':'bar'}
 	keys = a.keys()
-	TestError( 'foo' in keys )
+	assert( 'foo' in keys )
+
+main()

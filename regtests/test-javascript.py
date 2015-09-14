@@ -7,7 +7,10 @@ report = [
 ]
 
 
-ignore = ()
+ignore = (
+	'tuple_keys.py',
+	'for_else.py',
+)
 
 TODO_FIX = (
 )

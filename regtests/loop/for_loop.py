@@ -1,3 +1,4 @@
+from runtime import *
 '''
 for loop tests
 '''
@@ -8,38 +9,41 @@ def main():
 	y = 0
 	for x in a:
 		y += x
-	TestError( y==6 )
+	assert( y==6 )
 
 	z = ''
 	arr = ['a', 'b', 'c']
 	for v in arr:
 		z += v
-	TestError( z == 'abc' )
+	assert( z == 'abc' )
 
 	b = False
 	if 'a' in arr:
 		b = True
-	TestError( b == True )
+	assert( b == True )
 
 	s = 'hello world'
 	z = ''
 	for char in s:
 		z += char
-	TestError( z == 'hello world' )
+	assert( z == 'hello world' )
 
 	b = False
 	if 'hello' in s:
 		b = True
-	TestError( b==True )
+	assert( b==True )
 
+	print 'testing for loop over dict'
 	ob = {'a' : 'A', 'b' : 'B'}
 	k = ''
 	v = ''
 	for key in ob:
 		k += key
 		v += ob[key]
-	TestError(k=='ab' or k=='ba')
-	TestError(v=='AB' or v=='BA')
+	print k
+	print v
+	assert(k=='ab' or k=='ba')
+	assert(v=='AB' or v=='BA')
 
 	keys = []
 	values = []
@@ -47,8 +51,8 @@ def main():
 		keys.append( x )
 		values.append( y )
 
-	TestError( 'a' in keys )
-	TestError( 'A' in values )
+	assert( 'a' in keys )
+	assert( 'A' in values )
 
 	ob2 = {'c':'C', 'd':'D'}
 	e = 0
@@ -61,14 +65,16 @@ def main():
 			arr.append(w)
 			arr.append(z)
 
-	TestError( e==4 )
-	TestError( 'a' in arr)
-	TestError( 'b' in arr)
-	TestError( 'A' in arr)
-	TestError( 'B' in arr)
-	TestError( 'c' in arr)
-	TestError( 'C' in arr)
-	TestError( 'd' in arr)
-	TestError( 'D' in arr)
+	assert( e==4 )
+	assert( 'a' in arr)
+	assert( 'b' in arr)
+	assert( 'A' in arr)
+	assert( 'B' in arr)
+	assert( 'c' in arr)
+	assert( 'C' in arr)
+	assert( 'd' in arr)
+	assert( 'D' in arr)
 
 
+
+main()

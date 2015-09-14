@@ -213,24 +213,27 @@ def __object_keys__(ob):
 		. Object.keys(ob) traverses the full prototype chain.
 	'''
 	arr = []
-	isdigits = False
 	if ob.__keytype__ is not undefined:
 		if ob.__keytype__ == 'int':
-			isdigits = True
+			inline('for (var key in ob) {arr.push(int(key))}')
+		else:
+			inline('for (var key in ob) {arr.push(key)}')
+		return arr
 	else:
 		## this could be faster using maybe using this trick?
 		## (JSON.stringify(Object.keys(ob)).replace('"','').replace(',', '')[1:-1] + '').isdigit()
+		isdigits = False
 		test = 0
 		inline('for (var key in ob) { arr.push(key); if (key.isdigit()) {test += 1;} }')
 		isdigits = test == arr.length
 
-	if isdigits:
-		iarr = []
-		for key in arr:
-			iarr.push( int(key) )
-		return iarr
-	else:
-		return arr
+		if isdigits:
+			iarr = []
+			for key in arr:
+				iarr.push( int(key) )
+			return iarr
+		else:
+			return arr
 
 ## this is not called ObjectKeys because this is used for `ob.keys()`
 ## where `ob` could be a regular object, or python dict.
