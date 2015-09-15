@@ -655,6 +655,9 @@ def tuple(ob):
 	return a
 
 
+@bind(String.prototype.__add__)
+def __string_add(a):
+	return this + a
 
 @bind(String.prototype.__mul__)
 def __string_multiply(a):
@@ -710,6 +713,23 @@ def __string_join(arr):
 String.prototype.upper = lambda : this.toUpperCase()
 
 String.prototype.lower = lambda : this.toLowerCase()
+
+@bind(Number.prototype.__sub__)
+def __number_sub(other):
+	return this - other
+@bind(Number.prototype.__add__)
+def __number_add(other):
+	return this + other
+@bind(Number.prototype.__mul__)
+def __number_mul(other):
+	return this * other
+@bind(Number.prototype.__div__)
+def __number_div(other):
+	return this / other
+@bind(Number.prototype.__mod__)
+def __number_mod(other):
+	return this % other
+
 
 @bind(String.prototype.index)
 def __string_index(a):
@@ -788,6 +808,8 @@ def __array_add(other):
 	a.extend(this)
 	a.extend(other)
 	return a
+## helper extra `add` method for Arrays
+Array.prototype.add = Array.prototype.__add__
 
 @bind(Array.prototype.extend)
 def __array_extend(other):
@@ -795,19 +817,19 @@ def __array_extend(other):
 	return this
 
 @bind(Array.prototype.remove)
-def func(item):
+def __array_remove(item):
 	index = this.indexOf( item )
 	this.splice(index, 1)
 
 @bind(Array.prototype.insert)
-def func(index, obj):
+def __array_insert(index, obj):
 	if index < 0: index = this.length + index
 	this.splice(index, 0, obj)
 
 Array.prototype.index = lambda obj : this.indexOf(obj)
 
 @bind(Array.prototype.count)
-def func(obj):
+def __array_count(obj):
 	a = 0
 	for item in this:
 		if item is obj:  ## note that `==` will not work here, `===` is required for objects

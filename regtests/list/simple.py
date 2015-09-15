@@ -14,4 +14,8 @@ def main():
 		a += b
 	assert len(a)==5
 
+	## the pythonic way
+	a.extend( b )
+	assert len(a)==6
+
 main()

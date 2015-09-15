@@ -210,6 +210,15 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			return code
 
 	def visit_AugAssign(self, node):
+		methodnames = {
+			'+': 'add',
+			'-': 'sub',
+			'*': 'mul',
+			'/': 'div',
+			'%': 'mod'
+		}
+
+
 		## n++ and n-- are slightly faster than n+=1 and n-=1
 		target = self.visit(node.target)
 		op = self.visit(node.op)
@@ -226,11 +235,13 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				if typedpython.unicode_vars:
 					x = [
 						'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
+						self.indent() + 'else if (%s.__iadd__) { %s.__iadd__(%s); }' %(target,target, value),
 						self.indent() + 'else { %s %s= %s; }'%(target, op, value)
 					]
 				else:
 					x = [
 						'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
+						self.indent() + 'else if (%s.__iadd__) { %s.__iadd__(%s); }' %(target,target, value),
 						self.indent() + 'else { %s %s= %s; }'%(target, op, value)
 					]
 				a = '\n'.join(x)
@@ -248,6 +259,14 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				a = '\n'.join(x)
 			else:
 				a = '%s %s= %s;' %(target, op, value)  ## direct
+
+		elif op in methodnames.keys() and self._with_oo and not self._go:
+			m = methodnames[op]
+			x = [
+				'if (%s.__i%s__) { %s.__i%s__(%s) }' %(target,m, target,m, value),
+				self.indent() + 'else { %s %s= %s; }'%(target, op, value)
+			]
+			a = '\n'.join(x)
 
 		else:
 			a = '%s %s= %s;' %(target, op, value)  ## direct
