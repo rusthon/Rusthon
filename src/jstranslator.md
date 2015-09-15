@@ -1294,6 +1294,12 @@ If Test
 		out = []
 		test = self.visit(node.test)
 		if BLOCKIDS: out.append( '/*BEGIN-IF:%s*/' %id(node))
+		if self._runtime_type_checking and not isinstance(node.test, ast.Compare):
+			## note in old-style-js `typeof(null)=='object'`,
+			## so we need to check first that the test is not null.
+			## this still works for functions, because `typeof(F)` is 'function'
+			errmsg = 'if test not allowed directly on arrays or objects, you must use this form: `if len(array)` or `if len(dict.keys())`'
+			out.append( 'if (%s!=null && typeof(%s)=="object") {throw new RuntimeError("%s")}' %(test, test, errmsg))
 		out.append( self.indent() + 'if (%s)' %test )
 		out.append( self.indent() + '{' )
 
