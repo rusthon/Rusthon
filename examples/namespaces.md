@@ -15,7 +15,7 @@ def main():
 	print max[...]
 
 	with Min as 'std::min_element( std::begin(%s), std::end(%s) )':
-		min = Max(ref, ref)
+		min = Min(ref, ref)
 	print min[...]
 
 
