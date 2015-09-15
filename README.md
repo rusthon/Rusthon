@@ -48,8 +48,6 @@ Above will compile everything in mymarkdown.md:
 
 Getting Started Javascript
 -----------------
-* [javascript regression test results](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-javascript.md)
-
 
 Transpile from Python to Javascript, with specialized syntax for static types, and using [WebWorkers](https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax) and other extensions to the Python language like [mini-macros](https://github.com/rusthon/Rusthon/wiki/Macro-Functions)
 
@@ -91,6 +89,16 @@ To use these frontends install them on your system, they will be used as subproc
 to output the final javascript.
 * [coffee script](https://github.com/rusthon/Rusthon/blob/master/examples/hello_coffee.md)
 * [rapydscript](https://github.com/rusthon/Rusthon/blob/master/examples/hello_rapydscript.md)
+
+JavaScript Regression Test Results
+-----------------------------------
+* [calling](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-calling.md)
+* [dict](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-dict.md)
+* [lang](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-lang.md)
+* [list](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-list.md)
+* [loop](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-loop.md)
+* [set](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-set.md)
+* [str](https://github.com/rusthon/Rusthon/blob/master/regtests/regtest-report-js-str.md)
 
 
 C++/Rust/Go Backends
