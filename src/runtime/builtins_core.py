@@ -846,6 +846,25 @@ def __array_count(obj):
 			a += 1
 	return a
 
+
+## note Arrays in javascript by default sort by string order, even if the elements are numbers.
+def __sort_method(ob):
+	if instanceof(ob, Array):
+		if ob.length and typeof(ob[0])=='number':
+			def f(a,b):
+				if a < b:
+					return -1
+				elif a > b:
+					return 1
+				else:
+					return 0
+			inline("ob.sort( f )")
+		else:
+			inline("ob.sort()")
+	else:
+		return inline("ob.sort()")
+
+
 @unicode('𝑪𝒐𝒏𝒕𝒂𝒊𝒏𝒔')
 def __contains__( ob, a ):
 	t = typeof(ob)

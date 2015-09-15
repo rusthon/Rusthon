@@ -1,3 +1,4 @@
+from runtime import *
 """list slice"""
 
 class XXX:
@@ -8,8 +9,8 @@ class XXX:
 
 def main():
 	a = range(10)[:-5]
-	TestError( len(a)==5 )
-	TestError( a[4]==4 )
+	assert( len(a)==5 )
+	assert( a[4]==4 )
 
 	#if BACKEND=='DART':
 	#	print(a[...])
@@ -18,12 +19,12 @@ def main():
 
 
 	b = range(10)[::2]
-	TestError( len(b)==5 )
-	TestError( b[0]==0 )
-	TestError( b[1]==2 )
-	TestError( b[2]==4 )
-	TestError( b[3]==6 )
-	TestError( b[4]==8 )
+	assert( len(b)==5 )
+	assert( b[0]==0 )
+	assert( b[1]==2 )
+	assert( b[2]==4 )
+	assert( b[3]==6 )
+	assert( b[4]==8 )
 
 	#if BACKEND=='DART':
 	#	print(b[...])
@@ -39,11 +40,13 @@ def main():
 	#else:
 	#	print(d)
 
-	TestError( len(d)==15 )
+	assert( len(d)==15 )
 
 	x = XXX()
 	e = x.v[ len(b) : ]
-	TestError( len(e)==5 )
+	assert( len(e)==5 )
 
 	f = x.method( x.v[len(b):] )
-	TestError( len(f)==5 )
+	assert( len(f)==5 )
+
+main()

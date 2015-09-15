@@ -931,17 +931,17 @@ class typedpython:
 			#		c = c[:-1] + "')"
 			#	c = c[ :left-1 ] + " inline('" + c[left+1:]
 
-			if '::' in c:
-				c = c.replace('::', '.__doublecolon__.')
-				## this easily breaks - example: "myarray[ ::x]"
-				ugly = '[.__doublecolon__.'
-				if ugly in c: c = c.replace(ugly, '[::')
-				ugly = '.__doublecolon__.]'
-				if ugly in c: c = c.replace(ugly, '::]')
-				for n in range(-9, 9):
-					nasty = '.__doublecolon__.%s]' %n
-					if nasty in c:
-						c = c.replace(nasty, '::%s]'%n)
+			#if '::' in c:
+			#	c = c.replace('::', '.__doublecolon__.')
+			#	## this easily breaks - example: "myarray[ ::x]"
+			#	ugly = '[.__doublecolon__.'
+			#	if ugly in c: c = c.replace(ugly, '[::')
+			#	ugly = '.__doublecolon__.]'
+			#	if ugly in c: c = c.replace(ugly, '::]')
+			#	for n in range(-9, 9):
+			#		nasty = '.__doublecolon__.%s]' %n
+			#		if nasty in c:
+			#			c = c.replace(nasty, '::%s]'%n)
 
 			if c.strip().startswith('with ') and ' as ' in c and c.endswith(':'):
 				x,y = c.split(' as ')

@@ -1,3 +1,4 @@
+from runtime import *
 """list reverse slice"""
 
 
@@ -11,11 +12,11 @@ def main():
 	#	print(b)
 
 
-	TestError( b[0]==4 )
-	TestError( b[1]==3 )
-	TestError( b[2]==2 )
-	TestError( b[3]==1 )
-	TestError( b[4]==0 )
+	assert( b[0]==4 )
+	assert( b[1]==3 )
+	assert( b[2]==2 )
+	assert( b[3]==1 )
+	assert( b[4]==0 )
 
 	c = range(20)
 	d = c[ 2::-1 ]
@@ -25,6 +26,8 @@ def main():
 	#else:
 	#	print(d)
 
-	TestError( d[0]==2 )
-	TestError( d[1]==1 )
-	TestError( d[2]==0 )
+	assert( d[0]==2 )
+	assert( d[1]==1 )
+	assert( d[2]==0 )
+
+main()
