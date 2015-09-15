@@ -2149,14 +2149,8 @@ class PythonToPythonJS(NodeVisitorBase):
 
 					return '__jsdict_items(%s)' %self.visit(anode.value)
 
-				elif anode.attr == 'pop':
-					if args:
-						return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
-					else:
-						if self._strict_mode:
-							return '%s.pop()' %self.visit(anode.value)
-						else:
-							return '__jsdict_pop(%s)' %self.visit(anode.value)
+				elif anode.attr == 'pop' and len(args)==1:
+					return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
 
 				elif anode.attr == 'split' and not args:
 					if self._strict_mode:
