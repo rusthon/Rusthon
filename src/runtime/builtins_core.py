@@ -93,11 +93,13 @@ def len(ob):
 		return ob.length
 	elif __is_typed_array(ob):
 		return ob.length
-	#elif instanceof(ob, ArrayBuffer):  ## missing in safari
-	#	return ob.byteLength
 	elif ob.__len__:
 		return ob.__len__()
-	else: #elif instanceof(ob, Object):
+	elif isNaN(ob):
+		raise RuntimeError('calling `len` with NaN in invalid')
+	elif typeof(ob)=='number':
+		raise RuntimeError('calling `len` on a number is invalid')
+	else:  ## let this fail at runtime if ob is not an object
 		return Object.keys(ob).length
 
 
@@ -801,6 +803,14 @@ def __array_setslice(start, stop, step, items):
 def __array_append(item):
 	this.push( item )
 	return this
+
+@bind(Array.prototype.__mul__)
+def __array_mul(n):
+	a = []
+	for i in range(n):
+		a.extend(this)
+	return a
+
 
 @bind(Array.prototype.__add__)
 def __array_add(other):

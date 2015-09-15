@@ -1298,7 +1298,7 @@ If Test
 			## note in old-style-js `typeof(null)=='object'`,
 			## so we need to check first that the test is not null.
 			## this still works for functions, because `typeof(F)` is 'function'
-			errmsg = 'if test not allowed directly on arrays or objects, you must use this form: `if len(array)` or `if len(dict.keys())`'
+			errmsg = 'if test not allowed directly on arrays, dicts, or objects. The correct syntax is: `if len(array)` or `if len(dict.keys())` or `if myob is not None`'
 			out.append( 'if (%s!=null && typeof(%s)=="object") {throw new RuntimeError("%s")}' %(test, test, errmsg))
 		out.append( self.indent() + 'if (%s)' %test )
 		out.append( self.indent() + '{' )
