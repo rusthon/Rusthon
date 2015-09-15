@@ -1129,9 +1129,25 @@ old javascript backend also used `JS(str)`
 					elif node.left.func.id == '__go__arrayfixed__':
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
-						#return ' new Array(%s) /*array of: %s*/' %(asize, atype)
-						if atype in ('int', 'int32', 'i32'):
+
+						if atype in ('byte', 'uint8', 'ui8'):
+							r = ' new Uint8Array(%s)' %asize
+						elif atype in ('int8', 'i8'):
+							r = ' new Int8Array(%s)' %asize
+						elif atype in ('short', 'int16', 'i16'):
+							r = ' new Int16Array(%s)' %asize
+						elif atype in ('ushort', 'uint16', 'ui16'):
+							r = ' new Uint16Array(%s)' %asize
+						elif atype in ('int', 'int32', 'i32'):
 							r = ' new Int32Array(%s)' %asize
+						elif atype in ('uint', 'uint32', 'ui32'):
+							r = ' new Uint32Array(%s)' %asize
+						elif atype in ('float', 'float32', 'f32'):
+							r = ' new Float32Array(%s)' %asize
+						elif atype in ('float64', 'f64', 'double'):
+							r = ' new Float64Array(%s)' %asize
+						else:
+							raise SyntaxError(self.format_error('invalid type for fixed-size typed arrays: '+atype))
 
 						if len(right):
 							return '__array_fill__(%s, [%s])' %(r, ','.join(right))
