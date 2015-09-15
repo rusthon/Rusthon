@@ -1,10 +1,5 @@
 import os, sys, subprocess
 
-report = [
-	'JavaScript Backend Regression Tests',
-	'-----------------------------',
-	'the following tests compiled, and run in nodejs without any errors',
-]
 
 
 ignore = (
@@ -17,7 +12,14 @@ TODO_FIX = (
 	'yield.py'
 )
 
-for folder in 'calling str dict loop lang set'.split():
+for folder in 'list calling str dict loop lang set'.split():
+	report = [
+		'JavaScript Backend Regression Tests - %s' %folder,
+		'-----------------------------',
+		'the following tests compiled, and run in nodejs without any errors',
+	]
+
+
 	passed = {}
 
 	print 'testing folder: '+folder
@@ -69,4 +71,4 @@ for folder in 'calling str dict loop lang set'.split():
 		report.extend( passed[md].splitlines() )
 		report.append('```')
 
-open('regtest-report-javascript.md', 'wb').write('\n'.join(report))
+	open('regtest-report-js-%s.md'%folder, 'wb').write('\n'.join(report))

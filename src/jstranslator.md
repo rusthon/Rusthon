@@ -221,18 +221,34 @@ class is not implemented here for javascript, it gets translated ahead of time i
 		elif op=='+' and isinstance(node.value, ast.Num):
 			a = '%s %s= %s;' %(target, op, value)  ## direct
 		elif op == '+' and not self._go:
-			## supports += syntax for arrays ##
-			if typedpython.unicode_vars:
-				x = [
-					'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
-					'else { %s %s= %s; }'%(target, op, value)
-				]
+			if self._with_oo:
+				## supports += syntax for arrays ##
+				if typedpython.unicode_vars:
+					x = [
+						'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { %s.extend(%s); }' %(target,target,target, value),
+						self.indent() + 'else { %s %s= %s; }'%(target, op, value)
+					]
+				else:
+					x = [
+						'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
+						self.indent() + 'else { %s %s= %s; }'%(target, op, value)
+					]
+				a = '\n'.join(x)
+			elif self._runtime_type_checking:
+				if typedpython.unicode_vars:
+					x = [
+						'if (%s instanceof Array || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }' %(target,target),
+						self.indent() + '%s %s= %s;'%(target, op, value)
+					]
+				else:
+					x = [
+						'if (%s instanceof Array || __is_typed_array(%s)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }' %(target,target),
+						self.indent() + 'else { %s %s= %s; }'%(target, op, value)
+					]
+				a = '\n'.join(x)
 			else:
-				x = [
-					'if (%s instanceof Array || __is_typed_array(%s)) { %s.extend(%s); }' %(target,target,target, value),
-					'else { %s %s= %s; }'%(target, op, value)
-				]
-			a = '\n'.join(x)
+				a = '%s %s= %s;' %(target, op, value)  ## direct
+
 		else:
 			a = '%s %s= %s;' %(target, op, value)  ## direct
 
@@ -1130,9 +1146,9 @@ old javascript backend also used `JS(str)`
 						asize = self.visit(node.left.args[0])
 						atype = self.visit(node.left.args[1])
 
-						if atype in ('byte', 'uint8', 'ui8'):
+						if atype in ('ubyte', 'uint8', 'ui8'):
 							r = ' new Uint8Array(%s)' %asize
-						elif atype in ('int8', 'i8'):
+						elif atype in ('byte' ,'int8', 'i8'):
 							r = ' new Int8Array(%s)' %asize
 						elif atype in ('short', 'int16', 'i16'):
 							r = ' new Int16Array(%s)' %asize

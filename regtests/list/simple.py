@@ -1,7 +1,17 @@
 """basics"""
+from runtime import *
+
 def main():
 	a = [1,2,3,4]
-	TestError( len(a)==4 )
+	assert( len(a)==4 )
 
-	#b = list()
-	#TestError( len(b)==0 )
+	b = list()
+	assert( len(b)==0 )
+	b.append( 5 )
+	assert len(b)==1
+
+	with oo:
+		a += b
+	assert len(a)==5
+
+main()
