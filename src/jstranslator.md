@@ -37,7 +37,8 @@ class SwapLambda( RuntimeError ):
 
 class JSGenerator(NodeVisitorBase, GeneratorBase):
 	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
-		assert source
+		if not source:
+			raise RuntimeError('empty source string')
 		NodeVisitorBase.__init__(self, source)
 
 		self._unicode_name_map = UNICODE_NAME_MAP
@@ -511,6 +512,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		args_generics = dict()
 		func_pointers = set()
 		arrays = dict()
+		has_timeout = None
+		timeout_seconds = None
 		########################
 		decorators = []
 		for decor in node.decorator_list:
@@ -534,6 +537,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				func_expr_var = isinstance(decor.args[0], ast.Name)
 				node.name = self.visit(decor.args[0])
 
+			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'timeout':
+				has_timeout = True
+				timeout_seconds = decor.args[0].n
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'unicode':
 				if typedpython.unicode_vars:
@@ -581,6 +587,10 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		dechead = ''.join(decorators)
 		dectail = ')' * len(decorators)
+		if has_timeout:
+			dechead = 'setTimeout('+dechead
+			dectail += ', %s)' %(timeout_seconds*1000)
+
 		args = self.visit(node.args)
 		funcname = node.name
 

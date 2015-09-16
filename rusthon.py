@@ -20,6 +20,9 @@ elif os.path.isfile(os.path.expanduser('~/go/bin/go')):
 nodewebkit_runnable = False
 nodewebkit = os.path.expanduser('~/nwjs-v0.12.2-linux-x64/nw')
 if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
+else:
+	nodewebkit = os.path.expanduser('~/nwjs-v0.12.3-linux-x64/nw')
+	if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
 ## special case for linux, just for debugging, look for google-chrome,
 ## if found then use it to launch tests, with the --disable-gpu-sandbox
@@ -668,33 +671,23 @@ def build( modules, module_path, datadirs=None ):
 				output['dart'].append( {'name':name, 'script':dartcode, 'index': index} )
 
 	if js_merge:
-		tagname = None
-		src = []
+		taggroups = {}
 		for mod in js_merge:
-			if mod['tag']:
-				if tagname is not None:
-					raise RuntimeError('TODO multiple tag insertions: %s' %tagname)
-				tagname = mod['tag']
-				src.append( mod['code'] )
-			else:
-				src.append(mod['code'])
+			tagname = mod['tag']
+			if tagname not in taggroups:
+				taggroups[tagname] = []
 
-			if not tagname:
-				#print mod['code']
-				for modd in js_merge:
-					print mod['code']
-					if modd == mod:
-						break
+			src = taggroups[tagname]
+			src.append( mod['code'] )
+		for tagname in taggroups.keys():
+			groupsrc = '\n'.join( taggroups[tagname] )
+			js = compile_js( groupsrc, module_path, main_name=tagname )
+			tagged[ tagname ]           = js[ tagname ]
+			tagged_trans_src[ tagname ] = groupsrc
 
-				raise RuntimeError('fenced code block not given a tag-name')
-
-			js = compile_js( '\n'.join(src), module_path, main_name=tagname )
-			tagged[ tagname ] = js[ tagname ]
 			for name in js:
 				output['javascript'].append( {'name':name, 'script':js[name], 'index': index} )
 
-		if tagname:
-			tagged_trans_src[ tagname ] = '\n'.join(src)
 
 	cpyembed = []
 	nuitka = []
