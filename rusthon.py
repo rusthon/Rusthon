@@ -1438,9 +1438,10 @@ def main():
 		elif '--javascript' in sys.argv: script = '#backend:javascript\n'+script
 		elif '--rust' in sys.argv: script = '#backend:rust\n'+script
 		elif '--go' in sys.argv:   script = '#backend:go\n'+script
-		elif '--dart' in sys.argv: script = '#backend:dart\n'+script
-		elif '--lua' in sys.argv:  script = '#backend:lua\n'+script
+		elif '--dart' in sys.argv: raise RuntimeError('dart backend removed')
+		elif '--lua' in sys.argv:  raise RuntimeError('lua backend removed')
 		elif '--verilog' in sys.argv: script = '#backend:verilog\n'+script
+		else: script = '#backend:javascript\n'+script
 
 		fpath,fname = os.path.split(path)
 		tag = fname.split('.')[0]
@@ -1499,7 +1500,7 @@ def main():
 
 				if sys.platform=='darwin':  ## hack for OSX
 					subprocess.call(['open', tmp])
-				elif nodewebkit_runnable and '--release' not in sys.argv:
+				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
 
 					open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)

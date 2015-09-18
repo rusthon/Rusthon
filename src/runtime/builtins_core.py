@@ -117,8 +117,17 @@ if HTMLElement is not undefined:
 			elif T=='function':
 				raise RuntimeError('HTMLElement->(lambda function) is invalid')
 			elif T=='object':
-				for key in item.keys():
-					this.setAttribute(key, item[key])
+				## could be a DOM node from another document/iframe
+				if item.nodeType:
+					if item.nodeType==Node.TEXT_NODE:
+						this.appendChild(item)
+					elif item.nodeType==Node.ELEMENT_NODE:
+						this.appendChild(item)
+					else:
+						raise RuntimeError('HTMLElement unknown node type')
+				else:
+					for key in item.keys():
+						this.setAttribute(key, item[key])
 			else:
 				raise RuntimeError('HTMLElement->(invalid type): '+ item)
 
