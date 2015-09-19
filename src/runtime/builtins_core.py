@@ -58,10 +58,11 @@ def isinstance( ob, klass):
 			return True
 		else:
 			return False
+	#elif hasattr(ob, '__class__'):
+	elif ob.__class__:
+		return issubclass(ob.__class__, klass)
 	elif instanceof(ob, klass):
 		return True
-	elif hasattr(ob, '__class__'):
-		return issubclass(ob.__class__, klass)
 	elif typeof(ob)=='number':
 		if klass is int and ob.toString().isdigit():
 			return True
@@ -81,7 +82,7 @@ def isinstance( ob, klass):
 def issubclass(C, B):
 	if C is B:
 		return True
-	else:
+	elif C.__bases__:
 		for base in C.__bases__:
 			if issubclass(base, B):
 				return True

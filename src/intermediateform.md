@@ -1107,6 +1107,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		node._post_class_write = post_class_write
 		for item in node.body:
 			if isinstance(item, FunctionDef):
+				if item.name == '__getattr__':
+					raise SyntaxError(self.format_error('__getattr__ is not allowed'))
 				## only remove `self` if it is the first argument,
 				## python actually allows `self` to be any name (whatever the first argument is named)
 				## but that is very bad style, and basically never used.

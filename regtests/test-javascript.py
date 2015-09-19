@@ -6,13 +6,14 @@ ignore = (
 	'tuple_keys.py',
 	'for_else.py',
 	'while_else.py',
+	'__getattr__.py',
 )
 
 TODO_FIX = (
 	'yield.py'
 )
 
-for folder in 'list calling str dict loop lang set'.split():
+for folder in 'class list calling str dict loop lang set'.split():
 	report = [
 		'JavaScript Backend Regression Tests - %s' %folder,
 		'-----------------------------',

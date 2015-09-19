@@ -1,27 +1,33 @@
+from runtime import *
 '''
 builtin isinstance
 '''
-class A:
+class A():
 	pass
 
 class B:
 	pass
 
 def main():
+	print 'testing isinstance'
 	a = A()
 	b = B()
-	TestError( isinstance(a,A)==True )
-	TestError( isinstance(a,B)==False )
-	TestError( isinstance(a,dict)==False )
+	assert( isinstance(a,A)==True )
+	assert( isinstance(a,B)==False )
+	assert( isinstance(a,dict)==False )
 
-	TestError( isinstance(b,B)==True )
-	TestError( isinstance(b,A)==False )
+	assert( isinstance(b,B)==True )
+	assert( isinstance(b,A)==False )
 
 	c = [1,2]
-	TestError( isinstance(c, list)==True )
-	TestError( isinstance(c, dict)==False )
-	TestError( isinstance(c, A)==False )
+	assert( isinstance(c, list)==True )
+	assert( isinstance(c, dict)==False )
+	assert( isinstance(c, A)==False )
 
 	d = {'a':1, 'b':2}
-	TestWarning( isinstance(d, dict)==True )  ## in javascript-mode this will fail
-	TestError( isinstance(d, A)==False )
+	assert( isinstance(d, dict)==True )
+	assert( isinstance(d, A)==False )
+
+	print 'ok'
+
+main()
