@@ -7,6 +7,7 @@ ignore = (
 	'for_else.py',
 	'while_else.py',
 	'__getattr__.py',
+	'mi__getattr__.py',
 )
 
 TODO_FIX = (

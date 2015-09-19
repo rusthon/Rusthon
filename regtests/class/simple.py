@@ -1,3 +1,4 @@
+from runtime import *
 """simple class"""
 
 class A:
@@ -6,4 +7,6 @@ class A:
 
 def main():
     a = A()
-    TestError(a.x == 5)
+    assert(a.x == 5)
+
+main()

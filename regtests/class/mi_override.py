@@ -1,3 +1,4 @@
+from runtime import *
 '''
 multiple inheritance
 '''
@@ -21,12 +22,14 @@ class C( A, B ):
 
 def main():
 	a = A()
-	TestError( a.foo()==1 )
+	assert( a.foo()==1 )
 	b = B()
-	TestError( b.bar()==2 )
+	assert( b.bar()==2 )
 
 	c = C()
-	TestError( c.foo()==100 )
-	TestError( c.bar()==2 )
+	assert( c.foo()==100 )
+	assert( c.bar()==2 )
 
-	TestError( c.call_foo_bar()==102 )
+	assert( c.call_foo_bar()==102 )
+
+main()

@@ -1,3 +1,4 @@
+from runtime import *
 """custom addition"""
 
 class A:
@@ -8,8 +9,12 @@ class A:
 
 
 def main():
+	print 'testing __add__ operator overloading'
 	a = A()
 	b = A()
-	c = a + b
-	TestError( c == 10 )
+	with oo:
+		c = a + b
+	assert( c == 10 )
+	print 'ok'
 
+main()

@@ -1,3 +1,4 @@
+from runtime import *
 '''
 multiple inheritance
 '''
@@ -17,18 +18,21 @@ class C( A, B ):
 
 	## extend foo ##
 	def foo(self) -> int:
-		a = A.foo(self)
+		#a = A.foo(self)  ## TODO fix me, or support `super`
+		a  = A.prototype.foo(self)  ## workaround
 		a += 100
 		return a
 
 def main():
 	a = A()
-	TestError( a.foo()==1 )
+	assert( a.foo()==1 )
 	b = B()
-	TestError( b.bar()==2 )
+	assert( b.bar()==2 )
 
 	c = C()
-	TestError( c.foo()==101 )
-	TestError( c.bar()==2 )
+	assert( c.foo()==101 )
+	assert( c.bar()==2 )
 
-	TestError( c.call_foo_bar()==103 )
+	assert( c.call_foo_bar()==103 )
+
+main()

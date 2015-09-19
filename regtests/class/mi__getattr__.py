@@ -1,3 +1,4 @@
+from runtime import *
 '''
 __getattr__ and @property
 '''
@@ -28,14 +29,16 @@ def unknown(u):
 def main():
 	a = A()
 	b = unknown( a )
-	TestError( b.x==1 )
-	TestError( b.y==2 )
-	TestError( b.z=='z' )
-	TestError( b.w=='w' )
+	assert( b.x==1 )
+	assert( b.y==2 )
+	assert( b.z=='z' )
+	assert( b.w=='w' )
 
 	c = B()
 	d = unknown( c )
-	TestError( d.x==1 )
-	TestError( d.y==2 )
-	TestError( d.z=='z' )
-	TestError( d.w=='XXX' )
+	assert( d.x==1 )
+	assert( d.y==2 )
+	assert( d.z=='z' )
+	assert( d.w=='XXX' )
+
+main()

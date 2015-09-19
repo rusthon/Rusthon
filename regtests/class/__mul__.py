@@ -1,3 +1,4 @@
+from runtime import *
 """custom multiplication"""
 
 class A:
@@ -10,6 +11,9 @@ class A:
 def main():
 	a = A()
 	b = A()
-	c = a * b
-	TestError( c == 25 )
+	with operator_overloading:
+		c = a * b
+	assert( c == 25 )
 
+
+main()
