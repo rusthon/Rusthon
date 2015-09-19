@@ -12,7 +12,6 @@ The other backends are experimental.
 
 * [highlevel overview](http://rusthon-lang.blogspot.com/2015/06/rusthon-overview.html)
 * [multiple markdown syntax](https://github.com/rusthon/Rusthon/wiki/Multiple-Markdowns)
-* [professional training and support](http://rusthon-lang.blogspot.com/p/contract-me.html)
 
 Installing
 ----------
@@ -51,7 +50,7 @@ Getting Started Javascript
 
 Transpile from Python to Javascript, with specialized syntax for static types, and using [WebWorkers](https://github.com/rusthon/Rusthon/wiki/WebWorker-Syntax) and other extensions to the Python language like [mini-macros](https://github.com/rusthon/Rusthon/wiki/Macro-Functions)
 
-Mini-macros help you make your code more readable, and hide ugly API's like HTML DOM.
+Mini-macros help you make your code more readable, and hide ugly APIs like HTML DOM.
 note: you can use unicode for macro names.
 ```python
 with 𝕄 as "_=document.createElement(%s); _.setAttribute('id',%s); %s.appendChild(_)":
@@ -72,6 +71,16 @@ with 𝕄 as "document.createElement(%s)":
         𝕄('img')->(id='someid2')
     )
 
+```
+
+You can also do the same thing as above using pure python syntax.
+```python
+a = document.createElement('div')
+a.setAttribute('id', 'someid1')
+b = document.createElement('img')
+b.setAttribute('id', 'someid2')
+document.body.appendChild(a)
+document.body.appendChild(b)
 ```
 
 * [javascript example](https://github.com/rusthon/Rusthon/blob/master/examples/javascript_syntax.md)

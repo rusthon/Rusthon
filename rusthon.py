@@ -1341,6 +1341,8 @@ def main():
 		print()
 		print('		--literate-unicode enables unicode variables names to be output for the javascript backend.')
 		print()
+		print('		--convert2python=MYOUTPUT strips away static type annotations, to run your script in regular Python.')
+		print()
 		print('		--anaconda run scripts with Anaconda Python, must be installed to ~/anaconda')
 		print()
 		print('		note: when using regular python files (.py) as input instead of markdown (.md)')
@@ -1363,6 +1365,7 @@ def main():
 	datadirs = []
 	j2r = False
 	anaconda = False
+	convert2py = False
 
 	for arg in sys.argv[1:]:
 		if os.path.isdir(arg):
@@ -1378,6 +1381,8 @@ def main():
 			output_dir = arg.split('=')[-1]
 			if output_dir.startswith('~'):
 				output_dir = os.path.expanduser(output_dir)
+		elif arg.startswith('--convert2python='):
+			convert2py = arg.split('=')[-1]
 
 		elif arg.endswith('.py'):
 			scripts.append(arg)
@@ -1425,6 +1430,19 @@ def main():
 			sys.exit()
 
 
+	if convert2py:
+		## strips away rusthon type annotations ##
+		if not len(scripts):
+			raise RuntimeError('the option --convert2python=myoutput requires an input script')
+		if len(scripts)!=1:
+			raise RuntimeError('the option --convert2python=myoutput requires a single input script')
+		a = typedpython.transform_source(
+			open(scripts[0],'rb').read(), 
+			strip=True
+		)
+		open(convert2py, 'wb').write(a)
+		sys.exit()
+
 	base_path = None
 	singleout = None
 	for path in scripts:
@@ -1471,7 +1489,6 @@ def main():
 		print('saved output to: %s'%output_file)
 
 	elif not save:
-		print('testing build...')
 		tmpdir = tempfile.gettempdir()
 		## copy jar and other extra libraries files files ##
 		for p in datadirs:

@@ -2,6 +2,7 @@
 loop and add (integer)
 '''
 from time import clock
+from runtime import *
 
 class A:
 	def __init__(self, x:int,y:int,z:int):
@@ -47,3 +48,5 @@ def main():
 	c = A(n,n+3,n)
 	w = m.f1(xsteps, ysteps, a,b,c)
 	print(clock()-start)
+
+main()
