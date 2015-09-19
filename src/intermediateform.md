@@ -1097,7 +1097,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		method_names = []  ## write back in order (required by GLSL)
 		methods      = {}  ## same named functions get squashed in here (like getter/setters)
 		methods_all  = []  ## all methods of class
-
+		__call__     = None
 		class_vars = []
 		post_class_write = [
 			'%s.prototype.__class__ = %s' %(name, name),
@@ -1107,9 +1107,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		node._post_class_write = post_class_write
 		for item in node.body:
 			if isinstance(item, FunctionDef):
-				method_names.append(item.name)
-				methods[ item.name ] = item
-				methods_all.append( item )
 				## only remove `self` if it is the first argument,
 				## python actually allows `self` to be any name (whatever the first argument is named)
 				## but that is very bad style, and basically never used.
@@ -1128,6 +1125,13 @@ class PythonToPythonJS(NodeVisitorBase):
 					if n.id == 'self':
 						n.id = 'this'
 
+				if item.name == '__call__':
+					__call__ = item
+				else:
+					method_names.append(item.name)
+					methods[ item.name ] = item
+					methods_all.append( item )
+
 			elif isinstance(item, ast.Expr) and isinstance(item.value, Str):  ## skip doc strings
 				pass
 			elif isinstance(item, ast.ClassDef):
@@ -1143,6 +1147,7 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			else:
 				class_vars.append( item )
+
 
 		init = methods.get( '__init__', None)
 		if init:
@@ -1186,6 +1191,16 @@ class PythonToPythonJS(NodeVisitorBase):
 		else:
 			writer.write('inline("this.__$UID$__ = __$UID$__ ++")')
 
+
+		if __call__:
+			writer.write('var(__callbound__)')
+			writer.write('@bind(__callbound__, this)')
+			line = self.visit(__call__)
+			if line: writer.write( line )
+			writer.write('inline("for (var _ in this) {__callbound__[_]=this[_];}")')
+			writer.write('__callbound__.__proto__ = this.__proto__')
+			writer.write('__callbound__.__call__ = __callbound__')
+			writer.write('return __callbound__')
 
 		writer.pull()
 
