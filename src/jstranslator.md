@@ -339,6 +339,8 @@ top level the module, this builds the output and returns the javascript string t
 				nodejs_tornado = self._insert_nodejs_tornado
 			)
 			lines.insert( 0, runtime )
+		else:
+			lines.insert( 0, 'var __$UID$__=0;')
 
 
 

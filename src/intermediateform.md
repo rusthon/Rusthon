@@ -3129,23 +3129,24 @@ class PythonToPythonJS(NodeVisitorBase):
 					iter_end = self.visit(iter.args[0])
 
 				iter_name = target.id
-				writer.write('var(%s, %s__end__)' %(iter_name, iter_name))
+				writer.write('var(%s)' %iter_name)
 				writer.write('%s = %s' %(iter_name, iter_start))
-				if '(' in iter_end:
+				if '(' in iter_end:  ## if its a function call, cache it to a variable
+					writer.write('var(%s__end__)' %iter_name)
 					writer.write('%s__end__ = %s' %(iter_name, iter_end))
-					writer.write('while %s < %s__end__:' %(iter_name, iter_name))
+					writer.write('while inline("%s++") < %s__end__:' %(iter_name, iter_name))
 				else:
-					writer.write('while %s < %s:' %(iter_name, iter_end))
+					writer.write('while inline("%s++") < %s:' %(iter_name, iter_end))
 
 				writer.push()
 				map(self.visit, node.body)
 
 				if self._with_js:
-					writer.write('inline("%s += 1")' %iter_name )
+					#writer.write('inline("%s += 1")' %iter_name )
 					if enumtar:
 						writer.write('inline("%s += 1")'%enumtar.id)
 				else:
-					writer.write('%s += 1' %iter_name )
+					#writer.write('%s += 1' %iter_name )
 					if enumtar:
 						writer.write('%s += 1'%enumtar.id)
 

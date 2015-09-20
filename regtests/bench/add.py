@@ -2,7 +2,7 @@
 loop and add (integer)
 '''
 from time import clock
-from runtime import *
+#note: the rusthon runtime is not required here
 
 class A:
 	def __init__(self, x:int,y:int,z:int):
