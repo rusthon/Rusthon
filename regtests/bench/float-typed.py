@@ -42,7 +42,7 @@ def benchmark( n:int ) -> Point:
 
 
 def test( arg:int ) ->[]float:
-	times = []
+	times = []float()
 	for i in range(arg):
 		t0 = clock()
 		o = benchmark(POINTS)

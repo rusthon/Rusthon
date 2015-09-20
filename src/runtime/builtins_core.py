@@ -750,9 +750,18 @@ def __string_index(a):
 		raise ValueError(a + ' - not in string')
 	return i
 
-@bind(Array.prototype.equals)
+@bind(Array.prototype.equals)  ## non standard
 def __array_equals(a):
 	return JSON.stringify(this) == JSON.stringify(a)
+
+@bind(Array.prototype.copy)    ## non standard
+def func():
+	arr = []
+	i = 0
+	while i < this.length:
+		arr.push( this[i] )
+		i += 1
+	return arr
 
 
 @bind(Array.prototype.__contains__)

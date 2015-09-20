@@ -1,5 +1,9 @@
 [![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
+![bench add](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/add.py.png)
+https://github.com/rusthon/Rusthon/tree/master/regtests/bench/add.py
+
+
 Easily mix multiple languages, frontends, backends, compilers, and transpilers inside markdown files.
 Markdown is the container format for your multi-language application that can contain: server backend logic and config files,
 and frontend javascript with html and css, all in a single markdown file.
@@ -87,6 +91,12 @@ document.body.appendChild(b)
 * [javascript backend wiki](https://github.com/rusthon/Rusthon/wiki/JavaScript-Backend)
 * [javascript backend doc](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [javascript literate unicode](https://github.com/rusthon/Rusthon/wiki/JavaScript-Unicode-Literate-Output)
+
+![bench fannkuch](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/fannkuch.py.png)
+https://github.com/rusthon/Rusthon/tree/master/regtests/bench/fannkuch.py
+
+![bench floatvec](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/float.py.png)
+https://github.com/rusthon/Rusthon/tree/master/regtests/bench/float.py
 
 
 Extra JavaScript Frontends

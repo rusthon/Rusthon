@@ -7,7 +7,7 @@
 
 from time import clock
 
-DEFAULT_ARG = 9
+DEFAULT_ARG = 8
 
 
 def fannkuch(n:int) ->int:
@@ -41,13 +41,15 @@ def fannkuch(n:int) ->int:
 			if flips_count > max_flips:
 				max_flips = flips_count
 
+		do_return = False
 		while r != n:
 			perm1.insert(r, perm1.pop(0))
 			count[r] -= 1
 			if count[r] > 0:
+				do_return = False
 				break
 			r += 1
-		else:
+		if do_return:
 			return max_flips
 
 

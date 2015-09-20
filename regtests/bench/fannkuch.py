@@ -5,40 +5,29 @@
 # modified by Tupteq
 # modified by hartsantler 2014
 
-from time import time
+from time import clock
+from runtime import *
 
-DEFAULT_ARG = 9
+DEFAULT_ARG = 8
 
 def main():
-	if PYTHON=='PYTHONJS':
-		pythonjs.configure( direct_operator='+' )
-		pythonjs.configure( direct_keys=True )
-		pass
-
 	times = []
 	for i in range(4):
-		t0 = time()
-		#res = fannkuch(DEFAULT_ARG)
-		res = fannkuch(8)
-		tk = time()
+		t0 = clock()
+		res = fannkuch(DEFAULT_ARG)
+		tk = clock()
 		times.append(tk - t0)
 	avg = sum(times) / len(times)
 	print(avg)
 
 def fannkuch(n):
-	count = range(1, n+1)
+	count = list(range(1, n+1))
+	perm1 = list(range(n))
+	perm = list(range(n))
 	max_flips = 0
 	m = n-1
 	r = n
 	check = 0
-	perm1 = range(n)
-	perm = range(n)
-	#perm1_ins = perm1.insert
-	#perm1_pop = perm1.pop
-	if PYTHON=='PYTHON3':
-		count = list(count)
-		perm1 = list(perm1)
-		perm = list(perm)
 
 	while True:
 		if check < 30:
@@ -61,14 +50,17 @@ def fannkuch(n):
 			if flips_count > max_flips:
 				max_flips = flips_count
 
+		do_return = True
 		while r != n:
-			#perm1_ins(r, perm1_pop(0))
 			perm1.insert(r, perm1.pop(0))
 			count[r] -= 1
 			if count[r] > 0:
+				do_return = False
 				break
 			r += 1
-		else:
+
+		if do_return:
 			return max_flips
 
 
+main()

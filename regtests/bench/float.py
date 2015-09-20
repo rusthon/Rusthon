@@ -4,6 +4,7 @@ float numbers
 
 from time import clock
 from math import sin, cos, sqrt
+from runtime import *
 
 def main():
 	times = test( 3 )
@@ -37,7 +38,6 @@ class Point(object):
 def maximize(points):
 	next = points[0]
 	for p in points[1:]:
-		assert isinstance(p, Point)
 		next = next.maximize(p)
 	return next
 
@@ -46,7 +46,6 @@ def benchmark(n):
 	for i in range(n):
 		points[i] = Point(i)
 	for p in points:
-		assert isinstance(p, Point)
 		p.normalize()
 	return maximize(points)
 
@@ -61,3 +60,5 @@ def test(arg):
 		times.append(tk - t0)
 	return times
 	
+
+main()

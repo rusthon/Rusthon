@@ -9,38 +9,6 @@ if not found, then the final backend or user needs to implement the import.
 class fakestdlib:
 	REQUIRES = 1
 
-	LUA = {
-		'time': {
-			## requires socket module, install for luajit on ubuntu - `sudo-apt get install lua-socket`
-			## for lua interpreter on ubuntu - `sudo apt-get install liblua5.1-socket`
-			REQUIRES : ['socket'],
-			'time' : 'time = function() return socket.gettime() end',
-			'clock' : 'clock = function() return socket.gettime() end'
-		},
-		'math': {
-			'sin' : 'sin = function(a) return math.sin(a[1]) end',
-			'cos' : 'cos = function(a) return math.cos(a[1]) end',
-			'sqrt' : 'sqrt = function(a) return math.sqrt(a[1]) end',
-		}
-	}
-
-
-	DART = {
-		'time': {
-			'time' : 'time() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }',
-			'clock' : 'clock() { return new DateTime.now().millisecondsSinceEpoch / 1000.0; }'
-		},
-		'math': {
-			'sin' : 'var sin = math.sin',
-			'cos' : 'var cos = math.cos',
-			'sqrt' : 'var sqrt = math.sqrt',
-		},
-		'random' : {
-			'random' : 'var random = __random__'
-		}
-
-	}
-
 	JS = {
 		'time': {
 			'time': 'function time() { return new Date().getTime() / 1000.0; }',
@@ -68,6 +36,13 @@ class fakestdlib:
 			#'clock': 'func clock() float64 { return float64(time.Now().Unix()); }'
 			'clock': 'func clock() float64 { return float64(time.Now().UnixNano())/1000000000.0; }'
 		},
+		'math' : {
+			REQUIRES : ['math'],
+			'sin' : 'sin := math.Sin',
+			'cos' : 'cos := math.Cos',
+			'sqrt': 'sqrt := math.Sqrt'
+		},
+
 	}
 
 	CPP = {
