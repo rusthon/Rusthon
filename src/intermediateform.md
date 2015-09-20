@@ -3130,7 +3130,10 @@ class PythonToPythonJS(NodeVisitorBase):
 
 				iter_name = target.id
 				writer.write('var(%s)' %iter_name)
-				writer.write('%s = %s' %(iter_name, iter_start))
+				if iter_start == '0':
+					writer.write('%s = -1' %iter_name)
+				else:
+					writer.write('%s = %s-1' %(iter_name, iter_start))
 				if '(' in iter_end:  ## if its a function call, cache it to a variable
 					writer.write('var(%s__end__)' %iter_name)
 					writer.write('%s__end__ = %s' %(iter_name, iter_end))
