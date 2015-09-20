@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/rusthon/Rusthon.svg)](https://travis-ci.org/rusthon/Rusthon)
 
-![bench add](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/add.py.png)
+![add](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/add.py.png)
+
 https://github.com/rusthon/Rusthon/tree/master/regtests/bench/add.py
 
 
@@ -92,10 +93,12 @@ document.body.appendChild(b)
 * [javascript backend doc](https://github.com/rusthon/Rusthon/blob/master/doc/pythonjs.md)
 * [javascript literate unicode](https://github.com/rusthon/Rusthon/wiki/JavaScript-Unicode-Literate-Output)
 
-![bench fannkuch](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/fannkuch.py.png)
+![fannkuch](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/fannkuch.py.png)
+
 https://github.com/rusthon/Rusthon/tree/master/regtests/bench/fannkuch.py
 
-![bench floatvec](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/float.py.png)
+![floatvec](https://github.com/rusthon/Rusthon/tree/master/regtests/bench/float.py.png)
+
 https://github.com/rusthon/Rusthon/tree/master/regtests/bench/float.py
 
 
