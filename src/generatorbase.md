@@ -131,18 +131,11 @@ do extra things like inline extra helper code for things like `hasattr`, etc.
 			assert len(node.args)==1 and isinstance(node.args[0], ast.Str)
 			return self._inline_code_helper( node.args[0].s )
 
-		elif name == 'dart_import':
-			if len(node.args) == 1:
-				return 'import "%s";' %node.args[0].s
-			elif len(node.args) == 2:
-				return 'import "%s" as %s;' %(node.args[0].s, node.args[1].s)
-			else:
-				raise SyntaxError
-
 		elif name == 'list':
 			return self._visit_call_helper_list( node )
 
 		elif name == '__get__' and len(node.args)==2 and isinstance(node.args[1], ast.Str) and node.args[1].s=='__call__':
+			raise SyntaxError('deprecated')
 			return self._visit_call_helper_get_call_special( node )
 
 		elif name.split('.')[-1] == '__go__receive__':
@@ -209,6 +202,8 @@ or something that needs to be wrapped by a pointer/shared-reference.
 
 	def is_prim_type(self, T):
 		prims = 'void bool int float double long string str char byte u32 u64 i32 i64 f32 f64 std::string cstring'.split()
+		if self._go:
+			prims.append( 'interface{}' )
 		if T in prims:
 			return True
 		else:

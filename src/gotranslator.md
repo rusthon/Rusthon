@@ -304,12 +304,12 @@ class GoGenerator( JSGenerator ):
 			else:
 				r = '(*%s)[%s]' % (self.visit(node.value), self.visit(node.slice))
 
-			if isinstance(node.value, ast.Name) and node.value.id in self._known_arrays:
-				target = node.value.id
-				#value = self.visit( node.value )
-				cname = self._known_arrays[target]
-				#raise GenerateGenericSwitch( {'target':target, 'value':r, 'class':cname} )
-				raise GenerateGenericSwitch( {'value':r, 'class':cname} )
+			#if isinstance(node.value, ast.Name) and node.value.id in self._known_arrays:
+			#	target = node.value.id
+			#	#value = self.visit( node.value )
+			#	cname = self._known_arrays[target]
+			#	#raise GenerateGenericSwitch( {'target':target, 'value':r, 'class':cname} )
+			#	raise GenerateGenericSwitch( {'value':r, 'class':cname} )
 
 			return r
 
@@ -368,6 +368,8 @@ class GoGenerator( JSGenerator ):
 						lines.append( sub )
 			else:
 				if isinstance(b, ast.Import):
+					pass
+				elif isinstance(b, ast.ImportFrom):
 					pass
 				else:
 					raise SyntaxError(b)
@@ -453,8 +455,10 @@ class GoGenerator( JSGenerator ):
 		if fname.endswith('.append'):
 			is_append = True
 			arr = fname.split('.append')[0]
-
-		if fname == '__arg_array__':
+		####################################
+		if fname=='main':  ## can not directly call `main` in Go
+			return '/*run main*/'
+		elif fname == '__arg_array__':
 			assert len(node.args)==1
 			T = self.parse_go_style_arg(node.args[0])
 			if self.is_prim_type(T):
@@ -694,6 +698,12 @@ class GoGenerator( JSGenerator ):
 		generics = set()
 		args_generics = dict()
 		returns_self = False
+		use_generics = False
+
+		for decor in node.decorator_list:
+			if isinstance(decor, ast.Name) and decor.id=='generic':
+				use_generics = True
+
 
 		for decor in node.decorator_list:
 			if isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
@@ -704,7 +714,7 @@ class GoGenerator( JSGenerator ):
 						args_typedefs[ key.arg ] = self.visit(key.value)
 
 					## check for super classes - generics ##
-					if args_typedefs[ key.arg ] in self._classes:
+					if use_generics and args_typedefs[ key.arg ] in self._classes:
 						if node.name=='__init__':
 							## generics type switch is not possible in __init__ because
 							## it is used to generate the type struct, where types are static.
@@ -738,6 +748,10 @@ class GoGenerator( JSGenerator ):
 					returns_self = True
 					self.method_returns_multiple_subclasses[ self._class_stack[-1].name ].add(node.name)
 
+		if return_type and not self.is_prim_type(return_type):
+			if not return_type.startswith('*') and not return_type.startswith('&') and not return_type.startswith('func('):
+				return_type = '*'+return_type
+
 		node._arg_names = args_names = []
 		args = []
 		oargs = []
@@ -761,8 +775,13 @@ class GoGenerator( JSGenerator ):
 			if arg_name in args_typedefs:
 				arg_type = args_typedefs[arg_name]
 				#if generics and (i==0 or (is_method and i==1)):
-				if generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
+				if use_generics and generics and arg_name in args_generics.keys():  ## TODO - multiple generics in args
 					a = '__gen__ %s' %arg_type
+				elif self.is_prim_type(arg_type):
+					a = '%s %s' %(arg_name, arg_type)
+				elif not arg_type.startswith('*') and not arg_type.startswith('&') and not arg_type.startswith('func('):
+					## assume pointer ##
+					a = '%s *%s' %(arg_name, arg_type)
 				else:
 					a = '%s %s' %(arg_name, arg_type)
 			else:
@@ -827,7 +846,7 @@ class GoGenerator( JSGenerator ):
 		if starargs:
 			out.append(self.indent() + '%s := &__vargs__' %starargs)
 
-		if generics:
+		if use_generics and generics:
 			gname = args_names[ args_names.index(args_generics.keys()[0]) ]
 
 			#panic: runtime error: invalid memory address or nil pointer dereference
@@ -940,12 +959,15 @@ class GoGenerator( JSGenerator ):
 				#raise NotImplementedError('TODO other generic function return types', return_type)
 				out.append(self.indent() + 'return %s' %(return_type.replace('*','&')+'{}'))
 
-		else:
+		elif use_generics: ## no generics in args, generate generics caller switching
 			body = node.body[:]
 			body.reverse()
-			#self._scope_stack.append( (self._vars, self._known_vars))
 			self.generate_generic_branches( body, out, self._vars, self._known_vars )
-			#for b in node.body:
+
+		else: ## without generics ##
+			for b in node.body:
+				out.append(self.indent()+self.visit(b))
+
 		self._scope_stack = []
 
 		if is_method and return_type and node.name.endswith('__init__'):

@@ -16,6 +16,7 @@ def push( arr:[]int, x:int ):
 #def push2( arr:[]*A, x:*A ):
 #    arr.append( x )
 
+@generic
 def my_generic( s:A ):
     print( s.foo() )
 

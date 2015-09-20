@@ -19,6 +19,7 @@ class C(A):
 		return self.x + 200
 
 
+@generic
 def my_generic( g:A ) ->int:
 	return g.method1()
 

@@ -24,6 +24,7 @@ def push( arr:[]int, x:int ):
 #def push2( arr:[]*A, x:*A ):
 #    arr.append( x )
 
+@generic
 def my_generic( s:A ):
     print( s.foo() )
 
@@ -79,6 +80,7 @@ __object__
 }
 func (self *A)  foo() string {
 
+	
 	return "xxxx"
 }
 func __new__A() *A {
@@ -88,6 +90,7 @@ func __new__A() *A {
 }
 func (self *B)  A_foo() string {
 
+	
 	return "xxxx"
 }
 type B struct {
@@ -95,6 +98,7 @@ A
 }
 func (self *B)  foo() string {
 
+	
 	return "hello"
 }
 func __new__B() *B {
@@ -104,6 +108,7 @@ func __new__B() *B {
 }
 func (self *C)  A_foo() string {
 
+	
 	return "xxxx"
 }
 type C struct {
@@ -111,6 +116,7 @@ A
 }
 func (self *C)  foo() string {
 
+	
 	return "world"
 }
 func __new__C() *C {
@@ -120,6 +126,7 @@ func __new__C() *C {
 }
 func push(arr *[]int, x int) {
 
+	
 	__6 := append(*arr,x); *arr = __6;
 }
 func my_generic(__gen__ interface{}) {
@@ -167,6 +174,7 @@ func my_generic(__gen__ interface{}) {
 }
 func main() {
 
+	
 	arr := &[]int{};
 	__7 := append(*arr,1); *arr = __7;
 	push(arr, 100)
@@ -184,64 +192,16 @@ func main() {
 	c1 := __new__C();
 	__addr8 := B(*c1);__8 := append(*barr,&__addr8); *barr = __8;
 	fmt.Println(barr);
-	__subclass__ := (*barr)[0]
-	switch __subclass__.__class__ {
-		case "C":
-			__addr := C(*__subclass__)
-			bb := &__addr
-			fmt.Println("bb:", bb);
-			fmt.Println(bb.foo());
-			__subclass__ := (*barr)[1]
-			switch __subclass__.__class__ {
-				case "C":
-					__addr := C(*__subclass__)
-					cc := &__addr
-					fmt.Println("cc:", cc);
-					fmt.Println(cc.foo());
-					fmt.Println("----testing generic----");
-					for _,subclass := range *barr {
-						fmt.Println("subclass in bar:", subclass);
-						my_generic(subclass)
-					}
-				case "B":
-					__addr := B(*__subclass__)
-					cc := &__addr
-					fmt.Println("cc:", cc);
-					fmt.Println(cc.foo());
-					fmt.Println("----testing generic----");
-					for _,subclass := range *barr {
-						fmt.Println("subclass in bar:", subclass);
-						my_generic(subclass)
-					}
-			}
-		case "B":
-			__addr := B(*__subclass__)
-			bb := &__addr
-			fmt.Println("bb:", bb);
-			fmt.Println(bb.foo());
-			__subclass__ := (*barr)[1]
-			switch __subclass__.__class__ {
-				case "C":
-					__addr := C(*__subclass__)
-					cc := &__addr
-					fmt.Println("cc:", cc);
-					fmt.Println(cc.foo());
-					fmt.Println("----testing generic----");
-					for _,subclass := range *barr {
-						fmt.Println("subclass in bar:", subclass);
-						my_generic(subclass)
-					}
-				case "B":
-					__addr := B(*__subclass__)
-					cc := &__addr
-					fmt.Println("cc:", cc);
-					fmt.Println(cc.foo());
-					fmt.Println("----testing generic----");
-					for _,subclass := range *barr {
-						fmt.Println("subclass in bar:", subclass);
-						my_generic(subclass)
-					}
-			}
+	bb := (*barr)[0];
+	fmt.Println("bb:", bb);
+	fmt.Println(bb.foo());
+	cc := (*barr)[1];
+	fmt.Println("cc:", cc);
+	fmt.Println(cc.foo());
+	fmt.Println("----testing generic----");
+	for _,subclass := range *barr {
+		fmt.Println("subclass in bar:", subclass);
+		my_generic(subclass)
 	}
 }
 type _kwargs_type_ struct {
@@ -274,10 +234,12 @@ output:
 var XXX = "myglobal";
 func myprint(a string, b string) {
 
+	
 	fmt.Println((a + b));
 }
 func main() {
 
+	
 	fmt.Println("hi");
 	myprint("hello ", "world")
 	myprint("hi ", str(XXX))
@@ -320,6 +282,7 @@ output:
 
 func f(a int, b int, c int) int {
 
+	
 	fmt.Println("testing f: plain args");
 	return ((a + b) + c)
 }
@@ -331,17 +294,20 @@ func f2(__kwargs _kwargs_type_) int {
 	if __kwargs.__use__b { b = __kwargs.b }
 	c := 3
 	if __kwargs.__use__c { c = __kwargs.c }
+	
 	fmt.Println("testing f2: keyword args");
 	return ((a + b) + c)
 }
 func f3(__vargs__ ...int) int {
 
 	args := &__vargs__
+	
 	fmt.Println("testing f3: star args");
 	return (((*args)[0] + (*args)[1]) + (*args)[2])
 }
 func main() {
 
+	
 	if ((( f(1, 2, 3) ) == 6) == false) { panic("assertion failed"); }
 	x := f2(_kwargs_type_{b:100,__use__b:true});
 	if ((( x ) == 104) == false) { panic("assertion failed"); }
@@ -381,8 +347,10 @@ output:
 
 func main() {
 
+	
 	F := func (x int) int {
 
+		
 		return (x * 2)
 	}
 	a := F(10);
@@ -437,10 +405,12 @@ output:
 
 func test_pass_array_as_arg(arr *[]int) {
 
+	
 	__4 := append(*arr,5); *arr = __4;
 }
 func main() {
 
+	
 	a := &[]int{1, 2, 3};
 	fmt.Println(a);
 	if ((( (*a)[0] ) == 1) == false) { panic("assertion failed"); }
@@ -476,6 +446,7 @@ output:
 
 func main() {
 
+	
 	a := 1;
 	fmt.Println(a);
 	a = 2;
@@ -513,11 +484,13 @@ output:
 
 func wrapper(a int, c chan int) {
 
+	
 	result := 100;
 	c <- result;
 }
 func main() {
 
+	
 	c := make(chan int);
 	go wrapper(17, c)
 	x := <- c;
@@ -555,6 +528,7 @@ output:
 
 func main() {
 
+	
 	a := &map[string]int{ "x":100, "y":200 };
 	b := "";
 	c := 0;
@@ -596,6 +570,7 @@ class C(A):
 		return self.x + 200
 
 
+@generic
 def my_generic( g:A ) ->int:
 	return g.method1()
 
@@ -626,11 +601,13 @@ x int
 }
 func (self *A)  __init__(x int) *A {
 
+	
 	self.x = x;
 return self
 }
 func (self *A)  method1() int {
 
+	
 	return self.x
 }
 func __new__A( x int ) *A {
@@ -641,11 +618,13 @@ func __new__A( x int ) *A {
 }
 func (self *B)  __init__(x int) *B {
 
+	
 	self.x = x;
 return self
 }
 func (self *B)  A_method1() int {
 
+	
 	return self.x
 }
 type B struct {
@@ -653,6 +632,7 @@ A
 }
 func (self *B)  method1() int {
 
+	
 	return (self.x * 2)
 }
 func __new__B( x int ) *B {
@@ -663,11 +643,13 @@ func __new__B( x int ) *B {
 }
 func (self *C)  __init__(x int) *C {
 
+	
 	self.x = x;
 return self
 }
 func (self *C)  A_method1() int {
 
+	
 	return self.x
 }
 type C struct {
@@ -675,6 +657,7 @@ A
 }
 func (self *C)  method1() int {
 
+	
 	return (self.x + 200)
 }
 func __new__C( x int ) *C {
@@ -730,6 +713,7 @@ func my_generic(__gen__ interface{}) int {
 }
 func main() {
 
+	
 	a := __new__A(100);
 	b := __new__B(100);
 	c := __new__C(100);
@@ -797,12 +781,14 @@ arr *[]int
 }
 func (self *A)  __init__(x int, arr *[]int) *A {
 
+	
 	self.x = x;
 	self.arr = arr;
 return self
 }
 func (self *A)  get() int {
 
+	
 	return ((*self.arr)[3] + self.x)
 }
 func __new__A( x int,arr *[]int ) *A {
@@ -813,10 +799,16 @@ func __new__A( x int,arr *[]int ) *A {
 }
 func F(arr *[]int) {
 
+	
 	__2 := append(*arr,3); *arr = __2;
 }
 func main() {
 
+	
+	
+	
+	
+	
 	__comp__0 := []int{};
 	idx0 := 0;
 	iter0 := 3;
@@ -834,6 +826,10 @@ func main() {
 	if ((( (*a)[1] ) == 1) == false) { panic("assertion failed"); }
 	if ((( (*a)[2] ) == 2) == false) { panic("assertion failed"); }
 	if ((( (*a)[3] ) == 3) == false) { panic("assertion failed"); }
+	
+	
+	
+	
 	__comp__1 := []*A{};
 	idx1 := 0;
 	iter1 := 2;
@@ -901,6 +897,7 @@ func (self *A)  __init__(x int, y int, __kwargs _kwargs_type_) *A {
 
 	z := 1
 	if __kwargs.__use__z { z = __kwargs.z }
+	
 	self.x = x;
 	self.y = y;
 	self.z = z;
@@ -908,6 +905,7 @@ return self
 }
 func (self *A)  mymethod(m int) int {
 
+	
 	return (self.x * m)
 }
 func __new__A( x int,y int,__kwargs _kwargs_type_ ) *A {
@@ -918,10 +916,12 @@ func __new__A( x int,y int,__kwargs _kwargs_type_ ) *A {
 }
 func call_method(cb func(int)(int), mx int) int {
 
+	
 	return cb(mx)
 }
 func main() {
 
+	
 	a := __new__A(100, 200,_kwargs_type_{z:9999,__use__z:true});
 	fmt.Println(a.x);
 	fmt.Println(a.y);
@@ -991,6 +991,7 @@ output:
 
 func send_data(A chan int, B chan int, X int, Y int) {
 
+	
 	for  {
 		fmt.Println("sending data..");
 		A <- X;
@@ -999,6 +1000,7 @@ func send_data(A chan int, B chan int, X int, Y int) {
 }
 func select_loop(A chan int, B chan int, W chan int) int {
 
+	
 	fmt.Println("starting select loop");
 	y := 0;
 	for  {
@@ -1019,6 +1021,7 @@ func select_loop(A chan int, B chan int, W chan int) int {
 }
 func main() {
 
+	
 	a := make(chan int);
 	b := make(chan int);
 	w := make(chan int);
@@ -1050,6 +1053,7 @@ class H( G ):
 		print 'world'
 
 class A:
+	@generic
 	def __init__(self, a:G):
 		print 'A.__init__'
 		print(a)
@@ -1059,12 +1063,14 @@ class A:
 		print 'A.call'
 		self.f( self.x )
 
+	@generic
 	def f(self, a:G):
 		print 'A.f'
 		print(a)
 
 
 class B( A ):
+	@generic
 	def f(self, g:G):
 		print 'B.f'
 		g.method()
@@ -1091,6 +1097,7 @@ __object__
 }
 func (self *G)  method() {
 
+	
 	fmt.Println("calling G.method");
 	fmt.Println("hi");
 }
@@ -1101,6 +1108,7 @@ func __new__G() *G {
 }
 func (self *H)  G_method() {
 
+	
 	fmt.Println("calling G.method");
 	fmt.Println("hi");
 }
@@ -1109,6 +1117,7 @@ G
 }
 func (self *H)  method() {
 
+	
 	fmt.Println("calling H.method");
 	fmt.Println("world");
 }
@@ -1131,6 +1140,7 @@ return self
 }
 func (self *A)  call() {
 
+	
 	fmt.Println("A.call");
 	self.f(self.x)
 }
@@ -1158,6 +1168,7 @@ return self
 }
 func (self *B)  call() {
 
+	
 	fmt.Println("A.call");
 	self.f(self.x)
 }
@@ -1212,6 +1223,7 @@ func __new__B( a interface{} ) *B {
 }
 func main() {
 
+	
 	g := __new__G();
 	h := __new__H();
 	b1 := __new__B(g);
@@ -1283,6 +1295,7 @@ func (self *A)  __init__(x int, y int, __kwargs _kwargs_type_) *A {
 
 	z := 1
 	if __kwargs.__use__z { z = __kwargs.z }
+	
 	self.x = x
 	self.y = y
 	self.z = z
@@ -1290,6 +1303,7 @@ return self
 }
 func (self *A)  mymethod(m int) int {
 
+	
 	return (self.x * m)
 }
 func __new__A( x int,y int,__kwargs _kwargs_type_ ) *A {
@@ -1302,6 +1316,7 @@ func (self *B)  A___init__(x int, y int, __kwargs _kwargs_type_) *B {
 
 	z := 1
 	if __kwargs.__use__z { z = __kwargs.z }
+	
 	self.x = x
 	self.y = y
 	self.z = z
@@ -1309,6 +1324,7 @@ return self
 }
 func (self *B)  mymethod(m int) int {
 
+	
 	return (self.x * m)
 }
 type B struct {
@@ -1318,12 +1334,14 @@ w string
 }
 func (self *B)  __init__(s string) *B {
 
+	
 	self.w = s
 	self.x = 1
 return self
 }
 func (self *B)  method2(v string) string {
 
+	
 	fmt.Println(self.x);
 	self.w = v;
 	return self.w
@@ -1336,10 +1354,12 @@ func __new__B( s string ) *B {
 }
 func call_method(cb func(int)(int), mx int) int {
 
+	
 	return cb(mx)
 }
 func main() {
 
+	
 	a := __new__A(100, 200,_kwargs_type_{z:9999,__use__z:true});
 	fmt.Println(a.x);
 	fmt.Println(a.y);
@@ -1393,6 +1413,7 @@ output:
 
 func main() {
 
+	
 	a := &map[string]int{ "x":1, "y":2, "z":3 };
 	fmt.Println((*a)["x"]);
 	if ((( (*a)["x"] ) == 1) == false) { panic("assertion failed"); }
@@ -1479,6 +1500,7 @@ output:
 
 func main() {
 
+	
 	a := &[]int{1, 2, 3};
 	y := 0;
 	for _,x := range *a {
@@ -1551,6 +1573,11 @@ output:
 
 func main() {
 
+	
+	
+	
+	
+	
 	__comp__0 := &map[int]string{  };
 	idx0 := 0;
 	iter0 := 10;
@@ -1622,6 +1649,7 @@ func (self *A)  __init__(cb func(int)(int), x int, y int, __kwargs _kwargs_type_
 
 	z := 1
 	if __kwargs.__use__z { z = __kwargs.z }
+	
 	self.x = x
 	self.y = y
 	self.z = z
@@ -1630,6 +1658,7 @@ return self
 }
 func (self *A)  call(a int) int {
 
+	
 	return self.callback((((a + self.x) + self.y) + self.z))
 }
 func __new__A( cb func(int)(int),x int,y int,__kwargs _kwargs_type_ ) *A {
@@ -1640,10 +1669,12 @@ func __new__A( cb func(int)(int),x int,y int,__kwargs _kwargs_type_ ) *A {
 }
 func mycb(x int) int {
 
+	
 	return (x + 1000)
 }
 func main() {
 
+	
 	a := __new__A(mycb, 100, 200,_kwargs_type_{z:300,__use__z:true});
 	if ((( a.call(-600) ) == 1000) == false) { panic("assertion failed"); }
 	fmt.Println("ok");

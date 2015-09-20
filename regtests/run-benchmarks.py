@@ -19,7 +19,7 @@ def runbench_py(path, name, interp='python3'):
 		[interp, '/tmp/output.py',], stdout=subprocess.PIPE
 	)
 	proc.wait()
-	T = proc.stdout.read()
+	T = proc.stdout.read().splitlines()[0]  ## extra lines could contain compiler warnings, etc.
 	return float(T.strip())
 
 def runbench(path, name, backend='javascript'):
@@ -46,7 +46,9 @@ BENCHES = [
 for name in BENCHES:
 	times = {}
 	times['javascript'] = runbench('./bench', name, 'javascript')
-	times['c++'] = runbench('./bench', name, 'c++')
+	#times['rust'] = runbench('./bench', name, 'rust')
+	times['go']   = runbench('./bench', name, 'go')
+	times['c++']  = runbench('./bench', name, 'c++')
 	times['python'] = runbench_py('./bench', name)
 	times['pypy'] = runbench_py('./bench', name, interp='pypy')
 

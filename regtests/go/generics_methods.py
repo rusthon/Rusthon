@@ -9,6 +9,7 @@ class H( G ):
 		print 'world'
 
 class A:
+	@generic
 	def __init__(self, a:G):
 		print 'A.__init__'
 		print(a)
@@ -18,12 +19,14 @@ class A:
 		print 'A.call'
 		self.f( self.x )
 
+	@generic
 	def f(self, a:G):
 		print 'A.f'
 		print(a)
 
 
 class B( A ):
+	@generic
 	def f(self, g:G):
 		print 'B.f'
 		g.method()
