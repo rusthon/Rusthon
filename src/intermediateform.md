@@ -3137,9 +3137,9 @@ class PythonToPythonJS(NodeVisitorBase):
 				if '(' in iter_end:  ## if its a function call, cache it to a variable
 					writer.write('var(%s__end__)' %iter_name)
 					writer.write('%s__end__ = %s' %(iter_name, iter_end))
-					writer.write('while inline("%s++") < %s__end__:' %(iter_name, iter_name))
+					writer.write('while inline("++%s") < %s__end__:' %(iter_name, iter_name))
 				else:
-					writer.write('while inline("%s++") < %s:' %(iter_name, iter_end))
+					writer.write('while inline("++%s") < %s:' %(iter_name, iter_end))
 
 				writer.push()
 				map(self.visit, node.body)
