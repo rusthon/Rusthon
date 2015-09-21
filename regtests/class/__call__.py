@@ -20,6 +20,7 @@ def main():
 	assert a() == 'XXX'
 	assert a.__call__() == 'XXX'
 	assert a.foo() == 5
+	assert isinstance(a, A)
 	print 'ok'
 
 main()

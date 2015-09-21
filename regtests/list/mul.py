@@ -7,9 +7,10 @@ def main():
 	print a
 	with operator_overloading:
 		b = a * 2
+	print b
 	assert( len(b)==2 )
 	assert( b[0]=='hi' )
 	assert( b[1]=='hi' )
-	print b
+	print 'ok'
 
 main()

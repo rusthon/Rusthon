@@ -1123,13 +1123,18 @@ class PythonToPythonJS(NodeVisitorBase):
 
 
 				finfo = inspect_function( item )
-				for n in finfo['name_nodes']:
-					if n.id == 'self':
-						n.id = 'this'
 
 				if item.name == '__call__':
+					for n in finfo['name_nodes']:
+						if n.id == 'self':
+							n.id = '__call__'
+
 					__call__ = item
 				else:
+					for n in finfo['name_nodes']:
+						if n.id == 'self':
+							n.id = 'this'
+
 					method_names.append(item.name)
 					methods[ item.name ] = item
 					methods_all.append( item )
@@ -1167,7 +1172,53 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		writer.write('def %s(%s):' %(name,','.join(args)))
 		writer.push()
-		if init:
+
+		if __call__:
+			line = self.visit(__call__)
+			if line: writer.write( line )
+			writer.write('inline("__call__.__$UID$__ = __$UID$__ ++")')
+			#writer.write('__call__.__proto__ = this.__proto__')  ## not valid in all browsers
+			## this works in all browsers, and is only slightly slower than using `__proto__`
+
+			for mname in method_names:
+				writer.write('__call__.%s = this.%s' %(mname, mname))
+
+			writer.write('__call__.__call__ = __call__')  ## for the rare case, where the user directly call `__call__`
+			writer.write('__call__.__class__ = %s' %node.name)  ## so that builtin `isinstance` can still work.
+
+			if init:
+				if hasattr(init, '_code'):  ## cached - is this valid here with __call__? ##
+					code = init._code
+				elif args:
+					code = '__call__.__init__(%s)'%(', '.join(args))
+					init._code = code
+				else:
+					code = '__call__.__init__()'
+					init._code = code
+				writer.write(code)
+
+			writer.write('return __call__')
+
+
+			if False:
+				## this way of implementing a callable functor is 200x slower than above,
+				## what is likely killing the JIT here is dynamically binding `__call__` to `this`,
+				## looping over the values in `this` and reassigning them to `__callbound__` appears
+				## to break V8
+				writer.write('var(__callbound__)')
+				writer.write('@bind(__callbound__, this)')
+				line = self.visit(__call__)
+				if line: writer.write( line )
+				## note: Object.keys is even slower in this case ##
+				#writer.write('inline("for (var _ in Object.keys(this)) {__callbound__[_]=this[_];}")')
+				#writer.write('__callbound__.__proto__ = this.__proto__')
+				#writer.write('__callbound__.__call__ = __callbound__')
+				for mname in method_names:
+					writer.write('__callbound__.%s = this.%s.bind(this)' %(mname, mname))
+				writer.write('return __callbound__')
+
+
+		elif init:
 			writer.write('inline("this.__$UID$__ = __$UID$__ ++")')
 
 			tail = ''  ## what was tail used for?
@@ -1192,17 +1243,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 		else:
 			writer.write('inline("this.__$UID$__ = __$UID$__ ++")')
-
-
-		if __call__:
-			writer.write('var(__callbound__)')
-			writer.write('@bind(__callbound__, this)')
-			line = self.visit(__call__)
-			if line: writer.write( line )
-			writer.write('inline("for (var _ in this) {__callbound__[_]=this[_];}")')
-			writer.write('__callbound__.__proto__ = this.__proto__')
-			writer.write('__callbound__.__call__ = __callbound__')
-			writer.write('return __callbound__')
 
 		writer.pull()
 
