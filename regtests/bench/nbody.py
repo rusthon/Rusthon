@@ -1,21 +1,16 @@
 '''
 nbody sim
 '''
-from time import time
-
 # Pulled from http://shootout.alioth.debian.org/u64q/benchmark.php?test=nbody&lang=python&id=4
 # Contributed by Kevin Carson.
 # Modified by Tupteq, Fredrik Johansson, and Daniel Nanz.
 
+from time import clock
+from runtime import *
+
 
 def main():
-	if PYTHON=='PYTHONJS':
-		pythonjs.configure( direct_operator='+' )
-		pythonjs.configure( direct_operator='*' )
-		pythonjs.configure( direct_keys=True )
-		pass
-
-	times = test_nbody( 3 )
+	times = test_nbody( 6 )
 	avg = sum( times ) / 3.0
 	print( avg )
 
@@ -136,7 +131,7 @@ def offset_momentum(ref, bodies, px=0.0, py=0.0, pz=0.0):
 		px -= vx * m
 		py -= vy * m
 		pz -= vz * m
-	(r, v, m) = ref
+	r, v, m = ref
 	v[0] = px / m
 	v[1] = py / m
 	v[2] = pz / m
@@ -149,14 +144,15 @@ def test_nbody(iterations):
 
 	times = []
 	for _ in range(iterations):
-		t0 = time()
+		t0 = clock()
 		start_e = report_energy( SYSTEM, PAIRS )
 		advance(0.01, 20000, SYSTEM, PAIRS)
 		end_e = report_energy( SYSTEM, PAIRS )
-		t1 = time()
-		print('#start energy:', start_e)
-		print('#end energy:', end_e)
+		t1 = clock()
+		#print('#start energy:', start_e)
+		#print('#end energy:', end_e)
 		times.append(t1 - t0)
 	return times
 
 
+main()

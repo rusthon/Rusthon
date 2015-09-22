@@ -1447,15 +1447,18 @@ when fast_loops is off much of python `for in something` style of looping is los
 			## the only safe way to omit _visit_for_prep_iter_helper is to check
 			## if the user had statically typed the iterator variable as a dict.
 			pass
+
+		## TESTING ##
 		self._visit_for_prep_iter_helper(node, out, iname)
 
 		if BLOCKIDS: out.append('/*BEGIN-FOR:%s*/' %id(node))
 		if self._fast_loops:
-			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++)' % (index, index, iname, index) )
-			out.append( self.indent() + '{' )
+			out.append( self.indent() + 'var %s = %s.length-1;' %(index, iname) )
+			out.append( self.indent() + 'while (%s) {' %index )
 
 		else:
 			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++) {' % (index, index, iname, index) )
+
 		self.push()
 
 		if hasattr(self, '_in_timeout') and self._in_timeout:
@@ -1469,6 +1472,9 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 		for line in list(map(self.visit, node.body)):
 			body.append( self.indent() + line )
+
+		if self._fast_loops:
+			body.append( self.indent() + '%s--;' %index)
 
 		self.pull()
 		out.extend( body )

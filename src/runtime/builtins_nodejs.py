@@ -48,7 +48,9 @@ class file:
 	def close(self):
 		pass
 
-def __open__( path, mode=None):  ## this can not be named `open` because it replaces `window.open`
+def __open__( path, mode):  ## this can not be named `open` because it replaces `window.open`
+	if mode is undefined:
+		mode = 'r'
 	return file( path, mode )
 
 
