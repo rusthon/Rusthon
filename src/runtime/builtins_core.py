@@ -1239,19 +1239,16 @@ String.prototype.find = lambda a : this.indexOf(a)
 
 @bind(String.prototype.isdigit)
 def __string_isdigit():
-	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-	for char in this:
-		if char in digits: pass
-		else: return False
-	return True
+	if isNaN(this):
+		return False
+	elif this.indexOf('.')==-1:
+		return True
+	else:
+		return False
 
 @bind(String.prototype.isnumber)
 def __string_isnumber():
-	digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']
-	for char in this:
-		if char in digits: pass
-		else: return False
-	return True
+	return not isNaN(this)
 
 def __replace_method(ob, a, b):
 	## this is required because string.replace in javascript only replaces the first occurrence

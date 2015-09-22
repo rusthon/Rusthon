@@ -4,15 +4,10 @@ pystone
 
 from time import clock
 __version__ = "1.1"
-
+from runtime import *
 
 def main():
 	LOOPS = 100000
-	if PYTHON=='PYTHONJS':  
-		pythonjs.configure( direct_operator='+' )
-		pythonjs.configure( direct_operator='*' )
-		pythonjs.configure( direct_keys=True )
-		pass
 	a = pystones( LOOPS )
 	benchtime = a[0]
 	stones = a[1]
@@ -243,3 +238,4 @@ def Func3(EnumParIn):
 
 
 
+main()
