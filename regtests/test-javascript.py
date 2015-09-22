@@ -11,7 +11,9 @@ ignore = (
 )
 
 TODO_FIX = (
-	'yield.py'
+	'yield.py',
+	#'set_slice.py',
+	#'variable_kwargs.py',
 )
 
 for folder in 'class list calling str dict loop lang set'.split():
@@ -51,7 +53,7 @@ for folder in 'class list calling str dict loop lang set'.split():
 			'python',
 			'../rusthon.py',
 			'--javascript',
-			'--release',
+			#'--release',
 			os.path.join('./'+folder, md)
 		])
 		js = md[:-2] + 'js'

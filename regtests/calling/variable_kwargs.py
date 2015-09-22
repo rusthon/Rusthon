@@ -3,7 +3,7 @@ from runtime import *
 
 def f2(**kw):
 	a = 0
-	for key in kw:
+	for key in iter(kw):
 		a += kw[key]
 	return a
 

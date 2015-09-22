@@ -139,7 +139,7 @@ def offset_momentum(ref, bodies, px=0.0, py=0.0, pz=0.0):
 
 def test_nbody(iterations):
 	SYSTEM = []
-	for key in BODIES: SYSTEM.append( BODIES[key] )
+	for key in iter(BODIES): SYSTEM.append( BODIES[key] )
 	PAIRS = combinations(SYSTEM)
 
 	times = []

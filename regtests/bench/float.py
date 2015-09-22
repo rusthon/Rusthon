@@ -12,8 +12,8 @@ def main():
 	print( avg )
 
 
-class Point(object):
-
+#class Point(object):  ## not allowed in RapydScript
+class Point:
 	def __init__(self, i):
 		self.x = sin(i)
 		self.y = cos(i) * 3

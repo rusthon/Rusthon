@@ -35,6 +35,8 @@ def main():
 
 	x = []
 	y = [1,2,3]
+	## should be faster to call iter(myarr) when myarry is short. 
+	## for long arrays use `for v in myarry`
 	for v in iter(y):
 		x.append(v)
 		print v

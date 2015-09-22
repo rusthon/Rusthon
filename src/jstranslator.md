@@ -1360,8 +1360,8 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 ```python
 
-	def _visit_for_prep_iter_helper(self, node, out, iter_name):
-		if not self._fast_loops:
+	def _visit_for_prep_iter_helper(self, node, out, iter_name, wrapped):
+		if not self._fast_loops or wrapped:
 			if typedpython.unicode_vars:
 				s = 'if (! (%s instanceof Array || typeof %s == "string" || 𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚(%s) || 𝑰𝒔𝑨𝒓𝒓𝒂𝒚(%s) )) { %s = __object_keys__(%s) }' %(iter_name, iter_name, iter_name, iter_name, iter_name, iter_name)
 			else:
@@ -1405,6 +1405,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 		is_iter_wrapped = False
 		if iter.startswith('iter('):
 			is_iter_wrapped = True
+			iter = iter[5:-1]
 
 		out = []
 		body = []
@@ -1423,7 +1424,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 		## iterator, because _visit_for_prep_iter_helper might break it,
 		## by reassigning the original dict, to its keys (an array),
 		## later code in the block will then fail when it expects a dict.
-		if not self._fast_loops:
+		if not self._fast_loops or is_iter_wrapped:
 			if not typedpython.unicode_vars:
 				iname = '__iter%s' %self._iter_id
 			elif isinstance(node.iter, ast.Name):
@@ -1454,7 +1455,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 			pass
 
 		## TESTING ##
-		self._visit_for_prep_iter_helper(node, out, iname)
+		self._visit_for_prep_iter_helper(node, out, iname, is_iter_wrapped)
 
 		if BLOCKIDS: out.append('/*BEGIN-FOR:%s*/' %iter)
 
@@ -1464,6 +1465,8 @@ when fast_loops is off much of python `for in something` style of looping is los
 			## example: `for char in iter(mystr)`
 			if self._runtime_type_checking:
 				out.append( self.indent() + 'if (typeof(%s)=="string") {throw new RuntimeError("string iteration error:\\n  wrap the string with `iter()`:\\n  example `for c in iter(mystr)`.\\n");}' %iname )
+				#breaks:DOM and typedarrys##out.append( self.indent() + 'if (!(__is_some_array(%s)){throw new RuntimeError("Array iteration error:\\n  wrap the object with `iter()`:\\n  example `for ob in iter(iterable)`.\\n");}' %iname )
+				out.append( self.indent() + 'if (!(%s instanceof Array)){throw new RuntimeError("Array iteration error:\\n  wrap the object with `iter()`:\\n  example `for ob in iter(iterable)`.\\n");}' %iname )
 
 			out.append( self.indent() + 'var %s = %s.length-1;' %(index, iname) )
 			out.append( self.indent() + '%s.reverse();' %iname )			

@@ -772,8 +772,15 @@ def __array_copy():
 	return arr
 
 
-def iter(arr):
-	return arr
+#def iter(arr):
+#	if instanceof(arr, Array):
+#		return arr
+#	elif typeof(arr)=='string':
+#		return arr
+#	elif __is_some_array(arr):
+#		return arr
+#	else:
+#		return inline("Object.keys(arr)")
 
 @bind(Array.prototype.__contains__)
 def __array_contains(a):
@@ -951,6 +958,8 @@ def __is_some_array( ob ):
 		for t in __dom_array_types__:
 			if instanceof(ob, t):
 				return True
+	if ob.length is not undefined and typeof(ob.length)=='number':
+		return True
 	return False
 
 @unicode('𝑰𝒔𝑻𝒚𝒑𝒆𝒅𝑨𝒓𝒓𝒂𝒚')
@@ -1262,9 +1271,9 @@ def __string_isdigit():
 def __string_isnumber():
 	return not isNaN(this)
 
-@bind(String.prototype.reverse)
-def __string_invalid_method():
-	pass
+#@bind(String.prototype.reverse)
+#def __string_invalid_method():
+#	pass
 
 
 def __replace_method(ob, a, b):
