@@ -658,8 +658,12 @@ def hasattr(ob, attr):
 def list(ob):
 	a = []
 	if ob is not undefined:
-		for e in ob:
-			a.push(e)
+		if isinstance(ob, string):
+			for i in range(ob.length):
+				a.push(ob[i])
+		else:
+			for e in ob:
+				a.push(e)
 	return a
 
 @unicode('𝑻𝒖𝒑𝒍𝒆')
@@ -759,7 +763,7 @@ def __array_equals(a):
 	return JSON.stringify(this) == JSON.stringify(a)
 
 @bind(Array.prototype.copy)    ## non standard
-def func():
+def __array_copy():
 	arr = []
 	i = 0
 	while i < this.length:
@@ -767,6 +771,9 @@ def func():
 		i += 1
 	return arr
 
+
+def iter(arr):
+	return arr
 
 @bind(Array.prototype.__contains__)
 def __array_contains(a):
@@ -819,7 +826,12 @@ def __array_setslice(start, stop, step, items):
 	if start is undefined: start = 0
 	if stop is undefined: stop = this.length
 	arr = [start, stop-start]
-	for item in items: arr.push( item )
+	## todo fix instanceof String
+	if isinstance(items, string):
+		for i in range(items.length):
+			arr.push( items[i] )
+	else:
+		for item in items: arr.push( item )
 	this.splice.apply(this, arr )
 
 @bind(Array.prototype.append)
@@ -1249,6 +1261,11 @@ def __string_isdigit():
 @bind(String.prototype.isnumber)
 def __string_isnumber():
 	return not isNaN(this)
+
+@bind(String.prototype.reverse)
+def __string_invalid_method():
+	pass
+
 
 def __replace_method(ob, a, b):
 	## this is required because string.replace in javascript only replaces the first occurrence

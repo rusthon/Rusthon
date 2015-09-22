@@ -1397,9 +1397,14 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 
 	def visit_For(self, node):
+		self._fast_loops = True  ## TESTING fast loops always true, string iteration now requires `iter(s)` wrapped
+
 
 		target = node.target.id
 		iter = self.visit(node.iter) # iter is the python iterator
+		is_iter_wrapped = False
+		if iter.startswith('iter('):
+			is_iter_wrapped = True
 
 		out = []
 		body = []
@@ -1451,8 +1456,15 @@ when fast_loops is off much of python `for in something` style of looping is los
 		## TESTING ##
 		self._visit_for_prep_iter_helper(node, out, iname)
 
-		if BLOCKIDS: out.append('/*BEGIN-FOR:%s*/' %id(node))
-		if self._fast_loops:
+		if BLOCKIDS: out.append('/*BEGIN-FOR:%s*/' %iter)
+
+		if self._fast_loops and not is_iter_wrapped:
+
+			## iteration over strings not allowed in javascript backend without wrapping with `iter(mystr)` in the loop,
+			## example: `for char in iter(mystr)`
+			if self._runtime_type_checking:
+				out.append( self.indent() + 'if (typeof(%s)=="string") {throw new RuntimeError("string iteration error:\\n  wrap the string with `iter()`:\\n  example `for c in iter(mystr)`.\\n");}' %iname )
+
 			out.append( self.indent() + 'var %s = %s.length-1;' %(index, iname) )
 			out.append( self.indent() + '%s.reverse();' %iname )			
 			out.append( self.indent() + 'while (%s.length && %s+1) {' %(iname, index) )
@@ -1474,18 +1486,18 @@ when fast_loops is off much of python `for in something` style of looping is los
 		for line in list(map(self.visit, node.body)):
 			body.append( self.indent() + line )
 
-		if self._fast_loops:
+		if self._fast_loops and not is_iter_wrapped:
 			body.append( self.indent() + '%s--;' %index)
 
 		self.pull()
 		out.extend( body )
-		if self._fast_loops:
+		if self._fast_loops and not is_iter_wrapped:
 			out.append( self.indent() + '} %s.reverse();' %iname )			
 		else:
 			out.append( self.indent() + '}' )
 
 
-		if BLOCKIDS: out.append( self.indent() + '/*END-FOR:%s*/' %id(node))
+		if BLOCKIDS: out.append( self.indent() + '/*END-FOR:%s*/' %self._fast_loops)
 
 		self._iter_id -= 1
 

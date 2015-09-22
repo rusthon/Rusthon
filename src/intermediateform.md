@@ -3159,7 +3159,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			map(self.visit, node.body)
 			writer.pull()
 
-		elif self._with_js or self._with_dart:
+		elif self._with_js:
 			if isinstance(iter, ast.Call) and isinstance(iter.func, Name) and iter.func.id in ('range','xrange'):
 				iter_start = '0'
 				if len(iter.args) == 2:
@@ -3169,6 +3169,9 @@ class PythonToPythonJS(NodeVisitorBase):
 					iter_end = self.visit(iter.args[0])
 
 				iter_name = target.id
+
+				writer.write('inline("/*for var in range*/")')
+
 				writer.write('var(%s)' %iter_name)
 				if iter_start == '0':
 					writer.write('%s = -1' %iter_name)
