@@ -84,6 +84,10 @@ def issubclass(C, B):
 		return True
 	elif C.__bases__:
 		for base in C.__bases__:
+			#if base is undefined:
+			#	print C.__bases__
+			#	#print __n0
+			#	raise RuntimeError(C.__bases__)
 			if issubclass(base, B):
 				return True
 	return False

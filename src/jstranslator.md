@@ -1454,7 +1454,8 @@ when fast_loops is off much of python `for in something` style of looping is los
 		if BLOCKIDS: out.append('/*BEGIN-FOR:%s*/' %id(node))
 		if self._fast_loops:
 			out.append( self.indent() + 'var %s = %s.length-1;' %(index, iname) )
-			out.append( self.indent() + 'while (%s) {' %index )
+			out.append( self.indent() + '%s.reverse();' %iname )			
+			out.append( self.indent() + 'while (%s.length && %s) {' %(iname, index) )
 
 		else:
 			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++) {' % (index, index, iname, index) )
@@ -1478,7 +1479,12 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 		self.pull()
 		out.extend( body )
-		out.append( self.indent() + '}' )
+		if self._fast_loops:
+			out.append( self.indent() + '} %s.reverse();' %iname )			
+		else:
+			out.append( self.indent() + '}' )
+
+
 		if BLOCKIDS: out.append( self.indent() + '/*END-FOR:%s*/' %id(node))
 
 		self._iter_id -= 1

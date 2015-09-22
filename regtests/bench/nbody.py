@@ -10,7 +10,7 @@ from runtime import *
 
 
 def main():
-	times = test_nbody( 6 )
+	times = test_nbody( 3 )
 	avg = sum( times ) / 3.0
 	print( avg )
 
@@ -146,7 +146,7 @@ def test_nbody(iterations):
 	for _ in range(iterations):
 		t0 = clock()
 		start_e = report_energy( SYSTEM, PAIRS )
-		advance(0.01, 20000, SYSTEM, PAIRS)
+		advance(0.01, 200000, SYSTEM, PAIRS)
 		end_e = report_energy( SYSTEM, PAIRS )
 		t1 = clock()
 		#print('#start energy:', start_e)
