@@ -846,7 +846,9 @@ Array.prototype.add = Array.prototype.__add__
 
 @bind(Array.prototype.extend)
 def __array_extend(other):
-	for obj in other: this.push(obj)
+	#for obj in other: this.push(obj)  ## invalid because of for-in loops double reverse iter
+	for i in range(other.length):
+		this.push(other[i])
 	return this
 
 @bind(Array.prototype.remove)
