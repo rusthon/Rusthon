@@ -851,6 +851,14 @@ def __array_extend(other):
 		this.push(other[i])
 	return this
 
+
+#@bind(Array.prototype.pop)
+#def __array_pop():
+#	a = this[0]
+#	this.shift()
+#	return a
+
+
 @bind(Array.prototype.remove)
 def __array_remove(item):
 	index = this.indexOf( item )

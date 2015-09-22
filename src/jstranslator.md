@@ -1455,7 +1455,7 @@ when fast_loops is off much of python `for in something` style of looping is los
 		if self._fast_loops:
 			out.append( self.indent() + 'var %s = %s.length-1;' %(index, iname) )
 			out.append( self.indent() + '%s.reverse();' %iname )			
-			out.append( self.indent() + 'while (%s.length && %s) {' %(iname, index) )
+			out.append( self.indent() + 'while (%s.length && %s+1) {' %(iname, index) )
 
 		else:
 			out.append( self.indent() + 'for (var %s = 0; %s < %s.length; %s++) {' % (index, index, iname, index) )

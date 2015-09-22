@@ -4,7 +4,10 @@ from runtime import *
 
 def main():
 	a = list(range(10))
+	print a
 	b = a.pop()
+	print b
+	print a
 	assert( b==9 )
 	c = a.pop(0)
 	assert( c==0 )
