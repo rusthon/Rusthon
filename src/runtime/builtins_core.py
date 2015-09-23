@@ -22,7 +22,15 @@ def __array_fill__(arr, items):
 
 @unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
-	if ob is undefined or ob is null:
+	if instanceof(ob, Array):
+		if klass is list:
+			return True
+		elif klass is Array:
+			return True
+		else:
+			return False
+
+	elif ob is undefined or ob is null:
 		return False
 	elif typeof(klass) is 'string':
 		T = typeof( ob )
@@ -51,18 +59,13 @@ def isinstance( ob, klass):
 		else:
 			return False
 
-	elif instanceof(ob, Array):
-		if klass is list:
-			return True
-		elif klass is Array:
-			return True
-		else:
-			return False
-	#elif hasattr(ob, '__class__'):
+
 	elif ob.__class__:
 		return issubclass(ob.__class__, klass)
 	elif instanceof(ob, klass):
 		return True
+
+
 	elif typeof(ob)=='number':
 		if klass is int and ob.toString().isdigit():
 			return True
@@ -832,18 +835,41 @@ def __array_getslice(start, stop, step):
 def __array_setslice(start, stop, step, items):
 	if start is undefined: start = 0
 	if stop is undefined: stop = this.length
-	arr = [start, stop-start]
-	## todo fix instanceof String
-	if isinstance(items, string):
+	#arr = [start, stop-start]
+	#for i in range(items.length):
+	#	arr.push( items[i] )
+	#this.splice.apply(this, arr )
+
+	itemslen = items.length
+	thislen = this.length
+	remove  = stop-start
+	newlen  = itemslen+thislen-remove
+	if thislen < newlen:
+		offset = newlen-thislen
+		this.length = newlen
+		## move elements in place forward
+		i = thislen-1
+		while i >= stop:
+			this[ i+offset ] = this[i]
+			i -= 1
+
+		for j in range(itemslen):
+			this[j+start] = items[j]
+	elif thislen == newlen:
+		i = 0
+		for j in range(start, stop):
+			this[j] = items[i]
+			i += 1
+	else:
+		arr = [start, stop-start]
 		for i in range(items.length):
 			arr.push( items[i] )
-	else:
-		for item in items: arr.push( item )
-	this.splice.apply(this, arr )
+		this.splice.apply(this, arr )
 
 @bind(Array.prototype.append)
 def __array_append(item):
-	this.push( item )
+	#this.push( item )
+	this[this.length]=item
 	return this
 
 @bind(Array.prototype.__mul__)
@@ -871,11 +897,12 @@ def __array_extend(other):
 	return this
 
 
-#@bind(Array.prototype.pop)
-#def __array_pop():
-#	a = this[0]
-#	this.shift()
-#	return a
+@bind(Array.prototype.pop)
+def __array_pop(index):
+	if index == 0:
+		return this.shift()
+	elif index is undefined:
+		return inline('this.pop()')
 
 
 @bind(Array.prototype.remove)

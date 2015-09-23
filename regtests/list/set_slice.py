@@ -4,12 +4,13 @@ from runtime import *
 
 def main():
 	a = list(range(10))
+	for v in a: print v
 	a[ 2:4 ] = 'XXXY'
+	#print a
+	print '------------'
+	for v in a:
+		print v
 
-	#if BACKEND=='DART':
-	#	print(a[...])
-	#else:
-	#	print(a)
 
 	assert( a[0]==0 )
 	assert( a[1]==1 )
@@ -27,9 +28,12 @@ def main():
 	assert( a[11]==9 )
 
 	b = list(range(3))
+	#print b
 	c = b [ :2 ]
+	#print c
 	assert( c[0]==0 )
 	assert( c[1]==1 )
+	print '----------'
 
 	b[ :2 ] = 'ABC'
 	assert( len(b)==4 )

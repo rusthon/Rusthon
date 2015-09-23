@@ -2207,7 +2207,12 @@ class PythonToPythonJS(NodeVisitorBase):
 					return '__jsdict_items(%s)' %self.visit(anode.value)
 
 				elif anode.attr == 'pop' and len(args) in (1,2):
-					return '__jsdict_pop(%s, %s)' %(self.visit(anode.value), ','.join(args) )
+					pval  = self.visit(anode.value)
+					pargs = ','.join(args)
+					if len(args)==1 and isinstance(anode.value, ast.Name):  ## V8 can JIT this
+						return '(%s.pop(%s) if instanceof(%s,Array) else __jsdict_pop(%s, %s))' %(pval,pargs, pval, pval,pargs)
+					else:
+						return '__jsdict_pop(%s, %s)' %(pval, ','.join(args) )
 
 				elif anode.attr == 'split' and not args:
 					if self._strict_mode:
