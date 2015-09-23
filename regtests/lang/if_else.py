@@ -4,7 +4,7 @@ if/else
 '''
 
 #def func(x=None, callback=None):
-def func(x:bool=False, callback:lambda()(int)=None ):
+def func(x=False, callback=None ):
 	a = False
 	if x:   ## can c++ templates support this pythonic style?
 		a = False
@@ -42,7 +42,9 @@ def main():
 
 	assert( a==True )
 
-	cb = lambda : 1+1
+	def cb() ->int:
+		return 1+1
+
 	func( callback=cb )
 
 

@@ -3,7 +3,7 @@ from runtime import *
 class A:
 	def __init__(self, **kw):
 		a = 0
-		for key in kw:
+		for key in iter(kw):
 			a += kw[key]
 		self.value = a
 

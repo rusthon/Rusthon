@@ -24,7 +24,7 @@ def main():
 
 	s = 'hello world'
 	z = ''
-	for char in s:
+	for char in iter(s):
 		z += char
 	assert( z == 'hello world' )
 
@@ -37,7 +37,7 @@ def main():
 	ob = {'a' : 'A', 'b' : 'B'}
 	k = ''
 	v = ''
-	for key in ob:
+	for key in iter(ob):
 		k += key
 		v += ob[key]
 	print k
