@@ -1667,16 +1667,16 @@ class PythonToPythonJS(NodeVisitorBase):
 		elif self._with_ll or self._with_rust or self._with_go or self._with_cpp:
 			return '%s[%s]' %(name, self.visit(node.slice))
 
-		elif self._with_js or self._with_dart:
+		elif self._with_js:
 			if isinstance(node.slice, ast.Slice):  ## allow slice on Array
-				if self._with_dart:
-					## this is required because we need to support slices on String ##
-					return '__getslice__(%s, %s)'%(name, self.visit(node.slice))
+				if not node.slice.lower and not node.slice.upper and not node.slice.step:
+					return '%s.copy()' %name
+				elif not node.slice.upper and node.slice.step:
+					slice = self.visit(node.slice).split(',')
+					slice = '%s,%s' %(slice[0], slice[2])
+					return '%s.__getslice_lowerstep__(%s)'%(name, slice)
 				else:
-					if not node.slice.lower and not node.slice.upper and not node.slice.step:
-						return '%s.copy()' %name
-					else:
-						return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
+					return '%s.__getslice__(%s)'%(name, self.visit(node.slice))
 
 
 			elif isinstance(node.slice, ast.Index) and isinstance(node.slice.value, ast.Num):

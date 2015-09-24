@@ -139,14 +139,15 @@ def offset_momentum(ref, bodies, px=0.0, py=0.0, pz=0.0):
 
 def test_nbody(iterations):
 	SYSTEM = []
-	for key in iter(BODIES): SYSTEM.append( BODIES[key] )
+	bkeys = BODIES.keys()
+	for key in bkeys: SYSTEM.append( BODIES[key] )
 	PAIRS = combinations(SYSTEM)
 
 	times = []
 	for _ in range(iterations):
 		t0 = clock()
 		start_e = report_energy( SYSTEM, PAIRS )
-		advance(0.01, 200000, SYSTEM, PAIRS)
+		advance(0.01, 20000, SYSTEM, PAIRS)
 		end_e = report_energy( SYSTEM, PAIRS )
 		t1 = clock()
 		#print('#start energy:', start_e)

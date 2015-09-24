@@ -765,14 +765,11 @@ def __string_index(a):
 def __array_equals(a):
 	return JSON.stringify(this) == JSON.stringify(a)
 
+
 @bind(Array.prototype.copy)    ## non standard in python, used by `myarr[:]`
 def __array_copy():
-	if this.length==0: return []
-	else:
-		return [].concat(this)
-		#return this.slice(0)
-
-
+	#return [].concat(this)
+	return this.slice()
 
 #def iter(arr):
 #	if instanceof(arr, Array):
@@ -788,6 +785,21 @@ def __array_copy():
 def __array_contains(a):
 	if this.indexOf(a) == -1: return False
 	else: return True
+
+@bind(Array.prototype.__getslice_lowerstep__)
+def __array_getslice_lowerstep__(start, step):
+	arr = []
+	if step < 0:
+		while start >= 0:
+			arr.push( this[start] )
+			start += step
+	else:
+		n = this.length
+		while start < n:
+			arr.push( this[start] )
+			start += step
+
+	return arr
 
 
 @bind(Array.prototype.__getslice__)
@@ -831,7 +843,7 @@ def __array_getslice(start, stop, step):
 
 
 @bind(Array.prototype.__setslice__)
-def __array_setslice(start, stop, step, items):
+def __array_setslice(start, stop, step, items):  ## TODO step
 	if start is undefined: start = 0
 	if stop is undefined: stop = this.length
 	#arr = [start, stop-start]
@@ -851,9 +863,9 @@ def __array_setslice(start, stop, step, items):
 		while i >= stop:
 			this[ i+offset ] = this[i]
 			i -= 1
-
 		for j in range(itemslen):
 			this[j+start] = items[j]
+
 	elif thislen == newlen:
 		i = 0
 		for j in range(start, stop):
@@ -867,9 +879,9 @@ def __array_setslice(start, stop, step, items):
 
 @bind(Array.prototype.append)
 def __array_append(item):
-	#this.push( item )
-	this.length += 1
-	this[this.length-1]=item
+	this.push( item )
+	#this.length += 1
+	#this[this.length-1]=item
 	return this
 
 @bind(Array.prototype.__mul__)

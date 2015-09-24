@@ -8,7 +8,7 @@
 from time import clock
 from runtime import *
 
-DEFAULT_ARG = 8
+DEFAULT_ARG = 9
 
 def main():
 	times = []
