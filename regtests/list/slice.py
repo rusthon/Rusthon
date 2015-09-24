@@ -12,13 +12,9 @@ def main():
 	assert( len(a)==5 )
 	assert( a[4]==4 )
 
-	#if BACKEND=='DART':
-	#	print(a[...])
-	#else:
-	#	print(a)
-
-
+	print '--------'
 	b = range(10)[::2]
+	print b
 	assert( len(b)==5 )
 	assert( b[0]==0 )
 	assert( b[1]==2 )

@@ -788,6 +788,7 @@ def __array_contains(a):
 
 @bind(Array.prototype.__getslice_lowerstep__)
 def __array_getslice_lowerstep__(start, step):
+	start = start | 0
 	arr = []
 	if step < 0:
 		while start >= 0:
