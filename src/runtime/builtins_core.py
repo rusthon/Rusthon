@@ -22,15 +22,7 @@ def __array_fill__(arr, items):
 
 @unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
-	if instanceof(ob, Array):
-		if klass is list:
-			return True
-		elif klass is Array:
-			return True
-		else:
-			return False
-
-	elif ob is undefined or ob is null:
+	if ob is undefined or ob is null:
 		return False
 	elif typeof(klass) is 'string':
 		T = typeof( ob )
@@ -60,11 +52,19 @@ def isinstance( ob, klass):
 			return False
 
 
-	elif ob.__class__:
-		return issubclass(ob.__class__, klass)
+	elif instanceof(ob, Array):
+		if klass is list:
+			return True
+		elif klass is Array:
+			return True
+		else:
+			return False
+
 	elif instanceof(ob, klass):
 		return True
 
+	elif ob.__class__:  ## TODO check typeof
+		return issubclass(ob.__class__, klass)
 
 	elif typeof(ob)=='number':
 		if klass is int and ob.toString().isdigit():
@@ -765,14 +765,13 @@ def __string_index(a):
 def __array_equals(a):
 	return JSON.stringify(this) == JSON.stringify(a)
 
-@bind(Array.prototype.copy)    ## non standard
+@bind(Array.prototype.copy)    ## non standard in python, used by `myarr[:]`
 def __array_copy():
-	arr = []
-	i = 0
-	while i < this.length:
-		arr.push( this[i] )
-		i += 1
-	return arr
+	if this.length==0: return []
+	else:
+		return [].concat(this)
+		#return this.slice(0)
+
 
 
 #def iter(arr):
@@ -869,7 +868,8 @@ def __array_setslice(start, stop, step, items):
 @bind(Array.prototype.append)
 def __array_append(item):
 	#this.push( item )
-	this[this.length]=item
+	this.length += 1
+	this[this.length-1]=item
 	return this
 
 @bind(Array.prototype.__mul__)
@@ -897,12 +897,16 @@ def __array_extend(other):
 	return this
 
 
-@bind(Array.prototype.pop)
-def __array_pop(index):
-	if index == 0:
-		return this.shift()
-	elif index is undefined:
-		return inline('this.pop()')
+## nodejs 0.10.25 can not print arrays on the console if `pop` is changed?
+## bad idea to change the pop of array because JIT's will probably optimze for native.
+#@bind(Array.prototype.pop)
+#def __array_pop(index):
+#	if index is undefined:
+#		return inline('this.pop()')
+#	#elif index is 0:
+#	#	return this.shift()
+#	else:
+#		return inline('this.pop()')
 
 
 @bind(Array.prototype.remove)
@@ -913,7 +917,10 @@ def __array_remove(item):
 @bind(Array.prototype.insert)
 def __array_insert(index, obj):
 	if index < 0: index = this.length + index
-	this.splice(index, 0, obj)
+	if index == 0:
+		this.unshift(obj)
+	else:
+		this.splice(index, 0, obj)
 
 Array.prototype.index = lambda obj : this.indexOf(obj)
 

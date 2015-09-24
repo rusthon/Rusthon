@@ -2209,8 +2209,9 @@ class PythonToPythonJS(NodeVisitorBase):
 				elif anode.attr == 'pop' and len(args) in (1,2):
 					pval  = self.visit(anode.value)
 					pargs = ','.join(args)
-					if len(args)==1 and isinstance(anode.value, ast.Name):  ## V8 can JIT this
-						return '(%s.pop(%s) if instanceof(%s,Array) else __jsdict_pop(%s, %s))' %(pval,pargs, pval, pval,pargs)
+					## special case for `myarray.pop(0)`, all cases of `myarr.pop(n)` see `__jsdict_pop`
+					if len(args)==1 and isinstance(anode.value, ast.Name) and args[0]=='0':  ## V8 can JIT this
+						return '(%s.shift() if instanceof(%s,Array) else __jsdict_pop(%s, %s))' %(pval, pval, pval,pargs)
 					else:
 						return '__jsdict_pop(%s, %s)' %(pval, ','.join(args) )
 
