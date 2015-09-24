@@ -773,7 +773,11 @@ def __array_equals(a):
 @bind(Array.prototype.copy)    ## non standard in python, used by `myarr[:]`
 def __array_copy():
 	#return [].concat(this)
-	return this.slice()
+	#return this.slice()
+	a = new Array(this.length)
+	for i in range(this.length):
+		a[i]=this[i]
+	return a
 
 #def iter(arr):
 #	if instanceof(arr, Array):
