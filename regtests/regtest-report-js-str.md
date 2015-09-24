@@ -27,6 +27,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = "abc";
 	b = __replace_method(a, "a", "A");
@@ -102,6 +104,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d,f;
 	if (!(len("a") === 1)) {throw new Error("assertion failed"); }
 	a = "XYZ";
@@ -172,6 +176,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,x,b;
 	a = "XYZ";
 	b = "XYZ";
@@ -222,6 +228,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	console.log("testing string multiplication");
 	if (!((("hi".__mul__(2))) === "hihi")) {throw new Error("assertion failed"); }
@@ -272,8 +280,12 @@ output:
 
 var C =  function C()
 {
+/***/ if (C.__recompile !== undefined) { eval("C.__redef="+C.__recompile); C.__recompile=undefined; };
+/***/ if (C.__redef !== undefined) { return C.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
+	/***/ try {
 	this.__init__();
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, C, this.__init__)==true){debugger;}else{throw __err;} };
 }/*end->	`C`	*/
 
 C.prototype.__class__ = C;
@@ -281,17 +293,23 @@ C.__name__ = "C";
 C.__bases__ = [];
 C.prototype.toString =  function C_toString()
 {
+/***/ if (C_toString.__recompile !== undefined) { eval("C_toString.__redef="+C_toString.__recompile); C_toString.__recompile=undefined; };
+/***/ if (C_toString.__redef !== undefined) { return C_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
 
 C.prototype.__init__ =  function C___init__()
 {
+/***/ if (C___init__.__recompile !== undefined) { eval("C___init__.__redef="+C___init__.__recompile); C___init__.__recompile=undefined; };
+/***/ if (C___init__.__redef !== undefined) { return C___init__.__redef.apply(this,arguments); };
 	
 	this.value = null;
 }/*end->	`__init__`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c;
 	console.log("testing special strings");
 	if (!(len("\\") === 1)) {throw new Error("assertion failed"); }
@@ -302,7 +320,7 @@ var main =  function main()
 	c.value = "é";
 	if (!(c.value === "é")) {throw new Error("assertion failed"); }
 	if (!(len("éè") === 2)) {throw new Error("assertion failed"); }
-	if (!("éè".__getslice__(undefined, undefined, -1) === "èé")) {throw new Error("assertion failed"); }
+	if (!("éè".__getslice_lowerstep__(undefined, -1) === "èé")) {throw new Error("assertion failed"); }
 	console.log("ok");
 }/*end->	`main`	*/
 
@@ -329,6 +347,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a = "{x}{y}".format({ x:"A", y:"B" });
 	if (!(a === "AB")) {throw new Error("assertion failed"); }
@@ -362,6 +382,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = __sprintf("%s.%s", ["X", "Y"]);
 	if (!(a[0] === "X")) {throw new Error("assertion failed"); }
@@ -378,22 +400,51 @@ main();
 input:
 ------
 ```python
-"""The string iterator"""
+"""string iteration requires wrappingn with `iter(my)`"""
 from runtime import *
 
 def main():
 	a = list("abc")
+	print a
 	assert(a[0] == 'a')
 	assert(a[1] == 'b')
 	assert(a[2] == 'c')
-
+	print '--------'
 	b = ['a']
-	for i in "xyz":
-		b.append(i)
+	for chr in iter("xyz"):
+		print chr
+		b.append(chr)
+		print b
+	print '--------'
+	print b
 	assert(b[0] == 'a')
 	assert(b[1] == 'x')
 	assert(b[2] == 'y')
 	assert(b[3] == 'z')
+
+	b = ['a']
+	mystr = "xyz"
+	for char in iter(mystr):
+		print char
+		b.append(char)
+		print b
+	print '--------'
+	print b
+	assert(b[0] == 'a')
+	assert(b[1] == 'x')
+	assert(b[2] == 'y')
+	assert(b[3] == 'z')
+
+	x = []
+	y = [1,2,3]
+	## should be faster to call iter(myarr) when myarry is short. 
+	## for long arrays use `for v in myarry`
+	for v in iter(y):
+		x.append(v)
+		print v
+		print x
+	print '--'
+	print x
 
 main()
 ```
@@ -404,22 +455,64 @@ output:
 
 var main =  function main()
 {
-	var a,b;
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
+	var a,x,mystr,b,y;
 	a = list("abc");
+	console.log(a);
 	if (!(a[0] === "a")) {throw new Error("assertion failed"); }
 	if (!(a[1] === "b")) {throw new Error("assertion failed"); }
 	if (!(a[2] === "c")) {throw new Error("assertion failed"); }
+	console.log("--------");
 	b = ["a"];
 	var __iter0 = "xyz";
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
-		var i = __iter0[ __n0 ];
-		b.append(i);
+		var chr = __iter0[ __n0 ];
+		console.log(chr);
+		/***/ try {
+		b.append(chr);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, b.append)==true){debugger;}else{throw __err;} };
+		console.log(b);
 	}
+	console.log("--------");
+	console.log(b);
 	if (!(b[0] === "a")) {throw new Error("assertion failed"); }
 	if (!(b[1] === "x")) {throw new Error("assertion failed"); }
 	if (!(b[2] === "y")) {throw new Error("assertion failed"); }
 	if (!(b[3] === "z")) {throw new Error("assertion failed"); }
+	b = ["a"];
+	mystr = "xyz";
+	var __iter0 = mystr;
+	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
+	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
+		var char = __iter0[ __n0 ];
+		console.log(char);
+		/***/ try {
+		b.append(char);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, b.append)==true){debugger;}else{throw __err;} };
+		console.log(b);
+	}
+	console.log("--------");
+	console.log(b);
+	if (!(b[0] === "a")) {throw new Error("assertion failed"); }
+	if (!(b[1] === "x")) {throw new Error("assertion failed"); }
+	if (!(b[2] === "y")) {throw new Error("assertion failed"); }
+	if (!(b[3] === "z")) {throw new Error("assertion failed"); }
+	x = [];
+	y = [1, 2, 3];
+	var __iter0 = y;
+	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
+	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
+		var v = __iter0[ __n0 ];
+		/***/ try {
+		x.append(v);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, x.append)==true){debugger;}else{throw __err;} };
+		console.log(v);
+		console.log(x);
+	}
+	console.log("--");
+	console.log(x);
 }/*end->	`main`	*/
 
 main();

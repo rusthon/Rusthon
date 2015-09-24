@@ -48,12 +48,16 @@ output:
 
 var f1 =  function f1(a)
 {
+/***/ if (f1.__recompile !== undefined) { eval("f1.__redef="+f1.__recompile); f1.__recompile=undefined; };
+/***/ if (f1.__redef !== undefined) { return f1.__redef.apply(this,arguments); };
 	
 	return a;
 }/*end->	`f1`	*/
 
 var f2 =  function f2(_kwargs_)
 {
+/***/ if (f2.__recompile !== undefined) { eval("f2.__redef="+f2.__recompile); f2.__recompile=undefined; };
+/***/ if (f2.__redef !== undefined) { return f2.__redef.apply(this,arguments); };
 	
 	var a = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.a===undefined))?	1 :   typeof(_kwargs_)=='object'?_kwargs_.a: __invalid_call__('function `f2` requires named keyword arguments, invalid parameter for `a`',arguments);
 	var b = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.b===undefined))?	2 :   typeof(_kwargs_)=='object'?_kwargs_.b: __invalid_call__('function `f2` requires named keyword arguments, invalid parameter for `b`',arguments);
@@ -62,6 +66,8 @@ var f2 =  function f2(_kwargs_)
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
 	console.log("testing calling named parameters");
 	if (!(f1(10) === 10)) {throw new Error("assertion failed"); }
@@ -83,7 +89,7 @@ from runtime import *
 class A:
 	def f2(self, **kw):
 		a = 0
-		for key in kw:
+		for key in kw.keys():
 			a += kw[key]
 		return a
 
@@ -99,6 +105,8 @@ output:
 
 var A =  function A()
 {
+/***/ if (A.__recompile !== undefined) { eval("A.__redef="+A.__recompile); A.__recompile=undefined; };
+/***/ if (A.__redef !== undefined) { return A.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`A`	*/
 
@@ -107,24 +115,31 @@ A.__name__ = "A";
 A.__bases__ = [];
 A.prototype.toString =  function A_toString()
 {
+/***/ if (A_toString.__recompile !== undefined) { eval("A_toString.__redef="+A_toString.__recompile); A_toString.__recompile=undefined; };
+/***/ if (A_toString.__redef !== undefined) { return A_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
 
 A.prototype.f2 =  function A_f2(kw)
 {
+/***/ if (A_f2.__recompile !== undefined) { eval("A_f2.__redef="+A_f2.__recompile); A_f2.__recompile=undefined; };
+/***/ if (A_f2.__redef !== undefined) { return A_f2.__redef.apply(this,arguments); };
 	var a;
 	a = 0;
-	var __iter0 = kw;
+	var __iter0 = __jsdict_keys(kw);
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var key = __iter0[ __n0 ];
-		a += kw[key];
+		if (a instanceof Array || __is_typed_array(a)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { a += kw[key]; }
 	}
 	return a;
 }/*end->	`f2`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a =  new A();
 	if (!(a.f2({ x:1, y:2 }) === 3)) {throw new Error("assertion failed"); }
@@ -142,7 +157,7 @@ from runtime import *
 class A:
 	def __init__(self, **kw):
 		a = 0
-		for key in kw:
+		for key in iter(kw):
 			a += kw[key]
 		self.value = a
 
@@ -158,8 +173,12 @@ output:
 
 var A =  function A(kw)
 {
+/***/ if (A.__recompile !== undefined) { eval("A.__redef="+A.__recompile); A.__recompile=undefined; };
+/***/ if (A.__redef !== undefined) { return A.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
+	/***/ try {
 	this.__init__(kw);
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, A, this.__init__)==true){debugger;}else{throw __err;} };
 }/*end->	`A`	*/
 
 A.prototype.__class__ = A;
@@ -167,24 +186,31 @@ A.__name__ = "A";
 A.__bases__ = [];
 A.prototype.toString =  function A_toString()
 {
+/***/ if (A_toString.__recompile !== undefined) { eval("A_toString.__redef="+A_toString.__recompile); A_toString.__recompile=undefined; };
+/***/ if (A_toString.__redef !== undefined) { return A_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
 
 A.prototype.__init__ =  function A___init__(kw)
 {
+/***/ if (A___init__.__recompile !== undefined) { eval("A___init__.__redef="+A___init__.__recompile); A___init__.__recompile=undefined; };
+/***/ if (A___init__.__redef !== undefined) { return A___init__.__redef.apply(this,arguments); };
 	var a;
 	a = 0;
 	var __iter0 = kw;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var key = __iter0[ __n0 ];
-		a += kw[key];
+		if (a instanceof Array || __is_typed_array(a)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { a += kw[key]; }
 	}
 	this.value = a;
 }/*end->	`__init__`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a =  new A({ x:1, y:2 });
 	if (!(a.value === 3)) {throw new Error("assertion failed"); }
@@ -250,9 +276,13 @@ output:
 
 var get_lambda =  function get_lambda()
 {
+/***/ if (get_lambda.__recompile !== undefined) { eval("get_lambda.__redef="+get_lambda.__recompile); get_lambda.__recompile=undefined; };
+/***/ if (get_lambda.__redef !== undefined) { return get_lambda.__redef.apply(this,arguments); };
 	
 			var __lambda__ =  function __lambda__(x, y)
 	{
+/***/ if (__lambda__.__recompile !== undefined) { eval("__lambda__.__redef="+__lambda__.__recompile); __lambda__.__recompile=undefined; };
+/***/ if (__lambda__.__redef !== undefined) { return __lambda__.__redef.apply(this,arguments); };
 		
 		return (x + y);
 	}/*end->	`__lambda__`	*/
@@ -262,18 +292,24 @@ var get_lambda =  function get_lambda()
 
 var get_lambdas =  function get_lambdas()
 {
+/***/ if (get_lambdas.__recompile !== undefined) { eval("get_lambdas.__redef="+get_lambdas.__recompile); get_lambdas.__recompile=undefined; };
+/***/ if (get_lambdas.__redef !== undefined) { return get_lambdas.__redef.apply(this,arguments); };
 	
 	return [(function (a,b) {return (a + b);}), (function (x,y) {return (x + y);})];
 }/*end->	`get_lambdas`	*/
 
 var call_lambda =  function call_lambda(F)
 {
+/***/ if (call_lambda.__recompile !== undefined) { eval("call_lambda.__redef="+call_lambda.__recompile); call_lambda.__recompile=undefined; };
+/***/ if (call_lambda.__redef !== undefined) { return call_lambda.__redef.apply(this,arguments); };
 	
 	return F();
 }/*end->	`call_lambda`	*/
 
 var call_lambda2 =  function call_lambda2(_kwargs_)
 {
+/***/ if (call_lambda2.__recompile !== undefined) { eval("call_lambda2.__redef="+call_lambda2.__recompile); call_lambda2.__recompile=undefined; };
+/***/ if (call_lambda2.__redef !== undefined) { return call_lambda2.__redef.apply(this,arguments); };
 	
 	var callback = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.callback===undefined))?	null :   typeof(_kwargs_)=='object'?_kwargs_.callback: __invalid_call__('function `call_lambda2` requires named keyword arguments, invalid parameter for `callback`',arguments);
 	return callback();
@@ -281,9 +317,13 @@ var call_lambda2 =  function call_lambda2(_kwargs_)
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var funcs,r,e,d,f;
 			var __lambda__ =  function __lambda__(a, b)
 	{
+/***/ if (__lambda__.__recompile !== undefined) { eval("__lambda__.__redef="+__lambda__.__recompile); __lambda__.__recompile=undefined; };
+/***/ if (__lambda__.__redef !== undefined) { return __lambda__.__redef.apply(this,arguments); };
 		
 		return (a + b);
 	}/*end->	`__lambda__`	*/
@@ -321,7 +361,7 @@ from runtime import *
 
 def f2(**kw):
 	a = 0
-	for key in kw:
+	for key in iter(kw):
 		a += kw[key]
 	return a
 
@@ -337,19 +377,24 @@ output:
 
 var f2 =  function f2(kw)
 {
+/***/ if (f2.__recompile !== undefined) { eval("f2.__redef="+f2.__recompile); f2.__recompile=undefined; };
+/***/ if (f2.__redef !== undefined) { return f2.__redef.apply(this,arguments); };
 	var a;
 	a = 0;
 	var __iter0 = kw;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var key = __iter0[ __n0 ];
-		a += kw[key];
+		if (a instanceof Array || __is_typed_array(a)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { a += kw[key]; }
 	}
 	return a;
 }/*end->	`f2`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
 	if (!(f2({ x:1, y:2 }) === 3)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
@@ -385,6 +430,8 @@ output:
 
 var f =  function f(a)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 var args = Array.prototype.splice.call(arguments,1, arguments.length);
 	var c;
 	console.log("*args");
@@ -394,13 +441,16 @@ var args = Array.prototype.splice.call(arguments,1, arguments.length);
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var b = __iter0[ __n0 ];
-		c += b;
+		if (c instanceof Array || __is_typed_array(c)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { c += b; }
 	}
 	return c;
 }/*end->	`f`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
 	console.log("testing calling function that takes *args");
 	if (!(f(1, 2, 3, 3) === 9)) {throw new Error("assertion failed"); }
@@ -432,12 +482,16 @@ output:
 
 var f =  function f(a, b, c)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	
 	return ((a + b) + c);
 }/*end->	`f`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
 	if (!(f(1, 2, 3) === 6)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
@@ -471,6 +525,8 @@ output:
 
 var f =  function f(a, _kwargs_)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	
 	var b = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.b===undefined))?	null :   typeof(_kwargs_)=='object'?_kwargs_.b: __invalid_call__('function `f` requires named keyword arguments, invalid parameter for `b`',arguments);
 	var c = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.c===undefined))?	null :   typeof(_kwargs_)=='object'?_kwargs_.c: __invalid_call__('function `f` requires named keyword arguments, invalid parameter for `c`',arguments);
@@ -479,6 +535,8 @@ var f =  function f(a, _kwargs_)
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
 	console.log("testing keywords");
 	console.log(f(1, { b:2, c:3 }));
@@ -521,12 +579,16 @@ output:
 
 var f =  function f(x, a, b, c)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	
 	return (((x + a) + b) + c);
 }/*end->	`f`	*/
 
 var f2 =  function f2(x, y, z, _kwargs_)
 {
+/***/ if (f2.__recompile !== undefined) { eval("f2.__redef="+f2.__recompile); f2.__recompile=undefined; };
+/***/ if (f2.__redef !== undefined) { return f2.__redef.apply(this,arguments); };
 	
 	var w = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.w===undefined))?	0 :   typeof(_kwargs_)=='object'?_kwargs_.w: __invalid_call__('function `f2` requires named keyword arguments, invalid parameter for `w`',arguments);
 	return (((x + y) + z) + w);
@@ -534,6 +596,8 @@ var f2 =  function f2(x, y, z, _kwargs_)
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = [1, 1, 1];
 	if (!(f.apply(f, [].extend([1]).extend(a)) === 4)) {throw new Error("assertion failed"); }

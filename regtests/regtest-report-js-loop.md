@@ -32,7 +32,7 @@ def main():
 
 	s = 'hello world'
 	z = ''
-	for char in s:
+	for char in iter(s):
 		z += char
 	assert( z == 'hello world' )
 
@@ -45,7 +45,7 @@ def main():
 	ob = {'a' : 'A', 'b' : 'B'}
 	k = ''
 	v = ''
-	for key in ob:
+	for key in iter(ob):
 		k += key
 		v += ob[key]
 	print k
@@ -94,6 +94,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,arr,b,e,keys,k,ob,s,values,v,y,z,ob2;
 	a = [1, 2, 3];
 	y = 0;
@@ -101,7 +103,8 @@ var main =  function main()
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var x = __iter0[ __n0 ];
-		y += x;
+		if (y instanceof Array || __is_typed_array(y)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { y += x; }
 	}
 	if (!(y === 6)) {throw new Error("assertion failed"); }
 	z = "";
@@ -110,11 +113,13 @@ var main =  function main()
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var v = __iter0[ __n0 ];
-		z += v;
+		if (z instanceof Array || __is_typed_array(z)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { z += v; }
 	}
 	if (!(z === "abc")) {throw new Error("assertion failed"); }
 	b = false;
-		if (__contains__(arr, "a"))
+	if (__contains__(arr, "a") instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (__contains__(arr, "a"))
 	{
 		b = true;
 	}
@@ -125,11 +130,13 @@ var main =  function main()
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var char = __iter0[ __n0 ];
-		z += char;
+		if (z instanceof Array || __is_typed_array(z)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { z += char; }
 	}
 	if (!(z === "hello world")) {throw new Error("assertion failed"); }
 	b = false;
-		if (__contains__(s, "hello"))
+	if (__contains__(s, "hello") instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (__contains__(s, "hello"))
 	{
 		b = true;
 	}
@@ -142,8 +149,10 @@ var main =  function main()
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var key = __iter0[ __n0 ];
-		k += key;
-		v += ob[key];
+		if (k instanceof Array || __is_typed_array(k)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { k += key; }
+		if (v instanceof Array || __is_typed_array(v)) { throw new RuntimeError("Array += Array is not allowed without operator overloading"); }
+		else { v += ob[key]; }
 	}
 	console.log(k);
 	console.log(v);
@@ -158,8 +167,12 @@ var main =  function main()
 		var __mtarget__4 = __iter0[ __n0 ];
 		x = __mtarget__4[0];
 		y = __mtarget__4[1];
+		/***/ try {
 		keys.append(x);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, keys.append)==true){debugger;}else{throw __err;} };
+		/***/ try {
 		values.append(y);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, values.append)==true){debugger;}else{throw __err;} };
 	}
 	if (!(__contains__(keys, "a"))) {throw new Error("assertion failed"); }
 	if (!(__contains__(values, "A"))) {throw new Error("assertion failed"); }
@@ -173,8 +186,12 @@ var main =  function main()
 		var __mtarget__5 = __iter0[ __n0 ];
 		x = __mtarget__5[0];
 		y = __mtarget__5[1];
+		/***/ try {
 		arr.append(x);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr.append)==true){debugger;}else{throw __err;} };
+		/***/ try {
 		arr.append(y);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr.append)==true){debugger;}else{throw __err;} };
 		var __mtarget__6,w;
 		var __iter1 = __jsdict_items(ob2);
 		if (! (__iter1 instanceof Array || typeof __iter1 == "string" || __is_typed_array(__iter1) || __is_some_array(__iter1) )) { __iter1 = __object_keys__(__iter1) }
@@ -183,8 +200,12 @@ var main =  function main()
 			w = __mtarget__6[0];
 			z = __mtarget__6[1];
 			e ++;
+			/***/ try {
 			arr.append(w);
+			/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr.append)==true){debugger;}else{throw __err;} };
+			/***/ try {
 			arr.append(z);
+			/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr.append)==true){debugger;}else{throw __err;} };
 		}
 	}
 	if (!(e === 4)) {throw new Error("assertion failed"); }
@@ -245,6 +266,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d;
 	a = range(10);
 	if (!(a[0] === 0)) {throw new Error("assertion failed"); }
@@ -255,31 +278,32 @@ var main =  function main()
 	if (!(b[1] === 2)) {throw new Error("assertion failed"); }
 	if (!(len(b) === 9)) {throw new Error("assertion failed"); }
 	c = 0;
-	var i,i__end__;
-	i = 0;
-	while (i < 10)
+	/*for var in range*/;
+	var i;
+	i = -1;
+	while (++i < 10)
 	{
 		c ++;
-		i += 1;
 	}
 	if (!(c === 10)) {throw new Error("assertion failed"); }
 	d = 0;
+	/*for var in range*/;
 	
-	i = 1;
-	while (i < 10)
+	i = (1 - 1);
+	while (++i < 10)
 	{
 		d ++;
-		i += 1;
 	}
 	if (!(d === 9)) {throw new Error("assertion failed"); }
 	e = 0;
+	/*for var in range*/;
 	
-	i = 1;
+	i = (1 - 1);
+	var i__end__;
 	i__end__ = (8 + 2);
-	while (i < i__end__)
+	while (++i < i__end__)
 	{
 		e ++;
-		i += 1;
 	}
 	if (!(e === 9)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
@@ -329,6 +353,8 @@ arr1 = [];
 arr2 = [];
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,i,j;
 	a = 0;
 	i = 0;
@@ -345,8 +371,12 @@ var main =  function main()
 	if (!(a === 100)) {throw new Error("assertion failed"); }
 	while (((len(arr1) + len(arr2))) < 10)
 	{
+		/***/ try {
 		arr1.append(1);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr1.append)==true){debugger;}else{throw __err;} };
+		/***/ try {
 		arr2.append(2);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr2.append)==true){debugger;}else{throw __err;} };
 	}
 	if (!(len(arr1) === 5)) {throw new Error("assertion failed"); }
 	if (!(len(arr2) === 5)) {throw new Error("assertion failed"); }

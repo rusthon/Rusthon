@@ -26,6 +26,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var y,x;
 	x = set([1, 2, 3]);
 	y = set([1, 2, 3, 4]);

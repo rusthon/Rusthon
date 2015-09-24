@@ -31,12 +31,16 @@ output:
 
 var f =  function f()
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	
 	/*pass*/
 }/*end->	`f`	*/
 
 var G =  function G()
 {
+/***/ if (G.__recompile !== undefined) { eval("G.__redef="+G.__recompile); G.__recompile=undefined; };
+/***/ if (G.__redef !== undefined) { return G.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`G`	*/
 
@@ -45,11 +49,15 @@ G.__name__ = "G";
 G.__bases__ = [];
 G.prototype.toString =  function G_toString()
 {
+/***/ if (G_toString.__recompile !== undefined) { eval("G_toString.__redef="+G_toString.__recompile); G_toString.__recompile=undefined; };
+/***/ if (G_toString.__redef !== undefined) { return G_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,g;
 	g =  new G();
 	a = dict({ f:44, G:55, g:66 }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
@@ -77,8 +85,11 @@ def main():
 output:
 ------
 ```javascript
+var __$UID$__=0;
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var m;
 	var __comp__0;
 	var idx0;
@@ -91,7 +102,8 @@ var main =  function main()
 	{
 		var a;
 		a = idx0;
-		__comp__0[a] = "xxx";
+		if (__comp__0.__setitem__) { __comp__0.__setitem__(a, "xxx") }
+		else { __comp__0[a] = "xxx" }
 		idx0 ++;
 	}
 	m = __comp__0;
@@ -141,9 +153,12 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var err3,err2,err1,d;
 	d = dict({  }, { copy:false });
-		if (__jsdict_keys(d).length)
+	if (__jsdict_keys(d).length instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (__jsdict_keys(d).length)
 	{
 		err1 = 1;
 	}
@@ -151,7 +166,8 @@ var main =  function main()
 	{
 		err1 = 0;
 	}
-		if (len(__jsdict_keys(dict({  }, { copy:false }))))
+	if (len(__jsdict_keys(dict({  }, { copy:false }))) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (len(__jsdict_keys(dict({  }, { copy:false }))))
 	{
 		err2 = 1;
 	}
@@ -159,8 +175,10 @@ var main =  function main()
 	{
 		err2 = 0;
 	}
-	d["x"] = "xxx";
-		if (len(__jsdict_keys(d)))
+	if (d.__setitem__) { d.__setitem__("x", "xxx") }
+	else { d["x"] = "xxx" }
+	if (len(__jsdict_keys(d)) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (len(__jsdict_keys(d)))
 	{
 		err3 = 0;
 	}
@@ -181,12 +199,20 @@ input:
 ------
 ```python
 from runtime import *
-"""dict.keys()"""
+"""dict.keys() and iter"""
 
 def main():
 	a = {'foo':'bar'}
 	keys = a.keys()
 	assert( 'foo' in keys )
+
+	print 'testing iter over dict'
+	## this is not allowed, a must be wrapped with `iter(a)`
+	#for key in a:
+	print a
+	for key in iter(a):
+		print key
+		print a[key]
 
 main()
 ```
@@ -197,10 +223,21 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,keys;
 	a = dict({  }, { copy:false, keytype:"string", iterable:[["foo", "bar"]] });
 	keys = __jsdict_keys(a);
 	if (!(__contains__(keys, "foo"))) {throw new Error("assertion failed"); }
+	console.log("testing iter over dict");
+	console.log(a);
+	var __iter0 = a;
+	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
+	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
+		var key = __iter0[ __n0 ];
+		console.log(key);
+		console.log(a[key]);
+	}
 }/*end->	`main`	*/
 
 main();
@@ -305,12 +342,16 @@ output:
 
 var f =  function f()
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	
 	/*pass*/
 }/*end->	`f`	*/
 
 var G =  function G()
 {
+/***/ if (G.__recompile !== undefined) { eval("G.__redef="+G.__recompile); G.__recompile=undefined; };
+/***/ if (G.__redef !== undefined) { return G.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`G`	*/
 
@@ -319,14 +360,19 @@ G.__name__ = "G";
 G.__bases__ = [];
 G.prototype.toString =  function G_toString()
 {
+/***/ if (G_toString.__recompile !== undefined) { eval("G_toString.__redef="+G_toString.__recompile); G_toString.__recompile=undefined; };
+/***/ if (G_toString.__redef !== undefined) { return G_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
 
 G.prototype.get =  function G_get(x, _kwargs_)
 {
+/***/ if (G_get.__recompile !== undefined) { eval("G_get.__redef="+G_get.__recompile); G_get.__recompile=undefined; };
+/***/ if (G_get.__redef !== undefined) { return G_get.__redef.apply(this,arguments); };
 	
 	var y = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.y===undefined))?	null :   typeof(_kwargs_)=='object'?_kwargs_.y: __invalid_call__('function `get` requires named keyword arguments, invalid parameter for `y`',arguments);
-		if (y)
+	if (y instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (y)
 	{
 		return y;
 	}
@@ -338,6 +384,8 @@ G.prototype.get =  function G_get(x, _kwargs_)
 
 G.prototype.set =  function G_set(x, y)
 {
+/***/ if (G_set.__recompile !== undefined) { eval("G_set.__redef="+G_set.__recompile); G_set.__recompile=undefined; };
+/***/ if (G_set.__redef !== undefined) { return G_set.__redef.apply(this,arguments); };
 	
 	console.log("set method ok");
 	console.log([x, y]);
@@ -346,18 +394,24 @@ G.prototype.set =  function G_set(x, y)
 
 G.prototype.items =  function G_items()
 {
+/***/ if (G_items.__recompile !== undefined) { eval("G_items.__redef="+G_items.__recompile); G_items.__recompile=undefined; };
+/***/ if (G_items.__redef !== undefined) { return G_items.__redef.apply(this,arguments); };
 	
 	return true;
 }/*end->	`items`	*/
 
 G.prototype.pop =  function G_pop(x)
 {
+/***/ if (G_pop.__recompile !== undefined) { eval("G_pop.__redef="+G_pop.__recompile); G_pop.__recompile=undefined; };
+/***/ if (G_pop.__redef !== undefined) { return G_pop.__redef.apply(this,arguments); };
 	
 	return x;
 }/*end->	`pop`	*/
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,newkeys,g,i,o,p,u,v;
 	g =  new G();
 	a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
@@ -367,7 +421,9 @@ var main =  function main()
 	if (!(__jsdict_get(a, "none", "default") === "default")) {throw new Error("assertion failed"); }
 	if (!(__jsdict_get(g, 1) === 1)) {throw new Error("assertion failed"); }
 	if (!(g.get(0, { y:2 }) === 2)) {throw new Error("assertion failed"); }
+	/***/ try {
 	__jsdict_set(a, 0, "hi");
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, __jsdict_set)==true){debugger;}else{throw __err;} };
 	if (!(a[0] === "hi")) {throw new Error("assertion failed"); }
 	if (!(__jsdict_set(g, 1, 2))) {throw new Error("assertion failed"); }
 	console.log("ok");
@@ -434,6 +490,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
 	if (!(__contains__(a, 2))) {throw new Error("assertion failed"); }

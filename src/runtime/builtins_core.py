@@ -702,6 +702,10 @@ def __string_slice(start, stop, step):
 			stop = this.length + stop
 		return this.substring(start, stop)
 
+@bind(String.prototype.__getslice_lowerstep__)
+def __string_getslice_lowerstep__(start, step):
+	return this.__getslice__(start, undefined, step)
+
 String.prototype.splitlines = lambda : this.split('\n')
 
 String.prototype.strip = lambda : this.trim()  ## missing in IE8

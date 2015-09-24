@@ -40,6 +40,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,x;
 	x = "";
 	a = 2;
@@ -92,17 +94,27 @@ output:
 
 var f =  function f(l)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	var l;
+/***/ if (!(isinstance(l,Array))) {throw new TypeError("invalid type - not an array")};
+/***/ if (l.length > 0 && !( isinstance(l[0], int) )) {throw new TypeError("invalid array type")};
+	/***/ try {
 	l.append(1);
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, f, l.append)==true){debugger;}else{throw __err;} };
 }/*end->	`f`	*/
 f.args = ["[]int"];
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = [1,2,3] /*array of: int*/;
 	if (!(a[0] === 1)) {throw new Error("assertion failed"); }
+	/***/ try {
 	f(a);
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, f)==true){debugger;}else{throw __err;} };
 	if (!(len(a) === 4)) {throw new Error("assertion failed"); }
 	var __comp__0;
 	var idx0;
@@ -115,11 +127,15 @@ var main =  function main()
 	{
 		var x;
 		x = idx0;
+		/***/ try {
 		__comp__0.push(x);
+		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, __comp__0.push)==true){debugger;}else{throw __err;} };
 		idx0 ++;
 	}
 	b = __comp__0;
+	/***/ try {
 	f(b);
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, f)==true){debugger;}else{throw __err;} };
 	if (!(len(b) === 10)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
 
@@ -157,17 +173,26 @@ output:
 
 var f =  function f(m)
 {
+/***/ if (f.__recompile !== undefined) { eval("f.__redef="+f.__recompile); f.__recompile=undefined; };
+/***/ if (f.__redef !== undefined) { return f.__redef.apply(this,arguments); };
 	var m;
-	m["x"] = 100;
+/***/ if (m.__keytype__ != "string") {throw new TypeError("invalid dict key type")};
+/***/ if (m.__valuetype__ != "int") {throw new TypeError("invalid dict value type")};
+	if (m.__setitem__) { m.__setitem__("x", 100) }
+	else { m["x"] = 100 }
 }/*end->	`f`	*/
 f.args = ["map[string]int"];
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a = dict({  }, { copy:false, keytype:"string", iterable:[["x", 1], ["y", 2], ["z", 3]] ,valuetype:"int" });
 	if (!(a["x"] === 1)) {throw new Error("assertion failed"); }
+	/***/ try {
 	f(a);
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, f)==true){debugger;}else{throw __err;} };
 	if (!(a["x"] === 100)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
 
@@ -187,10 +212,15 @@ def main():
 output:
 ------
 ```javascript
+var __$UID$__=0;
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
+	/***/ try {
 	now = new Date();
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, JS)==true){debugger;}else{throw __err;} };
 	now = new Date();
 }/*end->	`main`	*/
 ```
@@ -224,6 +254,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = [1, 2, 3];
 	b = false;
@@ -285,31 +317,37 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a = false;
 	b = false;
-		if (! (a))
+	if (! (a) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (! (a))
 	{
 		b = true;
 	}
 	if (!(b === true)) {throw new Error("assertion failed"); }
 	a = 0;
 	b = false;
-		if (! (a))
+	if (! (a) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (! (a))
 	{
 		b = true;
 	}
 	if (!(b === true)) {throw new Error("assertion failed"); }
 	a = 0.0;
 	b = false;
-		if (! (a))
+	if (! (a) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (! (a))
 	{
 		b = true;
 	}
 	if (!(b === true)) {throw new Error("assertion failed"); }
 	a = null;
 	b = false;
-		if (! (a))
+	if (! (a) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (! (a))
 	{
 		b = true;
 	}
@@ -368,6 +406,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b,t4,t5,t2,t3,t1;
 	if (!(0 === 0)) {throw new Error("assertion failed"); }
 	if (!(1 === 1)) {throw new Error("assertion failed"); }
@@ -419,6 +459,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b,d;
 	d = dict({  }, { copy:false, keytype:"string", iterable:[["x", 1]] });
 	a = __contains__(d, "x");
@@ -457,12 +499,16 @@ output:
 
 var foo =  function foo()
 {
+/***/ if (foo.__recompile !== undefined) { eval("foo.__redef="+foo.__recompile); foo.__recompile=undefined; };
+/***/ if (foo.__redef !== undefined) { return foo.__redef.apply(this,arguments); };
 	
 	return 42;
 }/*end->	`foo`	*/
 
 var __lambda__ =  function __lambda__()
 {
+/***/ if (__lambda__.__recompile !== undefined) { eval("__lambda__.__redef="+__lambda__.__recompile); __lambda__.__recompile=undefined; };
+/***/ if (__lambda__.__redef !== undefined) { return __lambda__.__redef.apply(this,arguments); };
 	
 	return 42;
 }/*end->	`__lambda__`	*/
@@ -470,9 +516,15 @@ var __lambda__ =  function __lambda__()
 bar = __lambda__;
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	
+	/***/ try {
 	eval("a = bar()");
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, eval)==true){debugger;}else{throw __err;} };
+	/***/ try {
 	eval("b = foo()");
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, eval)==true){debugger;}else{throw __err;} };
 	if (!(a === 42)) {throw new Error("assertion failed"); }
 	if (!(b === 42)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
@@ -490,14 +542,29 @@ javascript typed array syntax
 '''
 
 def main():
+	s = [10,20,30]
+	for v in s:
+		print v
+	print s
+
 	print 'testing javascript typed arrays'
 	a = [128]int( 1,2,3 )
+	print __is_some_array(a)
+
 	assert len(a)==128
 	assert isinstance(a, Int32Array)
 	assert a[0]==1
 	assert a[1]==2
 	assert a[2]==3
 	assert a[3]==0
+
+	ii = 0
+	#for value in a:  ## will raise a runtime error
+	for value in iter(a):
+		print value
+		ii += 1
+		if ii > 10: break
+	#print a
 
 	b = [128]int32(1,2,3)
 	c = [128]i32(1,2,3)
@@ -531,15 +598,38 @@ output:
 
 var main =  function main()
 {
-	var a,c,b,d;
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
+	var a,c,b,d,ii,s;
+	s = [10, 20, 30];
+	var __iter0 = s;
+	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
+	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
+		var v = __iter0[ __n0 ];
+		console.log(v);
+	}
+	console.log(s);
 	console.log("testing javascript typed arrays");
 	a = __array_fill__( new Int32Array(128), [1,2,3]);
+	console.log(__is_some_array(a));
 	if (!(len(a) === 128)) {throw new Error("assertion failed"); }
 	if (!(isinstance(a, Int32Array))) {throw new Error("assertion failed"); }
 	if (!(a[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(a[1] === 2)) {throw new Error("assertion failed"); }
 	if (!(a[2] === 3)) {throw new Error("assertion failed"); }
 	if (!(a[3] === 0)) {throw new Error("assertion failed"); }
+	ii = 0;
+	var __iter0 = a;
+	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
+	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
+		var value = __iter0[ __n0 ];
+		console.log(value);
+		ii ++;
+				if (ii > 10)
+		{
+			break;
+		}
+	}
 	b = __array_fill__( new Int32Array(128), [1,2,3]);
 	c = __array_fill__( new Int32Array(128), [1,2,3]);
 	if (!(isinstance(b, Int32Array))) {throw new Error("assertion failed"); }
@@ -614,6 +704,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var i,x,r,o,n;
 	o = "x".charCodeAt(0);
 	if (!(o === 120)) {throw new Error("assertion failed"); }
@@ -663,6 +755,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
 	a = (false && (false || true));
 	if (!(a === false)) {throw new Error("assertion failed"); }
@@ -681,7 +775,7 @@ if/else
 '''
 
 #def func(x=None, callback=None):
-def func(x:bool=False, callback:lambda()(int)=None ):
+def func(x=False, callback=None ):
 	a = False
 	if x:   ## can c++ templates support this pythonic style?
 		a = False
@@ -719,7 +813,9 @@ def main():
 
 	assert( a==True )
 
-	cb = lambda : 1+1
+	def cb() ->int:
+		return 1+1
+
 	func( callback=cb )
 
 
@@ -733,12 +829,14 @@ output:
 
 var func =  function func(_kwargs_)
 {
+/***/ if (func.__recompile !== undefined) { eval("func.__redef="+func.__recompile); func.__recompile=undefined; };
+/***/ if (func.__redef !== undefined) { return func.__redef.apply(this,arguments); };
 	var a;
-var callback,x;
 	var x        = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.x===undefined))       ?	false :   typeof(_kwargs_)=='object'?_kwargs_.x: __invalid_call__('function `func` requires named keyword arguments, invalid parameter for `x`',arguments);
 	var callback = (_kwargs_===undefined || (typeof(_kwargs_)=='object' && _kwargs_.callback===undefined))?	null  :   typeof(_kwargs_)=='object'?_kwargs_.callback: __invalid_call__('function `func` requires named keyword arguments, invalid parameter for `callback`',arguments);
 	a = false;
-		if (x)
+	if (x instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (x)
 	{
 		a = false;
 	}
@@ -748,7 +846,8 @@ var callback,x;
 	}
 	if (!(a === true)) {throw new Error("assertion failed"); }
 	a = false;
-		if (callback)
+	if (callback instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (callback)
 	{
 		a = true;
 	}
@@ -761,15 +860,19 @@ var callback,x;
 
 var main =  function main()
 {
-	var a,cb;
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
+	var a;
 	a = false;
-		if (1)
+	if (1 instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (1)
 	{
 		a = true;
 	}
 	if (!(a === true)) {throw new Error("assertion failed"); }
 	a = false;
-		if (false)
+	if (false instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (false)
 	{
 		a = false;
 	}
@@ -779,7 +882,8 @@ var main =  function main()
 	}
 	if (!(a === true)) {throw new Error("assertion failed"); }
 	a = false;
-		if (null)
+	if (null instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
+	if (null)
 	{
 		a = false;
 	}
@@ -788,14 +892,18 @@ var main =  function main()
 		a = true;
 	}
 	if (!(a === true)) {throw new Error("assertion failed"); }
-			var __lambda__ =  function __lambda__()
+			var cb =  function cb()
 	{
+/***/ if (cb.__recompile !== undefined) { eval("cb.__redef="+cb.__recompile); cb.__recompile=undefined; };
+/***/ if (cb.__redef !== undefined) { return cb.__redef.apply(this,arguments); };
 		
 		return (1 + 1);
-	}/*end->	`__lambda__`	*/
+	}/*end->	`cb`	*/
+cb.returns = "int";
 
-	cb = __lambda__;
+	/***/ try {
 	func({ callback:cb });
+	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, func)==true){debugger;}else{throw __err;} };
 }/*end->	`main`	*/
 
 main();
@@ -827,6 +935,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
 	a =  new Date();
 	b =  new Date();
@@ -880,6 +990,8 @@ output:
 
 var main =  function main()
 {
+/***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
+/***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b;
 	a = false;
 		try {
