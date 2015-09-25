@@ -1397,7 +1397,8 @@ when fast_loops is off much of python `for in something` style of looping is los
 
 
 	def visit_For(self, node):
-		#self._fast_loops = False  ## TESTING fast loops always true, string iteration now requires `iter(s)` wrapped
+		self._fast_loops = False  ## if true breaks builtins that for loop on special `arguments`
+		## TESTING fast loops always true, string iteration now requires `iter(s)` wrapped
 
 
 		target = node.target.id
