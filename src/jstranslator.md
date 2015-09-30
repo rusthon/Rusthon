@@ -175,6 +175,8 @@ class is not implemented here for javascript, it gets translated ahead of time i
 
 	def visit_Assign(self, node):
 		target = node.targets[0]
+		isname = isinstance(target, ast.Name)
+
 		if isinstance(target, Tuple):
 			raise NotImplementedError('target tuple assignment should have been transformed to flat assignment by python_to_pythonjs.py')
 		else:
@@ -192,6 +194,16 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			else:
 				target = self.visit(target)
 
+
+			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
+				self._exports.add( target )
+
+			if isname and len(self._function_stack):
+				if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals'): 
+					target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
+
+
+			########################################
 			if value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send('):
 				if target=='this':  ## should assert that this is on the webworker side
 					target = 'this.__uid__'
@@ -205,8 +217,6 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				code = '%s = %s;' % (target, value)
 
 
-			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
-				self._exports.add( target )
 
 			return code
 
@@ -494,6 +504,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_prototype = False
 		is_debugger  = False
 		is_redef     = False
+		is_locals    = False
 		is_staticmeth= False
 		is_getter    = False
 		is_setter    = False
@@ -562,6 +573,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				is_debugger = True
 			elif isinstance(decor, ast.Name) and decor.id == 'redef':
 				is_redef = True
+				is_locals = True
+				node.has_locals = True
+			elif isinstance(decor, ast.Name) and decor.id == 'locals':
+				is_locals = True
+				node.has_locals = True
 
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
@@ -751,6 +767,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			#stemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, set:%s, enumerable:false, writable:false, configurable:true});'
 			stemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, set:%s, configurable:true});'
 			body.append( stemplate%(protoname,node.name, getterfunc, funcname))
+
+		if self._runtime_type_checking or is_locals:
+			body.append('%s.locals={}'%node.name)
 
 		## below is used for runtime type checking ##
 		if returns:
