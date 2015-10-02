@@ -200,7 +200,8 @@ class is not implemented here for javascript, it gets translated ahead of time i
 
 			if isname and len(self._function_stack):
 				if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals'): 
-					target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
+					#target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
+					target = 'arguments.callee.locals.%s=%s' %(target, target)
 
 
 			########################################
@@ -322,6 +323,18 @@ top level the module, this builds the output and returns the javascript string t
 					self._unicode_name_map[ node.name ] = decor.args[0].s
 
 
+	def _importfrom_helper(self, node):
+		if node.module=='nodejs':
+			self._insert_nodejs_runtime = True
+		elif node.module=='nodejs.tornado':
+			self._insert_nodejs_tornado = True
+		else:
+			inames = [ n.name for n in node.names ]
+			return 'import {%s} from "%s";' %(','.join(inames), node.module)
+
+		return ''
+
+
 	def visit_Module(self, node):
 		modules = []
 
@@ -339,7 +352,8 @@ top level the module, this builds the output and returns the javascript string t
 			if isinstance(b, ast.ImportFrom):
 				line = self.visit(b)
 				if line:
-					raise RuntimeError('import-from specials do not return a string!')
+					## ES6 imports
+					header.append(line)
 
 
 		if self._insert_runtime:
@@ -351,8 +365,6 @@ top level the module, this builds the output and returns the javascript string t
 			lines.insert( 0, runtime )
 		else:
 			lines.insert( 0, 'var __$UID$__=0;')
-
-
 
 		for b in node.body:
 			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id == '__new_module__':
@@ -769,7 +781,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			body.append( stemplate%(protoname,node.name, getterfunc, funcname))
 
 		if self._runtime_type_checking or is_locals:
-			body.append('%s.locals={}'%node.name)
+			if is_prototype:
+				body.append(
+					'%s.prototype.%s.locals = {};' % (protoname, node.name)
+				)
+			else:
+				body.append('%s.locals={}'%node.name)
 
 		## below is used for runtime type checking ##
 		if returns:

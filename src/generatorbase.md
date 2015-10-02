@@ -151,8 +151,11 @@ do extra things like inline extra helper code for things like `hasattr`, etc.
 Import `import x` and `from x import y`
 --------------------------------------
 
-
 ```python
+
+	def _importfrom_helper(self, node):
+		return ''
+
 	def visit_ImportFrom(self, node):
 		# print node.module
 		# print node.names[0].name
@@ -163,10 +166,8 @@ Import `import x` and `from x import y`
 				crate.add( alias.name )
 		if node.module=='runtime':
 			self._insert_runtime = True
-		elif node.module=='nodejs':
-			self._insert_nodejs_runtime = True
-		elif node.module=='nodejs.tornado':
-			self._insert_nodejs_tornado = True
+		else:
+			return self._importfrom_helper(node)
 
 		return ''
 

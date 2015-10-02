@@ -541,6 +541,9 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('from nodejs import *')
 		elif node.module == 'nodejs.tornado':
 			writer.write('from nodejs.tornado import *')
+		elif self._with_js:
+			inames = [n.name for n in node.names]
+			writer.write('from %s import %s' %(node.module, ','.join(inames)))
 		else:
 			msg = 'invalid import - file not found: %s'%path
 			raise SyntaxError( self.format_error(msg) )
