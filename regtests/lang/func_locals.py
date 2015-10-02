@@ -10,10 +10,13 @@ def myfunc(value='bar'):
 	@locals
 	def nested():
 		z = 'FOO'
+		return value + 'NESTED'
+
+	return nested()
 
 def main():
 	print myfunc.locals
-	myfunc()
+	print myfunc()
 	print myfunc.locals
 	assert myfunc.locals.x == 1
 	assert myfunc.locals.y.foo=='bar'

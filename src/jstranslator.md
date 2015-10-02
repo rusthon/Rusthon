@@ -786,7 +786,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					'%s.prototype.%s.locals = {};' % (protoname, node.name)
 				)
 			else:
-				body.append('%s.locals={}'%node.name)
+				body.append('%s.locals={};'%node.name)
+				if len(self._function_stack)>1:
+					body.append('arguments.callee.locals.%s=%s'%(node.name, node.name))
 
 		## below is used for runtime type checking ##
 		if returns:
