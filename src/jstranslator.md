@@ -36,10 +36,15 @@ class SwapLambda( RuntimeError ):
 		RuntimeError.__init__(self)
 
 class JSGenerator(NodeVisitorBase, GeneratorBase):
-	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
+	def __init__(self, source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True, as_module=False):
 		if not source:
 			raise RuntimeError('empty source string')
 		NodeVisitorBase.__init__(self, source)
+
+		self._ES6 = {
+			'imports' : True
+		}
+		self._as_module = as_module
 
 		self._unicode_name_map = UNICODE_NAME_MAP
 
@@ -301,6 +306,9 @@ generate a generic or requirejs module.
 				'define( function(){',
 				'__module__ = {}'
 			])
+		elif self._ES6['imports'] and self._as_module:
+			header.append('module "%s" {' %name)
+
 
 		return {
 			'name'   : name,
@@ -382,14 +390,16 @@ top level the module, this builds the output and returns the javascript string t
 			# moved to intermediateform.md
 			pass
 
-
+		######################### modules ####################
 		if self._requirejs and not self._webworker:
 			for name in self._exports:
 				if name.startswith('__'): continue
 				lines.append( '__module__.%s = %s' %(name,name))
-
 			lines.append( 'return __module__')
 			lines.append('}) //end requirejs define')
+
+		elif self._ES6['imports'] and self._as_module:
+			lines.append('} // end ES6 module')
 
 
 		if len(modules) == 1:
@@ -1617,7 +1627,7 @@ html files can also be translated, it is parsed and checked for `<script type="t
 
 ```python
 
-def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True):
+def translate_to_javascript(source, requirejs=True, insert_runtime=True, webworker=False, function_expressions=True, fast_javascript=False, fast_loops=False, runtime_checks=True, as_module=False):
 	if '--debug-inter' in sys.argv:
 		raise RuntimeError(source)
 	head = []
@@ -1691,7 +1701,8 @@ def translate_to_javascript(source, requirejs=True, insert_runtime=True, webwork
 		function_expressions=function_expressions,
 		fast_javascript = fast_javascript,
 		fast_loops      = fast_loops,
-		runtime_checks  = runtime_checks
+		runtime_checks  = runtime_checks,
+		as_module = as_module
 	)
 	output = gen.visit(tree)
 

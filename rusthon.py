@@ -162,6 +162,7 @@ def compile_js( script, module_path, main_name='main', directjs=False, directloo
 
 		code = translate_to_javascript(
 			pyjs,
+			as_module='--ES6-module' in sys.argv,
 			requirejs=False,
 			insert_runtime=False,
 			fast_javascript = fastjs,
@@ -1520,12 +1521,12 @@ def main():
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
 
-					open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)
+					#open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)
 
-
-					nwcfg = '{"name":"test", "node-main":"nwstartup.js", "main":"%s", "window":{"width":800, "height":600, "toolbar":false}}' %os.path.split(tmp)[1]
+					nwcfg = '{"name":"test", "main":"%s", "window":{"width":800, "height":600, "toolbar":false}}' %os.path.split(tmp)[1]
 					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
 
+					#subprocess.Popen([nodewebkit, '--enable-transparent-visuals', tmpdir], cwd=tmpdir)
 					subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
 
 					## this hack will not work ##
