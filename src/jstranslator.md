@@ -669,7 +669,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 						'	/***/ var __entryargs__ = arguments;',
 						'	/***/ try {var __win = require("nw.gui").Window.get(); __win.showDevTools(); __win.focus(); __win.moveTo(10,0);} catch (__err) {};',
 						'	setTimeout(function(){%s_wrapped(__entryargs__)}, 2000);' %node.name,
-						'	function %s_wrapped(%s)' % (node.name, ', '.join(args)),  ## scope lifted ok here
+						'	var %s_wrapped = function %s_wrapped(%s)' % (node.name, node.name, ', '.join(args)),  ## scope lifted ok here
 					]
 					fdef = '\n'.join(d)
 					self.push()
@@ -773,8 +773,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				body.append( '/*END-FUNC:%s*/' %id(node))
 
 		if is_debugger:
+			body.append( self.indent()+ '%s_wrapped.locals={}; /*wrapped entry point*/' %node.name )
 			self.pull()
-			body.append( '}/*debugger*/' )
+			body.append( '} /*debugger*/' )
 
 		if dectail:
 			body.append(dectail + ';/*end-decorators*/')
