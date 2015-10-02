@@ -2800,8 +2800,10 @@ class PythonToPythonJS(NodeVisitorBase):
 						writer.write( 'def %s( %s, %s, *%s ):' % (node.name, ','.join(args), kwargs_name, node.args.vararg))
 					else:
 						writer.write( 'def %s( %s, *%s ):' % (node.name, kwargs_name, node.args.vararg))
-				else:
+				elif args:
 					writer.write( 'def %s( %s, *%s ):' % (node.name, ','.join(args), node.args.vararg))
+				else:
+					writer.write( 'def %s( *%s ):' % (node.name, node.args.vararg))
 			elif len(node.args.defaults) or node.args.kwarg:
 				if args:
 					writer.write( 'def %s( %s, %s ):' % (node.name, ','.join(args), kwargs_name ) )

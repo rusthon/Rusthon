@@ -1246,7 +1246,8 @@ def save_tar( package, path='build.tar' ):
 	for lang in 'rust c c++ c# go javascript json python xml html verilog java nim dart lua'.split():
 		for info in package[lang]:
 			name = 'untitled'
-			if 'name' in info: name = info['name']
+			if 'name' in info and info['name']:
+				name = info['name']
 
 			source = False
 			is_bin = False
