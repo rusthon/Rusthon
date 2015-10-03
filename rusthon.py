@@ -1521,20 +1521,15 @@ def main():
 					subprocess.call(['open', tmp])
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
-
-					#open(os.path.join(tmpdir,"nwstartup.js"),'wb').write(NW_STARTUP_HACK)
-
 					nwcfg = '{"name":"test", "main":"%s", "window":{"width":800, "height":600, "toolbar":false}}' %os.path.split(tmp)[1]
 					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
 
 					#subprocess.Popen([nodewebkit, '--enable-transparent-visuals', tmpdir], cwd=tmpdir)
-					subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
+					if '--v8-natives' in sys.argv:
+						subprocess.Popen([nodewebkit,'--allow-natives-syntax', tmpdir], cwd=tmpdir)
+					else:
+						subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
 
-					## this hack will not work ##
-					#open(tmp, 'wb').write( NW_DEVTOOLS_HACK )
-					#subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
-					#time.sleep(2)
-					#open(tmp, 'wb').write( page['code'] )  ## rewrite html this happens after devtools window is shown.
 
 				else:
 					webbrowser.open(tmp)
@@ -1550,7 +1545,10 @@ def main():
 				#xxx = pak['script'].decode('utf-8')
 				#open(fpath, 'wb').write( xxx.encode('utf-16') )  ## TODO fix nodejs unicode
 				#codecs.open(fpath, 'w', 'utf-8').write( pak['script'] )  ## TODO fix nodejs unicode
-				subprocess.check_call([nodejs_exe, fpath])
+				if '--v8-natives' in sys.argv:
+					subprocess.check_call([nodejs_exe, '--allow-natives-syntax', fpath])
+				else:
+					subprocess.check_call([nodejs_exe, fpath])
 
 	else:
 		save_tar( package, output_tar )

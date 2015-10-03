@@ -41,6 +41,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 			raise RuntimeError('empty source string')
 		NodeVisitorBase.__init__(self, source)
 
+		self._v8 = '--v8-natives' in sys.argv
 		self._ES6 = {
 			'imports' : True
 		}
@@ -230,7 +231,8 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			else:
 				code = '%s = %s;' % (target, value)
 
-
+			if self._v8 and isname and len(self._function_stack):
+				code += 'if ('+target+' && typeof('+target+')=="object" && ! %HasFastProperties(' + target + ')) console.log("V8::WARN-SLOW-PROPS->%s");'%target
 
 			return code
 
@@ -358,6 +360,12 @@ top level the module, this builds the output and returns the javascript string t
 		modules.append( mod )
 		lines = mod['lines']
 		header = mod['header']
+
+		if self._v8:
+			header.append('console.log("V8::Version");')
+			header.append('console.log(%GetV8Version());')
+			header.append('console.log("V8::Heap");')
+			header.append('console.log(%GetHeapUsage());')
 
 		## first check for all the @unicode decorators,
 		## also check for special imports like `from runtime import *`
@@ -732,6 +740,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			)
 			body.append(
 				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(funcname, funcname)
+			)
+
+		if self._v8:
+			body.append(
+				'/***/ if (!%s.optimized) { '%funcname + '%OptimizeFunctionOnNextCall(' + '%s);%s.optimized=true;};'%(funcname,funcname)
 			)
 
 		if node.args.vararg:
