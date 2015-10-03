@@ -38,7 +38,12 @@ def runbench_py(path, name, interp='python3'):
 	data = open(os.path.join(path, name), 'rb').read()
 	data = data.replace('from runtime import *', '')
 	data = data.replace('with oo:', '')
-	open('/tmp/input.py', 'wb').write(data)
+	lines = []
+	for ln in data.splitlines():
+		if ln.strip().startswith('v8->('):
+			continue
+		lines.append(ln)
+	open('/tmp/input.py', 'wb').write('\n'.join(lines))
 
 	subprocess.check_call([
 		'python',
@@ -60,6 +65,7 @@ def runbench(path, name, backend='javascript'):
 		'python',
 		'../rusthon.py',
 		'--'+backend,
+		'--v8-natives',
 		'--release',
 		os.path.join(path, name)
 	], stdout=subprocess.PIPE)
@@ -71,7 +77,10 @@ def runbench(path, name, backend='javascript'):
 
 	return str(float(T.strip()))
 
-BENCHES = [
+BENCHES = ['richards.py'
+]
+
+[
 	'fannkuch.py',
 	'nbody.py',
 	'operator_overloading_functor.py',

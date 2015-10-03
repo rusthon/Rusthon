@@ -231,7 +231,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			else:
 				code = '%s = %s;' % (target, value)
 
-			if self._v8 and isname and len(self._function_stack):
+			if self._v8 and isname and len(self._function_stack) and self._runtime_type_checking:
 				code += 'if ('+target+' && typeof('+target+')=="object" && ! %HasFastProperties(' + target + ')) console.log("V8::WARN-SLOW-PROPS->%s");'%target
 
 			return code
@@ -362,10 +362,11 @@ top level the module, this builds the output and returns the javascript string t
 		header = mod['header']
 
 		if self._v8:
-			header.append('console.log("V8::Version");')
-			header.append('console.log(%GetV8Version());')
-			header.append('console.log("V8::Heap");')
-			header.append('console.log(%GetHeapUsage());')
+			#header.append('console.log("V8::Version");')
+			#header.append('console.log(%GetV8Version());')
+			#header.append('console.log("V8::Heap");')
+			#header.append('console.log(%GetHeapUsage());')
+			header.append('var v8 = function v8(fn) {return %OptimizeFunctionOnNextCall(fn);};')
 
 		## first check for all the @unicode decorators,
 		## also check for special imports like `from runtime import *`
@@ -547,6 +548,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		is_getter    = False
 		is_setter    = False
 		is_unicode   = False
+		is_v8        = False
 		bind_to      = None
 		bind_to_this = None
 		protoname    = None
@@ -597,6 +599,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 					assert len(decor.args)==1
 					is_unicode = True
 					node.name = decor.args[0].s
+
+			elif isinstance(decor, ast.Name) and decor.id == 'v8':
+				is_v8 = True
 
 			elif isinstance(decor, ast.Name) and decor.id == 'getter':
 				is_getter = True
@@ -742,7 +747,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				'/***/ if (%s.__redef !== undefined) { return %s.__redef.apply(this,arguments); };' %(funcname, funcname)
 			)
 
-		if self._v8:
+		if self._v8 and is_v8:
 			body.append(
 				'/***/ if (!%s.optimized) { '%funcname + '%OptimizeFunctionOnNextCall(' + '%s);%s.optimized=true;};'%(funcname,funcname)
 			)
@@ -986,6 +991,9 @@ Call Helper
 		elif fname == 'sleep':
 			self._sleeps += 1
 			return 'setTimeout(__sleep__%s.bind(this), %s*1000); function __sleep__%s(){' % (self._sleeps, args[0], self._sleeps)
+		elif fname=='v8.__right_arrow__':
+			jitFN = args.split('(')[0]
+			return '%s; v8(%s)' %(args, jitFN)
 		else:
 			return '%s(%s)' % (fname, args)
 

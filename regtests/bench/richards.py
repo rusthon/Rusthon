@@ -401,6 +401,15 @@ class Richards(object):
 
 def entry_point(iterations):
 	r = Richards()
+
+	## before bench timer let v8 type infer the method
+	## types so it can be JIT on next call, set by `v8(func)`
+	#r.run(1)
+	#v8(r.run)
+	## above works, but it can also be done in a single line with `->` syntax
+	v8->( r.run(1) )
+
+
 	startTime = clock()
 	result = r.run(iterations)
 	if not result:
@@ -408,7 +417,7 @@ def entry_point(iterations):
 	return clock() - startTime
 
 def main():
-	iterations=10
+	iterations=20
 	#print("#Richards benchmark (Python) starting. iterations="+str(iterations))
 	total_s = entry_point(iterations)
 	#print("#Total time for %s iterations: %s secs" %(iterations,total_s))
