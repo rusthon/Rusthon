@@ -1269,11 +1269,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			if line: writer.write( line )
 			#writer.write('%s.prototype.%s = %s'%(name,mname,mname))  ## this also works, but is not as humanreadable
 
-			if not self._fast_js:
-				## allows subclass method to extend the parents method by calling the parent by class name,
-				## `MyParentClass.some_method(self)`
-				f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
-				writer.write('%s.%s = inline("%s")'%(name,mname,f))
+			## allows subclass method to extend the parents method by calling the parent by class name,
+			## `MyParentClass.some_method(self)`
+			f = 'function () { return %s.prototype.%s.apply(arguments[0], Array.prototype.slice.call(arguments,1)) }' %(name, mname)
+			writer.write('%s.%s = inline("%s")'%(name,mname,f))
 
 		for base in node.bases:
 			base = self.visit(base)
