@@ -157,25 +157,33 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				return s
 			else:
 				## note `debugger` is a special statement in javascript that sets a break point if the js console debugger is open ##
+				do_try = True
 				caller = self._function_stack[-1].name
 				called = None
 				if isinstance(node.value, ast.Call):
 					called = self.visit(node.value.func)
+					if isinstance(node.value.func, ast.Name) and node.value.func.id=='new':
+						do_try = False
+				elif isinstance(node.value, ast.Attribute):
+					do_try = False
 
-				a = '/***/ try {\n'
-				a += self.indent() + s + '\n'
-				if typedpython.unicode_vars:
-					if called:
-						a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
-					else:
-						a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
+				if not do_try:
+					return s
 				else:
-					if called:
-							a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+					a = '/***/ try {\n'
+					a += self.indent() + s + '\n'
+					if typedpython.unicode_vars:
+						if called:
+							a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+						else:
+							a += self.indent() + '/***/ } catch (__err) { if (𝗗𝗲𝗯𝘂𝗴𝗴𝗲𝗿.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
 					else:
-						a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
-	
-				return a
+						if called:
+								a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s, %s)==true){debugger;}else{throw __err;} };' %(caller, called)
+						else:
+							a += self.indent() + '/***/ } catch (__err) { if (__debugger__.onerror(__err, %s)==true){debugger;}else{throw __err;} };' %caller
+		
+					return a
 
 
 	def visit_Assign(self, node):
