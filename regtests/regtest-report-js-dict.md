@@ -36,6 +36,7 @@ var f =  function f()
 	
 	/*pass*/
 }/*end->	`f`	*/
+f.locals={};
 
 var G =  function G()
 {
@@ -43,6 +44,7 @@ var G =  function G()
 /***/ if (G.__redef !== undefined) { return G.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`G`	*/
+G.locals={};
 
 G.prototype.__class__ = G;
 G.__name__ = "G";
@@ -53,17 +55,19 @@ G.prototype.toString =  function G_toString()
 /***/ if (G_toString.__redef !== undefined) { return G_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
+G.prototype.toString.locals = {};
 
 var main =  function main()
 {
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,g;
-	g =  new G();
-	a = dict({ f:44, G:55, g:66 }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
+	arguments.callee.locals.g=g =  new G();
+	arguments.callee.locals.a=a = dict({ f:44, G:55, g:66 }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
 	if (!(a[2] === 22)) {throw new Error("assertion failed"); }
 	if (!(a[3] === 33)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -95,20 +99,21 @@ var main =  function main()
 	var idx0;
 	var iter0;
 	var get0;
-	__comp__0 = {  };
-	idx0 = 0;
-	iter0 = 10;
+	arguments.callee.locals.__comp__0=__comp__0 = {  };
+	arguments.callee.locals.idx0=idx0 = 0;
+	arguments.callee.locals.iter0=iter0 = 10;
 	while (idx0 < iter0)
 	{
 		var a;
-		a = idx0;
+		arguments.callee.locals.a=a = idx0;
 		if (__comp__0.__setitem__) { __comp__0.__setitem__(a, "xxx") }
 		else { __comp__0[a] = "xxx" }
 		idx0 ++;
 	}
-	m = __comp__0;
+	arguments.callee.locals.m=m = __comp__0;
 	console.log(m);
 }/*end->	`main`	*/
+main.locals={};
 ```
 * [if_empty.py](dict/if_empty.py)
 
@@ -156,40 +161,41 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var err3,err2,err1,d;
-	d = dict({  }, { copy:false });
+	arguments.callee.locals.d=d = dict({  }, { copy:false });
 	if (__jsdict_keys(d).length instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (__jsdict_keys(d).length)
 	{
-		err1 = 1;
+		arguments.callee.locals.err1=err1 = 1;
 	}
 	else
 	{
-		err1 = 0;
+		arguments.callee.locals.err1=err1 = 0;
 	}
 	if (len(__jsdict_keys(dict({  }, { copy:false }))) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len(__jsdict_keys(dict({  }, { copy:false }))))
 	{
-		err2 = 1;
+		arguments.callee.locals.err2=err2 = 1;
 	}
 	else
 	{
-		err2 = 0;
+		arguments.callee.locals.err2=err2 = 0;
 	}
 	if (d.__setitem__) { d.__setitem__("x", "xxx") }
 	else { d["x"] = "xxx" }
 	if (len(__jsdict_keys(d)) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len(__jsdict_keys(d)))
 	{
-		err3 = 0;
+		arguments.callee.locals.err3=err3 = 0;
 	}
 	else
 	{
-		err3 = 1;
+		arguments.callee.locals.err3=err3 = 1;
 	}
 	if (!(err1 === 0)) {throw new Error("assertion failed"); }
 	if (!(err2 === 0)) {throw new Error("assertion failed"); }
 	if (!(err3 === 0)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -226,8 +232,8 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,keys;
-	a = dict({  }, { copy:false, keytype:"string", iterable:[["foo", "bar"]] });
-	keys = __jsdict_keys(a);
+	arguments.callee.locals.a=a = dict({  }, { copy:false, keytype:"string", iterable:[["foo", "bar"]] });
+	arguments.callee.locals.keys=keys = __jsdict_keys(a);
 	if (!(__contains__(keys, "foo"))) {throw new Error("assertion failed"); }
 	console.log("testing iter over dict");
 	console.log(a);
@@ -239,6 +245,7 @@ var main =  function main()
 		console.log(a[key]);
 	}
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -347,6 +354,7 @@ var f =  function f()
 	
 	/*pass*/
 }/*end->	`f`	*/
+f.locals={};
 
 var G =  function G()
 {
@@ -354,6 +362,7 @@ var G =  function G()
 /***/ if (G.__redef !== undefined) { return G.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`G`	*/
+G.locals={};
 
 G.prototype.__class__ = G;
 G.__name__ = "G";
@@ -364,6 +373,7 @@ G.prototype.toString =  function G_toString()
 /***/ if (G_toString.__redef !== undefined) { return G_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
+G.prototype.toString.locals = {};
 
 G.prototype.get =  function G_get(x, _kwargs_)
 {
@@ -381,7 +391,9 @@ G.prototype.get =  function G_get(x, _kwargs_)
 		return x;
 	}
 }/*end->	`get`	*/
+G.prototype.get.locals = {};
 
+G.get = function () { return G.prototype.get.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 G.prototype.set =  function G_set(x, y)
 {
 /***/ if (G_set.__recompile !== undefined) { eval("G_set.__redef="+G_set.__recompile); G_set.__recompile=undefined; };
@@ -391,7 +403,9 @@ G.prototype.set =  function G_set(x, y)
 	console.log([x, y]);
 	return true;
 }/*end->	`set`	*/
+G.prototype.set.locals = {};
 
+G.set = function () { return G.prototype.set.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 G.prototype.items =  function G_items()
 {
 /***/ if (G_items.__recompile !== undefined) { eval("G_items.__redef="+G_items.__recompile); G_items.__recompile=undefined; };
@@ -399,7 +413,9 @@ G.prototype.items =  function G_items()
 	
 	return true;
 }/*end->	`items`	*/
+G.prototype.items.locals = {};
 
+G.items = function () { return G.prototype.items.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 G.prototype.pop =  function G_pop(x)
 {
 /***/ if (G_pop.__recompile !== undefined) { eval("G_pop.__redef="+G_pop.__recompile); G_pop.__recompile=undefined; };
@@ -407,14 +423,16 @@ G.prototype.pop =  function G_pop(x)
 	
 	return x;
 }/*end->	`pop`	*/
+G.prototype.pop.locals = {};
 
+G.pop = function () { return G.prototype.pop.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 var main =  function main()
 {
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,newkeys,g,i,o,p,u,v;
-	g =  new G();
-	a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
+	arguments.callee.locals.g=g =  new G();
+	arguments.callee.locals.a=a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
 	if (!(a[2] === 22)) {throw new Error("assertion failed"); }
 	if (!(a[3] === 33)) {throw new Error("assertion failed"); }
 	console.log(__jsdict_get(a, 1, "getok"));
@@ -427,24 +445,24 @@ var main =  function main()
 	if (!(a[0] === "hi")) {throw new Error("assertion failed"); }
 	if (!(__jsdict_set(g, 1, 2))) {throw new Error("assertion failed"); }
 	console.log("ok");
-	i = __jsdict_items(a);
+	arguments.callee.locals.i=i = __jsdict_items(a);
 	console.log(i);
 	if (!(len(i) === 3)) {throw new Error("assertion failed"); }
 	if (!(__jsdict_items(g))) {throw new Error("assertion failed"); }
-	v = __jsdict_values(a);
+	arguments.callee.locals.v=v = __jsdict_values(a);
 	console.log(v);
 	if (!(len(v) === 3)) {throw new Error("assertion failed"); }
-	p = __jsdict_pop(a, 2);
+	arguments.callee.locals.p=p = __jsdict_pop(a, 2);
 	if (!(p === 22)) {throw new Error("assertion failed"); }
 	if (!(! (__contains__(__jsdict_keys(a), 2)))) {throw new Error("assertion failed"); }
-	o = __jsdict_pop(a, "missing", "X");
+	arguments.callee.locals.o=o = __jsdict_pop(a, "missing", "X");
 	if (!(o === "X")) {throw new Error("assertion failed"); }
 	console.log(__jsdict_keys(a));
 	if (!(__jsdict_keys(a).length === 2)) {throw new Error("assertion failed"); }
 	if (!(__jsdict_pop(g, 100) === 100)) {throw new Error("assertion failed"); }
 	console.log("testing dict.update");
-	u = dict({  }, { copy:false, keytype:"int", iterable:[[1, "x"], [2, "y"]] });
-	newkeys = __jsdict_update(a, u);
+	arguments.callee.locals.u=u = dict({  }, { copy:false, keytype:"int", iterable:[[1, "x"], [2, "y"]] });
+	arguments.callee.locals.newkeys=newkeys = __jsdict_update(a, u);
 	console.log(newkeys);
 	if (!(__contains__(__jsdict_keys(a), 1))) {throw new Error("assertion failed"); }
 	if (!(__contains__(__jsdict_keys(a), 2))) {throw new Error("assertion failed"); }
@@ -458,6 +476,7 @@ var main =  function main()
 	}
 	console.log("ok");
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -493,10 +512,11 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
-	a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
+	arguments.callee.locals.a=a = dict({  }, { copy:false, keytype:"int", iterable:[[2, 22], [3, 33]] });
 	if (!(__contains__(a, 2))) {throw new Error("assertion failed"); }
 	if (!(__contains__(a, 3))) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```

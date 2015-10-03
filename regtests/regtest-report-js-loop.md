@@ -97,8 +97,8 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,arr,b,e,keys,k,ob,s,values,v,y,z,ob2;
-	a = [1, 2, 3];
-	y = 0;
+	arguments.callee.locals.a=a = [1, 2, 3];
+	arguments.callee.locals.y=y = 0;
 	var __iter0 = a;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -107,8 +107,8 @@ var main =  function main()
 		else { y += x; }
 	}
 	if (!(y === 6)) {throw new Error("assertion failed"); }
-	z = "";
-	arr = ["a", "b", "c"];
+	arguments.callee.locals.z=z = "";
+	arguments.callee.locals.arr=arr = ["a", "b", "c"];
 	var __iter0 = arr;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -117,15 +117,15 @@ var main =  function main()
 		else { z += v; }
 	}
 	if (!(z === "abc")) {throw new Error("assertion failed"); }
-	b = false;
+	arguments.callee.locals.b=b = false;
 	if (__contains__(arr, "a") instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (__contains__(arr, "a"))
 	{
-		b = true;
+		arguments.callee.locals.b=b = true;
 	}
 	if (!(b === true)) {throw new Error("assertion failed"); }
-	s = "hello world";
-	z = "";
+	arguments.callee.locals.s=s = "hello world";
+	arguments.callee.locals.z=z = "";
 	var __iter0 = s;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -134,17 +134,17 @@ var main =  function main()
 		else { z += char; }
 	}
 	if (!(z === "hello world")) {throw new Error("assertion failed"); }
-	b = false;
+	arguments.callee.locals.b=b = false;
 	if (__contains__(s, "hello") instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (__contains__(s, "hello"))
 	{
-		b = true;
+		arguments.callee.locals.b=b = true;
 	}
 	if (!(b === true)) {throw new Error("assertion failed"); }
 	console.log("testing for loop over dict");
-	ob = dict({  }, { copy:false, keytype:"string", iterable:[["a", "A"], ["b", "B"]] });
-	k = "";
-	v = "";
+	arguments.callee.locals.ob=ob = dict({  }, { copy:false, keytype:"string", iterable:[["a", "A"], ["b", "B"]] });
+	arguments.callee.locals.k=k = "";
+	arguments.callee.locals.v=v = "";
 	var __iter0 = ob;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -158,15 +158,15 @@ var main =  function main()
 	console.log(v);
 	if (!((k === "ab" || k === "ba"))) {throw new Error("assertion failed"); }
 	if (!((v === "AB" || v === "BA"))) {throw new Error("assertion failed"); }
-	keys = [];
-	values = [];
+	arguments.callee.locals.keys=keys = [];
+	arguments.callee.locals.values=values = [];
 	var __mtarget__4,x;
 	var __iter0 = __jsdict_items(ob);
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var __mtarget__4 = __iter0[ __n0 ];
-		x = __mtarget__4[0];
-		y = __mtarget__4[1];
+		arguments.callee.locals.x=x = __mtarget__4[0];
+		arguments.callee.locals.y=y = __mtarget__4[1];
 		/***/ try {
 		keys.append(x);
 		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, keys.append)==true){debugger;}else{throw __err;} };
@@ -176,16 +176,16 @@ var main =  function main()
 	}
 	if (!(__contains__(keys, "a"))) {throw new Error("assertion failed"); }
 	if (!(__contains__(values, "A"))) {throw new Error("assertion failed"); }
-	ob2 = dict({  }, { copy:false, keytype:"string", iterable:[["c", "C"], ["d", "D"]] });
-	e = 0;
-	arr = [];
+	arguments.callee.locals.ob2=ob2 = dict({  }, { copy:false, keytype:"string", iterable:[["c", "C"], ["d", "D"]] });
+	arguments.callee.locals.e=e = 0;
+	arguments.callee.locals.arr=arr = [];
 	var __mtarget__5;
 	var __iter0 = __jsdict_items(ob);
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
 		var __mtarget__5 = __iter0[ __n0 ];
-		x = __mtarget__5[0];
-		y = __mtarget__5[1];
+		arguments.callee.locals.x=x = __mtarget__5[0];
+		arguments.callee.locals.y=y = __mtarget__5[1];
 		/***/ try {
 		arr.append(x);
 		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, arr.append)==true){debugger;}else{throw __err;} };
@@ -197,8 +197,8 @@ var main =  function main()
 		if (! (__iter1 instanceof Array || typeof __iter1 == "string" || __is_typed_array(__iter1) || __is_some_array(__iter1) )) { __iter1 = __object_keys__(__iter1) }
 		for (var __n1 = 0; __n1 < __iter1.length; __n1++) {
 			var __mtarget__6 = __iter1[ __n1 ];
-			w = __mtarget__6[0];
-			z = __mtarget__6[1];
+			arguments.callee.locals.w=w = __mtarget__6[0];
+			arguments.callee.locals.z=z = __mtarget__6[1];
 			e ++;
 			/***/ try {
 			arr.append(w);
@@ -218,6 +218,7 @@ var main =  function main()
 	if (!(__contains__(arr, "d"))) {throw new Error("assertion failed"); }
 	if (!(__contains__(arr, "D"))) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -269,44 +270,45 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d;
-	a = range(10);
+	arguments.callee.locals.a=a = range(10);
 	if (!(a[0] === 0)) {throw new Error("assertion failed"); }
 	if (!(a[1] === 1)) {throw new Error("assertion failed"); }
 	if (!(len(a) === 10)) {throw new Error("assertion failed"); }
-	b = range(1, 10);
+	arguments.callee.locals.b=b = range(1, 10);
 	if (!(b[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(b[1] === 2)) {throw new Error("assertion failed"); }
 	if (!(len(b) === 9)) {throw new Error("assertion failed"); }
-	c = 0;
+	arguments.callee.locals.c=c = 0;
 	/*for var in range*/;
 	var i;
-	i = -1;
+	arguments.callee.locals.i=i = -1;
 	while (++i < 10)
 	{
 		c ++;
 	}
 	if (!(c === 10)) {throw new Error("assertion failed"); }
-	d = 0;
+	arguments.callee.locals.d=d = 0;
 	/*for var in range*/;
 	
-	i = (1 - 1);
+	arguments.callee.locals.i=i = (1 - 1);
 	while (++i < 10)
 	{
 		d ++;
 	}
 	if (!(d === 9)) {throw new Error("assertion failed"); }
-	e = 0;
+	arguments.callee.locals.e=e = 0;
 	/*for var in range*/;
 	
-	i = (1 - 1);
+	arguments.callee.locals.i=i = (1 - 1);
 	var i__end__;
-	i__end__ = (8 + 2);
+	arguments.callee.locals.i__end__=i__end__ = (8 + 2);
 	while (++i < i__end__)
 	{
 		e ++;
 	}
 	if (!(e === 9)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -356,11 +358,11 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,i,j;
-	a = 0;
-	i = 0;
+	arguments.callee.locals.a=a = 0;
+	arguments.callee.locals.i=i = 0;
 	while (i < 10)
 	{
-		j = 0;
+		arguments.callee.locals.j=j = 0;
 		while (j < 10)
 		{
 			a ++;
@@ -381,6 +383,7 @@ var main =  function main()
 	if (!(len(arr1) === 5)) {throw new Error("assertion failed"); }
 	if (!(len(arr2) === 5)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```

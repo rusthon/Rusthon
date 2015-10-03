@@ -29,11 +29,12 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var y,x;
-	x = set([1, 2, 3]);
-	y = set([1, 2, 3, 4]);
+	arguments.callee.locals.x=x = set([1, 2, 3]);
+	arguments.callee.locals.y=y = set([1, 2, 3, 4]);
 	if (!(x.issubset(y) === true)) {throw new Error("assertion failed"); }
 	if (!(y.issubset(x) === false)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```

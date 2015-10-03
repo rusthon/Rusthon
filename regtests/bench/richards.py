@@ -192,8 +192,8 @@ class Task(TaskState):
 			p.append_to(self.input)
 		return old
 
-
-	def runTask(self):
+	#@v8
+	def runTask(self):  ## most CPU load
 		if self.isWaitingWithPacket():
 			msg = self.input
 			self.input = msg.link
@@ -348,7 +348,6 @@ class WorkTask(Task):
 
 		return self.qpkt(pkt)
 
-
 def schedule():
 	t = taskWorkArea.taskList
 	while t is not None:
@@ -362,6 +361,7 @@ def schedule():
 		else:
 			if tracing: trace(chr(ord("0")+t.ident))
 			t = t.runTask()
+
 
 class Richards(object):
 
@@ -408,7 +408,6 @@ def entry_point(iterations):
 	#v8(r.run)
 	## above works, but it can also be done in a single line with `->` syntax
 	v8->( r.run(1) )
-
 
 	startTime = clock()
 	result = r.run(iterations)

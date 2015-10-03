@@ -50,15 +50,15 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d,n,w;
-	a = [1, 2];
-	b = [3, 4];
-	n = 1;
-	w = 100;
-	c = (a.__add__(b));
+	arguments.callee.locals.a=a = [1, 2];
+	arguments.callee.locals.b=b = [3, 4];
+	arguments.callee.locals.n=n = 1;
+	arguments.callee.locals.w=w = 100;
+	arguments.callee.locals.c=c = (a.__add__(b));
 if (n instanceof Array || __is_typed_array(n)) { n.extend(n); }
 	else if (n.__iadd__) { n.__iadd__(n); }
 	else { n += n; }
-w = (w.__add__(w));
+arguments.callee.locals.w=w = (w.__add__(w));
 	if (!(n === 2)) {throw new Error("assertion failed"); }
 	if (!(w === 200)) {throw new Error("assertion failed"); }
 	if (!(len(c) === 4)) {throw new Error("assertion failed"); }
@@ -66,11 +66,12 @@ w = (w.__add__(w));
 	if (!(c[1] === 2)) {throw new Error("assertion failed"); }
 	if (!(c[2] === 3)) {throw new Error("assertion failed"); }
 	if (!(c[3] === 4)) {throw new Error("assertion failed"); }
-	d = a.__add__(b);
+	arguments.callee.locals.d=d = a.__add__(b);
 	if (!(len(d) === 4)) {throw new Error("assertion failed"); }
-	e = a.add(b);
+	arguments.callee.locals.e=e = a.add(b);
 	if (!(len(e) === 4)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -105,15 +106,16 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
-	a = range(10);
+	arguments.callee.locals.a=a = range(10);
 	if (!(len(a) === 10)) {throw new Error("assertion failed"); }
 	if (!(a[0] === 0)) {throw new Error("assertion failed"); }
 	if (!(a[9] === 9)) {throw new Error("assertion failed"); }
-	b = range(1, 10);
+	arguments.callee.locals.b=b = range(1, 10);
 	if (!(len(b) === 9)) {throw new Error("assertion failed"); }
 	if (!(b[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(b[8] === 9)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -154,9 +156,9 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
-	a = [1, 2, 3, 4];
+	arguments.callee.locals.a=a = [1, 2, 3, 4];
 	if (!(len(a) === 4)) {throw new Error("assertion failed"); }
-	b = list();
+	arguments.callee.locals.b=b = list();
 	if (!(len(b) === 0)) {throw new Error("assertion failed"); }
 	/***/ try {
 	b.append(5);
@@ -171,6 +173,7 @@ var main =  function main()
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, a.extend)==true){debugger;}else{throw __err;} };
 	if (!(len(a) === 6)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -242,6 +245,7 @@ var XXX =  function XXX()
 	this.__init__();
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, XXX, this.__init__)==true){debugger;}else{throw __err;} };
 }/*end->	`XXX`	*/
+XXX.locals={};
 
 XXX.prototype.__class__ = XXX;
 XXX.__name__ = "XXX";
@@ -252,6 +256,7 @@ XXX.prototype.toString =  function XXX_toString()
 /***/ if (XXX_toString.__redef !== undefined) { return XXX_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
+XXX.prototype.toString.locals = {};
 
 XXX.prototype.__init__ =  function XXX___init__()
 {
@@ -260,7 +265,9 @@ XXX.prototype.__init__ =  function XXX___init__()
 	
 	this.v = range(10);
 }/*end->	`__init__`	*/
+XXX.prototype.__init__.locals = {};
 
+XXX.__init__ = function () { return XXX.prototype.__init__.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 XXX.prototype.method =  function XXX_method(a)
 {
 /***/ if (XXX_method.__recompile !== undefined) { eval("XXX_method.__redef="+XXX_method.__recompile); XXX_method.__recompile=undefined; };
@@ -268,17 +275,19 @@ XXX.prototype.method =  function XXX_method(a)
 	
 	return a;
 }/*end->	`method`	*/
+XXX.prototype.method.locals = {};
 
+XXX.method = function () { return XXX.prototype.method.apply(arguments[0], Array.prototype.slice.call(arguments,1)) };
 var main =  function main()
 {
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d,f,x;
-	a = range(10).__getslice__(undefined, -5, undefined);
+	arguments.callee.locals.a=a = range(10).__getslice__(undefined, -5, undefined);
 	if (!(len(a) === 5)) {throw new Error("assertion failed"); }
 	if (!(a[4] === 4)) {throw new Error("assertion failed"); }
 	console.log("--------");
-	b = range(10).__getslice_lowerstep__(undefined, 2);
+	arguments.callee.locals.b=b = range(10).__getslice_lowerstep__(undefined, 2);
 	console.log(b);
 	if (!(len(b) === 5)) {throw new Error("assertion failed"); }
 	if (!(b[0] === 0)) {throw new Error("assertion failed"); }
@@ -286,15 +295,16 @@ var main =  function main()
 	if (!(b[2] === 4)) {throw new Error("assertion failed"); }
 	if (!(b[3] === 6)) {throw new Error("assertion failed"); }
 	if (!(b[4] === 8)) {throw new Error("assertion failed"); }
-	c = range(20);
-	d = c.__getslice__(len(b), undefined, undefined);
+	arguments.callee.locals.c=c = range(20);
+	arguments.callee.locals.d=d = c.__getslice__(len(b), undefined, undefined);
 	if (!(len(d) === 15)) {throw new Error("assertion failed"); }
-	x =  new XXX();
-	e = x.v.__getslice__(len(b), undefined, undefined);
+	arguments.callee.locals.x=x =  new XXX();
+	arguments.callee.locals.e=e = x.v.__getslice__(len(b), undefined, undefined);
 	if (!(len(e) === 5)) {throw new Error("assertion failed"); }
-	f = x.method(x.v.__getslice__(len(b), undefined, undefined));
+	arguments.callee.locals.f=f = x.method(x.v.__getslice__(len(b), undefined, undefined));
 	if (!(len(f) === 5)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -324,12 +334,13 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a;
-	a = [1, 2];
+	arguments.callee.locals.a=a = [1, 2];
 	/***/ try {
 	a.remove(1);
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, a.remove)==true){debugger;}else{throw __err;} };
 	if (!(len(a) === 1)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -369,14 +380,15 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,idx;
-	a = [1, 2, 3, 4];
+	arguments.callee.locals.a=a = [1, 2, 3, 4];
 	if (!(a[(a.length + -1)] === 4)) {throw new Error("assertion failed"); }
 	if (!(a[(a.length + -2)] === 3)) {throw new Error("assertion failed"); }
 	if (!(a[(a.length + -3)] === 2)) {throw new Error("assertion failed"); }
 	if (!(a[(a.length + -4)] === 1)) {throw new Error("assertion failed"); }
-	idx = -2;
+	arguments.callee.locals.idx=idx = -2;
 	if (!(a[((a.length + idx) - 1)])) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -429,19 +441,20 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,d;
-	a = range(10);
-	b = a.__getslice_lowerstep__(4, -1);
+	arguments.callee.locals.a=a = range(10);
+	arguments.callee.locals.b=b = a.__getslice_lowerstep__(4, -1);
 	if (!(b[0] === 4)) {throw new Error("assertion failed"); }
 	if (!(b[1] === 3)) {throw new Error("assertion failed"); }
 	if (!(b[2] === 2)) {throw new Error("assertion failed"); }
 	if (!(b[3] === 1)) {throw new Error("assertion failed"); }
 	if (!(b[4] === 0)) {throw new Error("assertion failed"); }
-	c = range(20);
-	d = c.__getslice_lowerstep__(2, -1);
+	arguments.callee.locals.c=c = range(20);
+	arguments.callee.locals.d=d = c.__getslice_lowerstep__(2, -1);
 	if (!(d[0] === 2)) {throw new Error("assertion failed"); }
 	if (!(d[1] === 1)) {throw new Error("assertion failed"); }
 	if (!(d[2] === 0)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -507,6 +520,7 @@ var A =  function A()
 /***/ if (A.__redef !== undefined) { return A.__redef.apply(this,arguments); };
 	this.__$UID$__ = __$UID$__ ++;
 }/*end->	`A`	*/
+A.locals={};
 
 A.prototype.__class__ = A;
 A.__name__ = "A";
@@ -517,30 +531,31 @@ A.prototype.toString =  function A_toString()
 /***/ if (A_toString.__redef !== undefined) { return A_toString.__redef.apply(this,arguments); };
 	return this.__$UID$__;
 }/*end->	`toString`	*/
+A.prototype.toString.locals = {};
 
 var main =  function main()
 {
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,ok,d,err3,err2,err1,err4;
-	d = [];
+	arguments.callee.locals.d=d = [];
 	if (len(d) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len(d))
 	{
-		err1 = 1;
+		arguments.callee.locals.err1=err1 = 1;
 	}
 	else
 	{
-		err1 = 0;
+		arguments.callee.locals.err1=err1 = 0;
 	}
 	if (len([]) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len([]))
 	{
-		err2 = 1;
+		arguments.callee.locals.err2=err2 = 1;
 	}
 	else
 	{
-		err2 = 0;
+		arguments.callee.locals.err2=err2 = 0;
 	}
 	/***/ try {
 	d.append("xxx");
@@ -548,34 +563,35 @@ var main =  function main()
 	if (len(d) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len(d))
 	{
-		err3 = 0;
+		arguments.callee.locals.err3=err3 = 0;
 	}
 	else
 	{
-		err3 = 1;
+		arguments.callee.locals.err3=err3 = 1;
 	}
 	if (!(err1 === 0)) {throw new Error("assertion failed"); }
 	if (!(err2 === 0)) {throw new Error("assertion failed"); }
 	if (!(err3 === 0)) {throw new Error("assertion failed"); }
-	a =  new A();
-	ok = false;
+	arguments.callee.locals.a=a =  new A();
+	arguments.callee.locals.ok=ok = false;
 		if (a !== null)
 	{
-		ok = true;
+		arguments.callee.locals.ok=ok = true;
 	}
 	if (!(ok)) {throw new Error("assertion failed"); }
 	a.x = [];
 	if (len(a.x) instanceof Array) {throw new RuntimeError("if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`")}
 	if (len(a.x))
 	{
-		err4 = 1;
+		arguments.callee.locals.err4=err4 = 1;
 	}
 	else
 	{
-		err4 = 0;
+		arguments.callee.locals.err4=err4 = 0;
 	}
 	if (!(err4 === 0)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -623,7 +639,7 @@ var main =  function main()
 	console.log("testing array.insert");
 	console.log([]);
 	console.log("----");
-	a = [1, 2, 3, 4];
+	arguments.callee.locals.a=a = [1, 2, 3, 4];
 	console.log(a.length);
 	console.log(Object.keys(a));
 	console.log("____");
@@ -640,6 +656,7 @@ var main =  function main()
 	if (!(a[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(a[1] === "hi")) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -675,15 +692,16 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
-	a = ["hi"];
+	arguments.callee.locals.a=a = ["hi"];
 	console.log(a);
-	b = (a.__mul__(2));
+	arguments.callee.locals.b=b = (a.__mul__(2));
 	console.log(b);
 	if (!(len(b) === 2)) {throw new Error("assertion failed"); }
 	if (!(b[0] === "hi")) {throw new Error("assertion failed"); }
 	if (!(b[1] === "hi")) {throw new Error("assertion failed"); }
 	console.log("ok");
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -761,7 +779,7 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,e,d;
-	a = list(range(10));
+	arguments.callee.locals.a=a = list(range(10));
 	var __iter0 = a;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -788,9 +806,9 @@ var main =  function main()
 	if (!(a[6] === 7)) {throw new Error("assertion failed"); }
 	if (!(a[7] === 8)) {throw new Error("assertion failed"); }
 	if (!(a[8] === 9)) {throw new Error("assertion failed"); }
-	b = list(range(3));
+	arguments.callee.locals.b=b = list(range(3));
 	console.log(b);
-	c = b.__getslice__(undefined, 2, undefined);
+	arguments.callee.locals.c=c = b.__getslice__(undefined, 2, undefined);
 	console.log(c);
 	if (!(len(c) === 2)) {throw new Error("assertion failed"); }
 	if (!(c[0] === 0)) {throw new Error("assertion failed"); }
@@ -806,14 +824,14 @@ var main =  function main()
 	if (!(b[1] === "B")) {throw new Error("assertion failed"); }
 	if (!(b[2] === "C")) {throw new Error("assertion failed"); }
 	if (!(b[3] === 2)) {throw new Error("assertion failed"); }
-	e = range(5);
+	arguments.callee.locals.e=e = range(5);
 	console.log(e);
 	/***/ try {
 	e.__setslice__(2, 3, undefined, "x");
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, e.__setslice__)==true){debugger;}else{throw __err;} };
 	console.log(e);
 	if (!(e[2] === "x")) {throw new Error("assertion failed"); }
-	d = list(range(10));
+	arguments.callee.locals.d=d = list(range(10));
 	/***/ try {
 	d.__setslice__(2, 4, undefined, [99, 100]);
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, d.__setslice__)==true){debugger;}else{throw __err;} };
@@ -823,6 +841,7 @@ var main =  function main()
 	if (!(d[3] === 100)) {throw new Error("assertion failed"); }
 	console.log(d);
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -852,12 +871,13 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,idx;
-	a = [1, 2, 3, 4];
-	idx = 1;
+	arguments.callee.locals.a=a = [1, 2, 3, 4];
+	arguments.callee.locals.idx=idx = 1;
 	if (!(a[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(a[idx] === 2)) {throw new Error("assertion failed"); }
 	if (!(a.index(3) === 2)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -902,8 +922,8 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,y,b,z,w;
-	a = [1, 2, 3];
-	y = 0;
+	arguments.callee.locals.a=a = [1, 2, 3];
+	arguments.callee.locals.y=y = 0;
 	var __iter0 = a;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -912,8 +932,8 @@ var main =  function main()
 		else { y += x; }
 	}
 	if (!(y === 6)) {throw new Error("assertion failed"); }
-	b = range(3);
-	z = 0;
+	arguments.callee.locals.b=b = range(3);
+	arguments.callee.locals.z=z = 0;
 	var __iter0 = b;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -922,7 +942,7 @@ var main =  function main()
 		else { z += x; }
 	}
 	if (!(z === 3)) {throw new Error("assertion failed"); }
-	w = 0;
+	arguments.callee.locals.w=w = 0;
 	var __iter0 = a;
 	if (! (__iter0 instanceof Array || typeof __iter0 == "string" || __is_typed_array(__iter0) || __is_some_array(__iter0) )) { __iter0 = __object_keys__(__iter0) }
 	for (var __n0 = 0; __n0 < __iter0.length; __n0++) {
@@ -936,6 +956,7 @@ var main =  function main()
 	}
 	if (!(w === 9)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -977,8 +998,8 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,idx;
-	a = [1, 2, 3, 4];
-	idx = 1;
+	arguments.callee.locals.a=a = [1, 2, 3, 4];
+	arguments.callee.locals.idx=idx = 1;
 	if (!(a[0] === 1)) {throw new Error("assertion failed"); }
 	if (!(a[idx] === 2)) {throw new Error("assertion failed"); }
 	if (a.__setitem__) { a.__setitem__(0, "hello") }
@@ -998,6 +1019,7 @@ var main =  function main()
 	if (!(a[5] === "yyy")) {throw new Error("assertion failed"); }
 	if (!(len(a) === 6)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -1036,7 +1058,7 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var y,x;
-	x = [100, 10, 3, 2, 1];
+	arguments.callee.locals.x=x = [100, 10, 3, 2, 1];
 	/***/ try {
 	__sort_method(x);
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, __sort_method)==true){debugger;}else{throw __err;} };
@@ -1045,7 +1067,7 @@ var main =  function main()
 	if (!(x[2] === 3)) {throw new Error("assertion failed"); }
 	if (!(x[3] === 10)) {throw new Error("assertion failed"); }
 	if (!(x[4] === 100)) {throw new Error("assertion failed"); }
-	y = ["C", "B", "A"];
+	arguments.callee.locals.y=y = ["C", "B", "A"];
 	/***/ try {
 	__sort_method(y);
 	/***/ } catch (__err) { if (__debugger__.onerror(__err, main, __sort_method)==true){debugger;}else{throw __err;} };
@@ -1053,6 +1075,7 @@ var main =  function main()
 	if (!(y[1] === "B")) {throw new Error("assertion failed"); }
 	if (!(y[2] === "C")) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -1082,11 +1105,12 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,b;
-	a = ["foo", "bar"];
+	arguments.callee.locals.a=a = ["foo", "bar"];
 	if (!(__contains__(a, "foo"))) {throw new Error("assertion failed"); }
-	b = [0, 1, 2];
+	arguments.callee.locals.b=b = [0, 1, 2];
 	if (!(__contains__(b, 2))) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -1124,18 +1148,19 @@ var main =  function main()
 /***/ if (main.__recompile !== undefined) { eval("main.__redef="+main.__recompile); main.__recompile=undefined; };
 /***/ if (main.__redef !== undefined) { return main.__redef.apply(this,arguments); };
 	var a,c,b,d;
-	a = list(range(10));
+	arguments.callee.locals.a=a = list(range(10));
 	console.log(a);
-	b = a.pop();
+	arguments.callee.locals.b=b = a.pop();
 	console.log(b);
 	console.log(a);
 	if (!(b === 9)) {throw new Error("assertion failed"); }
-	c = (a instanceof Array ? a.shift() : __jsdict_pop(a, 0));
+	arguments.callee.locals.c=c = (a instanceof Array ? a.shift() : __jsdict_pop(a, 0));
 	if (!(c === 0)) {throw new Error("assertion failed"); }
-	d = ["A", "B", "C"];
+	arguments.callee.locals.d=d = ["A", "B", "C"];
 	if (!(__jsdict_pop(d, 1) === "B")) {throw new Error("assertion failed"); }
 	if (!(len(d) === 2)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```
@@ -1172,24 +1197,25 @@ var main =  function main()
 	var idx0;
 	var iter0;
 	var get0;
-	__comp__0 = [];
-	idx0 = 0;
-	iter0 = 3;
+	arguments.callee.locals.__comp__0=__comp__0 = [];
+	arguments.callee.locals.idx0=idx0 = 0;
+	arguments.callee.locals.iter0=iter0 = 3;
 	while (idx0 < iter0)
 	{
 		var x;
-		x = idx0;
+		arguments.callee.locals.x=x = idx0;
 		/***/ try {
 		__comp__0.push(x);
 		/***/ } catch (__err) { if (__debugger__.onerror(__err, main, __comp__0.push)==true){debugger;}else{throw __err;} };
 		idx0 ++;
 	}
-	a = __comp__0;
+	arguments.callee.locals.a=a = __comp__0;
 	if (!(len(a) === 3)) {throw new Error("assertion failed"); }
 	if (!(a[0] === 0)) {throw new Error("assertion failed"); }
 	if (!(a[1] === 1)) {throw new Error("assertion failed"); }
 	if (!(a[2] === 2)) {throw new Error("assertion failed"); }
 }/*end->	`main`	*/
+main.locals={};
 
 main();
 ```

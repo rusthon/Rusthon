@@ -367,6 +367,7 @@ top level the module, this builds the output and returns the javascript string t
 			#header.append('console.log("V8::Heap");')
 			#header.append('console.log(%GetHeapUsage());')
 			header.append('var v8 = function v8(fn) {return %OptimizeFunctionOnNextCall(fn);};')
+			header.append('v8.gc = function v8_gc() {return %CollectGarbage(null);};')
 
 		## first check for all the @unicode decorators,
 		## also check for special imports like `from runtime import *`
