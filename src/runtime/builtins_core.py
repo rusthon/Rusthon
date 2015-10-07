@@ -20,6 +20,20 @@ def __array_fill__(arr, items):
 		arr[i] = items[i]
 	return arr
 
+def __set_timeout(func, seconds):
+	## note: 10ms is the smallest possible time for setTimeout/Interval
+	ms = seconds * 1000
+	id = setTimeout( func, ms )
+	func._timeout_id = id
+	return func
+
+def __set_interval(func, seconds):
+	ms = seconds * 1000
+	id = setInterval( func, ms )
+	func._interval_id = id
+	return func
+
+
 @unicode('𝑰𝒔𝑰𝒏𝒔𝒕𝒂𝒏𝒄𝒆')
 def isinstance( ob, klass):
 	if ob is undefined or ob is null:

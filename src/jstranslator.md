@@ -662,11 +662,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		dectail = ')' * len(decorators)
 		if has_timeout:
 			if has_timeout=='INTERVAL':
-				dechead = 'setInterval('+dechead
-				dectail += ', %s)' %(timeout_seconds*1000)
+				dechead = '__set_interval('+dechead
+				dectail += ', %s)' %(timeout_seconds)
 			else:
-				dechead = 'setTimeout('+dechead
-				dectail += ', %s)' %(timeout_seconds*1000)
+				dechead = '__set_timeout('+dechead
+				dectail += ', %s)' %(timeout_seconds)
 
 		args = self.visit(node.args)
 		funcname = node.name
