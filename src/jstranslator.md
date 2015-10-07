@@ -46,7 +46,7 @@ class JSGenerator(NodeVisitorBase, GeneratorBase):
 			'imports' : True
 		}
 		self._as_module = as_module
-
+		self._in_locals = False
 		self._unicode_name_map = UNICODE_NAME_MAP
 
 		self._iter_id = 0  ## used by for loops
@@ -213,7 +213,7 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				self._exports.add( target )
 
 			if isname and len(self._function_stack):
-				if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals'): 
+				if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals') or self._in_locals: 
 					#target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
 					target = 'arguments.callee.locals.%s=%s' %(target, target)
 
@@ -594,6 +594,15 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'timeout':
 				has_timeout = True
 				timeout_seconds = decor.args[0].n
+				if decor.keywords:
+					raise RuntimeError(decor.keywords)
+				elif len(decor.args)>1 and isinstance(decor.args[1], ast.Dict):
+					if isinstance(decor.args[1].keys[0], ast.Name) and decor.args[1].keys[0].id=='loop':
+						dval = self.visit(decor.args[1].values[0])
+						if dval=='true' or dval == 'True' or dval == 1:
+							has_timeout = 'INTERVAL'
+					else:
+						raise SyntaxError(self.format_error('invalid option to @timeout decorator'))
 
 			elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == 'unicode':
 				if typedpython.unicode_vars:
@@ -619,9 +628,11 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				is_redef = True
 				is_locals = True
 				node.has_locals = True
+				self._in_locals = True
 			elif isinstance(decor, ast.Name) and decor.id == 'locals':
 				is_locals = True
 				node.has_locals = True
+				self._in_locals = True
 
 			elif isinstance(decor, ast.Name) and decor.id == '__pyfunction__':
 				is_pyfunc = True
@@ -650,8 +661,12 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		dechead = ''.join(decorators)
 		dectail = ')' * len(decorators)
 		if has_timeout:
-			dechead = 'setTimeout('+dechead
-			dectail += ', %s)' %(timeout_seconds*1000)
+			if has_timeout=='INTERVAL':
+				dechead = 'setInterval('+dechead
+				dectail += ', %s)' %(timeout_seconds*1000)
+			else:
+				dechead = 'setTimeout('+dechead
+				dectail += ', %s)' %(timeout_seconds*1000)
 
 		args = self.visit(node.args)
 		funcname = node.name
@@ -818,7 +833,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			stemplate = 'Object.defineProperty(%s.prototype, "%s", {get:%s, set:%s, configurable:true});'
 			body.append( stemplate%(protoname,node.name, getterfunc, funcname))
 
-		if self._runtime_type_checking or is_locals:
+		if self._runtime_type_checking or is_locals or self._in_locals:
 			if is_prototype:
 				body.append(
 					'%s.prototype.%s.locals = {};' % (protoname, node.name)
@@ -854,7 +869,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( node.name + '.args = [%s];' %targs )
 
-
+		if is_locals:
+			self._in_locals = False
 
 		buffer = '\n'.join( comments + body )
 		buffer += '\n'
