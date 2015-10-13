@@ -402,7 +402,8 @@ top level the module, this builds the output and returns the javascript string t
 			runtime = generate_js_runtime(
 				nodejs         = self._insert_nodejs_runtime,
 				nodejs_tornado = self._insert_nodejs_tornado,
-				webworker_manager = self._has_channels and not self._webworker
+				webworker_manager = self._has_channels and not self._webworker,
+				debugger = self._runtime_type_checking
 			)
 			lines.insert( 0, runtime )
 		else:
@@ -1619,16 +1620,8 @@ Regenerate JS Runtime
 TODO: update and test generate new js runtimes
 
 ```python
-def generate_minimal_js_runtime():
-	from python_to_pythonjs import main as py2pyjs
-	a = py2pyjs(
-		open('src/runtime/builtins_core.py', 'rb').read(),
-		module_path = 'runtime',
-		fast_javascript = True
-	)
-	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
-def generate_js_runtime( nodejs=False, nodejs_tornado=False, webworker_manager=False ):
+def generate_js_runtime( nodejs=False, nodejs_tornado=False, webworker_manager=False, debugger=False ):
 	## note: RUSTHON_LIB_ROOT gets defined in the entry of rusthon.py
 	r = [
 		open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/pythonpythonjs.py'), 'rb').read(),
@@ -1639,6 +1632,17 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False, webworker_manager=F
 		)
 
 	]
+
+	if debugger:
+		r.append(
+			python_to_pythonjs(
+				open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/builtins_debugger.py'), 'rb').read(),
+				fast_javascript = True,
+				pure_javascript = False
+			)
+		)
+
+
 	if nodejs:
 		r.append(
 			python_to_pythonjs(
