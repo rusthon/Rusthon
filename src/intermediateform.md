@@ -474,9 +474,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				writer.write( '''inline("var %s = require('%s')")''' %(alias.name, alias.name) )
 
 	def visit_ImportFrom(self, node):
-		if self._with_dart:
-			lib = fakestdlib.DART
-		elif self._with_go:
+		if self._with_go:
 			lib = fakestdlib.GO
 		elif self._with_cpp:
 			lib = fakestdlib.CPP
@@ -627,9 +625,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			assert v is not None
 			a.append( v )
 
-		if self._with_dart:
-			return 'tuple([%s])' %','.join(a)
-		elif self._with_rust or self._with_cpp:
+		if self._with_rust or self._with_cpp:
 			if len(a)==1:
 				return '(%s,)' % a[0]
 			else:
@@ -819,13 +815,10 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				writer.write('%s[ %s ] = %s' %(cname, key, val) )
 
+		elif self._with_go:
+			writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
 		else:
-			if self._with_dart:
-				writer.write('%s.add( %s )' %(cname,self.visit(node.elt)) )
-			elif self._with_go:
-				writer.write('%s = append(%s, %s )' %(cname, cname,self.visit(node.elt)) )
-			else:
-				writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
+			writer.write('%s.push( %s )' %(cname,self.visit(node.elt)) )
 
 	def visit_In(self, node):
 		return ' in '
@@ -918,7 +911,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			else:
 				return self._get_js_class_base_init( n )  ## TODO fixme
 
-	def _visit_dart_classdef(self, node): ## this should be called visit_multibackend_classdef
+	def _visit_typed_classdef(self, node): ## this should be called visit_multibackend_classdef
 		name = node.name
 		node._struct_vars = dict()
 		self._js_classes[ name ] = node
@@ -1001,8 +994,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		for dec in node.decorator_list:
 			writer.write('@%s'%self.visit(dec))
 
-		if self._with_dart and props:
-			writer.write('@properties(%s)'%','.join(props))  ## TODO rename this to @__dart__props__
 
 		bases = []
 		for base in node.bases:
@@ -1026,8 +1017,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		## constructor
 		if init:
 			methods.pop( '__init__' )
-			if self._with_dart:
-				init.name = node.name
+			#if self._with_dart:
+			#	init.name = node.name
 
 			if not self._with_rust:
 				## this is used for which backend? ##
@@ -1041,7 +1032,7 @@ class PythonToPythonJS(NodeVisitorBase):
 					if isinstance(item.targets[0].value, ast.Name) and item.targets[0].value.id=='self':
 						attr = item.targets[0].attr
 						if attr not in node._struct_vars:
-							if self._with_go or self._with_dart:  ## this works for dart to?
+							if self._with_go:
 								node._struct_vars[ attr ] = 'interface'
 							elif self._with_cpp:
 								pass
@@ -1306,8 +1297,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('__new_module__(%s)' %node.name) ## triggers a new file in final stage of translation.
 
 		######## c++ and typed backends ########
-		if self._with_dart or self._with_go or self._with_rust or self._with_cpp:
-			self._visit_dart_classdef(node)
+		if self._with_go or self._with_rust or self._with_cpp:
+			self._visit_typed_classdef(node)
 			self._class_stack.pop()
 			return
 
@@ -1329,8 +1320,9 @@ class PythonToPythonJS(NodeVisitorBase):
 		return '('+ op.join( [self.visit(v) for v in node.values] ) + ')'
 
 	def visit_If(self, node):
-		if self._with_dart and writer.is_at_global_level():
-			raise SyntaxError( self.format_error('if statements can not be used at module level in dart') )
+		if writer.is_at_global_level():
+			if self._with_rust or self._with_rust or self._with_cpp:
+				raise SyntaxError( self.format_error('if statements can not be used at module level when transpiling to typed language') )
 
 		elif isinstance(node.test, ast.Dict):
 			if self._with_js:
@@ -1386,10 +1378,6 @@ class PythonToPythonJS(NodeVisitorBase):
 		writer.pull()
 
 	def visit_Raise(self, node):
-		#if self._with_js or self._with_dart:
-		#	writer.write('throw Error')
-		#else:
-		#writer.write('raise %s' % self.visit(node.type))
 		if isinstance(node.type, ast.Name):
 			writer.write('raise %s' % node.type.id)
 
@@ -1416,7 +1404,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		writer.write('pass')
 
 	def visit_Name(self, node):
-		if self._with_js or self._with_dart:
+		if self._with_js:
 			if node.id == 'True':
 				return 'true'
 			elif node.id == 'False':
@@ -1424,8 +1412,6 @@ class PythonToPythonJS(NodeVisitorBase):
 			elif node.id == 'None':
 				if self._with_go:
 					return 'nil'
-				elif self._with_dart:
-					return 'null'
 				else:
 					return 'null'
 
@@ -1589,16 +1575,12 @@ class PythonToPythonJS(NodeVisitorBase):
 				if self._with_cpp or self._with_rust or self._with_go:
 					comp.append('%s in %s' %(a[1], a[0]))
 
-				elif self._with_dart:
-					## indexOf works with lists and strings in Dart
-					comp.append( '%s.contains(%s)' %(a[0], a[1]) )
-
 				elif self._with_js:
 					## this makes "if 'x' in Array" work like Python: "if 'x' in list" - TODO fix this for js-objects
 					## note javascript rules are confusing: "1 in [1,2]" is true, this is because a "in test" in javascript tests for an index
 					comp.append( '__contains__(%s, %s)' %(a[0],a[1]))
 				else:
-					comp.append( "__get__(__get__(%s, '__contains__'), '__call__')([%s], JSObject())" %a )  ## deprecated? might be used for lua
+					raise RuntimeError( self.format_error('invalid backend') )
 
 				if isinstance(node.ops[i], ast.NotIn):
 					comp.append( ' )')  ## it is not required to enclose NotIn
@@ -1638,7 +1620,7 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_Attribute(self, node):
 		node_value = self.visit(node.value)
 
-		if self._with_dart or self._with_ll or self._with_go:
+		if self._with_ll or self._with_go:
 			return '%s.%s' %(node_value, node.attr)
 
 		elif self._with_js:
@@ -1688,9 +1670,6 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					return '%s[ %s ]' %(name, self.visit(node.slice))
 
-			elif self._with_dart:  ## --------- dart mode -------
-				return '%s[ %s ]' %(name, self.visit(node.slice))
-
 
 			else:  ## ------------------ old javascript mode ------------------------
 				## TODO clean this up ##
@@ -1724,8 +1703,6 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_Slice(self, node):
 		if self._with_go or self._with_rust or self._with_cpp:
 			lower = upper = step = None
-		elif self._with_dart:
-			lower = upper = step = 'null'
 		elif self._with_js:
 			lower = upper = step = 'undefined'
 		else:
@@ -1758,7 +1735,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			return "%s, %s, %s" % (lower, upper, step)
 
 	def visit_Assign(self, node):
-		use_runtime_errors = not (self._with_js or self._with_ll or self._with_dart or self._with_coffee or self._with_go)
+		use_runtime_errors = not (self._with_js or self._with_ll or self._with_go)
 		use_runtime_errors = use_runtime_errors and self._with_runtime_exceptions
 
 		lineno = node.lineno
@@ -1916,7 +1893,7 @@ class PythonToPythonJS(NodeVisitorBase):
 				else:
 					code = '%s.__setslice__(%s, %s)' %(self.visit(target.value), self.visit(target.slice), self.visit(node.value))
 
-			elif self._with_dart or self._with_ll or self._with_cpp or self._with_go or self._with_rust:
+			elif self._with_ll or self._with_cpp or self._with_go or self._with_rust:
 				code = '%s[ %s ] = %s'
 				code = code % (self.visit(target.value), self.visit(target.slice.value), self.visit(node.value))
 
@@ -1947,7 +1924,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			target_value = self.visit(target.value)  ## target.value may have "returns_type" after being visited
 			self._in_assign_target = False
 
-			if self._with_js or self._with_dart or self._with_go:
+			if self._with_js or self._with_go:
 				writer.write( '%s.%s=%s' %(target_value, target.attr, self.visit(node.value)) )
 
 		elif isinstance(target, Name):  ## assignment to variable
@@ -1990,7 +1967,7 @@ class PythonToPythonJS(NodeVisitorBase):
 							i
 						)
 						writer.write(code)
-					elif self._with_js or self._with_dart:
+					elif self._with_js:
 						writer.write("%s = %s[%s]" % (self.visit(target), r, i))
 					else:
 						raise RuntimeError( self.format_error('unknown backend'))
@@ -2010,18 +1987,16 @@ class PythonToPythonJS(NodeVisitorBase):
 		s = s.replace('__new__>>', 'new ')
 		s = s.replace('.__doublecolon__.', '::')
 
-		if self._with_dart and s == '\\0':  ## TODO other numbers
-			return 'new(String.fromCharCode(0))'
 
-		elif self._with_js or self._with_dart:
-			return '"%s"' %s#.encode('utf-8')
+		if self._with_js:
+			return '"%s"' %s           #.encode('utf-8')
 		else:
 			if len(s) == 0:
 				return '""'
 			elif s.startswith('"') or s.endswith('"'):
-				return "'''%s'''" %s#.encode('utf-8')
+				return "'''%s'''" %s   #.encode('utf-8')
 			else:
-				return '"""%s"""' %s#.encode('utf-8')
+				return '"""%s"""' %s   #.encode('utf-8')
 
 	def visit_IfExp(self, node):
 		test    = self.visit(node.test)
@@ -2083,14 +2058,8 @@ class PythonToPythonJS(NodeVisitorBase):
 			node.func.id = '__open__'
 
 		###############################################
-		if not self._with_dart and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id in self._typedef_vars and self._typedef_vars[node.func.value.id]=='list':
-			if node.func.attr == 'append':
-				return '%s.push( %s )' %(node.func.value.id, self.visit(node.args[0]) )
-			else:
-				raise SyntaxError( self.format_error(node) )
 
-
-		elif self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
+		if self._with_webworker and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'self' and node.func.attr == 'terminate':
 			return 'self.postMessage({"type":"terminate"})'
 
 		elif self._use_threading and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, Name) and node.func.value.id == 'threading':
@@ -2150,12 +2119,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			if name in self._generator_functions:
 				return ' new(%s(%s))' %(name, ','.join(args))
-
-			elif self._with_dart and name in self._builtin_functions_dart:
-				if args:
-					return self._builtin_functions_dart[name] % ','.join(args)
-				else:
-					return self._builtin_functions_dart[name]
 
 			elif name in self._builtin_functions and self._builtin_functions[name]:  ## inlined js
 				if args:
@@ -2280,35 +2243,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 					a = ','.join(args)
 					return 'new( %s(%s) )' %( self.visit(node.func), a )
-
-			elif self._with_dart:  ## ------------------ DART --------------------------------------
-
-				if isinstance(node.func, ast.Attribute):  ## special method calls
-					anode = node.func
-					self._in_assign_target = True
-					method = self.visit( node.func )
-					self._in_assign_target = False
-
-					if anode.attr == 'replace' and len(node.args)==2:
-						return '__replace_method(%s, %s)' %(self.visit(anode.value), ','.join(args) )
-					elif anode.attr == 'split' and len(node.args)==0:
-						return '__split_method(%s)' %self.visit(anode.value)
-					elif anode.attr == 'upper' and len(node.args)==0:
-						return '__upper_method(%s)' %self.visit(anode.value)
-					elif anode.attr == 'lower' and len(node.args)==0:
-						return '__lower_method(%s)' %self.visit(anode.value)
-
-				## default ##
-				if node.keywords:
-					kwargs = ','.join( ['%s=%s'%(x.arg, self.visit(x.value)) for x in node.keywords] )
-					if args:
-						return '%s(%s, %s)' %( self.visit(node.func), ','.join(args), kwargs )
-					else:
-						return '%s( %s )' %( self.visit(node.func), kwargs )
-
-				else:
-					a = ','.join(args)
-					return '%s(%s)' %( self.visit(node.func), a )
 
 			else:  ## ----------------------------- javascript mode ------------------------
 				if node.keywords:
@@ -2570,10 +2504,9 @@ class PythonToPythonJS(NodeVisitorBase):
 
 
 			elif isinstance(decorator, ast.Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'webworker':
-				if not self._with_dart:
-					threaded = True
-					assert len(decorator.args) == 1
-					jsfile = decorator.args[0].s
+				threaded = True
+				assert len(decorator.args) == 1
+				jsfile = decorator.args[0].s
 
 			elif isinstance(decorator, Call) and isinstance(decorator.func, ast.Name) and decorator.func.id == 'returns':
 				#if decorator.keywords:  ## deprecated
@@ -2592,9 +2525,6 @@ class PythonToPythonJS(NodeVisitorBase):
 
 			elif self._with_cpp or self._with_rust:
 				writer.write('@%s' %self.visit(decorator))
-
-			elif self._with_dart:
-				with_dart_decorators.append( self.visit(decorator) )
 
 			elif isinstance(decorator, Name) and decorator.id == 'fastdef':  ## TODO clean this up
 				fastdef = True
@@ -2680,8 +2610,6 @@ class PythonToPythonJS(NodeVisitorBase):
 					usertype = None
 					if '=' in v:
 						t,n = v.split('=')  ## unpack type and name
-						if self._with_dart and t in typedpython.simd_types:
-							t = t[0].upper() + t[1:]
 						v = '%s=%s' %(n,t)  ## reverse
 						local_typedef_names.add( n )
 						if t == 'long' and inlined_long == False:
@@ -2703,7 +2631,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('@expression(%s)' %func_expr)
 
 
-		if not self._with_dart and not self._with_js and not javascript and not self._with_glsl:
+		if not self._with_js and not javascript:
 			writer.write('@__pyfunction__')
 
 		if return_type or return_type_keywords:
@@ -2720,35 +2648,7 @@ class PythonToPythonJS(NodeVisitorBase):
 			writer.write('@%s' %self.visit(decorator))
 
 
-
-		if self._with_dart:
-			## dart supports optional positional params [x=1, y=2], or optional named {x:1, y:2}
-			## but not both at the same time.
-			if node.args.kwarg:
-				raise SyntaxError( self.format_error('dart functions can not take variable keyword arguments (**kwargs)' ) )
-
-			for dec in with_dart_decorators: writer.write('@%s'%dec)
-
-			args = []
-			offset = len(node.args.args) - len(node.args.defaults)
-			for i, arg in enumerate(node.args.args):
-				a = arg.id
-				dindex = i - offset
-				if dindex >= 0 and node.args.defaults:
-					default_value = self.visit( node.args.defaults[dindex] )
-					args.append( '%s=%s' %(a, default_value) )
-				else:
-					args.append( a )
-
-			if node.args.vararg:
-				if node.args.defaults:
-					raise SyntaxError( self.format_error('dart functions can not use variable arguments (*args) and have keyword arguments' ) )
-
-				args.append('__variable_args__%s' %node.args.vararg)
-
-			writer.write( 'def %s( %s ):' % (node.name, ','.join(args)) )
-
-		elif self._with_go or self._with_rust or self._with_cpp:  ## pass-thru unchanged to next stage
+		if self._with_go or self._with_rust or self._with_cpp:  ## pass-thru unchanged to next stage
 			args = []
 			offset = len(node.args.args) - len(node.args.defaults)
 			for i, arg in enumerate(node.args.args):
@@ -2827,7 +2727,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		writer.write('var(%s)' %a)
 
 		#####################################################################
-		if self._with_dart or self._with_glsl or self._with_go or self._with_rust or self._with_cpp:
+		if self._with_go or self._with_rust or self._with_cpp:
 			pass
 
 		elif (self._with_js or javascript or self._with_ll):
