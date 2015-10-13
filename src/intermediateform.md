@@ -1320,7 +1320,7 @@ class PythonToPythonJS(NodeVisitorBase):
 		return '('+ op.join( [self.visit(v) for v in node.values] ) + ')'
 
 	def visit_If(self, node):
-		if writer.is_at_global_level() and self._with_rust or self._with_rust or self._with_cpp:
+		if writer.is_at_global_level() and (self._with_rust or self._with_rust or self._with_cpp):
 			raise SyntaxError( self.format_error('if statements can not be used at module level when transpiling to typed language') )
 
 		elif isinstance(node.test, ast.Dict):
