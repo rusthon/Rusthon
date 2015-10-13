@@ -384,15 +384,6 @@ top level the module, this builds the output and returns the javascript string t
 					header.append(line)
 
 
-		if self._insert_runtime:
-			## always regenerate the runtime, in case the user wants to hack it ##
-			runtime = generate_js_runtime(
-				nodejs         = self._insert_nodejs_runtime,
-				nodejs_tornado = self._insert_nodejs_tornado
-			)
-			lines.insert( 0, runtime )
-		else:
-			lines.insert( 0, 'var __$UID$__=0;')
 
 		for b in node.body:
 			if isinstance(b, ast.Expr) and isinstance(b.value, ast.Call) and isinstance(b.value.func, ast.Name) and b.value.func.id == '__new_module__':
@@ -405,10 +396,23 @@ top level the module, this builds the output and returns the javascript string t
 				line = self.visit(b)
 				if line: lines.append( line )
 
-		if self._has_channels and not self._webworker:
-			#lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__, __workerimports__);')
-			# moved to intermediateform.md
-			pass
+
+		if self._insert_runtime:
+			## always regenerate the runtime, in case the user wants to hack it ##
+			runtime = generate_js_runtime(
+				nodejs         = self._insert_nodejs_runtime,
+				nodejs_tornado = self._insert_nodejs_tornado,
+				webworker_manager = self._has_channels and not self._webworker
+			)
+			lines.insert( 0, runtime )
+		else:
+			lines.insert( 0, 'var __$UID$__=0;')
+
+
+		#if self._has_channels and not self._webworker:
+		#	#lines.insert( 0, 'var __workerpool__ = new __WorkerPool__(__workersrc__, __workerimports__);')
+		#	# moved to intermediateform.md
+		#	pass
 
 		######################### modules ####################
 		if self._requirejs and not self._webworker:
@@ -749,9 +753,9 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			else:
 				body.append( '/*BEGIN-FUNC:%s*/' %id(node))
 
-		body.append( self.indent() + fdef )
+		body.append( self.indent() + fdef + '{' )
+		#body.append( self.indent() + '{' )
 
-		body.append( self.indent() + '{' )
 		self.push()
 
 		if self._runtime_type_checking or is_redef:
@@ -789,7 +793,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 				msg = 'error in function: %s'%node.name
 				msg += '\n%s' %child
 				raise SyntaxError(msg)
-			else:
+			elif v.strip():
 				body.append( self.indent()+v)
 
 		## todo fix when sleep comes before channel async _func_recv, should be a stack of ['}', '});']
@@ -1402,7 +1406,6 @@ If Test
 	def visit_If(self, node):
 		out = []
 		test = self.visit(node.test)
-		if BLOCKIDS: out.append( '/*BEGIN-IF:%s*/' %id(node))
 		if self._runtime_type_checking and not isinstance(node.test, ast.Compare):
 			## note in old-style-js `typeof(null)=='object'`,
 			## so we need to check first that the test is not null.
@@ -1413,8 +1416,9 @@ If Test
 			errmsg = 'if test not allowed directly on arrays. The correct syntax is: `if len(array)` or `if array.length`'
 			out.append( 'if (%s instanceof Array) {throw new RuntimeError("%s")}' %(test, errmsg))
 
-		out.append( self.indent() + 'if (%s)' %test )
-		out.append( self.indent() + '{' )
+			out.append( self.indent() + 'if (%s) {' %test )
+		else:
+			out.append( 'if (%s) {' %test )
 
 		self.push()
 
@@ -1429,13 +1433,10 @@ If Test
 		self.pull()
 
 		if orelse:
-			out.append( self.indent() + '}')
-			out.append( self.indent() + 'else')
-			out.append( self.indent() + '{')
+			out.append( self.indent() + '} else {')
 			out.extend( orelse )
 
 		out.append( self.indent() + '}' )
-		if BLOCKIDS: out.append( self.indent() + '/*END-IF:%s*/' %id(node))
 
 		return '\n'.join( out )
 
@@ -1627,7 +1628,7 @@ def generate_minimal_js_runtime():
 	)
 	return main( a, requirejs=False, insert_runtime=False, function_expressions=True, fast_javascript=True )
 
-def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
+def generate_js_runtime( nodejs=False, nodejs_tornado=False, webworker_manager=False ):
 	## note: RUSTHON_LIB_ROOT gets defined in the entry of rusthon.py
 	r = [
 		open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/pythonpythonjs.py'), 'rb').read(),
@@ -1651,6 +1652,15 @@ def generate_js_runtime( nodejs=False, nodejs_tornado=False ):
 		r.append(
 			python_to_pythonjs(
 				open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/nodejs_tornado.py'), 'rb').read(),
+				fast_javascript = True,
+				pure_javascript = False
+			)
+		)
+
+	if webworker_manager:
+		r.append(
+			python_to_pythonjs(
+				open(os.path.join(RUSTHON_LIB_ROOT,'src/runtime/builtins_webworker.py'), 'rb').read(),
 				fast_javascript = True,
 				pure_javascript = False
 			)
