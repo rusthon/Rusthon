@@ -1320,9 +1320,8 @@ class PythonToPythonJS(NodeVisitorBase):
 		return '('+ op.join( [self.visit(v) for v in node.values] ) + ')'
 
 	def visit_If(self, node):
-		if writer.is_at_global_level():
-			if self._with_rust or self._with_rust or self._with_cpp:
-				raise SyntaxError( self.format_error('if statements can not be used at module level when transpiling to typed language') )
+		if writer.is_at_global_level() and self._with_rust or self._with_rust or self._with_cpp:
+			raise SyntaxError( self.format_error('if statements can not be used at module level when transpiling to typed language') )
 
 		elif isinstance(node.test, ast.Dict):
 			if self._with_js:
@@ -3510,7 +3509,7 @@ def python_to_pythonjs(script, **kwargs):
 		pre = [
 			'__workerimports__ = [%s]' %','.join(userimports),
 			#'__workerpool__ = new(__WorkerPool__(__workersrc__, __workerimports__))',
-			'inline("var 𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍 = new __WorkerPool__(__workersrc__, __workerimports__)")',
+			'inline("var ⲢⲑⲑⲒ = new __WorkerPool__(__workersrc__, __workerimports__)")',
 			''
 		]
 		code = '\n'.join(pre) + code

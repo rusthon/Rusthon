@@ -212,23 +212,25 @@ class is not implemented here for javascript, it gets translated ahead of time i
 			if self._requirejs and target not in self._exports and self._indent == 0 and '.' not in target:
 				self._exports.add( target )
 
-			if isname and len(self._function_stack):
-				if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals') or self._in_locals: 
-					#target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
-					target = 'arguments.callee.locals.%s=%s' %(target, target)
 
 
 			########################################
-			if value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send('):
+			if value.startswith('ⲢⲑⲑⲒ.send('):
 				if target=='this':  ## should assert that this is on the webworker side
 					target = 'this.__uid__'
-					value = value.replace('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send(', 'self.postMessage(')
+					value = value.replace('ⲢⲑⲑⲒ.send(', 'self.postMessage(')
 				code = value % target
-			elif value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.recv') or value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.get') or value.startswith('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.call'):
+			elif value.startswith('ⲢⲑⲑⲒ.recv') or value.startswith('ⲢⲑⲑⲒ.get') or value.startswith('ⲢⲑⲑⲒ.call'):
 				self._func_recv += 1
 				self.push()
 				code = value % target
 			else:
+				if isname and len(self._function_stack):
+					if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals') or self._in_locals: 
+						#target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
+						target = 'arguments.callee.locals.%s=%s' %(target, target)
+
+
 				code = '%s = %s;' % (target, value)
 
 			if self._v8 and isname and len(self._function_stack) and self._runtime_type_checking:
@@ -1199,22 +1201,22 @@ old javascript backend also used `JS(str)`
 				self._has_channels = True
 				r = []
 				if isinstance(node.right, ast.Name):
-					r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.recv( %s,'%right)
+					r.append('ⲢⲑⲑⲒ.recv( %s,'%right)
 				elif isinstance(node.right, ast.Attribute):
 					wid = node.right.value.id
 					attr = node.right.attr
-					r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.get( %s, "%s", '%(wid, attr))
+					r.append('ⲢⲑⲑⲒ.get( %s, "%s", '%(wid, attr))
 				elif isinstance(node.right, ast.Call):
 					if isinstance(node.right.func, ast.Name):
 						fname = node.right.func.id
 						args  = [self.visit(a) for a in node.right.args]
-						r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.call( "%s", [%s], ' % (fname, ','.join(args)))
+						r.append('ⲢⲑⲑⲒ.call( "%s", [%s], ' % (fname, ','.join(args)))
 
 					else:
 						wid = node.right.func.value.id
 						attr = node.right.func.attr
 						args  = [self.visit(a) for a in node.right.args]
-						r.append('𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.callmeth( %s, "%s", [%s], '%(wid, attr, ','.join(args)))
+						r.append('ⲢⲑⲑⲒ.callmeth( %s, "%s", [%s], '%(wid, attr, ','.join(args)))
 				else:
 					raise RuntimeError(node.right)
 
@@ -1224,7 +1226,7 @@ old javascript backend also used `JS(str)`
 			elif left == '__go__send__':
 				self._has_channels = True
 				r = [
-					'𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.send({message:%s,'%right,
+					'ⲢⲑⲑⲒ.send({message:%s,'%right,
 					'id:%s})'
 				]
 				return ''.join(r)

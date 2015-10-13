@@ -813,10 +813,7 @@ TODO clean up.
 				closure_wrapper = '[&]{%s;}'%self.visit(node.args[0])
 				return 'std::thread %s( %s );' %(thread, closure_wrapper)
 			elif self._rust:
-				#return 'spawn( move || {%s;} );' % self.visit(node.args[0])
 				return 'thread::spawn( move || {%s;} );' % self.visit(node.args[0])
-			elif self._dart:
-				return 'Isolate.spawn(%s);' %self.visit(node.args[0])
 			elif self._go:
 				return 'go %s' %self.visit(node.args[0])
 			else:  ## javascript
@@ -832,9 +829,9 @@ TODO clean up.
 					if not node.keywords[0].arg=='cpu':
 						raise SyntaxError('invalid keyword argument to the builtin `spawn`')
 					cpuid = self.visit(node.keywords[0].value)
-					return '𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.spawn({%s:"%s", args:[%s]}, {cpu:%s})' %(mode,fname, ','.join(args), cpuid)
+					return 'ⲢⲑⲑⲒ.spawn({%s:"%s", args:[%s]}, {cpu:%s})' %(mode,fname, ','.join(args), cpuid)
 				else:
-					return '𝑾𝒐𝒓𝒌𝒆𝒓𝑷𝒐𝒐𝒍.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
+					return 'ⲢⲑⲑⲒ.spawn({%s:"%s", args:[%s]})' %(mode,fname, ','.join(args))
 
 		elif name == '__go_make__':
 			if len(node.args)==2:
