@@ -123,7 +123,31 @@ class __WorkerPool__:
 
 
 		def onmessage_update(evt):
-			if evt.data.time_update:  ## the worker uses setInterval to report the time, see `worker.busy()`
+			if self._binrecv:
+				#print 'got binary....'
+				id    = self._binrecv['id']
+				btype = self._binrecv['type']
+				self._binrecv = None
+				msg = None
+				switch btype:
+					case "Float32Array":
+						msg = new Float32Array(evt.data)
+					case "Float64Array":
+						msg = new Float64Array(evt.data)
+					case "Int32Array":
+						msg = new Int32Array(evt.data)
+
+				if id in ww._stream_callbacks:  ## channels
+					callbacks = ww._stream_callbacks[id]
+					if len(callbacks):
+						cb = callbacks.pop()
+						cb( msg )
+					else:
+						ww._stream_triggers[id].push( msg )
+				else:
+					raise WebWorkerError('invalid id:' + id)
+
+			elif evt.data.time_update:  ## the worker uses setInterval to report the time, see `worker.busy()`
 				ww._last_time_update = evt.data.time_update
 			elif evt.data.debug:
 				console.warn( ww._cpuid + '|' + evt.data.debug)
@@ -143,7 +167,9 @@ class __WorkerPool__:
 					ww._callmeth_callback( msg )
 				else:
 					id = evt.data.id
-					if id in ww._stream_callbacks:  ## channels
+					if evt.data.bin:
+						self._binrecv = {'id':id, 'type':evt.data.bin}
+					elif id in ww._stream_callbacks:  ## channels
 						callbacks = ww._stream_callbacks[id]
 						if len(callbacks):
 							cb = callbacks.pop()

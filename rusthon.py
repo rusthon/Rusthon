@@ -71,7 +71,12 @@ self.onmessage = function (evt) {
 			var ob = __instances__[id];
 			var re = ob.send(bmsg);
 			if (re !== undefined) {
-				self.postMessage({'id':id, 'message':re, 'proto':ob.send.returns});
+				if (ob.send.returns=="Float32Array") {
+					self.postMessage({'id':id, 'bin':ob.send.returns});
+					self.postMessage(re.buffer, [re.buffer]);
+				} else {
+					self.postMessage({'id':id, 'message':re, 'proto':ob.send.returns});
+				}
 			}
 		}
 		__bin__ = null;
