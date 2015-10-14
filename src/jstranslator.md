@@ -1300,6 +1300,8 @@ old javascript backend also used `JS(str)`
 
 						if len(right):
 							return '__array_fill__(%s, [%s])' %(r, ','.join(right))
+						else:
+							return r
 
 		if self._with_oo:
 			methodnames = {

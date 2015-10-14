@@ -43,9 +43,9 @@ with webworker:
 		def send(self,typedarr):
 			avg = 0
 			for i in range(typedarr.length):
+				#print typedarr[i]
 				avg += typedarr[i]
-			#return avg / typedarr.length
-			return 1.1
+			return avg / typedarr.length
 
 @debugger
 def test():
@@ -64,8 +64,8 @@ def test():
 def test_workers(worker1):
 	show('sending data to worker')
 	print worker1
-	#arr = [100]float32()  ## creates Float32Array of size 100  ## TODO fixme
-	arr = new Float32Array()
+
+	arr = [100]float32()  ## creates a fixed size Float32Array of size 100
 	for i in range(100):
 		arr[i] = i
 
