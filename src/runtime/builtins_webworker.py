@@ -165,7 +165,7 @@ class __WorkerPool__:
 		## each worker in this pool runs on its own CPU core
 		## how to get number of CPU cores in JS?
 		self.pool = {}
-		self.num_spawned = 1  ## TODO check why this fails when zero
+		self.num_spawned = 1  ## must be 1, not zero
 
 
 	def spawn(self, cfg, options):
@@ -184,7 +184,6 @@ class __WorkerPool__:
 			## this thread could be busy, spawn into it anyways.
 			print 'reusing cpu already in pool'
 			self.pool[cpu].spawn_class(cfg)
-			return id
 		elif autoscale:
 			print 'spawn auto scale up'
 			## first check if any of the other threads are not busy
@@ -198,15 +197,12 @@ class __WorkerPool__:
 					cpu = cid
 					break
 
-			id = str(cpu) + '|' + str(self.num_spawned)
-
 			if not readythread:
 				assert cpu not in self.pool.keys()
 				readythread = self.create_webworker(cpu)
 				self.pool[cpu] = readythread
 
 			readythread.spawn_class(cfg)
-			return id
 		else:
 			## user defined CPU ##
 			print 'spawn user defined cpu:' + cpu
@@ -214,20 +210,40 @@ class __WorkerPool__:
 			readythread = self.create_webworker(cpu)
 			self.pool[cpu] = readythread
 			self.pool[cpu].spawn_class(cfg)
-			return id
+
+		return id
 
 	def send(self, id=None, message=None):
 		tid, sid = id.split('|')
 		if tid not in self.pool:
 			raise RuntimeError('send: invalid cpu id')
 
-		try:
-			self.pool[tid].postMessage({'send':sid, 'message':message})
+		if __is_typed_array(message):  ## transferable buffers (no copy, moves data into worker)
+			bspec = {'send_binary':sid}
+			if instanceof(message, Float32Array):
+				bspec['type'] = 'Float32Array'
+			elif instanceof(message, Float64Array):
+				bspec['type'] = 'Float64Array'
+			elif instanceof( ob, Int32Array ):
+				bspec['type'] = 'Int32Array'
+			elif instanceof( ob, Int16Array ):
+				bspec['type'] = 'Int16Array'
+			elif instanceof( ob, Uint16Array ):
+				bspec['type'] = 'Uint16Array'
+			elif instanceof( ob, Uint32Array ):
+				bspec['type'] = 'Uint32Array'
 
-		except:
-			print 'DataCloneError: can not send data to webworker'
-			print message
-			raise RuntimeError('DataCloneError: can not send data to webworker')
+			self.pool[tid].postMessage(bspec)  ## object header
+			self.pool[tid].postMessage(message.buffer, [message.buffer])  ## binary body
+
+		else:
+			try:
+				self.pool[tid].postMessage({'send':sid, 'message':message})
+
+			except:
+				print 'DataCloneError: can not send data to webworker'
+				print message
+				raise RuntimeError('DataCloneError: can not send data to webworker')
 
 	def recv(self, id, callback):
 

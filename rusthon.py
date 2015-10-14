@@ -55,9 +55,35 @@ var __construct__ = function(constructor, args) {
 };
 
 var __instances__ = {};
+var __bin__  = null;
 self.onmessage = function (evt) {
-	var msg = evt.data;
 	var id;
+	if (__bin__) {
+		var bmsg;
+		if (__bin__.type=="Float32Array") {
+			bmsg = new Float32Array(evt.data);
+		} else if (__bin__.type=="Float64Array") {
+			bmsg = new Float64Array(evt.data);
+		} // TODO other types
+
+		if (__bin__.send_binary) {
+			id = __bin__.send_binary;
+			var ob = __instances__[id];
+			var re = ob.send(bmsg);
+			if (re !== undefined) {
+				self.postMessage({'id':id, 'message':re, 'proto':ob.send.returns});
+			}
+		}
+		__bin__ = null;
+		return;
+	}
+	var msg = evt.data;
+
+	if (msg.send_binary) {
+		// should assert here that __bin__ is null
+		__bin__ = msg;
+		return;
+	}
 	if (msg['spawn']) {
 		id = msg.spawn;
 		self.postMessage({debug:"SPAWN:"+id});
