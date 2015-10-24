@@ -139,9 +139,14 @@ os = _fake_os()
 
 class _fake_sys:
 	def __init__(self):
-		self.stdin = process.stdin
-		self.stdout = process.stdout
-		self.stderr = process.stderr
+		if process.platform=='win32':  ## not available on mswindows
+			self.stdin = None
+			self.stdout = None
+			self.stderr = None
+		else:
+			self.stdin = process.stdin
+			self.stdout = process.stdout
+			self.stderr = process.stderr
 		self.argv = process.argv
 
 	def exit(self):

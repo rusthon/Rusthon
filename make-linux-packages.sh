@@ -12,11 +12,11 @@ chmod +x rusthon.py
 sudo ln --symbolic --force /usr/lib/rusthon/rusthon.py /usr/bin/transpile
 
 ## debian
-fpm -s dir -t deb -a all -m "brett hartshorn <goatman.py@gmail.com>" -n rusthon -v 0.9.4 /usr/bin/transpile ./rusthon.py=/usr/lib/rusthon/rusthon.py ./src=/usr/local/lib/rusthon/
+fpm -s dir -t deb -a all -m "brett hartshorn <goatman.py@gmail.com>" -n rusthon -v 0.9.5 /usr/bin/transpile ./rusthon.py=/usr/lib/rusthon/rusthon.py ./src=/usr/local/lib/rusthon/
 
 ## check contents of deb
-dpkg -c rusthon_0.9.4_all.deb
+dpkg -c rusthon_0.9.5_all.deb
 
 ## fedora -- requires rpmbuild -- which is not available in debian?
-fpm -s dir -t rpm -a noarch -n rusthon -v 0.9.4 /usr/bin/transpile ./rusthon.py=/usr/lib/rusthon/rusthon.py ./src=/usr/local/lib/rusthon/
+fpm -s dir -t rpm -a noarch -n rusthon -v 0.9.5 /usr/bin/transpile ./rusthon.py=/usr/lib/rusthon/rusthon.py ./src=/usr/local/lib/rusthon/
 

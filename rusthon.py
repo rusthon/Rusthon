@@ -1552,13 +1552,13 @@ def main():
 					subprocess.call(['open', tmp])
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
-					nwcfg = '{"name":"test", "main":"%s", "window":{"width":800, "height":600, "toolbar":false}}' %os.path.split(tmp)[1]
+					nwcfg = '{"name":"test", "main":"%s", "window":{"width":1200, "height":680, "toolbar":false}}' %os.path.split(tmp)[1]
 					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
 
-					#subprocess.Popen([nodewebkit, '--enable-transparent-visuals', tmpdir], cwd=tmpdir)
 					if '--v8-natives' in sys.argv:
 						subprocess.Popen([nodewebkit,'--allow-natives-syntax', tmpdir], cwd=tmpdir)
 					else:
+						#subprocess.Popen([nodewebkit,'--enable-transparent-visuals', '--disable-gpu',  tmpdir], cwd=tmpdir)
 						subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
 
 
