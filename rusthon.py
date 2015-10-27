@@ -24,6 +24,12 @@ else:
 	nodewebkit = os.path.expanduser('~/nwjs-v0.12.3-linux-x64/nw')
 	if os.path.isfile( nodewebkit ): nodewebkit_runnable = True
 
+if sys.platform=='darwin':
+	nodewebkit = os.path.expanduser('~/nwjs-v0.12.3-osx-x64/nwjs.app/Contents/MacOS/nwjs')
+	if os.path.isfile( nodewebkit ):
+		nodewebkit_runnable = True
+
+
 ## special case for linux, just for debugging, look for google-chrome,
 ## if found then use it to launch tests, with the --disable-gpu-sandbox
 ## otherwise webgl may fail on some graphics cards, this is dangerous
@@ -1548,7 +1554,7 @@ def main():
 				#open(tmp, 'wb').write( page['code'].encode('utf-8') )
 				open(tmp, 'wb').write( page['code'].encode('utf-16') )
 
-				if sys.platform=='darwin':  ## hack for OSX
+				if sys.platform=='darwin' and not nodewebkit_runnable:  ## hack for OSX
 					subprocess.call(['open', tmp])
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
