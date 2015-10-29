@@ -1546,7 +1546,12 @@ def main():
 
 		if package['html']:
 			for i,page in enumerate(package['html']):
-				tmp = tempfile.gettempdir() + '/rusthon-webpage%s.html' %i
+				tname = 'rusthon-webpage%s.html' %i
+
+				if 'name' in page and page['name']:
+					tname = page['name']
+
+				tmp = tempfile.gettempdir() + '/' + tname
 				## note in Chrome UTF-8 javascript will fail with this error: 
 				## `Unexpected token ILLEGAL` with unicode variables
 				## the file must be written as UTF-16.
@@ -1554,7 +1559,9 @@ def main():
 				#open(tmp, 'wb').write( page['code'].encode('utf-8') )
 				open(tmp, 'wb').write( page['code'].encode('utf-16') )
 
-				if sys.platform=='darwin' and not nodewebkit_runnable:  ## hack for OSX
+				if i<len(package['html'])-1:  ## only launch the last html file.
+					pass
+				elif sys.platform=='darwin' and not nodewebkit_runnable:  ## hack for OSX
 					subprocess.call(['open', tmp])
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
