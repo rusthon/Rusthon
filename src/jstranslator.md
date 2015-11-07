@@ -800,6 +800,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		## todo fix when sleep comes before channel async _func_recv, should be a stack of ['}', '});']
 		if self._sleeps:
 			body.append( '}/*end-sleep*/' * self._sleeps)
+			body.append( '__sleep__%s.locals={};' % self._sleeps)
 			self._sleeps = 0
 
 		if self._func_recv:
@@ -1018,6 +1019,9 @@ Call Helper
 		elif fname=='v8.__right_arrow__':
 			jitFN = args.split('(')[0]
 			return '%s; v8(%s)' %(args, jitFN)
+		elif fname.endswith('.__right_arrow__'):
+			ob = fname.replace('.__right_arrow__', '')
+			return '__right_arrow__(%s, %s)' %(ob, args)
 		else:
 			return '%s(%s)' % (fname, args)
 

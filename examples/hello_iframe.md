@@ -39,7 +39,8 @@ from runtime import *
 def hello_world():
 	iframe = document->('iframe')->(src='myiframe.html')
 	document.body->(iframe)
-
+	global doc
+	sleep(1)
 	doc = iframe.contentDocument
 	h1  = doc->('#FOO')
 	print h1

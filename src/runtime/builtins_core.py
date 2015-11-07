@@ -124,43 +124,65 @@ def len(ob):
 	else:  ## let this fail at runtime if ob is not an object
 		return Object.keys(ob).length
 
+# -ᐅ unified can-ab
+def __htmldoc_rightarrow__(arg):
+	print 'htmldoc rightarr'
+	print arg
+	if arg.startswith('#'):
+		return this.getElementById(arg[1:])
+	else:
+		return this.createElement(arg)
+
+def __htmlelement_rightarrow__():
+	for item in arguments:
+		T = typeof(item)
+		if instanceof(item, HTMLElement):
+			this.appendChild( item )
+		elif instanceof(item, Text):  ## a text node create by `document.createTextNode`
+			this.appendChild( item )
+		elif T=='string':
+			this.appendChild( document.createTextNode(item) )
+		elif T=='function':
+			raise RuntimeError('HTMLElement->(lambda function) is invalid')
+		elif T=='object':
+			## could be a DOM node from another document/iframe
+			if item.nodeType:
+				if item.nodeType==Node.TEXT_NODE:
+					this.appendChild(item)
+				elif item.nodeType==Node.ELEMENT_NODE:
+					this.appendChild(item)
+				else:
+					raise RuntimeError('HTMLElement unknown node type')
+			else:
+				for key in item.keys():
+					this.setAttribute(key, item[key])
+		else:
+			raise RuntimeError('HTMLElement->(invalid type): '+ item)
+
+	return this
+
+
+def __right_arrow__():
+	ob = arguments[0]
+	args = []
+	for i in range(1, arguments.length):
+		args.push( arguments[i] )
+
+	if ob.__right_arrow__:
+		return ob.__right_arrow__.apply(ob, args)
+	elif ob.nodeType:
+		switch ob.nodeType:
+			case document.DOCUMENT_NODE:
+				ob.__right_arrow__ = __htmldoc_rightarrow__.bind(ob)
+			case document.ELEMENT_NODE:
+				ob.__right_arrow__ = __htmlelement_rightarrow__.bind(ob)
+		return ob.__right_arrow__.apply(ob, args)
+	else:
+		raise RuntimeError('invalid use of ->')
 
 if HTMLElement is not undefined:
-	@bind(HTMLElement.prototype.__right_arrow__)
-	def __auto_dom__():
-		for item in arguments:
-			T = typeof(item)
-			if instanceof(item, HTMLElement):
-				this.appendChild( item )
-			elif instanceof(item, Text):  ## a text node create by `document.createTextNode`
-				this.appendChild( item )
-			elif T=='string':
-				this.appendChild( document.createTextNode(item) )
-			elif T=='function':
-				raise RuntimeError('HTMLElement->(lambda function) is invalid')
-			elif T=='object':
-				## could be a DOM node from another document/iframe
-				if item.nodeType:
-					if item.nodeType==Node.TEXT_NODE:
-						this.appendChild(item)
-					elif item.nodeType==Node.ELEMENT_NODE:
-						this.appendChild(item)
-					else:
-						raise RuntimeError('HTMLElement unknown node type')
-				else:
-					for key in item.keys():
-						this.setAttribute(key, item[key])
-			else:
-				raise RuntimeError('HTMLElement->(invalid type): '+ item)
-
-		return this
-
-	@bind(HTMLDocument.prototype.__right_arrow__)
-	def __htmldoc_rightarrow__(arg):
-		if arg.startswith('#'):
-			return this.getElementById(arg[1:])
-		else:
-			return this.createElement(arg)
+	HTMLElement.prototype.__right_arrow__  = __htmlelement_rightarrow__
+	HTMLDocument.prototype.__right_arrow__ = __htmldoc_rightarrow__
 
 
 # the unicode decorator is used in the global namespace to define
