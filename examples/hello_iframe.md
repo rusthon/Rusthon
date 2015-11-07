@@ -7,7 +7,7 @@ iframe html
 <head>
 </head>
 <body>
-<h1>Hello Iframe</h1>
+<h1 id="FOO">Hello Iframe</h1>
 </body>
 </html>
 ```
@@ -39,6 +39,10 @@ from runtime import *
 def hello_world():
 	iframe = document->('iframe')->(src='myiframe.html')
 	document.body->(iframe)
+
+	doc = iframe.contentDocument
+	h1  = doc->('#FOO')
+	print h1
 
 
 ```
