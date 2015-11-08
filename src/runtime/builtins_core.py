@@ -126,8 +126,6 @@ def len(ob):
 
 # -ᐅ unified can-ab
 def __htmldoc_rightarrow__(arg):
-	print 'htmldoc rightarr'
-	print arg
 	if arg.startswith('#'):
 		return this.getElementById(arg[1:])
 	else:

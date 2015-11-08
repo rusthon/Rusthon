@@ -228,7 +228,8 @@ class is not implemented here for javascript, it gets translated ahead of time i
 				if isname and len(self._function_stack):
 					if self._runtime_type_checking or hasattr(self._function_stack[-1],'has_locals') or self._in_locals: 
 						#target = '%s.locals.%s=%s' %(self._function_stack[-1].name, target, target)
-						target = 'arguments.callee.locals.%s=%s' %(target, target)
+						#target = 'arguments.callee.locals.%s=%s' %(target, target)  ## breaks with multiple sleeps
+						target = 'ƒ.locals.%s=%s' %(target, target)
 
 
 				code = '%s = %s;' % (target, value)
@@ -763,6 +764,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 			## doing the recompile and eval inside the function itself allows it to pick
 			## up any variables from the outer scope if it is a nested function.
 			## note: the user calls `myfunc.redefine(src)` and then on next call it is recompiled.
+			body.append('/***/var ƒ = arguments.callee;')
 			body.append(
 				'/***/ if (%s.__recompile !== undefined) { eval("%s.__redef="+%s.__recompile); %s.__recompile=undefined; };' %(funcname, funcname, funcname, funcname)
 			)
@@ -800,7 +802,7 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 		## todo fix when sleep comes before channel async _func_recv, should be a stack of ['}', '});']
 		if self._sleeps:
 			body.append( '}/*end-sleep*/' * self._sleeps)
-			body.append( '__sleep__%s.locals={};' % self._sleeps)
+			#body.append( '__sleep__%s.locals={};' % self._sleeps)  ## breaks on multiple sleeps
 			self._sleeps = 0
 
 		if self._func_recv:

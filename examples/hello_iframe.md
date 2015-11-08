@@ -44,6 +44,9 @@ def hello_world():
 	doc = iframe.contentDocument
 	h1  = doc->('#FOO')
 	print h1
+	sleep(1)
+	h1->('foo')
+	h1->( doc->('a')->('bar', href="http://...") )
 
 
 ```
