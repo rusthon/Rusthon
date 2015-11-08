@@ -124,7 +124,6 @@ def len(ob):
 	else:  ## let this fail at runtime if ob is not an object
 		return Object.keys(ob).length
 
-# -ᐅ unified can-ab
 def __htmldoc_rightarrow__(arg):
 	if arg.startswith('#'):
 		return this.getElementById(arg[1:])
@@ -160,6 +159,7 @@ def __htmlelement_rightarrow__():
 	return this
 
 
+# becomes function `ᐅ` note: from unicode unified can-ab
 def __right_arrow__():
 	ob = arguments[0]
 	args = []

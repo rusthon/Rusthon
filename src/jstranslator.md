@@ -542,7 +542,8 @@ note: `visit_Function` after doing some setup, calls `_visit_function` that subc
 
 		if typedpython.unicode_vars and typedpython.needs_escape(node.name):
 			node.name = typedpython.escape_text(node.name)
-
+		if node.name=='__right_arrow__' and len(self._function_stack)==1:
+			node.name = 'ᐅ'
 
 		comments = []
 		body = []
@@ -1023,7 +1024,8 @@ Call Helper
 			return '%s; v8(%s)' %(args, jitFN)
 		elif fname.endswith('.__right_arrow__'):
 			ob = fname.replace('.__right_arrow__', '')
-			return '__right_arrow__(%s, %s)' %(ob, args)
+			#return '__right_arrow__(%s, %s)' %(ob, args)
+			return 'ᐅ(%s, %s)' %(ob, args)
 		else:
 			return '%s(%s)' % (fname, args)
 
