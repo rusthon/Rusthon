@@ -1365,25 +1365,27 @@ def main():
 	if len(sys.argv)==1 or '--help' in sys.argv:
 		print('usage: ./rusthon.py [python files] [markdown files] [tar file] [--release] [--run=] [--data=]')
 		print('		[tar file] is the optional name of the output tar that contains the build')
-		print()
+		print
 		print('		source files, transpiled source, and output binaries.')
-		print()
+		print
 		print('		--release generates optimized output without extra runtime checks')
-		print()
+		print
 		print('		--run is given a list of programs to run, "--run=a.py,b.py"')
 		print('		a.py and b.py can be run this way by naming the code blocks in the markdown')
 		print('		using the tag syntax "@a.py" on the line before the code block.')
-		print()
+		print
 		print('		--data is given a list of directories to include in the build dir and tarfile.')
-		print()
+		print
 		print('		--obfuscate produces random names for unicode functions and variables.')
-		print()
+		print
 		print('		--literate-unicode enables unicode variables names to be output for the javascript backend.')
-		print()
+		print
 		print('		--convert2python=MYOUTPUT strips away static type annotations, to run your script in regular Python.')
-		print()
+		print
 		print('		--anaconda run scripts with Anaconda Python, must be installed to ~/anaconda')
-		print()
+		print
+		print('		--transparent linux and NW.js only (forces window transparency and disables GPU acceleration)')
+		print
 		print('		note: when using regular python files (.py) as input instead of markdown (.md)')
 		print('		you can use these extra options to set which backend is used by the transpiler:')
 		for backend in '--c++ --javascript --go --rust'.split():
@@ -1567,14 +1569,13 @@ def main():
 					## nodewebkit looks for `package.json` in the folder it is given ##
 					nwcfg = '{"name":"test", "main":"%s", "window":{"width":1200, "height":680, "toolbar":false}}' %os.path.split(tmp)[1]
 					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
-
+					nwcmd = [nodewebkit]
 					if '--v8-natives' in sys.argv:
-						subprocess.Popen([nodewebkit,'--allow-natives-syntax', tmpdir], cwd=tmpdir)
-					else:
-						#subprocess.Popen([nodewebkit,'--enable-transparent-visuals', '--disable-gpu',  tmpdir], cwd=tmpdir)
-						subprocess.Popen([nodewebkit, tmpdir], cwd=tmpdir)
-
-
+						nwcmd.append('--allow-natives-syntax')
+					if sys.platform=='linux2' and '--transparent' in sys.argv:
+						nwcmd.extend(['--enable-transparent-visuals', '--disable-gpu'])
+					nwcmd.append(tmpdir)
+					subprocess.Popen(nwcmd, cwd=tmpdir)
 				else:
 					webbrowser.open(tmp)
 
