@@ -1554,6 +1554,9 @@ def main():
 					tname = page['name']
 
 				tmp = tempfile.gettempdir() + '/' + tname
+				if sys.platform=='darwin':  ## force /tmp directory on OSX, makes debugging the output simpler
+					tmp = '/tmp/' + tname
+
 				## note in Chrome UTF-8 javascript will fail with this error: 
 				## `Unexpected token ILLEGAL` with unicode variables
 				## the file must be written as UTF-16.
@@ -1567,7 +1570,12 @@ def main():
 					subprocess.call(['open', tmp])
 				elif nodewebkit_runnable:
 					## nodewebkit looks for `package.json` in the folder it is given ##
-					nwcfg = '{"name":"test", "main":"%s", "window":{"width":1200, "height":680, "toolbar":false}}' %os.path.split(tmp)[1]
+					nwcfg = '{"name":"test", "main":"%s", ' %os.path.split(tmp)[1]
+					if '--frameless' in sys.argv:
+						nwcfg += '"window":{"width":1200, "height":680, "toolbar":false, "frame":false}}'
+					else:
+						nwcfg += '"window":{"width":1200, "height":680, "toolbar":false}}'
+
 					open(os.path.join(tmpdir,"package.json"),'wb').write(nwcfg)
 					nwcmd = [nodewebkit]
 					if '--v8-natives' in sys.argv:
