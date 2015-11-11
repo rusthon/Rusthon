@@ -1025,7 +1025,12 @@ Call Helper
 		elif fname.endswith('.__right_arrow__'):
 			ob = fname.replace('.__right_arrow__', '')
 			#return '__right_arrow__(%s, %s)' %(ob, args)
-			return 'ᐅ(%s, %s)' %(ob, args)
+			#return 'ᐅ(%s, %s)' %(ob, args)
+			if args:
+				return 'ᐅ(%s, %s)' %(ob, args)
+			else:
+				return 'ᐅ(%s)' %ob
+
 		else:
 			return '%s(%s)' % (fname, args)
 

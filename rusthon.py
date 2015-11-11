@@ -1573,6 +1573,10 @@ def main():
 					nwcfg = '{"name":"test", "main":"%s", ' %os.path.split(tmp)[1]
 					if '--frameless' in sys.argv:
 						nwcfg += '"window":{"width":1200, "height":680, "toolbar":false, "frame":false}}'
+					elif '--desktop' in sys.argv:
+						## note as_desktop is broken in new NW.js
+						## https://github.com/nwjs/nw.js/issues/2833
+						nwcfg += '"window":{"width":1200, "height":680, "toolbar":false, "as_desktop":true, "frame":false}}'
 					else:
 						nwcfg += '"window":{"width":1200, "height":680, "toolbar":false}}'
 

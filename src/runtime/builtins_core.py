@@ -131,30 +131,34 @@ def __htmldoc_rightarrow__(arg):
 		return this.createElement(arg)
 
 def __htmlelement_rightarrow__():
-	for item in arguments:
-		T = typeof(item)
-		if instanceof(item, HTMLElement):
-			this.appendChild( item )
-		elif instanceof(item, Text):  ## a text node create by `document.createTextNode`
-			this.appendChild( item )
-		elif T=='string':
-			this.appendChild( document.createTextNode(item) )
-		elif T=='function':
-			raise RuntimeError('HTMLElement->(lambda function) is invalid')
-		elif T=='object':
-			## could be a DOM node from another document/iframe
-			if item.nodeType:
-				if item.nodeType==Node.TEXT_NODE:
-					this.appendChild(item)
-				elif item.nodeType==Node.ELEMENT_NODE:
-					this.appendChild(item)
+	if arguments.length==0:
+		while this.childNodes.length:
+			this.removeChild( this.firstChild )
+	else:
+		for item in arguments:
+			T = typeof(item)
+			if instanceof(item, HTMLElement):
+				this.appendChild( item )
+			elif instanceof(item, Text):  ## a text node create by `document.createTextNode`
+				this.appendChild( item )
+			elif T=='string':
+				this.appendChild( document.createTextNode(item) )
+			elif T=='function':
+				raise RuntimeError('HTMLElement->(lambda function) is invalid')
+			elif T=='object':
+				## could be a DOM node from another document/iframe
+				if item.nodeType:
+					if item.nodeType==Node.TEXT_NODE:
+						this.appendChild(item)
+					elif item.nodeType==Node.ELEMENT_NODE:
+						this.appendChild(item)
+					else:
+						raise RuntimeError('HTMLElement unknown node type')
 				else:
-					raise RuntimeError('HTMLElement unknown node type')
+					for key in item.keys():
+						this.setAttribute(key, item[key])
 			else:
-				for key in item.keys():
-					this.setAttribute(key, item[key])
-		else:
-			raise RuntimeError('HTMLElement->(invalid type): '+ item)
+				raise RuntimeError('HTMLElement->(invalid type): '+ item)
 
 	return this
 
