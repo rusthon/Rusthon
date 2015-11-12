@@ -19,6 +19,7 @@ TODO_FIX = (
 	'hello_coffee.md',
 	'hello_elm.md',
 	'hello_fullstack.md',
+	'hello_openlayers.md',
 )
 
 files = os.listdir('../examples')
