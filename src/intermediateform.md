@@ -463,15 +463,20 @@ class PythonToPythonJS(NodeVisitorBase):
 				## allow "workerjs" to be loaded as a fallback, however this appears to not work in nodewebkit.
 				writer.write( 'if __NODEJS__==True and typeof(Worker)=="undefined": Worker = require("workerjs")')
 
-			elif alias.asname:
-				#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
-				writer.write( '''inline("var %s = require('%s')")''' %(alias.asname, alias.name.replace('__DASH__', '-')) )
+			#elif alias.asname:
+			#	#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.asname, alias.name) )
+			#	writer.write( '''inline("var %s = require('%s')")''' %(alias.asname, alias.name.replace('__DASH__', '-')) )
+			#elif '.' in alias.name:
+			#	raise NotImplementedError('import with dot not yet supported: line %s' % node.lineno)
+			#else:
+			#	#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.name, alias.name) )
+			#	writer.write( '''inline("var %s = require('%s')")''' %(alias.name, alias.name) )
 
-			elif '.' in alias.name:
-				raise NotImplementedError('import with dot not yet supported: line %s' % node.lineno)
+			elif alias.asname:
+				writer.write('import %s as %s' %(alias.name, alias.asname))
 			else:
-				#writer.write( '''inline("var %s = requirejs('%s')")''' %(alias.name, alias.name) )
-				writer.write( '''inline("var %s = require('%s')")''' %(alias.name, alias.name) )
+				writer.write('import %s' %alias.name)
+
 
 	def visit_ImportFrom(self, node):
 		if self._with_go:

@@ -355,6 +355,23 @@ top level the module, this builds the output and returns the javascript string t
 
 		return ''
 
+	def visit_Import(self, node):
+		res = []
+		for alias in node.names:
+			alias.name = alias.name.replace('__SLASH__', '/').replace('__DASH__', '-')
+			if alias.asname:
+				res.append(
+					"var %s = require('%s');" %(alias.asname, alias.name)
+				)
+			else:
+				res.append(
+					"var %s = require('%s');" %(alias.name, alias.name)
+				)
+
+		if res:
+			return '\n'.join(res)
+		else:
+			return ''
 
 	def visit_Module(self, node):
 		modules = []
