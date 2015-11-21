@@ -40,7 +40,8 @@ Test calling Rusthon translated JS from RapydScript.
 @my_rapydscript.js
 ```rapydscript
 
-𝑭𝑶𝑶𝒃𝒂𝒓 = 'UNICODE_OK'
+## note unicode is broken in rapydscript
+#𝑭𝑶𝑶𝒃𝒂𝒓 = 'UNICODE_OK'
 
 def hi_from_rapyd():
 	window.alert('hey rapydscript!')
