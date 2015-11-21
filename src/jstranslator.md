@@ -356,10 +356,82 @@ top level the module, this builds the output and returns the javascript string t
 		return ''
 
 	def visit_Import(self, node):
+		rapydlibs = {
+			'math': '/lib/node_modules/rapydscript/src/lib/math.pyj',
+			'random': '/lib/node_modules/rapydscript/src/lib/random.pyj',
+			're': '/lib/node_modules/rapydscript/src/lib/re.pyj',
+			'operator': '/lib/node_modules/rapydscript/src/lib/operator.pyj',
+		}
 		res = []
 		for alias in node.names:
 			alias.name = alias.name.replace('__SLASH__', '/').replace('__DASH__', '-')
-			if alias.asname:
+			if alias.name in rapydlibs.keys():
+				pyj = rapydlibs[ alias.name ]
+				if not os.path.isfile(pyj):
+					raise RuntimeError('can not find rapydscript stdlib source: %s' %pyj)
+
+				tmpjs = tempfile.gettempdir() + '/rapyd-output.js'
+				subprocess.check_call(['rapydscript', pyj, '--bare', '--prettify', '--output', tmpjs])
+				rapydata = open(tmpjs,'rb').read()
+				#raise RuntimeError(rapydata)
+				#res.append(rapydata)
+				in_mod = False
+				in_private = False
+				head  = []
+				body = []
+				tail = []
+				funcnames = set()
+				for line in rapydata.splitlines():
+					if line.strip()=='var __name__ = "__main__";':  ## hackish way to split head and module body
+						in_mod = True
+						body.append('var %s = {' %alias.name)
+					elif in_mod:
+						if line.startswith('_$'):
+							in_private = True
+						helpercall = False
+						for fname in funcnames:
+							if line.startswith(fname) and '(' in line and ')' in line and line.endswith(';'):
+								helpercall = True
+						#########################
+						if helpercall:
+							tail.append('%s.%s' %(alias.name, line))
+						elif in_private:
+							head.append(line)
+							if line=='};':
+								in_private = False
+						else:
+							if line.startswith('function '):
+								fname = line.split()[1].split('(')[0]
+								funcnames.add( fname )
+								line = '%s : %s' %(fname,line)
+							elif line == '}':  ## end of function
+								line += ','
+							elif line.strip() and line[0]!=' ' and line[-1]==';' and '=' in line:
+								#vname = line.split('=')[0].strip()
+								line = line.replace('=', ':').replace(';', ',')
+
+							## very hackish
+							if line.startswith(' '):
+								hacks = set()
+								for word in line.split():
+									if '(' not in word:
+										continue
+									word = word.split('(')[0]
+									for fname in funcnames:
+										if word == fname:
+											hacks.add(fname)
+								for fname in hacks:
+									line = line.replace(fname, '%s.%s'%(alias.name,fname))
+
+							body.append(line)
+					else:
+						head.append(line)
+				body.append('};')  ## end of module
+				res.extend(head)
+				res.extend(body)
+				res.extend(tail)
+
+			elif alias.asname:
 				res.append(
 					"var %s = require('%s');" %(alias.asname, alias.name)
 				)
