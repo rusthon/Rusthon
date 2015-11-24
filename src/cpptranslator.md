@@ -196,6 +196,11 @@ class CppGenerator( RustGenerator, CPythonGenerator ):
 		pak['main'] = '\n'.join( lines )
 		return pak['main']
 
+	def visit_Set(self, node):
+		## c++11 aggregate initialization
+		## http://en.cppreference.com/w/cpp/language/aggregate_initialization
+		return '{%s}' %','.join([self.visit(elt) for elt in node.elts])
+
 ```
 
 low level `new` for interfacing with external c++.

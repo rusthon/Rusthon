@@ -554,6 +554,9 @@ class PythonToPythonJS(NodeVisitorBase):
 	def visit_Assert(self, node):
 		writer.write('assert %s' %self.visit(node.test))
 
+	def visit_Set(self, node):  ## new python3 style `a={1,2,3}`
+		return '{%s}' %','.join([self.visit(elt) for elt in node.elts])
+
 	def visit_Dict(self, node):
 		node.returns_type = 'dict'
 		keytype = None
