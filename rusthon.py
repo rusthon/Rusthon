@@ -1386,6 +1386,8 @@ def main():
 		print
 		print('		--transparent linux and NW.js only (forces window transparency and disables GPU acceleration)')
 		print
+		print('		--debug-inter print intermediate translation code and then exit.')
+		print
 		print('		note: when using regular python files (.py) as input instead of markdown (.md)')
 		print('		you can use these extra options to set which backend is used by the transpiler:')
 		for backend in '--c++ --javascript --go --rust'.split():

@@ -687,9 +687,17 @@ Also implements extra syntax like `switch` and `select`.
 				raise SyntaxError( 'invalid use of with: %s' %node.context_expr)
 
 		elif isinstance(node.context_expr, ast.Str):
-			body = []
-			for b in node.body: body.append(self.visit(b))
-			return node.context_expr.s + ';'.join(body)
+			if self._cpp:
+				body = ['namespace %s {' %node.context_expr.s]
+				self.push()
+				for b in node.body:
+					body.append(self.visit(b))
+				self.pull()
+				body.append('}')
+				return  '\n'.join(body)
+
+			else:
+				raise RuntimeError('TODO namespace for some backend')
 
 		elif isinstance(node.context_expr, ast.Name) and node.optional_vars:
 			assert isinstance(node.optional_vars, ast.Subscript)

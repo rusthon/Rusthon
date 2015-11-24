@@ -1240,7 +1240,11 @@ handles all special calls
 				return '%s %s			/* declared */' %(V, node.args[0].id)
 			elif len(node.args) == 2:
 				if self._cpp:
-					T = node.args[1].s
+					if isinstance(node.args[1], ast.Str):
+						T = node.args[1].s
+					else:
+						T = node.args[1].id
+
 					if self.is_prim_type(T):
 						return '%s  %s' %(T, node.args[0].id)
 					else:

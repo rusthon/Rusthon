@@ -554,7 +554,8 @@ TODO save GCC PGO files.
 ```python
 
 def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
-	#raise SyntaxError(script)
+	if '--debug-inter' in sys.argv:
+		raise RuntimeError(script)
 	if insert_runtime:
 		runtime = open( os.path.join(RUSTHON_LIB_ROOT, 'src/runtime/cpp_builtins.py') ).read()
 		runtime = python_to_pythonjs( runtime, cpp=True )
