@@ -705,6 +705,8 @@ Also implements extra syntax like `switch` and `select`.
 			else:
 				macro_string = self.visit(node.optional_vars.value)[1:-1]
 
+			macro_string = macro_string.replace('\\"', '"')
+
 			if macro_string.startswith('"'):
 				raise SyntaxError('bad macro: ' + macro_string)
 
@@ -713,7 +715,10 @@ Also implements extra syntax like `switch` and `select`.
 			r = []
 			for b in node.body:
 				a = self.visit(b)
-				if a: r.append(self.indent()+a)
+				if a:
+					if len(r): r.append(self.indent()+a)
+					else: r.append(a)
+
 			self.macros.pop( macro_name )  ## remove macro
 			return '\n'.join(r)
 

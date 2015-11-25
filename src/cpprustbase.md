@@ -939,6 +939,11 @@ handles all special calls
 		fname = force_name or self.visit(node.func)
 		if fname in self.macros:
 			macro = self.macros[fname]
+			if '%=' in macro:  ## advanced meta programming, captures the name of the variable the macro assigns to.
+				if not self._assign_var_name:
+					raise RuntimeError('the macro syntax `%=` can only be used as part of an assignment expression')
+				macro = macro.replace('%=', self._assign_var_name)
+
 			args = ','.join([self.visit(arg) for arg in node.args])
 			if '"%s"' in macro:
 				return macro % tuple([s.s for s in node.args])
@@ -2901,6 +2906,7 @@ because they need some special handling in other places.
 				raise RuntimeError('TODO slice assignment')
 		else:
 			target = self.visit( node.targets[0] )
+			self._assign_var_name = target
 		#######################
 
 		if self._cpp and isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and node.value.func.attr in ('pop', 'insert'):
