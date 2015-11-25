@@ -176,13 +176,9 @@ Import `import x` and `from x import y`
 		res = []
 		if r:
 			for name in r:
-				if self._go:
-					self._imports.add('import("%s");' %name)
-				elif self._rust:
+				if self._rust:  ## TODO move this to rusttranslator.md
 					if name not in self._crates:
 						self._crates[name] = set()
-				elif self._lua:
-					res.append('require "%s"' %name)
 				else:
 					raise SyntaxError('import not yet support for this backend')
 

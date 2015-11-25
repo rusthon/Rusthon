@@ -47,6 +47,18 @@ class GoGenerator( JSGenerator ):
 		return self.uids
 
 
+	def visit_Import(self, node):
+		r = [alias.name.replace('__SLASH__', '/') for alias in node.names]
+		res = []
+		if r:
+			for name in r:
+				self._imports.add('import("%s");' %name)
+
+		if res:
+			return '\n'.join(res)
+		else:
+			return ''
+
 	def visit_Str(self, node):
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		return '"%s"' % s
