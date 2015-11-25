@@ -318,6 +318,7 @@ def new_module():
 		'nim'     : [],
 		'xml'     : [],
 		'json'    : [],
+		'bazel'   : [],
 		'rapydscript':[],
 		'javascript':[],
 	}
@@ -435,6 +436,8 @@ def hack_nim_stdlib(code):
 
 
 def build( modules, module_path, datadirs=None ):
+	if '--debug-build' in sys.argv:
+		raise RuntimeError(modules)
 	output = {'executeables':[], 'rust':[], 'c':[], 'c++':[], 'c#':[], 'go':[], 'javascript':[], 'java':[], 'xml':[], 'json':[], 'python':[], 'html':[], 'verilog':[], 'nim':[], 'lua':[], 'dart':[], 'datadirs':datadirs, 'datafiles':{}}
 	python_main = {'name':'main.py', 'script':[]}
 	go_main = {'name':'main.go', 'source':[]}
@@ -641,13 +644,15 @@ def build( modules, module_path, datadirs=None ):
 					exename = mod['tag']
 
 				## user named output for external build tools that need .h,.hpp,.cpp, files output to hardcoded paths.
-				if mod['tag'] and (mod['tag'].endswith('.h') or mod['tag'].endswith('.hpp') or mod['tag'].endswith('.cpp')):
+				if mod['tag'] and (mod['tag'].endswith('.h') or mod['tag'].endswith('.hpp') or mod['tag'].endswith('.cpp') or mod['tag'].endswith('.cc')):
 					pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
 					pak = translate_to_cpp(
 						pyjs, 
 						cached_json_files=cached_json, 
 						insert_runtime=False
 					)
+					if '--debug-c++' in sys.argv:
+						raise RuntimeError(pak)
 					## pak contains: c_header and cpp_header
 					output['datafiles'][ mod['tag'] ] = pak['main']  ## save to output c++ to tar
 
@@ -1247,6 +1252,33 @@ def build( modules, module_path, datadirs=None ):
 	if python_main['script']:
 		python_main['script'] = '\n'.join(python_main['script'])
 		output['python'].append( python_main )
+
+	if modules['bazel']:
+		# http://bazel.io/docs/build-ref.html#workspaces
+		## a WORKSPACE file is required, even if empty.
+		tmpdir = tempfile.gettempdir()
+		open(tmpdir+'/WORKSPACE', 'wb')
+
+		for filename in output['datafiles'].keys():
+			open(tmpdir+'/'+filename, 'wb').write(output['datafiles'][filename])
+
+		bazelbuilds = []
+		mods_sorted_by_index = sorted(modules['bazel'], key=lambda mod: mod.get('index'))
+		for mod in mods_sorted_by_index:
+			bazelconfig = mod['code']
+			open(tmpdir+'/BUILD', 'wb').write(bazelconfig)
+			for chk in bazelconfig.split(','):
+				chk = chk.strip()
+				words = chk.split()
+				if chk.endswith('"') and 'name' in words and '=' in words:
+					chk = chk.split()
+					bazelbuilds.append(chk[-1][1:-1])
+
+
+		assert len(bazelbuilds)==1
+		buildname = bazelbuilds[0]
+		#subprocess.check_call(['bazel', 'build', ':'+buildname], cwd=tmpdir)
+		subprocess.check_call(['bazel', 'run', ':'+buildname], cwd=tmpdir)
 
 	return output
 
