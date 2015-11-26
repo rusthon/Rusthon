@@ -2686,6 +2686,8 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 			else:
 				if name in 'jvm nim cpython nuitka weak'.split():
 					return '%s->%s' % (name, attr)
+				elif name in self._known_instances:
+					return '%s->%s' % (name, attr)
 				elif self._shared_pointers:
 					return '__shared__(%s)->%s' % (name, attr)
 				else:
@@ -2961,7 +2963,7 @@ because they need some special handling in other places.
 
 			if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Name) and node.value.func.id in self._classes:
 				value = '__new__' + value
-				return 'let %s *%s = %s;' % (target, node.value.func.id, value)
+				return 'let %s *%s = %s;' % (target, node.value.func.id, value)  ## rust, TODO can c++ construct globals on the heap outside of function?
 			else:
 				guesstype = 'auto'
 				if isinstance(node.value, ast.Num):
@@ -3417,25 +3419,7 @@ because they need some special handling in other places.
 					self._known_instances[ target ] = classname
 
 					if self._cpp:
-						return 'auto %s = %s; // new style' %(target, value)
-
-						if False:  ## DEPRECATED
-							## make object on the stack, safe to use _ref_ in same block ##
-							## TODO move get-args-and-kwargs to its own helper function
-							constructor_args = value.strip()[ len(classname)+1 :-1] ## strip to just args
-							r = '%s  _ref_%s = %s{};' %(classname, target, classname)
-							if constructor_args:
-								r += '_ref_%s.__init__(%s);\n' %(target, constructor_args)
-							if self._shared_pointers:
-								if self._unique_ptr:
-									r += 'std::unique_ptr<%s> %s = _make_unique<%s>(_ref_%s);' %(classname, target, classname, target)
-								else:
-									r += 'std::shared_ptr<%s> %s = std::make_shared<%s>(_ref_%s);' %(classname, target, classname, target)
-							else:  ## raw pointer to object
-								#return 'auto %s = new %s;' %(target, value)  ## user must free memory manually
-								r += '%s* %s = &_ref_%s;' %(classname, target, target)  ## freeed when _ref_ goes out of scope
-							return r
-
+						return 'auto %s = %s; // new object' %(target, value)
 
 					else:  ## rust
 						self._construct_rust_structs_directly = False
@@ -3487,8 +3471,11 @@ because they need some special handling in other places.
 					if comptarget:
 						result.append('auto %s = %s;  /* list comprehension */' % (target, comptarget))
 						return '\n'.join(result)
+					elif isinstance(node.value, ast.BinOp) and isinstance(node.value.op, ast.RShift) and isinstance(node.value.left, ast.Name) and node.value.left.id=='__new__':
+						self._known_instances[target] = self.visit(node.value.right)
+						return 'auto %s = %s;  /* new object */' % (target, value)
 					else:
-						return 'auto %s = %s;  /* fallback */' % (target, value)
+						return 'auto %s = %s;  /* auto-fallback */' % (target, value)
 				else:
 					if value.startswith('Rc::new(RefCell::new('):
 						#return 'let _RC_%s = %s; let mut %s = _RC_%s.borrow_mut();	/* new array */' % (target, value, target, target)
