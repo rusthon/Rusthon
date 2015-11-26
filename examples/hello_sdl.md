@@ -20,9 +20,8 @@ namespace('SDL2pp')
 def main():
 	print 'init sdl'
 	SDL( SDL_INIT_VIDEO )
-	#SDLTTF()
-	#TTF_Init()
-	inline('SDLTTF ttf')  ## TODO syntax
+
+	ttf = new(SDLTTF())
 
 	win = Window(
 		"my sdl window",
