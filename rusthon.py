@@ -1171,6 +1171,7 @@ def build( modules, module_path, datadirs=None ):
 		if compile_mode=='binary':
 			cmd.extend(['-O3', '-fprofile-generate', '-march=native', '-mtune=native', '-I'+tempfile.gettempdir()])
 
+		cmd.append('-Wl,-rpath,/usr/local/lib/')  ## extra user installed dynamic libs
 		cmd.append('-Wl,-rpath,./')  ## can not load dynamic libs from same directory without this
 		cmd.append(tmpfile)
 
