@@ -948,10 +948,13 @@ handles all special calls
 			if '"%s"' in macro:
 				return macro % tuple([s.s for s in node.args])
 			elif '%s' in macro:
-				if macro.count('%s')==1:
+				if macro.count('%s')>1:
+					args = tuple([self.visit(s) for s in node.args])
+				try:
 					return macro % args
-				else:
-					return macro % tuple([self.visit(s) for s in node.args])
+				except TypeError as err:
+					raise RuntimeError('%s\nMACRO:\t%s\nARGS:\t%s' %(err[0], macro, args))
+
 			else:
 				return '%s(%s)' %(macro,args)
 
