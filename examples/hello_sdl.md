@@ -13,18 +13,48 @@ Build Options
 ```rusthon
 #backend:c++
 import SDL2pp/SDL2pp.hh
+from time import sleep
 
 namespace('SDL2pp')
 
 def main():
 	print 'init sdl'
 	SDL( SDL_INIT_VIDEO )
-
+	SDLTTF()
 	win = Window(
-		"SDL2pp demo",
+		"my sdl window",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 		640, 480,
 		SDL_WINDOW_RESIZABLE
 	)
+
+	// Create accelerated video renderer with default driver
+	ren = new(
+		Renderer(win, -1, SDL_RENDERER_ACCELERATED)
+	)
+	// Load sprites image as a new texture
+	#tex = Texture(ren, DATA_PATH "/M484SpaceSoldier.png")
+
+	font = new(
+		Font('/usr/share/fonts/gnu-free/FreeSans.ttf', 20)
+	)
+	with Color as 'SDL_Color{%s, %s, %s, %s}':
+		color = Color(255,255,255, 255)
+
+	tex  = new(
+		Texture(ren[...], font.RenderText_Blended("hello world", color))
+	)
+	// Clear screen
+	ren.Clear()
+
+	// Render text
+	ren.Copy(tex[...])
+
+	// Show rendered frame
+	ren.Present()
+
+	// 5 second delay
+	sleep(5.0)
+
 
 ```
