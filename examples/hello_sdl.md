@@ -20,7 +20,10 @@ namespace('SDL2pp')
 def main():
 	print 'init sdl'
 	SDL( SDL_INIT_VIDEO )
-	SDLTTF()
+	#SDLTTF()
+	#TTF_Init()
+	inline('SDLTTF ttf')  ## TODO syntax
+
 	win = Window(
 		"my sdl window",
 		SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
