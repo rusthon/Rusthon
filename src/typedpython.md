@@ -981,14 +981,46 @@ class typedpython:
 			output.append( c )
 
 
-		r = '\n'.join(output)
+		parse_and_fix_code('\n'.join(output), output)
+		return '\n'.join(output)
 
-		try:
-			ast.parse(r)
-		except SyntaxError as e:
+
+def parse_and_fix_code(r, output):
+	try:
+		ast.parse(r)
+	except SyntaxError as e:
+		errmsg = str(e)
+		eline = output[e.lineno-1]
+		if errmsg.startswith('only named arguments may follow *expression'):
+			nline = []
+			infunc = False
+			hitptr = 0
+			for i,char in enumerate(eline):
+				if char=='(':
+					infunc = True
+				elif infunc and char=='*':
+					hitptr += 1
+				elif hitptr and (char==',' or char==')'):
+					nline.append('[...]'*hitptr)
+					hitptr = 0
+				elif hitptr and char==' ' and i>0 and nline[i-1] != '*':
+					nline.append('[...]'*hitptr)
+					hitptr = 0
+
+				if char=='*' and hitptr:
+					pass
+				else:
+					nline.append(char)
+
+			if hitptr:
+				nline.append('[...]'*hitptr)
+
+			output[e.lineno-1] = ''.join(nline)
+			parse_and_fix_code('\n'.join(output), output)
+
+		else:
 			print '-'*80
 			print 'Syntax Error on this line:'
-			eline = output[e.lineno-1]
 			if eline.strip().startswith('def '):
 				funcname = eline.strip().split('(')[0].split('def ')[-1]
 				print 'SyntaxError in function definition: "%s"' % funcname
@@ -1007,8 +1039,6 @@ class typedpython:
 			print '-'*80
 
 			raise e
-
-		return r
 
 ```
 

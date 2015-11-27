@@ -47,16 +47,16 @@ def main():
 		Font('/usr/share/fonts/gnu-free/FreeSans.ttf', 20)
 	)
 
-	let color : SDL_Color& = {255,0,255, 255}
+	let color : SDL_Color = {255,0,255, 255}
 
 	tex  = new(
-		Texture(ren[...], font.RenderText_Blended("hello world", color))
+		Texture(*ren, font.RenderText_Blended("hello world", color))
 	)
 	// Clear screen
 	ren.Clear()
 
 	// Render text
-	ren.Copy(tex[...])
+	ren.Copy(*tex)
 
 	// Show rendered frame
 	ren.Present()

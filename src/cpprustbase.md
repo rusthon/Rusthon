@@ -1282,7 +1282,7 @@ handles all special calls
 					else:
 						T = node.args[1].s
 					T = T.strip()
-					if self.is_prim_type(T) or T.endswith('&'):
+					if self.is_prim_type(T) or T.endswith('&') or isinstance(node.args[2], ast.Set):
 						if T.endswith('&'):
 							## http://stackoverflow.com/questions/1565600/how-come-a-non-const-reference-cannot-bind-to-a-temporary-object
 							## TODO is using `const T&` safer?
@@ -1438,7 +1438,10 @@ handles all special calls
 
 		if node.starargs:
 			if args: args += ','
-			args += '*%s...' %self.visit(node.starargs)
+			if self._cpp:
+				args += '(*%s)' %self.visit(node.starargs)
+			else:
+				args += '*%s...' %self.visit(node.starargs)
 
 
 		if hasattr(node, 'is_new_class_instance') and self._rust:

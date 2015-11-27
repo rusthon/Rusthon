@@ -2,7 +2,7 @@ import os, sys, subprocess
 
 passed = []
 ignore = ('fails_', 'giws_', 'unreal_', 'verilog', 'nuitka_', 'nim_', 'java_', 'custom_', 'cpython_', 'nodejs_')
-ignoreosx = ['hello_cpython.md', 'hello_sdl.md']
+ignoreosx = ['hello_cpython.md']
 
 ## rust is broken on fedora? Travis uses Debian.
 TODO_FIX = (
@@ -20,6 +20,7 @@ TODO_FIX = (
 	'hello_elm.md',
 	'hello_fullstack.md',
 	'hello_openlayers.md',
+	'hello_sdl.md',
 )
 
 files = os.listdir('../examples')
