@@ -1,11 +1,17 @@
 SDL C++ Example
 -------------
-* git clone https://github.com/AMDmi3/libSDL2pp.git
-* cd libSDL2pp
-* cmake . && make && make install
+* requires libSDL2pp
+* libSDL2pp is downloaded from github, built and installed automatically.
 
 
-* @include:/usr/include/SDL2pp
+libSDL2pp
+----------
+@https://github.com/AMDmi3/libSDL2pp.git
+```bash
+cmake .
+make
+sudo make install
+```
 
 Build Options
 -------------

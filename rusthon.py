@@ -435,6 +435,33 @@ def hack_nim_stdlib(code):
 	return '\n'.join(out)
 
 
+def is_restricted_bash( line ):
+	if '&&' in line:
+		return False
+	if "`" in line:
+		return False
+	if '"' in line:
+		return False
+
+	okcmds = [
+		'./configure', 
+		'make', 'cmake', 
+		'scons', 'bazel', 
+		'cd', 'mkdir', 'cp', 
+		'npm', 'grunt', 'gyp', 'nw-gyp',
+		'apt-get', 'yum',
+		'pip',
+	]
+	cmd = line.split()[0]
+	if cmd == 'sudo': cmd = line.split()[1]
+
+	if cmd in okcmds:
+		return True
+	else:
+		return False
+
+GITCACHE = os.path.expanduser('~/rusthon_cache')
+
 def build( modules, module_path, datadirs=None ):
 	if '--debug-build' in sys.argv:
 		raise RuntimeError(modules)
@@ -448,6 +475,45 @@ def build( modules, module_path, datadirs=None ):
 	nim_wrappers = []
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
 	cached_json = {}
+
+	if modules['bash']:
+		for mod in modules['bash']:
+			if 'tag' in mod and mod['tag']:
+				tag = mod['tag']
+				if tag.startswith('http://') or tag.startswith('https://'):
+					if not tag.endswith('.git'):
+						raise SyntaxError('only git repos links are allowed: '+tag)
+					if not os.path.isdir(GITCACHE):
+						print 'making new rusthon cache folder: ' + GITCACHE
+						os.mkdir(GITCACHE)
+
+					gitname = tag.split('/')[-1][:-4]
+					projectdir = os.path.join(GITCACHE, gitname)
+
+					rebuild = True
+					if gitname not in os.listdir(GITCACHE):
+						cmd = ['git', 'clone', tag]
+						subprocess.check_call(cmd, cwd=GITCACHE)
+					elif '--git-sync' in sys.argv:
+						cmd = ['git', 'pull']
+						subprocess.check_call(cmd, cwd=projectdir)
+					else:
+						rebuild = False
+
+					if rebuild:
+						print 'rebuilding git repo: ' + tag
+						## TODO restrict the bash syntax allowed here,
+						## or build it in a sandbox or docker container.
+						for line in mod['code'].splitlines():
+							if not is_restricted_bash(line):
+								raise SyntaxError('bash build script syntax is restricted:\n'+line)
+							else:
+								print '>>'+line
+							subprocess.check_call( line.split(), cwd=projectdir )
+
+				else:
+					output['datafiles'][tag] = mod['code']
+
 
 	if modules['javascript']:
 		for mod in modules['javascript']:
