@@ -1491,11 +1491,19 @@ regular Python has no support for.
 			if self._cpp:
 				if isinstance(node.right, ast.Call) and isinstance(node.right.func, ast.Name):
 					classname = node.right.func.id
-					if node.right.args:
-						args = ','.join([self.visit(arg) for arg in node.right.args])
-						return '(new %s)->__init__(%s)' %(classname, args)
+					if classname in self._classes:
+						if node.right.args:
+							args = ','.join([self.visit(arg) for arg in node.right.args])
+							return '(new %s)->__init__(%s)' %(classname, args)
+						else:
+							return '(new %s)->__init__()' %classname
 					else:
-						return '(new %s)' %classname
+						if node.right.args:
+							args = ','.join([self.visit(arg) for arg in node.right.args])
+							return '(new %s(%s))' %(classname, args)
+						else:
+							return '(new %s)' %classname
+
 				else:
 					raise SyntaxError(self.format_error(self.visit(node.right)))
 			else:
