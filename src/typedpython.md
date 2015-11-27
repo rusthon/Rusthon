@@ -714,7 +714,9 @@ class typedpython:
 					## type must be quoted if its external style (rust or c++)
 					## like: `Vec<T>` or `std::something<T>`
 					ct = c.split(':')[-1]
-					if ('<' in ct and '>' in ct) or '::' in ct:
+					if '=' in ct:
+						ct = ct.split('=')[0].strip()
+					if ('<' in ct and '>' in ct) or '::' in ct or ct.endswith('*') or ct.endswith('&'):
 						c = c.replace(':', ',"')
 						if '=' in c:
 							c = c.replace('=', '", ')

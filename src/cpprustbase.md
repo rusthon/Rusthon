@@ -1245,7 +1245,7 @@ handles all special calls
 						return '%s %s = %s' %(V, vname, self.visit(infer_from))
 
 			elif len(node.args) == 1:
-				return '%s %s			/* declared */' %(V, node.args[0].id)
+				return '%s %s			/* declared - rust maybe able to infer the type */' %(V, node.args[0].id)
 			elif len(node.args) == 2:
 				if self._cpp:
 					if isinstance(node.args[1], ast.Str):
@@ -1281,8 +1281,15 @@ handles all special calls
 						T = node.args[1].id
 					else:
 						T = node.args[1].s
+					T = T.strip()
+					if self.is_prim_type(T) or T.endswith('&'):
+						if T.endswith('&'):
+							## http://stackoverflow.com/questions/1565600/how-come-a-non-const-reference-cannot-bind-to-a-temporary-object
+							## TODO is using `const T&` safer?
+							#T = 'const '+T  ## this also works
+							## strip away `&`
+							T = T[:-1]
 
-					if self.is_prim_type(T):
 						return '%s  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 					else:
 						if not self._shared_pointers:
@@ -1291,7 +1298,7 @@ handles all special calls
 							return 'std::unique_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
 						else:
 							return 'std::shared_ptr<%s>  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
-				else:
+				else:  ## rust
 					if mutable:
 						return '%s mut %s : %s = %s' %(V, node.args[0].id, node.args[1].s, self.visit(node.args[2]))
 					else:

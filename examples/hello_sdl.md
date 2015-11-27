@@ -46,8 +46,8 @@ def main():
 	font = new(
 		Font('/usr/share/fonts/gnu-free/FreeSans.ttf', 20)
 	)
-	with Color as 'SDL_Color{%s, %s, %s, %s}':
-		color = Color(255,255,255, 255)
+
+	let color : SDL_Color& = {255,0,255, 255}
 
 	tex  = new(
 		Texture(ren[...], font.RenderText_Blended("hello world", color))
