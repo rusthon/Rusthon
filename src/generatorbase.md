@@ -245,9 +245,14 @@ Function Decorators
 		elif isinstance(decor, ast.Call) and isinstance(decor.func, ast.Name) and decor.func.id == '__typedef__':
 			if len(decor.args) == 3:
 				vname = self.visit(decor.args[0])
-				vtype = self.visit(decor.args[1])
+				if isinstance(decor.args[1], ast.Str):
+					vtype = decor.args[1].s
+				else:
+					vtype = self.visit(decor.args[1])
 				vptr = decor.args[2].s
-				args_typedefs[ vname ] = '%s %s' %(vptr, vtype)  ## space is required because it could have the `mut` keyword
+
+				## note: the space is required because it could be `mut` rust-keyword, or `struct` C type.
+				args_typedefs[ vname ] = '%s %s' %(vptr, vtype)
 
 			else:
 				for key in decor.keywords:
