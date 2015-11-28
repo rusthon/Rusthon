@@ -296,6 +296,8 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		s = node.s.replace("\\", "\\\\").replace('\n', '\\n').replace('\r', '\\r').replace('"', '\\"')
 		if wrap is False:
 			return s
+		elif self._force_cstr:
+			return '"%s"' % s
 
 		elif self.usertypes and 'string' in self.usertypes.keys():
 			if self.usertypes['string'] is None:

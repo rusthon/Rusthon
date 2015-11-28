@@ -23,6 +23,7 @@ class CppRustBase( GoGenerator ):
 		self._root_classes = {}
 		self._java_classpaths = []
 		self._known_strings = set()
+		self._force_cstr = False
 		self.macros = {}
 
 
@@ -1289,8 +1290,15 @@ handles all special calls
 							#T = 'const '+T  ## this also works
 							## strip away `&`
 							T = T[:-1]
+						varname = node.args[0].id
+						if '*' in T:
+							varname += '[]' * T.count('*')
+							if T=='const char*':
+								self._force_cstr = True
+						data = self.visit(node.args[2])
+						self._force_cstr = False
 
-						return '%s  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))
+						return '%s  %s = %s' %(T, varname, data)
 					else:
 						if not self._shared_pointers:
 							return '%s*  %s = %s' %(T, node.args[0].id, self.visit(node.args[2]))

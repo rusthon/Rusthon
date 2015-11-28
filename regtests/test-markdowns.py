@@ -21,6 +21,7 @@ TODO_FIX = (
 	'hello_fullstack.md',
 	'hello_openlayers.md',
 	'hello_sdl.md',
+	'hello_civetweb.md',
 )
 
 files = os.listdir('../examples')

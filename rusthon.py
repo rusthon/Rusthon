@@ -447,10 +447,10 @@ def is_restricted_bash( line ):
 		'./configure', 
 		'make', 'cmake', 
 		'scons', 'bazel', 
-		'cd', 'mkdir', 'cp', 
+		'cd', 'mkdir', 'cp', #'pwd', 'ls',
 		'npm', 'grunt', 'gyp', 'nw-gyp',
 		'apt-get', 'yum',
-		'pip',
+		'pip', 'docker',
 	]
 	cmd = line.split()[0]
 	if cmd == 'sudo': cmd = line.split()[1]
@@ -500,11 +500,12 @@ def build( modules, module_path, datadirs=None ):
 					else:
 						rebuild = False
 
-					if rebuild:
+					if rebuild or '--force-rebuild-deps' in sys.argv:
 						print 'rebuilding git repo: ' + tag
 						## TODO restrict the bash syntax allowed here,
 						## or build it in a sandbox or docker container.
 						for line in mod['code'].splitlines():
+							if not line.strip(): continue
 							if not is_restricted_bash(line):
 								raise SyntaxError('bash build script syntax is restricted:\n'+line)
 							else:
@@ -1277,10 +1278,11 @@ def build( modules, module_path, datadirs=None ):
 			for lib in links:
 				cmd.append('-l'+lib)
 
-		if link or giws:
+		## always link to libdl, external libraries may require dl_open, etc.
+		cmd.append('-ldl')
 
-			if libdl:
-				cmd.append('-ldl')
+
+		if link or giws:
 
 			if giws:   ## link to the JVM if giws bindings were compiled ##
 				cmd.append('-ljvm')

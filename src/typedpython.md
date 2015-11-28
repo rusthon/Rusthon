@@ -1024,7 +1024,7 @@ def parse_and_fix_code(r, output):
 			if eline.strip().startswith('def '):
 				funcname = eline.strip().split('(')[0].split('def ')[-1]
 				print 'SyntaxError in function definition: "%s"' % funcname
-				for i,eln in enumerate(source.splitlines()):
+				for i,eln in enumerate(r.splitlines()):
 					if 'def '+funcname in eln:
 						print 'line number: %s' %(i+1)
 						print eln
