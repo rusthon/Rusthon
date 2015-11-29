@@ -1004,7 +1004,10 @@ def parse_and_fix_code(r, output):
 				output[e.lineno-1] = eline.replace('::', '.__doublecolon__.')
 				parse_and_fix_code('\n'.join(output), output)
 			else:
-				raise RuntimeError('TODO multiple ::')
+				nline = list(eline)
+				nline[ e.offset-1: e.offset+1 ] = '.__doublecolon__.'
+				output[e.lineno-1] = ''.join(nline)
+				parse_and_fix_code('\n'.join(output), output)
 
 
 		elif errmsg.startswith('only named arguments may follow *expression'):
