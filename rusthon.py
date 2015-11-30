@@ -319,6 +319,7 @@ def new_module():
 		'xml'     : [],
 		'json'    : [],
 		'bazel'   : [],
+		'gyp'     : [],
 		'rapydscript':[],
 		'javascript':[],
 	}
@@ -475,6 +476,7 @@ def build( modules, module_path, datadirs=None ):
 	nim_wrappers = []
 	libdl = False ## provides: dlopen, dlclose, for dynamic libs. Nim needs this
 	cached_json = {}
+	gyp_builds  = {}
 
 	if modules['bash']:
 		for mod in modules['bash']:
@@ -514,6 +516,22 @@ def build( modules, module_path, datadirs=None ):
 
 				else:
 					output['datafiles'][tag] = mod['code']
+
+
+	if modules['gyp']:
+		for mod in modules['gyp']:
+			if 'tag' in mod and mod['tag']:
+				output['datafiles'][mod['tag']] = mod['code']
+
+			gypcfg = json.loads( mod['code'].replace("'", '"') )
+			#if len(gypcfg['targets']) > 1:
+			#	continue
+			for gtarget in gypcfg['targets']:
+				for gsrc in gtarget['sources']:
+					gyp_builds[ gsrc ] = {
+						'gyp':mod['code'],
+						'src': None
+					}
 
 
 	if modules['javascript']:
@@ -722,6 +740,9 @@ def build( modules, module_path, datadirs=None ):
 						raise RuntimeError(pak)
 					## pak contains: c_header and cpp_header
 					output['datafiles'][ mod['tag'] ] = pak['main']  ## save to output c++ to tar
+
+					if mod['tag'] in gyp_builds.keys():
+						gyp_builds[ mod['tag'] ]['src'] = pak['main']
 
 					if 'user-headers' in pak:
 						for classtag in pak['user-headers'].keys():
@@ -1348,6 +1369,16 @@ def build( modules, module_path, datadirs=None ):
 		buildname = bazelbuilds[0]
 		#subprocess.check_call(['bazel', 'build', ':'+buildname], cwd=tmpdir)
 		subprocess.check_call(['bazel', 'run', ':'+buildname], cwd=tmpdir)
+
+	if gyp_builds:
+		tmpdir = tempfile.gettempdir()
+		for gname in gyp_builds.keys():
+			gbuild = gyp_builds[gname]
+			if gbuild['src']:
+				open(tmpdir+'/build.gyp', 'wb').write(gbuild['gyp'])
+				open(tmpdir+'/'+gname, 'wb').write( gbuild['src'] )
+				subprocess.check_call(['gyp', 'configure'], cwd=tmpdir)
+				subprocess.check_call(['gyp', 'build'], cwd=tmpdir)
 
 	return output
 
