@@ -521,7 +521,10 @@ def build( modules, module_path, datadirs=None ):
 	if modules['gyp']:
 		for mod in modules['gyp']:
 			if 'tag' in mod and mod['tag']:
-				output['datafiles'][mod['tag']] = mod['code']
+				if not mod['tag'] != 'binding.gyp':
+					raise RuntimeError('nw-gyp requires the gyp file is named `binding.gyp`')
+
+			output['datafiles']['binding.gyp'] = mod['code']
 
 			gypcfg = json.loads( mod['code'].replace("'", '"') )
 			#if len(gypcfg['targets']) > 1:
@@ -734,7 +737,7 @@ def build( modules, module_path, datadirs=None ):
 					pak = translate_to_cpp(
 						pyjs, 
 						cached_json_files=cached_json, 
-						insert_runtime=False
+						insert_runtime=mod['tag'] in gyp_builds.keys()
 					)
 					if '--debug-c++' in sys.argv:
 						raise RuntimeError(pak)
@@ -1375,10 +1378,14 @@ def build( modules, module_path, datadirs=None ):
 		for gname in gyp_builds.keys():
 			gbuild = gyp_builds[gname]
 			if gbuild['src']:
-				open(tmpdir+'/build.gyp', 'wb').write(gbuild['gyp'])
+				open(tmpdir+'/binding.gyp', 'wb').write(gbuild['gyp'])
 				open(tmpdir+'/'+gname, 'wb').write( gbuild['src'] )
-				subprocess.check_call(['gyp', 'configure'], cwd=tmpdir)
-				subprocess.check_call(['gyp', 'build'], cwd=tmpdir)
+				subprocess.check_call(['nw-gyp', 'configure', '--target=0.12.3'], cwd=tmpdir)
+				subprocess.check_call(['nw-gyp', 'build'], cwd=tmpdir)
+
+				node_module = open(tmpdir+'/build/Release/binding.node', 'rb').read()
+				output['datafiles']['binding.node'] = node_module
+
 
 	return output
 

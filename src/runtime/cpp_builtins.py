@@ -25,6 +25,24 @@ def IOError( msg:string ) -> std::runtime_error*:
 #	return vec
 
 
+## TODO rewrite in python, so try/catch can be optional and always compatible with external build tools
+#std::fstream* __open__(const std::string name, const std::string mode) {
+#	try {
+#		std::fstream* s;
+#		if (mode==std::string("rb") || mode==std::string("r")) {
+#			s = new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
+#		} else {
+#			s = new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
+#		}
+#		s->exceptions( std::ios::failbit | std::ios::badbit | std::ios::eofbit );
+#		return s;	
+#	} catch (...) {
+#		throw IOError(std::string("No such file or directory: ")+name);
+#	}
+#}
+
+
+
 inline("""
 
 const char* cstr( std::string s ) { return s.c_str(); }
@@ -84,21 +102,6 @@ std::string str( const std::string s ) {
 }
 std::string str( int s ) {
 	return std::to_string(s);
-}
-
-std::fstream* __open__(const std::string name, const std::string mode) {
-	try {
-		std::fstream* s;
-		if (mode==std::string("rb") || mode==std::string("r")) {
-			s = new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
-		} else {
-			s = new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
-		}
-		s->exceptions( std::ios::failbit | std::ios::badbit | std::ios::eofbit );
-		return s;	
-	} catch (...) {
-		throw IOError(std::string("No such file or directory: ")+name);
-	}
 }
 
 std::string readfile(std::fstream* f) {

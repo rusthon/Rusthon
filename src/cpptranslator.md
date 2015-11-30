@@ -333,53 +333,58 @@ TODO
 		## TODO: check why `catch (...)` is not catching file errors
 		out = []
 
-		if finallybody:
-			self._finally_id += 1
-			out.append('bool __finally_done_%s = false;' %self._finally_id)
-			out.append( self.indent()+'try {' )
-		else:
-			out.append( 'try {' )
+		use_try = False  ## when building with external tools or platforms -fexceptions can not be enabled.
+
+
+		if use_try:
+			if finallybody:
+				self._finally_id += 1
+				out.append('bool __finally_done_%s = false;' %self._finally_id)
+				out.append( self.indent()+'try {' )
+			else:
+				out.append( 'try {' )
 
 		self.push()
 		for b in node.body:
 			out.append( self.indent()+self.visit(b) )
 
 		self.pull()
-		out.append(self.indent()+ '}' )
+		if use_try:
+			out.append(self.indent()+ '}' )
 
 
-		out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
-		self.push()
-		out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
-		for h in node.handlers:
-			out.append(
-				self.indent() + self.visit_ExceptHandler(h, finallybody=finallybody)
-			)
-		self.pull()
-
-		out.append(self.indent()+ '}' )
-
-		## TODO also catch these error that standard c++ libraries are likely to throw ##
-		#out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
-		#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
-		#out.append( self.indent() + 'catch (const std::exception& e) {' )
-		#out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
-
-
-		## wrap in another try that is silent
-		if finallybody:
-			out.append(self.indent()+'if (__finally_done_%s == false) {' %self._finally_id )
+			out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
 			self.push()
-			out.append(self.indent()+'try {		// finally block')
-			self.push()
-			for b in finallybody:
-				out.append(self.indent()+self.visit(b))
+			out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
+			for h in node.handlers:
+				out.append(
+					self.indent() + self.visit_ExceptHandler(h, finallybody=finallybody)
+				)
 			self.pull()
-			out.append(self.indent()+'} catch (...) {}')
-			self.pull()
-			out.append(self.indent()+'}')
 
-			self._finally_id -= 1
+			out.append(self.indent()+ '}' )
+
+			## TODO also catch these error that standard c++ libraries are likely to throw ##
+			#out.append( self.indent() + 'catch (const std::overflow_error& e) { std::cout << "OVERFLOW ERROR" << std::endl; }' )
+			#out.append( self.indent() + 'catch (const std::runtime_error& e) { std::cout << "RUNTIME ERROR" << std::endl; }' )
+			#out.append( self.indent() + 'catch (const std::exception& e) {' )
+			#out.append( self.indent() + 'catch (...) { std::cout << "UNKNOWN ERROR" << std::endl; }' )
+
+
+			## wrap in another try that is silent
+			if finallybody:
+				out.append(self.indent()+'if (__finally_done_%s == false) {' %self._finally_id )
+				self.push()
+				out.append(self.indent()+'try {		// finally block')
+				self.push()
+				for b in finallybody:
+					out.append(self.indent()+self.visit(b))
+				self.pull()
+				out.append(self.indent()+'} catch (...) {}')
+				self.pull()
+				out.append(self.indent()+'}')
+
+				self._finally_id -= 1
 
 		return '\n'.join( out )
 

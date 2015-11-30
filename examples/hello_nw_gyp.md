@@ -1,11 +1,11 @@
 NW.js C++ Extension
 -------------
 * https://github.com/nwjs/nw-gyp
-* for more info see https://github.com/civetweb/civetweb/blob/master/docs/Embedding.md
+* https://github.com/nodejs/node/blob/master/test/addons/hello-world/binding.cc
+
 
 Gyp File
 ----------
-@binding.gyp
 ```gyp
 {
   'targets': [
@@ -28,18 +28,13 @@ import v8.h
 
 namespace('v8')
 
-
 def MyMethod(args : const FunctionCallbackInfo<Value>&):
-	#Isolate* isolate = Isolate::GetCurrent();
-	#HandleScope scope(isolate);
-	#args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world"));
-
 	isolate = Isolate::GetCurrent()
-	scope = HandleScope(isolate)
-	args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world"));
+	let scope(isolate) : HandleScope
+	inline('args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world"))')  ## TODO fixme
 
-def init(target: Handle<Object>):
-	NODE_SET_METHOD(target, "hello", MyMethod)
+def init(target: Local<Object>):
+	NODE_SET_METHOD(target, "hello".c_str(), MyMethod)
 
 NODE_MODULE(binding, init)
 

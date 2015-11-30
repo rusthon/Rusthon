@@ -1193,6 +1193,17 @@ handles all special calls
 			infer_from = None
 			if len(node.args) and isinstance(node.args[0], ast.Name):
 				vname = node.args[0].id
+			elif len(node.args)==2 and isinstance(node.args[0], ast.Call):
+				## syntax: `let foo(bar) : SomeClass`, translates into c++11 universal constructor call
+				assert self._cpp
+				if isinstance(node.args[1], ast.Str):
+					T = node.args[1].s
+				else:
+					T = self.visit(node.args[1])
+
+				return '%s %s' %(T, self.visit(node.args[0]))
+
+
 			elif len(node.args) and isinstance(node.args[0], ast.Attribute): ## syntax `let self.x:T = y`
 				assert node.args[0].value.id == 'self'
 				assert len(node.args)==3
