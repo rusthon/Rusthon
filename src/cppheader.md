@@ -49,7 +49,6 @@ std::shared_ptr<std::runtime_error> __shared__(std::runtime_error ob) {
 }
 
 
-
 template<class T>
 T* __pointer__(T* ob) {return ob;}
 

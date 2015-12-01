@@ -1810,6 +1810,7 @@ TODO clean up go stuff.
 			self._known_arrays    = dict()
 			self._known_strings   = set()
 			self._known_pyobjects = dict()
+			self._known_refs      = dict()
 
 		elif len(self._function_stack) > 1:
 			## do not clear self._known_* inside of closures ##
@@ -1896,6 +1897,11 @@ TODO clean up go stuff.
 		for name in args_typedefs:
 			if args_typedefs[name]=='string':
 				self._known_strings.add(name)
+			elif args_typedefs[name].endswith('&'):
+				self._known_refs[name] = args_typedefs[name]
+			elif args_typedefs[name].endswith('*'):
+				self._known_instances[name]= args_typedefs[name]
+
 
 		returns_self = options['returns_self']
 		return_type = options['returns']
@@ -2723,6 +2729,8 @@ Also swaps `.` for c++ namespace `::` by checking if the value is a Name and the
 			else:
 				if name in 'jvm nim cpython nuitka weak'.split():
 					return '%s->%s' % (name, attr)
+				elif name in self._known_refs:
+					return '%s.%s' % (name, attr)
 				elif name in self._known_instances:
 					return '%s->%s' % (name, attr)
 				elif self._shared_pointers:
