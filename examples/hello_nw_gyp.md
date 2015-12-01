@@ -31,8 +31,7 @@ namespace('v8')
 def MyMethod(args : const FunctionCallbackInfo<Value>&):
 	isolate = Isolate::GetCurrent()
 	let scope(isolate) : HandleScope
-	with pointers:
-		args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world".c_str() ))
+	args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world".c_str() ))
 
 def init(target: Local<Object>):
 	NODE_SET_METHOD(target, "hello".c_str(), MyMethod)

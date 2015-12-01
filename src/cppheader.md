@@ -37,6 +37,9 @@ template<class T>
 std::shared_ptr<T> __shared__(T& ob) {return std::make_shared<T>(&ob);}
 
 template<class T>
+std::shared_ptr<T> __shared__(T ob) {return std::make_shared<T>(ob);}
+
+template<class T>
 std::shared_ptr<T> __shared__(std::shared_ptr<T> ob) {return ob;}
 
 
