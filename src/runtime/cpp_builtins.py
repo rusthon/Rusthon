@@ -25,21 +25,21 @@ def IOError( msg:string ) -> std::runtime_error*:
 #	return vec
 
 
-## TODO rewrite in python, so try/catch can be optional and always compatible with external build tools
-#std::fstream* __open__(const std::string name, const std::string mode) {
-#	try {
-#		std::fstream* s;
-#		if (mode==std::string("rb") || mode==std::string("r")) {
-#			s = new std::fstream(name.c_str(), std::fstream::in | std::fstream::binary);
-#		} else {
-#			s = new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary);
-#		}
-#		s->exceptions( std::ios::failbit | std::ios::badbit | std::ios::eofbit );
-#		return s;	
-#	} catch (...) {
-#		throw IOError(std::string("No such file or directory: ")+name);
-#	}
-#}
+## note: try/catch can be optional to be compatible with external build tools that disable exceptions
+def __open__( name:string, mode: string) -> std::fstream*:
+	try:
+		let s : std::fstream*
+
+		if mode=="rb" or mode=="r":
+			options = inline('std::fstream::in | std::fstream::binary')
+			s = new std::fstream(name.c_str(), options)
+		else:
+			s = new std::fstream(name.c_str(), std::fstream::out | std::fstream::binary)
+		with pointers:
+			s.exceptions( std::ios::failbit | std::ios::badbit | std::ios::eofbit )
+		return s
+	except:
+		inline('throw IOError(std::string("No such file or directory: ")+name)')
 
 
 

@@ -1265,7 +1265,7 @@ handles all special calls
 					else:
 						T = node.args[1].id
 
-					if self.is_prim_type(T):
+					if self.is_prim_type(T) or T.endswith('*') or T.endswith('&'):
 						return '%s  %s' %(T, node.args[0].id)
 					else:
 						if not self._shared_pointers:
@@ -1524,7 +1524,9 @@ regular Python has no support for.
 							return '(new %s)' %classname
 
 				else:
-					raise SyntaxError(self.format_error(self.visit(node.right)))
+					#raise SyntaxError(self.format_error(self.visit(node.right)))
+					return '(new %s)' %self.visit(node.right)
+
 			else:
 				return ' new %s' %right
 
