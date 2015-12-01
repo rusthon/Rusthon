@@ -1736,8 +1736,11 @@ def main():
 			tmpdir = tempfile.gettempdir()
 			for pak in package['javascript']:
 				fname = pak['name']
-				if not fname.endswith('.js'):
+				if fname is None:
+					fname = 'rusthon-temp.js'
+				elif not fname.endswith('.js'):
 					fname += '.js'
+
 				fpath = os.path.join(tmpdir, fname)
 				open(fpath, 'wb').write( pak['script'] )
 				#xxx = pak['script'].decode('utf-8')

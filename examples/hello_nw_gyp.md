@@ -40,8 +40,30 @@ NODE_MODULE(binding, init)
 
 ```
 
+Nw.js
+------
+tests the c++ module from javascript
 
-var assert = require('assert');
-var binding = require('./build/Release/binding');
-assert.equal('world', binding.hello());
-console.log('binding.hello() =', binding.hello());
+@myscript.js
+```rusthon
+#backend:javascript
+mymodule = require('./build/Release/binding')
+def test():
+	alert( mymodule.hello() )
+
+```
+
+HTML
+-----
+
+@index.html
+```html
+<html>
+<head>
+<@myscript.js>
+</head>
+<body>
+<button onclick="javascript:test()">clickme</button>
+</body>
+</html>
+```
