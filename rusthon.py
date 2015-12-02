@@ -734,10 +734,17 @@ def build( modules, module_path, datadirs=None ):
 				## user named output for external build tools that need .h,.hpp,.cpp, files output to hardcoded paths.
 				if mod['tag'] and (mod['tag'].endswith('.h') or mod['tag'].endswith('.hpp') or mod['tag'].endswith('.cpp') or mod['tag'].endswith('.cc')):
 					pyjs = python_to_pythonjs(script, cpp=True, module_path=module_path)
+					use_try = True
+					if '--no-except' in sys.argv:
+						use_try = False
+					elif mod['tag'] in gyp_builds.keys():  ## nw-gyp builds without c++ exceptions
+						use_try = False
+
 					pak = translate_to_cpp(
 						pyjs, 
 						cached_json_files=cached_json, 
-						insert_runtime=mod['tag'] in gyp_builds.keys()
+						insert_runtime=mod['tag'] in gyp_builds.keys(),
+						use_try = use_try
 					)
 					if '--debug-c++' in sys.argv:
 						raise RuntimeError(pak)

@@ -250,7 +250,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 
 ```python
 
-	def __init__(self, source=None, requirejs=False, insert_runtime=False, cached_json_files=None):
+	def __init__(self, source=None, requirejs=False, insert_runtime=False, cached_json_files=None, use_try=True):
 		RustGenerator.__init__(self, source=source, requirejs=False, insert_runtime=False)
 		self._cpp = True
 		self._rust = False  ## can not be true at the same time self._cpp is true, conflicts in switch/match hack.
@@ -268,6 +268,7 @@ casting works fine with `static_cast` and `std::static_pointer_cast`.
 		self.usertypes = dict()
 		self._user_class_headers = dict()
 		self._finally_id = 0
+		self._use_try = use_try
 
 	def visit_Delete(self, node):
 		targets = [self.visit(t) for t in node.targets]
@@ -333,7 +334,7 @@ TODO
 		## TODO: check why `catch (...)` is not catching file errors
 		out = []
 
-		use_try = False  ## when building with external tools or platforms -fexceptions can not be enabled.
+		use_try = self._use_try  ## when building with external tools or platforms -fexceptions can not be enabled.
 
 
 		if use_try:
@@ -352,10 +353,19 @@ TODO
 		if use_try:
 			out.append(self.indent()+ '}' )
 
+			handler_types = []
+			for ha in node.handlers:
+				if ha.type:
+					handler_types.append(self.visit(ha.type))
 
-			out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
-			self.push()
-			out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
+			if handler_types:
+				out.append( self.indent() + 'catch (std::runtime_error* __error__) {' )
+				self.push()
+				out.append( self.indent() + 'std::string __errorname__ = __parse_error_type__(__error__);')
+			else:
+				out.append( self.indent() + 'catch (...) {' )
+				self.push()
+
 			for h in node.handlers:
 				out.append(
 					self.indent() + self.visit_ExceptHandler(h, finallybody=finallybody)
@@ -391,10 +401,10 @@ TODO
 	def visit_ExceptHandler(self, node, finallybody=None):
 		#out = ['catch (std::runtime_error* __error__) {']
 		T = 'Error'
+		out = []
 		if node.type:
 			T = self.visit(node.type)
-
-		out = ['if (__errorname__ == std::string("%s")) {' %T ]
+			out.append('if (__errorname__ == std::string("%s")) {' %T )
 
 		self.push()
 
@@ -420,7 +430,8 @@ TODO
 			out.append(self.indent()+self.visit(b))
 
 		self.pull()
-		out.append(self.indent()+'}')
+		if node.type:
+			out.append(self.indent()+'}')
 		return '\n'.join(out)
 
 
@@ -565,7 +576,7 @@ TODO save GCC PGO files.
 
 ```python
 
-def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
+def translate_to_cpp(script, insert_runtime=True, cached_json_files=None, use_try=True):
 	if '--debug-inter' in sys.argv:
 		raise RuntimeError(script)
 	if insert_runtime:
@@ -580,7 +591,12 @@ def translate_to_cpp(script, insert_runtime=True, cached_json_files=None):
 		sys.stderr.write('\n'.join(e))
 		raise err
 
-	g = CppGenerator( source=script, insert_runtime=insert_runtime, cached_json_files=cached_json_files )
+	g = CppGenerator(
+		source=script, 
+		insert_runtime=insert_runtime, 
+		cached_json_files=cached_json_files,
+		use_try = use_try
+	)
 	g.visit(tree) # first pass gathers classes
 	pass2 = g.visit(tree)
 	g.reset()
